@@ -1,0 +1,32 @@
+{
+  "name": "ggraphic-monorepo",
+  "private": true,
+  "type": "module",
+  "version": "0.0.0",
+  "description": "ggraphic: template-based, AI-centred open-source design editor",
+  "packageManager": "pnpm@12.12.1",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r --if-present typecheck",
+    "lint": "eslint .",
+    "test": "pnpm -r --if-present test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check:boundaries": "node scripts/check-boundaries.mjs",
+    "check:licences": "node scripts/check-licences.mjs",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "pnpm -r build && changeset publish"
+  },
+  "devDependencies": {
+    "@changesets/cli": "^2.29.0",
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "globals": "^16.0.0",
+    "prettier": "3.9.10",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.2"
+  }
+}

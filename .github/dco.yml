@@ -1,0 +1,3 @@
+# Config for the DCO GitHub App (https://github.com/apps/dco).
+require:
+  members: false
