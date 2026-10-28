@@ -9,7 +9,12 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import * as Y from 'yjs';
 import { describe, expect, it, vi } from 'vitest';
 
-import { duplicatePageById, readPages, seedPagesIfEmpty } from '@ggraphic/editor/collab/pagesDoc';
+import {
+  duplicatePageById,
+  readPages,
+  seedPagesIfEmpty,
+  updatePageStateById,
+} from '@ggraphic/editor/collab/pagesDoc';
 import { useCanvasHistorySetup } from '@ggraphic/editor/hooks/useCanvasHistorySetup';
 import { useCanvasInteractions } from '@ggraphic/editor/hooks/useCanvasInteractions';
 import { CanvasStoreProvider, useCanvasStore } from '@ggraphic/editor/stores/CanvasStoreProvider';
@@ -184,7 +189,7 @@ describe('page groups in the editor', () => {
     ).toEqual(['a', 'b', 'c']);
   });
 
-  it("a duplicated page's groups point at the duplicate's ids", () => {
+  it("a duplicated page's groups are a copy: editing them leaves the source alone", () => {
     const doc = new Y.Doc();
     const state = {
       additionalTexts: texts('a', 'b'),
@@ -192,10 +197,86 @@ describe('page groups in the editor', () => {
     };
     seedPagesIfEmpty(doc, [{ id: 'p1', configId: 'free', state }]);
     expect(duplicatePageById(doc, 'p1', 'copy')).toBe(true);
-    const copy = readPages(doc)[1]!.state as typeof state;
-    const live = new Set(copy.additionalTexts.map((t) => t.id));
-    expect(copy.groups).toHaveLength(1);
-    expect(copy.groups[0]!.elementIds.every((id) => live.has(id))).toBe(true);
+    const pageState = (id: string) =>
+      readPages(doc).find((page) => page.id === id)!.state as typeof state;
+    pageState('copy').groups[0]!.elementIds.push('mutated');
+    updatePageStateById(doc, 'copy', { groups: [] });
+    expect(pageState('p1').groups).toEqual([{ id: 'g', elementIds: ['a', 'b'] }]);
+  });
+
+  it('ungroup then undo restores the group in one step', async () => {
+    const h = await mount([{ id: 'g', elementIds: ['a', 'b'] }]);
+    act(() => h().click('a'));
+    await act(async () => h().commands.ungroup());
+    expect(h().state().groups).toEqual([]);
+    await act(async () => h().store.getState().undo());
+    expect(h().state().groups).toEqual([{ id: 'g', elementIds: ['a', 'b'] }]);
+  });
+
+  describe('on a real stage (deferred pointer-up)', () => {
+    function mountWithStage() {
+      const handlers = new Map<string, () => void>();
+      const container = document.createElement('div');
+      const stage = {
+        container: () => container,
+        getLayers: () => [],
+        on: (name: string, fn: () => void) => handlers.set(name, fn),
+        off: (name: string) => handlers.delete(name),
+      };
+      let click!: (id: string) => void;
+      let store!: CanvasEditorStoreApi;
+      const groups: PageGroup[] = [{ id: 'g', elementIds: ['a', 'b'] }];
+      function Probe() {
+        store = useCanvasStore();
+        const api = useCanvasInteractions({
+          stageRef: { current: { getStage: () => stage } } as never,
+          marqueeEnabled: false,
+          getGroups: () => groups,
+        });
+        click = api.selectElement;
+        return <div data-testid="stage" />;
+      }
+      const view = render(
+        <CanvasStoreProvider>
+          <Probe />
+        </CanvasStoreProvider>
+      );
+      return {
+        handlers,
+        store: () => store,
+        click: (id: string) => act(() => click(id)),
+        // The hook learns "pointer is down" from the stage container.
+        press: () =>
+          act(() => {
+            container.dispatchEvent(new Event('pointerdown'));
+          }),
+        unmount: view.unmount,
+      };
+    }
+
+    it('press then release on a member of the selected group narrows to the member', () => {
+      const h = mountWithStage();
+      act(() => h.store().getState().setSelectedLayers(['a', 'b']));
+      h.press();
+      h.click('a');
+      expect(h.store().getState().selectedLayerIds).toEqual(['a', 'b']);
+      act(() => {
+        window.dispatchEvent(new Event('pointerup'));
+      });
+      expect(h.store().getState().selectedLayerIds).toEqual(['a']);
+    });
+
+    it('a drag between press and release keeps the whole group', () => {
+      const h = mountWithStage();
+      act(() => h.store().getState().setSelectedLayers(['a', 'b']));
+      h.press();
+      h.click('a');
+      act(() => h.handlers.get('dragstart.multiSelect')!());
+      act(() => {
+        window.dispatchEvent(new Event('pointerup'));
+      });
+      expect(h.store().getState().selectedLayerIds).toEqual(['a', 'b']);
+    });
   });
 
   it('the ungroup shortcut is listed in the command registry', () => {

@@ -31,6 +31,7 @@ import {
 } from '@ggraphic/editor/utils/orientation';
 import { openTextEditor } from '@ggraphic/editor/utils/textEditorOpeners';
 
+import { pruneGroups, readGroups, wholeGroupsIn, withoutGroup } from '../groups/pageGroups.js';
 import { CanvasClipboard } from './canvasClipboard.js';
 import { moveLayerTo, type CanvasItem, type LayerStep } from './canvasLayerManager.js';
 import {
@@ -42,8 +43,6 @@ import {
   type InsertOffset,
   type TemplateEntryLookup,
 } from './duplicateElement.js';
-import { pruneGroups, readGroups, wholeGroupsIn, withoutGroup } from '../groups/pageGroups.js';
-
 import { layerLabel } from './layerLabels.js';
 import { lockedIdsOf, toggledLocks } from './layerLock.js';
 import {

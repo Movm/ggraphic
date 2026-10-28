@@ -56,8 +56,8 @@ import { getOptimalContainerWidth } from '@ggraphic/editor/utils/viewport';
 import { blockElementIds, placeBlock, type LiftedBlock } from '../blocks/liftedBlock.js';
 import { hostEmittedStateKeys } from '../collab/pageElementStateKeys.js';
 import { useSelectionAwareness } from '../collab/useSelectionAwareness.js';
-import { readGroups } from '../groups/pageGroups.js';
 import { useYjsPageStateSync } from '../collab/useYjsPageStateSync.js';
+import { readGroups } from '../groups/pageGroups.js';
 import {
   useCanvasInteractions,
   useCanvasStoreReset,
