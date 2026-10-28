@@ -4,16 +4,49 @@
  * another size (axes: x, y, w, h, font size `s`, icon scale `k`). Every top-level
  * number of a kind is either here or in `UNSCALED_FIELDS` with the reason it stays;
  * `templateGeometry.vitest.ts` builds each kind by its factory and goes red on a
- * number that is in neither. Keyed by `stateKey`, as `BINDABLE_FIELDS` is.
+ * number (or number array) that is in neither; the guard runs over the factory default
+ * and a populated fixture that sets every optional number. Keyed by `stateKey`, as `BINDABLE_FIELDS` is.
  */
 import type { GateAdapter, GeometryTable } from '@ggraphic/core';
 
 import { BINDABLE_FIELDS } from '../brand/bindableFields.js';
 
 export const TEMPLATE_GEOMETRY: GeometryTable = {
-  additionalTexts: { x: 'x', y: 'y', width: 'w', fontSize: 's', letterSpacing: 's' },
-  shapeInstances: { x: 'x', y: 'y', width: 'w', height: 'h', cornerRadius: 's' },
-  userImageInstances: { x: 'x', y: 'y', width: 'w', height: 'h' },
+  additionalTexts: {
+    x: 'x',
+    y: 'y',
+    width: 'w',
+    fontSize: 's',
+    letterSpacing: 's',
+    strokeWidth: 's',
+    shadowBlur: 's',
+    shadowOffsetX: 's',
+    shadowOffsetY: 's',
+  },
+  shapeInstances: {
+    x: 'x',
+    y: 'y',
+    width: 'w',
+    height: 'h',
+    cornerRadius: 's',
+    textGrowth: 's',
+    strokeWidth: 's',
+    // A number array: every element is a px length and scales like `s`.
+    dash: 's',
+    shadowBlur: 's',
+    shadowOffsetX: 's',
+    shadowOffsetY: 's',
+  },
+  userImageInstances: {
+    x: 'x',
+    y: 'y',
+    width: 'w',
+    height: 'h',
+    blur: 's',
+    shadowBlur: 's',
+    shadowOffsetX: 's',
+    shadowOffsetY: 's',
+  },
   chartInstances: { x: 'x', y: 'y', width: 'w', height: 'h' },
   iconStates: { x: 'x', y: 'y', scale: 'k' },
   frameInstances: {
@@ -23,6 +56,14 @@ export const TEMPLATE_GEOMETRY: GeometryTable = {
     height: 'h',
     borderWidth: 's',
     cornerRadius: 's',
+    // Px inside the frame (`coverPhotoRect` adds them to the centred photo's position).
+    imageOffsetX: 's',
+    imageOffsetY: 's',
+    // A number array: every element is a px length and scales like `s`.
+    borderDash: 's',
+    shadowBlur: 's',
+    shadowOffsetX: 's',
+    shadowOffsetY: 's',
   },
   illustrationInstances: { x: 'x', y: 'y', scale: 'k' },
   circleBadgeInstances: { x: 'x', y: 'y', radius: 's' },
@@ -41,30 +82,54 @@ export const TEMPLATE_GEOMETRY: GeometryTable = {
 const RATIO = 'ratio; independent of the page size';
 const ANGLE = 'angle; independent of the page size';
 const OPACITY = 'opacity; independent of the page size';
-const INSIDE_FRAME = 'relative to the frame; follows the frame, not the page';
+const SHADOW_OPACITY = 'opacity; independent of the page size';
+const ADJUSTMENT = 'image adjustment (a filter strength or a share); independent of the page size';
 
 export const UNSCALED_FIELDS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
   iconStates: { rotation: ANGLE, opacity: OPACITY },
-  additionalTexts: { rotation: ANGLE, scale: RATIO, opacity: OPACITY, lineHeight: RATIO },
+  additionalTexts: {
+    rotation: ANGLE,
+    scale: RATIO,
+    opacity: OPACITY,
+    lineHeight: RATIO,
+    shadowOpacity: SHADOW_OPACITY,
+  },
   shapeInstances: {
     rotation: ANGLE,
     scaleX: RATIO,
     scaleY: RATIO,
     opacity: OPACITY,
+    shadowOpacity: SHADOW_OPACITY,
   },
   frameInstances: {
     rotation: ANGLE,
     scaleX: RATIO,
     scaleY: RATIO,
     opacity: OPACITY,
-    imageOffsetX: INSIDE_FRAME,
-    imageOffsetY: INSIDE_FRAME,
     imageScale: RATIO,
+    tilt: ANGLE,
+    aspectRatioLock: RATIO,
   },
   illustrationInstances: { rotation: ANGLE, opacity: OPACITY },
   circleBadgeInstances: { rotation: ANGLE, scale: RATIO, opacity: OPACITY },
   pillBadgeInstances: { rotation: ANGLE, scale: RATIO, opacity: OPACITY },
-  userImageInstances: { rotation: ANGLE, scale: RATIO, opacity: OPACITY },
+  userImageInstances: {
+    rotation: ANGLE,
+    scale: RATIO,
+    opacity: OPACITY,
+    shadowOpacity: SHADOW_OPACITY,
+    brightness: ADJUSTMENT,
+    contrast: ADJUSTMENT,
+    saturation: ADJUSTMENT,
+    hue: ADJUSTMENT,
+    temperature: ADJUSTMENT,
+    tintStrength: ADJUSTMENT,
+    vignette: ADJUSTMENT,
+    cropZoom: ADJUSTMENT,
+    panX: ADJUSTMENT,
+    panY: ADJUSTMENT,
+    cropRotation: ANGLE,
+  },
   chartInstances: { scale: RATIO, rotation: ANGLE, opacity: OPACITY },
 };
 
@@ -85,6 +150,8 @@ export const TEMPLATE_GATE_ADAPTER: GateAdapter = {
     const y = num(el, 'y');
     switch (stateKey) {
       case 'additionalTexts':
+        // Scale and rotation are ignored on purpose: the gate checks the laid-out text
+        // against its own width, not where a transform puts it.
         return {
           x,
           y,
