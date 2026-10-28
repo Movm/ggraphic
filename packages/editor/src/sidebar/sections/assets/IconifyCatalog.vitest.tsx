@@ -229,5 +229,23 @@ describe('IconifyCatalog', () => {
       // Nothing was fetched meanwhile.
       expect(created.length).toBe(before);
     });
+
+    it('says the wait the host names even when the clock moves during the click', async () => {
+      failing.add('/api/assets/icons/lets/tree-fill.svg');
+      const refresh = vi.fn(() => Promise.resolve({ retryAfterSeconds: 7 }));
+      renderCatalog(service({ refresh }));
+      await screen.findByRole('alert');
+      // Every read of the clock is a millisecond later than the one before.
+      let t = Date.now();
+      const clock = vi.spyOn(Date, 'now').mockImplementation(() => ++t);
+      try {
+        fireEvent.click(screen.getByRole('button', { name: 'Erneut versuchen' }));
+        const button = await screen.findByRole('button', { name: /Erneut versuchen/ });
+        await waitFor(() => expect(button).toBeDisabled());
+        expect(screen.getByRole('alert')).toHaveTextContent('7 s');
+      } finally {
+        clock.mockRestore();
+      }
+    });
   });
 });

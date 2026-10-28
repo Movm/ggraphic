@@ -33,6 +33,27 @@ export interface GateAdapter {
     stateKey: string,
     el: Readonly<Record<string, unknown>>
   ): readonly { field: string; value: string }[];
+  /**
+   * Why an element cannot be placed against a frame at all (a rotated image, say), or null.
+   * `bounds` then fails closed for it.
+   */
+  boundsProblem?(stateKey: string, el: Readonly<Record<string, unknown>>): string | null;
+  /**
+   * The assets an element names by id rather than by file: icons, illustrations, stickers,
+   * emoji. `id` is the element's id (an icon's key in `iconStates`). The ids are checked against
+   * `GateContext.allowedAssets`.
+   */
+  assetRefs(
+    stateKey: string,
+    el: Readonly<Record<string, unknown>>,
+    id: string
+  ): readonly { kind: string; id: string }[];
+  /**
+   * How many lines a text element's own content takes at its width (explicit breaks and an
+   * estimate of wrapping); 1 for an element that is not a text. Used for a text the template
+   * has no `maxLines` for, which would otherwise be measured as one line.
+   */
+  lineCount(stateKey: string, el: Readonly<Record<string, unknown>>): number;
   /** The box an element covers in canvas px, or null if it has none. `lines` is a text's line count. */
   box(stateKey: string, el: Readonly<Record<string, unknown>>, lines: number): Box | null;
   /**
@@ -48,6 +69,8 @@ export interface GateAdapter {
     bold: boolean;
     opacity: number;
     ground?: string;
+    /** Set when the text cannot be placed against a frame (rotated, width not measurable): `bounds` then fails closed. */
+    boundsProblem?: string;
     /** Set when the text's colour is not the flat `fill` (a gradient): the reason it cannot be checked. */
     notCheckable?: string;
   } | null;
@@ -98,6 +121,12 @@ export interface GateContext {
   adapter: GateAdapter;
   /** Paths of the assets the pack ships (its manifest). */
   manifestPaths: ReadonlySet<string>;
+  /**
+   * Licence-ok assets by kind (as `GateAdapter.assetRefs` names them), supplied by the caller.
+   * An entry is an exact id, or a prefix when it ends in `:` (a whole set). A kind with no
+   * entry allows nothing. A template cannot carry attribution, so attribution-only sets stay off.
+   */
+  allowedAssets: Readonly<Record<string, readonly string[]>>;
   /** The template's slots by element id; `role` is what the `budget` rule reads for the word cap. */
   slots: Readonly<Record<string, { role?: string; budget: GateBudget }>>;
   /** Placeholder text by element id, checked against the slot's budget (the template's own locales are checked too). */
@@ -127,6 +156,16 @@ const fmt = (n: number): string => String(Math.round(n * 100) / 100);
 
 function intersects(a: Box, b: Box): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+}
+
+/** Overlap of more than the rounding slack on both axes. */
+function overlaps(a: Box, b: Box): boolean {
+  return (
+    a.x + SLACK < b.x + b.width &&
+    b.x + SLACK < a.x + a.width &&
+    a.y + SLACK < b.y + b.height &&
+    b.y + SLACK < a.y + a.height
+  );
 }
 
 function inside(inner: Box, outer: Box): boolean {
@@ -187,6 +226,15 @@ export function checkTemplate(t: TemplateInput, ctx: GateContext): GateProblem[]
         problem('unbound-colour', `${id}.${field} holds ${value} with no bind and no fixed entry`);
       }
     }
+    for (const ref of ctx.adapter.assetRefs(key, el, id)) {
+      const allowed = ctx.allowedAssets[ref.kind] ?? [];
+      if (!allowed.some((a) => (a.endsWith(':') ? ref.id.startsWith(a) : ref.id === a))) {
+        problem(
+          'asset-licence',
+          `${id} uses ${ref.kind} "${ref.id}", which is not on the licence allowlist`
+        );
+      }
+    }
     for (const field of ctx.adapter.assetFields[key] ?? []) {
       const src = el[field];
       if (typeof src !== 'string' || src === '') continue;
@@ -232,6 +280,18 @@ export function checkTemplate(t: TemplateInput, ctx: GateContext): GateProblem[]
           `placeholder of ${id} has ${words(text)} words, over maxWords ${maxWords}`
         );
       }
+    }
+  }
+
+  // The renderer draws icons from `selectedIcons`; one without an `iconStates` entry would sit
+  // at the stage centre, where no frame check can see it.
+  const states = isObj(source['iconStates']) ? source['iconStates'] : {};
+  for (const iconId of Array.isArray(source['selectedIcons']) ? source['selectedIcons'] : []) {
+    if (!isObj(states[String(iconId)])) {
+      problem(
+        'bounds',
+        `icon ${String(iconId)} is in selectedIcons but has no iconStates entry; its place is unknown`
+      );
     }
   }
 
@@ -359,14 +419,28 @@ function checkPlaced(
   const order = Array.isArray(state['layerOrder'])
     ? (state['layerOrder'] as unknown[]).map(String)
     : [];
-  const lines = (id: string) => ctx.slots[id]?.budget.maxLines ?? 1;
+  // A slot's maxLines is what the user may type; the text on the page (the placeholder) is
+  // measured too, and the larger count counts.
+  const lines = (id: string, key: string, el: Obj) =>
+    Math.max(ctx.slots[id]?.budget.maxLines ?? 1, ctx.adapter.lineCount(key, el), 1);
 
   const NOT_DETERMINABLE = 'ground not determinable';
   const opaque = (color: string): boolean => parseColor(color)?.a === 1;
 
   for (const [id, { el, key }] of placed) {
-    const box = ctx.adapter.box(key, el, lines(id));
-    if (box) {
+    const box = ctx.adapter.box(key, el, lines(id, key, el));
+    const text = ctx.adapter.text(key, el);
+    const placement = ctx.adapter.boundsProblem?.(key, el) ?? null;
+    // A text of unknown width cannot be placed against any frame: fail closed.
+    if (placement) {
+      problem('bounds', `${id}: ${placement}`, where);
+    } else if (text?.boundsProblem) {
+      problem('bounds', `${id}: ${text.boundsProblem}`, where);
+    } else if (box && text && !(box.width > 0)) {
+      problem('bounds', `${id} has no width (width unknown)`, where);
+    } else if (box && text && !(text.fontSize > 0)) {
+      problem('bounds', `${id} has no font size (font size unknown)`, where);
+    } else if (box) {
       const frame = t.frames?.[id] ?? 'safe';
       if (!inside(box, frames[frame])) {
         problem(
@@ -376,7 +450,6 @@ function checkPlaced(
         );
       }
     }
-    const text = ctx.adapter.text(key, el);
     if (!text) continue;
     if (box && envelope && intersects(box, envelope)) {
       problem('logo-overlap', `${id} runs into the logo envelope (${layoutLabel(layout)})`, where);
@@ -396,8 +469,8 @@ function checkPlaced(
       fail(`text opacity or alpha is below 1, contrast not determinable`);
       continue;
     }
-    // The ground: the badge's own fill, else the topmost layer below the text that holds its
-    // centre, else the page background.
+    // The ground: the badge's own fill, else the topmost layer below the text that overlaps
+    // it (it must hold the whole box), else the page background.
     let ground: string | null = text.ground ?? null;
     if (ground === null) {
       const at = order.indexOf(id);
@@ -405,8 +478,6 @@ function checkPlaced(
         fail(`${NOT_DETERMINABLE} (the text is not in layerOrder)`);
         continue;
       }
-      const cx = box.x + box.width / 2;
-      const cy = box.y + box.height / 2;
       ground = typeof state['backgroundColor'] === 'string' ? state['backgroundColor'] : '';
       for (const belowId of order.slice(0, at).reverse()) {
         const below = placed.get(belowId);
@@ -421,10 +492,10 @@ function checkPlaced(
           if (cover.kind === 'unknown') break;
           continue;
         }
-        if (cx < area.x || cx > area.x + area.width || cy < area.y || cy > area.y + area.height) {
-          continue;
-        }
-        ground = cover.kind === 'solid' ? cover.fill : null;
+        if (!overlaps(box, area)) continue;
+        // Only a shape holding the whole text box is its ground; one that covers part of it
+        // puts the text on two grounds (or an edge), which is not judged by either.
+        ground = cover.kind === 'solid' && inside(box, area) ? cover.fill : null;
         break;
       }
     }

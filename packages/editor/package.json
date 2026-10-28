@@ -384,6 +384,7 @@
     "./utils/templateRotation": "./src/utils/templateRotation.ts",
     "./utils/textAlign": "./src/utils/textAlign.ts",
     "./utils/textEditorOpeners": "./src/utils/textEditorOpeners.ts",
+    "./utils/textRouting": "./src/utils/textRouting.ts",
     "./utils/textUtils": "./src/utils/textUtils.ts",
     "./utils/touchInput": "./src/utils/touchInput.ts",
     "./utils/transformHudLabel": "./src/utils/transformHudLabel.ts",

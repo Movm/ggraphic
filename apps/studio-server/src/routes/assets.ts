@@ -52,7 +52,7 @@ export function assetsRouter(
     const icons = enabled();
     const { q, limit, prefix, refresh } = parseOr400(searchQuery, req.query);
     limited(limiters.iconifySearch, res);
-    const result = await icons.search(q, limit, prefix ?? null);
+    const result = await icons.search(q, limit, prefix ?? null, { refresh: Boolean(refresh) });
     if (refresh) {
       const wait = icons.cooldownSeconds();
       if (wait > 0) res.set('Retry-After', String(wait));

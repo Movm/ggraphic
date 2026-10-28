@@ -245,11 +245,160 @@ describe.skipIf(!hasDb)('brand packs (Postgres)', () => {
         })
         .expect(200);
       expect(three.body.settings).toMatchObject({ ...NEW, logoAlt: { ground: 'dark' } });
-      // Saving without them clears them.
-      const cleared = await owner.put(base).send(BRAND_SETTINGS).expect(200);
+      // An explicit null clears them.
+      const cleared = await owner
+        .put(base)
+        .send({
+          ...BRAND_SETTINGS,
+          fonts: { ...BRAND_SETTINGS.fonts, serif: null, condensed: null },
+          logoAlt: null,
+          layout: null,
+        })
+        .expect(200);
       expect(cleared.body.settings).toMatchObject({ layout: null, logoAlt: null });
       expect(cleared.body.pack).not.toHaveProperty('layout');
       expect(cleared.body.pack).not.toHaveProperty('logoAlt');
+    });
+
+    describe('a body from an older client (keys missing)', () => {
+      const oldShape = (extra: Record<string, unknown> = {}) => ({
+        name: 'Example',
+        colors: { primary: '#123456', secondary: '#abcdef', accent: '#ffcc00' },
+        fonts: { headline: 'Raleway', body: 'Instrument Sans' },
+        ...extra,
+      });
+
+      it.each([
+        ['three-colour body', () => oldShape({ logoAssetId: null })],
+        ['full body', () => ({ ...BRAND_SETTINGS, name: 'Renamed' })],
+      ])('keeps the stored layout, logoAlt, serif and condensed (%s)', async (_label, body) => {
+        const alt = await uploadLogo();
+        await owner
+          .put(base)
+          .send(oldShape({ ...NEW, logoAlt: { assetId: alt.id, ground: 'light' } }))
+          .expect(200);
+        const res = await owner.put(base).send(body()).expect(200);
+        expect(res.body.settings).toMatchObject({
+          ...NEW,
+          logoAlt: { assetId: alt.id, ground: 'light' },
+        });
+        expect(res.body.pack.fonts).toMatchObject({ serif: 'Fraunces', condensed: 'Raleway' });
+      });
+
+      it('clears each one only on an explicit null', async () => {
+        const alt = await uploadLogo();
+        await owner
+          .put(base)
+          .send(oldShape({ ...NEW, logoAlt: { assetId: alt.id, ground: 'light' } }))
+          .expect(200);
+        const res = await owner
+          .put(base)
+          .send(
+            oldShape({
+              fonts: { ...NEW.fonts, serif: null },
+              layout: null,
+            })
+          )
+          .expect(200);
+        expect(res.body.settings.fonts).toMatchObject({ serif: null, condensed: 'Raleway' });
+        expect(res.body.settings.layout).toBeNull();
+        expect(res.body.settings.logoAlt).toMatchObject({ assetId: alt.id });
+        const cleared = await owner
+          .put(base)
+          .send(oldShape({ ...NEW, logoAlt: null }))
+          .expect(200);
+        expect(cleared.body.settings.logoAlt).toBeNull();
+      });
+
+      it('drops a kept serif or condensed whose font asset was deleted, instead of a 400', async () => {
+        await owner
+          .put(base)
+          .send(oldShape({ fonts: { ...NEW.fonts, serif: 'Gone Serif' } }))
+          .expect(400);
+        const font = (
+          await owner
+            .post(`${base}/fonts`)
+            .field('family', 'Gone Serif')
+            .field('licence', 'OFL-1.1')
+            .attach('file', WOFF2, 'f.woff2')
+            .expect(201)
+        ).body;
+        await owner
+          .put(base)
+          .send(oldShape({ fonts: { ...NEW.fonts, serif: 'Gone Serif' } }))
+          .expect(200);
+        await owner.delete(`${base}/assets/${font.id}`).expect(204);
+        const res = await owner.put(base).send(oldShape()).expect(200);
+        expect(res.body.settings.fonts).toMatchObject({ serif: null, condensed: 'Raleway' });
+      });
+
+      it('does not write stale kept values over a save that committed meanwhile (row lock)', async () => {
+        const alt = await uploadLogo();
+        await owner
+          .put(base)
+          .send(oldShape({ ...NEW, logoAlt: { assetId: alt.id, ground: 'light' } }))
+          .expect(200);
+        const next = { ...NEW.layout, margin: 0.08 };
+        // The test holds brand_assets, so the old-shape PUT stops right after it read the
+        // stored row (it reads the assets second).
+        const holder = await pool.connect();
+        const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+        try {
+          await holder.query('begin');
+          await holder.query('lock table brand_assets in access exclusive mode');
+          // superagent sends on `then`: start it now.
+          const stale = owner
+            .put(base)
+            .send(oldShape({ name: 'Old client' }))
+            .then((r) => r);
+          const blocked = async () => {
+            for (let i = 0; i < 100; i++) {
+              const { rows } = await pool.query(
+                "select 1 from pg_stat_activity where wait_event_type = 'Lock' and query ilike '%brand_assets%'"
+              );
+              if (rows.length > 0) return;
+              await sleep(20);
+            }
+            throw new Error('the PUT never reached brand_assets');
+          };
+          await blocked();
+          // Another save sets a new layout. Under the row lock it has to wait for the PUT; without
+          // it, it commits at once. Wait for whichever happens, by an explicit signal.
+          let newerDone = false;
+          const newer = pool
+            .query('update brand_packs set layout = $1', [JSON.stringify(next)])
+            .then(() => (newerDone = true));
+          for (let i = 0; i < 200 && !newerDone; i++) {
+            const { rows } = await pool.query(
+              "select 1 from pg_stat_activity where wait_event_type = 'Lock' and query ilike 'update brand_packs%'"
+            );
+            if (rows.length > 0) break;
+            await sleep(20);
+          }
+          await holder.query('rollback');
+          const [res] = await Promise.all([stale, newer]);
+          expect(res.status).toBe(200);
+        } finally {
+          holder.release();
+        }
+        const read = await owner.get(base).expect(200);
+        expect(read.body.settings.layout).toEqual(next);
+      });
+
+      it('aliases a stored legacy family before checking it, instead of dropping it', async () => {
+        await owner.put(base).send(oldShape(NEW)).expect(200);
+        await pool.query(
+          "update brand_packs set fonts = jsonb_set(fonts, '{serif}', '\"PT Sans\"')"
+        );
+        const res = await owner.put(base).send(oldShape()).expect(200);
+        expect(res.body.settings.fonts.serif).toBe('Instrument Sans');
+      });
+
+      it('has nothing to keep on a first save', async () => {
+        const res = await owner.put(base).send(oldShape()).expect(200);
+        expect(res.body.settings).toMatchObject({ layout: null, logoAlt: null });
+        expect(res.body.settings.fonts).toMatchObject({ serif: null, condensed: null });
+      });
     });
 
     it.each([

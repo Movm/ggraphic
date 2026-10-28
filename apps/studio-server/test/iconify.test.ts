@@ -576,10 +576,194 @@ describe('iconify client', () => {
     const client = createIconifyClient(iconify, fake.impl);
     await client.search('tree', 10, null);
     failBatch = false;
-    await client.search('tree', 10, null);
+    await client.search('tree', 10, null, { refresh: true });
     await client.svg('tabler', 'house');
     expect(fake.calls.filter((c) => c.endsWith('.svg'))).toEqual([]);
     expect(fake.calls.filter((c) => c.startsWith('/search'))).toHaveLength(1);
+  });
+
+  describe('batch budget', () => {
+    const names = Array.from({ length: 160 }, (_, i) => `icon-${i}`);
+    const run = async (batch: (prefix: string, url: URL) => Response) => {
+      const held: number[] = [];
+      const fake = fakeIconify({ search: names.map((n) => `tabler:${n}`), batch });
+      const client = createIconifyClient(iconify, fake.impl, Date.now, (bytes) => held.push(bytes));
+      await client.search('tree', 160, null);
+      return { held, fake };
+    };
+
+    it('reserves each chunk before it starts: held bytes stay within 4 MB and return to 0', async () => {
+      // 10 chunks of 16 names reserve 1 MB each; unreserved they would hold 10 MB at once.
+      const { held } = await run(batchAnswer);
+      expect(Math.max(...held)).toBeLessThanOrEqual(4 * 1024 * 1024);
+      expect(Math.max(...held)).toBeGreaterThan(0);
+      expect(held.at(-1)).toBe(0);
+    });
+
+    it('refunds the reservation of a chunk that fails', async () => {
+      const { held, fake } = await run(() => new Response('', { status: 500 }));
+      // Without the refund the budget is spent after 4 chunks and the other 6 never go out.
+      expect(fake.calls.filter((c) => /^\/tabler\.json/.test(c))).toHaveLength(10);
+      expect(Math.max(...held)).toBeLessThanOrEqual(4 * 1024 * 1024);
+      expect(held.at(-1)).toBe(0);
+    });
+  });
+
+  it('does not ask the upstream again for names it said it cannot batch', async () => {
+    const fake = fakeIconify({
+      search: ['tabler:tree', 'tabler:ghost'],
+      // `ghost` is not in the answer: unbatchable. `tree` is.
+      batch: (prefix) =>
+        Response.json({
+          prefix,
+          width: 24,
+          height: 24,
+          icons: { tree: { body: '<path d="M0 0h1"/>' } },
+        }),
+    });
+    const client = createIconifyClient(iconify, fake.impl);
+    await client.search('tree', 10, null);
+    expect(fake.calls.filter((c) => /^\/tabler\.json/.test(c))).toHaveLength(1);
+    await client.search('tree', 10, null);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(fake.calls.filter((c) => /^\/tabler\.json/.test(c))).toHaveLength(1);
+  });
+
+  it('remembers names of an oversized chunk and of a set the upstream does not know', async () => {
+    const fake = fakeIconify({
+      search: ['tabler:big', 'lets:gone'],
+      batch: (prefix) =>
+        prefix === 'lets'
+          ? new Response('', { status: 404 })
+          : new Response(
+              new ReadableStream({ pull: (c) => c.enqueue(new Uint8Array(512 * 1024)) })
+            ),
+    });
+    const client = createIconifyClient(iconify, fake.impl);
+    await client.search('tree', 10, null);
+    const before = fake.calls.filter((c) => /\.json/.test(c)).length;
+    expect(before).toBe(2);
+    await client.search('tree', 10, null);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(fake.calls.filter((c) => /\.json/.test(c))).toHaveLength(before);
+  });
+
+  it('does not start a second warm while the first search is still warming', async () => {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((r) => (release = r));
+    const fake = fakeIconify({ search: ['tabler:tree'] });
+    const inner = fake.impl.getMockImplementation()!;
+    const impl = vi.fn<typeof fetch>(async (input, init) => {
+      if (/\.json/.test(String(input))) {
+        await gate;
+        return batchAnswer('tabler', new URL(String(input)));
+      }
+      return inner(input, init);
+    });
+    const client = createIconifyClient(iconify, impl);
+    const first = client.search('tree', 10, null);
+    await vi.waitFor(() =>
+      expect(impl.mock.calls.some((c) => /\.json/.test(String(c[0])))).toBe(true)
+    );
+    await client.search('tree', 10, null);
+    release();
+    await first;
+    expect(impl.mock.calls.filter((c) => /\.json/.test(String(c[0])))).toHaveLength(1);
+  });
+
+  it('caps the background warms running at once', async () => {
+    const queries = Array.from({ length: 8 }, (_, i) => `q${i}`);
+    let open = 0;
+    let peak = 0;
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((r) => (release = r));
+    let failBatch = true;
+    const fake = fakeIconify({ search: ['tabler:tree'] });
+    const inner = fake.impl.getMockImplementation()!;
+    const impl = vi.fn<typeof fetch>(async (input, init) => {
+      if (/\.json/.test(String(input))) {
+        if (failBatch) return new Response('', { status: 500 });
+        open += 1;
+        peak = Math.max(peak, open);
+        await gate;
+        open -= 1;
+        return batchAnswer('tabler', new URL(String(input)));
+      }
+      return inner(input, init);
+    });
+    const client = createIconifyClient(iconify, impl);
+    for (const q of queries) await client.search(q, 10, null);
+    failBatch = false;
+    for (const q of queries) await client.search(q, 10, null);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(peak).toBeLessThanOrEqual(4);
+    expect(peak).toBeGreaterThan(0);
+    release();
+  });
+
+  it('marks names whose batch answer is refused for its Content-Length as unbatchable', async () => {
+    const fake = fakeIconify({
+      search: ['tabler:big'],
+      batch: () => new Response('{}', { headers: { 'content-length': '99999999' } }),
+    });
+    const client = createIconifyClient(iconify, fake.impl);
+    await client.search('tree', 10, null);
+    await client.search('tree', 10, null, { refresh: true });
+    expect(fake.calls.filter((c) => /\.json/.test(c))).toHaveLength(1);
+  });
+
+  it('runs a refresh through the same per-search dedupe as every other warm', async () => {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((r) => (release = r));
+    const fake = fakeIconify({ search: ['tabler:tree'] });
+    const inner = fake.impl.getMockImplementation()!;
+    const impl = vi.fn<typeof fetch>(async (input, init) => {
+      if (/\.json/.test(String(input))) {
+        await gate;
+        return batchAnswer('tabler', new URL(String(input)));
+      }
+      return inner(input, init);
+    });
+    const client = createIconifyClient(iconify, impl);
+    const first = client.search('tree', 10, null);
+    await vi.waitFor(() =>
+      expect(impl.mock.calls.some((c) => /\.json/.test(String(c[0])))).toBe(true)
+    );
+    // A refresh that joins the running warm waits for it, and starts no second one.
+    let refreshed = false;
+    const refresh = client
+      .search('tree', 10, null, { refresh: true })
+      .then(() => (refreshed = true));
+    await new Promise((r) => setTimeout(r, 30));
+    expect(refreshed).toBe(false);
+    release();
+    await Promise.all([first, refresh]);
+    expect(refreshed).toBe(true);
+    expect(impl.mock.calls.filter((c) => /\.json/.test(String(c[0])))).toHaveLength(1);
+  });
+
+  it('answers a cached search without waiting for the upstream', async () => {
+    let failBatch = true;
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((r) => (release = r));
+    const fake = fakeIconify({ search: ['tabler:tree'] });
+    const inner = fake.impl.getMockImplementation()!;
+    const impl = vi.fn<typeof fetch>(async (input, init) => {
+      if (/\.json/.test(String(input))) {
+        if (failBatch) return new Response('', { status: 500 });
+        await gate;
+        return batchAnswer('tabler', new URL(String(input)));
+      }
+      return inner(input, init);
+    });
+    const client = createIconifyClient(iconify, impl);
+    await client.search('tree', 10, null);
+    failBatch = false;
+    // Resolves although the batch is still blocked.
+    await expect(client.search('tree', 10, null)).resolves.toMatchObject({
+      icons: [expect.anything()],
+    });
+    release();
   });
 
   it('reports the cooldown the upstream asked for', async () => {

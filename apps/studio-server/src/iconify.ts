@@ -16,8 +16,10 @@ const MAX_SVG_BYTES = 64 * 1024;
  * as emoji still fit) and in total per search, so a hostile or broken upstream stays bounded.
  */
 const BATCH_CHUNK = 16;
-const MAX_CHUNK_BYTES = BATCH_CHUNK * MAX_SVG_BYTES;
 const MAX_BATCH_TOTAL_BYTES = 4 * 1024 * 1024;
+const BATCH_CONCURRENCY = 4;
+/** Background warms of cached searches running at once, across all searches. */
+const MAX_BACKGROUND_WARMS = 4;
 
 /** How long we stay off a rate-limiting upstream when it names no Retry-After. */
 const DEFAULT_RETRY_AFTER_S = 10;
@@ -163,7 +165,16 @@ function batchIconSvg(set: BatchAnswer, icon: BatchIcon | undefined): string | n
 }
 
 export interface IconifyClient {
-  search(query: string, limit: number, prefix: string | null): Promise<IconSearchResult>;
+  /**
+   * `refresh` waits for the batch retry on a cached search (the Retry-After the route reports
+   * needs its outcome); otherwise a cached answer returns at once and warms in the background.
+   */
+  search(
+    query: string,
+    limit: number,
+    prefix: string | null,
+    options?: { refresh?: boolean }
+  ): Promise<IconSearchResult>;
   svg(prefix: string, name: string): Promise<string>;
   /** Seconds the upstream asked us to stay away for; 0 when we may call it. */
   cooldownSeconds(): number;
@@ -176,8 +187,15 @@ export function isIconToken(value: string): boolean {
 export function createIconifyClient(
   config: IconifyConfig,
   fetchImpl: typeof fetch = fetch,
-  now: () => number = Date.now
+  now: () => number = Date.now,
+  /** Test seam: called with the bytes reserved from the batch budgets after every change. */
+  onBudget?: (held: number) => void
 ): IconifyClient {
+  let heldBytes = 0;
+  const hold = (delta: number) => {
+    heldBytes += delta;
+    onBudget?.(heldBytes);
+  };
   const allowedLicences = new Set(config.licences.map((l) => l.toLowerCase()));
   const cache = new TtlCache<unknown>(CACHE_ENTRIES, now);
   let sets: { allowed: Map<string, SetInfo>; expires: number } | null = null;
@@ -232,9 +250,10 @@ export function createIconifyClient(
     }
     // Read in chunks and give up at the limit, whatever Content-Length says.
     const reader = response.body?.getReader();
-    if (!reader || Number(response.headers.get('content-length') ?? 0) > maxBytes) {
+    const declared = Number(response.headers.get('content-length') ?? 0) > maxBytes;
+    if (!reader || declared) {
       await reader?.cancel().catch(() => undefined);
-      throw upstreamError();
+      throw declared ? Object.assign(upstreamError(), { oversized: true }) : upstreamError();
     }
     const chunks: Uint8Array[] = [];
     let size = 0;
@@ -246,7 +265,7 @@ export function createIconifyClient(
         if (size > maxBytes) {
           await reader.cancel().catch(() => undefined);
           console.warn('iconify answered more than the allowed size');
-          throw upstreamError();
+          throw Object.assign(upstreamError(), { oversized: true });
         }
         chunks.push(value);
       }
@@ -311,53 +330,106 @@ export function createIconifyClient(
    * The icons of a search in one request per set (`/{prefix}.json?icons=a,b`) instead of one per
    * tile, into the same cache the single route reads. Best effort: whatever this misses is
    * fetched singly when the tile asks. Everything passes `sanitizeSvg` like a single icon.
+   *
+   * Memory: a chunk reserves its byte cap from the total budget before it starts and gives back
+   * what it did not read, and only `BATCH_CONCURRENCY` chunks run at once, so the bytes held
+   * never exceed `MAX_BATCH_TOTAL_BYTES`. `unbatchable` collects names an upstream answer
+   * covered but could not render (missing, flipped, rejected), so a repeat does not ask again;
+   * names from a failed request are not added, those are worth another try.
    */
-  async function warm(hits: IconHit[]): Promise<void> {
+  async function warm(hits: IconHit[], unbatchable: Set<string>): Promise<void> {
     const byPrefix = new Map<string, string[]>();
     for (const { prefix, name } of hits) {
-      if (cache.get(`svg\0${prefix}\0${name}`) !== undefined) continue;
+      const id = `${prefix}:${name}`;
+      if (unbatchable.has(id) || cache.get(`svg\0${prefix}\0${name}`) !== undefined) continue;
       byPrefix.set(prefix, [...(byPrefix.get(prefix) ?? []), name]);
     }
-    let budget = MAX_BATCH_TOTAL_BYTES;
-    const requests = [...byPrefix].flatMap(([prefix, names]) => {
+    const queue = [...byPrefix].flatMap(([prefix, names]) => {
       const chunks: [string, string[]][] = [];
       for (let i = 0; i < names.length; i += BATCH_CHUNK) {
         chunks.push([prefix, names.slice(i, i + BATCH_CHUNK)]);
       }
       return chunks;
     });
-    await Promise.all(
-      requests.map(async ([prefix, names]) => {
-        try {
-          const params = new URLSearchParams({ icons: names.join(',') });
-          const body = await get(
-            `/${prefix}.json?${params.toString()}`,
-            Math.min(MAX_CHUNK_BYTES, budget)
-          );
-          if (body) budget -= body.body.length;
-          const set = body ? (json(body.body) as BatchAnswer) : null;
-          if (!set || typeof set.icons !== 'object' || set.icons === null) return;
-          for (const name of names) {
-            const svg = batchIconSvg(set, set.icons[name]);
-            if (svg !== null) cache.set(`svg\0${prefix}\0${name}`, svg, SVG_TTL_MS);
-          }
-        } catch {
-          // The tiles fall back to single requests.
+    let budget = MAX_BATCH_TOTAL_BYTES;
+    const runChunk = async (prefix: string, names: string[]): Promise<void> => {
+      const reserved = Math.min(names.length * MAX_SVG_BYTES, budget);
+      if (reserved < MAX_SVG_BYTES) return;
+      budget -= reserved;
+      hold(reserved);
+      let used = 0;
+      try {
+        const params = new URLSearchParams({ icons: names.join(',') });
+        const body = await get(`/${prefix}.json?${params.toString()}`, reserved);
+        if (body) used = body.body.length;
+        // A set the upstream does not know, or an answer over the cap, will not get better.
+        if (!body) {
+          for (const name of names) unbatchable.add(`${prefix}:${name}`);
+          return;
         }
-      })
-    );
+        const set = json(body.body) as BatchAnswer;
+        if (!set || typeof set.icons !== 'object' || set.icons === null) return;
+        for (const name of names) {
+          const svg = batchIconSvg(set, set.icons[name]);
+          if (svg !== null) cache.set(`svg\0${prefix}\0${name}`, svg, SVG_TTL_MS);
+          else unbatchable.add(`${prefix}:${name}`);
+        }
+      } catch (error) {
+        if ((error as { oversized?: boolean }).oversized) {
+          for (const name of names) unbatchable.add(`${prefix}:${name}`);
+        }
+        // The tiles fall back to single requests.
+      } finally {
+        budget += reserved - used;
+        hold(-reserved);
+      }
+    };
+    const worker = async (): Promise<void> => {
+      for (let next = queue.shift(); next; next = queue.shift()) await runChunk(...next);
+    };
+    await Promise.all(Array.from({ length: Math.min(BATCH_CONCURRENCY, queue.length) }, worker));
+  }
+
+  /** Warms in progress by search key, so repeats do not stack up. */
+  const warming = new Map<string, Promise<void>>();
+  /**
+   * Runs a warm once per search key. A background caller that finds one running, or the cap of
+   * `MAX_BACKGROUND_WARMS` reached, returns at once. A caller that needs the outcome (a refresh,
+   * the first search) joins the running warm and waits for it, or waits for a free slot first;
+   * the upstream's own timeout bounds every wait.
+   */
+  async function warmOnce(
+    key: string,
+    run: () => Promise<void>,
+    background: boolean
+  ): Promise<void> {
+    for (;;) {
+      const running = warming.get(key);
+      if (running) return background ? undefined : running;
+      if (warming.size < MAX_BACKGROUND_WARMS) break;
+      if (background) return;
+      await Promise.race(warming.values());
+    }
+    const done = run().finally(() => warming.delete(key));
+    warming.set(key, done);
+    return done;
   }
 
   return {
-    async search(rawQuery, limit, prefix) {
+    async search(rawQuery, limit, prefix, options) {
       // "Tree", " tree " and "tree" are one search.
       const query = rawQuery.trim().toLowerCase().replace(/\s+/g, ' ');
       const key = `search\0${query}\0${limit}\0${prefix ?? ''}`;
-      const hit = cache.get(key) as IconSearchResult | undefined;
+      const hit = cache.get(key) as
+        { result: IconSearchResult; unbatchable: Set<string> } | undefined;
       if (hit) {
-        // Icons a first attempt could not batch (rate limit) are fetched now, still in batches.
-        await warm(hit.icons);
-        return hit;
+        // Icons a first attempt could not batch (rate limit) are fetched again, still in batches.
+        const refresh = options?.refresh === true;
+        // A refresh waits for the retry (its own, or the one already running); a plain repeat
+        // answers at once. Both share the per-search dedupe and the cap.
+        const run = warmOnce(key, () => warm(hit.result.icons, hit.unbatchable), !refresh);
+        if (refresh) await run;
+        return hit.result;
       }
       const allowed = await allowedSets();
       let prefixes = [...allowed.keys()];
@@ -386,8 +458,9 @@ export function createIconifyClient(
         icons,
         total: typeof answer.total === 'number' ? answer.total : icons.length,
       };
-      cache.set(key, result, SEARCH_TTL_MS);
-      await warm(icons);
+      const unbatchable = new Set<string>();
+      cache.set(key, { result, unbatchable }, SEARCH_TTL_MS);
+      await warmOnce(key, () => warm(icons, unbatchable), false);
       return result;
     },
 

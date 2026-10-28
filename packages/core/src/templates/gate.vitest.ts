@@ -22,6 +22,8 @@ const adapter: GateAdapter = {
     userImageInstances: { x: 'x', y: 'y', width: 'w', height: 'h' },
     frameInstances: { x: 'x', y: 'y', width: 'w', height: 'h' },
     pillBadgeInstances: { x: 'x', y: 'y' },
+    illustrationInstances: { x: 'x', y: 'y', scale: 'k' },
+    iconStates: { x: 'x', y: 'y', scale: 'k' },
   },
   colorFields: {
     page: ['backgroundColor'],
@@ -43,6 +45,14 @@ const adapter: GateAdapter = {
         : []),
     ];
   },
+  assetRefs: (key, el) =>
+    key === 'illustrationInstances'
+      ? [{ kind: 'illustration', id: `${String(el['source'])}:${String(el['illustrationId'])}` }]
+      : key === 'iconStates'
+        ? [{ kind: 'icon', id: String(el['iconId']) }]
+        : [],
+  lineCount: (key, el) =>
+    key === 'additionalTexts' && typeof el['text'] === 'string' ? el['text'].split('\n').length : 1,
   box: (key, el, lines) =>
     key === 'additionalTexts'
       ? {
@@ -130,6 +140,7 @@ const context = (over: Partial<GateContext> = {}): GateContext => ({
   canvases: { '1:1': { width: 1080, height: 1080 } },
   adapter,
   manifestPaths: new Set(['/ok.png']),
+  allowedAssets: { illustration: ['kawaii:'], icon: ['tabler:tree'] },
   slots: { headline: { role: 'headline', budget: { maxWords: 8, maxLines: 2, maxChars: 60 } } },
   placeholderTexts: { headline: 'Hello there' },
   ...over,
@@ -355,6 +366,32 @@ describe('render gate stage 1', () => {
       expect(found[0]?.detail).toContain(NOT);
     });
 
+    it('a text straddling two grounds', () => {
+      const left = fixedFill({ id: 'left', width: 0.5, fill: '#000000' });
+      const right = fixedFill({ id: 'right', x: 0.5, width: 0.5, fill: '#ffffff' });
+      const t = template(
+        { fixed: { left: ['fill'], right: ['fill'] } },
+        { shapeInstances: [left, right], layerOrder: ['left', 'right', 'logo', 'headline'] }
+      );
+      const found = checkTemplate(t, context());
+      expect(found.map((p) => p.rule)).toEqual(['contrast']);
+      expect(found[0]?.detail).toContain(NOT);
+    });
+
+    it('a text wholly inside one of two grounds still decides', () => {
+      const left = fixedFill({ id: 'left', width: 0.5, fill: '#000000' });
+      const right = fixedFill({ id: 'right', x: 0.5, width: 0.5, fill: '#ffffff' });
+      const t = template(
+        { fixed: { left: ['fill'], right: ['fill'] } },
+        {
+          shapeInstances: [left, right],
+          additionalTexts: [{ ...headline, width: 0.4 }],
+          layerOrder: ['left', 'right', 'logo', 'headline'],
+        }
+      );
+      expect(rules(t)).toEqual([]);
+    });
+
     it('a text gradient is not judged by its flat fill', () => {
       const t = template(
         { fixed: { headline: ['fillGradient'] } },
@@ -419,6 +456,34 @@ describe('render gate stage 1', () => {
     });
   });
 
+  describe('texts the template has no slot for', () => {
+    // 3 lines of 0.06 x 1080 x 1.2 px from y 0.85 leave the safe frame; one line does not.
+    const note = (over: Obj = {}) => ({
+      id: 'note',
+      text: 'a',
+      x: 0,
+      y: 0.85,
+      width: 0.5,
+      fontSize: 0.06,
+      fill: '#ffffff',
+      bind: { fill: 'ink' },
+      ...over,
+    });
+    const make = (n: Obj) =>
+      template({}, { additionalTexts: [headline, n], layerOrder: ['logo', 'headline', 'note'] });
+
+    it('are measured with the line count of their own text', () => {
+      expect(rules(make(note()))).toEqual([]);
+      expect(rules(make(note({ text: 'a\nb\nc' })))).toEqual(['bounds']);
+    });
+
+    it('fail bounds closed without a width', () => {
+      const found = checkTemplate(make(note({ width: undefined })), context());
+      expect(found.map((p) => p.rule)).toEqual(['bounds']);
+      expect(found[0]?.detail).toContain('width unknown');
+    });
+  });
+
   it('checks every image source field the adapter lists', () => {
     const frame = (imageSrc: string) => ({
       id: 'frame',
@@ -432,6 +497,94 @@ describe('render gate stage 1', () => {
       'asset-licence',
     ]);
     expect(rules(template({}, { frameInstances: [frame('/ok.png')] }))).toEqual([]);
+  });
+
+  describe('assets named by id', () => {
+    const picture = (source: string, illustrationId: string) => ({
+      id: 'pic',
+      source,
+      illustrationId,
+      x: 0.4,
+      y: 0.5,
+      scale: 1,
+    });
+    const withIllustration = (source: string, id = 'cat') =>
+      template({}, { illustrationInstances: [picture(source, id)] });
+
+    it('need an entry on the allowlist: a whole set by prefix', () => {
+      expect(rules(withIllustration('kawaii'))).toEqual([]);
+      const found = checkTemplate(withIllustration('gophers'), context());
+      expect(found.map((p) => p.rule)).toEqual(['asset-licence']);
+      expect(found[0]?.detail).toContain('illustration "gophers:cat"');
+    });
+
+    it('or one asset by exact id', () => {
+      const icon = (iconId: string) =>
+        template({}, { iconStates: { a: { iconId, x: 0.2, y: 0.5, scale: 1 } } });
+      expect(rules(icon('tabler:tree'))).toEqual([]);
+      expect(rules(icon('tabler:house'))).toEqual(['asset-licence']);
+    });
+
+    it('are refused when the context allows none of the kind', () => {
+      expect(rules(withIllustration('kawaii'), context({ allowedAssets: {} }))).toEqual([
+        'asset-licence',
+      ]);
+    });
+  });
+
+  describe('what the renderer draws', () => {
+    it('a text with no font size fails bounds closed', () => {
+      const found = checkTemplate(
+        template({}, { additionalTexts: [{ ...headline, fontSize: undefined }] }),
+        context()
+      );
+      expect(found.map((p) => p.rule)).toContain('bounds');
+      expect(found.find((p) => p.rule === 'bounds')?.detail).toContain('font size unknown');
+    });
+
+    it('a text the adapter cannot place fails bounds closed with its reason', () => {
+      const stub: GateAdapter = {
+        ...adapter,
+        text: (key, el) => {
+          const base = adapter.text(key, el);
+          return base && el['id'] === 'headline'
+            ? { ...base, boundsProblem: 'rotated, not checkable' }
+            : base;
+        },
+      };
+      const found = checkTemplate(template(), context({ adapter: stub }));
+      expect(found.map((p) => p.rule)).toEqual(['bounds']);
+      expect(found[0]?.detail).toContain('rotated, not checkable');
+    });
+
+    it('a slotted text is measured by its placeholder too, not by maxLines alone', () => {
+      const many = { ...headline, text: 'a\nb\nc\nd\ne\nf\ng', y: 0.7 };
+      const t = template(
+        { placeholders: { en: { headline: many.text } } },
+        { additionalTexts: [many] }
+      );
+      // maxLines 1 would fit above the bottom edge; seven lines do not.
+      const slots = { headline: { role: 'headline', budget: { maxLines: 1, maxChars: 60 } } };
+      expect(rules(t, context({ slots }))).toContain('bounds');
+    });
+
+    it('an icon listed in selectedIcons needs an iconStates entry to be placed', () => {
+      const t = template(
+        {},
+        { selectedIcons: ['tabler:tree'], iconStates: {}, layerOrder: ['logo', 'headline'] }
+      );
+      const found = checkTemplate(t, context());
+      expect(found.map((p) => p.rule)).toEqual(['bounds']);
+      expect(found[0]?.detail).toContain('tabler:tree');
+      const ok = template(
+        {},
+        {
+          selectedIcons: ['tabler:tree'],
+          iconStates: { 'tabler:tree': { iconId: 'tabler:tree', x: 0.2, y: 0.5, scale: 1 } },
+        }
+      );
+      expect(rules(ok)).toEqual([]);
+    });
   });
 
   describe('every colour string is a colour', () => {

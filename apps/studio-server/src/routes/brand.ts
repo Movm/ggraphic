@@ -120,64 +120,106 @@ export function organisationBrandRouter(db: Db, config: Config): Router {
     const orgId = orgParam(req.params);
     await requireMembership(db, me(res), orgId, 'owner');
     const parsed = parseOr400(brandWriteBody, req.body);
-    // Old clients may still send a replaced family ("PT Sans"); store its successor.
-    const body = settingsFromInput({
-      ...parsed,
-      fonts: {
-        headline: aliasFontFamily(parsed.fonts.headline),
-        body: aliasFontFamily(parsed.fonts.body),
-        serif: parsed.fonts.serif && aliasFontFamily(parsed.fonts.serif),
-        condensed: parsed.fonts.condensed && aliasFontFamily(parsed.fonts.condensed),
-      },
-    });
-    if (!body) {
-      throw new HttpError(400, {
-        error: 'invalid_request',
-        message: 'colors: cannot derive a brand.',
+    // Read and write in one transaction under a row lock, so a save that kept stored values
+    // cannot write them back over a concurrent one.
+    await db.transaction(async (tx) => {
+      // A key the client did not send keeps its stored value; an explicit null clears it.
+      const [stored] = await tx
+        .select()
+        .from(brandPacks)
+        .where(eq(brandPacks.organisationId, orgId))
+        .for('update');
+      const assets = await tx
+        .select()
+        .from(brandAssets)
+        .where(eq(brandAssets.organisationId, orgId));
+      const families = new Set<string>([
+        ...BUNDLED_FONT_FAMILIES,
+        ...assets.filter((a) => a.kind === 'font').map((a) => a.fontFamily!),
+      ]);
+      const keep = <T>(sent: T | null | undefined, kept: T | null): T | null =>
+        sent === undefined ? kept : sent;
+      const storedFonts = (stored?.fonts ?? {}) as {
+        serif?: string | null;
+        condensed?: string | null;
+      };
+      // A kept family whose font was deleted since is dropped: an old client cannot see or fix it.
+      const alive = (family: string | null) => {
+        const aliased = family && aliasFontFamily(family);
+        return aliased && families.has(aliased) ? aliased : null;
+      };
+      const serif =
+        parsed.fonts.serif === undefined ? alive(storedFonts.serif ?? null) : parsed.fonts.serif;
+      const condensed =
+        parsed.fonts.condensed === undefined
+          ? alive(storedFonts.condensed ?? null)
+          : parsed.fonts.condensed;
+      const storedAlt =
+        stored?.logoAltAssetId && stored.logoAltGround
+          ? { assetId: stored.logoAltAssetId, ground: stored.logoAltGround }
+          : null;
+      // Old clients may still send a replaced family ("PT Sans"); store its successor.
+      const body = settingsFromInput({
+        ...parsed,
+        fonts: {
+          headline: aliasFontFamily(parsed.fonts.headline),
+          body: aliasFontFamily(parsed.fonts.body),
+          serif: serif && aliasFontFamily(serif),
+          condensed: condensed && aliasFontFamily(condensed),
+        },
+        logoAlt: keep(parsed.logoAlt, storedAlt),
+        layout: keep(
+          parsed.layout,
+          stored?.layout ? clampBrandLayout(stored.layout as unknown as BrandLayout) : null
+        ),
       });
-    }
-    const assets = await db.select().from(brandAssets).where(eq(brandAssets.organisationId, orgId));
-    const families = new Set<string>([
-      ...BUNDLED_FONT_FAMILIES,
-      ...assets.filter((a) => a.kind === 'font').map((a) => a.fontFamily!),
-    ]);
-    for (const [slot, family] of Object.entries(body.fonts)) {
-      if (family !== null && !families.has(family)) {
+      if (!body) {
         throw new HttpError(400, {
           error: 'invalid_request',
-          message: `fonts.${slot}: upload a font of family "${family}" first, or pick ${BUNDLED_FONT_FAMILIES.join(', ')}.`,
+          message: 'colors: cannot derive a brand.',
         });
       }
-    }
-    if (body.logoAssetId && !assets.some((a) => a.id === body.logoAssetId && a.kind === 'logo')) {
-      throw new HttpError(400, {
-        error: 'invalid_request',
-        message: 'logoAssetId: not a logo of this organisation.',
-      });
-    }
-    if (body.logoAlt && !assets.some((a) => a.id === body.logoAlt?.assetId && a.kind === 'logo')) {
-      throw new HttpError(400, {
-        error: 'invalid_request',
-        message: 'logoAlt.assetId: not a logo of this organisation.',
-      });
-    }
-    const values = {
-      name: body.name,
-      colors: body.colors,
-      backgrounds: body.backgrounds,
-      fonts: body.fonts,
-      logoAssetId: body.logoAssetId,
-      layout: body.layout,
-      logoAltAssetId: body.logoAlt?.assetId ?? null,
-      logoAltGround: body.logoAlt?.ground ?? null,
-    };
-    await db
-      .insert(brandPacks)
-      .values({ organisationId: orgId, ...values })
-      .onConflictDoUpdate({
-        target: brandPacks.organisationId,
-        set: { ...values, updatedAt: sql`now()` },
-      });
+      for (const [slot, family] of Object.entries(body.fonts)) {
+        if (family !== null && !families.has(family)) {
+          throw new HttpError(400, {
+            error: 'invalid_request',
+            message: `fonts.${slot}: upload a font of family "${family}" first, or pick ${BUNDLED_FONT_FAMILIES.join(', ')}.`,
+          });
+        }
+      }
+      if (body.logoAssetId && !assets.some((a) => a.id === body.logoAssetId && a.kind === 'logo')) {
+        throw new HttpError(400, {
+          error: 'invalid_request',
+          message: 'logoAssetId: not a logo of this organisation.',
+        });
+      }
+      if (
+        body.logoAlt &&
+        !assets.some((a) => a.id === body.logoAlt?.assetId && a.kind === 'logo')
+      ) {
+        throw new HttpError(400, {
+          error: 'invalid_request',
+          message: 'logoAlt.assetId: not a logo of this organisation.',
+        });
+      }
+      const values = {
+        name: body.name,
+        colors: body.colors,
+        backgrounds: body.backgrounds,
+        fonts: body.fonts,
+        logoAssetId: body.logoAssetId,
+        layout: body.layout,
+        logoAltAssetId: body.logoAlt?.assetId ?? null,
+        logoAltGround: body.logoAlt?.ground ?? null,
+      };
+      await tx
+        .insert(brandPacks)
+        .values({ organisationId: orgId, ...values })
+        .onConflictDoUpdate({
+          target: brandPacks.organisationId,
+          set: { ...values, updatedAt: sql`now()` },
+        });
+    });
     res.json(await load(orgId));
   });
 
