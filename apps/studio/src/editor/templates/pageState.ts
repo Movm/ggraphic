@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { brandDefault } from '@ggraphic/core';
+import { studioBrand } from '../../brand';
 import { type BaseCanvasState } from '@ggraphic/editor/configs/factory/baseTypes';
 import { carryInstanceState } from '@ggraphic/editor/configs/factory/carryInstanceState';
 
@@ -33,7 +33,7 @@ export function pageStateFrom(props: Record<string, unknown>, seed: PageSeed): S
     backgroundColor:
       typeof background === 'string'
         ? background
-        : (seed.backgroundColor ?? brandDefault.defaultBackground),
+        : (seed.backgroundColor ?? studioBrand.defaultBackground),
   };
 }
 

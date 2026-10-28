@@ -6,7 +6,7 @@
  *
  * Texts carry role ids (`TEXT_ROLES`) so the AI draft knows which one to fill.
  */
-import { brandDefault } from '@ggraphic/core';
+import { studioBrand } from '../../brand';
 import { type AdditionalText } from '@ggraphic/editor/configs/types';
 import { createShape } from '@ggraphic/editor/utils/shapes';
 
@@ -28,9 +28,9 @@ export const TEXT_ROLES = {
   callToAction: 'cta',
 } as const;
 
-const { colors } = brandDefault;
-const PAPER = colors.surface;
-const NIGHT = colors.primary;
+const { colors } = studioBrand;
+const SURFACE = colors.surface;
+const PRIMARY = colors.primary;
 
 interface Frame {
   width: number;
@@ -67,7 +67,7 @@ function text(
     width: f.inner,
     fontSize: Math.round(size * f.s),
     align: 'left',
-    lineHeight: brandDefault.lineHeightFactor,
+    lineHeight: studioBrand.lineHeightFactor,
     ...rest,
   };
 }
@@ -80,7 +80,7 @@ function headlineSeed(f: Frame): PageSeed {
     height: Math.round(14 * f.s),
   };
   return {
-    backgroundColor: NIGHT,
+    backgroundColor: PRIMARY,
     shapeInstances: [bar],
     additionalTexts: [
       text(f, TEXT_ROLES.headline, 'header', 'A clear headline', 0.28, {
@@ -112,7 +112,7 @@ function headlineSeed(f: Frame): PageSeed {
 
 function quoteSeed(f: Frame): PageSeed {
   return {
-    backgroundColor: PAPER,
+    backgroundColor: SURFACE,
     additionalTexts: [
       text(f, 'quote-mark', 'header', '“', 0.08, {
         size: 280,
