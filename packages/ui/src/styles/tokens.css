@@ -1,0 +1,207 @@
+/* SPDX-License-Identifier: MPL-2.0 */
+/*
+ * @ggraphic/ui design tokens.
+ *
+ * Two layers:
+ *   1. Palette (--ui-wine-*, --ui-pink-*, --ui-blush-*, ...): raw brand values.
+ *   2. Roles (--ui-color-*): what components read. Never a hex in a component.
+ *
+ * Everything sits at :where(:root), specificity 0, so a host overrides any
+ * token with a plain `:root { ... }` rule, no matter the import order.
+ *
+ * BRAND OVERRIDE: redefine these (the roles follow; see README):
+ *   --ui-brand-ink       text and strong borders
+ *   --ui-brand-deep      inverse surfaces (hero, footer, AuthLayout photo panel)
+ *   --ui-brand-primary   buttons, links, focus ring, selected state
+ *   --ui-brand-primary-hover
+ *   --ui-brand-tint      soft surfaces (tabs track, tinted cards, alerts)
+ *   --ui-brand-highlight accent on dark surfaces
+ *   --ui-brand-display   large display type on dark surfaces
+ *   --ui-font-display / --ui-font-body
+ */
+
+:where(:root) {
+  /* ---- Brand knobs (the handful a host redefines) ---- */
+  --ui-brand-ink: #3a0b1c;
+  --ui-brand-deep: #4a0f24;
+  --ui-brand-primary: #d6146f;
+  --ui-brand-primary-hover: #4a0f24;
+  --ui-brand-tint: #fbeaf1;
+  --ui-brand-highlight: #ff7db8;
+  --ui-brand-display: #ff3d96;
+
+  /* ---- Palette ---- */
+  --ui-wine-950: #3a0b1c;
+  --ui-wine-900: #4a0f24;
+  --ui-wine-800: #6b1535;
+  --ui-magenta-700: #b00e5b;
+  --ui-magenta-600: #d6146f;
+  --ui-pink-500: #ff3d96;
+  --ui-pink-400: #ff7db8;
+  --ui-pink-300: #ff8fc3;
+  --ui-pink-on-wine: #f6dce7;
+  --ui-blush-50: #fdf1f6;
+  --ui-blush-100: #fbeaf1;
+  --ui-blush-200: #f9e1eb;
+  --ui-blush-300: #f3dce6;
+  --ui-blush-400: #ebd3dd;
+  --ui-mauve-600: #7f5366;
+  --ui-sand-100: #f1e8dc;
+  --ui-white: #ffffff;
+
+  /* Status colours. The mockups show no states: teal (darkened from v1's #1c7c80, 4.4:1), ochre and
+     blue appear once in Landing v1; danger is deliberately NOT the brand pink. */
+  --ui-teal-700: #17696d;
+  --ui-ochre-700: #7a5710;
+  --ui-ochre-500: #b8841f;
+  --ui-blue-700: #2a4bb8;
+  --ui-red-700: #b3261e;
+
+  /* ---- Colour roles ---- */
+  --ui-color-bg: var(--ui-white);
+  --ui-color-bg-subtle: var(--ui-brand-tint);
+  --ui-color-bg-inverse: var(--ui-brand-deep);
+  --ui-color-surface: var(--ui-white);
+  --ui-color-surface-hover: var(--ui-blush-100);
+  --ui-color-canvas: #f8f1f4; /* dotted work surface behind posters */
+  --ui-color-canvas-dot: var(--ui-blush-400);
+
+  --ui-color-text: var(--ui-brand-ink);
+  --ui-color-text-secondary: var(--ui-wine-800);
+  --ui-color-text-muted: var(--ui-mauve-600); /* 6.3:1 on white; the mockup's #9A6A7C is 4.4:1 */
+  --ui-color-text-inverse: var(--ui-white);
+  --ui-color-text-inverse-muted: var(--ui-pink-on-wine);
+
+  --ui-color-border: var(--ui-blush-300); /* decorative dividers, card edges */
+  --ui-color-border-control: #9a6a7c; /* input/checkbox edges: >= 3:1 (WCAG 1.4.11) */
+  --ui-color-border-strong: var(--ui-brand-ink);
+
+  --ui-color-accent: var(--ui-brand-primary);
+  --ui-color-accent-hover: var(--ui-brand-primary-hover);
+  --ui-color-accent-contrast: var(--ui-white);
+  --ui-color-highlight: var(--ui-brand-highlight);
+  --ui-color-display: var(--ui-brand-display);
+  --ui-color-link: var(--ui-brand-primary);
+  --ui-color-link-hover: var(--ui-wine-800);
+  --ui-color-focus: var(--ui-brand-primary);
+  --ui-color-selection: var(--ui-brand-tint);
+
+  --ui-color-info: var(--ui-blue-700);
+  --ui-color-success: var(--ui-teal-700);
+  --ui-color-warning: var(--ui-ochre-700);
+  --ui-color-warning-edge: var(--ui-ochre-500);
+  --ui-color-danger: var(--ui-red-700);
+  --ui-color-info-bg: #eef1fb;
+  --ui-color-success-bg: #e9f5f5;
+  --ui-color-warning-bg: #faf3e3;
+  --ui-color-danger-bg: #fdeceb;
+
+  --ui-color-scrim: rgb(58 11 28 / 0.55);
+
+  /* ---- Typography ---- */
+  --ui-font-display: 'Bricolage Grotesque Variable', 'Bricolage Grotesque', system-ui, sans-serif;
+  --ui-font-body: var(--ui-font-display);
+  --ui-font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --ui-weight-regular: 400;
+  --ui-weight-medium: 500;
+  --ui-weight-bold: 700;
+  --ui-weight-black: 800;
+
+  --ui-text-xs: 0.75rem; /* 12 */
+  --ui-text-sm: 0.875rem; /* 14 */
+  --ui-text-base: 1rem; /* 16 */
+  --ui-text-md: 1.0625rem; /* 17: control labels and input text */
+  --ui-text-lg: 1.125rem; /* 18 */
+  --ui-text-xl: clamp(1.0625rem, 1.6vw, 1.3125rem); /* 17-21 lead */
+  --ui-text-title: clamp(2.125rem, 3.6vw, 2.75rem); /* 34-44 form/step titles */
+  --ui-text-heading: clamp(2.125rem, 4.6vw, 4rem); /* 34-64 section statements */
+  --ui-text-display-md: clamp(3rem, 6.5vw, 6.5rem); /* 48-104 auth panel */
+  --ui-text-display: clamp(4rem, 12vw, 11.5rem); /* 64-184 hero */
+  --ui-text-pill: clamp(1.25rem, 3.4vw, 2.875rem); /* 20-46 audience chips */
+
+  --ui-leading-tight: 0.88; /* display */
+  --ui-leading-snug: 1.04; /* statements */
+  --ui-leading-title: 1;
+  --ui-leading-body: 1.5;
+  --ui-leading-lead: 1.45;
+
+  --ui-tracking-display: -0.05em;
+  --ui-tracking-display-md: -0.045em;
+  --ui-tracking-heading: -0.035em;
+  --ui-tracking-title: -0.04em;
+  --ui-tracking-brand: -0.04em;
+
+  /* ---- Space (4px scale) + layout ---- */
+  --ui-space-1: 0.25rem;
+  --ui-space-2: 0.5rem;
+  --ui-space-3: 0.75rem;
+  --ui-space-4: 1rem;
+  --ui-space-5: 1.25rem;
+  --ui-space-6: 1.5rem;
+  --ui-space-8: 2rem;
+  --ui-space-10: 2.5rem;
+  --ui-space-12: 3rem;
+  --ui-space-16: 4rem;
+  --ui-gutter: clamp(1.25rem, 4vw, 3.5rem);
+  --ui-section-pad: clamp(5.5rem, 10vw, 8.75rem);
+  --ui-measure: 36ch;
+  --ui-container: 1200px;
+
+  /* ---- Control sizes ---- */
+  --ui-control-sm: 2.5rem; /* 40 */
+  --ui-control-md: 3rem; /* 48 */
+  --ui-control-lg: 3.375rem; /* 54: primary CTA, form submit */
+  --ui-field-height: 3.25rem; /* 52 */
+  --ui-target-min: 2.75rem; /* 44: tab height, icon button */
+
+  /* ---- Radii ---- */
+  --ui-radius-xs: 6px; /* posters in previews */
+  --ui-radius-sm: 8px;
+  --ui-radius-md: 12px; /* fields */
+  --ui-radius-lg: 16px; /* cards, panels */
+  --ui-radius-pill: 999px; /* buttons, tabs, chips, prompt */
+
+  /* ---- Elevation (wine-tinted, never neutral black) ---- */
+  --ui-shadow-sm: 0 1px 4px rgb(58 11 28 / 0.15);
+  --ui-shadow-md: 0 4px 16px rgb(58 11 28 / 0.12);
+  --ui-shadow-lg: 0 14px 40px rgb(58 11 28 / 0.22);
+  --ui-shadow-xl: 0 30px 80px rgb(0 0 0 / 0.35);
+
+  /* ---- Focus ---- */
+  --ui-focus-ring: 3px solid var(--ui-color-focus);
+  --ui-focus-offset: 2px;
+
+  /* ---- Motion ---- */
+  --ui-duration-fast: 150ms;
+  --ui-duration-base: 300ms;
+  --ui-duration-slow: 600ms;
+  --ui-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/*
+ * Inverse surface: the wine-coloured hero, footer and auth photo panel. Wrap
+ * any subtree in data-ui-surface="inverse" and the roles flip for it.
+ * (The mockups show no dark mode; this is the only second theme they imply.)
+ */
+:where([data-ui-surface='inverse']) {
+  --ui-color-bg: var(--ui-color-bg-inverse);
+  --ui-color-surface: var(--ui-color-bg-inverse);
+  --ui-color-text: var(--ui-color-text-inverse);
+  --ui-color-text-secondary: var(--ui-color-text-inverse-muted);
+  --ui-color-text-muted: var(--ui-color-text-inverse-muted);
+  --ui-color-border: rgb(255 255 255 / 0.18);
+  --ui-color-link: var(--ui-color-text-inverse-muted);
+  --ui-color-link-hover: var(--ui-color-text-inverse);
+  --ui-color-focus: var(--ui-brand-highlight);
+  color: var(--ui-color-text);
+  background: var(--ui-color-bg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(:root) {
+    --ui-duration-fast: 0.01ms;
+    --ui-duration-base: 0.01ms;
+    --ui-duration-slow: 0.01ms;
+  }
+}

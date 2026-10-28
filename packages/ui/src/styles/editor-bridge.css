@@ -1,0 +1,53 @@
+/* SPDX-License-Identifier: MPL-2.0 */
+/*
+ * Maps the kit tokens onto the editor core's --editor-* contract, so the
+ * editor chrome follows the kit (and a brand override of the kit reaches the
+ * editor too). Import AFTER tokens.css. Hosts that already define --editor-*
+ * keep winning: this file sits at :where(:root), specificity 0.
+ */
+:where(:root) {
+  --editor-bg: var(--ui-color-canvas);
+  --editor-canvas-bg: var(--ui-color-canvas);
+  --editor-surface: var(--ui-color-surface);
+  --editor-surface-hover: var(--ui-color-surface-hover);
+  --editor-inset: var(--ui-blush-50);
+  --editor-tile: var(--ui-blush-100);
+  --editor-canvas-hover: var(--ui-blush-300);
+  --editor-border: var(--ui-color-border);
+  --editor-border-soft: var(--ui-color-border);
+  --editor-border-strong: var(--ui-color-border-control);
+  --editor-text: var(--ui-color-text);
+  --editor-text-secondary: var(--ui-color-text-secondary);
+  --editor-text-muted: var(--ui-color-text-muted);
+  --editor-placeholder: var(--ui-color-text-muted);
+  --editor-accent: var(--ui-color-accent);
+  --editor-active-fg: var(--ui-color-accent);
+  --editor-active-bg: var(--ui-color-selection);
+  --editor-active-soft: var(--ui-blush-50);
+  --editor-stack-back: var(--ui-pink-300);
+  --editor-stack-mid: var(--ui-blush-300);
+  --editor-green-deep: var(--ui-color-accent);
+  --editor-menubar-gradient: linear-gradient(
+    90deg,
+    var(--ui-wine-950) 0%,
+    var(--ui-brand-deep) 55%,
+    var(--ui-color-accent) 100%
+  );
+  --editor-secondary-fg: var(--ui-color-text-secondary);
+  --editor-danger-fg: var(--ui-color-danger);
+  --editor-danger-bg: var(--ui-color-danger-bg);
+  --editor-tanne-preview: var(--ui-color-accent);
+  --editor-switch-off: var(--ui-color-border-control);
+  --editor-switch-thumb-on: var(--ui-white);
+  --editor-switch-thumb-off: var(--ui-white);
+  --editor-control-border: var(--ui-color-border-control);
+  --editor-control-bg: transparent;
+  --editor-control-bg-hover: transparent;
+  --editor-icon-button-bg: var(--ui-color-surface);
+  --editor-icon-button-bg-hover: var(--ui-color-surface-hover);
+  --editor-icon-button-fg: var(--ui-color-accent);
+  --editor-icon-button-shadow: var(--ui-shadow-md);
+  --editor-ease-out: var(--ui-ease-out);
+  --editor-ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --editor-topbar-height: 56px;
+}
