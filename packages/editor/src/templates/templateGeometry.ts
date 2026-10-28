@@ -134,6 +134,8 @@ export const UNSCALED_FIELDS: Readonly<Record<string, Readonly<Record<string, st
 };
 
 type El = Readonly<Record<string, unknown>>;
+const isRecord = (v: unknown): v is El => typeof v === 'object' && v !== null && !Array.isArray(v);
+const str = (el: El, field: string): string => (typeof el[field] === 'string' ? el[field] : '');
 const num = (el: El, field: string, fallback = 0): number => {
   const v = el[field];
   return typeof v === 'number' && Number.isFinite(v) ? v : fallback;
@@ -142,9 +144,55 @@ const num = (el: El, field: string, fallback = 0): number => {
 /** Editor icons are drawn 120 px across at scale 1, centred on their x/y (as `boundsOf`). */
 const ICON_SIZE = 120;
 
+/**
+ * `BINDABLE_FIELDS` without the fields that are not colours: fonts, and `src` (bound only to the logo).
+ */
+const COLOR_FIELDS: Readonly<Record<string, readonly string[]>> = Object.fromEntries(
+  Object.entries(BINDABLE_FIELDS).map(([key, fields]) => [
+    key,
+    fields.filter((field) => field !== 'src' && !field.startsWith('font')),
+  ])
+);
+
+/**
+ * stateKey -> fields that name an image file. `templateGeometry.vitest.ts` goes red on a string
+ * field of a kind that looks like one (`src`, `imageSrc`, ...) and is not listed here.
+ */
+export const ASSET_FIELDS: Readonly<Record<string, readonly string[]>> = {
+  userImageInstances: ['src'],
+  frameInstances: ['imageSrc'],
+  assetInstances: ['src'],
+};
+
 export const TEMPLATE_GATE_ADAPTER: GateAdapter = {
   geometry: TEMPLATE_GEOMETRY,
-  colorFields: BINDABLE_FIELDS,
+  colorFields: COLOR_FIELDS,
+  assetFields: ASSET_FIELDS,
+  nestedColors(stateKey, el) {
+    const out: { field: string; value: string }[] = [];
+    const add = (field: string, value: unknown) => {
+      if (typeof value === 'string') out.push({ field, value });
+    };
+    const stops = (field: string, gradient: unknown) => {
+      const list = isRecord(gradient) ? gradient['stops'] : null;
+      if (Array.isArray(list))
+        for (const stop of list) if (isRecord(stop)) add(field, stop['color']);
+    };
+    if (stateKey === 'shapeInstances' || stateKey === 'additionalTexts') {
+      stops('fillGradient', el['fillGradient']);
+    }
+    if (stateKey === 'additionalTexts') {
+      if (isRecord(el['accent'])) add('accent', el['accent']['fill']);
+      if (isRecord(el['marker'])) {
+        add('marker', el['marker']['fill']);
+        add('marker', el['marker']['color']);
+      }
+    }
+    if (stateKey === 'chartInstances' && Array.isArray(el['colors'])) {
+      for (const color of el['colors']) add('colors', color);
+    }
+    return out;
+  },
   box(stateKey, el, lines) {
     const x = num(el, 'x');
     const y = num(el, 'y');
@@ -175,16 +223,52 @@ export const TEMPLATE_GATE_ADAPTER: GateAdapter = {
     }
   },
   text(stateKey, el) {
-    if (stateKey !== 'additionalTexts') return null;
     const style = el['fontStyle'];
-    return {
-      fill: typeof el['fill'] === 'string' ? el['fill'] : '',
-      fontSize: num(el, 'fontSize'),
-      bold: typeof style === 'string' && style.includes('bold'),
-    };
+    const opacity = num(el, 'opacity', 1);
+    if (stateKey === 'additionalTexts') {
+      return {
+        fill: typeof el['fill'] === 'string' ? el['fill'] : '',
+        fontSize: num(el, 'fontSize'),
+        bold: typeof style === 'string' && style.includes('bold'),
+        opacity,
+      };
+    }
+    if (stateKey === 'pillBadgeInstances') {
+      return {
+        fill: str(el, 'textColor'),
+        fontSize: num(el, 'fontSize'),
+        bold: typeof style === 'string' && style.includes('bold'),
+        opacity,
+        ground: str(el, 'backgroundColor'),
+      };
+    }
+    if (stateKey === 'circleBadgeInstances') {
+      // Judged on its smallest line, and bold only when every line is.
+      const lines = Array.isArray(el['textLines']) ? el['textLines'].filter(isRecord) : [];
+      return {
+        fill: str(el, 'textColor'),
+        fontSize: lines.length ? Math.min(...lines.map((l) => num(l, 'fontSize'))) : 0,
+        bold: lines.length > 0 && lines.every((l) => l['fontWeight'] === 'bold'),
+        opacity,
+        ground: str(el, 'backgroundColor'),
+      };
+    }
+    return null;
   },
-  fill(stateKey, el) {
-    if (stateKey !== 'shapeInstances') return null;
-    return typeof el['fill'] === 'string' ? el['fill'] : null;
+  cover(stateKey, el) {
+    // Texts paint no ground. A shape is a ground only when flat and opaque; every other
+    // kind (photo, frame, chart, badge, icon, sticker, illustration) is not provably one.
+    if (stateKey === 'additionalTexts') return null;
+    if (stateKey !== 'shapeInstances') return { kind: 'unknown' };
+    const gradient = el['fillGradient'];
+    const blend = el['blendMode'];
+    if (
+      (gradient !== undefined && gradient !== null) ||
+      num(el, 'opacity', 1) < 1 ||
+      (blend !== undefined && blend !== 'normal')
+    ) {
+      return { kind: 'unknown' };
+    }
+    return { kind: 'solid', fill: str(el, 'fill') };
   },
 };

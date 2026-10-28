@@ -113,7 +113,7 @@
             "text": "Add the details here: what, when and where.",
             "x": 0.0,
             "y": 0.640138,
-            "width": 1.0,
+            "width": 0.45,
             "fontSize": 0.031481,
             "align": "left",
             "fontFamily": "",
@@ -130,7 +130,7 @@
             "text": "Find out more",
             "x": 0.0,
             "y": 0.897059,
-            "width": 0.6,
+            "width": 0.45,
             "fontSize": 0.031481,
             "align": "left",
             "fontFamily": "",
@@ -167,9 +167,9 @@
     "body": {
       "role": "body",
       "budget": {
-        "maxWords": 30,
+        "maxWords": 14,
         "maxLines": 4,
-        "maxChars": 200
+        "maxChars": 80
       }
     },
     "cta": {
@@ -177,7 +177,7 @@
       "budget": {
         "maxWords": 4,
         "maxLines": 1,
-        "maxChars": 30
+        "maxChars": 20
       }
     }
   },
@@ -193,7 +193,7 @@
   ],
   "locks": [],
   "fixed": {},
-  "logoCorners": ["bottom-right", "top-right"],
+  "logoCorners": ["bottom-right"],
   "placeholders": {
     "en": {
       "headline": "A clear headline",

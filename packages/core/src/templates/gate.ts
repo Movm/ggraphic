@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 import { type BrandPack } from '../brand/brandPack.js';
-import { brandLayout, logoEnvelope, LOGO_CORNERS, safeArea } from '../brand/layout.js';
+import { brandLayout, logoEnvelope, safeArea, type BrandLayout } from '../brand/layout.js';
 import type { Box } from '../brand/logoFit.js';
 import type { SchemeId } from '../brand/schemes.js';
 import { contrastRatio, parseColor } from '../color/color.js';
@@ -18,15 +18,34 @@ import {
  */
 export interface GateAdapter {
   geometry: GeometryTable;
-  /** stateKey → fields that may carry a colour binding. */
+  /** stateKey → fields that hold a colour value and may carry a binding (no font or image fields). */
   colorFields: Readonly<Record<string, readonly string[]>>;
+  /** stateKey → fields that name an image file; each must be bound to the logo or listed in the pack manifest. */
+  assetFields: Readonly<Record<string, readonly string[]>>;
+  /** Colours an element holds inside nested fields (gradient stops, chart colours, text accent and marker); `field` is the top-level field. */
+  nestedColors(
+    stateKey: string,
+    el: Readonly<Record<string, unknown>>
+  ): readonly { field: string; value: string }[];
   /** The box an element covers in canvas px, or null if it has none. `lines` is a text's line count. */
   box(stateKey: string, el: Readonly<Record<string, unknown>>, lines: number): Box | null;
+  /**
+   * A text the element draws, or null. `ground` is set when the element paints its own ground
+   * (a badge's fill), which the text is then held against. `opacity` is 1 when none is set.
+   */
   text(
     stateKey: string,
     el: Readonly<Record<string, unknown>>
-  ): { fill: string; fontSize: number; bold: boolean } | null;
-  fill(stateKey: string, el: Readonly<Record<string, unknown>>): string | null;
+  ): { fill: string; fontSize: number; bold: boolean; opacity: number; ground?: string } | null;
+  /**
+   * What the element paints under later layers: `solid` is an opaque flat fill, `unknown` is
+   * anything else (an image, a gradient, a translucent fill, a chart, a badge), null is nothing
+   * (a text).
+   */
+  cover(
+    stateKey: string,
+    el: Readonly<Record<string, unknown>>
+  ): { kind: 'solid'; fill: string } | { kind: 'unknown' } | null;
 }
 
 export const GATE_RULES = [
@@ -43,7 +62,7 @@ export const GATE_RULES = [
 export type GateRule = (typeof GATE_RULES)[number];
 
 export interface GateProblem {
-  /** `schema` is not raised here: the caller reports a file that does not read under it. */
+  /** `schema` for a file that does not read, or a page the gate could not place; the other rules are `GATE_RULES`. */
   rule: GateRule | 'schema';
   templateId: string;
   detail: string;
@@ -87,7 +106,9 @@ const GATE_LOGO_SIZE = { width: 400, height: 100 };
 const refOf = (entry: unknown): unknown => (isObj(entry) ? entry['ref'] : entry);
 const bindOf = (el: Obj): Obj => (isObj(el['bind']) ? el['bind'] : {});
 const isLogo = (el: Obj): boolean => refOf(bindOf(el)['src']) === 'brand.logo';
-const words = (text: string): number => text.split(/\s+/).filter(Boolean).length;
+/** Breaking whitespace only: a no-break or narrow no-break space (\u00a0, \u202f) joins "73 %" into one word. */
+const BREAKING_SPACE = /[ \t\n\r\f\v\u1680\u2000-\u2006\u2008-\u200a\u2028\u2029\u205f\u3000]+/;
+const words = (text: string): number => text.split(BREAKING_SPACE).filter(Boolean).length;
 const fmt = (n: number): string => String(Math.round(n * 100) / 100);
 
 function intersects(a: Box, b: Box): boolean {
@@ -106,13 +127,13 @@ function inside(inner: Box, outer: Box): boolean {
 /**
  * Stage 1 of the render gate: every rule of `GATE_RULES` against a template, on each brand ×
  * colour world × declared format of the context, on the placed page. Returns every problem
- * (identical findings on other brands, worlds and formats are listed once).
+ * (one per rule, detail, brand, world and format).
  */
 export function checkTemplate(t: TemplateInput, ctx: GateContext): GateProblem[] {
   const out: GateProblem[] = [];
   const seen = new Set<string>();
   const add = (p: GateProblem) => {
-    const key = `${p.rule}|${p.detail}`;
+    const key = `${p.rule}|${p.detail}|${p.brand ?? ''}|${p.scheme ?? ''}|${p.format ?? ''}`;
     if (seen.has(key)) return;
     seen.add(key);
     out.push(p);
@@ -139,15 +160,26 @@ export function checkTemplate(t: TemplateInput, ctx: GateContext): GateProblem[]
         );
       }
     }
+    // Any non-empty string in a colour field is a colour, readable or not (a named colour
+    // or hsl() renders just the same); it must follow the brand or be listed as fixed.
     for (const field of ctx.adapter.colorFields[key] ?? []) {
       const value = el[field];
-      if (typeof value === 'string' && parseColor(value) && !bound(id, el, field)) {
+      if (typeof value === 'string' && value.trim() !== '' && !bound(id, el, field)) {
         problem('unbound-colour', `${id}.${field} holds ${value} with no bind and no fixed entry`);
       }
     }
-    const src = el['src'];
-    if (typeof src === 'string' && src !== '' && !isLogo(el) && !ctx.manifestPaths.has(src)) {
-      problem('asset-licence', `${id}.src "${src}" is not in the pack manifest`);
+    for (const { field, value } of ctx.adapter.nestedColors(key, el)) {
+      if (value.trim() !== '' && !bound(id, el, field)) {
+        problem('unbound-colour', `${id}.${field} holds ${value} with no bind and no fixed entry`);
+      }
+    }
+    for (const field of ctx.adapter.assetFields[key] ?? []) {
+      const src = el[field];
+      if (typeof src !== 'string' || src === '') continue;
+      if (field === 'src' && isLogo(el)) continue;
+      if (!ctx.manifestPaths.has(src)) {
+        problem('asset-licence', `${id}.${field} "${src}" is not in the pack manifest`);
+      }
     }
   }
 
@@ -228,8 +260,7 @@ export function checkTemplate(t: TemplateInput, ctx: GateContext): GateProblem[]
           });
           continue;
         }
-        for (const corner of LOGO_CORNERS) {
-          const layout = { ...brandLayout(brand), logoCorner: corner };
+        for (const layout of layoutsOf(brand, t)) {
           const placedBrand: BrandPack = {
             ...brand,
             layout,
@@ -261,6 +292,29 @@ export function checkTemplate(t: TemplateInput, ctx: GateContext): GateProblem[]
   return out;
 }
 
+/** Layouts a brand may set: the margin and logo box at their limits (`brandLayout` clamps to these). */
+const LAYOUT_EXTREMES = [
+  { margin: 0.04, logoMaxWidth: 0.4, logoMaxHeight: 0.2 },
+  { margin: 0.04, logoMaxWidth: 0.05, logoMaxHeight: 0.03 },
+  { margin: 0.12, logoMaxWidth: 0.4, logoMaxHeight: 0.2 },
+  { margin: 0.12, logoMaxWidth: 0.05, logoMaxHeight: 0.03 },
+] as const;
+
+/**
+ * The brand's own layout and the extremes, each with every corner the template declares
+ * (the logo is only ever placed in one of them, whatever corner the brand asks for).
+ */
+function layoutsOf(brand: BrandPack, t: TemplateInput): BrandLayout[] {
+  const own = brandLayout(brand);
+  const corners = t.logoCorners?.length ? t.logoCorners : [own.logoCorner];
+  return [own, ...LAYOUT_EXTREMES.map((l) => ({ ...own, ...l }))].flatMap((l) =>
+    corners.map((logoCorner) => ({ ...l, logoCorner }))
+  );
+}
+
+const layoutLabel = (l: BrandLayout): string =>
+  `layout margin ${l.margin}, logo ${l.logoMaxWidth}×${l.logoMaxHeight} at ${l.logoCorner}`;
+
 function checkPlaced(
   t: TemplateInput,
   ctx: GateContext,
@@ -291,51 +345,73 @@ function checkPlaced(
     : [];
   const lines = (id: string) => ctx.slots[id]?.budget.maxLines ?? 1;
 
+  const NOT_DETERMINABLE = 'ground not determinable';
+  const opaque = (color: string): boolean => parseColor(color)?.a === 1;
+
   for (const [id, { el, key }] of placed) {
     const box = ctx.adapter.box(key, el, lines(id));
-    if (!box) continue;
-    const frame = t.frames?.[id] ?? 'safe';
-    if (!inside(box, frames[frame])) {
-      problem(
-        'bounds',
-        `${id} leaves the ${frame} frame: box ${fmt(box.x)},${fmt(box.y)} ${fmt(box.width)}×${fmt(box.height)}`,
-        where
-      );
+    if (box) {
+      const frame = t.frames?.[id] ?? 'safe';
+      if (!inside(box, frames[frame])) {
+        problem(
+          'bounds',
+          `${id} leaves the ${frame} frame: box ${fmt(box.x)},${fmt(box.y)} ${fmt(box.width)}×${fmt(box.height)} (${layoutLabel(layout)})`,
+          where
+        );
+      }
     }
     const text = ctx.adapter.text(key, el);
     if (!text) continue;
-    if (envelope && intersects(box, envelope)) {
-      problem('logo-overlap', `${id} runs into the logo envelope at ${corner}`, where);
+    if (box && envelope && intersects(box, envelope)) {
+      problem('logo-overlap', `${id} runs into the logo envelope (${layoutLabel(layout)})`, where);
     }
-    // contrast: the topmost shape below the text that holds its centre, else the page background.
-    const cx = box.x + box.width / 2;
-    const cy = box.y + box.height / 2;
-    let ground = typeof state['backgroundColor'] === 'string' ? state['backgroundColor'] : '';
-    for (const belowId of order.slice(0, order.indexOf(id)).reverse()) {
-      const below = placed.get(belowId);
-      if (!below) continue;
-      const fill = ctx.adapter.fill(below.key, below.el);
-      const shape = fill === null ? null : ctx.adapter.box(below.key, below.el, 1);
-      if (
-        fill !== null &&
-        shape &&
-        cx >= shape.x &&
-        cx <= shape.x + shape.width &&
-        cy >= shape.y &&
-        cy <= shape.y + shape.height
-      ) {
-        ground = fill;
+
+    // contrast fails closed: a ground that cannot be proven opaque and flat is a failure.
+    const fail = (why: string) => problem('contrast', `${id}: ${why}`, where);
+    if (text.opacity < 1 || !opaque(text.fill)) {
+      fail(`text opacity or alpha is below 1, contrast not determinable`);
+      continue;
+    }
+    // The ground: the badge's own fill, else the topmost layer below the text that holds its
+    // centre, else the page background.
+    let ground: string | null = text.ground ?? null;
+    if (ground === null) {
+      const at = order.indexOf(id);
+      if (!box || at === -1) {
+        fail(`${NOT_DETERMINABLE} (the text is not in layerOrder)`);
+        continue;
+      }
+      const cx = box.x + box.width / 2;
+      const cy = box.y + box.height / 2;
+      ground = typeof state['backgroundColor'] === 'string' ? state['backgroundColor'] : '';
+      for (const belowId of order.slice(0, at).reverse()) {
+        const below = placed.get(belowId);
+        const cover = below && ctx.adapter.cover(below.key, below.el);
+        if (!below || !cover) continue;
+        const area = ctx.adapter.box(below.key, below.el, 1);
+        if (!area) {
+          // An element of unknown extent could lie under the text.
+          if (cover.kind === 'unknown') ground = null;
+          if (cover.kind === 'unknown') break;
+          continue;
+        }
+        if (cx < area.x || cx > area.x + area.width || cy < area.y || cy > area.y + area.height) {
+          continue;
+        }
+        ground = cover.kind === 'solid' ? cover.fill : null;
         break;
       }
+    }
+    if (ground === null || !opaque(ground)) {
+      fail(`${NOT_DETERMINABLE} under ${text.fill}`);
+      continue;
     }
     const ratio = contrastRatio(text.fill, ground);
     const large = text.fontSize >= (text.bold ? 18.67 : 24) * (short / 1080);
     const need = large ? LARGE_TEXT_CONTRAST : TEXT_CONTRAST;
     if (ratio === null || ratio < need) {
-      problem(
-        'contrast',
-        `${id}: ${text.fill} on ${ground || 'no ground'} is ${ratio === null ? 'unreadable' : fmt(ratio)}, needs ${need}`,
-        where
+      fail(
+        `${text.fill} on ${ground} is ${ratio === null ? 'unreadable' : fmt(ratio)}, needs ${need}`
       );
     }
   }
