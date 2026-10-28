@@ -33,24 +33,30 @@ export interface RebindContext {
   logoSize?: { width: number; height: number } | null;
 }
 
-const BRAND_COLOR_KEYS: readonly string[] = [
-  'primary',
-  'secondary',
-  'accent',
-  'accentOnLight',
-  'attention',
-  'textOnDark',
-  'textOnLight',
-  'surface',
-];
-const BRAND_FONT_KEYS: readonly string[] = ['headline', 'body', 'quoteShort', 'quoteEmphasis'];
+// Record types make a missing or extra key a compile error.
+const BRAND_COLOR_KEYS: Record<BrandColorRole, true> = {
+  primary: true,
+  secondary: true,
+  accent: true,
+  accentOnLight: true,
+  attention: true,
+  textOnDark: true,
+  textOnLight: true,
+  surface: true,
+};
+const BRAND_FONT_KEYS: Record<BrandFontRole, true> = {
+  headline: true,
+  body: true,
+  quoteShort: true,
+  quoteEmphasis: true,
+};
 
 export function isBindingRef(value: unknown): value is BindingRef {
   if (typeof value !== 'string') return false;
   if ((SURFACE_ROLES as readonly string[]).includes(value)) return true;
   if (value === 'brand.logo') return true;
-  if (value.startsWith('brand.')) return BRAND_COLOR_KEYS.includes(value.slice(6));
-  if (value.startsWith('font.')) return BRAND_FONT_KEYS.includes(value.slice(5));
+  if (value.startsWith('brand.')) return Object.hasOwn(BRAND_COLOR_KEYS, value.slice(6));
+  if (value.startsWith('font.')) return Object.hasOwn(BRAND_FONT_KEYS, value.slice(5));
   return false;
 }
 
@@ -175,6 +181,10 @@ function schemeOf(state: Obj, brand: BrandPack): Scheme | null {
  * value no longer matches its binding was edited by hand: it keeps its value
  * and loses the binding. Copies only what changed; returns `state` itself when
  * nothing is bound or the page already carries the brand's stamp.
+ *
+ * The stamp identifies the brand, not the bindings: a binding added while the
+ * stamp is current is not resolved until the brand changes, so callers set the
+ * field and the binding value together.
  */
 export function rebindPageState(
   state: Readonly<Record<string, unknown>>,
