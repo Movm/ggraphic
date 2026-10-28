@@ -192,7 +192,9 @@ export function ChartSettingsSection({
                   type="number"
                   value={s.values[i] ?? 0}
                   aria-label={
-                    series ? `${s.name || `Reihe ${si + 1}`}: ${point.name}` : `Wert ${point.name}`
+                    series
+                      ? `${s.name || t.defaults.series(si + 1)}: ${point.name}`
+                      : t.sidebar.chart.valueOf(point.name)
                   }
                   onChange={(e) => update(setChartValue(chart, i, si, Number(e.target.value) || 0))}
                   className={`w-16 shrink-0 ${CELL}`}

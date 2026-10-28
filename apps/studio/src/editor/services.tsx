@@ -23,7 +23,8 @@ import {
 } from '@ggraphic/editor/hostServices';
 import { useState, useSyncExternalStore } from 'react';
 
-import { api, ApiError, type Draft } from '../api/client';
+import { api, type Draft } from '../api/client';
+import { apiErrorText } from '../ui/errorText';
 
 /** The AI draft behind the "AI draft" tab (`aiDraftTab.tsx`). */
 export interface StudioAiDraftService {
@@ -106,7 +107,7 @@ const makeUseStudioUpload = (organisationId: string) => (): CanvasMediaUploadSta
         const result: CanvasMediaUploadResult = { id: url, shareToken: url };
         return result;
       } catch (err) {
-        setError(err instanceof ApiError ? err.message : 'The upload failed.');
+        setError(apiErrorText(err, 'The upload failed.'));
         return null;
       } finally {
         setActive((n) => n - 1);

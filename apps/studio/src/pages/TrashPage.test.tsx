@@ -74,6 +74,20 @@ describe('TrashPage', () => {
     vi.restoreAllMocks();
   });
 
+  it('does not show the server text when the trash cannot be loaded', async () => {
+    const leak = 'SQLSTATE 23505 duplicate key in projects_pkey';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ error: 'internal', message: leak }), { status: 500 })
+      )
+    );
+    renderPage();
+    expect(await screen.findByText(/something went wrong/i)).toBeInTheDocument();
+    expect(screen.queryByText(leak)).not.toBeInTheDocument();
+  });
+
   it('lists trashed projects with the day they were deleted and the days left', async () => {
     vi.stubGlobal(
       'fetch',
