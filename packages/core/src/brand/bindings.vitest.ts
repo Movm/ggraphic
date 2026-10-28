@@ -252,6 +252,45 @@ describe('rebindPageState edge cases', () => {
       expect([img.x, img.y, img.width, img.height]).toEqual([900, 1200, 120, 80]);
     });
 
+    describe('size unknown at rebind time', () => {
+      const known = { width: 400, height: 100 };
+      const unknown = (state: Record<string, unknown>) =>
+        rebindPageState(state, { brand: logoBrand, logoSize: null, pageSize });
+
+      it('an unknown size marks the binding pendingFit', () => {
+        const img = imgOf(unknown(stateWith()));
+        expect(img.bind?.src).toMatchObject({ value: 'new.svg', pendingFit: true });
+      });
+
+      it('a later known size fits under the same stamp and saves once', () => {
+        const first = unknown(stateWith());
+        const fitted = rebindPageState(first.state, {
+          brand: logoBrand,
+          logoSize: known,
+          pageSize,
+        });
+        expect(fitted.changed).toBe(true);
+        expect(fitted.state['brandStamp']).toBe(first.state['brandStamp']);
+        const img = imgOf(fitted);
+        expect([img.x, img.y, img.width, img.height]).toEqual([900, 1250, 120, 30]);
+        expect(img.bind?.src).not.toHaveProperty('pendingFit');
+        const again = rebindPageState(fitted.state, {
+          brand: logoBrand,
+          logoSize: known,
+          pageSize,
+        });
+        expect(again.changed).toBe(false);
+        expect(again.state).toBe(fitted.state);
+      });
+
+      it('writes nothing while the size stays unknown', () => {
+        const first = unknown(stateWith());
+        const again = unknown(first.state);
+        expect(again.changed).toBe(false);
+        expect(again.state).toBe(first.state);
+      });
+    });
+
     it('a second rebind changes nothing', () => {
       const first = rebindPageState(stateWith(), {
         brand: logoBrand,
