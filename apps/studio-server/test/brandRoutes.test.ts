@@ -310,6 +310,55 @@ describe.skipIf(!hasDb)('brand packs (Postgres)', () => {
         expect(cleared.body.settings.logoAlt).toBeNull();
       });
 
+      it('drops a kept serif or condensed whose font asset was deleted, instead of a 400', async () => {
+        await owner
+          .put(base)
+          .send(oldShape({ fonts: { ...NEW.fonts, serif: 'Gone Serif' } }))
+          .expect(400);
+        const font = (
+          await owner
+            .post(`${base}/fonts`)
+            .field('family', 'Gone Serif')
+            .field('licence', 'OFL-1.1')
+            .attach('file', WOFF2, 'f.woff2')
+            .expect(201)
+        ).body;
+        await owner
+          .put(base)
+          .send(oldShape({ fonts: { ...NEW.fonts, serif: 'Gone Serif' } }))
+          .expect(200);
+        await owner.delete(`${base}/assets/${font.id}`).expect(204);
+        const res = await owner.put(base).send(oldShape()).expect(200);
+        expect(res.body.settings.fonts).toMatchObject({ serif: null, condensed: 'Raleway' });
+      });
+
+      it('does not lose a concurrent save: the read of the stored row is locked', async () => {
+        const alt = await uploadLogo();
+        await owner
+          .put(base)
+          .send(oldShape({ ...NEW, logoAlt: { assetId: alt.id, ground: 'light' } }))
+          .expect(200);
+        // Two old-shape saves and one new-shape save at once; the layout set by the new one
+        // must survive whichever order they run in.
+        const next = { ...NEW.layout, margin: 0.08 };
+        await Promise.all([
+          owner
+            .put(base)
+            .send(oldShape({ name: 'A' }))
+            .expect(200),
+          owner
+            .put(base)
+            .send(oldShape({ name: 'B', layout: next }))
+            .expect(200),
+          owner
+            .put(base)
+            .send(oldShape({ name: 'C' }))
+            .expect(200),
+        ]);
+        const read = await owner.get(base).expect(200);
+        expect(read.body.settings.layout).toEqual(next);
+      });
+
       it('has nothing to keep on a first save', async () => {
         const res = await owner.put(base).send(oldShape()).expect(200);
         expect(res.body.settings).toMatchObject({ layout: null, logoAlt: null });
