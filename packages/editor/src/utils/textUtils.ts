@@ -229,15 +229,41 @@ export function runMeasurer(
   accent: TextAccent | null = null
 ): MeasureRun {
   const cache = new Map<string, number>();
-  return (text, style) => {
-    const run = runFont(fontFamily, fontStyle, style, accent);
-    const key = `${fontGeneration}:${run.fontFamily}:${run.fontStyle}:${text}`;
+  const measured: MeasureWidth = (text, size, family, style) => {
+    const key = `${fontGeneration}:${family}:${style}:${text}`;
     let width = cache.get(key);
     if (width === undefined) {
-      width = measureTextWidthWithFont(text, fontSize, run.fontFamily, run.fontStyle);
+      width = measureTextWidthWithFont(text, size, family, style);
       cache.set(key, width);
     }
     return width;
+  };
+  return createRunMeasurer(measured, fontSize, fontFamily, fontStyle, accent);
+}
+
+/** Measures `text` in px under one concrete family and style (canvas in the browser). */
+export type MeasureWidth = (
+  text: string,
+  fontSize: number,
+  fontFamily: string,
+  fontStyle: string
+) => number;
+
+/**
+ * `runMeasurer` with the glyph measure injected: the same run-font choice (`runFont`) as the
+ * renderer, a different source of widths. The render gate passes a table-backed one, so it
+ * lays text out with the renderer's own code and never needs a canvas.
+ */
+export function createRunMeasurer(
+  measureWidth: MeasureWidth,
+  fontSize: number,
+  fontFamily: string,
+  fontStyle: string = 'normal',
+  accent: TextAccent | null = null
+): MeasureRun {
+  return (text, style) => {
+    const run = runFont(fontFamily, fontStyle, style, accent);
+    return measureWidth(text, fontSize, run.fontFamily, run.fontStyle);
   };
 }
 

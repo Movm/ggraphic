@@ -211,6 +211,8 @@ function elementsById(state: Readonly<Record<string, unknown>>): [string, unknow
   return out;
 }
 
+const FONT_STYLES: readonly string[] = ['normal', 'italic', 'bold', 'bold italic'];
+
 const invalid = (reason: string): TemplateReadResult => ({ status: 'invalid', reason });
 
 function crossReferences(file: TemplateFile): string | null {
@@ -227,10 +229,24 @@ function crossReferences(file: TemplateFile): string | null {
   const odd = arrayIds.find((id) => !OFFER_ID_PATTERN.test(id));
   if (odd !== undefined)
     return `pages.0.state: element id "${odd}" must be 1-64 of a-z, 0-9 and "-"`;
+  // The editor draws these four; any other value (a numeric weight, say) is passed to the
+  // browser as it is, and the render gate cannot tell which face it picks.
+  for (const [id, item] of elements) {
+    const style = isRecord(item) ? item['fontStyle'] : undefined;
+    if (style !== undefined && !FONT_STYLES.includes(style as string)) {
+      return `${id}.fontStyle: must be one of ${FONT_STYLES.join(', ')}`;
+    }
+  }
   if (known.has('page')) return 'pages.0.state: "page" is reserved and cannot be an element id';
   const missing = (key: string, id: string) => `${key}: no element "${id}" in pages[0].state`;
   for (const id of Object.keys(file.frames)) if (!known.has(id)) return missing(`frames.${id}`, id);
-  for (const id of Object.keys(file.slots)) if (!known.has(id)) return missing(`slots.${id}`, id);
+  for (const id of Object.keys(file.slots)) {
+    if (!known.has(id)) return missing(`slots.${id}`, id);
+    // Slots are what the AI is offered by id; a record key is not held to the pattern above.
+    if (!OFFER_ID_PATTERN.test(id)) {
+      return `slots.${id}: slot key must be 1-64 of a-z, 0-9 and "-"`;
+    }
+  }
   const bound = new Map<string, Set<string>>();
   for (const [id, item] of elements) {
     const bind = isRecord(item) ? item['bind'] : null;
