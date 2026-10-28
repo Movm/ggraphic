@@ -1,0 +1,153 @@
+{
+  "formatVersion": 1,
+  "id": "studio-quote",
+  "version": 1,
+  "kind": "template",
+  "family": "quote",
+  "title": {
+    "en": "Quote",
+    "de": "Zitat"
+  },
+  "description": {
+    "en": "A quotation with its speaker",
+    "de": "Ein Zitat mit der sprechenden Person"
+  },
+  "tags": {
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["1:1", "4:5", "16:9"],
+  "schemes": ["light"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "quote-mark",
+            "type": "header",
+            "text": "“",
+            "x": 0.0,
+            "y": 0.009516,
+            "width": 1.0,
+            "fontSize": 0.259259,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "bind": {
+              "fill": "accent",
+              "fontFamily": "font.quoteEmphasis"
+            }
+          },
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "Good design is as little design as possible.",
+            "x": 0.0,
+            "y": 0.266436,
+            "width": 1.0,
+            "fontSize": 0.066667,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.2,
+            "fontStyle": "italic",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.quoteEmphasis"
+            }
+          },
+          {
+            "id": "subline",
+            "type": "subheader",
+            "text": "— Name of the speaker",
+            "x": 0.0,
+            "y": 0.780277,
+            "width": 1.0,
+            "fontSize": 0.035185,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": ["brand-logo", "quote-mark", "headline", "subline"]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "headline": {
+      "role": "quote",
+      "budget": {
+        "maxWords": 25,
+        "maxLines": 5,
+        "maxChars": 160
+      }
+    },
+    "subline": {
+      "role": "name",
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 1,
+        "maxChars": 50
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "quote-with-name",
+      "title": {
+        "en": "Quote with name",
+        "de": "Zitat mit Name"
+      },
+      "elementIds": ["quote-mark", "headline", "subline"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right", "bottom-left"],
+  "placeholders": {
+    "en": {
+      "quote-mark": "“",
+      "headline": "Good design is as little design as possible.",
+      "subline": "— Name of the speaker"
+    },
+    "de": {
+      "headline": "Gutes Design ist so wenig Design wie möglich.",
+      "subline": "— Name der sprechenden Person"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-28",
+    "licence": "CC0-1.0"
+  }
+}

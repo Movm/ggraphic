@@ -1,0 +1,735 @@
+{
+  "plain": {
+    "studio-headline": {
+      "backgroundColor": "#6b1632",
+      "bind": {
+        "backgroundColor": {
+          "ref": "ground",
+          "value": "#6b1632"
+        }
+      },
+      "brandScheme": "primary",
+      "brandStamp": "c5ea0ad9",
+      "shapeInstances": [
+        {
+          "id": "accent-bar",
+          "type": "rect",
+          "x": 157,
+          "y": 324,
+          "width": 120,
+          "height": 14,
+          "fill": "#ff7ab6",
+          "rotation": 0,
+          "scaleX": 1,
+          "scaleY": 1,
+          "opacity": 1,
+          "bind": {
+            "fill": {
+              "ref": "accent",
+              "value": "#ff7ab6"
+            }
+          }
+        }
+      ],
+      "additionalTexts": [
+        {
+          "id": "headline",
+          "type": "header",
+          "text": "A clear headline",
+          "x": 97,
+          "y": 378,
+          "width": 886,
+          "fontSize": 104,
+          "align": "left",
+          "lineHeight": 1.1,
+          "fontFamily": "Raleway, Arial, sans-serif",
+          "fill": "#ffffff",
+          "fontStyle": "bold",
+          "bind": {
+            "fill": {
+              "ref": "ink",
+              "value": "#ffffff"
+            },
+            "fontFamily": {
+              "ref": "font.headline",
+              "value": "Raleway"
+            }
+          }
+        },
+        {
+          "id": "subline",
+          "type": "subheader",
+          "text": "One line that says why it matters",
+          "x": 97,
+          "y": 675,
+          "width": 886,
+          "fontSize": 48,
+          "align": "left",
+          "lineHeight": 1.1,
+          "fontFamily": "Raleway, Arial, sans-serif",
+          "fill": "#d3b9c2",
+          "bind": {
+            "fill": {
+              "ref": "ink2",
+              "value": "#d3b9c2"
+            },
+            "fontFamily": {
+              "ref": "font.headline",
+              "value": "Raleway"
+            }
+          }
+        },
+        {
+          "id": "body",
+          "type": "body",
+          "text": "Add the details here: what, when and where.",
+          "x": 97,
+          "y": 837,
+          "width": 886,
+          "fontSize": 34,
+          "align": "left",
+          "lineHeight": 1.35,
+          "fontFamily": "Instrument Sans, Arial, sans-serif",
+          "fill": "#ffffff",
+          "bind": {
+            "fill": {
+              "ref": "ink",
+              "value": "#ffffff"
+            },
+            "fontFamily": {
+              "ref": "font.body",
+              "value": "Instrument Sans"
+            }
+          }
+        },
+        {
+          "id": "cta",
+          "type": "body",
+          "text": "Find out more",
+          "x": 97,
+          "y": 1134,
+          "width": 886,
+          "fontSize": 34,
+          "align": "left",
+          "lineHeight": 1.1,
+          "fontFamily": "Instrument Sans, Arial, sans-serif",
+          "fill": "#d3b9c2",
+          "fontStyle": "bold",
+          "bind": {
+            "fill": {
+              "ref": "ink2",
+              "value": "#d3b9c2"
+            },
+            "fontFamily": {
+              "ref": "font.body",
+              "value": "Instrument Sans"
+            }
+          }
+        }
+      ],
+      "layerOrder": [
+        "accent-bar",
+        "headline",
+        "subline",
+        "body",
+        "cta"
+      ]
+    },
+    "studio-quote": {
+      "backgroundColor": "#fdf0f5",
+      "bind": {
+        "backgroundColor": {
+          "ref": "ground",
+          "value": "#fdf0f5"
+        }
+      },
+      "brandScheme": "light",
+      "brandStamp": "c5ea0ad9",
+      "shapeInstances": [],
+      "additionalTexts": [
+        {
+          "id": "quote-mark",
+          "type": "header",
+          "text": "“",
+          "x": 97,
+          "y": 108,
+          "width": 886,
+          "fontSize": 280,
+          "align": "left",
+          "lineHeight": 1,
+          "fontFamily": "Fraunces, Georgia, serif",
+          "fill": "#d4146e",
+          "bind": {
+            "fill": {
+              "ref": "accent",
+              "value": "#d4146e"
+            },
+            "fontFamily": {
+              "ref": "font.quoteEmphasis",
+              "value": "Fraunces"
+            }
+          }
+        },
+        {
+          "id": "headline",
+          "type": "header",
+          "text": "Good design is as little design as possible.",
+          "x": 97,
+          "y": 405,
+          "width": 886,
+          "fontSize": 72,
+          "align": "left",
+          "lineHeight": 1.2,
+          "fontFamily": "Fraunces, Georgia, serif",
+          "fill": "#6b1632",
+          "fontStyle": "italic",
+          "bind": {
+            "fill": {
+              "ref": "ink",
+              "value": "#6b1632"
+            },
+            "fontFamily": {
+              "ref": "font.quoteEmphasis",
+              "value": "Fraunces"
+            }
+          }
+        },
+        {
+          "id": "subline",
+          "type": "subheader",
+          "text": "— Name of the speaker",
+          "x": 97,
+          "y": 999,
+          "width": 886,
+          "fontSize": 38,
+          "align": "left",
+          "lineHeight": 1.1,
+          "fontFamily": "Instrument Sans, Arial, sans-serif",
+          "fill": "#97576d",
+          "fontStyle": "bold",
+          "bind": {
+            "fill": {
+              "ref": "ink2",
+              "value": "#97576d"
+            },
+            "fontFamily": {
+              "ref": "font.body",
+              "value": "Instrument Sans"
+            }
+          }
+        }
+      ],
+      "layerOrder": [
+        "quote-mark",
+        "headline",
+        "subline"
+      ]
+    },
+    "studio-number": {
+      "backgroundColor": "#d4146e",
+      "bind": {
+        "backgroundColor": {
+          "ref": "ground",
+          "value": "#d4146e"
+        }
+      },
+      "brandScheme": "secondary",
+      "brandStamp": "c5ea0ad9",
+      "shapeInstances": [],
+      "additionalTexts": [
+        {
+          "id": "number",
+          "type": "header",
+          "text": "73%",
+          "x": 97,
+          "y": 216,
+          "width": 886,
+          "fontSize": 300,
+          "align": "left",
+          "lineHeight": 1,
+          "fontFamily": "Raleway, Arial, sans-serif",
+          "fill": "#ffffff",
+          "fontStyle": "bold",
+          "bind": {
+            "fill": {
+              "ref": "accent",
+              "value": "#ffffff"
+            },
+            "fontFamily": {
+              "ref": "font.headline",
+              "value": "Raleway"
+            }
+          }
+        },
+        {
+          "id": "headline",
+          "type": "header",
+          "text": "of what this number stands for",
+          "x": 97,
+          "y": 675,
+          "width": 886,
+          "fontSize": 64,
+          "align": "left",
+          "lineHeight": 1.1,
+          "fontFamily": "Raleway, Arial, sans-serif",
+          "fill": "#ffffff",
+          "fontStyle": "bold",
+          "bind": {
+            "fill": {
+              "ref": "ink",
+              "value": "#ffffff"
+            },
+            "fontFamily": {
+              "ref": "font.headline",
+              "value": "Raleway"
+            }
+          }
+        },
+        {
+          "id": "subline",
+          "type": "body",
+          "text": "Source or context in one short line",
+          "x": 97,
+          "y": 999,
+          "width": 886,
+          "fontSize": 34,
+          "align": "left",
+          "lineHeight": 1.1,
+          "fontFamily": "Instrument Sans, Arial, sans-serif",
+          "fill": "#ffffff",
+          "bind": {
+            "fill": {
+              "ref": "ink",
+              "value": "#ffffff"
+            },
+            "fontFamily": {
+              "ref": "font.body",
+              "value": "Instrument Sans"
+            }
+          }
+        }
+      ],
+      "layerOrder": [
+        "number",
+        "headline",
+        "subline"
+      ]
+    }
+  },
+  "logo": {
+    "studio-headline": {
+      "backgroundColor": "#6b1632",
+      "bind": {
+        "backgroundColor": {
+          "ref": "ground",
+          "value": "#6b1632"
+        }
+      },
+      "brandScheme": "primary",
+      "brandStamp": "719af166",
+      "shapeInstances": [
+        {
+          "id": "accent-bar",
+          "type": "rect",
+          "x": 157,
+          "y": 324,
+          "width": 120,
+          "height": 14,
+          "fill": "#ff7ab6",
+          "rotation": 0,
+          "scaleX": 1,
+          "scaleY": 1,
+          "opacity": 1,
+          "bind": {
+            "fill": {
+              "ref": "accent",
+              "value": "#ff7ab6"
+            }
+          }
+        }
+      ],
+      "userImageInstances": [
+        {
+          "id": "brand-logo",
+          "src": "/test-logo.png",
+          "fileName": "Test",
+          "x": 745,
+          "y": 1194,
+          "width": 238,
+          "height": 59,
+          "rotation": 0,
+          "scale": 1,
+          "opacity": 1,
+          "bind": {
+            "src": {
+              "ref": "brand.logo",
+              "value": "/test-logo.png",
+              "box": {
+                "x": 745,
+                "y": 1145,
+                "width": 238,
+                "height": 108
+              },
+              "fit": {
+                "x": 745,
+                "y": 1194,
+                "width": 238,
+                "height": 59
+              }
+            }
+          }
+        }
+      ],
+      "additionalTexts": [
+        {
+          "id": "headline",
+          "type": "header",
+          "text": "A clear headline",
+          "x": 97,
+          "y": 378,
+          "width": 886,
+          "fontSize": 104,
+          "align": "left",
+          "lineHeight": 1.1,
+          "fontFamily": "Raleway, Arial, sans-serif",
+          "fill": "#ffffff",
+          "fontStyle": "bold",
+          "bind": {
+            "fill": {
+              "ref": "ink",
+              "value": "#ffffff"
+            },
+            "fontFamily": {
+              "ref": "font.headline",
+              "value": "Raleway"
+            }
+          }
+        },
+        {
+          "id": "subline",
+          "type": "subheader",
+          "text": "One line that says why it matters",
+          "x": 97,
+          "y": 675,
+          "width": 886,
+          "fontSize": 48,
+          "align": "left",
+          "lineHeight": 1.1,
+          "fontFamily": "Raleway, Arial, sans-serif",
+          "fill": "#d3b9c2",
+          "bind": {
+            "fill": {
+              "ref": "ink2",
+              "value": "#d3b9c2"
+            },
+            "fontFamily": {
+              "ref": "font.headline",
+              "value": "Raleway"
+            }
+          }
+        },
+        {
+          "id": "body",
+          "type": "body",
+          "text": "Add the details here: what, when and where.",
+          "x": 97,
+          "y": 837,
+          "width": 886,
+          "fontSize": 34,
+          "align": "left",
+          "lineHeight": 1.35,
+          "fontFamily": "Instrument Sans, Arial, sans-serif",
+          "fill": "#ffffff",
+          "bind": {
+            "fill": {
+              "ref": "ink",
+              "value": "#ffffff"
+            },
+            "fontFamily": {
+              "ref": "font.body",
+              "value": "Instrument Sans"
+            }
+          }
+        },
+        {
+          "id": "cta",
+          "type": "body",
+          "text": "Find out more",
+          "x": 97,
+          "y": 1134,
+          "width": 886,
+          "fontSize": 34,
+          "align": "left",
+          "lineHeight": 1.1,
+          "fontFamily": "Instrument Sans, Arial, sans-serif",
+          "fill": "#d3b9c2",
+          "fontStyle": "bold",
+          "bind": {
+            "fill": {
+              "ref": "ink2",
+              "value": "#d3b9c2"
+            },
+            "fontFamily": {
+              "ref": "font.body",
+              "value": "Instrument Sans"
+            }
+          }
+        }
+      ],
+      "layerOrder": [
+        "accent-bar",
+        "brand-logo",
+        "headline",
+        "subline",
+        "body",
+        "cta"
+      ]
+    },
+    "studio-quote": {
+      "backgroundColor": "#fdf0f5",
+      "bind": {
+        "backgroundColor": {
+          "ref": "ground",
+          "value": "#fdf0f5"
+        }
+      },
+      "brandScheme": "light",
+      "brandStamp": "719af166",
+      "shapeInstances": [],
+      "userImageInstances": [
+        {
+          "id": "brand-logo",
+          "src": "/test-logo.png",
+          "fileName": "Test",
+          "x": 745,
+          "y": 1194,
+          "width": 238,
+          "height": 59,
+          "rotation": 0,
+          "scale": 1,
+          "opacity": 1,
+          "bind": {
+            "src": {
+              "ref": "brand.logo",
+              "value": "/test-logo.png",
+              "box": {
+                "x": 745,
+                "y": 1145,
+                "width": 238,
+                "height": 108
+              },
+              "fit": {
+                "x": 745,
+                "y": 1194,
+                "width": 238,
+                "height": 59
+              }
+            }
+          }
+        }
+      ],
+      "additionalTexts": [
+        {
+          "id": "quote-mark",
+          "type": "header",
+          "text": "“",
+          "x": 97,
+          "y": 108,
+          "width": 886,
+          "fontSize": 280,
+          "align": "left",
+          "lineHeight": 1,
+          "fontFamily": "Fraunces, Georgia, serif",
+          "fill": "#d4146e",
+          "bind": {
+            "fill": {
+              "ref": "accent",
+              "value": "#d4146e"
+            },
+            "fontFamily": {
+              "ref": "font.quoteEmphasis",
+              "value": "Fraunces"
+            }
+          }
+        },
+        {
+          "id": "headline",
+          "type": "header",
+          "text": "Good design is as little design as possible.",
+          "x": 97,
+          "y": 405,
+          "width": 886,
+          "fontSize": 72,
+          "align": "left",
+          "lineHeight": 1.2,
+          "fontFamily": "Fraunces, Georgia, serif",
+          "fill": "#6b1632",
+          "fontStyle": "italic",
+          "bind": {
+            "fill": {
+              "ref": "ink",
+              "value": "#6b1632"
+            },
+            "fontFamily": {
+              "ref": "font.quoteEmphasis",
+              "value": "Fraunces"
+            }
+          }
+        },
+        {
+          "id": "subline",
+          "type": "subheader",
+          "text": "— Name of the speaker",
+          "x": 97,
+          "y": 999,
+          "width": 886,
+          "fontSize": 38,
+          "align": "left",
+          "lineHeight": 1.1,
+          "fontFamily": "Instrument Sans, Arial, sans-serif",
+          "fill": "#97576d",
+          "fontStyle": "bold",
+          "bind": {
+            "fill": {
+              "ref": "ink2",
+              "value": "#97576d"
+            },
+            "fontFamily": {
+              "ref": "font.body",
+              "value": "Instrument Sans"
+            }
+          }
+        }
+      ],
+      "layerOrder": [
+        "brand-logo",
+        "quote-mark",
+        "headline",
+        "subline"
+      ]
+    },
+    "studio-number": {
+      "backgroundColor": "#d4146e",
+      "bind": {
+        "backgroundColor": {
+          "ref": "ground",
+          "value": "#d4146e"
+        }
+      },
+      "brandScheme": "secondary",
+      "brandStamp": "719af166",
+      "shapeInstances": [],
+      "userImageInstances": [
+        {
+          "id": "brand-logo",
+          "src": "/test-logo.png",
+          "fileName": "Test",
+          "x": 745,
+          "y": 1194,
+          "width": 238,
+          "height": 59,
+          "rotation": 0,
+          "scale": 1,
+          "opacity": 1,
+          "bind": {
+            "src": {
+              "ref": "brand.logo",
+              "value": "/test-logo.png",
+              "box": {
+                "x": 745,
+                "y": 1145,
+                "width": 238,
+                "height": 108
+              },
+              "fit": {
+                "x": 745,
+                "y": 1194,
+                "width": 238,
+                "height": 59
+              }
+            }
+          }
+        }
+      ],
+      "additionalTexts": [
+        {
+          "id": "number",
+          "type": "header",
+          "text": "73%",
+          "x": 97,
+          "y": 216,
+          "width": 886,
+          "fontSize": 300,
+          "align": "left",
+          "lineHeight": 1,
+          "fontFamily": "Raleway, Arial, sans-serif",
+          "fill": "#ffffff",
+          "fontStyle": "bold",
+          "bind": {
+            "fill": {
+              "ref": "accent",
+              "value": "#ffffff"
+            },
+            "fontFamily": {
+              "ref": "font.headline",
+              "value": "Raleway"
+            }
+          }
+        },
+        {
+          "id": "headline",
+          "type": "header",
+          "text": "of what this number stands for",
+          "x": 97,
+          "y": 675,
+          "width": 886,
+          "fontSize": 64,
+          "align": "left",
+          "lineHeight": 1.1,
+          "fontFamily": "Raleway, Arial, sans-serif",
+          "fill": "#ffffff",
+          "fontStyle": "bold",
+          "bind": {
+            "fill": {
+              "ref": "ink",
+              "value": "#ffffff"
+            },
+            "fontFamily": {
+              "ref": "font.headline",
+              "value": "Raleway"
+            }
+          }
+        },
+        {
+          "id": "subline",
+          "type": "body",
+          "text": "Source or context in one short line",
+          "x": 97,
+          "y": 999,
+          "width": 886,
+          "fontSize": 34,
+          "align": "left",
+          "lineHeight": 1.1,
+          "fontFamily": "Instrument Sans, Arial, sans-serif",
+          "fill": "#ffffff",
+          "bind": {
+            "fill": {
+              "ref": "ink",
+              "value": "#ffffff"
+            },
+            "fontFamily": {
+              "ref": "font.body",
+              "value": "Instrument Sans"
+            }
+          }
+        }
+      ],
+      "layerOrder": [
+        "brand-logo",
+        "number",
+        "headline",
+        "subline"
+      ]
+    }
+  }
+}
