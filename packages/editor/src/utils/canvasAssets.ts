@@ -125,6 +125,12 @@ export interface CanvasAssetCatalog {
    * Without it the editor knows no emoji file and a placed emoji draws nothing.
    */
   emojiSrc?: (code: string) => string;
+  /**
+   * Does the host ship the file of this emoji (`group` is the catalogue group's label)? A host
+   * that bundles a subset lists only that; without it every emoji of the Noto set is offered.
+   * An emoji whose five skin-tone files are not all offered loses the tone picker.
+   */
+  emojiOffered?: (code: string, group: string) => boolean;
   /** The illustration catalogues; without them the editor offers none. */
   illustrations?: IllustrationSources;
   /**
