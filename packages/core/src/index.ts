@@ -31,6 +31,15 @@ export {
   type SchemeId,
   type SurfaceRole,
 } from './brand/schemes.js';
+export {
+  DEFAULT_BRAND_LAYOUT,
+  LOGO_CORNERS,
+  type BrandLayout,
+  type LogoCorner,
+  brandLayout,
+  logoEnvelope,
+  safeArea,
+} from './brand/layout.js';
 export { fitLogoBox } from './brand/logoFit.js';
 export {
   brandFingerprint,
