@@ -191,6 +191,32 @@ describe.skipIf(!hasDb)('brand packs (Postgres)', () => {
     const uploadLogo = async () =>
       (await owner.post(`${base}/logo`).attach('file', PNG_1X1, 'l.png').expect(201)).body;
 
+    it('answers 400 for a logo box over 30 × 12 percent', async () => {
+      for (const layout of [
+        { ...NEW.layout, logoMaxWidth: 0.35 },
+        { ...NEW.layout, logoMaxHeight: 0.13 },
+      ]) {
+        await owner
+          .put(base)
+          .send({ ...BRAND_SETTINGS, layout })
+          .expect(400);
+      }
+    });
+
+    it('reads a stored 0.4 × 0.2 layout clamped to 0.30 × 0.12, never rejected', async () => {
+      await owner
+        .put(base)
+        .send({ ...BRAND_SETTINGS, ...NEW })
+        .expect(200);
+      await pool.query('update brand_packs set layout = $1', [
+        JSON.stringify({ ...NEW.layout, logoMaxWidth: 0.4, logoMaxHeight: 0.2 }),
+      ]);
+      const read = await editor.get(base).expect(200);
+      const clamped = { ...NEW.layout, logoMaxWidth: 0.3, logoMaxHeight: 0.12 };
+      expect(read.body.settings.layout).toEqual(clamped);
+      expect(read.body.pack.layout).toEqual(clamped);
+    });
+
     it('round-trip through PUT and GET', async () => {
       const alt = await uploadLogo();
       const saved = await owner

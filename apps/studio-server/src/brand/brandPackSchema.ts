@@ -3,7 +3,13 @@
  * The core's BrandPack as a zod schema. The two assertions at the bottom fail to
  * compile when the schema and `@ggraphic/core`'s type drift apart in either direction.
  */
-import { isBindingRef, LOGO_CORNERS, type BindingRef, type BrandPack } from '@ggraphic/core';
+import {
+  BRAND_LAYOUT_BOUNDS,
+  isBindingRef,
+  LOGO_CORNERS,
+  type BindingRef,
+  type BrandPack,
+} from '@ggraphic/core';
 import { z } from 'zod';
 
 export const hexColor = z
@@ -47,10 +53,16 @@ export const fontFamily = z
   .regex(/^[\p{L}\p{N}][\p{L}\p{N} _-]*$/u, 'letters, digits, spaces, - and _ only');
 
 export const brandLayoutSchema = z.object({
-  margin: z.number().min(0.04).max(0.12),
+  margin: z.number().min(BRAND_LAYOUT_BOUNDS.margin.min).max(BRAND_LAYOUT_BOUNDS.margin.max),
   logoCorner: z.enum(LOGO_CORNERS),
-  logoMaxWidth: z.number().min(0.05).max(0.4),
-  logoMaxHeight: z.number().min(0.03).max(0.2),
+  logoMaxWidth: z
+    .number()
+    .min(BRAND_LAYOUT_BOUNDS.logoMaxWidth.min)
+    .max(BRAND_LAYOUT_BOUNDS.logoMaxWidth.max),
+  logoMaxHeight: z
+    .number()
+    .min(BRAND_LAYOUT_BOUNDS.logoMaxHeight.min)
+    .max(BRAND_LAYOUT_BOUNDS.logoMaxHeight.max),
 });
 
 export const brandPackSchema = z.object({

@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
-import { aliasFontFamily, type BrandPack } from '@ggraphic/core';
+import {
+  aliasFontFamily,
+  type BrandLayout,
+  type BrandPack,
+  clampBrandLayout,
+} from '@ggraphic/core';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import { type RequestHandler, type Response, Router } from 'express';
 import multer from 'multer';
@@ -79,7 +84,8 @@ export function organisationBrandRouter(db: Db, config: Config): Router {
             row.logoAltAssetId && row.logoAltGround
               ? { assetId: row.logoAltAssetId, ground: row.logoAltGround }
               : null,
-          layout: row.layout,
+          // Stored under wider bounds: clamp on read, so an old row never fails the schema.
+          layout: row.layout ? clampBrandLayout(row.layout as unknown as BrandLayout) : null,
         })
       : null;
     const fonts = assets
