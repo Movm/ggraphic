@@ -17,7 +17,7 @@ import { nameFromPrompt } from './createFromPrompt';
 import { StartPage } from './StartPage';
 
 const config = (ai: boolean): StudioConfig => ({
-  features: { ai },
+  features: { ai, removeBackground: false },
   limits: { uploadBytes: 1e7, thumbnailBytes: 1e6, documentBytes: 5e6 },
   uploadTypes: ['image/png'],
 });
