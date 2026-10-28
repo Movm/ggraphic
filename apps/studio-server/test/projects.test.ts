@@ -119,6 +119,32 @@ describe.skipIf(!hasDb)('projects (Postgres)', () => {
     expect(renamed.body).toMatchObject({ version: 4, schemaVersion: 2 });
   });
 
+  it("guards a write by the document's own schemaVersion when the body names none", async () => {
+    const created = await admin
+      .post(list)
+      .send({ name: 'Plakat', document: { schemaVersion: 2 }, schemaVersion: 2 })
+      .expect(201);
+    const id = created.body.id as string;
+    // An old client: a v1 document, no top-level schemaVersion.
+    const refused = await admin
+      .patch(`/api/projects/${id}`)
+      .send({ version: 1, document: { schemaVersion: 1, a: 1 } })
+      .expect(409);
+    expect(refused.body).toMatchObject({ error: 'schema-version' });
+    const after = await admin.get(`/api/projects/${id}`).expect(200);
+    expect(after.body).toMatchObject({
+      version: 1,
+      schemaVersion: 2,
+      document: { schemaVersion: 2 },
+    });
+    // A v2 document without the top-level field is accepted and keeps the stored version.
+    const accepted = await admin
+      .patch(`/api/projects/${id}`)
+      .send({ version: 1, document: { schemaVersion: 2, a: 2 } })
+      .expect(200);
+    expect(accepted.body).toMatchObject({ version: 2, schemaVersion: 2 });
+  });
+
   it('rejects a stale version with 409', async () => {
     const { body } = await admin.post(list).send({ name: 'A' }).expect(201);
     await admin
