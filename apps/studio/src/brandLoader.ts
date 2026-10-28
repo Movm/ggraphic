@@ -9,6 +9,7 @@ import { type BrandFontFace, type BrandPack } from '@ggraphic/core';
 import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
 
 import { studioBrand } from './brand';
+import { measureLogo } from './logoSize';
 
 const loaded = new Map<string, Promise<void>>();
 
@@ -40,6 +41,7 @@ export async function loadBrandFonts(faces: readonly BrandFontFace[]): Promise<v
 }
 
 export async function applyBrandPack(pack: BrandPack | null): Promise<void> {
-  if (pack) await loadBrandFonts(pack.fontFaces);
+  if (pack)
+    await Promise.all([loadBrandFonts(pack.fontFaces), pack.logo && measureLogo(pack.logo.src)]);
   registerBrandPacks(pack ? [pack, studioBrand] : [studioBrand]);
 }

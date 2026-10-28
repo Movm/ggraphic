@@ -9,3 +9,5 @@ export * from './ai/operations.js';
 export * from './ai/wrappers.js';
 export * from './media/stockImages.js';
 export * from './media/stickerRef.js';
+export * from './text/hyphenation.js';
+export * from './text/fitText.js';

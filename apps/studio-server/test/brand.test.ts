@@ -145,6 +145,16 @@ describe('buildBrandPack', () => {
     expect(Object.keys(pack).sort()).toEqual(Object.keys(brandDefault).sort());
   });
 
+  it('makes the primary colour the default ground, not the first ground', () => {
+    const settings = brandSettingsBody.parse({
+      ...SETTINGS,
+      colors: { ...SETTINGS.colors, primary: '#0F3A52' },
+    });
+    const pack = buildBrandPack(orgId, settings, [], null);
+    expect(settings.backgrounds[0]!.color).not.toBe('#0F3A52');
+    expect(pack.defaultBackground).toBe('#0F3A52');
+  });
+
   it('validates the core default pack with the same schema', () => {
     expect(brandPackSchema.safeParse(brandDefault).success).toBe(true);
   });
