@@ -65,16 +65,20 @@ export async function runTrashPurge(
       TRASH_PURGE_LOCK_KEY,
     ]);
     if (!rows[0]?.got) return null;
+    let outcome: { removed: number } | { error: unknown };
     try {
-      return await purgeExpiredTrash(db, now);
-    } finally {
-      try {
-        await lock.query('SELECT pg_advisory_unlock($1)', [TRASH_PURGE_LOCK_KEY]);
-      } catch (err) {
-        broken = err instanceof Error ? err : new Error('unlock failed');
-        throw broken;
-      }
+      outcome = { removed: await purgeExpiredTrash(db, now) };
+    } catch (error) {
+      outcome = { error };
     }
+    try {
+      await lock.query('SELECT pg_advisory_unlock($1)', [TRASH_PURGE_LOCK_KEY]);
+    } catch (err) {
+      broken = err instanceof Error ? err : new Error('unlock failed');
+      throw broken;
+    }
+    if ('error' in outcome) throw outcome.error;
+    return outcome.removed;
   } finally {
     lock.release(broken);
   }
