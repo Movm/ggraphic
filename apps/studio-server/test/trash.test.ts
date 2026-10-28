@@ -118,6 +118,32 @@ describe.skipIf(!hasDb)('trash (Postgres)', () => {
       expect(res.body.projects.map((p: { id: string }) => p.id)).not.toContain(live);
     });
 
+    it('counts the days left on the database clock, rounded up', async () => {
+      const a = await create('A');
+      const b = await create('B');
+      const c = await create('C');
+      for (const id of [a, b, c]) await admin.delete(`/api/projects/${id}`).expect(204);
+      await pool.query(
+        "UPDATE projects SET deleted_at = now() - interval '29 days 12 hours' WHERE id = $1",
+        [a]
+      );
+      await pool.query(
+        "UPDATE projects SET deleted_at = now() - interval '29 days 23 hours' WHERE id = $1",
+        [b]
+      );
+      await pool.query(
+        "UPDATE projects SET deleted_at = now() - interval '31 days' WHERE id = $1",
+        [c]
+      );
+      const days = Object.fromEntries(
+        (await admin.get(trash)).body.projects.map((p: { name: string; daysLeft: number }) => [
+          p.name,
+          p.daysLeft,
+        ])
+      );
+      expect(days).toEqual({ A: 1, B: 1, C: 0 });
+    });
+
     it('is empty for a fresh account and refuses a non-member', async () => {
       expect((await admin.get(trash).expect(200)).body).toEqual({ projects: [] });
       const bob = await otherOrganisation(app, pool, 'bob@example.org');
@@ -149,9 +175,20 @@ describe.skipIf(!hasDb)('trash (Postgres)', () => {
       expect((await admin.get(trash)).body.projects).toEqual([]);
     });
 
-    it('is a 404 for a project that is not in the trash', async () => {
+    it('is idempotent: restoring a live project answers 200 with its summary', async () => {
       const id = await create();
-      await admin.post(`/api/projects/${id}/restore`).expect(404);
+      const res = await admin.post(`/api/projects/${id}/restore`).expect(200);
+      expect(res.body).toMatchObject({ id, name: 'Plakat', version: 1 });
+      await admin.delete(`/api/projects/${id}`).expect(204);
+      await admin.post(`/api/projects/${id}/restore`).expect(200);
+      await admin.post(`/api/projects/${id}/restore`).expect(200);
+    });
+
+    it('is a 404 for a project that does not exist or is not in the caller organisation', async () => {
+      await admin.post('/api/projects/00000000-0000-4000-8000-00000000abcd/restore').expect(404);
+      const id = await create();
+      const bob = await otherOrganisation(app, pool, 'bob2@example.org');
+      await bob.post(`/api/projects/${id}/restore`).expect(404);
     });
 
     it('is a 404 for another account, and the project stays in the trash', async () => {

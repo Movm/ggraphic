@@ -340,7 +340,8 @@ describe.skipIf(!hasDb)('accounts and sessions (Postgres)', () => {
         await who.post('/api/auth/invitations/token/accept').send({}).expect(404);
       }
       const { rows } = await pool.query('SELECT count(*)::int AS n FROM memberships');
-      expect(rows[0].n).toBe(2);
+      // The admin's, the editor's in the default organisation and the editor's own.
+      expect(rows[0].n).toBe(3);
     });
 
     it('never offers to create organisations, not even to the admin or with registration open', async () => {

@@ -148,6 +148,36 @@ describe.skipIf(!hasDb)('trash purge (Postgres)', () => {
       expect(await runTrashPurge(pool, db, now)).toBe(1);
     });
 
+    it('destroys the connection when the unlock fails, so the session lock cannot leak', async () => {
+      const released: unknown[] = [];
+      const client = {
+        query: (text: string) =>
+          text.includes('pg_try_advisory_lock')
+            ? Promise.resolve({ rows: [{ got: true }] })
+            : Promise.reject(new Error('unlock failed')),
+        release: (err?: unknown) => released.push(err ?? 'reused'),
+      };
+      const stub = { connect: () => Promise.resolve(client) } as unknown as typeof pool;
+      await expect(runTrashPurge(stub, db, now)).rejects.toThrow('unlock failed');
+      expect(released).toHaveLength(1);
+      expect(released[0]).toBeInstanceOf(Error);
+    });
+
+    it('returns a healthy connection to the pool after a normal run', async () => {
+      const released: unknown[] = [];
+      const real = await pool.connect();
+      const wrapped = Object.assign(Object.create(real), {
+        query: real.query.bind(real),
+        release: (err?: unknown) => {
+          released.push(err ?? 'reused');
+          real.release();
+        },
+      });
+      const stub = { connect: () => Promise.resolve(wrapped) } as unknown as typeof pool;
+      expect(await runTrashPurge(stub, db, now)).toBe(0);
+      expect(released).toEqual(['reused']);
+    });
+
     it('releases the lock after a run', async () => {
       await runTrashPurge(pool, db, now);
       const other = await pool.connect();

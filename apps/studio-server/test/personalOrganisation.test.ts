@@ -2,14 +2,22 @@
 // Every account has an organisation to work in. Needs a real Postgres (DATABASE_URL).
 import { eq } from 'drizzle-orm';
 import request from 'supertest';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../src/app.ts';
 import { hashPassword } from '../src/auth/passwords.ts';
 import { createDb } from '../src/db/client.ts';
 import { runMigrations } from '../src/db/migrate.ts';
 import { accounts, memberships, organisations } from '../src/db/schema.ts';
 import { ensurePersonalOrganisation } from '../src/orgs.ts';
-import { DEFAULT_ORG, PASSWORD, resetDb, setupAdmin, testConfig } from './helpers.ts';
+import {
+  BRAND_SETTINGS,
+  DEFAULT_ORG,
+  memberOf,
+  PASSWORD,
+  resetDb,
+  setupAdmin,
+  testConfig,
+} from './helpers.ts';
 
 const hasDb = Boolean(process.env['DATABASE_URL']);
 
@@ -66,11 +74,45 @@ describe.skipIf(!hasDb)('personal organisation (Postgres)', () => {
     expect(await membershipsOf(account.id)).toHaveLength(1);
   });
 
-  it('leaves an account that already has a membership alone', async () => {
+  it('leaves an account that already owns an organisation alone', async () => {
     const admin = await setupAdmin(app);
     const id = await ensurePersonalOrganisation(db, { id: admin.accountId, displayName: 'Admin' });
     expect(id).toBe(DEFAULT_ORG);
     expect(await membershipsOf(admin.accountId)).toHaveLength(1);
+  });
+
+  it('takes no transaction and no lock when the account already owns an organisation', async () => {
+    const admin = await setupAdmin(app);
+    const transaction = vi.spyOn(db, 'transaction');
+    const execute = vi.spyOn(db, 'execute');
+    try {
+      await ensurePersonalOrganisation(db, { id: admin.accountId, displayName: 'Admin' });
+      await admin.get('/api/auth/session').expect(200);
+      expect(transaction).not.toHaveBeenCalled();
+      expect(execute).not.toHaveBeenCalled();
+    } finally {
+      transaction.mockRestore();
+      execute.mockRestore();
+    }
+  });
+
+  it('gives an editor-only account an organisation of its own, which it owns', async () => {
+    await setupAdmin(app);
+    const ed = await memberOf(app, pool, DEFAULT_ORG, 'ed@example.org');
+    const session = await ed.get('/api/auth/session').expect(200);
+    expect(session.body.organisations).toHaveLength(2);
+    expect(session.body.organisations[0]).toMatchObject({ name: 'ed', role: 'owner' });
+    expect(session.body.organisations[1]).toMatchObject({ id: DEFAULT_ORG, role: 'editor' });
+    expect(ed.orgId).toBe(session.body.organisations[0].id);
+    // It can save its brand there.
+    await ed.put(`/api/orgs/${ed.orgId}/brand-pack`).send(BRAND_SETTINGS).expect(200);
+    // One personal organisation, however often it logs in.
+    await ed.get('/api/auth/session').expect(200);
+    const again = await request(app)
+      .post('/api/auth/login')
+      .send({ email: 'ed@example.org', password: PASSWORD })
+      .expect(200);
+    expect(again.body.organisations).toHaveLength(2);
   });
 
   it('gives an account without a membership an organisation at login', async () => {
@@ -109,32 +151,16 @@ describe.skipIf(!hasDb)('personal organisation (Postgres)', () => {
       ]);
     });
 
-    it('lists the oldest membership first when the account owns none', async () => {
+    it('lists an owned organisation first even if an editor membership is older', async () => {
       const admin = await setupAdmin(app);
-      const [older, newer] = await db
-        .insert(organisations)
-        .values([{ name: 'Zzz older' }, { name: 'Aaa newer' }])
-        .returning();
-      await db.delete(memberships).where(eq(memberships.accountId, admin.accountId));
-      await db.insert(memberships).values([
-        {
-          organisationId: newer!.id,
-          accountId: admin.accountId,
-          role: 'editor',
-          createdAt: new Date('2024-01-01'),
-        },
-        {
-          organisationId: older!.id,
-          accountId: admin.accountId,
-          role: 'editor',
-          createdAt: new Date('2022-01-01'),
-        },
-      ]);
-      const res = await admin.get('/api/auth/session').expect(200);
-      expect(res.body.organisations.map((o: { id: string }) => o.id)).toEqual([
-        older!.id,
-        newer!.id,
-      ]);
+      const ed = await memberOf(app, pool, DEFAULT_ORG, 'ed@example.org');
+      await pool.query(
+        "UPDATE memberships SET created_at = '2000-01-01' WHERE account_id = $1 AND role = 'editor'",
+        [ed.accountId]
+      );
+      const res = await ed.get('/api/auth/session').expect(200);
+      expect(res.body.organisations[0].role).toBe('owner');
+      expect(admin.accountId).not.toBe(ed.accountId);
     });
   });
 });

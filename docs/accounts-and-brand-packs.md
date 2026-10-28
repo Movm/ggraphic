@@ -41,11 +41,13 @@ and pages, not a migration.
   (default `false`) and gives the new account its own organisation. Otherwise there is
   no way to create a second account: set `ALLOW_REGISTRATION=true` for as long as it takes.
   There is no admin screen for accounts.
-- **Every account has an organisation.** `ensurePersonalOrganisation` runs at login and on
-  `GET /api/auth/session`: an account without a membership gets an organisation named
-  after the person, owned by them (serialised per account, so concurrent requests create
-  one). The session lists an account's organisations owned-first, then oldest membership,
-  and the app works in the first. `canCreateOrganisations` is always `false`; the field is
+- **Every account owns an organisation.** `ensurePersonalOrganisation` runs at login and on
+  `GET /api/auth/session`: an account that owns none (no membership, or only editor
+  memberships from invitations) gets an organisation named after the person, owned by them.
+  An account that owns one costs a single read; only the creating path takes a transaction
+  and a per-account advisory lock, and re-checks under it. The session lists an account's
+  organisations owned-first, then oldest membership, and the app works in the first.
+  `canCreateOrganisations` is always `false`; the field is
   kept for older cached web clients and will go.
 - **Passwords:** argon2id via [`argon2`](https://github.com/ranisalt/node-argon2) (MIT,
   prebuilt binaries for glibc and musl), parameters m = 19 MiB, t = 2, p = 1 (OWASP
@@ -169,8 +171,7 @@ need no column: they cascade with the row and are only reachable through the pro
 `GET /api/orgs/:orgId/trash` lists the deleted projects, newest first, with `purgeAt` and
 `daysLeft`; `POST /api/projects/:id/restore` brings one back untouched (version and
 `updated_at` unchanged); `DELETE /api/projects/:id/purge` ("delete now") removes one that is
-already in the trash. Rights are those of delete: any member. A restore or purge of a project
-that is not in the trash, or of another organisation, is `404`.
+already in the trash. Rights are those of delete: any member. Restore is idempotent: a project that is already live answers `200` with its summary. A restore of an unknown project or one of another organisation, and a purge of a project that is not in the trash, is `404`.
 
 Every statement that reads `projects` must exclude the trash. `test/trashReaders.test.ts`
 reads the source and fails on a statement without `live()` (`src/trash.ts`); the trash side
