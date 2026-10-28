@@ -21,7 +21,8 @@ const SRC = fileURLToPath(new URL('../src', import.meta.url));
 /** A statement that reads, updates or deletes `projects`. */
 const READER =
   /\.(?:from|update|delete)\(projects\)|\.(?:inner|left|right|full)Join\(projects\b|\b(?:FROM|JOIN|UPDATE)\s+projects\b/g;
-const LIVE = /\blive\(\)|isNull\(projects\.deletedAt\)|deleted_at\s+IS\s+NULL/i;
+// Raw SQL names the table: `deleted_at IS NULL` on a joined table must not excuse the reader.
+const LIVE = /\blive\(\)|isNull\(projects\.deletedAt\)|\bprojects\.deleted_at\s+IS\s+NULL/i;
 /** What a statement on the trash side says instead. */
 const TRASH_SIDE = /isNotNull\(projects\.deletedAt\)|lt\(projects\.deletedAt/;
 
@@ -63,11 +64,14 @@ interface Statement {
   text: string;
 }
 
-function sourceFiles(dir = SRC): string[] {
-  return readdirSync(dir, { recursive: true, encoding: 'utf8' })
-    .filter((f) => f.endsWith('.ts'))
-    .map((f) => f.replaceAll('\\', '/'))
+const allFiles = (dir = SRC): string[] =>
+  readdirSync(dir, { recursive: true, encoding: 'utf8', withFileTypes: true })
+    .filter((e) => e.isFile())
+    .map((e) => `${e.parentPath}/${e.name}`.slice(SRC.length + 1).replaceAll('\\', '/'))
     .sort();
+
+function sourceFiles(): string[] {
+  return allFiles().filter((f) => f.endsWith('.ts'));
 }
 
 function withoutComments(source: string): string {
@@ -97,6 +101,10 @@ const excusedBy = (entry: Excuse) =>
   unfiltered.filter((s) => s.file === entry.file && s.text.includes(entry.marker));
 
 describe('trash readers', () => {
+  it('has no stray copy of a source file under src (a .bak is not scanned)', () => {
+    expect(allFiles().filter((f) => !f.endsWith('.ts'))).toEqual([]);
+  });
+
   it('finds the readers it is meant to guard', () => {
     // A scan that matches nothing would pass every other test.
     expect(all.length).toBeGreaterThanOrEqual(10);
