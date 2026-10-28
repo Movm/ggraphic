@@ -57,6 +57,15 @@ type Obj = Record<string, unknown>;
 const isObj = (v: unknown): v is Obj => v !== null && typeof v === 'object' && !Array.isArray(v);
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
+/** Whether a value is out of reach of its axis: a fraction outside 0..1, or an array that can't scale. */
+const unplaceable = (v: unknown, axis: GeometryAxis): boolean => {
+  if (Array.isArray(v)) {
+    // Only the s axis scales a list (a dash pattern is a list of px lengths).
+    return axis !== 's' || !v.every((e) => isNum(e) && e >= 0 && e <= 1);
+  }
+  return axis !== 'k' && isNum(v) && (v < 0 || v > 1);
+};
+
 /** The template's worlds that the brand keeps, in the template's order. */
 export function offeredSchemes(t: Pick<TemplateInput, 'schemes'>, brand: BrandPack): SchemeId[] {
   const have = new Set(deriveSchemes(brand).map((s) => s.id));
@@ -101,7 +110,7 @@ function forEachElement(state: Obj, visit: (el: Obj, key: string, id: string) =>
  * Places a template's first page on a canvas: fractions of the brand grid become pixels, bound
  * fields take the values of the chosen world, the logo goes to a free corner. Pure: the input is
  * not touched and the same input gives the same page. A template with an unknown bind ref or a
- * geometry fraction outside 0..1 is refused (`bind`, `geometry`).
+ * geometry fraction outside 0..1, or a number list on an axis other than `s`, is refused (`bind`, `geometry`).
  */
 export function instantiateTemplatePage(
   t: TemplateInput,
@@ -126,12 +135,12 @@ export function instantiateTemplatePage(
     if (!checkBinds(el)) bad ??= 'bind';
     for (const [field, axis] of Object.entries(ctx.geometry[key] ?? {})) {
       const v = el[field];
-      if (axis !== 'k' && isNum(v) && (v < 0 || v > 1)) bad ??= 'geometry';
+      if (unplaceable(v, axis)) bad ??= 'geometry';
     }
   });
   for (const [field, axis] of Object.entries(ctx.geometry['page'] ?? {})) {
     const v = state[field];
-    if (axis !== 'k' && isNum(v) && (v < 0 || v > 1)) bad ??= 'geometry';
+    if (unplaceable(v, axis)) bad ??= 'geometry';
   }
   if (bad) return { ok: false, reason: bad };
 
@@ -146,6 +155,11 @@ export function instantiateTemplatePage(
   const place = (el: Obj, table: Readonly<Record<string, GeometryAxis>> | undefined, F: Box) => {
     for (const [field, axis] of Object.entries(table ?? {})) {
       const v = el[field];
+      if (Array.isArray(v)) {
+        // Validated above: only the s axis reaches here with a list of fractions.
+        el[field] = v.map((e: number) => Math.round(e * S));
+        continue;
+      }
       if (!isNum(v)) continue;
       el[field] =
         axis === 'x'
