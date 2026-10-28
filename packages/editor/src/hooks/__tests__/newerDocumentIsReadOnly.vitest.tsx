@@ -20,10 +20,10 @@ function v1Doc(): Y.Doc {
   return ydoc;
 }
 
-/** A doc this build wrote: version 2, nothing left to lift. */
+/** A doc this build wrote: version 3, nothing left to lift. */
 function currentDoc(): Y.Doc {
   const ydoc = v1Doc();
-  getMetaMap(ydoc).set(YDOC_KEYS.schemaVersion, 2);
+  getMetaMap(ydoc).set(YDOC_KEYS.schemaVersion, 3);
   return ydoc;
 }
 
@@ -58,14 +58,27 @@ describe('a doc of today’s version', () => {
   it('gets stamped when this build seeds it', () => {
     const ydoc = new Y.Doc();
     open(ydoc);
-    expect(getMetaMap(ydoc).get(YDOC_KEYS.schemaVersion)).toBe(2);
+    expect(getMetaMap(ydoc).get(YDOC_KEYS.schemaVersion)).toBe(3);
   });
 
   it('lifts a version 1 doc on open, writing the stamp', () => {
     const ydoc = v1Doc();
     const { result } = open(ydoc);
     expect(result.current.isPreview).toBe(false);
-    expect(getMetaMap(ydoc).get(YDOC_KEYS.schemaVersion)).toBe(2);
+    expect(getMetaMap(ydoc).get(YDOC_KEYS.schemaVersion)).toBe(3);
+    expect(result.current.pages.map((p) => p.state.headline)).toEqual(['Eins']);
+  });
+});
+
+describe('a version 2 doc', () => {
+  it('is lifted on open, writing the v3 stamp once and nothing else', () => {
+    const ydoc = v1Doc();
+    getMetaMap(ydoc).set(YDOC_KEYS.schemaVersion, 2);
+    const updates = recordUpdates(ydoc);
+    const { result } = open(ydoc);
+    expect(result.current.isPreview).toBe(false);
+    expect(getMetaMap(ydoc).get(YDOC_KEYS.schemaVersion)).toBe(3);
+    expect(updates).toHaveLength(1);
     expect(result.current.pages.map((p) => p.state.headline)).toEqual(['Eins']);
   });
 });
@@ -73,12 +86,12 @@ describe('a doc of today’s version', () => {
 describe('a doc from a newer version', () => {
   it('shows its pages read-only and writes nothing', () => {
     const ydoc = v1Doc();
-    getMetaMap(ydoc).set(YDOC_KEYS.schemaVersion, 3);
+    getMetaMap(ydoc).set(YDOC_KEYS.schemaVersion, 4);
     const updates = recordUpdates(ydoc);
     const { result } = open(ydoc);
 
     expect(result.current.isPreview).toBe(true);
-    expect(result.current.schemaRefusal).toMatchObject({ status: 'newer', version: 3, known: 2 });
+    expect(result.current.schemaRefusal).toMatchObject({ status: 'newer', version: 4, known: 3 });
     expect(result.current.pages.map((p) => p.state.headline)).toEqual(['Eins']);
     expect(result.current.replaceDeck).toBeNull();
 
@@ -91,7 +104,7 @@ describe('a doc from a newer version', () => {
 
   it('is not seeded when empty', () => {
     const ydoc = new Y.Doc();
-    getMetaMap(ydoc).set(YDOC_KEYS.schemaVersion, 3);
+    getMetaMap(ydoc).set(YDOC_KEYS.schemaVersion, 4);
     const updates = recordUpdates(ydoc);
     open(ydoc);
     expect(ydoc.getMap(YDOC_KEYS.pagesById).size).toBe(0);
@@ -103,11 +116,11 @@ describe('a doc from a newer version', () => {
     const { result } = open(ydoc);
     expect(result.current.isPreview).toBe(false);
     await act(async () => {
-      getMetaMap(ydoc).set(YDOC_KEYS.schemaVersion, 3);
+      getMetaMap(ydoc).set(YDOC_KEYS.schemaVersion, 4);
       await Promise.resolve();
     });
     expect(result.current.isPreview).toBe(true);
-    expect(result.current.schemaRefusal).toMatchObject({ status: 'newer', version: 3 });
+    expect(result.current.schemaRefusal).toMatchObject({ status: 'newer', version: 4 });
   });
 });
 

@@ -100,6 +100,9 @@ export const PPTX_UNMAPPED_PAGE_KEYS = {
   bind: 'Markenbindung der Felder; die Werte sind schon aufgelöst',
   brandScheme: 'Farbwelt der Marke; die Farben sind schon aufgelöst',
   brandStamp: 'Stempel der Markenbindung; nur für den Abgleich im Editor',
+  // Vorlagen-Herkunft und Gruppen (F0).
+  templateRef: 'origin of the page; nothing to draw',
+  groups: 'element groups; members are exported one by one',
 } as const satisfies Record<string, string>;
 
 const KNOWN_KEYS: ReadonlySet<string> = new Set([

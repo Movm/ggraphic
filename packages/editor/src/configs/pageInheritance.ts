@@ -26,6 +26,8 @@ const INHERITABLE_KEYS = [
   'bind',
   'brandScheme',
   'brandStamp',
+  // `templateRef` and `groups` (F0) are deliberately not inheritable: they
+  // describe one page's origin and its element groups, not a style to carry on.
 ] as const;
 
 export function extractInheritablePageState(
