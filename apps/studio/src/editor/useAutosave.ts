@@ -4,7 +4,7 @@
  * (`CanvasEditorExportApi.getPages`), and once they have changed and then
  * held still for a moment, `PATCH /api/projects/:id` stores them with the
  * version last read. A 409 stops saving until the user decides (reload, or
- * overwrite with the version on screen). A PNG thumbnail follows a save, at
+ * overwrite with the version on screen). A 404 (the project was trashed meanwhile) stops it too. A PNG thumbnail follows a save, at
  * most every half minute.
  */
 import { type CanvasEditorExportApi } from '@ggraphic/editor/components/CanvasEditor/types';
@@ -14,7 +14,7 @@ import { api, ApiError } from '../api/client';
 
 import { serializeDocument, type StudioDocument } from './document';
 
-export type SaveStatus = 'saved' | 'pending' | 'saving' | 'error' | 'conflict' | 'refused';
+export type SaveStatus = 'saved' | 'pending' | 'saving' | 'error' | 'conflict' | 'refused' | 'gone';
 
 const POLL_MS = 1000;
 const SETTLE_MS = 1500;
@@ -104,6 +104,11 @@ export function useAutosave({
           // The server holds a newer format: this build must not write over it.
           blockedRef.current = true;
           setStatus('refused');
+        } else if (err instanceof ApiError && err.status === 404) {
+          // Trashed or deleted in another tab: retrying would only 404 again. Restoring keeps
+          // the version, so a later "Try again" succeeds.
+          blockedRef.current = true;
+          setStatus('gone');
         } else {
           setStatus('error');
         }
@@ -169,7 +174,15 @@ export function useAutosave({
   /** Saves now, e.g. before leaving the editor. */
   const flush = useCallback(() => (blockedRef.current ? Promise.resolve() : save()), [save]);
 
-  return { status, overwrite, flush, retry: () => void save(true) };
+  /** True while what is on screen differs from what was last stored. */
+  const hasUnsaved = useCallback(() => {
+    const doc = currentDocument();
+    return (
+      doc !== null && savedJsonRef.current !== null && JSON.stringify(doc) !== savedJsonRef.current
+    );
+  }, [currentDocument]);
+
+  return { status, overwrite, flush, hasUnsaved, retry: () => void save(true) };
 }
 
 async function shrinkPng(dataUrl: string, maxWidth: number): Promise<Blob | null> {

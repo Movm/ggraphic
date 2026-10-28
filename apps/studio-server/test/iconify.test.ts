@@ -1,0 +1,406 @@
+// SPDX-License-Identifier: AGPL-3.0-only
+// GET /api/assets/icons/* against a fake Iconify API. Needs Postgres (DATABASE_URL) for the login.
+import request from 'supertest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createApp } from '../src/app.ts';
+import { FixedWindowLimiter } from '../src/auth/rateLimit.ts';
+import { ICONIFY_DEFAULT_LICENCES, type IconifyConfig } from '../src/config.ts';
+import { createDb } from '../src/db/client.ts';
+import { runMigrations } from '../src/db/migrate.ts';
+import { createAuthLimiters } from '../src/routes/auth.ts';
+import { PASSWORD, resetDb, setupAdmin, testConfig } from './helpers.ts';
+
+const hasDb = Boolean(process.env['DATABASE_URL']);
+const iconify: IconifyConfig = {
+  url: 'http://iconify.internal:3000',
+  licences: ICONIFY_DEFAULT_LICENCES,
+  timeoutMs: 1000,
+};
+
+const set = (name: string, spdx: string, extra: Record<string, unknown> = {}) => ({
+  name,
+  author: { name: `${name} Authors` },
+  license: { title: spdx, spdx },
+  ...extra,
+});
+
+/** What the fake upstream knows. Each key is an icon-set prefix. */
+const COLLECTIONS: Record<string, unknown> = {
+  tabler: set('Tabler Icons', 'MIT'),
+  lets: set('Lets Icons', 'CC-BY-4.0'),
+  typcn: set('Typicons', 'CC-BY-SA-4.0'),
+  gplset: set('GPL Set', 'GPL-3.0-or-later'),
+  ncset: set('NC Set', 'CC-BY-NC-4.0'),
+  fa6: set('Font Awesome 6 Solid', 'CC-BY-4.0'),
+  'fa7-solid': set('Font Awesome Solid', 'CC-BY-4.0'),
+  ri: set('Remix Icon', 'Apache-2.0', { version: '4.8.0' }),
+  'ri-new': set('Remix Icon', 'Apache-2.0', { version: '4.9.0' }),
+  noversion: set('Remix Icon', 'Apache-2.0'),
+  nolicence: { name: 'No Licence', author: { name: 'x' } },
+};
+Object.assign(COLLECTIONS, { 'ri-new': set('Remix Icon', 'Apache-2.0', { version: '4.9.0' }) });
+
+const SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M0 0h24v24H0z"/></svg>';
+
+const svgResponse = (body: string, init: ResponseInit = {}) =>
+  new Response(body, { ...init, headers: { 'content-type': 'image/svg+xml', ...init.headers } });
+
+interface FakeOptions {
+  search?: string[];
+  svg?: (prefix: string, name: string) => Response;
+  collections?: () => Response;
+}
+
+/** A stand-in for api.iconify.design; records every URL it is asked for. */
+function fakeIconify(options: FakeOptions = {}) {
+  const calls: string[] = [];
+  const impl = vi.fn<typeof fetch>((input) => {
+    const url = new URL(String(input));
+    calls.push(url.pathname + url.search);
+    if (url.pathname === '/collections') {
+      return Promise.resolve(options.collections?.() ?? Response.json(COLLECTIONS));
+    }
+    if (url.pathname === '/search') {
+      return Promise.resolve(
+        Response.json({
+          icons: options.search ?? [
+            'tabler:tree',
+            'typcn:tree',
+            'gplset:tree',
+            'ncset:tree',
+            'fa6:tree',
+            'fa7-solid:tree',
+            'ri:tree-line',
+            'ri-new:tree-line',
+            'noversion:tree',
+            'nolicence:tree',
+            'unknown:tree',
+            'lets:tree',
+          ],
+          total: 12,
+        })
+      );
+    }
+    const match = /^\/([a-z0-9-]+)\/([a-z0-9-]+)\.svg$/.exec(url.pathname);
+    if (match) {
+      return Promise.resolve(options.svg?.(match[1]!, match[2]!) ?? svgResponse(SVG));
+    }
+    return Promise.resolve(new Response('404', { status: 404 }));
+  });
+  return { impl, calls };
+}
+
+describe('anonymous', () => {
+  it('needs a session', async () => {
+    const config = testConfig({ features: { removeBackground: null, iconify } });
+    const app = createApp({ config, db: createDb(config.databaseUrl).db });
+    await request(app).get('/api/assets/icons/search?q=tree').expect(401);
+    await request(app).get('/api/assets/icons/tabler/tree.svg').expect(401);
+  });
+});
+
+describe.skipIf(!hasDb)('/api/assets/icons (Postgres)', () => {
+  const base = testConfig();
+  const { pool, db } = createDb(base.databaseUrl);
+
+  beforeAll(async () => {
+    await runMigrations(pool);
+  });
+  beforeEach(async () => {
+    await resetDb(pool);
+    await setupAdmin(createApp({ config: base, db }));
+  });
+  afterAll(async () => {
+    await pool.end();
+  });
+
+  async function loggedIn(
+    fetchImpl: typeof fetch,
+    { enabled = true, searchLimit = 100, svgLimit = 100 } = {}
+  ) {
+    const app = createApp({
+      config: { ...base, features: { removeBackground: null, iconify: enabled ? iconify : null } },
+      db,
+      fetch: fetchImpl,
+      limiters: {
+        ...createAuthLimiters(),
+        iconifySearch: new FixedWindowLimiter({ limit: searchLimit, windowMs: 60_000 }),
+        iconifySvg: new FixedWindowLimiter({ limit: svgLimit, windowMs: 60_000 }),
+      },
+    });
+    const agent = request.agent(app);
+    await agent
+      .post('/api/auth/login')
+      .send({ email: 'admin@example.org', password: PASSWORD })
+      .expect(200);
+    return agent;
+  }
+
+  describe('search', () => {
+    it('answers hits with set, licence and author, and never an excluded set', async () => {
+      const fake = fakeIconify();
+      const agent = await loggedIn(fake.impl);
+      const res = await agent.get('/api/assets/icons/search?q=tree&limit=50').expect(200);
+      const ids = (res.body.icons as { prefix: string; name: string }[]).map(
+        (i) => `${i.prefix}:${i.name}`
+      );
+      expect(ids).toEqual(['tabler:tree', 'ri:tree-line', 'lets:tree']);
+      expect(res.body.icons[0]).toEqual({
+        prefix: 'tabler',
+        name: 'tree',
+        setTitle: 'Tabler Icons',
+        licence: 'MIT',
+        author: 'Tabler Icons Authors',
+      });
+      expect(res.body.icons[2]).toMatchObject({
+        licence: 'CC-BY-4.0',
+        author: 'Lets Icons Authors',
+      });
+    });
+
+    it('asks upstream only for allowed sets, with the fixed host', async () => {
+      const fake = fakeIconify();
+      const agent = await loggedIn(fake.impl);
+      await agent.get('/api/assets/icons/search?q=tree').expect(200);
+      const search = fake.calls.find((c) => c.startsWith('/search'))!;
+      const prefixes = new URL(`http://x${search}`).searchParams.get('prefixes')!.split(',');
+      expect(prefixes).toContain('tabler');
+      for (const excluded of [
+        'typcn',
+        'gplset',
+        'ncset',
+        'fa6',
+        'fa7-solid',
+        'ri-new',
+        'nolicence',
+      ]) {
+        expect(prefixes).not.toContain(excluded);
+      }
+      for (const [url] of fake.impl.mock.calls) {
+        expect(String(url).startsWith('http://iconify.internal:3000/')).toBe(true);
+      }
+    });
+
+    it('does not trust upstream to filter: a stray excluded hit is dropped', async () => {
+      const fake = fakeIconify({ search: ['typcn:tree', 'fa6:tree', 'tabler:tree'] });
+      const agent = await loggedIn(fake.impl);
+      const res = await agent.get('/api/assets/icons/search?q=tree').expect(200);
+      expect(res.body.icons).toHaveLength(1);
+    });
+
+    it('limits to one allowed set with prefix, and finds nothing for an excluded one', async () => {
+      const fake = fakeIconify();
+      const agent = await loggedIn(fake.impl);
+      await agent.get('/api/assets/icons/search?q=tree&prefix=tabler').expect(200);
+      const search = fake.calls.find((c) => c.startsWith('/search'))!;
+      expect(new URL(`http://x${search}`).searchParams.get('prefixes')).toBe('tabler');
+      const res = await agent.get('/api/assets/icons/search?q=tree&prefix=typcn').expect(200);
+      expect(res.body).toEqual({ icons: [], total: 0 });
+    });
+
+    it('caches repeated searches and the licence table', async () => {
+      const fake = fakeIconify();
+      const agent = await loggedIn(fake.impl);
+      await agent.get('/api/assets/icons/search?q=tree').expect(200);
+      await agent.get('/api/assets/icons/search?q=tree').expect(200);
+      await agent.get('/api/assets/icons/search?q=house').expect(200);
+      expect(fake.calls.filter((c) => c.startsWith('/search'))).toHaveLength(2);
+      expect(fake.calls.filter((c) => c === '/collections')).toHaveLength(1);
+    });
+
+    it('treats case and spacing in a search term as one search', async () => {
+      const fake = fakeIconify();
+      const agent = await loggedIn(fake.impl);
+      await agent.get('/api/assets/icons/search?q=Tree').expect(200);
+      await agent.get('/api/assets/icons/search?q=%20tree%20').expect(200);
+      await agent.get('/api/assets/icons/search?q=TREE').expect(200);
+      await agent.get('/api/assets/icons/search?q=big%20%20Tree').expect(200);
+      await agent.get('/api/assets/icons/search?q=big%20tree').expect(200);
+      const searches = fake.calls.filter((c) => c.startsWith('/search'));
+      expect(searches).toHaveLength(2);
+      expect(new URL(`http://x${searches[0]}`).searchParams.get('query')).toBe('tree');
+      expect(new URL(`http://x${searches[1]}`).searchParams.get('query')).toBe('big tree');
+    });
+
+    it.each([
+      ['/api/assets/icons/search'],
+      ['/api/assets/icons/search?q='],
+      ['/api/assets/icons/search?q=%20%20'],
+      [`/api/assets/icons/search?q=${'a'.repeat(65)}`],
+      ['/api/assets/icons/search?q=tree&limit=0'],
+      ['/api/assets/icons/search?q=tree&limit=500'],
+      ['/api/assets/icons/search?q=tree&prefix=../etc'],
+      ['/api/assets/icons/search?q=tree&prefix=UPPER'],
+    ])('answers 400 for %s', async (path) => {
+      const fake = fakeIconify();
+      const agent = await loggedIn(fake.impl);
+      const res = await agent.get(path).expect(400);
+      expect(res.body.error).toBe('invalid_request');
+      expect(fake.impl).not.toHaveBeenCalled();
+    });
+
+    it('answers feature_disabled and calls nobody when switched off', async () => {
+      const fake = fakeIconify();
+      const agent = await loggedIn(fake.impl, { enabled: false });
+      const res = await agent.get('/api/assets/icons/search?q=tree').expect(503);
+      expect(res.body.error).toBe('feature_disabled');
+      await agent.get('/api/assets/icons/tabler/tree.svg').expect(503);
+      expect(fake.impl).not.toHaveBeenCalled();
+    });
+
+    it('answers 504 with a fixed message when upstream times out', async () => {
+      const impl = vi.fn<typeof fetch>(() =>
+        Promise.reject(new DOMException('secret-host timed out', 'TimeoutError'))
+      );
+      const agent = await loggedIn(impl);
+      const res = await agent.get('/api/assets/icons/search?q=tree').expect(504);
+      expect(res.body.error).toBe('iconify_timeout');
+      expect(JSON.stringify(res.body)).not.toContain('secret-host');
+    });
+
+    it('answers 502 when upstream fails or sends too much', async () => {
+      const failing = fakeIconify({ collections: () => new Response('boom', { status: 500 }) });
+      const agent = await loggedIn(failing.impl);
+      const res = await agent.get('/api/assets/icons/search?q=tree').expect(502);
+      expect(res.body.error).toBe('iconify_upstream_error');
+
+      const huge = fakeIconify({
+        collections: () =>
+          new Response(new ReadableStream({ pull: (c) => c.enqueue(new Uint8Array(512 * 1024)) })),
+      });
+      const agent2 = await loggedIn(huge.impl);
+      await agent2.get('/api/assets/icons/search?q=tree').expect(502);
+    });
+
+    it('refuses redirects from upstream', async () => {
+      const fake = fakeIconify();
+      const agent = await loggedIn(fake.impl);
+      await agent.get('/api/assets/icons/search?q=tree').expect(200);
+      for (const [, init] of fake.impl.mock.calls) expect(init?.redirect).toBe('error');
+    });
+
+    it('rate limits per account', async () => {
+      const fake = fakeIconify();
+      const agent = await loggedIn(fake.impl, { searchLimit: 2 });
+      await agent.get('/api/assets/icons/search?q=a').expect(200);
+      await agent.get('/api/assets/icons/search?q=b').expect(200);
+      const res = await agent.get('/api/assets/icons/search?q=c').expect(429);
+      expect(res.body.error).toBe('rate_limited');
+      expect(res.headers['retry-after']).toBeDefined();
+    });
+  });
+
+  describe('svg', () => {
+    it('answers the icon as image/svg+xml, cached privately', async () => {
+      const fake = fakeIconify();
+      const agent = await loggedIn(fake.impl);
+      const res = await agent.get('/api/assets/icons/tabler/tree.svg').expect(200);
+      expect(res.headers['content-type']).toMatch(/^image\/svg\+xml/);
+      expect(res.headers['cache-control']).toBe('private, max-age=3600');
+      expect(res.headers['content-security-policy']).toContain("default-src 'none'");
+      expect(Buffer.from(res.body as Buffer).toString()).toBe(SVG);
+      await agent.get('/api/assets/icons/tabler/tree.svg').expect(200);
+      expect(fake.calls.filter((c) => c.endsWith('.svg'))).toEqual(['/tabler/tree.svg']);
+    });
+
+    it('never serves an excluded or unknown set', async () => {
+      const fake = fakeIconify();
+      const agent = await loggedIn(fake.impl);
+      for (const prefix of ['typcn', 'gplset', 'ncset', 'fa6', 'ri-new', 'noversion', 'unknown']) {
+        await agent.get(`/api/assets/icons/${prefix}/tree.svg`).expect(404);
+      }
+      expect(fake.calls.filter((c) => c.endsWith('.svg'))).toEqual([]);
+    });
+
+    it.each([
+      ['/api/assets/icons/TABLER/tree.svg'],
+      ['/api/assets/icons/tabler/Tree.svg'],
+      ['/api/assets/icons/tabler/tr%20ee.svg'],
+      ['/api/assets/icons/tabler/..%2F..%2Fsecret.svg'],
+      ['/api/assets/icons/tab_ler/tree.svg'],
+    ])('answers 400 for %s', async (path) => {
+      const fake = fakeIconify();
+      const agent = await loggedIn(fake.impl);
+      await agent.get(path).expect(400);
+      expect(fake.impl).not.toHaveBeenCalled();
+    });
+
+    it('answers 404 when upstream has no such icon', async () => {
+      const agent = await loggedIn(
+        fakeIconify({ svg: () => new Response('404', { status: 404 }) }).impl
+      );
+      const res = await agent.get('/api/assets/icons/tabler/nope.svg').expect(404);
+      expect(res.body.error).toBe('not_found');
+    });
+
+    it('answers 502 for a body that is no svg we can make safe', async () => {
+      for (const body of [
+        '<html></html>',
+        '<svg/onload=alert(1) xmlns="http://www.w3.org/2000/svg"></svg>',
+        '<svg xmlns="http://www.w3.org/2000/svg" a="1"onload="x()"></svg>',
+        '<!DOCTYPE svg [<!ENTITY x "y">]><svg xmlns="http://www.w3.org/2000/svg">&x;</svg>',
+      ]) {
+        const agent = await loggedIn(fakeIconify({ svg: () => svgResponse(body) }).impl);
+        await agent.get('/api/assets/icons/tabler/tree.svg').expect(502);
+      }
+    });
+
+    it('serves the sanitised svg, not what upstream sent', async () => {
+      const dirty =
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><script>alert(1)</script>' +
+        '<image href="http://evil/x.png"/><style>@\\69mport "x";</style>' +
+        '<path d="M0 0h24" onclick="x()" style="fill:red" fill="url(#g)"/>' +
+        '<use href="#a"/><a href="javascript:x"><animate attributeName="href" values="javascript&#58;x"/></a></svg>';
+      const agent = await loggedIn(fakeIconify({ svg: () => svgResponse(dirty) }).impl);
+      const res = await agent.get('/api/assets/icons/tabler/tree.svg').expect(200);
+      expect(Buffer.from(res.body as Buffer).toString()).toBe(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24" fill="url(#g)"/><use href="#a"/></svg>'
+      );
+    });
+
+    it('answers 502 when upstream does not say it sends an svg', async () => {
+      for (const type of ['text/html', 'application/json', 'text/plain']) {
+        const agent = await loggedIn(
+          fakeIconify({ svg: () => new Response(SVG, { headers: { 'content-type': type } }) }).impl
+        );
+        await agent.get('/api/assets/icons/tabler/tree.svg').expect(502);
+      }
+    });
+
+    it('answers 502 when Content-Length already says too much', async () => {
+      const agent = await loggedIn(
+        fakeIconify({ svg: () => svgResponse(SVG, { headers: { 'content-length': '999999' } }) })
+          .impl
+      );
+      await agent.get('/api/assets/icons/tabler/tree.svg').expect(502);
+      const agent2 = await loggedIn(
+        fakeIconify({
+          collections: () =>
+            Response.json(COLLECTIONS, { headers: { 'content-length': '99999999' } }),
+        }).impl
+      );
+      await agent2.get('/api/assets/icons/search?q=tree').expect(502);
+    });
+
+    it('answers 502 for an oversize body', async () => {
+      const big = '<svg xmlns="http://www.w3.org/2000/svg">' + ' '.repeat(200 * 1024) + '</svg>';
+      const agent = await loggedIn(fakeIconify({ svg: () => svgResponse(big) }).impl);
+      await agent.get('/api/assets/icons/tabler/tree.svg').expect(502);
+    });
+
+    it('answers 504 on timeout and 429 over the limit', async () => {
+      const slow = fakeIconify({
+        svg: () => {
+          throw new DOMException('x', 'TimeoutError');
+        },
+      });
+      const agent = await loggedIn(slow.impl);
+      await agent.get('/api/assets/icons/tabler/tree.svg').expect(504);
+
+      const agent2 = await loggedIn(fakeIconify().impl, { svgLimit: 1 });
+      await agent2.get('/api/assets/icons/tabler/tree.svg').expect(200);
+      await agent2.get('/api/assets/icons/tabler/house.svg').expect(429);
+    });
+  });
+});

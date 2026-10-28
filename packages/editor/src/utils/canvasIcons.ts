@@ -13,6 +13,14 @@ import { addCollection } from '@iconify/react';
 import { getIconData, iconToSVG } from '@iconify/utils';
 import { type IconifyJSON } from '@iconify-json/tabler';
 
+import {
+  externalIconDataUrl,
+  externalIconDefs,
+  externalIconsVersion,
+  getExternalIcon,
+  isExternalIconId,
+} from './externalIcons.js';
+
 export interface CanvasIcon {
   id: string;
   iconId: string;
@@ -196,15 +204,29 @@ export function loadIconSetsFor(iconIds: readonly string[]): Promise<void> {
 
 /** Are the sets of these catalog ids loaded, so the sync map can resolve them? */
 export function iconSetsLoaded(iconIds: readonly string[]): boolean {
-  return iconIds.every((id) => catalogBySet.has(splitIconId(id).prefix));
+  // An icon from the host's search needs no set: its SVG lives in the document.
+  return iconIds.every((id) => isExternalIconId(id) || catalogBySet.has(splitIconId(id).prefix));
 }
 
 export function getIconsSync(): IconDef[] | null {
   return syncList;
 }
 
+let mergedMap: {
+  bundled: Record<string, IconDef> | null;
+  version: number;
+  map: Record<string, IconDef>;
+} | null = null;
+
+/** The bundled catalog plus the icons placed from the host's search. */
 export function getIconMapSync(): Record<string, IconDef> | null {
-  return syncMap;
+  const version = externalIconsVersion();
+  const external = externalIconDefs();
+  if (Object.keys(external).length === 0) return syncMap;
+  if (mergedMap?.bundled !== syncMap || mergedMap.version !== version) {
+    mergedMap = { bundled: syncMap, version, map: { ...syncMap, ...external } };
+  }
+  return mergedMap.map;
 }
 
 // ---------------------------------------------------------------------------
@@ -233,6 +255,13 @@ export async function generateIconDataUrl(
 
   const promise = (async () => {
     try {
+      if (isExternalIconId(iconId)) {
+        const external = getExternalIcon(iconId);
+        if (!external) return null;
+        const dataUrl = externalIconDataUrl(external.svg, size, color);
+        dataUrlCache.set(cacheKey, dataUrl);
+        return dataUrl;
+      }
       const { prefix, name } = splitIconId(iconId);
       const setPromise = loadSetByPrefix(prefix);
       if (!setPromise) return null;

@@ -17,10 +17,14 @@ import { draftBody, pickBody, type StudioConfig } from './contract.ts';
 import type { Db } from './db/client.ts';
 import { errorHandler, HttpError, parseOr400 } from './http.ts';
 import { type AuthLimiters, authRouter, createAuthLimiters, tooMany } from './routes/auth.ts';
+import { assetsRouter } from './routes/assets.ts';
 import { brandAssetsRouter, organisationBrandRouter } from './routes/brand.ts';
 import { imagesRouter } from './routes/images.ts';
-import { organisationsRouter } from './routes/organisations.ts';
-import { organisationProjectsRouter, projectsRouter } from './routes/projects.ts';
+import {
+  organisationProjectsRouter,
+  organisationTrashRouter,
+  projectsRouter,
+} from './routes/projects.ts';
 import { organisationUploadsRouter, uploadsRouter } from './routes/uploads.ts';
 import { IMAGE_TYPES } from './uploads.ts';
 
@@ -57,7 +61,7 @@ export function createApp({
   const cookie = sessionCookie(config.cookieSecure);
   app.use((_req, res, next) => {
     res.set('X-Content-Type-Options', 'nosniff');
-    // Invitation links carry their token in the path; never send it to other sites.
+    // Paths can carry ids and file names; never send them to other sites.
     res.set('Referrer-Policy', 'same-origin');
     next();
   });
@@ -89,6 +93,7 @@ export function createApp({
       features: {
         ai: config.ai !== null,
         removeBackground: config.features.removeBackground !== null,
+        iconify: config.features.iconify !== null,
       },
       limits: {
         uploadBytes: config.uploadMaxBytes,
@@ -105,13 +110,14 @@ export function createApp({
   // Everything below needs a session.
   api.use(requireAuth);
   api.use('/orgs/:orgId/projects', organisationProjectsRouter(db));
+  api.use('/orgs/:orgId/trash', organisationTrashRouter(db));
   api.use('/orgs/:orgId/uploads', organisationUploadsRouter(db, config));
   api.use('/orgs/:orgId/brand-pack', organisationBrandRouter(db, config));
-  api.use('/orgs', organisationsRouter(db, config));
   api.use('/brand-assets', brandAssetsRouter(db, config));
   api.use('/projects', projectsRouter(db, config));
   api.use('/uploads', uploadsRouter(db, config));
   api.use('/images', imagesRouter(config, limiters, fetchImpl));
+  api.use('/assets', assetsRouter(config, limiters, fetchImpl));
 
   // Shared by the /ai routes: the 503 when AI is off, and the per-account rate limit.
   const aiOrDisabled = (): AiConfig => {

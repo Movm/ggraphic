@@ -40,6 +40,7 @@ export {
   logoEnvelope,
   safeArea,
 } from './brand/layout.js';
+export { deriveBrandColors, deriveGrounds, type BrandColorInputs } from './brand/derive.js';
 export { fitLogoBox } from './brand/logoFit.js';
 export {
   brandFingerprint,

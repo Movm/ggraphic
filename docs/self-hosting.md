@@ -1,6 +1,6 @@
 # Self-hosting ggraphic Studio
 
-ggraphic Studio is the hostable design app: organisations with their own projects, members and brand pack, image uploads and optional AI text drafts. It runs on your own machine or server with Docker Compose. There is no hosted service and no billing; every instance brings its own AI key if it wants AI at all.
+ggraphic Studio is the hostable design app: organisations with their own projects and brand pack, image uploads and optional AI text drafts. It runs on your own machine or server with Docker Compose. There is no hosted service and no billing; every instance brings its own AI key if it wants AI at all.
 
 > **First run needs the setup token.** On an empty instance Studio prints a one-time setup token to its log at start (`docker compose logs studio`); the admin account can only be created with it. Set `SETUP_TOKEN` in `.env` instead to choose it yourself. The compose file binds Studio to `127.0.0.1`; see [Security](#security) before exposing it.
 
@@ -37,20 +37,25 @@ All settings are environment variables in `.env`; `.env.example` documents each 
 
 ### Accounts and organisations
 
+Studio is a single-user tool for now: one person, one organisation.
+
 - The first account is the **instance admin** and owner of the default organisation, which holds every project that existed before accounts (upgrades keep all projects; existing upload files are assigned to it at start).
-- Every account belongs to one or more organisations as **owner** (projects, members, invitations, brand) or **editor** (projects).
-- New people join through **invitation links**: an owner creates one on the Members page and passes it on; Studio sends no email. A link works once and for seven days. While self-registration is off, only links created by the instance admin can create new accounts; links from other owners need an existing account.
-- `ALLOW_REGISTRATION=true` opens self-registration; each new account gets its own organisation.
-- Only the instance admin creates further organisations (everyone, when registration is open).
+- There are no invitation links and no member management. The tables and the `/api/orgs/:orgId/...` URLs stay, so this can come back; no endpoint creates organisations, members or invitations today.
+- A second person gets an account only when you set `ALLOW_REGISTRATION=true` (default `false`) and they register on the login page; each new account gets its own organisation and sees nothing of yours. There is no admin screen to create accounts.
+- Every account owns an organisation to work in. An account that owns none (a new one, or one that only has editor memberships left over from earlier invitations) gets a personal one, named after the person, at its next login or session check, and works there; its other memberships stay and are listed after it.
 - There is no password reset yet. If someone forgets their password, the admin can set a new hash in the database: `docker compose exec studio node -e "import('argon2').then(a=>a.hash(process.argv[1],{type:a.argon2id})).then(console.log)" 'new password'`, then `UPDATE accounts SET password_hash = '<hash>' WHERE email = '...'; DELETE FROM sessions WHERE account_id = (SELECT id FROM accounts WHERE email = '...');`.
+
+### Trash
+
+Deleting a project moves it to the trash (`/trash` in the app); from there it can be restored or deleted for good. A project is removed for good 30 days after it was deleted, by a job inside the server process that checks every six hours (the first time ten minutes after start; with several instances on one database only one runs it at a time). Each run logs `Trash purge: removed N projects` and nothing else. `TRASH_PURGE_ENABLED=false` switches the job off: deleted projects then stay in the trash until they are deleted by hand. Uploaded images are shared by an organisation's projects and are not removed with a project.
 
 ### Brand packs
 
-Owners set their organisation's brand on the Brand page: name, the eight colour roles, the grounds a page can sit on, headline and body fonts, a logo (PNG or WebP; SVG is refused) and font files (WOFF2, TTF, OTF) with a required licence note that is stored with the file. Make sure you may use a font on a web server before uploading it. The editor opens every project with its organisation's brand; without one it uses Studio's own colours.
+Owners set their organisation's brand on the Brand page: name, three colours (primary, secondary, accent), headline and body fonts, a logo (PNG or WebP; SVG is refused) and font files (WOFF2, TTF, OTF) with a required licence note that is stored with the file. Studio derives the other five roles (accent on light, attention, text on dark, text on light, surface) and the grounds a page can sit on from the three colours, so that text and accents stay readable; they cannot be set by hand. Saving a brand that was set by hand replaces its hand-set values with derived ones. Make sure you may use a font on a web server before uploading it. The editor opens every project with its organisation's brand; without one it uses Studio's own colours.
 
 ### Tools that need an outside service
 
-Studio's tools that call an outside service all follow one rule: a tool is **on when its key or URL is set**. `<TOOL>_ENABLED=false` switches a configured tool off (for example `AI_ENABLED=false`), and `<TOOL>_ENABLED=true` without its key or URL stops the server at start with an error, so a typo does not leave you with a silently missing tool. Tools whose service is not configured are hidden in the editor, and their routes answer `{"error":"feature_disabled"}` (the AI routes keep `ai_disabled`). `GET /api/config` tells the app which tools are on, as booleans only; keys and hosts never leave the server.
+Studio's tools that call an outside service all follow one rule: a tool is **on when its key or URL is set**. `<TOOL>_ENABLED=false` switches a configured tool off (for example `AI_ENABLED=false`), and `<TOOL>_ENABLED=true` without its key or URL stops the server at start with an error, so a typo does not leave you with a silently missing tool. Tools whose service is not configured are hidden in the editor, and their routes answer `{"error":"feature_disabled"}` (the AI routes keep `ai_disabled`). Icon search is the exception to "on when set": it needs no key, so it is **off until `ICONIFY_ENABLED=true`** (see [Icon search](#icon-search)). `GET /api/config` tells the app which tools are on, as booleans only; keys and hosts never leave the server.
 
 ### AI drafts
 
@@ -97,6 +102,16 @@ rembg s --host 0.0.0.0 --port 7000
 
 Uploads for this tool are limited by `UPLOAD_MAX_BYTES`; SVG is refused.
 
+### Icon search
+
+With `ICONIFY_ENABLED=true` the editor's Elements tab searches 400,000+ icons from [Iconify](https://iconify.design) next to the icons bundled with the editor. It is off by default because it sends data out of the instance.
+
+**What leaves your instance when it is on:** the search term (up to 64 characters) and the icon set and name of each icon that is previewed or placed, sent from the Studio server to `ICONIFY_API_URL` (default `https://api.iconify.design`, the public Iconify API; no key, no account). The browser never contacts Iconify: it asks Studio, so Iconify sees the server's address, not your users', and no cookie or account data. It does not see which account searched. No design content, image or text from a design is sent. To keep everything inside your network, run your own [Iconify API](https://iconify.design/docs/api/) (open source, with the icon sets you choose) and set `ICONIFY_API_URL` to it.
+
+Studio fixes the host to `ICONIFY_API_URL`; users cannot send a URL. Requests are authenticated, rate limited per account, bounded in time (`ICONIFY_TIMEOUT_MS`, default 10000) and size, and never follow redirects. Studio caches search results (10 minutes), the licence table (1 hour) and icons (24 hours) in memory.
+
+**Licences.** Only sets whose licence is in `ICONIFY_LICENCES` are offered (default `MIT,Apache-2.0,ISC,CC0-1.0,OFL-1.1,CC-BY-4.0,CC-BY-3.0`); a set whose licence Iconify does not state is never offered. NC, ND, SA and GPL licences are refused at start. Font Awesome sets are excluded on purpose, as is Remix Icon above version 4.8.0 (later versions carry a non-open licence). Each hit shows its set, licence and author. A placed icon is stored as a copy of its SVG in the design (so exports work offline), together with its source, licence and author. Studio rebuilds every SVG from an allowlist of shapes and attributes (no scripts, styles, animation, images or external references) before serving it and again before the editor stores or draws it. **Credits.** Almost every offered licence (MIT, Apache-2.0, ISC, CC BY, OFL) asks for a notice. Studio adds one line per icon set to the **share text** (the text offered next to the image when sharing or copying), in German, with the author and a link to the licence text, for every set except CC0. **Nothing is embedded in exported images** (PNG, PDF, PPTX): if you publish an image on its own, add the credit yourself. The picker shows "Icon: <set> von <author>, <licence>" for the selected icon.
+
 ## Backups
 
 Back up both the database and the uploads volume; one without the other leaves projects pointing at missing images.
@@ -139,7 +154,7 @@ Postgres major versions (e.g. 17 to 18) are not upgraded in place: dump, switch 
 - **Sessions** are server-side rows in Postgres; the browser holds a random token in an `HttpOnly`, `SameSite=Lax`, `Secure` cookie (`__Host-studio_session`) and the database only its SHA-256. Passwords are hashed with argon2id. `COOKIE_SECURE=false` is refused on a non-loopback `HOST` (as in the container) unless `ALLOW_INSECURE_COOKIE=1` is set, and Studio then prints a warning at every start.
 - **CSRF:** every state-changing request needs the session's CSRF token in `X-CSRF-Token`; requests a browser marks as cross-site are refused; the login endpoints accept JSON only.
 - **Login rate limits:** 10 failed attempts per email and 30 attempts per client IP (IPv6: per /64) within 15 minutes, per Studio process. At most four password hashes run at once; when 64 more are waiting, further logins get `503`.
-- **Organisations are isolated:** a project, upload, member list or brand pack of an organisation you are not a member of answers `404`.
+- **Organisations are isolated:** a project, upload or brand pack of an organisation you are not a member of answers `404`.
 - Uploads are checked by their content (PNG, JPEG, GIF, WebP, AVIF, SVG), stored under random names and served with `Content-Security-Policy: sandbox`; SVGs are additionally served as attachments so their scripts never run as a page.
 - Logos and fonts are checked by their content as well, stored under random names and served only to members of their organisation.
 

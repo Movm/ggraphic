@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { and, desc, eq, inArray, lte, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNotNull, lte, sql } from 'drizzle-orm';
 import express, { type Response, Router } from 'express';
 import { requireMembership, requireSession } from '../auth/middleware.ts';
 import {
@@ -7,14 +7,18 @@ import {
   type Project,
   projectIdSchema,
   type ProjectSummary,
+  type TrashItem,
   updateProjectBody,
 } from '../contract.ts';
 import type { Db } from '../db/client.ts';
 import { memberships, type ProjectRow, projects, projectThumbnails } from '../db/schema.ts';
 import { HttpError, parseOr400 } from '../http.ts';
+import { live, TRASH_RETENTION_DAYS } from '../trash.ts';
 import { isPng } from '../uploads.ts';
 
-type SummaryRow = Omit<ProjectRow, 'document' | 'ownerId'> & { thumbnailUpdatedAt: Date | null };
+type SummaryRow = Omit<ProjectRow, 'document' | 'ownerId' | 'deletedAt'> & {
+  thumbnailUpdatedAt: Date | null;
+};
 
 const summaryColumns = {
   id: projects.id,
@@ -69,7 +73,7 @@ export function organisationProjectsRouter(db: Db): Router {
       .select(summaryColumns)
       .from(projects)
       .leftJoin(projectThumbnails, eq(projectThumbnails.projectId, projects.id))
-      .where(eq(projects.organisationId, orgId))
+      .where(and(eq(projects.organisationId, orgId), live()))
       .orderBy(desc(projects.updatedAt));
     res.json({ projects: rows.map(toSummary) });
   });
@@ -86,8 +90,42 @@ export function organisationProjectsRouter(db: Db): Router {
       .select({ ...summaryColumns, document: projects.document })
       .from(projects)
       .leftJoin(projectThumbnails, eq(projectThumbnails.projectId, projects.id))
-      .where(eq(projects.id, row!.id));
+      .where(and(eq(projects.id, row!.id), live()));
     res.status(201).json({ ...toSummary(created!), document: created!.document });
+  });
+
+  return router;
+}
+
+/** `/api/orgs/:orgId/trash`: what was deleted from the organisation and can still be restored. */
+export function organisationTrashRouter(db: Db): Router {
+  const router = Router({ mergeParams: true });
+
+  router.get('/', async (req, res) => {
+    const orgId = orgParam(req.params);
+    await requireMembership(db, requireSession(res).account.id, orgId);
+    const rows = await db
+      .select({
+        id: projects.id,
+        organisationId: projects.organisationId,
+        name: projects.name,
+        deletedAt: projects.deletedAt,
+        // From the database clock that stamped deleted_at, not from this process's.
+        purgeAt: sql<Date>`${projects.deletedAt} + make_interval(days => ${TRASH_RETENTION_DAYS})`,
+        daysLeft: sql<number>`greatest(0, ceil(extract(epoch from (${projects.deletedAt} + make_interval(days => ${TRASH_RETENTION_DAYS}) - now())) / 86400))::int`,
+      })
+      .from(projects)
+      .where(and(eq(projects.organisationId, orgId), isNotNull(projects.deletedAt)))
+      .orderBy(desc(projects.deletedAt));
+    const items: TrashItem[] = rows.map((row) => ({
+      id: row.id,
+      organisationId: row.organisationId,
+      name: row.name,
+      deletedAt: row.deletedAt!.toISOString(),
+      purgeAt: new Date(row.purgeAt).toISOString(),
+      daysLeft: row.daysLeft,
+    }));
+    res.json({ projects: items });
   });
 
   return router;
@@ -111,7 +149,8 @@ function documentVersion(document: unknown): number {
 export function projectsRouter(db: Db, opts: { thumbnailMaxBytes: number }): Router {
   const router = Router();
 
-  const visible = (res: Response, id: string) =>
+  // Membership only. Every statement adds `live()` (or, for the trash, `isNotNull`).
+  const owned = (res: Response, id: string) =>
     and(
       eq(projects.id, id),
       inArray(projects.organisationId, memberOrganisations(db, requireSession(res).account.id))
@@ -122,7 +161,7 @@ export function projectsRouter(db: Db, opts: { thumbnailMaxBytes: number }): Rou
       .select({ ...summaryColumns, document: projects.document })
       .from(projects)
       .leftJoin(projectThumbnails, eq(projectThumbnails.projectId, projects.id))
-      .where(visible(res, id));
+      .where(and(owned(res, id), live()));
     if (!row) throw notFound();
     return { ...toSummary(row), document: row.document };
   }
@@ -132,13 +171,26 @@ export function projectsRouter(db: Db, opts: { thumbnailMaxBytes: number }): Rou
       .select(summaryColumns)
       .from(projects)
       .leftJoin(projectThumbnails, eq(projectThumbnails.projectId, projects.id))
-      .where(visible(res, id));
+      .where(and(owned(res, id), live()));
     if (!row) throw notFound();
     return toSummary(row);
   }
 
   router.get('/:id', async (req, res) => {
-    res.json(await loadProject(res, idParam(req.params.id)));
+    const id = idParam(req.params.id);
+    try {
+      res.json(await loadProject(res, id));
+    } catch (err) {
+      if (!(err instanceof HttpError) || err.status !== 404) throw err;
+      // trashedProbe: `owned` limits this to the caller's organisations, so a project of another
+      // organisation stays a plain not_found. The client says "in the Trash" instead of "missing".
+      const [inTrash] = await db
+        .select({ trashedProbe: projects.id })
+        .from(projects)
+        .where(and(owned(res, id), isNotNull(projects.deletedAt)));
+      if (inTrash) throw new HttpError(404, { error: 'trashed' });
+      throw err;
+    }
   });
 
   router.patch('/:id', async (req, res) => {
@@ -155,13 +207,13 @@ export function projectsRouter(db: Db, opts: { thumbnailMaxBytes: number }): Rou
     const updated = await db
       .update(projects)
       .set({ ...changes, version: sql`${projects.version} + 1`, updatedAt: sql`now()` })
-      .where(and(visible(res, id), eq(projects.version, version), notLower))
+      .where(and(owned(res, id), live(), eq(projects.version, version), notLower))
       .returning({ id: projects.id });
     if (updated.length === 0) {
       const [current] = await db
         .select({ version: projects.version, schemaVersion: projects.schemaVersion })
         .from(projects)
-        .where(visible(res, id));
+        .where(and(owned(res, id), live()));
       if (!current) throw notFound();
       if (changes.schemaVersion !== undefined && current.schemaVersion > changes.schemaVersion) {
         throw new HttpError(409, {
@@ -180,11 +232,35 @@ export function projectsRouter(db: Db, opts: { thumbnailMaxBytes: number }): Rou
   });
 
   router.delete('/:id', async (req, res) => {
-    const deleted = await db
-      .delete(projects)
-      .where(visible(res, idParam(req.params.id)))
+    // Soft delete: the row stays for TRASH_RETENTION_DAYS (restore, or src/trashPurge.ts).
+    const trashed = await db
+      .update(projects)
+      .set({ deletedAt: sql`now()` })
+      .where(and(owned(res, idParam(req.params.id)), live()))
       .returning({ id: projects.id });
-    if (deleted.length === 0) throw notFound();
+    if (trashed.length === 0) throw notFound();
+    res.status(204).end();
+  });
+
+  router.post('/:id/restore', async (req, res) => {
+    const id = idParam(req.params.id);
+    // Only deleted_at changes: the project returns to its old place with its old version.
+    // Idempotent: a project that is already live is answered with its summary; one that does
+    // not exist, or is not the caller's, is a 404 from loadSummary.
+    await db
+      .update(projects)
+      .set({ deletedAt: null })
+      .where(and(owned(res, id), isNotNull(projects.deletedAt)));
+    res.json(await loadSummary(res, id));
+  });
+
+  /** "Delete now": removes a project that is already in the trash, with its thumbnail. */
+  router.delete('/:id/purge', async (req, res) => {
+    const purged = await db
+      .delete(projects)
+      .where(and(owned(res, idParam(req.params.id)), isNotNull(projects.deletedAt)))
+      .returning({ id: projects.id });
+    if (purged.length === 0) throw notFound();
     res.status(204).end();
   });
 
@@ -200,7 +276,10 @@ export function projectsRouter(db: Db, opts: { thumbnailMaxBytes: number }): Rou
           message: 'Send the thumbnail as a PNG with Content-Type: image/png.',
         });
       }
-      const [exists] = await db.select({ id: projects.id }).from(projects).where(visible(res, id));
+      const [exists] = await db
+        .select({ id: projects.id })
+        .from(projects)
+        .where(and(owned(res, id), live()));
       if (!exists) throw notFound();
       await db
         .insert(projectThumbnails)
@@ -218,7 +297,7 @@ export function projectsRouter(db: Db, opts: { thumbnailMaxBytes: number }): Rou
       .select({ png: projectThumbnails.png })
       .from(projectThumbnails)
       .innerJoin(projects, eq(projects.id, projectThumbnails.projectId))
-      .where(visible(res, idParam(req.params.id)));
+      .where(and(owned(res, idParam(req.params.id)), live()));
     if (!row) throw notFound();
     // The URL carries ?v=<updated time>, so a changed thumbnail gets a new URL.
     res

@@ -94,6 +94,8 @@ export const projects = pgTable('projects', {
   version: integer('version').notNull().default(1),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  /** Set when the project is moved to the trash; null while it is live. See src/trash.ts. */
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
 });
 
 export const projectThumbnails = pgTable('project_thumbnails', {
