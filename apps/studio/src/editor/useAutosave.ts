@@ -27,8 +27,9 @@ interface Options {
   base: StudioDocument;
   /**
    * The document as parsed, before the brand was applied to it. Given when the brand changed
-   * the document on opening: that change is then an unsaved edit and is saved once. Without it
-   * the baseline is what the editor opens with.
+   * the document on opening: that change is stored once, silently (no "Unsaved changes", no
+   * leave warning, as the user edited nothing). Without it the baseline is what the editor
+   * opens with.
    */
   baseline?: StudioDocument;
   initialVersion: number;
@@ -54,7 +55,10 @@ export function useAutosave({
     baseline ? JSON.stringify(serializeDocument(baseline)) : null
   );
   const firstReadRef = useRef(true);
+  /** What the editor opened with: a difference from the stored document that is not an edit. */
+  const openedJsonRef = useRef<string | null>(null);
   const changedAtRef = useRef(0);
+  const openedSavedRef = useRef(false);
   const busyRef = useRef(false);
   const blockedRef = useRef(false);
   const thumbnailAtRef = useRef(0);
@@ -74,13 +78,13 @@ export function useAutosave({
   }, [exportApi, projectId, thumbnailMaxBytes]);
 
   const save = useCallback(
-    async (force = false) => {
+    async (force = false, silent = false) => {
       const doc = currentDocument();
       if (!doc || busyRef.current) return;
       const json = JSON.stringify(doc);
       if (!force && json === savedJsonRef.current) return;
       busyRef.current = true;
-      setStatus('saving');
+      if (!silent) setStatus('saving');
       try {
         const saved = await api.updateProject(projectId, {
           version: versionRef.current,
@@ -109,9 +113,11 @@ export function useAutosave({
           // the version, so a later "Try again" succeeds.
           blockedRef.current = true;
           setStatus('gone');
-        } else {
+        } else if (!silent) {
           setStatus('error');
         }
+        // Saving is stopped: what the editor opened with stays unstored, so it counts as unsaved.
+        if (blockedRef.current) openedJsonRef.current = null;
       } finally {
         busyRef.current = false;
       }
@@ -129,6 +135,7 @@ export function useAutosave({
       // baseline says the document was changed on opening.
       if (firstReadRef.current) {
         firstReadRef.current = false;
+        openedJsonRef.current = json;
         savedJsonRef.current ??= json;
         if (!hasThumbnail) {
           thumbnailAtRef.current = Date.now();
@@ -137,6 +144,14 @@ export function useAutosave({
         }
       }
       if (json === savedJsonRef.current) return;
+      if (json === openedJsonRef.current) {
+        // The brand changed the document on opening: store it, and say nothing about it.
+        if (!openedSavedRef.current) {
+          openedSavedRef.current = true;
+          void save(false, true);
+        }
+        return;
+      }
       const now = Date.now();
       if (changedAtRef.current === 0) changedAtRef.current = now;
       setStatus((s) => (s === 'saving' ? s : 'pending'));
@@ -147,17 +162,26 @@ export function useAutosave({
     return () => clearInterval(timer);
   }, [currentDocument, save, hasThumbnail, uploadThumbnail]);
 
+  /**
+   * True while the user's edits are not stored: what is on screen differs from what was last
+   * stored, and from what the editor opened with (the brand's rebind of the document is no edit).
+   */
+  const hasUnsaved = useCallback(() => {
+    const doc = currentDocument();
+    // Before the first read nothing was on screen to edit.
+    if (doc === null || savedJsonRef.current === null || firstReadRef.current) return false;
+    const json = JSON.stringify(doc);
+    return json !== savedJsonRef.current && json !== openedJsonRef.current;
+  }, [currentDocument]);
+
   // Leaving the page with unsaved changes: the browser asks first.
   useEffect(() => {
     const onBeforeUnload = (event: BeforeUnloadEvent) => {
-      const doc = currentDocument();
-      if (doc && savedJsonRef.current !== null && JSON.stringify(doc) !== savedJsonRef.current) {
-        event.preventDefault();
-      }
+      if (hasUnsaved()) event.preventDefault();
     };
     window.addEventListener('beforeunload', onBeforeUnload);
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
-  }, [currentDocument]);
+  }, [hasUnsaved]);
 
   /** After a 409: store what is on screen over the newer version. */
   const overwrite = useCallback(async () => {
@@ -173,14 +197,6 @@ export function useAutosave({
 
   /** Saves now, e.g. before leaving the editor. */
   const flush = useCallback(() => (blockedRef.current ? Promise.resolve() : save()), [save]);
-
-  /** True while what is on screen differs from what was last stored. */
-  const hasUnsaved = useCallback(() => {
-    const doc = currentDocument();
-    return (
-      doc !== null && savedJsonRef.current !== null && JSON.stringify(doc) !== savedJsonRef.current
-    );
-  }, [currentDocument]);
 
   return { status, overwrite, flush, hasUnsaved, retry: () => void save(true) };
 }
