@@ -11,7 +11,13 @@ const PREFIX_OR_NAME = /^[a-z0-9-]+$/;
 const MAX_COLLECTIONS_BYTES = 1024 * 1024;
 const MAX_SEARCH_BYTES = 256 * 1024;
 const MAX_SVG_BYTES = 64 * 1024;
-const MAX_BATCH_BYTES = 512 * 1024;
+/**
+ * A batch answer is capped per request (names per chunk x the single-icon cap, so heavy sets such
+ * as emoji still fit) and in total per search, so a hostile or broken upstream stays bounded.
+ */
+const BATCH_CHUNK = 16;
+const MAX_CHUNK_BYTES = BATCH_CHUNK * MAX_SVG_BYTES;
+const MAX_BATCH_TOTAL_BYTES = 4 * 1024 * 1024;
 
 /** How long we stay off a rate-limiting upstream when it names no Retry-After. */
 const DEFAULT_RETRY_AFTER_S = 10;
@@ -159,6 +165,8 @@ function batchIconSvg(set: BatchAnswer, icon: BatchIcon | undefined): string | n
 export interface IconifyClient {
   search(query: string, limit: number, prefix: string | null): Promise<IconSearchResult>;
   svg(prefix: string, name: string): Promise<string>;
+  /** Seconds the upstream asked us to stay away for; 0 when we may call it. */
+  cooldownSeconds(): number;
 }
 
 export function isIconToken(value: string): boolean {
@@ -310,11 +318,23 @@ export function createIconifyClient(
       if (cache.get(`svg\0${prefix}\0${name}`) !== undefined) continue;
       byPrefix.set(prefix, [...(byPrefix.get(prefix) ?? []), name]);
     }
+    let budget = MAX_BATCH_TOTAL_BYTES;
+    const requests = [...byPrefix].flatMap(([prefix, names]) => {
+      const chunks: [string, string[]][] = [];
+      for (let i = 0; i < names.length; i += BATCH_CHUNK) {
+        chunks.push([prefix, names.slice(i, i + BATCH_CHUNK)]);
+      }
+      return chunks;
+    });
     await Promise.all(
-      [...byPrefix].map(async ([prefix, names]) => {
+      requests.map(async ([prefix, names]) => {
         try {
           const params = new URLSearchParams({ icons: names.join(',') });
-          const body = await get(`/${prefix}.json?${params.toString()}`, MAX_BATCH_BYTES);
+          const body = await get(
+            `/${prefix}.json?${params.toString()}`,
+            Math.min(MAX_CHUNK_BYTES, budget)
+          );
+          if (body) budget -= body.body.length;
           const set = body ? (json(body.body) as BatchAnswer) : null;
           if (!set || typeof set.icons !== 'object' || set.icons === null) return;
           for (const name of names) {
@@ -334,7 +354,11 @@ export function createIconifyClient(
       const query = rawQuery.trim().toLowerCase().replace(/\s+/g, ' ');
       const key = `search\0${query}\0${limit}\0${prefix ?? ''}`;
       const hit = cache.get(key) as IconSearchResult | undefined;
-      if (hit) return hit;
+      if (hit) {
+        // Icons a first attempt could not batch (rate limit) are fetched now, still in batches.
+        await warm(hit.icons);
+        return hit;
+      }
       const allowed = await allowedSets();
       let prefixes = [...allowed.keys()];
       if (prefix) prefixes = prefixes.filter((p) => p === prefix);
@@ -366,6 +390,8 @@ export function createIconifyClient(
       await warm(icons);
       return result;
     },
+
+    cooldownSeconds: () => Math.max(0, cooldownLeft()),
 
     async svg(prefix, name) {
       if (!(await allowedSets()).has(prefix)) throw notFound();

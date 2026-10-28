@@ -40,6 +40,9 @@ describe('createStudioServices', () => {
     expect(await iconSearch!.search('tree')).toEqual([hit]);
     expect(search).toHaveBeenCalledWith('tree', 60, undefined);
     expect(await iconSearch!.svg('tabler', 'tree')).toBe('<svg></svg>');
+    const refresh = vi.spyOn(api, 'refreshIcons').mockResolvedValue({ retryAfterSeconds: 3 });
+    expect(await iconSearch!.refresh!('tree')).toEqual({ retryAfterSeconds: 3 });
+    expect(refresh).toHaveBeenCalledWith('tree', 60);
     expect(iconSearch!.previewUrl('tabler', 'tree')).toBe('/api/assets/icons/tabler/tree.svg');
   });
 

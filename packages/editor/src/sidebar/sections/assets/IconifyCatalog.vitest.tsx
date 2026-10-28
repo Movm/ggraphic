@@ -201,5 +201,33 @@ describe('IconifyCatalog', () => {
       await waitFor(() => expect(created.length).toBeGreaterThan(0));
       expect(screen.queryByRole('alert')).toBeNull();
     });
+
+    it('retries through the host refresh, which fetches in batches, not per tile', async () => {
+      failing.add('/api/assets/icons/lets/tree-fill.svg');
+      const refresh = vi.fn(() => Promise.resolve({ retryAfterSeconds: null }));
+      renderCatalog(service({ refresh }));
+      await screen.findByRole('alert');
+      failing.clear();
+      const before = created.length;
+      fireEvent.click(screen.getByRole('button', { name: 'Erneut versuchen' }));
+      await waitFor(() => expect(refresh).toHaveBeenCalledWith('baum'));
+      // The tiles are probed again only after the refresh answered.
+      await waitFor(() => expect(created.length).toBeGreaterThan(before));
+      await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
+    });
+
+    it('disables the button for the wait the host names, and says how long', async () => {
+      failing.add('/api/assets/icons/lets/tree-fill.svg');
+      const refresh = vi.fn(() => Promise.resolve({ retryAfterSeconds: 7 }));
+      renderCatalog(service({ refresh }));
+      await screen.findByRole('alert');
+      const before = created.length;
+      fireEvent.click(screen.getByRole('button', { name: 'Erneut versuchen' }));
+      const button = await screen.findByRole('button', { name: /Erneut versuchen/ });
+      await waitFor(() => expect(button).toBeDisabled());
+      expect(screen.getByRole('alert')).toHaveTextContent('7 s');
+      // Nothing was fetched meanwhile.
+      expect(created.length).toBe(before);
+    });
   });
 });

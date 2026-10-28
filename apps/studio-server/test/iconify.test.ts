@@ -296,6 +296,20 @@ describe.skipIf(!hasDb)('/api/assets/icons (Postgres)', () => {
     });
   });
 
+  describe('refresh', () => {
+    it('re-runs the batch and says how long to wait when the upstream is limiting us', async () => {
+      const fake = fakeIconify({
+        search: ['tabler:tree'],
+        batch: () => new Response('', { status: 429, headers: { 'retry-after': '6' } }),
+      });
+      const agent = await loggedIn(fake.impl);
+      const res = await agent.get('/api/assets/icons/search?q=tree&refresh=1').expect(200);
+      expect(res.headers['retry-after']).toBe('6');
+      expect(res.headers['cache-control']).toBe('no-store');
+      expect(res.body.icons).toHaveLength(1);
+    });
+  });
+
   describe('svg', () => {
     it('answers the icon as image/svg+xml, cached privately', async () => {
       const fake = fakeIconify();
@@ -510,5 +524,75 @@ describe('iconify client', () => {
     const client = createIconifyClient(iconify, fake.impl);
     const result = await client.search('tree', 10, null);
     expect(result.icons).toHaveLength(1);
+  });
+
+  it('batches heavy sets in chunks that fit, instead of falling back to one request per icon', async () => {
+    const names = Array.from({ length: 40 }, (_, i) => `icon-${i}`);
+    const fat = '<path d="' + 'M0 0h1'.repeat(3500) + '"/>';
+    const fake = fakeIconify({
+      search: names.map((n) => `tabler:${n}`),
+      batch: (prefix, url) =>
+        Response.json({
+          prefix,
+          width: 24,
+          height: 24,
+          icons: Object.fromEntries(
+            (url.searchParams.get('icons') ?? '').split(',').map((n) => [n, { body: fat }])
+          ),
+        }),
+    });
+    const client = createIconifyClient(iconify, fake.impl);
+    await client.search('tree', 64, null);
+    const batches = fake.calls.filter((c) => /^\/tabler\.json/.test(c));
+    expect(batches).toHaveLength(3);
+    for (const c of batches) {
+      expect(
+        new URL(`http://x${c}`).searchParams.get('icons')!.split(',').length
+      ).toBeLessThanOrEqual(16);
+    }
+    await client.svg('tabler', 'icon-39');
+    expect(fake.calls.filter((c) => c.endsWith('.svg'))).toEqual([]);
+  });
+
+  it('ignores a batch answer over the chunk cap', async () => {
+    const fake = fakeIconify({
+      search: ['tabler:tree'],
+      batch: () =>
+        new Response(new ReadableStream({ pull: (c) => c.enqueue(new Uint8Array(512 * 1024)) })),
+    });
+    const client = createIconifyClient(iconify, fake.impl);
+    await expect(client.search('tree', 10, null)).resolves.toMatchObject({
+      icons: [expect.anything()],
+    });
+  });
+
+  it('fetches the missing icons in batches when a cached search is repeated', async () => {
+    let failBatch = true;
+    const fake = fakeIconify({
+      search: ['tabler:tree', 'tabler:house'],
+      batch: (prefix, url) =>
+        failBatch ? new Response('', { status: 500 }) : batchAnswer(prefix, url),
+    });
+    const client = createIconifyClient(iconify, fake.impl);
+    await client.search('tree', 10, null);
+    failBatch = false;
+    await client.search('tree', 10, null);
+    await client.svg('tabler', 'house');
+    expect(fake.calls.filter((c) => c.endsWith('.svg'))).toEqual([]);
+    expect(fake.calls.filter((c) => c.startsWith('/search'))).toHaveLength(1);
+  });
+
+  it('reports the cooldown the upstream asked for', async () => {
+    let t = 1_000;
+    const fake = fakeIconify({
+      search: ['tabler:tree'],
+      batch: () => new Response('', { status: 429, headers: { 'retry-after': '9' } }),
+    });
+    const client = createIconifyClient(iconify, fake.impl, () => t);
+    expect(client.cooldownSeconds()).toBe(0);
+    await client.search('tree', 10, null);
+    expect(client.cooldownSeconds()).toBe(9);
+    t += 4_000;
+    expect(client.cooldownSeconds()).toBe(5);
   });
 });

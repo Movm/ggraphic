@@ -59,8 +59,38 @@ export function IconifyCatalog({
   // Tiles are CSS masks, which cannot report a failed load; each tile probes its own image.
   const [failedTiles, setFailedTiles] = useState<ReadonlySet<string>>(new Set());
   const [attempt, setAttempt] = useState(0);
+  // The wait the host asked for before another attempt, as an end time, and a ticking clock.
+  const [waitUntil, setWaitUntil] = useState<number | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+  const [refreshing, setRefreshing] = useState(false);
+  useEffect(() => {
+    if (waitUntil === null) return undefined;
+    const id = window.setInterval(() => {
+      setNow(Date.now());
+      if (Date.now() >= waitUntil) setWaitUntil(null);
+    }, 500);
+    return () => window.clearInterval(id);
+  }, [waitUntil]);
 
   if (!iconSearch || !enabled) return null;
+  const waitSeconds = waitUntil === null ? 0 : Math.max(0, Math.ceil((waitUntil - now) / 1000));
+  const retry = async () => {
+    setRefreshing(true);
+    let wait: number | null = null;
+    try {
+      wait = iconSearch.refresh ? (await iconSearch.refresh(term)).retryAfterSeconds : null;
+    } catch {
+      wait = null;
+    }
+    setRefreshing(false);
+    if (wait !== null && wait > 0) {
+      setNow(Date.now());
+      setWaitUntil(Date.now() + wait * 1000);
+      return;
+    }
+    setFailedTiles(new Set());
+    setAttempt((n) => n + 1);
+  };
   const hits = data ?? [];
   const current = selected && hits.some((h) => same(h, selected)) ? selected : null;
 
@@ -102,13 +132,11 @@ export function IconifyCatalog({
 
       {hits.some((h) => failedTiles.has(`${h.prefix}:${h.name}`)) && (
         <div role="alert" className="flex items-center gap-2 text-xs text-editor-danger-fg">
-          <span>{t.tilesFailed}</span>
+          <span>{waitSeconds > 0 ? t.busy(waitSeconds) : t.tilesFailed}</span>
           <button
             type="button"
-            onClick={() => {
-              setFailedTiles(new Set());
-              setAttempt((n) => n + 1);
-            }}
+            disabled={waitSeconds > 0 || refreshing}
+            onClick={() => void retry()}
             className="h-7 px-2 rounded-md border border-[var(--editor-border-strong)] bg-transparent text-xs text-[var(--editor-text)] cursor-pointer hover:bg-[var(--editor-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--editor-accent)]"
           >
             {t.retry}
