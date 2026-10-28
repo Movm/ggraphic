@@ -40,6 +40,18 @@ export const projectSummarySchema = z.object({
   thumbnailUrl: z.string().nullable(),
 });
 
+/** A project in the trash. Without a document or thumbnail: it can only be restored or purged. */
+export const trashItemSchema = z.object({
+  id: z.uuid(),
+  organisationId: z.uuid(),
+  name: z.string(),
+  deletedAt: z.iso.datetime(),
+  /** When the purge may remove it for good. */
+  purgeAt: z.iso.datetime(),
+  /** Whole days until then, rounded up; 0 once it is due. */
+  daysLeft: z.int(),
+});
+
 export const projectSchema = projectSummarySchema.extend({ document: documentSchema });
 
 export const draftBody = z.object({
@@ -214,6 +226,7 @@ export type CreateProjectBody = z.infer<typeof createProjectBody>;
 export type UpdateProjectBody = z.infer<typeof updateProjectBody>;
 export type ProjectSummary = z.infer<typeof projectSummarySchema>;
 export type Project = z.infer<typeof projectSchema>;
+export type TrashItem = z.infer<typeof trashItemSchema>;
 export type DraftBody = z.infer<typeof draftBody>;
 export type PickBody = z.infer<typeof pickBody>;
 export type Pick = z.infer<typeof pickSchema>;

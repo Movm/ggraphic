@@ -38,7 +38,11 @@ describe.skipIf(!url)('upgrade from 0001 (Postgres)', () => {
     expect(await runMigrations(pool, onlyFirst)).toEqual(['0001_init.sql']);
     await pool.query("INSERT INTO projects (name) VALUES ('one'), ('two')");
 
-    expect(await runMigrations(pool)).toEqual(['0002_accounts.sql']);
+    expect(await runMigrations(pool)).toEqual(['0002_accounts.sql', '0003_trash.sql']);
+    // The trash column is additive: projects from before it are live.
+    expect((await pool.query('SELECT 1 FROM projects WHERE deleted_at IS NOT NULL')).rowCount).toBe(
+      0
+    );
     const { rows } = await pool.query('SELECT name, organisation_id FROM projects ORDER BY name');
     expect(rows).toEqual([
       { name: 'one', organisation_id: DEFAULT_ORG },
