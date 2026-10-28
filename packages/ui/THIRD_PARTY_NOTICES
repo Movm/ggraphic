@@ -1,0 +1,5 @@
+This package bundles no third-party components.
+
+Its npm dependencies keep their own licenses: radix-ui (MIT) and
+@fontsource-variable/bricolage-grotesque (the Bricolage Grotesque typeface,
+SIL Open Font License 1.1, imported only through `@ggraphic/ui/fonts.css`).
