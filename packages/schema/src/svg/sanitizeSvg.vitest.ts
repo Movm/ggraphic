@@ -168,3 +168,116 @@ describe('sanitizeSvg: what survives', () => {
     expect(sanitizeSvg(once)).toBe(once);
   });
 });
+
+describe('sanitizeSvg: use expansion', () => {
+  /** n levels, each holding `fan` uses of the level below: fan^n instances (probe mk.mts). */
+  const bomb = (n: number, fan: number) => {
+    let body = '<defs><path id="l0" d="M0 0h1v1z" fill="red"/>';
+    for (let i = 1; i <= n; i++) {
+      body += `<g id="l${i}">${`<use href="#l${i - 1}"/>`.repeat(fan)}</g>`;
+    }
+    return wrap(`${body}</defs><use href="#l${n}"/>`);
+  };
+
+  it('refuses the reference bomb (10 levels of 10 uses)', () => {
+    const input = bomb(10, 10);
+    expect(input.length).toBeLessThan(MAX_SVG_CHARS);
+    expect(sanitizeSvg(input)).toBeNull();
+  });
+
+  it('refuses a smaller bomb whose expansion still passes the cap', () => {
+    expect(sanitizeSvg(bomb(5, 10))).toBeNull();
+  });
+
+  it('refuses a use that references its own ancestor', () => {
+    expect(sanitizeSvg(wrap('<g id="a"><use href="#a"/></g>'))).toBeNull();
+    expect(sanitizeSvg(wrap('<symbol id="s"><g><use href="#s"/></g></symbol>'))).toBeNull();
+  });
+
+  it('refuses a mutual cycle', () => {
+    expect(
+      sanitizeSvg(
+        wrap('<g id="a"><use href="#b"/></g><g id="b"><use href="#a"/></g><use href="#a"/>')
+      )
+    ).toBeNull();
+  });
+
+  it('keeps a legitimate icon with a few uses, also the same target twice', () => {
+    const input = wrap(
+      '<defs><path id="p" d="M0 0h4"/><g id="pair"><use href="#p"/><use href="#p" x="5"/></g></defs>' +
+        '<use href="#pair"/><use href="#pair" y="8"/><use href="#missing"/>'
+    );
+    expect(sanitizeSvg(input)).not.toBeNull();
+  });
+});
+
+describe('sanitizeSvg: href', () => {
+  it('emits one href when both spellings are present, preferring the plain one', () => {
+    const input = `<svg ${NS} xmlns:xlink="http://www.w3.org/1999/xlink"><use xlink:href="#a" href="#b"/></svg>`;
+    const out = sanitizeSvg(input)!;
+    expect(out).toBe(`<svg ${NS}><use href="#b"/></svg>`);
+    expect(sanitizeSvg(out)).toBe(out);
+  });
+
+  it('drops both when the plain one is not a fragment', () => {
+    const input = `<svg ${NS} xmlns:xlink="http://www.w3.org/1999/xlink"><use xlink:href="#a" href="http://evil"/></svg>`;
+    expect(sanitizeSvg(input)).toBe(`<svg ${NS}><use/></svg>`);
+  });
+});
+
+describe('sanitizeSvg: presentation values', () => {
+  const clean = (attrs: string) => sanitizeSvg(wrap(`<path d="M0 0" ${attrs}/>`))!;
+
+  it.each([
+    'fill="image-set(&quot;http://evil/x.png&quot; 1x)"',
+    'fill="-webkit-image-set(url(#a) 1x)"',
+    'fill="image(&quot;x&quot;)"',
+    'fill="cross-fade(url(#a), url(#b), 50%)"',
+    'fill="src(&quot;x&quot;)"',
+    'fill="expression(alert(1))"',
+    'fill="var(--x)"',
+    'stroke="calc(1px + 2px)"',
+    'transform="foo(1)"',
+  ])('drops %s', (attr) => {
+    expect(clean(attr)).toBe(wrap('<path d="M0 0"/>'));
+  });
+
+  it('keeps colour functions, transforms and fragment urls', () => {
+    const out = clean(
+      'fill="rgb(1 2 3)" stroke="hsla(1, 2%, 3%, .5)" transform="translate(1 2) rotate(5)" gradientTransform="matrix(1 0 0 1 0 0)"'
+    );
+    expect(out).toContain('fill="rgb(1 2 3)"');
+    expect(out).toContain('stroke="hsla(1, 2%, 3%, .5)"');
+    expect(out).toContain('transform="translate(1 2) rotate(5)"');
+  });
+
+  it('allows only none or one url(#id) in mask and clip-path', () => {
+    expect(clean('clip-path="none"')).toContain('clip-path="none"');
+    expect(clean('mask="url(#m)"')).toContain('mask="url(#m)"');
+    for (const bad of ['url(#m) url(#n)', 'url(#m) red', 'circle(50%)', 'inset(1px)', 'fill-box']) {
+      expect(clean(`clip-path="${bad}"`)).toBe(wrap('<path d="M0 0"/>'));
+    }
+  });
+
+  it('accepts only the five XML space characters inside url( )', () => {
+    expect(clean('fill="url(\u00a0#g)"')).toBe(wrap('<path d="M0 0"/>'));
+    expect(clean('fill="url( #g )"')).toContain('fill="url( #g )"');
+  });
+});
+
+describe('sanitizeSvg: idempotence at the size cap', () => {
+  it('returns null when escaping pushes the output past the cap', () => {
+    // Each `&amp;` in the source is 5 chars, and `"` in an attribute grows from 1 to 6.
+    const title = '<'.repeat(0);
+    const text = '&amp;'.repeat(Math.floor((MAX_SVG_CHARS - 200) / 5));
+    const input = `<svg ${NS}><title>${text}${title}</title></svg>`;
+    expect(input.length).toBeLessThanOrEqual(MAX_SVG_CHARS);
+    const out = sanitizeSvg(input);
+    // Re-escaped text is the same size here, so it may pass; what must hold is idempotence.
+    if (out !== null) expect(sanitizeSvg(out)).toBe(out);
+    // Raw `>` (1 char) comes back as `&gt;` (4 chars): this one must be refused.
+    const grows = `<svg ${NS}><title>${'>'.repeat(MAX_SVG_CHARS - 100)}</title></svg>`;
+    expect(grows.length).toBeLessThanOrEqual(MAX_SVG_CHARS);
+    expect(sanitizeSvg(grows)).toBeNull();
+  });
+});
