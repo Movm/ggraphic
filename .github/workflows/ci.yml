@@ -15,6 +15,22 @@ concurrency:
 jobs:
   check:
     runs-on: ubuntu-latest
+    # The Studio server's route and authorisation tests need a real Postgres; without
+    # DATABASE_URL they are skipped, so CI provides one.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: studio
+          POSTGRES_PASSWORD: studio
+          POSTGRES_DB: studio_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U studio -d studio_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -27,8 +43,13 @@ jobs:
       - run: pnpm lint
       - run: pnpm format:check
       - run: pnpm test
-      # Placeholders: scripts are added with the first import.
-      - name: Boundary check (no brand/party-specific imports or strings)
-        run: 'echo "TODO: pnpm check:boundaries"'
-      - name: Licence check (MPL-2.0 packages, AGPL-3.0 apps/studio)
-        run: 'echo "TODO: pnpm check:licences"'
+        env:
+          DATABASE_URL: postgres://studio:studio@127.0.0.1:5432/studio_test
+      - run: pnpm build
+      - name: Guard self-tests
+        run: pnpm check:guards:self-test
+      - name: Licence check (production dependency tree)
+        run: pnpm check:licences
+      - name: ESM specifier check (src and built dist)
+        run: node scripts/check-esm-specifiers.mjs --dist
+      # Brand-neutral boundary checks live in the Gruenerator repository by design.
