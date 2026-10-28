@@ -12,13 +12,16 @@ import { styledFontSpecs } from '@ggraphic/editor/hooks/useFontLoader';
  */
 describe('styledFontSpecs', () => {
   it('nennt den Stil im Spec — sonst lädt nur der Grundschnitt', () => {
-    expect(styledFontSpecs('PT Sans', 60)).toEqual(['bold 60px PT Sans', 'italic 60px PT Sans']);
+    expect(styledFontSpecs('Instrument Sans', 60)).toEqual([
+      'bold 60px Instrument Sans',
+      'italic 60px Instrument Sans',
+    ]);
   });
 
   it('deckt jede Familie ab, die die Vorlage zeichnet', () => {
-    expect(styledFontSpecs(['PT Sans', 'FixtureSans'], 42)).toEqual([
-      'bold 42px PT Sans',
-      'italic 42px PT Sans',
+    expect(styledFontSpecs(['Instrument Sans', 'FixtureSans'], 42)).toEqual([
+      'bold 42px Instrument Sans',
+      'italic 42px Instrument Sans',
       'bold 42px FixtureSans',
       'italic 42px FixtureSans',
     ]);
@@ -27,6 +30,8 @@ describe('styledFontSpecs', () => {
   it('fragt kein `bold italic` an', () => {
     // Keine unserer Schriften hat den Schnitt, und Browser und Skia lösen die
     // Anfrage gegensätzlich auf — `fontStyleForRun` fragt ihn deshalb nie an.
-    expect(styledFontSpecs('PT Sans', 60).some((spec) => spec.includes('bold italic'))).toBe(false);
+    expect(
+      styledFontSpecs('Instrument Sans', 60).some((spec) => spec.includes('bold italic'))
+    ).toBe(false);
   });
 });

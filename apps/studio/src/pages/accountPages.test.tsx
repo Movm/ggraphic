@@ -159,7 +159,7 @@ describe('BrandPage', () => {
     settings: null,
     assets: [],
     pack: null,
-    bundledFonts: ['Raleway', 'PT Sans', 'Vollkorn'],
+    bundledFonts: ['Raleway', 'Instrument Sans', 'Fraunces'],
   };
 
   it('starts from the Studio colours, previews edits live and saves them', async () => {
@@ -189,7 +189,7 @@ describe('BrandPage', () => {
     };
     expect(saved.colors['primary']).toBe('#112233');
     expect(saved.backgrounds).toHaveLength(studioBrand.backgrounds.length);
-    expect(saved.fonts).toEqual({ headline: 'Raleway', body: 'PT Sans' });
+    expect(saved.fonts).toEqual({ headline: 'Raleway', body: 'Instrument Sans' });
   });
 
   it('blocks saving an invalid colour', async () => {

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { aliasFontFamily } from './fontAliases.js';
 import type { CanvasElementConfig, FullCanvasConfig } from '../configs/types.js';
 
 /**
@@ -13,13 +14,13 @@ export function canvasFontFamilies<TState>(config: {
   elements: readonly CanvasElementConfig<TState>[];
 }): string[] {
   const families = new Set<string>();
-  if (config.fonts?.primary) families.add(config.fonts.primary);
+  if (config.fonts?.primary) families.add(aliasFontFamily(config.fonts.primary));
   for (const element of config.elements) {
     if (element.type !== 'text') continue;
     // Element families carry a ', Arial, sans-serif' fallback stack — only the
     // first entry is a webfont we can wait for.
     const family = element.fontFamily.split(',')[0]?.trim();
-    if (family) families.add(family);
+    if (family) families.add(aliasFontFamily(family));
   }
   return Array.from(families);
 }

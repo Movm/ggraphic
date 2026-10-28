@@ -24,7 +24,7 @@ function stageOf(text: string, withMarker: boolean) {
         y={10}
         width={500}
         fontSize={24}
-        fontFamily="PT Sans, Arial, sans-serif"
+        fontFamily="Instrument Sans, Arial, sans-serif"
         fill="#FFFFFF"
         shadowColor="#000000"
         shadowBlur={18}

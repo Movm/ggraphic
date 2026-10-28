@@ -28,7 +28,7 @@ function dragTo(text: string, x: number, targets: SnapTarget[]): number {
         y={700}
         width={200}
         fontSize={24}
-        fontFamily="PT Sans, Arial, sans-serif"
+        fontFamily="Instrument Sans, Arial, sans-serif"
         draggable
         stageWidth={1000}
         stageHeight={1000}

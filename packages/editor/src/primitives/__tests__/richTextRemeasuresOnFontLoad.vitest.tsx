@@ -107,7 +107,8 @@ describe('measureTextWidthWithFont', () => {
     fonts.check.mockClear();
     fonts.check.mockReturnValue(true);
 
-    for (let i = 0; i < 20; i++) measureTextWidthWithFont(`Wort ${i}`, 40, 'PT Sans', 'normal');
+    for (let i = 0; i < 20; i++)
+      measureTextWidthWithFont(`Wort ${i}`, 40, 'Instrument Sans', 'normal');
 
     expect(fonts.check).toHaveBeenCalledTimes(1);
     expect(fonts.load).not.toHaveBeenCalled();

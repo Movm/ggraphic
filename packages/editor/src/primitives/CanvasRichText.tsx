@@ -35,6 +35,7 @@ import {
 import { useFontGeneration } from '@ggraphic/editor/hooks/useFontGeneration';
 import { useGeometryReporter } from '@ggraphic/editor/hooks/useGeometryReporter';
 import { useSnapScheduler } from '@ggraphic/editor/hooks/useSnapScheduler';
+import { resolveFontFamily } from '../utils/fontAliases.js';
 import { gradientFillProps } from '@ggraphic/editor/utils/gradientFill';
 import { markerBoxes } from '@ggraphic/editor/utils/markerBoxes';
 import { defaultTextMarker, markerInkOn } from '@ggraphic/editor/utils/markerColors';
@@ -431,7 +432,7 @@ export function CanvasRichText({
                   x={padding + offset}
                   y={top}
                   fontSize={fontSize}
-                  fontFamily={fontFamily}
+                  fontFamily={resolveFontFamily(fontFamily)}
                   fontStyle={fontStyle}
                   fill={fill}
                   {...gradientAt(padding + offset, top)}

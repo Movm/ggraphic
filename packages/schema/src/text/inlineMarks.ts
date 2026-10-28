@@ -393,7 +393,7 @@ export function normalizeInlineMarks(text: string): string {
 
 /**
  * `++Marker++` als `==Akzent==` lesen — für die Orte, an denen der Marker
- * keine Box hat (AT setzt Hervorhebungen gelb in Vollkorn kursiv, nie als
+ * keine Box hat (AT setzt Hervorhebungen gelb in Fraunces kursiv, nie als
  * Kasten). Texte ohne `++` bleiben Zeichen für Zeichen unberührt; nur ein Text
  * mit Marker läuft durch Parser und Serializer.
  */

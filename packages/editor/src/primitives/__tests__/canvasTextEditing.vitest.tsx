@@ -27,7 +27,7 @@ import { CanvasText } from '@ggraphic/editor/primitives/CanvasText';
 import type { CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
 
 const BRAND_TYPE = 'FixtureSans, Arial, sans-serif';
-const PT_SANS = 'PT Sans, Arial, sans-serif';
+const INSTRUMENT_SANS = 'Instrument Sans, Arial, sans-serif';
 
 interface StageOptions {
   /** Entwurfsmaße; weichen sie von width/height ab, skaliert CanvasStage eine Gruppe darum. */
@@ -84,7 +84,7 @@ describe('Doppelklick auf Leinwand-Text', () => {
   });
 
   it('öffnet auf bereits ausgezeichnetem Text denselben Editor', () => {
-    dblClickOnCanvas({ text: '• Erster Punkt\n• Zweiter Punkt', fontFamily: PT_SANS });
+    dblClickOnCanvas({ text: '• Erster Punkt\n• Zweiter Punkt', fontFamily: INSTRUMENT_SANS });
 
     expect(screen.getByRole('toolbar', { name: 'Textformatierung' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Fett/ })).toBeInTheDocument();
@@ -105,7 +105,7 @@ describe('Doppelklick auf Leinwand-Text', () => {
     // Der Maßstab der Bühne allein kennt sie nicht — der Editor stünde dann
     // an der richtigen Stelle in der falschen Größe über dem Text.
     dblClickOnCanvas(
-      { text: 'Skaliert', fontFamily: PT_SANS, width: 100, fontSize: 20 },
+      { text: 'Skaliert', fontFamily: INSTRUMENT_SANS, width: 100, fontSize: 20 },
       { logicalWidth: 300, logicalHeight: 300 }
     );
 
@@ -118,7 +118,7 @@ describe('Doppelklick auf Leinwand-Text', () => {
   });
 
   it('öffnet nichts, wo das Feld nicht bearbeitbar ist', () => {
-    dblClickOnCanvas({ text: 'Nur Anzeige', fontFamily: PT_SANS, editable: false });
+    dblClickOnCanvas({ text: 'Nur Anzeige', fontFamily: INSTRUMENT_SANS, editable: false });
 
     expect(screen.queryByRole('toolbar')).not.toBeInTheDocument();
   });
@@ -156,12 +156,16 @@ describe('Escape im Editor', () => {
       editor = useCanvasTextFormatting();
       return null;
     }
-    dblClickOnCanvas({ text: 'Erster Punkt', fontFamily: PT_SANS, onTextChange }, {}, (node) => (
-      <CanvasTextEditorProvider>
-        <Grab />
-        {node}
-      </CanvasTextEditorProvider>
-    ));
+    dblClickOnCanvas(
+      { text: 'Erster Punkt', fontFamily: INSTRUMENT_SANS, onTextChange },
+      {},
+      (node) => (
+        <CanvasTextEditorProvider>
+          <Grab />
+          {node}
+        </CanvasTextEditorProvider>
+      )
+    );
     act(() => {
       editor!.editor!.commands.insertContentAt(editor!.editor!.state.doc.content.size - 1, ' neu');
     });
@@ -177,12 +181,16 @@ describe('Escape im Editor', () => {
 
 describe('Bühne innerhalb eines Wirt-Providers', () => {
   it('öffnet keine zweite Sitzung — der Wirt bekommt den Editor', () => {
-    dblClickOnCanvas({ text: 'Klimaschutz ist kein Sprint', fontFamily: PT_SANS }, {}, (node) => (
-      <CanvasTextEditorProvider>
-        <HostControls />
-        {node}
-      </CanvasTextEditorProvider>
-    ));
+    dblClickOnCanvas(
+      { text: 'Klimaschutz ist kein Sprint', fontFamily: INSTRUMENT_SANS },
+      {},
+      (node) => (
+        <CanvasTextEditorProvider>
+          <HostControls />
+          {node}
+        </CanvasTextEditorProvider>
+      )
+    );
 
     expect(screen.getByTestId('host')).not.toHaveTextContent('leer');
     expect(screen.getAllByRole('toolbar', { name: 'Textformatierung' })).toHaveLength(1);
@@ -195,7 +203,7 @@ describe('Bühne innerhalb eines Wirt-Providers', () => {
   it('zeigt die Karte weiterhin, wo keine Kopfleiste darüber liegt', () => {
     // `StandaloneCanvas`: Bühne ohne Editor-Rahmen. Ohne diesen Zweig verlöre
     // der Pfad jede Formatierung.
-    dblClickOnCanvas({ text: 'Klimaschutz ist kein Sprint', fontFamily: PT_SANS });
+    dblClickOnCanvas({ text: 'Klimaschutz ist kein Sprint', fontFamily: INSTRUMENT_SANS });
 
     expect(document.querySelector('.canvas-rte__floating-toolbar')).not.toBeNull();
   });
@@ -205,9 +213,11 @@ describe('Bühne innerhalb eines Wirt-Providers', () => {
     // rendert die Kontextleiste aber nicht (die App stellt sie). Entschiede
     // der Provider anhand einer Zusage des Aufrufers statt anhand der
     // Anmeldung, bliebe der Text hier ganz ohne Schnitt-Knöpfe.
-    dblClickOnCanvas({ text: 'Klimaschutz ist kein Sprint', fontFamily: PT_SANS }, {}, (node) => (
-      <CanvasTextEditorProvider>{node}</CanvasTextEditorProvider>
-    ));
+    dblClickOnCanvas(
+      { text: 'Klimaschutz ist kein Sprint', fontFamily: INSTRUMENT_SANS },
+      {},
+      (node) => <CanvasTextEditorProvider>{node}</CanvasTextEditorProvider>
+    );
 
     expect(document.querySelector('.canvas-rte__floating-toolbar')).not.toBeNull();
   });
@@ -236,13 +246,13 @@ describe('Der Editor zeigt, was die Leinwand zeigt', () => {
   const indent = () => styledFrame().style.getPropertyValue('--canvas-rte-list-indent');
 
   it('rückt eine Aufzählung ein, damit der Punkt im Feld steht statt daneben', () => {
-    dblClickOnCanvas({ text: '• Erster Punkt\n• Zweiter Punkt', fontFamily: PT_SANS });
+    dblClickOnCanvas({ text: '• Erster Punkt\n• Zweiter Punkt', fontFamily: INSTRUMENT_SANS });
 
     expect(parseFloat(indent())).toBeGreaterThan(0);
   });
 
   it('rückt glatten Text nicht ein', () => {
-    dblClickOnCanvas({ text: 'Klimaschutz ist kein Sprint', fontFamily: PT_SANS });
+    dblClickOnCanvas({ text: 'Klimaschutz ist kein Sprint', fontFamily: INSTRUMENT_SANS });
 
     expect(indent()).toBe('0px');
   });
@@ -251,7 +261,7 @@ describe('Der Editor zeigt, was die Leinwand zeigt', () => {
     // Derselbe Maßstabsfall wie oben beim Kasten: misst der Einzug am
     // Bildschirm statt am Entwurf, driftet er auf jedem Format auseinander,
     // dessen Entwurfsmaße von den Ausgabemaßen abweichen.
-    const feld = { text: '• Erster Punkt', fontFamily: PT_SANS, width: 100, fontSize: 20 };
+    const feld = { text: '• Erster Punkt', fontFamily: INSTRUMENT_SANS, width: 100, fontSize: 20 };
     dblClickOnCanvas(feld);
     const einfach = parseFloat(indent());
     cleanup();
@@ -263,7 +273,7 @@ describe('Der Editor zeigt, was die Leinwand zeigt', () => {
   });
 
   it('zeigt die Deckkraft des Feldes', () => {
-    dblClickOnCanvas({ text: 'Klimaschutz', fontFamily: PT_SANS, opacity: 0.4 });
+    dblClickOnCanvas({ text: 'Klimaschutz', fontFamily: INSTRUMENT_SANS, opacity: 0.4 });
 
     expect(styledFrame().style.opacity).toBe('0.4');
   });
@@ -271,7 +281,7 @@ describe('Der Editor zeigt, was die Leinwand zeigt', () => {
   it('wird dabei aber nicht unsichtbar', () => {
     // Der Regler der Kopfleiste geht bis 0. Der Editor ist Werkzeug, nicht
     // Sujet — bei 0 tippte man ins Unsichtbare.
-    dblClickOnCanvas({ text: 'Klimaschutz', fontFamily: PT_SANS, opacity: 0 });
+    dblClickOnCanvas({ text: 'Klimaschutz', fontFamily: INSTRUMENT_SANS, opacity: 0 });
 
     expect(styledFrame().style.opacity).toBe('0.2');
   });
