@@ -10,7 +10,8 @@ import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
 import { type StudioConfig } from '../api/client';
 import { studioBrand } from '../brand';
 import { rememberLogoSize } from '../logoSize';
-import { TEST_ORG, TEST_PROJECTS_URL, WithSession } from '../testing/session';
+import { LoggedInContext } from '../session/SessionContext';
+import { TEST_ORG, TEST_PROJECTS_URL, WithSession, testSession } from '../testing/session';
 import { Toaster } from '../ui/toast';
 
 import { nameFromPrompt } from './createFromPrompt';
@@ -54,10 +55,13 @@ function fakeServer({
   ai,
   listed = [],
   pack = null,
+  createFails = null,
 }: {
   ai: 'ok' | 'timeout';
   listed?: unknown[];
   pack?: unknown;
+  /** The project POST answers with this error instead of creating. */
+  createFails?: { status: number; error: string; message: string } | null;
 }) {
   const calls: Call[] = [];
   const project = (document: unknown, version: number) => ({
@@ -83,6 +87,9 @@ function fakeServer({
       typeof init?.body === 'string' ? (JSON.parse(init.body) as Record<string, unknown>) : null;
     calls.push({ method, url, body });
     if (url === TEST_PROJECTS_URL && method === 'GET') return json(200, { projects: listed });
+    if (url === TEST_PROJECTS_URL && method === 'POST' && createFails) {
+      return json(createFails.status, { error: createFails.error, message: createFails.message });
+    }
     if (url === TEST_PROJECTS_URL && method === 'POST')
       return json(201, project(body?.document, 1));
     if (url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET')
@@ -214,6 +221,54 @@ describe('StartPage', () => {
     expect(screen.getByRole('button', { name: /Create/ })).toBeEnabled();
   });
 
+  it.each([
+    [
+      500,
+      'internal',
+      'duplicate key value violates unique constraint "projects_pkey"',
+      /project could not be created/i,
+    ],
+    [403, 'forbidden', 'role viewer may not insert into projects', /not allowed/i],
+    [413, 'too_large', 'body exceeds 5242880 bytes', /too large/i],
+    [429, 'rate_limited', 'rate limit exceeded: 30/min', /too many/i],
+  ])(
+    'tells %s from createProject in plain words, not the server text',
+    async (status, error, message, friendly) => {
+      const { fetchMock } = fakeServer({ ai: 'ok', createFails: { status, error, message } });
+      vi.stubGlobal('fetch', fetchMock);
+      const user = userEvent.setup();
+      renderStart(false);
+
+      await user.type(screen.getByLabelText('Describe your graphic'), 'Library opens on Sundays');
+      await user.keyboard('{Enter}');
+
+      expect(await screen.findByText(friendly)).toBeInTheDocument();
+      expect(screen.queryByText(message)).not.toBeInTheDocument();
+      expect(screen.getByLabelText('Describe your graphic')).toHaveValue(
+        'Library opens on Sundays'
+      );
+    }
+  );
+
+  it('says the server is unreachable when createProject cannot connect', async () => {
+    const { fetchMock } = fakeServer({ ai: 'ok' });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+        String(input) === TEST_PROJECTS_URL && init?.method === 'POST'
+          ? Promise.reject(new TypeError('Failed to fetch'))
+          : fetchMock(input, init)
+      )
+    );
+    const user = userEvent.setup();
+    renderStart(false);
+
+    await user.type(screen.getByLabelText('Describe your graphic'), 'Library opens on Sundays');
+    await user.keyboard('{Enter}');
+
+    expect(await screen.findByText(/check your connection/i)).toBeInTheDocument();
+  });
+
   it('shows a loading state while the draft runs', async () => {
     let release: (r: Response) => void = () => {};
     const { fetchMock } = fakeServer({ ai: 'ok' });
@@ -321,6 +376,61 @@ describe('StartPage sections', () => {
     expect(within(templates).getByRole('button', { name: /^Quote/ })).toBeInTheDocument();
     expect(within(templates).getByRole('button', { name: /^Headline/ })).toBeInTheDocument();
     expect(within(templates).getByRole('button', { name: /^Blank/ })).toBeInTheDocument();
+  });
+
+  it('does not let a late brand answer for the previous organisation change the tiles', async () => {
+    const near = {
+      ...studioBrand,
+      id: 'near',
+      colors: { ...studioBrand.colors, secondary: '#FAFAFA' },
+    };
+    let releaseA: () => void = () => {};
+    const answered = (pack: unknown) =>
+      new Response(JSON.stringify({ settings: null, assets: [], pack, bundledFonts: [] }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === '/api/orgs/org-a/brand-pack') {
+          await new Promise<void>((resolve) => (releaseA = resolve));
+          return answered(near);
+        }
+        if (url === '/api/orgs/org-b/brand-pack') return answered(null);
+        return new Response(JSON.stringify({ projects: [] }), {
+          headers: { 'Content-Type': 'application/json' },
+        });
+      })
+    );
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const as = (id: string) => (
+      <QueryClientProvider client={client}>
+        <LoggedInContext.Provider
+          value={{ ...testSession(), organisation: { id, name: id, role: 'owner' } }}
+        >
+          <StartPage config={config(false)} />
+        </LoggedInContext.Provider>
+      </QueryClientProvider>
+    );
+    const user = userEvent.setup();
+    const view = render(as('org-a'));
+    view.rerender(as('org-b'));
+
+    const templates = screen.getByRole('list', { name: 'Templates' });
+    // B answered: its studio brand keeps the light-only template.
+    expect(
+      await within(templates).findByRole('button', { name: /^Light only/ })
+    ).toBeInTheDocument();
+    // A answers late with a brand that cannot place it; a new format redraws the tiles.
+    releaseA();
+    // Wait for the real condition: A's answer has landed in the query cache (and, before the fix,
+    // registered A's brand).
+    await waitFor(() =>
+      expect(client.getQueryState(['start-brand', 'org-a'])?.status).toBe('success')
+    );
+    await user.click(screen.getByRole('radio', { name: /1080 × 1080/ }));
+    expect(within(templates).getByRole('button', { name: /^Light only/ })).toBeInTheDocument();
   });
 
   it('creates a project from a template in the chosen format', async () => {

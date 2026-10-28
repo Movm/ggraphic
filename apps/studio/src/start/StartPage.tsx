@@ -10,7 +10,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useId, useMemo, useState, type ReactNode } from 'react';
 import { PiFile, PiQuotes, PiTextT, PiNumberOne } from 'react-icons/pi';
 
-import { ApiError, type StudioConfig } from '../api/client';
+import { type StudioConfig } from '../api/client';
+import { studioBrand } from '../brand';
 import { DEFAULT_FORMAT, STUDIO_FORMATS, type StudioFormatId } from '../editor/document';
 import { templatesFor } from '../editor/templates/catalog';
 import { BLANK_TEMPLATE_ID } from '../editor/templates/ids';
@@ -18,6 +19,7 @@ import { PROJECTS_QUERY_KEY } from '../projects/projectsKey';
 import { editorPath, navigate } from '../router';
 import { useLoggedIn } from '../session/SessionContext';
 import { PageShell } from '../ui/PageShell';
+import { apiErrorText } from '../ui/errorText';
 import { toast } from '../ui/toast';
 
 import {
@@ -25,7 +27,7 @@ import {
   TemplateUnavailableError,
   createFromPrompt,
   createFromTemplate,
-  loadOrganisationBrand,
+  fetchOrganisationBrand,
 } from './createFromPrompt';
 import { ProjectGrid } from './ProjectGrid';
 
@@ -56,10 +58,14 @@ const FORMAT_OPTIONS = STUDIO_FORMATS.map((f) => ({
   detail: f.size,
 }));
 
+/**
+ * What to tell a person when creating a project failed. The server's own text is for logs, so an
+ * `ApiError` is told by code and status (`apiErrorText`), never by its message.
+ */
 const errorText = (err: unknown) =>
-  err instanceof AiPromptError || err instanceof ApiError || err instanceof TemplateUnavailableError
+  err instanceof AiPromptError || err instanceof TemplateUnavailableError
     ? err.message
-    : 'The project could not be created.';
+    : apiErrorText(err, 'The project could not be created. Please try again.');
 
 export function StartPage({ config }: { config: StudioConfig | undefined }) {
   const queryClient = useQueryClient();
@@ -72,18 +78,16 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
   // The tiles follow the organisation's brand: its worlds decide which templates can be placed.
   const brand = useQuery({
     queryKey: ['start-brand', organisation.id],
-    queryFn: async () => {
-      await loadOrganisationBrand(organisation.id);
-      return true;
-    },
+    // Only reads the pack: registering it here would let a late answer for a previous
+    // organisation change the brand every later `templatesFor` sees.
+    queryFn: () => fetchOrganisationBrand(organisation.id),
     gcTime: 0,
     refetchOnWindowFocus: false,
     retry: false,
   });
   const templates = useMemo(
-    () => templatesFor(formatId),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the brand query registers the brand `templatesFor` reads
-    [formatId, brand.dataUpdatedAt]
+    () => templatesFor(formatId, brand.data ?? studioBrand),
+    [formatId, brand.data]
   );
 
   const submit = async () => {
