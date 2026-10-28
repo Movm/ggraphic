@@ -8,6 +8,7 @@ export {
   type BrandFontFace,
   type BrandFonts,
   type BrandImage,
+  type BrandLogoAlt,
   type BrandPack,
   type BrandSwatch,
 } from './brand/brandPack.js';
@@ -33,6 +34,8 @@ export {
 export { fitLogoBox } from './brand/logoFit.js';
 export {
   brandFingerprint,
+  firstFontFamily,
+  groundClass,
   isBindingRef,
   rebindPages,
   rebindPageState,

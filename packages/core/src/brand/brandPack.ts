@@ -34,6 +34,8 @@ export interface BrandPack {
   lineHeightFactor: number;
   /** The brand's mark on designs; null when the brand sets none. */
   logo: BrandImage | null;
+  /** A second logo for grounds of one class; absent = `logo` everywhere. */
+  logoAlt?: BrandLogoAlt | null;
   /** The quotation-mark graphic; null = typographic quotes. */
   quoteMark: { src: string } | null;
 }
@@ -83,6 +85,10 @@ export interface BrandFonts {
   quoteShort: string;
   /** Emphasised words and long quotes. */
   quoteEmphasis: string;
+  /** Serif display; absent = quoteEmphasis. */
+  serif?: string;
+  /** Narrow display; absent = headline. */
+  condensed?: string;
   /** Families whose bold cut is declared as a family of its own, regular → bold. */
   boldFamilies?: Readonly<Record<string, string>>;
 }
@@ -99,4 +105,9 @@ export interface BrandImage {
   src: string;
   /** Alternative text. */
   label: string;
+}
+
+/** A logo that reads on grounds of one class (`dark` or `light`). */
+export interface BrandLogoAlt extends BrandImage {
+  ground: 'dark' | 'light';
 }
