@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import { PLAIN_STYLE, wrapLines } from '@ggraphic/schema';
+import { runMeasurer } from '@ggraphic/editor/utils/textUtils';
 import { describe, expect, it } from 'vitest';
 
 import { draftDeckOps, draftTexts, fillTexts } from './aiDraft';
 import { BLANK_TEMPLATE_ID, HEADLINE_TEMPLATE_ID, QUOTE_TEMPLATE_ID } from './templates/ids';
 import { seedFor } from './templates/seeds';
+import { headlineFont } from './templates/typography';
 
 const SIZE = { width: 1080, height: 1350 };
 const draft = {
@@ -34,6 +37,26 @@ describe('fillTexts', () => {
     expect(filled?.find((t) => t.id === 'subline')?.text).toBe(draft.subline);
     // The quote mark is decoration, not a role.
     expect(filled?.find((t) => t.id === 'quote-mark')?.text).toBe('“');
+  });
+
+  it('shrinks a long headline to its slot instead of running into the subline', () => {
+    const texts = seedFor(HEADLINE_TEMPLATE_ID, SIZE.width, SIZE.height).additionalTexts ?? [];
+    const long = { ...draft, headline: 'Gemeinschaftsgarten Stadtrand wächst und wächst weiter' };
+    const filled = fillTexts(texts, long)!;
+    const headline = filled.find((t) => t.id === 'headline')!;
+    const subline = filled.find((t) => t.id === 'subline')!;
+    const seeded = texts.find((t) => t.id === 'headline')!;
+    expect(headline.fontSize).toBeLessThan(seeded.fontSize!);
+    // The wrapped headline ends above the subline.
+    const lines = wrapLines(headline.text, headline.width!, (t) =>
+      runMeasurer(headline.fontSize!, headlineFont(), 'bold')(t, PLAIN_STYLE)
+    );
+    expect(
+      headline.y + lines.length * headline.fontSize! * (headline.lineHeight ?? 1)
+    ).toBeLessThanOrEqual(subline.y);
+    // A short headline keeps the seeded size.
+    const short = fillTexts(texts, { ...draft, headline: 'Hello' })!;
+    expect(short.find((t) => t.id === 'headline')!.fontSize).toBe(seeded.fontSize);
   });
 
   it('returns null for a page without a headline or subline', () => {

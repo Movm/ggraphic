@@ -15,7 +15,10 @@ export interface StudioPageState extends BaseCanvasState {
 
 /** What a template puts on a fresh page. */
 export type PageSeed = Partial<
-  Pick<StudioPageState, 'backgroundColor' | 'additionalTexts' | 'shapeInstances'>
+  Pick<
+    StudioPageState,
+    'backgroundColor' | 'additionalTexts' | 'shapeInstances' | 'userImageInstances'
+  >
 >;
 
 /**
@@ -38,5 +41,9 @@ export function pageStateFrom(props: Record<string, unknown>, seed: PageSeed): S
 }
 
 function seedLayerOrder(seed: PageSeed): string[] {
-  return [...(seed.shapeInstances ?? []), ...(seed.additionalTexts ?? [])].map((e) => e.id);
+  return [
+    ...(seed.shapeInstances ?? []),
+    ...(seed.userImageInstances ?? []),
+    ...(seed.additionalTexts ?? []),
+  ].map((e) => e.id);
 }
