@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { BINDABLE_FIELDS, EXEMPT_FIELDS } from './bindableFields.js';
+import { BINDABLE_FIELDS, EXEMPT_FIELDS, type Exempt } from './bindableFields.js';
+import { pagePersistedStateKeys } from '../collab/pageElementStateKeys.js';
+import { type ShapeInstance } from '../utils/shapes.js';
 import { registerAssetCatalog, type CanvasAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
 
 import {
@@ -142,5 +144,16 @@ describe('bindable fields', () => {
         expect(BINDABLE_FIELDS[stateKey] ?? [], `${stateKey}.${field}`).not.toContain(field);
       }
     }
+  });
+
+  it('lists only page fields the page state persists', () => {
+    const persisted = pagePersistedStateKeys();
+    expect(BINDABLE_FIELDS['page']!.filter((field) => !persisted.includes(field))).toEqual([]);
+  });
+
+  it('a dead exempt entry does not type-check', () => {
+    // @ts-expect-error `noSuchField` is not a field of a shape
+    const dead: Exempt<ShapeInstance> = { noSuchField: 'x' };
+    expect(Object.keys(dead)).toEqual(['noSuchField']);
   });
 });

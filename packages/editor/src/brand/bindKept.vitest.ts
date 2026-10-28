@@ -105,36 +105,39 @@ describe('AI update op keeps bind', () => {
 });
 
 describe('block lift keeps bind', () => {
+  const full = boundState() as unknown as Record<string, unknown[]>;
   const block = {
-    additionalTexts: [],
-    shapeInstances: [shape],
-    assetInstances: [],
-    chartInstances: [],
-    userImageInstances: [],
-    pillBadgeInstances: [],
-    circleBadgeInstances: [],
+    additionalTexts: full.additionalTexts,
+    shapeInstances: full.shapeInstances,
+    assetInstances: full.assetInstances,
+    chartInstances: full.chartInstances,
+    userImageInstances: full.userImageInstances,
+    pillBadgeInstances: full.pillBadgeInstances,
+    circleBadgeInstances: full.circleBadgeInstances,
     selectedIcons: ['tabler-sun'],
     iconStates: { 'tabler-sun': { x: 10, y: 20, scale: 1, rotation: 0, bind: BIND } },
     layerOrder: [],
     bounds: { x: 10, y: 20, width: 100, height: 100 },
   } as unknown as LiftedBlock;
 
+  const LIFTED = [
+    'additionalTexts',
+    'shapeInstances',
+    'assetInstances',
+    'chartInstances',
+    'userImageInstances',
+    'pillBadgeInstances',
+    'circleBadgeInstances',
+  ] as const;
+
   it('through translateBlock', () => {
     const moved = translateBlock(block, 5, 5);
-    expect(moved.shapeInstances[0]!.bind).toEqual(BIND);
+    for (const key of LIFTED) expect(moved[key][0]!.bind, key).toEqual(BIND);
     expect(moved.iconStates['tabler-sun']!.bind).toEqual(BIND);
   });
 
   it('through placeBlock', () => {
     const placed = placeBlock(block, { x: 500, y: 500 }, { width: 1080, height: 1350 });
-    expect(placed.shapeInstances[0]!.bind).toEqual(BIND);
-  });
-});
-
-describe('re-seed keeps bind', () => {
-  it('through carryInstanceState', () => {
-    const carried = carryInstanceState(boundState() as unknown as Record<string, unknown>);
-    expect(carried.shapeInstances[0]!.bind).toEqual(BIND);
-    expect(carried.iconStates['tabler-sun']!.bind).toEqual(BIND);
+    for (const key of LIFTED) expect(placed[key][0]!.bind, key).toEqual(BIND);
   });
 });
