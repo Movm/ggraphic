@@ -68,4 +68,12 @@ describe('fitLogoBox', () => {
     const flat = { ...box, width: 0 };
     expect(fitLogoBox(flat, { width: 10, height: 10 }, page)).toBe(flat);
   });
+
+  it('an extreme aspect ratio keeps a side of at least 1', () => {
+    const box = { x: 900, y: 1200, width: 120, height: 80 };
+    const tall = fitLogoBox(box, { width: 1, height: 1000 }, page);
+    expect(tall.width).toBeGreaterThanOrEqual(1);
+    const flat = fitLogoBox(box, { width: 100000, height: 1 }, page);
+    expect(flat.height).toBeGreaterThanOrEqual(1);
+  });
 });

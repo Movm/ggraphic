@@ -49,7 +49,24 @@ describe('brand logo on templates', () => {
         bind?: Record<string, { ref: string; value: string }>;
       }[]
     )[0]!;
-    expect(logo.bind?.['src']).toEqual({ ref: 'brand.logo', value: LOGO });
+    expect(logo.bind?.['src']).toMatchObject({ ref: 'brand.logo', value: LOGO });
+  });
+
+  it('stores the envelope and fit on the logo binding, and the fit is the box', () => {
+    rememberLogoSize(LOGO, 400, 100);
+    registerBrandPacks([withLogo, studioBrand]);
+    const logo = (
+      seedPageState(HEADLINE_TEMPLATE_ID, 1080, 1350)['userImageInstances'] as {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        bind?: Record<string, { box?: object; fit?: object }>;
+      }[]
+    )[0]!;
+    const { x, y, width, height } = logo;
+    expect(logo.bind?.['src']?.fit).toEqual({ x, y, width, height });
+    expect(logo.bind?.['src']?.box).toMatchObject({ width: 238, height: 108 });
   });
 
   it('adds nothing for a brand without a logo or an unmeasured logo', () => {

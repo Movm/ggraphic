@@ -17,7 +17,7 @@ interface Item {
   height?: number;
   bind?: { fill?: Binding; src?: Binding; fontFamily?: Binding };
 }
-type Binding = { ref: string; value: string };
+type Binding = { ref: string; value: string; box?: object; fit?: object };
 
 const brand: BrandPack = {
   ...brandDefault,
@@ -245,6 +245,64 @@ describe('rebindPageState edge cases', () => {
         })
       );
       expect([img.x, img.y, img.width, img.height]).toEqual([10, 20, 300, 200]);
+    });
+
+    describe('logo envelope', () => {
+      const WIDE = { width: 400, height: 100 };
+      const SQUARE = { width: 100, height: 100 };
+      const ENVELOPE = { x: 800, y: 1150, width: 238, height: 108 };
+      const brandOf = (src: string): BrandPack => ({ ...brand, logo: { src, label: 'Logo' } });
+      const seeded = (box: typeof ENVELOPE) => ({
+        images: [
+          {
+            src: 'seed.svg',
+            ...box,
+            bind: { src: { ref: 'brand.logo', value: 'seed.svg', box: ENVELOPE, fit: box } },
+          },
+        ],
+      });
+      const box = (img: Item) => [img.x, img.y, img.width, img.height];
+      const swap = (state: Record<string, unknown>, src: string, size: typeof WIDE) =>
+        rebindPageState(state, { brand: brandOf(src), logoSize: size, pageSize }).state;
+
+      it('wide, square, wide never ends smaller than the first wide fit', () => {
+        const first = swap(seeded({ ...ENVELOPE, width: 238, height: 59, y: 1199 }), 'a.svg', WIDE);
+        const second = swap(first, 'b.svg', SQUARE);
+        const third = swap(second, 'c.svg', WIDE);
+        expect(box(imgOf({ state: third }))).toEqual(box(imgOf({ state: first })));
+      });
+
+      it('a square after a wide logo fits like a fresh seed', () => {
+        const afterWide = swap(
+          swap(seeded({ ...ENVELOPE, width: 238, height: 59, y: 1199 }), 'a.svg', WIDE),
+          'b.svg',
+          SQUARE
+        );
+        const fresh = swap(seeded({ ...ENVELOPE }), 'b.svg', SQUARE);
+        expect(box(imgOf({ state: afterWide }))).toEqual(box(imgOf({ state: fresh })));
+      });
+
+      it('a box moved by hand becomes the new envelope', () => {
+        const fitted = swap(
+          seeded({ ...ENVELOPE, width: 238, height: 59, y: 1199 }),
+          'a.svg',
+          WIDE
+        );
+        const img = imgOf({ state: fitted });
+        const moved = {
+          images: [{ ...img, x: 100, y: 100, width: 300, height: 200 }],
+        };
+        const next = imgOf({ state: swap(moved, 'b.svg', SQUARE) });
+        expect(box(next)).toEqual([100, 100, 200, 200]);
+      });
+
+      it('a binding written before the envelope existed uses the current box once, then stores it', () => {
+        const legacy = swap(stateWith(), 'new.svg', WIDE);
+        const bind = imgOf({ state: legacy }).bind?.src as unknown as { box: object; fit: object };
+        expect(bind.box).toEqual({ x: 900, y: 1200, width: 120, height: 80 });
+        const back = swap(swap(legacy, 'b.svg', SQUARE), 'c.svg', WIDE);
+        expect(box(imgOf({ state: back }))).toEqual(box(imgOf({ state: legacy })));
+      });
     });
 
     it('a brand without a logo keeps the image and drops the binding', () => {

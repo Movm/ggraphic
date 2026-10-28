@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-interface Box {
+export interface Box {
   x: number;
   y: number;
   width: number;
@@ -18,8 +18,9 @@ export function fitLogoBox(
   const sizes = [box.width, box.height, size.width, size.height];
   if (!sizes.every((n) => Number.isFinite(n) && n > 0)) return box;
   const scale = Math.min(box.width / size.width, box.height / size.height);
-  const width = Math.floor(size.width * scale);
-  const height = Math.floor(size.height * scale);
+  // A side never floors to 0: an extreme proportion keeps a visible hairline.
+  const width = Math.max(1, Math.floor(size.width * scale));
+  const height = Math.max(1, Math.floor(size.height * scale));
   const left = box.x + box.width / 2 < page.width / 2;
   const top = box.y + box.height / 2 < page.height / 2;
   return {
