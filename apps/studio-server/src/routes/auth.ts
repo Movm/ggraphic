@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { and, count, eq, gt, isNull, sql } from 'drizzle-orm';
+import { count, eq, sql } from 'drizzle-orm';
 import { type Request, type Response, Router } from 'express';
 import { clientKey } from '../auth/clientKey.ts';
 import type { SessionCookie } from '../auth/cookies.ts';
@@ -13,17 +13,11 @@ import {
   type LoadedSession,
   loadSession,
 } from '../auth/sessions.ts';
-import { safeEqual, sha256 } from '../auth/tokens.ts';
+import { safeEqual } from '../auth/tokens.ts';
 import type { Config } from '../config.ts';
-import {
-  type InvitationInfo,
-  loginBody,
-  type SessionState,
-  setupBody,
-  signupBody,
-} from '../contract.ts';
+import { loginBody, type SessionState, setupBody, signupBody } from '../contract.ts';
 import type { Db } from '../db/client.ts';
-import { accounts, DEFAULT_ORGANISATION_ID, invitations, organisations } from '../db/schema.ts';
+import { accounts, DEFAULT_ORGANISATION_ID } from '../db/schema.ts';
 import { HttpError, parseOr400 } from '../http.ts';
 import {
   addMember,
@@ -40,7 +34,7 @@ const SETUP_LOCK_KEY = 7_401_553;
 export interface AuthLimiters {
   /** Failed logins per email. */
   email: FixedWindowLimiter;
-  /** Every attempt at login, setup, registration and invitation acceptance per client IP. */
+  /** Every attempt at login, setup and registration per client IP. */
   ip: FixedWindowLimiter;
   /** AI drafts per account: each one spends the instance's provider budget. */
   ai: FixedWindowLimiter;
@@ -63,12 +57,6 @@ export function tooMany(retryAfter: number, res: Response): HttpError {
     message: 'Too many attempts. Try again later.',
   });
 }
-
-const invalidInvitation = () =>
-  new HttpError(404, {
-    error: 'invitation_invalid',
-    message: 'This invitation link is invalid, used or expired.',
-  });
 
 const alreadySetUp = () =>
   new HttpError(409, { error: 'already_set_up', message: 'This instance is set up.' });
@@ -100,9 +88,6 @@ export function authRouter(
     return (row?.n ?? 0) === 0;
   }
 
-  const canCreateOrganisations = (session: LoadedSession) =>
-    session.account.isInstanceAdmin || config.allowRegistration;
-
   async function state(session: LoadedSession | null): Promise<SessionState> {
     return {
       setupRequired: session ? false : await instanceIsEmpty(),
@@ -110,7 +95,9 @@ export function authRouter(
       account: session?.account ?? null,
       csrfToken: session?.csrfToken ?? null,
       organisations: session ? await organisationsOf(db, session.account.id) : [],
-      canCreateOrganisations: session ? canCreateOrganisations(session) : false,
+      // One organisation per person: nothing creates more. Kept in the answer for SPA tabs
+      // that still parse it; to be dropped in a later release.
+      canCreateOrganisations: false,
     };
   }
 
@@ -203,7 +190,7 @@ export function authRouter(
     if (!config.allowRegistration) {
       throw new HttpError(403, {
         error: 'registration_closed',
-        message: 'Registration is closed on this instance. Ask for an invitation.',
+        message: 'Registration is closed on this instance.',
       });
     }
     const body = parseOr400(signupBody, req.body);
@@ -223,86 +210,6 @@ export function authRouter(
       throw err;
     }
     res.status(201).json(await stateFor(res, accountId));
-  });
-
-  const openInvitation = (tokenHash: string) =>
-    and(
-      eq(invitations.tokenHash, tokenHash),
-      isNull(invitations.acceptedAt),
-      gt(invitations.expiresAt, sql`now()`)
-    );
-
-  router.get('/invitations/:token', async (req, res) => {
-    const [row] = await db
-      .select({
-        organisationName: organisations.name,
-        role: invitations.role,
-        allowsSignup: invitations.allowsSignup,
-      })
-      .from(invitations)
-      .innerJoin(organisations, eq(organisations.id, invitations.organisationId))
-      .where(openInvitation(sha256(req.params.token)));
-    if (!row) throw invalidInvitation();
-    const body: InvitationInfo = {
-      ...row,
-      allowsSignup: row.allowsSignup || config.allowRegistration,
-    };
-    res.set('Cache-Control', 'no-store').json(body);
-  });
-
-  router.post('/invitations/:token/accept', async (req, res) => {
-    limitIp(req, res);
-    const tokenHash = sha256(req.params.token);
-    const session = sessionOf(res);
-    const signup = session ? null : parseOr400(signupBody, req.body);
-    const passwordHash = signup ? await hashPassword(signup.password) : null;
-    let accountId: string;
-    try {
-      accountId = await db.transaction(async (tx) => {
-        // Consumes the invitation; a second accept of the same link finds nothing.
-        const [invitation] = await tx
-          .update(invitations)
-          .set({ acceptedAt: sql`now()` })
-          .where(openInvitation(tokenHash))
-          .returning({
-            id: invitations.id,
-            organisationId: invitations.organisationId,
-            role: invitations.role,
-            allowsSignup: invitations.allowsSignup,
-          });
-        if (!invitation) throw invalidInvitation();
-        let id: string;
-        if (session) {
-          id = session.account.id;
-        } else {
-          if (!invitation.allowsSignup && !config.allowRegistration) {
-            throw new HttpError(403, {
-              error: 'signup_not_allowed',
-              message: 'This invitation is for an existing account. Log in first.',
-            });
-          }
-          const [account] = await tx
-            .insert(accounts)
-            .values({ ...signup!, passwordHash: passwordHash! })
-            .returning({ id: accounts.id });
-          id = account!.id;
-        }
-        await tx
-          .update(invitations)
-          .set({ acceptedBy: id })
-          .where(eq(invitations.id, invitation.id));
-        await addMember(tx, invitation.organisationId, id, invitation.role);
-        return id;
-      });
-    } catch (err) {
-      if (isUniqueViolation(err)) throw emailTaken();
-      throw err;
-    }
-    if (session) {
-      res.json(await state(session));
-    } else {
-      res.status(201).json(await stateFor(res, accountId));
-    }
   });
 
   return router;

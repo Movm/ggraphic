@@ -19,7 +19,6 @@ import { errorHandler, HttpError, parseOr400 } from './http.ts';
 import { type AuthLimiters, authRouter, createAuthLimiters, tooMany } from './routes/auth.ts';
 import { brandAssetsRouter, organisationBrandRouter } from './routes/brand.ts';
 import { imagesRouter } from './routes/images.ts';
-import { organisationsRouter } from './routes/organisations.ts';
 import { organisationProjectsRouter, projectsRouter } from './routes/projects.ts';
 import { organisationUploadsRouter, uploadsRouter } from './routes/uploads.ts';
 import { IMAGE_TYPES } from './uploads.ts';
@@ -57,7 +56,7 @@ export function createApp({
   const cookie = sessionCookie(config.cookieSecure);
   app.use((_req, res, next) => {
     res.set('X-Content-Type-Options', 'nosniff');
-    // Invitation links carry their token in the path; never send it to other sites.
+    // Paths can carry ids and file names; never send them to other sites.
     res.set('Referrer-Policy', 'same-origin');
     next();
   });
@@ -107,7 +106,6 @@ export function createApp({
   api.use('/orgs/:orgId/projects', organisationProjectsRouter(db));
   api.use('/orgs/:orgId/uploads', organisationUploadsRouter(db, config));
   api.use('/orgs/:orgId/brand-pack', organisationBrandRouter(db, config));
-  api.use('/orgs', organisationsRouter(db, config));
   api.use('/brand-assets', brandAssetsRouter(db, config));
   api.use('/projects', projectsRouter(db, config));
   api.use('/uploads', uploadsRouter(db, config));
