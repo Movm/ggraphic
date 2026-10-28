@@ -49,7 +49,6 @@ export interface KawaiiInstance {
 
 // SVG Illustration types
 export type SvgSource =
-  | 'undraw'
   | 'opendoodles'
   | 'illlustrations'
   | 'gophers'
