@@ -12,6 +12,7 @@ import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand/brandReg
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { studioBrand } from '../../brand';
+import { formatSize } from '../document';
 import { rememberLogoSize } from '../../logoSize';
 import {
   HEADLINE_TEMPLATE_ID,
@@ -135,9 +136,11 @@ describe('bound seeds', () => {
     expect(same(headline.backgroundColor, WINE)).toBe(true);
     expect(same(headline.shapeInstances[0]!['fill'], ROSE)).toBe(true);
     expect(same(colourOf(headline, 'headline'), WHITE)).toBe(true);
-    expect(same(colourOf(headline, 'subline'), ROSE)).toBe(true);
+    // Small text takes the world's softer ink: the accent is only guaranteed 3:1.
+    const softInk = resolveScheme(studioBrand, 'primary')!.roles.ink2;
+    expect(same(colourOf(headline, 'subline'), softInk)).toBe(true);
     expect(same(colourOf(headline, 'body'), WHITE)).toBe(true);
-    expect(same(colourOf(headline, 'cta'), ROSE)).toBe(true);
+    expect(same(colourOf(headline, 'cta'), softInk)).toBe(true);
 
     const quote = stateOf(QUOTE_TEMPLATE_ID);
     expect(same(quote.backgroundColor, BLUSH)).toBe(true);
@@ -199,37 +202,53 @@ describe('text contrast', () => {
     accent: '#7FD1A0',
   })!;
   const brands = [studioBrand, { ...studioBrand, id: 'green', colors: greenColors }];
-  const LARGE_TEXT_PX = 24;
+  /**
+   * WCAG "large text" is 24 CSS px, as rendered. Seed type sizes are artboard pixels, set for a
+   * 1080 px short side (`scaleFor`) and shown shrunk. A phone shows the artboard about 360 CSS px
+   * wide, a third of its size, so 24 CSS px is 72 artboard px on a 1080 short side. Relative to
+   * the artboard that is a text height of 1/15 of the short side, the same on every format
+   * (24 px on a 1080 artboard would be only ~8 CSS px, nowhere near large). Anything smaller
+   * needs 4.5:1.
+   */
+  const LARGE_TEXT_SHARE_OF_SHORT_SIDE = 72 / 1080;
+  const FORMATS = ['profile-square', 'post-portrait', 'slide-16-9'].map((id) => ({
+    id,
+    ...formatSize(id),
+  }));
 
   describe.each(brands)('on the $id brand', (brand) => {
     const worlds = () => deriveSchemes(brand).map((s) => s.id);
 
-    it('every text of every template reads on the ground of every world the brand offers', () => {
-      registerBrandPacks([brand, studioBrand]);
-      const failures: string[] = [];
-      for (const template of STUDIO_TEMPLATE_IDS) {
-        const seeded = seedPageState(template, 1080, 1350);
-        for (const world of worlds()) {
-          // The AI can put a template in any offered world: bind the page into it the same way.
-          const { brandStamp: _stamp, ...rest } = seeded;
-          const page = rebindPageState({ ...rest, brandScheme: world }, { brand }).state;
-          const ground = page['backgroundColor'] as string;
-          for (const t of page['additionalTexts'] as {
-            id: string;
-            fill: string;
-            fontSize: number;
-          }[]) {
-            const ratio = contrastRatio(t.fill, ground) ?? 0;
-            const need = t.fontSize >= LARGE_TEXT_PX ? 3 : 4.5;
-            if (ratio < need) {
-              failures.push(
-                `${template}/${world}/${t.id}: ${ratio.toFixed(2)} < ${need} (${t.fill} on ${ground})`
-              );
+    it.each(FORMATS)(
+      'every text of every template reads on the page background of every world the brand offers ($id; the background only, not text over shapes or photos)',
+      ({ width, height }) => {
+        registerBrandPacks([brand, studioBrand]);
+        const failures: string[] = [];
+        for (const template of STUDIO_TEMPLATE_IDS) {
+          const seeded = seedPageState(template, width, height);
+          for (const world of worlds()) {
+            // The AI can put a template in any offered world: bind the page into it the same way.
+            const { brandStamp: _stamp, ...rest } = seeded;
+            const page = rebindPageState({ ...rest, brandScheme: world }, { brand }).state;
+            const ground = page['backgroundColor'] as string;
+            for (const t of page['additionalTexts'] as {
+              id: string;
+              fill: string;
+              fontSize: number;
+            }[]) {
+              const ratio = contrastRatio(t.fill, ground) ?? 0;
+              const large = t.fontSize >= LARGE_TEXT_SHARE_OF_SHORT_SIDE * Math.min(width, height);
+              const need = large ? 3 : 4.5;
+              if (ratio < need) {
+                failures.push(
+                  `${template}/${world}/${t.id}: ${ratio.toFixed(2)} < ${need} (${t.fill} on ${ground})`
+                );
+              }
             }
           }
         }
+        expect(failures).toEqual([]);
       }
-      expect(failures).toEqual([]);
-    });
+    );
   });
 });
