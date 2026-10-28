@@ -1,4 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
@@ -282,53 +285,185 @@ describe('template gate adapter: assets named by id', () => {
   });
 });
 
+describe('font width tables', () => {
+  it('match the installed fonts (regenerate with node scripts/generate-font-widths.mjs)', () => {
+    const script = fileURLToPath(
+      new URL('../../../../scripts/generate-font-widths.mjs', import.meta.url)
+    );
+    expect(() => execFileSync('node', [script, '--check'], { stdio: 'pipe' })).not.toThrow();
+  });
+});
+
 describe('template gate adapter: line count of a text', () => {
   const lines = TEMPLATE_GATE_ADAPTER.lineCount;
-  const text = (over: Record<string, unknown>) => ({ width: 223.2, fontSize: 20, ...over });
+  const text = (over: Record<string, unknown>) => ({
+    text: 'Hello',
+    width: 900,
+    fontSize: 100,
+    fontFamily: 'Raleway',
+    fontStyle: 'bold',
+    ...over,
+  });
+  const check = (over: Record<string, unknown>) =>
+    TEMPLATE_GATE_ADAPTER.text('additionalTexts', text(over))?.boundsProblem ?? null;
+
   it('counts explicit breaks', () => {
     expect(lines('additionalTexts', text({ text: 'a\nb\nc' }))).toBe(3);
     expect(lines('shapeInstances', { text: 'a\nb' })).toBe(1);
   });
-  it('wraps greedily by word, not by character total', () => {
-    // ~18 lowercase chars fit a line. 32 chars in three words still need three lines.
-    expect(lines('additionalTexts', text({ text: 'ABCDEFGHIJ ABCDEFGHIJ ABCDEFGHIJ' }))).toBe(3);
-    expect(lines('additionalTexts', text({ text: 'short' }))).toBe(1);
+
+  it('is an upper bound for wide glyphs (the shipped fonts measured at 1.05 em for W, 0.93 for m)', () => {
+    // Reviewer's measurements at 100 px bold in 900 px: six lines each.
+    expect(lines('additionalTexts', text({ text: 'WWWWW '.repeat(6).trim() }))).toBe(6);
+    expect(lines('additionalTexts', text({ text: 'mmmmm '.repeat(6).trim() }))).toBe(6);
+    expect(
+      lines('additionalTexts', text({ text: 'Add the details here: what, when and where.' }))
+    ).toBeLessThanOrEqual(3);
   });
-  it('is wider for uppercase, bold and letter spacing', () => {
-    const t = 'aaaaaaaaaa aaaaaaaa';
-    expect(lines('additionalTexts', text({ text: t }))).toBe(2);
-    expect(lines('additionalTexts', text({ text: 'aaaaaaaaaaaaaaa' }))).toBe(1);
-    expect(lines('additionalTexts', text({ text: 'AAAAAAAAAAAAAAA' }))).toBe(2);
-    expect(lines('additionalTexts', text({ text: 'aaaaaaaaaaaaaaaaaa', fontStyle: 'bold' }))).toBe(
-      2
+
+  it('adds letter spacing per character and breaks a long word on a character boundary', () => {
+    const tight = lines('additionalTexts', text({ text: 'aaaaaaaaaaaaaaaa', width: 1000 }));
+    const spaced = lines(
+      'additionalTexts',
+      text({ text: 'aaaaaaaaaaaaaaaa', width: 1000, letterSpacing: 30 })
     );
-    expect(lines('additionalTexts', text({ text: 'aaaaaaaaaaaaaaa', letterSpacing: 3 }))).toBe(2);
+    expect(spaced).toBeGreaterThan(tight);
+    expect(lines('additionalTexts', text({ text: 'W'.repeat(30), width: 1000 }))).toBe(4);
   });
-  it('breaks a word longer than the line across lines', () => {
-    expect(lines('additionalTexts', text({ text: 'a'.repeat(50) }))).toBe(3);
+
+  it('measures with the table of the text font and its weight', () => {
+    expect(check({})).toBeNull();
+    expect(check({ fontFamily: 'Raleway, Arial, sans-serif' })).toBeNull();
+    // A legacy family is aliased first.
+    expect(check({ fontFamily: 'PT Sans' })).toBeNull();
+  });
+
+  it('is not checkable for a font without a table, or a code point the fonts do not cover', () => {
+    expect(check({ fontFamily: 'Comic Sans' })).toContain('text width not checkable');
+    expect(check({ fontFamily: '' })).toContain('text width not checkable');
+    expect(check({ text: '気候保護は今すぐ必要です' })).toContain('text width not checkable');
+    expect(check({ text: 'Hallo 😀' })).toContain('text width not checkable');
+  });
+
+  it('is not checkable when rotated', () => {
+    expect(check({ rotation: 90, text: 'a' })).toBe('rotated, not checkable');
+    expect(check({ rotation: 0, text: 'a' })).toBeNull();
+  });
+
+  it('treats a rotated shape as a ground of unknown paint', () => {
+    const shape = { fill: '#ffffff', opacity: 1, rotation: 45 };
+    expect(TEMPLATE_GATE_ADAPTER.cover('shapeInstances', shape)).toEqual({ kind: 'unknown' });
+    expect(TEMPLATE_GATE_ADAPTER.cover('shapeInstances', { ...shape, rotation: 0 })).toEqual({
+      kind: 'solid',
+      fill: '#ffffff',
+    });
   });
 });
 
-describe('template gate adapter: badge boxes', () => {
-  it('gives a pill badge its padded text box, scaled, from its top-left', () => {
-    const box = adapter.box(
-      'pillBadgeInstances',
-      { x: 100, y: 50, text: 'aaaa', fontSize: 20, paddingX: 10, paddingY: 5, scale: 2 },
-      1
-    )!;
-    expect(box.x).toBe(100);
-    expect(box.y).toBe(50);
-    expect(box.height).toBe((20 + 10) * 2);
-    expect(box.width).toBeGreaterThanOrEqual((4 * 0.62 * 20 + 20) * 2);
+describe('template gate adapter: badges', () => {
+  const pill = (over: Record<string, unknown> = {}) => ({
+    x: 100,
+    y: 50,
+    text: 'aaaa',
+    fontSize: 20,
+    fontFamily: 'Raleway',
+    fontStyle: 'bold',
+    paddingX: 10,
+    paddingY: 5,
+    scale: 2,
+    ...over,
   });
-  it('gives a circle badge its disc, centred', () => {
+  const box = (el: Record<string, unknown>) =>
+    TEMPLATE_GATE_ADAPTER.box('pillBadgeInstances', el, 1)!;
+
+  it('gives a pill its padded, scaled box from its top-left', () => {
+    const b = box(pill());
+    expect([b.x, b.y, b.height]).toEqual([100, 50, (20 + 10) * 2]);
+    expect(b.width).toBeGreaterThanOrEqual((4 * 0.5 * 20 + 20) * 2);
+  });
+
+  it('is an upper bound for a wide pill text (WWWWWWWW at 100 px bold is 842 px)', () => {
     expect(
-      adapter.box('circleBadgeInstances', { x: 100, y: 100, radius: 30, scale: 2 }, 1)
-    ).toEqual({
-      x: 40,
-      y: 40,
-      width: 120,
-      height: 120,
+      box(pill({ text: 'WWWWWWWW', fontSize: 100, paddingX: 0, paddingY: 0, scale: 1 })).width
+    ).toBeGreaterThanOrEqual(842);
+  });
+
+  it('boxes a pill with its real line count', () => {
+    expect(box(pill({ text: 'A\nB\nC', scale: 1 })).height).toBe(3 * 20 + 10);
+  });
+
+  it('is not checkable when rotated or when the text cannot be measured', () => {
+    const problem = (el: Record<string, unknown>) =>
+      TEMPLATE_GATE_ADAPTER.text('pillBadgeInstances', el)?.boundsProblem ?? null;
+    expect(problem(pill())).toBeNull();
+    expect(problem(pill({ rotation: 15 }))).toBe('rotated, not checkable');
+    expect(problem(pill({ text: '😀' }))).toContain('text width not checkable');
+  });
+
+  describe('circle', () => {
+    const circle = (lines: Record<string, unknown>[], over: Record<string, unknown> = {}) => ({
+      x: 100,
+      y: 100,
+      radius: 100,
+      scale: 1,
+      textLines: lines,
+      ...over,
     });
+    const line = (over: Record<string, unknown> = {}) => ({
+      text: 'Neu',
+      yOffset: 0,
+      fontFamily: 'Raleway',
+      fontSize: 40,
+      fontWeight: 'bold',
+      ...over,
+    });
+    const problem = (el: Record<string, unknown>) =>
+      TEMPLATE_GATE_ADAPTER.text('circleBadgeInstances', el)?.boundsProblem ?? null;
+
+    it('gives its disc, centred', () => {
+      expect(
+        TEMPLATE_GATE_ADAPTER.box(
+          'circleBadgeInstances',
+          { x: 100, y: 100, radius: 30, scale: 2 },
+          1
+        )
+      ).toEqual({ x: 40, y: 40, width: 120, height: 120 });
+    });
+
+    it('keeps a line inside the disc', () => {
+      expect(problem(circle([line()]))).toBeNull();
+    });
+
+    it('fails a line that wraps, leaves the disc at a corner, or is rotated', () => {
+      expect(problem(circle([line({ text: 'WWWWWWWWWW' })]))).toContain('disc');
+      expect(problem(circle([line({ text: 'Wahlkreis', yOffset: 85 })]))).toContain('disc');
+      expect(problem(circle([line()], { rotation: 30 }))).toBe('rotated, not checkable');
+    });
+  });
+});
+
+describe('bundled illustration sets', () => {
+  it('have unique ids across all sets, so the gate lookup agrees with the renderer', async () => {
+    const sets = await Promise.all(
+      [
+        'kawaii',
+        'gophers',
+        'humaaans',
+        'illlustrations',
+        'opendoodles',
+        'openpeeps',
+        'transhumans',
+      ].map(
+        (name) =>
+          import(`../utils/illustrations/${name}.ts`) as Promise<Record<string, { id: string }[]>>
+      )
+    );
+    const ids = sets.flatMap((mod) =>
+      Object.values(mod)
+        .flat()
+        .map((def) => def.id)
+    );
+    expect(ids.length).toBeGreaterThan(100);
+    expect(ids.filter((id, i) => ids.indexOf(id) !== i)).toEqual([]);
   });
 });
