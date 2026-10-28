@@ -30,7 +30,7 @@ const CATALOG: CanvasAssetCatalog = {
     loadKawaii: () => Promise.resolve([{ id: 'cat', name: 'Cat', tags: [], source: 'kawaii' }]),
     loadSvg: () =>
       Promise.resolve([
-        { id: 'svg-1', name: 'One', filename: 'one.svg', source: 'undraw', tags: [] },
+        { id: 'svg-1', name: 'One', filename: 'one.svg', source: 'opendoodles', tags: [] },
       ]),
     basePath: '/illustrations',
   },
