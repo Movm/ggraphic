@@ -16,6 +16,13 @@ const flag = (fallback: boolean) =>
     .default(fallback ? 'true' : 'false')
     .transform((v) => v === 'true');
 
+/** Unset keeps the default (follow the keys), `false` switches a configured tool off. */
+const TOGGLE_HINT = 'must be "true" or "false"';
+const toggle = z
+  .enum(['true', 'false'], { error: TOGGLE_HINT })
+  .optional()
+  .transform((v) => (v === undefined ? null : v === 'true'));
+
 const PROXY_KEYWORDS = new Set(['loopback', 'linklocal', 'uniquelocal']);
 
 function isProxyEntry(entry: string): boolean {
@@ -87,6 +94,10 @@ const envSchema = z.object({
   OPENAI_API_KEY: optionalString,
   OPENAI_MODEL: optionalString,
   AI_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
+  AI_ENABLED: toggle,
+  REMBG_URL: optionalString,
+  REMBG_ENABLED: toggle,
+  REMBG_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
 });
 
 export interface AiConfig {
@@ -94,6 +105,17 @@ export interface AiConfig {
   apiKey: string;
   model: string;
   timeoutMs: number;
+}
+
+export interface RembgConfig {
+  /** Operator-set base URL of the rembg server, without a trailing slash. */
+  url: string;
+  timeoutMs: number;
+}
+
+/** Tools that need an external service. Each is null when switched off. */
+export interface Features {
+  removeBackground: RembgConfig | null;
 }
 
 export interface Config {
@@ -122,6 +144,25 @@ export interface Config {
   setupToken: string | null;
   /** null when AI is not configured; the feature is then switched off. */
   ai: AiConfig | null;
+  /** The other external tools; `ai` stays above because the AI routes read it directly. */
+  features: Features;
+}
+
+/**
+ * The rule for every external tool: on when its key or URL is present, off with
+ * `<TOOL>_ENABLED=false`, and `<TOOL>_ENABLED=true` without the key or URL is an error.
+ */
+function resolveFeature<T>(
+  name: string,
+  enabled: boolean | null,
+  needs: string,
+  config: T | null
+): T | null {
+  if (enabled === false) return null;
+  if (enabled === true && config === null) {
+    throw new Error(`Invalid configuration: ${name}_ENABLED=true needs ${needs}`);
+  }
+  return config;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -131,7 +172,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   );
   const parsed = envSchema.safeParse(set);
   if (!parsed.success) {
-    const fields = parsed.error.issues.map((issue) => issue.path.join('.')).join(', ');
+    // Names only, never values; a switch also says which values it takes.
+    const fields = parsed.error.issues
+      .map(
+        (issue) => issue.path.join('.') + (issue.message === TOGGLE_HINT ? ` ${TOGGLE_HINT}` : '')
+      )
+      .join(', ');
     throw new Error(`Invalid configuration: ${fields}`);
   }
   const e = parsed.data;
@@ -141,7 +187,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       'Invalid configuration: COOKIE_SECURE=false sends session cookies over plain HTTP; on a non-loopback HOST it needs ALLOW_INSECURE_COOKIE=1'
     );
   }
-  const ai =
+  const ai = resolveFeature(
+    'AI',
+    e.AI_ENABLED,
+    'OPENAI_BASE_URL, OPENAI_API_KEY and OPENAI_MODEL',
     e.OPENAI_BASE_URL && e.OPENAI_API_KEY && e.OPENAI_MODEL
       ? {
           baseUrl: e.OPENAI_BASE_URL.replace(/\/+$/, ''),
@@ -149,7 +198,17 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
           model: e.OPENAI_MODEL,
           timeoutMs: e.AI_TIMEOUT_MS,
         }
-      : null;
+      : null
+  );
+  if (e.REMBG_URL && !/^https?:\/\/[^\s/]/i.test(e.REMBG_URL)) {
+    throw new Error('Invalid configuration: REMBG_URL');
+  }
+  const removeBackground = resolveFeature(
+    'REMBG',
+    e.REMBG_ENABLED,
+    'REMBG_URL',
+    e.REMBG_URL ? { url: e.REMBG_URL.replace(/\/+$/, ''), timeoutMs: e.REMBG_TIMEOUT_MS } : null
+  );
   return {
     databaseUrl: e.DATABASE_URL,
     host: e.HOST,
@@ -167,5 +226,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     trustProxy: e.TRUST_PROXY,
     setupToken: e.SETUP_TOKEN ?? null,
     ai,
+    features: { removeBackground },
   };
 }
