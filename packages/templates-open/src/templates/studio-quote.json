@@ -65,7 +65,7 @@
           {
             "id": "headline",
             "type": "header",
-            "text": "Good design is as little design as possible.",
+            "text": "Small steps, taken together, get us there.",
             "x": 0.0,
             "y": 0.266436,
             "width": 1.0,
@@ -137,11 +137,11 @@
   "placeholders": {
     "en": {
       "quote-mark": "“",
-      "headline": "Good design is as little design as possible.",
+      "headline": "Small steps, taken together, get us there.",
       "subline": "— Name of the speaker"
     },
     "de": {
-      "headline": "Gutes Design ist so wenig Design wie möglich.",
+      "headline": "Kleine Schritte, gemeinsam gegangen, führen ans Ziel.",
       "subline": "— Name der sprechenden Person"
     }
   },
