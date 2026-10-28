@@ -41,7 +41,7 @@ const ALLOWED: Excuse[] = [
   },
   {
     file: 'routes/projects.ts',
-    marker: '.select({ id: projects.id })',
+    marker: '.select({ trashedProbe: projects.id })',
     reason: 'a read of a trashed project tells its organisation "trashed" instead of "missing"',
   },
   {
