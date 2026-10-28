@@ -30,6 +30,32 @@ describe('api client', () => {
     await expect(api.listProjects('org-1')).rejects.toMatchObject({ code: 'invalid_response' });
   });
 
+  it('posts an image to remove-background and returns the PNG', async () => {
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        new Response(png, { status: 200, headers: { 'Content-Type': 'image/png' } })
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    const blob = await api.removeBackground(new Blob(['x'], { type: 'image/jpeg' }), 'a.jpg');
+    expect(blob.type).toBe('image/png');
+    expect(blob.size).toBe(4);
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe('/api/images/remove-background');
+    expect(init?.method).toBe('POST');
+    expect((init?.body as FormData).get('file')).toBeInstanceOf(Blob);
+  });
+
+  it('turns a failed remove-background call into an ApiError', async () => {
+    vi.stubGlobal('fetch', reply(504, { error: 'rembg_timeout', message: 'Too slow.' }));
+    await expect(api.removeBackground(new Blob(['x']), 'a.png')).rejects.toMatchObject({
+      status: 504,
+      code: 'rembg_timeout',
+      message: 'Too slow.',
+    });
+  });
+
   it('sends the patch with the version it read', async () => {
     const fetchMock = reply(200, {
       id: 'p1',
