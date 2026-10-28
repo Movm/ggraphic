@@ -28,6 +28,7 @@
  * an anderer Stelle um als der Renderer, der es dann zeichnet.
  */
 
+import { hyphenationPoints } from './hyphenation.js';
 import {
   PLAIN_STYLE,
   parseInlineMarks,
@@ -226,32 +227,61 @@ const trailingStyle = (word: Word, fallback: RunStyle): RunStyle =>
   word.length > 0 ? runStyleOf(word[word.length - 1]!) : fallback;
 
 /**
- * Bricht ein Wort, das allein schon zu breit ist, INNERHALB des Wortes um.
- * Konva tut das von sich aus; weil wir die Zeilen vorberechnen und mit
- * `wrap="none"` setzen, greift sein Netz nicht mehr und wir brauchen unseres.
+ * Bricht ein Wort, das allein schon zu breit ist, um — bevorzugt mit Trennstrich
+ * an einer Silbengrenze („Gemein- / schafts- / garten"), und nur wenn kein
+ * Trennstück in die Zeile passt, hart mitten im Wort. Konva bräche von sich aus
+ * ohne Strich; weil wir die Zeilen vorberechnen und mit `wrap="none"` setzen,
+ * greift sein Netz nicht mehr und wir brauchen unseres.
  */
 function breakWord(word: Word, maxWidth: number, measure: MeasureRun): Word[] {
-  const chunks: Word[] = [];
-  let chunk: Word = [];
-  let chunkWidth = 0;
-  for (const frag of word) {
-    for (const char of frag.text) {
-      const charWidth = measure(char, frag);
-      if (chunk.length > 0 && chunkWidth + charWidth > maxWidth) {
-        chunks.push(chunk);
-        chunk = [];
-        chunkWidth = 0;
-      }
-      const last = chunk[chunk.length - 1];
-      if (last && sameRunStyle(last, frag)) {
-        last.text += char;
-      } else {
-        chunk.push({ ...runStyleOf(frag), text: char });
-      }
-      chunkWidth += charWidth;
+  // Zeichen mit ihrem Fragment, damit der Stil eines Laufs über den Bruch hinweg bleibt.
+  const chars: { char: string; frag: InlineRun }[] = [];
+  for (const frag of word) for (const char of frag.text) chars.push({ char, frag });
+  const points = new Set(hyphenationPoints(chars.map((c) => c.char).join('')));
+
+  const slice = (from: number, to: number, hyphen: boolean): Word => {
+    const out: Word = [];
+    for (const { char, frag } of chars.slice(from, to)) {
+      const last = out[out.length - 1];
+      if (last && sameRunStyle(last, frag)) last.text += char;
+      else out.push({ ...runStyleOf(frag), text: char });
     }
+    if (hyphen) {
+      const last = out[out.length - 1];
+      if (last) last.text += '-';
+    }
+    return out;
+  };
+  const widthOf = (from: number, to: number, hyphen: boolean) =>
+    wordWidth(slice(from, to, hyphen), measure);
+
+  const chunks: Word[] = [];
+  let start = 0;
+  while (start < chars.length) {
+    if (widthOf(start, chars.length, false) <= maxWidth) {
+      chunks.push(slice(start, chars.length, false));
+      break;
+    }
+    // Der späteste Trennpunkt, dessen Stück samt Strich noch in die Zeile passt.
+    let end = -1;
+    for (let p = chars.length - 1; p > start; p--) {
+      if (!points.has(p)) continue;
+      // Hinter einem Bindestrich braucht es keinen zweiten Strich.
+      const dash = chars[p - 1]!.char !== '-';
+      if (widthOf(start, p, dash) <= maxWidth) {
+        chunks.push(slice(start, p, dash));
+        end = p;
+        break;
+      }
+    }
+    if (end < 0) {
+      // Kein Trennstück passt: harter Bruch, so viele Zeichen wie die Zeile fasst.
+      end = start + 1;
+      while (end < chars.length && widthOf(start, end + 1, false) <= maxWidth) end++;
+      chunks.push(slice(start, end, false));
+    }
+    start = end;
   }
-  if (chunk.length > 0) chunks.push(chunk);
   return chunks.length > 0 ? chunks : [word];
 }
 
