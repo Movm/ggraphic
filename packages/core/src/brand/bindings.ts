@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 import { normalizeColor } from '../color/color.js';
+import { fitLogoBox } from './logoFit.js';
 import { type BrandColors, type BrandFonts, type BrandPack } from './brandPack.js';
 import {
   deriveSchemes,
@@ -29,8 +30,10 @@ export type Bindings = Readonly<Record<string, Binding>>;
 
 export interface RebindContext {
   brand: BrandPack;
-  /** Natural size of the logo, for fitting its box (used from a later task on). */
+  /** Natural size of the brand's logo; a swapped logo is fitted into its old box when known. */
   logoSize?: { width: number; height: number } | null;
+  /** Size of the page, needed with `logoSize` to pick the corner a logo box keeps. */
+  pageSize?: { width: number; height: number } | null;
 }
 
 // Record types make a missing or extra key a compile error.
@@ -134,8 +137,24 @@ function hasBindings(obj: Obj): boolean {
   return isPlainObject(obj['bind']) && Object.keys(obj['bind']).length > 0;
 }
 
+/** Fits a swapped logo into its old box when the logo and page sizes are known. */
+function fitLogo(obj: Obj, { logoSize, pageSize }: RebindContext): void {
+  if (!logoSize || !pageSize) return;
+  const { x, y, width, height } = obj;
+  if (![x, y, width, height].every((n) => typeof n === 'number' && Number.isFinite(n))) return;
+  Object.assign(
+    obj,
+    fitLogoBox(
+      { x, y, width, height } as { x: number; y: number; width: number; height: number },
+      logoSize,
+      pageSize
+    )
+  );
+}
+
 /** Rebinds one object's fields; the same object when nothing changes. */
-function rebindObject(obj: Obj, brand: BrandPack, scheme: Scheme | null): Obj {
+function rebindObject(obj: Obj, ctx: RebindContext, scheme: Scheme | null): Obj {
+  const { brand } = ctx;
   if (!isPlainObject(obj['bind'])) return obj;
   const bind = obj['bind'] as Record<string, Binding>;
   let next: Obj | null = null;
@@ -160,6 +179,7 @@ function rebindObject(obj: Obj, brand: BrandPack, scheme: Scheme | null): Obj {
     if (current === value && binding.value === value) continue;
     next ??= { ...obj };
     next[field] = value;
+    if (binding.ref === 'brand.logo' && current !== value) fitLogo(next, ctx);
     nextBind ??= { ...bind };
     nextBind[field] = { ref: binding.ref, value };
   }
@@ -202,7 +222,7 @@ export function rebindPageState(
   if (!bound || state['brandStamp'] === stamp) return { state: state as Obj, changed: false };
 
   const scheme = schemeOf(state, brand);
-  let next: Obj = rebindObject(state, brand, scheme);
+  let next: Obj = rebindObject(state, ctx, scheme);
   for (const [key, value] of Object.entries(state)) {
     if (key === 'bind') continue;
     let replaced: unknown = value;
@@ -210,7 +230,7 @@ export function rebindPageState(
       let items: unknown[] | null = null;
       value.forEach((item, i) => {
         if (!isPlainObject(item)) return;
-        const out = rebindObject(item, brand, scheme);
+        const out = rebindObject(item, ctx, scheme);
         if (out !== item) (items ??= [...value])[i] = out;
       });
       if (items) replaced = items;
@@ -218,7 +238,7 @@ export function rebindPageState(
       let record: Obj | null = null;
       for (const [id, item] of Object.entries(value)) {
         if (!isPlainObject(item)) continue;
-        const out = rebindObject(item, brand, scheme);
+        const out = rebindObject(item, ctx, scheme);
         if (out !== item) (record ??= { ...value })[id] = out;
       }
       if (record) replaced = record;

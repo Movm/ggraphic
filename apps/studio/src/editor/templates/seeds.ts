@@ -161,6 +161,7 @@ function logoImages(f: Frame): UserImageInstance[] {
       rotation: 0,
       scale: 1,
       opacity: 1,
+      bind: withBinding(undefined, 'src', { ref: 'brand.logo', value: logo.src }),
     },
   ];
 }

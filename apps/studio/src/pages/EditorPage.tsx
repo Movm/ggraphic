@@ -16,6 +16,7 @@ import { parseDocument, type StudioDocument } from '../editor/document';
 import { rebindStudioDocument } from '../editor/rebind';
 import { createStudioServices } from '../editor/services';
 import { useAutosave, type SaveStatus } from '../editor/useAutosave';
+import { logoSizeOf } from '../logoSize';
 import { navigate } from '../router';
 
 const STATUS_TEXT: Record<SaveStatus, string> = {
@@ -132,10 +133,14 @@ function OpenProject({
 }) {
   // The brand query has settled, so the organisation's pack is the active one: bound page
   // fields follow it before the editor opens. What is saved is judged against `parsed`.
-  const { doc, changed } = useMemo(
-    () => rebindStudioDocument(parsed, { brand: activeBrand(), logoSize: null }),
-    [parsed]
-  );
+  const { doc, changed } = useMemo(() => {
+    // The brand loader measured the logo before the query settled; a failed measurement is null.
+    const brand = activeBrand();
+    return rebindStudioDocument(parsed, {
+      brand,
+      logoSize: brand.logo ? logoSizeOf(brand.logo.src) : null,
+    });
+  }, [parsed]);
   const exportApi = useRef<CanvasEditorExportApi>(null);
   const services = useMemo(
     () =>

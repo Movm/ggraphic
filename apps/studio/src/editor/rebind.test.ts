@@ -42,4 +42,44 @@ describe('rebindStudioDocument', () => {
     expect(result.changed).toBe(false);
     expect(result.doc).toBe(doc);
   });
+
+  it('a bound logo follows the new logo and is fitted to the format size', () => {
+    const OLD = '/api/brand-assets/' + 'a'.repeat(32) + '.png';
+    const NEW = '/api/brand-assets/' + 'b'.repeat(32) + '.png';
+    const doc = {
+      formatId: 'post-portrait',
+      pages: [
+        {
+          configId: 'blank',
+          state: {
+            userImageInstances: [
+              {
+                id: 'brand-logo',
+                src: OLD,
+                x: 900,
+                y: 1200,
+                width: 120,
+                height: 80,
+                bind: { src: { ref: 'brand.logo', value: OLD } },
+              },
+            ],
+          },
+        },
+      ],
+    };
+    const brand = { ...orgBrand, logo: { src: NEW, label: 'New' } };
+    const { doc: next } = rebindStudioDocument(doc, {
+      brand,
+      logoSize: { width: 400, height: 100 },
+    });
+    const img = (next.pages[0]!.state as { userImageInstances: Record<string, unknown>[] })
+      .userImageInstances[0]!;
+    expect([img['src'], img['x'], img['y'], img['width'], img['height']]).toEqual([
+      NEW,
+      900,
+      1250,
+      120,
+      30,
+    ]);
+  });
 });
