@@ -22,6 +22,8 @@ const adapter: GateAdapter = {
     userImageInstances: { x: 'x', y: 'y', width: 'w', height: 'h' },
     frameInstances: { x: 'x', y: 'y', width: 'w', height: 'h' },
     pillBadgeInstances: { x: 'x', y: 'y' },
+    illustrationInstances: { x: 'x', y: 'y', scale: 'k' },
+    iconStates: { x: 'x', y: 'y', scale: 'k' },
   },
   colorFields: {
     page: ['backgroundColor'],
@@ -43,6 +45,12 @@ const adapter: GateAdapter = {
         : []),
     ];
   },
+  assetRefs: (key, el) =>
+    key === 'illustrationInstances'
+      ? [{ kind: 'illustration', id: `${String(el['source'])}:${String(el['illustrationId'])}` }]
+      : key === 'iconStates'
+        ? [{ kind: 'icon', id: String(el['iconId']) }]
+        : [],
   lineCount: (key, el) =>
     key === 'additionalTexts' && typeof el['text'] === 'string' ? el['text'].split('\n').length : 1,
   box: (key, el, lines) =>
@@ -132,6 +140,7 @@ const context = (over: Partial<GateContext> = {}): GateContext => ({
   canvases: { '1:1': { width: 1080, height: 1080 } },
   adapter,
   manifestPaths: new Set(['/ok.png']),
+  allowedAssets: { illustration: ['kawaii:'], icon: ['tabler:tree'] },
   slots: { headline: { role: 'headline', budget: { maxWords: 8, maxLines: 2, maxChars: 60 } } },
   placeholderTexts: { headline: 'Hello there' },
   ...over,
@@ -488,6 +497,39 @@ describe('render gate stage 1', () => {
       'asset-licence',
     ]);
     expect(rules(template({}, { frameInstances: [frame('/ok.png')] }))).toEqual([]);
+  });
+
+  describe('assets named by id', () => {
+    const picture = (source: string, illustrationId: string) => ({
+      id: 'pic',
+      source,
+      illustrationId,
+      x: 0.4,
+      y: 0.5,
+      scale: 1,
+    });
+    const withIllustration = (source: string, id = 'cat') =>
+      template({}, { illustrationInstances: [picture(source, id)] });
+
+    it('need an entry on the allowlist: a whole set by prefix', () => {
+      expect(rules(withIllustration('kawaii'))).toEqual([]);
+      const found = checkTemplate(withIllustration('gophers'), context());
+      expect(found.map((p) => p.rule)).toEqual(['asset-licence']);
+      expect(found[0]?.detail).toContain('illustration "gophers:cat"');
+    });
+
+    it('or one asset by exact id', () => {
+      const icon = (iconId: string) =>
+        template({}, { iconStates: { a: { iconId, x: 0.2, y: 0.5, scale: 1 } } });
+      expect(rules(icon('tabler:tree'))).toEqual([]);
+      expect(rules(icon('tabler:house'))).toEqual(['asset-licence']);
+    });
+
+    it('are refused when the context allows none of the kind', () => {
+      expect(rules(withIllustration('kawaii'), context({ allowedAssets: {} }))).toEqual([
+        'asset-licence',
+      ]);
+    });
   });
 
   describe('every colour string is a colour', () => {

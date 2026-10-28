@@ -10,6 +10,7 @@
 import type { GateAdapter, GeometryTable } from '@ggraphic/core';
 
 import { BINDABLE_FIELDS } from '../brand/bindableFields.js';
+import { catalogIconId, type IconIdCarrier } from '../utils/iconInstances.js';
 
 export const TEMPLATE_GEOMETRY: GeometryTable = {
   additionalTexts: {
@@ -194,6 +195,25 @@ export const TEMPLATE_GATE_ADAPTER: GateAdapter = {
       for (const color of el['colors']) add('colors', color);
     }
     return out;
+  },
+  assetRefs(stateKey, el, id) {
+    if (stateKey === 'illustrationInstances') {
+      return [{ kind: 'illustration', id: `${str(el, 'source')}:${str(el, 'illustrationId')}` }];
+    }
+    if (stateKey === 'assetInstances') {
+      const assetId = str(el, 'assetId');
+      return [{ kind: assetId.startsWith('emoji-') ? 'emoji' : 'sticker', id: assetId }];
+    }
+    if (stateKey === 'iconStates') {
+      // What is drawn is the stored copy of an external icon; its declared origin names the set.
+      const source = el['source'];
+      if (isRecord(source) && source['kind'] === 'iconify') {
+        return [{ kind: 'icon', id: `${str(source, 'prefix')}:${str(source, 'name')}` }];
+      }
+      const catalogId = catalogIconId(id, { [id]: el as IconIdCarrier });
+      return [{ kind: 'icon', id: catalogId.replace(/^iconify:/, '') }];
+    }
+    return [];
   },
   lineCount(stateKey, el) {
     if (stateKey !== 'additionalTexts' || typeof el['text'] !== 'string') return 1;

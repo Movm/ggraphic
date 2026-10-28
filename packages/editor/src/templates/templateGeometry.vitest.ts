@@ -208,3 +208,50 @@ describe('template geometry', () => {
     expect(ASSET_FIELDS).toEqual(TEMPLATE_GATE_ADAPTER.assetFields);
   });
 });
+
+describe('template gate adapter: assets named by id', () => {
+  const refs = TEMPLATE_GATE_ADAPTER.assetRefs;
+
+  it('names an illustration by its source and id', () => {
+    expect(refs('illustrationInstances', { source: 'gophers', illustrationId: 'g1' }, 'i')).toEqual(
+      [{ kind: 'illustration', id: 'gophers:g1' }]
+    );
+  });
+
+  it('names a sticker or an emoji by its asset id', () => {
+    expect(refs('assetInstances', { assetId: 'asset:abc' }, 'a')).toEqual([
+      { kind: 'sticker', id: 'asset:abc' },
+    ]);
+    expect(refs('assetInstances', { assetId: 'emoji-1f600' }, 'a')).toEqual([
+      { kind: 'emoji', id: 'emoji-1f600' },
+    ]);
+  });
+
+  it('names an icon by its catalogue id, a copy by its iconId, an external one by its source', () => {
+    expect(refs('iconStates', {}, 'tabler:tree')).toEqual([{ kind: 'icon', id: 'tabler:tree' }]);
+    expect(refs('iconStates', { iconId: 'lucide:sun' }, 'copy-1')).toEqual([
+      { kind: 'icon', id: 'lucide:sun' },
+    ]);
+    expect(refs('iconStates', { iconId: 'iconify:mdi:home' }, 'copy-2')).toEqual([
+      { kind: 'icon', id: 'mdi:home' },
+    ]);
+    expect(
+      refs('iconStates', { source: { kind: 'iconify', prefix: 'lets', name: 'tree' } }, 'x')
+    ).toEqual([{ kind: 'icon', id: 'lets:tree' }]);
+  });
+
+  it('names nothing for kinds without an id-based asset', () => {
+    expect(refs('shapeInstances', {}, 's')).toEqual([]);
+  });
+});
+
+describe('template gate adapter: line count of a text', () => {
+  const lines = TEMPLATE_GATE_ADAPTER.lineCount;
+  it('counts explicit breaks and estimates wrapping', () => {
+    expect(lines('additionalTexts', { text: 'a\nb\nc', width: 500, fontSize: 20 })).toBe(3);
+    // 40 chars x 20 px x 0.55 = 440 px in a 200 px box: three lines.
+    expect(lines('additionalTexts', { text: 'x'.repeat(40), width: 200, fontSize: 20 })).toBe(3);
+    expect(lines('additionalTexts', { text: 'short', width: 500, fontSize: 20 })).toBe(1);
+    expect(lines('shapeInstances', { text: 'a\nb' })).toBe(1);
+  });
+});

@@ -34,6 +34,16 @@ export interface GateAdapter {
     el: Readonly<Record<string, unknown>>
   ): readonly { field: string; value: string }[];
   /**
+   * The assets an element names by id rather than by file: icons, illustrations, stickers,
+   * emoji. `id` is the element's id (an icon's key in `iconStates`). The ids are checked against
+   * `GateContext.allowedAssets`.
+   */
+  assetRefs(
+    stateKey: string,
+    el: Readonly<Record<string, unknown>>,
+    id: string
+  ): readonly { kind: string; id: string }[];
+  /**
    * How many lines a text element's own content takes at its width (explicit breaks and an
    * estimate of wrapping); 1 for an element that is not a text. Used for a text the template
    * has no `maxLines` for, which would otherwise be measured as one line.
@@ -104,6 +114,12 @@ export interface GateContext {
   adapter: GateAdapter;
   /** Paths of the assets the pack ships (its manifest). */
   manifestPaths: ReadonlySet<string>;
+  /**
+   * Licence-ok assets by kind (as `GateAdapter.assetRefs` names them), supplied by the caller.
+   * An entry is an exact id, or a prefix when it ends in `:` (a whole set). A kind with no
+   * entry allows nothing. A template cannot carry attribution, so attribution-only sets stay off.
+   */
+  allowedAssets: Readonly<Record<string, readonly string[]>>;
   /** The template's slots by element id; `role` is what the `budget` rule reads for the word cap. */
   slots: Readonly<Record<string, { role?: string; budget: GateBudget }>>;
   /** Placeholder text by element id, checked against the slot's budget (the template's own locales are checked too). */
@@ -201,6 +217,15 @@ export function checkTemplate(t: TemplateInput, ctx: GateContext): GateProblem[]
     for (const { field, value } of ctx.adapter.nestedColors(key, el)) {
       if (value.trim() !== '' && !bound(id, el, field)) {
         problem('unbound-colour', `${id}.${field} holds ${value} with no bind and no fixed entry`);
+      }
+    }
+    for (const ref of ctx.adapter.assetRefs(key, el, id)) {
+      const allowed = ctx.allowedAssets[ref.kind] ?? [];
+      if (!allowed.some((a) => (a.endsWith(':') ? ref.id.startsWith(a) : ref.id === a))) {
+        problem(
+          'asset-licence',
+          `${id} uses ${ref.kind} "${ref.id}", which is not on the licence allowlist`
+        );
       }
     }
     for (const field of ctx.adapter.assetFields[key] ?? []) {
