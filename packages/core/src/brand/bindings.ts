@@ -3,10 +3,9 @@ import { normalizeColor } from '../color/color.js';
 import { fitLogoBox } from './logoFit.js';
 import { type BrandColors, type BrandFonts, type BrandPack } from './brandPack.js';
 import {
-  deriveSchemes,
   SCHEME_IDS,
   SURFACE_ROLES,
-  schemeById,
+  resolveScheme,
   type Scheme,
   type SchemeId,
   type SurfaceRole,
@@ -194,7 +193,7 @@ function rebindObject(obj: Obj, ctx: RebindContext, scheme: Scheme | null): Obj 
 function schemeOf(state: Obj, brand: BrandPack): Scheme | null {
   const id = state['brandScheme'];
   if (typeof id !== 'string' || !(SCHEME_IDS as readonly string[]).includes(id)) return null;
-  return schemeById(brand, id as SchemeId) ?? deriveSchemes(brand)[0] ?? null;
+  return resolveScheme(brand, id as SchemeId);
 }
 
 /**

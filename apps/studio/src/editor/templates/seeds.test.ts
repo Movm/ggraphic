@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { brandFingerprint, normalizeColor } from '@ggraphic/core';
+import { brandFingerprint, deriveSchemes, normalizeColor } from '@ggraphic/core';
 import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -82,6 +82,18 @@ const MAGENTA = '#D4146E';
 const ROSE = '#FF7AB6';
 const BLUSH = '#FDF0F5';
 const WHITE = '#FFFFFF';
+
+describe('seeds under a brand whose light world was deduplicated', () => {
+  it('draw the quote in the world that absorbed it', () => {
+    const near = { ...studioBrand, colors: { ...studioBrand.colors, secondary: '#FAFAFA' } };
+    registerBrandPacks([near, studioBrand]);
+    const quote = stateOf(QUOTE_TEMPLATE_ID);
+    const secondary = deriveSchemes(near).find((s) => s.id === 'secondary')!;
+    expect(quote.brandScheme).toBe('light');
+    expect(same(quote.backgroundColor, secondary.roles.ground)).toBe(true);
+    expect(same(quote.backgroundColor, near.colors.primary)).toBe(false);
+  });
+});
 
 describe('bound seeds', () => {
   const colourOf = (state: SeedState, id: string) =>

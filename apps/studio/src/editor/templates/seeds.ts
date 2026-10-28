@@ -8,10 +8,9 @@
  */
 import {
   brandFingerprint,
-  deriveSchemes,
   normalizeColor,
   resolveRef,
-  schemeById,
+  resolveScheme,
   withBinding,
   type BindingRef,
   type Bindings,
@@ -59,7 +58,7 @@ interface Frame {
 /** What `ref` resolves to under the brand's `schemeId` world; fonts as the plain family name. */
 function painterFor(schemeId: SchemeId): Frame['paint'] {
   const brand = activeBrand();
-  const scheme = schemeById(brand, schemeId) ?? deriveSchemes(brand)[0] ?? null;
+  const scheme = resolveScheme(brand, schemeId);
   return (ref) => {
     const value = resolveRef(ref, brand, scheme) ?? brand.defaultBackground;
     return ref.startsWith('font.') ? value : normalizeColor(value);
