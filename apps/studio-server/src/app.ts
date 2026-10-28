@@ -42,6 +42,8 @@ export function createApp({
   const cookie = sessionCookie(config.cookieSecure);
   app.use((_req, res, next) => {
     res.set('X-Content-Type-Options', 'nosniff');
+    // Invitation links carry their token in the path; never send it to other sites.
+    res.set('Referrer-Policy', 'same-origin');
     next();
   });
 

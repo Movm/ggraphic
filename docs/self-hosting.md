@@ -1,8 +1,8 @@
 # Self-hosting ggraphic Studio
 
-ggraphic Studio is the hostable design app: projects with one editor document each, image uploads and optional AI text drafts. It runs on your own machine or server with Docker Compose. There is no hosted service, no account and no billing; every instance brings its own AI key if it wants AI at all.
+ggraphic Studio is the hostable design app: organisations with their own projects, members and brand pack, image uploads and optional AI text drafts. It runs on your own machine or server with Docker Compose. There is no hosted service and no billing; every instance brings its own AI key if it wants AI at all.
 
-> **No login yet.** Anyone who can reach Studio can read, change and delete every project. The compose file therefore binds Studio to `127.0.0.1` only. See [Security](#security) before exposing it anywhere else.
+> **First visit sets the instance up.** On an empty instance the first person who opens Studio creates the admin account. Do this right after the first start, before the instance is reachable by anyone else. The compose file binds Studio to `127.0.0.1`; see [Security](#security) before exposing it.
 
 ## Requirements
 
@@ -20,20 +20,33 @@ sed -i.bak "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(openssl rand -hex 24)/" 
 docker compose up -d --build
 ```
 
-Open <http://localhost:8080>. Check the state with `docker compose ps` and `curl http://localhost:8080/healthz` (answers `{"status":"ok"}` when the database is reachable). Logs: `docker compose logs -f studio`.
+Open <http://localhost:8080> and create the admin account. Check the state with `docker compose ps` and `curl http://localhost:8080/healthz` (answers `{"status":"ok"}` when the database is reachable). Logs: `docker compose logs -f studio`.
 
 The database schema is created and upgraded automatically when Studio starts.
 
 Data lives in two named volumes:
 
-| Volume                        | Content                                            |
-| ----------------------------- | -------------------------------------------------- |
-| `ggraphic-studio_db-data`     | Postgres: projects, documents, thumbnails          |
-| `ggraphic-studio_studio-data` | Uploaded images (`/data/uploads` in the container) |
+| Volume                        | Content                                                                                      |
+| ----------------------------- | -------------------------------------------------------------------------------------------- |
+| `ggraphic-studio_db-data`     | Postgres: accounts, sessions, organisations, projects, documents, thumbnails, brand settings |
+| `ggraphic-studio_studio-data` | Uploaded images (`/data/uploads`), brand logos and fonts (`/data/brand-assets`)              |
 
 ## Configuration
 
 All settings are environment variables in `.env`; `.env.example` documents each one. After changing `.env`, apply it with `docker compose up -d`.
+
+### Accounts and organisations
+
+- The first account is the **instance admin** and owner of the default organisation, which holds every project that existed before accounts (upgrades keep all projects; existing upload files are assigned to it at start).
+- Every account belongs to one or more organisations as **owner** (projects, members, invitations, brand) or **editor** (projects).
+- New people join through **invitation links**: an owner creates one on the Members page and passes it on; Studio sends no email. A link works once and for seven days. While self-registration is off, only links created by the instance admin can create new accounts; links from other owners need an existing account.
+- `ALLOW_REGISTRATION=true` opens self-registration; each new account gets its own organisation.
+- Only the instance admin creates further organisations (everyone, when registration is open).
+- There is no password reset yet. If someone forgets their password, the admin can set a new hash in the database: `docker compose exec studio node -e "import('argon2').then(a=>a.hash(process.argv[1],{type:a.argon2id})).then(console.log)" 'new password'`, then `UPDATE accounts SET password_hash = '<hash>' WHERE email = '...'; DELETE FROM sessions WHERE account_id = (SELECT id FROM accounts WHERE email = '...');`.
+
+### Brand packs
+
+Owners set their organisation's brand on the Brand page: name, the eight colour roles, the grounds a page can sit on, headline and body fonts, a logo (PNG or WebP; SVG is refused) and font files (WOFF2, TTF, OTF) with a required licence note that is stored with the file. Make sure you may use a font on a web server before uploading it. The editor opens every project with its organisation's brand; without one it uses Studio's own colours.
 
 ### AI drafts
 
@@ -104,10 +117,14 @@ Postgres major versions (e.g. 17 to 18) are not upgraded in place: dump, switch 
 
 ## Security
 
-- **No authentication.** Keep Studio on `127.0.0.1` (the default) and use it on that machine, or through an SSH tunnel: `ssh -L 8080:127.0.0.1:8080 your-server`.
-- To share an instance, put it behind your own authenticating reverse proxy (e.g. oauth2-proxy, Authelia, or HTTP basic auth with TLS in Caddy/nginx). Do not change the port binding to `0.0.0.0` without that.
+- **Set the instance up first.** Until the admin account exists, anyone who reaches Studio can claim it.
+- **TLS in front.** To share an instance, keep the `127.0.0.1` binding and put a TLS-terminating reverse proxy (Caddy, nginx, Traefik) in front. Set `TRUST_PROXY` to the proxy's hops or addresses so login rate limits see client addresses, not the proxy's.
+- **Sessions** are server-side rows in Postgres; the browser holds a random token in an `HttpOnly`, `SameSite=Lax`, `Secure` cookie (`__Host-studio_session`) and the database only its SHA-256. Passwords are hashed with argon2id.
+- **CSRF:** every state-changing request needs the session's CSRF token in `X-CSRF-Token`; requests a browser marks as cross-site are refused; the login endpoints accept JSON only.
+- **Login rate limits:** 10 failed attempts per email and 30 attempts per client IP within 15 minutes, per Studio process.
+- **Organisations are isolated:** a project, upload, member list or brand pack of an organisation you are not a member of answers `404`.
 - Uploads are checked by their content (PNG, JPEG, GIF, WebP, AVIF, SVG), stored under random names and served with `Content-Security-Policy: sandbox`; SVGs are additionally served as attachments so their scripts never run as a page.
-- Accounts are planned (projects already carry an `owner_id` column); until then, treat every instance as single-user.
+- Logos and fonts are checked by their content as well, stored under random names and served only to members of their organisation.
 
 ## Stopping and removing
 
@@ -128,6 +145,7 @@ DATABASE_URL=postgres://studio:secret@127.0.0.1:5432/studio pnpm --filter @ggrap
 
 ## Not yet supported
 
-- Logins and per-user projects (Better Auth with email/password and optional OIDC is planned).
+- Password reset and change, email, two-factor login and OIDC/SSO.
+- Deleting accounts and organisations from the UI.
 - Object storage (S3-compatible) for uploads; uploads are local disk only.
 - Cleaning up uploads that no project uses any more.

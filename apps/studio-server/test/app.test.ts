@@ -89,5 +89,6 @@ describe('anonymous requests', () => {
   it('marks API answers as not cacheable', async () => {
     const res = await request(makeApp().app).get('/api/config').expect(200);
     expect(res.headers['cache-control']).toBe('no-store');
+    expect(res.headers['referrer-policy']).toBe('same-origin');
   });
 });

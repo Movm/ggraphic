@@ -32,6 +32,10 @@ services:
       UPLOAD_MAX_BYTES: ${UPLOAD_MAX_BYTES:-}
       THUMBNAIL_MAX_BYTES: ${THUMBNAIL_MAX_BYTES:-}
       DOCUMENT_MAX_BYTES: ${DOCUMENT_MAX_BYTES:-}
+      FONT_MAX_BYTES: ${FONT_MAX_BYTES:-}
+      ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-}
+      TRUST_PROXY: ${TRUST_PROXY:-}
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-}
@@ -41,7 +45,7 @@ services:
     # Lets OPENAI_BASE_URL point at a model server on the host (e.g. Ollama), also on Linux.
     extra_hosts:
       - 'host.docker.internal:host-gateway'
-    # No login in this version: reachable from this machine only. See docs/self-hosting.md.
+    # Reachable from this machine only; expose it through a TLS reverse proxy. See docs/self-hosting.md.
     ports:
       - '127.0.0.1:${STUDIO_PORT:-8080}:8080'
 
