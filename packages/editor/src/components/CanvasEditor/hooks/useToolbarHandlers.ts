@@ -8,6 +8,7 @@ import type {
 import type { ShadowPatch } from '@ggraphic/editor/hooks/useFloatingModuleHandlers';
 import type { SelectionGeometry } from '@ggraphic/editor/utils/canvasCommands';
 import type { PageCommandId } from '@ggraphic/editor/utils/canvasCommandRegistry';
+import { type SelectionGeometry } from '@ggraphic/editor/utils/canvasCommands';
 import type { CropAspectId } from '@ggraphic/editor/utils/cropAspect';
 import type { GradientFill } from '@ggraphic/editor/utils/gradientFill';
 import type { TextAlign } from '@ggraphic/editor/utils/textAlign';

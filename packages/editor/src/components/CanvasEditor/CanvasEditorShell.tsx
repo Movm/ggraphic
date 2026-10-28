@@ -28,7 +28,8 @@
  */
 
 import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { PAGE_PERSISTED_STATE_KEYS } from '@ggraphic/editor/collab/pageElementStateKeys';
+import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { pagePersistedStateKeys } from '@ggraphic/editor/collab/pageElementStateKeys';
 import { serializeDeck } from '@ggraphic/editor/collab/pagesDoc';
 import { createPageSyncedCallbacks } from '@ggraphic/editor/collab/wrapCallbacksWithPageSync';
 import { CanvasTextEditorProvider } from '@ggraphic/editor/components/CanvasTextOverlay';
@@ -206,6 +207,7 @@ function CanvasEditorInner({
   hostChrome,
   readOnly = false,
 }: CanvasEditorProps) {
+  const t = useMessages();
   // Note: onAutoSaveShareToken is threaded down to useCanvasAutoSave (via
   // PageWrapper → GenericCanvas) instead of a store subscription here — a
   // subscription dies with the unmount, losing tokens that resolve after the
@@ -235,6 +237,7 @@ function CanvasEditorInner({
     canUndoPageOp,
     canRedoPageOp,
     isPreview,
+    schemaRefusal,
   } = usePageManager<string>({
     initialConfigId,
     formatId,
@@ -282,7 +285,7 @@ function CanvasEditorInner({
       const wrapped = createPageSyncedCallbacks(
         () => callbacksRef.current,
         (partial) => updatePageStateRef.current(pageId, partial),
-        [...pageCallbackKeys(configId), ...PAGE_PERSISTED_STATE_KEYS]
+        [...pageCallbackKeys(configId), ...pagePersistedStateKeys()]
       );
       cache.set(pageId, { configId, wrapped });
       return wrapped;
@@ -1015,7 +1018,7 @@ function CanvasEditorInner({
     return [];
   }, [activeConfig, activeState]);
 
-  // Auto-switch tabs based on config (e.g., switch to 'settings' when a balken is selected).
+  // Auto-switch tabs based on config (e.g., switch to 'settings' when a host element is selected).
   // Desktop only: on mobile a tap just selects — the canvas keeps its size, and
   // the selection's area opens from the bottom bar's "Mehr" button instead.
   const mobileSelectionArea = isMobileWeb
@@ -1618,7 +1621,7 @@ function CanvasEditorInner({
                 onClick={handleSkipToLayers}
                 className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-[400] focus:flex focus:min-h-8 focus:items-center focus:rounded-md focus:border focus:border-[var(--editor-border-strong)] focus:bg-[var(--editor-surface)] focus:px-3 focus:text-[length:var(--font-size-small)] focus:font-semibold focus:text-[var(--editor-text)] focus:shadow-md outline-none kbd:focus-visible:outline-2 kbd:focus-visible:outline-solid kbd:focus-visible:outline-offset-2 kbd:focus-visible:outline-[var(--editor-accent)]"
               >
-                Zu den Ebenen
+                {t.shell.skipToLayers}
               </button>
             )}
             <CanvasEditorLayout
@@ -1652,9 +1655,18 @@ function CanvasEditorInner({
               mobileSheetOpen={isMobileSheetOpen}
               onCanvasBackdropPointerDown={isMobileSheetOpen ? handlePanelClose : undefined}
             >
+              {schemaRefusal && (
+                // Read-only for good, not loading: say why nothing can be edited.
+                <p
+                  role="alert"
+                  className="mx-auto mt-sm max-w-prose rounded-md border border-[var(--editor-border-strong)] bg-[var(--editor-surface)] px-3 py-2 text-[length:var(--font-size-small)] text-[var(--editor-text)]"
+                >
+                  {t.shell.schemaRefusal[schemaRefusal.status]}
+                </p>
+              )}
               <div
                 inert={isPreview || hasPendingSuggestion}
-                aria-busy={isPreview}
+                aria-busy={isPreview && !schemaRefusal}
                 ref={pagesContainerCallbackRef}
                 onPointerDown={handleWorkAreaPointerDown}
                 className={cn(
