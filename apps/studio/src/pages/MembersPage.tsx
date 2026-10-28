@@ -200,6 +200,11 @@ export function MembersPage() {
                 <span>Invitation link (shown once)</span>
                 <input readOnly value={lastLink} onFocus={(e) => e.currentTarget.select()} />
               </label>
+              <p className="studio-invite__warning">
+                Anyone who has this link can join {organisation.name} until it is used or expires.
+                Send it only to the person you mean, through a private channel; revoke it below if
+                it went to the wrong place.
+              </p>
               <button type="button" className="studio-button" onClick={() => void copy()}>
                 Copy
               </button>

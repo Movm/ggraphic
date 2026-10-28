@@ -1162,6 +1162,12 @@ body {
   gap: 4px;
   font-weight: 700;
 }
+.studio-invite__warning {
+  flex-basis: 100%;
+  margin: 0;
+  font-weight: 700;
+  color: var(--primary-700);
+}
 .studio-invite__link input {
   padding: 8px 10px;
   border: 1px solid var(--secondary-200);

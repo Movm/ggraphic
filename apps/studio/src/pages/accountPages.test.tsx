@@ -130,6 +130,7 @@ describe('MembersPage', () => {
     expect(
       await screen.findByDisplayValue(`${window.location.origin}/invite/secret-token`)
     ).toBeInTheDocument();
+    expect(screen.getByText(/Anyone who has this link can join/)).toBeInTheDocument();
 
     await user.selectOptions(screen.getByLabelText('Role of Ed'), 'owner');
     await waitFor(() =>
