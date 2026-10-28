@@ -97,7 +97,9 @@ describe('ProjectListPage', () => {
     vi.stubGlobal('fetch', fetchMock);
     renderPage();
 
-    const cards = await screen.findAllByRole('listitem');
+    // The top bar's links are list items too; the cards live in the main area.
+    await screen.findByRole('heading', { name: 'Summer poster' });
+    const cards = within(screen.getByRole('main')).getAllByRole('listitem');
     expect(cards).toHaveLength(2);
     expect(within(cards[0]!).getByRole('heading', { name: 'Summer poster' })).toBeInTheDocument();
     expect(within(cards[0]!).getByRole('link', { name: 'Open Summer poster' })).toHaveAttribute(
