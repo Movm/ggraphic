@@ -171,9 +171,7 @@ describe('EditorPage', () => {
       vi.stubGlobal('fetch', fetchMock);
       renderEditor();
 
-      await waitFor(() =>
-        expect(document.querySelector('.konvajs-content canvas')).not.toBeNull()
-      );
+      await waitFor(() => expect(document.querySelector('.konvajs-content canvas')).not.toBeNull());
       await new Promise((r) => setTimeout(r, 4000));
       expect(calls.filter((c) => c.method === 'PUT' || c.method === 'PATCH')).toEqual([]);
     },

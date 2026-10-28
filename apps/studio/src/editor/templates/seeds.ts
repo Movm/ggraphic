@@ -8,6 +8,7 @@
  */
 import {
   brandFingerprint,
+  fitLogoBox,
   normalizeColor,
   resolveRef,
   resolveScheme,
@@ -145,22 +146,26 @@ function logoImages(f: Frame): UserImageInstance[] {
   const logo = activeBrand().logo;
   const size = logo ? logoSizeOf(logo.src) : null;
   if (!logo || !size) return [];
-  const scale = Math.min((f.width * 0.22) / size.width, (f.height * 0.08) / size.height);
-  const width = Math.round(size.width * scale);
-  const height = Math.round(size.height * scale);
+  // The envelope is the corner the logo may fill; every later logo is fitted into it again.
+  const maxWidth = Math.round(f.width * 0.22);
+  const maxHeight = Math.round(f.height * 0.08);
+  const box = {
+    x: f.width - f.m - maxWidth,
+    y: f.height - f.m - maxHeight,
+    width: maxWidth,
+    height: maxHeight,
+  };
+  const fit = fitLogoBox(box, size, f);
   return [
     {
       id: 'brand-logo',
       src: logo.src,
       fileName: logo.label,
-      x: f.width - f.m - width,
-      y: f.height - f.m - height,
-      width,
-      height,
+      ...fit,
       rotation: 0,
       scale: 1,
       opacity: 1,
-      bind: withBinding(undefined, 'src', { ref: 'brand.logo', value: logo.src }),
+      bind: withBinding(undefined, 'src', { ref: 'brand.logo', value: logo.src, box, fit }),
     },
   ];
 }
