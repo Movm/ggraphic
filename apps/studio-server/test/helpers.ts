@@ -47,7 +47,7 @@ export const BRAND_SETTINGS = {
     { label: 'Night', color: '#123456', ink: '#FFFFFF' },
     { label: 'Paper', color: '#F5F5F5', ink: '#123456' },
   ],
-  fonts: { headline: 'Raleway', body: 'PT Sans' },
+  fonts: { headline: 'Raleway', body: 'Instrument Sans' },
 };
 
 export const WOFF2 = Buffer.concat([Buffer.from('wOF2', 'latin1'), Buffer.alloc(60, 1)]);

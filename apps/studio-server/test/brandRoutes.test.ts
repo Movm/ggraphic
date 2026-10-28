@@ -51,7 +51,7 @@ describe.skipIf(!hasDb)('brand packs (Postgres)', () => {
   it('has no pack until an owner saves one', async () => {
     const res = await editor.get(base).expect(200);
     expect(res.body).toMatchObject({ settings: null, assets: [], pack: null });
-    expect(res.body.bundledFonts).toEqual(['Raleway', 'PT Sans', 'Vollkorn']);
+    expect(res.body.bundledFonts).toEqual(['Raleway', 'Instrument Sans', 'Fraunces']);
   });
 
   it('saves settings, builds the pack and lets editors read but not write', async () => {
@@ -70,6 +70,14 @@ describe.skipIf(!hasDb)('brand packs (Postgres)', () => {
       .expect(403);
   });
 
+  it('accepts the replaced font families and stores their successors', async () => {
+    const res = await owner
+      .put(base)
+      .send({ ...BRAND_SETTINGS, fonts: { headline: 'PT Sans', body: 'Vollkorn' } })
+      .expect(200);
+    expect(res.body.settings.fonts).toEqual({ headline: 'Instrument Sans', body: 'Fraunces' });
+  });
+
   it('validates colours and font families', async () => {
     await owner
       .put(base)
@@ -77,7 +85,7 @@ describe.skipIf(!hasDb)('brand packs (Postgres)', () => {
       .expect(400);
     const unknown = await owner
       .put(base)
-      .send({ ...BRAND_SETTINGS, fonts: { headline: 'Unknown Sans', body: 'PT Sans' } })
+      .send({ ...BRAND_SETTINGS, fonts: { headline: 'Unknown Sans', body: 'Instrument Sans' } })
       .expect(400);
     expect(unknown.body.message).toContain('Unknown Sans');
   });
@@ -128,7 +136,7 @@ describe.skipIf(!hasDb)('brand packs (Postgres)', () => {
     expect(served.headers['content-type']).toBe('font/woff2');
     const saved = await owner
       .put(base)
-      .send({ ...BRAND_SETTINGS, fonts: { headline: 'Mine', body: 'PT Sans' } })
+      .send({ ...BRAND_SETTINGS, fonts: { headline: 'Mine', body: 'Instrument Sans' } })
       .expect(200);
     expect(saved.body.pack.fonts.headline).toBe('Mine');
     expect(saved.body.pack.fontFaces).toEqual([

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { aliasFontFamily } from './fontAliases.js';
 /**
  * Welche Auszeichnung eine Schrift tragen kann — abgeleitet aus den
  * `@font-face`-Regeln in `styles/typography.css`, nicht je Vorlage gepflegt.
@@ -14,7 +15,7 @@
  * wird gezeichnet (Konva `textDecoration`) und gilt deshalb für jede Schrift. Aufzählungen
  * ebenso — sie sind Umbruch, kein Schnitt.
  *
- * `fontFamily` kommt als CSS-Stapel („PT Sans, Arial, sans-serif"); gewertet
+ * `fontFamily` kommt als CSS-Stapel („Instrument Sans, Arial, sans-serif"); gewertet
  * wird die erste Familie, denn die zeichnet, solange sie geladen ist.
  */
 
@@ -32,20 +33,18 @@ export interface FontMarkSupport {
  * Fettschnitt seiner Grundfamilie: `font-weight: bold` auf der Grundfamilie
  * träfe keinen von ihnen.
  *
- * `Vollkorn` ist eine Kursiv-Familie — beide Schnitte sind kursiv, einen
- * aufrechten gibt es nicht. Kursiv anzubieten wäre wirkungslos, Fett dagegen
- * trifft `Vollkorn-BoldItalic`.
+ * Ersetzte Familien laufen vorher durch `aliasFontFamily`.
  */
 const FACES: Record<string, FontMarkSupport> = {
-  'PT Sans': { bold: true, italic: true },
-  Vollkorn: { bold: true, italic: false },
+  'Instrument Sans': { bold: true, italic: true },
+  Fraunces: { bold: true, italic: true },
 };
 
 const NONE: FontMarkSupport = { bold: false, italic: false };
 
 /** Erste Familie aus einem CSS-Stapel, ohne Anführungszeichen. */
 export function primaryFontFamily(fontFamily: string): string {
-  return (fontFamily.split(',')[0] ?? '').trim().replace(/^['"]|['"]$/g, '');
+  return aliasFontFamily((fontFamily.split(',')[0] ?? '').trim().replace(/^['"]|['"]$/g, ''));
 }
 
 export function fontMarkSupport(fontFamily: string): FontMarkSupport {

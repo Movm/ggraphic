@@ -4,7 +4,7 @@ import { brandDefault } from './brandDefault';
 
 const WHITE = '#FFFFFF';
 // The families the core may ship itself: all under the SIL Open Font License.
-const OPEN_FAMILIES = ['PT Sans', 'Raleway', 'Vollkorn'];
+const OPEN_FAMILIES = ['Instrument Sans', 'Raleway', 'Fraunces'];
 
 const channel = (hex: string, at: number) => {
   const value = parseInt(hex.slice(at, at + 2), 16) / 255;

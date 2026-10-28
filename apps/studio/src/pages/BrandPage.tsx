@@ -21,6 +21,8 @@ import {
   type BrandPackResponse,
   type BrandSettings,
 } from '../api/client';
+import { aliasFontFamily } from '@ggraphic/core';
+
 import { studioBrand } from '../brand';
 import { loadBrandFonts } from '../brandLoader';
 import { useLoggedIn } from '../session/SessionContext';
@@ -109,8 +111,17 @@ function BrandEditor({
   data: BrandPackResponse;
 }) {
   const queryClient = useQueryClient();
-  const [settings, setSettings] = useState<BrandSettings>(
-    () => data.settings ?? defaultSettings(orgName)
+  const [settings, setSettings] = useState<BrandSettings>(() =>
+    data.settings
+      ? {
+          ...data.settings,
+          // A pack saved before the font swap may still name the old families.
+          fonts: {
+            headline: aliasFontFamily(data.settings.fonts.headline),
+            body: aliasFontFamily(data.settings.fonts.body),
+          },
+        }
+      : defaultSettings(orgName)
   );
   const [groundIndex, setGroundIndex] = useState<number | 'primary'>('primary');
   // Stable list keys for the grounds, which have no id of their own until the server builds one.

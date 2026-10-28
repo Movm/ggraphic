@@ -32,6 +32,7 @@ import {
   snapByBounds,
 } from '@ggraphic/editor/utils/snapping';
 
+import { resolveFontFamily } from '../utils/fontAliases.js';
 import { CanvasRichText } from './CanvasRichText.js';
 
 import type { TransformConfig, TransformAnchor } from '@ggraphic/editor/types/editorTypes';
@@ -397,7 +398,7 @@ function CanvasTextInner({
         y={y}
         width={width}
         fontSize={fontSize}
-        fontFamily={fontFamily}
+        fontFamily={resolveFontFamily(fontFamily)}
         fontStyle={fontStyle}
         fill={fill}
         {...(gradientProps ?? { fillPriority: 'color' as const })}

@@ -10,7 +10,7 @@ import { type Role, type Session } from '../api/client';
 import { studioBrand } from '../brand';
 import { TEST_ORG, WithSession } from '../testing/session';
 import { AuthPage } from './AuthPage';
-import { BrandPage } from './BrandPage';
+import { BrandPage, defaultSettings } from './BrandPage';
 import { MembersPage } from './MembersPage';
 
 const json = (status: number, body: unknown) =>
@@ -177,7 +177,7 @@ describe('BrandPage', () => {
     settings: null,
     assets: [],
     pack: null,
-    bundledFonts: ['Raleway', 'PT Sans', 'Vollkorn'],
+    bundledFonts: ['Raleway', 'Instrument Sans', 'Fraunces'],
   };
 
   it('starts from the Studio colours, previews edits live and saves them', async () => {
@@ -207,7 +207,26 @@ describe('BrandPage', () => {
     };
     expect(saved.colors['primary']).toBe('#112233');
     expect(saved.backgrounds).toHaveLength(studioBrand.backgrounds.length);
-    expect(saved.fonts).toEqual({ headline: 'Raleway', body: 'PT Sans' });
+    expect(saved.fonts).toEqual({ headline: 'Raleway', body: 'Instrument Sans' });
+  });
+
+  it('shows and saves the successors of replaced font families', async () => {
+    const settings = {
+      ...defaultSettings('Org'),
+      fonts: { headline: 'Raleway', body: 'PT Sans' },
+    };
+    const calls = stubServer((method, url, body) => {
+      if (url !== `/api/orgs/${TEST_ORG}/brand-pack`) return undefined;
+      if (method === 'GET') return json(200, { ...empty, settings });
+      return json(200, { ...empty, settings: body });
+    });
+    const user = userEvent.setup();
+    renderWith(<BrandPage />);
+    await screen.findByLabelText(/^Primary Main colour/);
+    await user.click(screen.getByRole('button', { name: 'Save brand' }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
+    const saved = calls.find((c) => c.method === 'PUT')!.body as { fonts: Record<string, string> };
+    expect(saved.fonts).toEqual({ headline: 'Raleway', body: 'Instrument Sans' });
   });
 
   it('blocks saving an invalid colour', async () => {
