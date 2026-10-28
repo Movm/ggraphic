@@ -3,6 +3,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
+import '@ggraphic/ui/fonts.css';
+import '@ggraphic/ui/tokens.css';
+import '@ggraphic/ui/editor-bridge.css';
+import '@ggraphic/ui/styles.css';
 import './fonts';
 import './styles.css';
 import { App } from './App';

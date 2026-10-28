@@ -3,6 +3,7 @@ import { type BrandPack } from '@ggraphic/core';
 import { CanvasEditorProvider } from '@ggraphic/editor/CanvasEditorProvider';
 import { CanvasEditorShell } from '@ggraphic/editor/components/CanvasEditor/CanvasEditorShell';
 import { type CanvasEditorExportApi } from '@ggraphic/editor/components/CanvasEditor/types';
+import { Alert, Button } from '@ggraphic/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useRef } from 'react';
 import { PiArrowLeft } from 'react-icons/pi';
@@ -65,13 +66,15 @@ export function EditorPage({ projectId, config }: { projectId: string; config: S
   if (project.isError) {
     const missing = project.error instanceof ApiError && project.error.status === 404;
     return (
-      <main className="studio-page">
-        <div role="alert" className="studio-error">
-          <p>{missing ? 'This project does not exist.' : 'The project could not be opened.'}</p>
-          <button type="button" className="studio-button" onClick={() => navigate('/')}>
+      <main className="ui-root studio-standalone">
+        <Alert tone="danger">
+          <p className="studio-alert-text">
+            {missing ? 'This project does not exist.' : 'The project could not be opened.'}
+          </p>
+          <Button variant="outline" size="sm" onClick={() => navigate('/')}>
             Back to projects
-          </button>
-        </div>
+          </Button>
+        </Alert>
       </main>
     );
   }
@@ -128,30 +131,30 @@ function ProjectEditor({
     <CanvasEditorProvider services={services}>
       <div className="studio-editor">
         {autosave.status === 'conflict' ? (
-          <div role="alert" className="studio-banner">
+          <Alert tone="warning" role="alert" className="studio-banner">
             <span>
               This project was changed in another window. Reload to see that version, or keep yours
               and overwrite it.
             </span>
-            <button type="button" className="studio-button" onClick={onReload}>
-              Reload
-            </button>
-            <button
-              type="button"
-              className="studio-button"
-              onClick={() => void autosave.overwrite()}
-            >
-              Overwrite with mine
-            </button>
-          </div>
+            <span className="studio-banner__actions">
+              <Button variant="outline" size="sm" onClick={onReload}>
+                Reload
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => void autosave.overwrite()}>
+                Overwrite with mine
+              </Button>
+            </span>
+          </Alert>
         ) : null}
         {autosave.status === 'error' ? (
-          <div role="alert" className="studio-banner">
+          <Alert tone="danger" className="studio-banner">
             <span>Your changes could not be saved.</span>
-            <button type="button" className="studio-button" onClick={autosave.retry}>
-              Try again
-            </button>
-          </div>
+            <span className="studio-banner__actions">
+              <Button variant="outline" size="sm" onClick={autosave.retry}>
+                Try again
+              </Button>
+            </span>
+          </Alert>
         ) : null}
         <CanvasEditorShell
           initialConfigId={doc.pages[0]!.configId}

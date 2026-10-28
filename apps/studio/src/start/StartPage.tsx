@@ -4,6 +4,7 @@
  * the format under it, a few example prompts, and the recent projects below.
  * Submitting creates a project, lets the AI write its texts and opens it.
  */
+import { Button } from '@ggraphic/ui';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useId, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { PiArrowRight } from 'react-icons/pi';
@@ -13,7 +14,7 @@ import { DEFAULT_FORMAT, STUDIO_FORMATS, type StudioFormatId } from '../editor/d
 import { PROJECTS_QUERY_KEY, projectsKey } from '../pages/ProjectListPage';
 import { editorPath, navigate, PROJECTS_PATH } from '../router';
 import { useLoggedIn } from '../session/SessionContext';
-import { AccountBar } from '../ui/AccountBar';
+import { PageShell } from '../ui/PageShell';
 import { toast } from '../ui/toast';
 
 import { createFromPrompt } from './createFromPrompt';
@@ -71,12 +72,7 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
   };
 
   return (
-    <main className="studio-start">
-      <header className="studio-start__bar">
-        <span className="studio-logo">ggraphic Studio</span>
-        <AccountBar />
-      </header>
-
+    <PageShell>
       <section className="studio-start__hero" aria-labelledby={promptId + '-title'}>
         <h1 id={promptId + '-title'} className="studio-start__title">
           What do you want to create?
@@ -115,14 +111,10 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
                 </label>
               ))}
             </fieldset>
-            <button
-              type="submit"
-              className="studio-composer__send"
-              disabled={busy || !prompt.trim() || !config}
-            >
+            <Button type="submit" disabled={busy || !prompt.trim() || !config}>
               {busy ? (ai ? 'Writing your draft…' : 'Creating…') : 'Create'}
               {busy ? null : <PiArrowRight aria-hidden />}
-            </button>
+            </Button>
           </div>
         </form>
         <p id={hintId} className="studio-start__hint" role={busy ? 'status' : undefined}>
@@ -135,21 +127,22 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
         <ul className="studio-examples" aria-label="Example prompts">
           {EXAMPLE_PROMPTS.map((example) => (
             <li key={example}>
-              <button
-                type="button"
+              <Button
+                variant="outline"
+                size="sm"
                 className="studio-example"
                 disabled={busy}
                 onClick={() => setPrompt(example)}
               >
                 {example}
-              </button>
+              </Button>
             </li>
           ))}
         </ul>
       </section>
 
       <RecentProjects />
-    </main>
+    </PageShell>
   );
 }
 
@@ -168,7 +161,7 @@ function RecentProjects() {
           Recent projects
         </h2>
         <a
-          className="studio-link"
+          className="ui-link studio-link"
           href={PROJECTS_PATH}
           onClick={(e) => {
             e.preventDefault();

@@ -9,6 +9,7 @@ import {
   type EditorPagePickerProps,
   type EditorTabSectionProps,
 } from '@ggraphic/editor/components/CanvasEditor/editorShell';
+import { Button } from '@ggraphic/ui';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { PiSparkle } from 'react-icons/pi';
 
@@ -160,20 +161,20 @@ export function StudioPagePicker({
         </ul>
         <div className="studio-dialog__actions">
           {mode === 'add' && onDuplicateCurrent ? (
-            <button
-              type="button"
-              className="studio-button"
+            <Button
+              variant="outline"
+              size="sm"
               onClick={() => {
                 onDuplicateCurrent();
                 onClose();
               }}
             >
               Duplicate this page
-            </button>
+            </Button>
           ) : null}
-          <button type="button" className="studio-button" onClick={onClose}>
+          <Button variant="outline" size="sm" onClick={onClose}>
             Cancel
-          </button>
+          </Button>
         </div>
       </div>
     </div>
