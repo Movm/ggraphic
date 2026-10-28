@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
- * Routes on the History API: `/` (the start page with the prompt), `/projects`
- * (redirects to `/`, where the projects are), `/trash`, `/p/:id` (the editor) and `/brand` (the current
- * organisation). The server answers every other path with index.html.
+ * Routes on the History API: `/` (the start page: the prompt and the projects), `/projects`
+ * (kept for old links; redirects to `/`), `/trash`, `/p/:id` (the editor) and `/brand` (the
+ * current organisation's brand). The server answers every other path with index.html.
  */
 import { useSyncExternalStore } from 'react';
 
@@ -30,7 +30,6 @@ export function parseRoute(pathname: string): Route {
   return { name: 'start' };
 }
 
-export const PROJECTS_PATH = '/projects';
 export const TRASH_PATH = '/trash';
 export const BRAND_PATH = '/brand';
 

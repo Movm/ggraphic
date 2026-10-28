@@ -2,8 +2,8 @@
 /**
  * The logged-in account and the organisation it works in. There is one person
  * per instance, so the Studio never asks which organisation: an account that
- * belongs to several (an older instance) works in the one it owns, else in its
- * first membership (the server lists them oldest first).
+ * belongs to several (an older instance) works in an organisation it owns first, else in
+ * its first membership (the server lists them oldest first).
  */
 import { Alert } from '@ggraphic/ui';
 import { useQueryClient } from '@tanstack/react-query';
