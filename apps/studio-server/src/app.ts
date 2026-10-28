@@ -18,6 +18,7 @@ import type { Db } from './db/client.ts';
 import { errorHandler, HttpError, parseOr400 } from './http.ts';
 import { type AuthLimiters, authRouter, createAuthLimiters, tooMany } from './routes/auth.ts';
 import { brandAssetsRouter, organisationBrandRouter } from './routes/brand.ts';
+import { imagesRouter } from './routes/images.ts';
 import { organisationsRouter } from './routes/organisations.ts';
 import { organisationProjectsRouter, projectsRouter } from './routes/projects.ts';
 import { organisationUploadsRouter, uploadsRouter } from './routes/uploads.ts';
@@ -110,6 +111,7 @@ export function createApp({
   api.use('/brand-assets', brandAssetsRouter(db, config));
   api.use('/projects', projectsRouter(db, config));
   api.use('/uploads', uploadsRouter(db, config));
+  api.use('/images', imagesRouter(config, limiters, fetchImpl));
 
   // Shared by the /ai routes: the 503 when AI is off, and the per-account rate limit.
   const aiOrDisabled = (): AiConfig => {

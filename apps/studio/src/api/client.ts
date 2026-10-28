@@ -231,11 +231,8 @@ export function onUnauthenticated(listener: () => void): () => void {
   return () => unauthenticatedListeners.delete(listener);
 }
 
-async function request<T>(
-  path: string,
-  schema: z.ZodType<T> | null,
-  init: RequestInit = {}
-): Promise<T> {
+/** One call; a failed answer becomes an `ApiError` from the server's error body. */
+async function send(path: string, init: RequestInit = {}): Promise<Response> {
   const method = (init.method ?? 'GET').toUpperCase();
   const headers = new Headers(init.headers);
   if (method !== 'GET' && csrfToken) headers.set('X-CSRF-Token', csrfToken);
@@ -259,6 +256,15 @@ async function request<T>(
       parsed.success ? (parsed.data.currentVersion ?? null) : null
     );
   }
+  return response;
+}
+
+async function request<T>(
+  path: string,
+  schema: z.ZodType<T> | null,
+  init: RequestInit = {}
+): Promise<T> {
+  const response = await send(path, init);
   if (schema === null) return undefined as T;
   const result = schema.safeParse(await response.json());
   if (!result.success) {
@@ -412,5 +418,12 @@ export const api = {
 
   draft: (body: { briefing: string; width: number; height: number }) =>
     request('/ai/draft', draftSchema, json('POST', body)),
+  /** A transparent PNG of the image; the server forwards it to the instance's rembg service. */
+  removeBackground: async (image: Blob, filename: string) => {
+    const form = new FormData();
+    form.append('file', image, filename);
+    const response = await send('/images/remove-background', { method: 'POST', body: form });
+    return new Blob([await response.arrayBuffer()], { type: 'image/png' });
+  },
   pick: (body: PickBody) => request('/ai/pick', pickSchema, json('POST', body)),
 };
