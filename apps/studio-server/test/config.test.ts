@@ -114,10 +114,23 @@ describe('loadConfig', () => {
       });
     });
 
+    it('keeps the public API as the default URL, also for an empty value', () => {
+      expect(
+        loadConfig({ ...base, ICONIFY_ENABLED: 'true', ICONIFY_API_URL: '' }).features.iconify?.url
+      ).toBe('https://api.iconify.design');
+    });
+
     it('refuses a URL that is no http(s) URL', () => {
-      expect(() =>
-        loadConfig({ ...base, ICONIFY_ENABLED: 'true', ICONIFY_API_URL: 'file:///etc/passwd' })
-      ).toThrow(/ICONIFY_API_URL/);
+      for (const url of [
+        'file:///etc/passwd',
+        'ftp://icons.example.org',
+        'icons.example.org',
+        'http://',
+      ]) {
+        expect(() =>
+          loadConfig({ ...base, ICONIFY_ENABLED: 'true', ICONIFY_API_URL: url })
+        ).toThrow(/ICONIFY_API_URL/);
+      }
     });
 
     it('refuses NC, ND, SA and GPL licences in the allowlist', () => {

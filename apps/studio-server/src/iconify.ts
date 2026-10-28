@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Icon search through an Iconify API (api.iconify.design or the operator's own).
 // The host is operator config, fixed; users only send a search term and icon names.
+import { sanitizeSvg } from '@ggraphic/schema';
 import type { IconifyConfig } from './config.ts';
 import { HttpError } from './http.ts';
 
@@ -117,10 +118,6 @@ export function isIconToken(value: string): boolean {
   return PREFIX_OR_NAME.test(value);
 }
 
-/** Only plain vector paths: nothing that runs, loads or links elsewhere. */
-const UNSAFE_SVG =
-  /<script|<foreignObject|<image|<iframe|<object|<embed|<!ENTITY|<!DOCTYPE|\son[a-z]+\s*=|javascript:|@import|url\(\s*["']?(?!#)|(?:xlink:)?href\s*=\s*["']?(?!#)/i;
-
 export function createIconifyClient(
   config: IconifyConfig,
   fetchImpl: typeof fetch = fetch,
@@ -139,7 +136,10 @@ export function createIconifyClient(
   };
 
   /** One bounded GET against the configured host; null for a 404. */
-  async function get(path: string, maxBytes: number): Promise<Buffer | null> {
+  async function get(
+    path: string,
+    maxBytes: number
+  ): Promise<{ body: Buffer; type: string } | null> {
     let response: Response;
     try {
       response = await fetchImpl(`${config.url}${path}`, {
@@ -183,7 +183,7 @@ export function createIconifyClient(
       if (error instanceof HttpError) throw error;
       throw failed(error);
     }
-    return Buffer.concat(chunks);
+    return { body: Buffer.concat(chunks), type: response.headers.get('content-type') ?? '' };
   }
 
   const json = (body: Buffer): unknown => {
@@ -220,7 +220,7 @@ export function createIconifyClient(
     if (sets && sets.expires > now()) return Promise.resolve(sets.allowed);
     pendingSets ??= (async () => {
       const body = await get('/collections', MAX_COLLECTIONS_BYTES);
-      const table = body ? json(body) : null;
+      const table = body ? json(body.body) : null;
       if (!table || typeof table !== 'object' || Array.isArray(table)) throw upstreamError();
       const allowed = new Map<string, SetInfo>();
       for (const [prefix, info] of Object.entries(table)) {
@@ -237,7 +237,9 @@ export function createIconifyClient(
   }
 
   return {
-    async search(query, limit, prefix) {
+    async search(rawQuery, limit, prefix) {
+      // "Tree", " tree " and "tree" are one search.
+      const query = rawQuery.trim().toLowerCase().replace(/\s+/g, ' ');
       const key = `search\0${query}\0${limit}\0${prefix ?? ''}`;
       const hit = cache.get(key) as IconSearchResult | undefined;
       if (hit) return hit;
@@ -251,7 +253,7 @@ export function createIconifyClient(
         prefixes: prefixes.join(','),
       });
       const body = await get(`/search?${params.toString()}`, MAX_SEARCH_BYTES);
-      const answer = body ? (json(body) as { icons?: unknown; total?: unknown }) : null;
+      const answer = body ? (json(body.body) as { icons?: unknown; total?: unknown }) : null;
       if (!answer || !Array.isArray(answer.icons)) throw upstreamError();
       const icons: IconHit[] = [];
       for (const id of answer.icons) {
@@ -279,9 +281,12 @@ export function createIconifyClient(
       if (hit) return hit;
       const body = await get(`/${prefix}/${name}.svg`, MAX_SVG_BYTES);
       if (!body) throw notFound();
-      const svg = body.toString('utf8').trim();
-      if (!/^<svg[\s>]/.test(svg) || UNSAFE_SVG.test(svg)) {
-        console.warn('iconify answered no plain svg');
+      // Upstream must say it sends an SVG, and what it sends is rebuilt from an allowlist.
+      const svg = /^image\/svg\+xml\b/i.test(body.type)
+        ? sanitizeSvg(body.body.toString('utf8'))
+        : null;
+      if (svg === null) {
+        console.warn('iconify answered no usable svg');
         throw upstreamError();
       }
       cache.set(key, svg, SVG_TTL_MS);
