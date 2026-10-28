@@ -150,7 +150,10 @@ describe('bound seeds', () => {
       }
       for (const text of state.additionalTexts) {
         expect(text.bind?.['fill']?.value, text.id).toBe(text['fill']);
-        expect(text.bind?.['fontFamily']?.value, text.id).toBe(text['fontFamily']);
+        // The field carries the stack of typography.ts; the binding the bare family.
+        const family = text.bind?.['fontFamily']?.value as string;
+        expect(family, text.id).not.toContain(',');
+        expect(text['fontFamily'], text.id).toMatch(new RegExp(`^${family}, `));
       }
     }
   );

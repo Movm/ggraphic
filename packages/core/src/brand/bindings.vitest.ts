@@ -144,6 +144,39 @@ describe('rebindPageState', () => {
     const text = (rebindPageState(state, { brand: other }).state['textInstances'] as Item[])[0]!;
     expect(text.fontFamily).toBe('Lora');
   });
+
+  describe('font stacks', () => {
+    const stacked = (family: string) => ({
+      textInstances: [
+        {
+          fontFamily: family,
+          bind: { fontFamily: { ref: 'font.headline', value: 'Raleway' } },
+        },
+      ],
+    });
+    const lora: BrandPack = { ...brand, fonts: { ...brand.fonts, headline: 'Lora' } };
+    const textOf = (r: { state: Record<string, unknown> }) =>
+      (r.state['textInstances'] as Item[])[0]!;
+
+    it('a stacked field counts as bound', () => {
+      const text = textOf(rebindPageState(stacked('Raleway, Arial, sans-serif'), { brand: lora }));
+      expect(text.bind?.fontFamily).toBeDefined();
+    });
+
+    it('a rebind replaces the first family and keeps the tail', () => {
+      const text = textOf(
+        rebindPageState(stacked('"raleway", Arial, sans-serif'), { brand: lora })
+      );
+      expect(text.fontFamily).toBe('Lora, Arial, sans-serif');
+      expect(text.bind?.fontFamily?.value).toBe('Lora');
+    });
+
+    it('a different first family is an override', () => {
+      const text = textOf(rebindPageState(stacked('Georgia, serif'), { brand: lora }));
+      expect(text.fontFamily).toBe('Georgia, serif');
+      expect(text.bind?.fontFamily).toBeUndefined();
+    });
+  });
 });
 
 describe('rebindPageState edge cases', () => {

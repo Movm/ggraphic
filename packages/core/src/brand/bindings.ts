@@ -138,6 +138,29 @@ function isColorRef(ref: BindingRef): boolean {
   return !ref.startsWith('font.') && ref !== 'brand.logo';
 }
 
+/** Splits a CSS font stack at its first comma outside quotes: the first family and the rest, comma included. */
+function splitStack(stack: string): { first: string; tail: string } {
+  let quote: string | null = null;
+  for (let i = 0; i < stack.length; i++) {
+    const ch = stack[i]!;
+    if (quote) {
+      if (ch === quote) quote = null;
+    } else if (ch === '"' || ch === "'") quote = ch;
+    else if (ch === ',') return { first: stack.slice(0, i), tail: stack.slice(i) };
+  }
+  return { first: stack, tail: '' };
+}
+
+/** A family name without quotes and padding, lower case. */
+const familyKey = (family: string) =>
+  family
+    .trim()
+    .replace(/^(["'])(.*)\1$/, '$2')
+    .trim()
+    .toLowerCase();
+
+const firstFamilyKey = (stack: string) => familyKey(splitStack(stack).first);
+
 function hasBindings(obj: Obj): boolean {
   return isPlainObject(obj['bind']) && Object.keys(obj['bind']).length > 0;
 }
@@ -183,12 +206,16 @@ function rebindObject(obj: Obj, ctx: RebindContext, scheme: Scheme | null): Obj 
     const current = obj[field];
     const valid = isBindingRef(binding?.ref) && typeof binding.value === 'string';
     const color = valid && isColorRef(binding.ref);
+    // A font field may carry a stack; only its first family is the brand's to follow.
+    const font = valid && binding.ref.startsWith('font.');
     const edited =
       !valid ||
       typeof current !== 'string' ||
       (color
         ? normalizeColor(current) !== normalizeColor(binding.value)
-        : current !== binding.value);
+        : font
+          ? firstFamilyKey(current) !== firstFamilyKey(binding.value)
+          : current !== binding.value);
     const resolved = edited ? null : resolveRef(binding.ref, brand, scheme);
     if (resolved === null) {
       nextBind ??= { ...bind };
@@ -196,9 +223,16 @@ function rebindObject(obj: Obj, ctx: RebindContext, scheme: Scheme | null): Obj 
       continue;
     }
     const value = color ? normalizeColor(resolved) : resolved;
-    if (current === value && binding.value === value) continue;
+    // `value` is what the binding stores; the field keeps its fallback tail.
+    const written = font ? value + splitStack(current as string).tail : value;
+    if (
+      binding.value === value &&
+      (font ? firstFamilyKey(current as string) === familyKey(value) : current === value)
+    )
+      continue;
     next ??= { ...obj };
-    next[field] = value;
+    next[field] =
+      font && firstFamilyKey(current as string) === familyKey(value) ? current : written;
     const fitted =
       binding.ref === 'brand.logo' && current !== value ? fitLogo(next, binding, ctx) : null;
     nextBind ??= { ...bind };
