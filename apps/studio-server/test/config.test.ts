@@ -36,12 +36,13 @@ describe('loadConfig', () => {
     it('leaves every tool off when nothing is set', () => {
       const config = loadConfig(base);
       expect(config.ai).toBeNull();
-      expect(config.features).toEqual({ removeBackground: null });
+      expect(config.features).toEqual({ removeBackground: null, iconify: null });
     });
 
     it('turns a tool on when its URL is present', () => {
       expect(loadConfig({ ...base, REMBG_URL: 'http://rembg:7000/' }).features).toEqual({
         removeBackground: { url: 'http://rembg:7000', timeoutMs: 60_000 },
+        iconify: null,
       });
       expect(
         loadConfig({ ...base, REMBG_URL: 'http://rembg:7000', REMBG_TIMEOUT_MS: '5000' }).features
@@ -52,7 +53,7 @@ describe('loadConfig', () => {
     it('lets <TOOL>_ENABLED=false switch a configured tool off', () => {
       expect(
         loadConfig({ ...base, REMBG_URL: 'http://rembg:7000', REMBG_ENABLED: 'false' }).features
-      ).toEqual({ removeBackground: null });
+      ).toEqual({ removeBackground: null, iconify: null });
       expect(loadConfig({ ...base, ...ai, AI_ENABLED: 'false' }).ai).toBeNull();
     });
 
@@ -77,6 +78,60 @@ describe('loadConfig', () => {
         /REMBG_ENABLED must be "true" or "false"/
       );
       expect(() => loadConfig({ ...base, REMBG_URL: 'file:///etc/passwd' })).toThrow(/REMBG_URL/);
+    });
+  });
+
+  describe('iconify', () => {
+    it('is off by default, even though it needs no key', () => {
+      expect(loadConfig(base).features.iconify).toBeNull();
+      expect(
+        loadConfig({ ...base, ICONIFY_API_URL: 'https://icons.example.org' }).features.iconify
+      ).toBeNull();
+      expect(loadConfig({ ...base, ICONIFY_ENABLED: 'false' }).features.iconify).toBeNull();
+    });
+
+    it('is on with ICONIFY_ENABLED=true and defaults to the public API and a licence allowlist', () => {
+      const iconify = loadConfig({ ...base, ICONIFY_ENABLED: 'true' }).features.iconify;
+      expect(iconify).toEqual({
+        url: 'https://api.iconify.design',
+        licences: ['MIT', 'Apache-2.0', 'ISC', 'CC0-1.0', 'OFL-1.1', 'CC-BY-4.0', 'CC-BY-3.0'],
+        timeoutMs: 10_000,
+      });
+    });
+
+    it('takes an operator URL (trailing slash dropped), licences and timeout', () => {
+      const iconify = loadConfig({
+        ...base,
+        ICONIFY_ENABLED: 'true',
+        ICONIFY_API_URL: 'http://iconify.internal:3000/',
+        ICONIFY_LICENCES: 'MIT, CC0-1.0',
+        ICONIFY_TIMEOUT_MS: '2500',
+      }).features.iconify;
+      expect(iconify).toEqual({
+        url: 'http://iconify.internal:3000',
+        licences: ['MIT', 'CC0-1.0'],
+        timeoutMs: 2500,
+      });
+    });
+
+    it('refuses a URL that is no http(s) URL', () => {
+      expect(() =>
+        loadConfig({ ...base, ICONIFY_ENABLED: 'true', ICONIFY_API_URL: 'file:///etc/passwd' })
+      ).toThrow(/ICONIFY_API_URL/);
+    });
+
+    it('refuses NC, ND, SA and GPL licences in the allowlist', () => {
+      for (const licence of ['CC-BY-NC-4.0', 'CC-BY-ND-4.0', 'CC-BY-SA-4.0', 'GPL-3.0-only']) {
+        expect(() =>
+          loadConfig({ ...base, ICONIFY_ENABLED: 'true', ICONIFY_LICENCES: `MIT,${licence}` })
+        ).toThrow(/ICONIFY_LICENCES/);
+      }
+    });
+
+    it('refuses an unknown switch value', () => {
+      expect(() => loadConfig({ ...base, ICONIFY_ENABLED: 'yes' })).toThrow(
+        /ICONIFY_ENABLED must be "true" or "false"/
+      );
     });
   });
 

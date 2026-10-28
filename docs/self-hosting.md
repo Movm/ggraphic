@@ -50,7 +50,7 @@ Owners set their organisation's brand on the Brand page: name, the eight colour 
 
 ### Tools that need an outside service
 
-Studio's tools that call an outside service all follow one rule: a tool is **on when its key or URL is set**. `<TOOL>_ENABLED=false` switches a configured tool off (for example `AI_ENABLED=false`), and `<TOOL>_ENABLED=true` without its key or URL stops the server at start with an error, so a typo does not leave you with a silently missing tool. Tools whose service is not configured are hidden in the editor, and their routes answer `{"error":"feature_disabled"}` (the AI routes keep `ai_disabled`). `GET /api/config` tells the app which tools are on, as booleans only; keys and hosts never leave the server.
+Studio's tools that call an outside service all follow one rule: a tool is **on when its key or URL is set**. `<TOOL>_ENABLED=false` switches a configured tool off (for example `AI_ENABLED=false`), and `<TOOL>_ENABLED=true` without its key or URL stops the server at start with an error, so a typo does not leave you with a silently missing tool. Tools whose service is not configured are hidden in the editor, and their routes answer `{"error":"feature_disabled"}` (the AI routes keep `ai_disabled`). Icon search is the exception to "on when set": it needs no key, so it is **off until `ICONIFY_ENABLED=true`** (see [Icon search](#icon-search)). `GET /api/config` tells the app which tools are on, as booleans only; keys and hosts never leave the server.
 
 ### AI drafts
 
@@ -96,6 +96,16 @@ rembg s --host 0.0.0.0 --port 7000
 ```
 
 Uploads for this tool are limited by `UPLOAD_MAX_BYTES`; SVG is refused.
+
+### Icon search
+
+With `ICONIFY_ENABLED=true` the editor's Elements tab searches 400,000+ icons from [Iconify](https://iconify.design) next to the icons bundled with the editor. It is off by default because it sends data out of the instance.
+
+**What leaves your instance when it is on:** the search term (up to 64 characters) and the icon set and name of each icon that is previewed or placed, sent from the Studio server to `ICONIFY_API_URL` (default `https://api.iconify.design`, the public Iconify API; no key, no account). The browser never contacts Iconify: it asks Studio, so Iconify sees the server's address, not your users', and no cookie or account data. It does not see which account searched. No design content, image or text from a design is sent. To keep everything inside your network, run your own [Iconify API](https://iconify.design/docs/api/) (open source, with the icon sets you choose) and set `ICONIFY_API_URL` to it.
+
+Studio fixes the host to `ICONIFY_API_URL`; users cannot send a URL. Requests are authenticated, rate limited per account, bounded in time (`ICONIFY_TIMEOUT_MS`, default 10000) and size, and never follow redirects. Studio caches search results (10 minutes), the licence table (1 hour) and icons (24 hours) in memory.
+
+**Licences.** Only sets whose licence is in `ICONIFY_LICENCES` are offered (default `MIT,Apache-2.0,ISC,CC0-1.0,OFL-1.1,CC-BY-4.0,CC-BY-3.0`); a set whose licence Iconify does not state is never offered. NC, ND, SA and GPL licences are refused at start. Font Awesome sets are excluded on purpose, as is Remix Icon above version 4.8.0 (later versions carry a non-open licence). Each hit shows its set, licence and author. A placed icon is stored as a copy of its SVG in the design (so exports work offline), together with its source, licence and author. **CC BY sets require attribution**: the picker shows "Icon: <set> by <author>, <licence>"; adding it to your published work is up to you, there is no automatic credits list for icons yet.
 
 ## Backups
 

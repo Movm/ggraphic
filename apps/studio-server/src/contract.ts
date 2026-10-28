@@ -101,7 +101,7 @@ export const pickSchema = z.object({
 });
 
 export const configSchema = z.object({
-  features: z.object({ ai: z.boolean(), removeBackground: z.boolean() }),
+  features: z.object({ ai: z.boolean(), removeBackground: z.boolean(), iconify: z.boolean() }),
   limits: z.object({
     uploadBytes: z.int(),
     thumbnailBytes: z.int(),

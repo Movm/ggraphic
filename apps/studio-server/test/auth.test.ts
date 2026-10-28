@@ -286,6 +286,8 @@ describe.skipIf(!hasDb)('accounts and sessions (Postgres)', () => {
           ip: new FixedWindowLimiter({ limit: 2, windowMs: 60_000 }),
           ai: new FixedWindowLimiter({ limit: 100, windowMs: 60_000 }),
           removeBackground: new FixedWindowLimiter({ limit: 100, windowMs: 60_000 }),
+          iconifySearch: new FixedWindowLimiter({ limit: 100, windowMs: 60_000 }),
+          iconifySvg: new FixedWindowLimiter({ limit: 100, windowMs: 60_000 }),
         },
       });
       await request(limited).post('/api/auth/login').send({}).expect(400);
