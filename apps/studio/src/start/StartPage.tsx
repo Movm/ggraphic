@@ -10,7 +10,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useId, useMemo, useState, type ReactNode } from 'react';
 import { PiFile, PiQuotes, PiTextT, PiNumberOne } from 'react-icons/pi';
 
-import { ApiError, type StudioConfig } from '../api/client';
+import { type StudioConfig } from '../api/client';
 import { studioBrand } from '../brand';
 import { DEFAULT_FORMAT, STUDIO_FORMATS, type StudioFormatId } from '../editor/document';
 import { templatesFor } from '../editor/templates/catalog';
@@ -19,6 +19,7 @@ import { PROJECTS_QUERY_KEY } from '../projects/projectsKey';
 import { editorPath, navigate } from '../router';
 import { useLoggedIn } from '../session/SessionContext';
 import { PageShell } from '../ui/PageShell';
+import { apiErrorText } from '../ui/errorText';
 import { toast } from '../ui/toast';
 
 import {
@@ -59,20 +60,12 @@ const FORMAT_OPTIONS = STUDIO_FORMATS.map((f) => ({
 
 /**
  * What to tell a person when creating a project failed. The server's own text is for logs, so an
- * `ApiError` is told by kind (as `createFromPrompt` does for the AI), never by its message.
+ * `ApiError` is told by code and status (`apiErrorText`), never by its message.
  */
-const errorText = (err: unknown) => {
-  if (err instanceof AiPromptError || err instanceof TemplateUnavailableError) return err.message;
-  if (err instanceof ApiError) {
-    if (err.status === 0)
-      return 'The server is not reachable. Check your connection and try again.';
-    if (err.status === 401) return 'Your session has ended. Please sign in again.';
-    if (err.status === 403) return 'You are not allowed to create projects here.';
-    if (err.status === 413) return 'The project is too large to save.';
-    if (err.status === 429) return 'Too many requests right now. Please try again in a moment.';
-  }
-  return 'The project could not be created. Please try again.';
-};
+const errorText = (err: unknown) =>
+  err instanceof AiPromptError || err instanceof TemplateUnavailableError
+    ? err.message
+    : apiErrorText(err, 'The project could not be created. Please try again.');
 
 export function StartPage({ config }: { config: StudioConfig | undefined }) {
   const queryClient = useQueryClient();

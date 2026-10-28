@@ -8,10 +8,8 @@ import { PROJECTS_QUERY_KEY } from '../projects/projectsKey';
 import { navigate } from '../router';
 import { useLoggedIn } from '../session/SessionContext';
 import { PageShell, PageTitle } from '../ui/PageShell';
+import { apiErrorText } from '../ui/errorText';
 import { toast } from '../ui/toast';
-
-const errorText = (err: unknown) =>
-  err instanceof ApiError ? err.message : 'Something went wrong.';
 
 const dateFormat = new Intl.DateTimeFormat('en', { dateStyle: 'medium' });
 
@@ -31,12 +29,12 @@ export function TrashPage() {
       void queryClient.invalidateQueries({ queryKey: key });
       void queryClient.invalidateQueries({ queryKey: PROJECTS_QUERY_KEY });
     },
-    onError: (err) => toast.error(errorText(err)),
+    onError: (err) => toast.error(apiErrorText(err)),
   });
   const purge = useMutation({
     mutationFn: (item: TrashItem) => api.purgeProject(item.id),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: key }),
-    onError: (err) => toast.error(errorText(err)),
+    onError: (err) => toast.error(apiErrorText(err)),
   });
   const busy = restore.isPending || purge.isPending;
 
@@ -66,7 +64,7 @@ export function TrashPage() {
       {trash.isPending ? <p className="studio-muted">Loading the trash…</p> : null}
       {trash.isError ? (
         <Alert tone="danger">
-          <p className="studio-alert-text">{errorText(trash.error)}</p>
+          <p className="studio-alert-text">{apiErrorText(trash.error)}</p>
           <Button variant="outline" size="sm" onClick={() => void trash.refetch()}>
             Try again
           </Button>
