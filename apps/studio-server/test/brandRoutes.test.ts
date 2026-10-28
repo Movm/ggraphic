@@ -332,31 +332,56 @@ describe.skipIf(!hasDb)('brand packs (Postgres)', () => {
         expect(res.body.settings.fonts).toMatchObject({ serif: null, condensed: 'Raleway' });
       });
 
-      it('does not lose a concurrent save: the read of the stored row is locked', async () => {
+      it('does not write stale kept values over a save that committed meanwhile (row lock)', async () => {
         const alt = await uploadLogo();
         await owner
           .put(base)
           .send(oldShape({ ...NEW, logoAlt: { assetId: alt.id, ground: 'light' } }))
           .expect(200);
-        // Two old-shape saves and one new-shape save at once; the layout set by the new one
-        // must survive whichever order they run in.
         const next = { ...NEW.layout, margin: 0.08 };
-        await Promise.all([
-          owner
+        // The test holds brand_assets, so the old-shape PUT stops right after it read the
+        // stored row (it reads the assets second).
+        const holder = await pool.connect();
+        const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+        try {
+          await holder.query('begin');
+          await holder.query('lock table brand_assets in access exclusive mode');
+          // superagent sends on `then`: start it now.
+          const stale = owner
             .put(base)
-            .send(oldShape({ name: 'A' }))
-            .expect(200),
-          owner
-            .put(base)
-            .send(oldShape({ name: 'B', layout: next }))
-            .expect(200),
-          owner
-            .put(base)
-            .send(oldShape({ name: 'C' }))
-            .expect(200),
-        ]);
+            .send(oldShape({ name: 'Old client' }))
+            .then((r) => r);
+          const blocked = async () => {
+            for (let i = 0; i < 100; i++) {
+              const { rows } = await pool.query(
+                "select 1 from pg_stat_activity where wait_event_type = 'Lock' and query ilike '%brand_assets%'"
+              );
+              if (rows.length > 0) return;
+              await sleep(20);
+            }
+            throw new Error('the PUT never reached brand_assets');
+          };
+          await blocked();
+          // Another save sets a new layout. Under the row lock it has to wait for the PUT.
+          const newer = pool.query('update brand_packs set layout = $1', [JSON.stringify(next)]);
+          await Promise.race([newer, sleep(300)]);
+          await holder.query('rollback');
+          const [res] = await Promise.all([stale, newer]);
+          expect(res.status).toBe(200);
+        } finally {
+          holder.release();
+        }
         const read = await owner.get(base).expect(200);
         expect(read.body.settings.layout).toEqual(next);
+      });
+
+      it('aliases a stored legacy family before checking it, instead of dropping it', async () => {
+        await owner.put(base).send(oldShape(NEW)).expect(200);
+        await pool.query(
+          "update brand_packs set fonts = jsonb_set(fonts, '{serif}', '\"PT Sans\"')"
+        );
+        const res = await owner.put(base).send(oldShape()).expect(200);
+        expect(res.body.settings.fonts.serif).toBe('Instrument Sans');
       });
 
       it('has nothing to keep on a first save', async () => {

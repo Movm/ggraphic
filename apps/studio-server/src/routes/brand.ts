@@ -123,6 +123,12 @@ export function organisationBrandRouter(db: Db, config: Config): Router {
     // Read and write in one transaction under a row lock, so a save that kept stored values
     // cannot write them back over a concurrent one.
     await db.transaction(async (tx) => {
+      // A key the client did not send keeps its stored value; an explicit null clears it.
+      const [stored] = await tx
+        .select()
+        .from(brandPacks)
+        .where(eq(brandPacks.organisationId, orgId))
+        .for('update');
       const assets = await tx
         .select()
         .from(brandAssets)
@@ -131,12 +137,6 @@ export function organisationBrandRouter(db: Db, config: Config): Router {
         ...BUNDLED_FONT_FAMILIES,
         ...assets.filter((a) => a.kind === 'font').map((a) => a.fontFamily!),
       ]);
-      // A key the client did not send keeps its stored value; an explicit null clears it.
-      const [stored] = await tx
-        .select()
-        .from(brandPacks)
-        .where(eq(brandPacks.organisationId, orgId))
-        .for('update');
       const keep = <T>(sent: T | null | undefined, kept: T | null): T | null =>
         sent === undefined ? kept : sent;
       const storedFonts = (stored?.fonts ?? {}) as {
@@ -144,7 +144,10 @@ export function organisationBrandRouter(db: Db, config: Config): Router {
         condensed?: string | null;
       };
       // A kept family whose font was deleted since is dropped: an old client cannot see or fix it.
-      const alive = (family: string | null) => (family && families.has(family) ? family : null);
+      const alive = (family: string | null) => {
+        const aliased = family && aliasFontFamily(family);
+        return aliased && families.has(aliased) ? aliased : null;
+      };
       const serif =
         parsed.fonts.serif === undefined ? alive(storedFonts.serif ?? null) : parsed.fonts.serif;
       const condensed =

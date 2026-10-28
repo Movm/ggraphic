@@ -601,7 +601,9 @@ describe('iconify client', () => {
     });
 
     it('refunds the reservation of a chunk that fails', async () => {
-      const { held } = await run(() => new Response('', { status: 500 }));
+      const { held, fake } = await run(() => new Response('', { status: 500 }));
+      // Without the refund the budget is spent after 4 chunks and the other 6 never go out.
+      expect(fake.calls.filter((c) => /^\/tabler\.json/.test(c))).toHaveLength(10);
       expect(Math.max(...held)).toBeLessThanOrEqual(4 * 1024 * 1024);
       expect(held.at(-1)).toBe(0);
     });
@@ -697,6 +699,40 @@ describe('iconify client', () => {
     expect(peak).toBeLessThanOrEqual(4);
     expect(peak).toBeGreaterThan(0);
     release();
+  });
+
+  it('marks names whose batch answer is refused for its Content-Length as unbatchable', async () => {
+    const fake = fakeIconify({
+      search: ['tabler:big'],
+      batch: () => new Response('{}', { headers: { 'content-length': '99999999' } }),
+    });
+    const client = createIconifyClient(iconify, fake.impl);
+    await client.search('tree', 10, null);
+    await client.search('tree', 10, null, { refresh: true });
+    expect(fake.calls.filter((c) => /\.json/.test(c))).toHaveLength(1);
+  });
+
+  it('runs a refresh through the same per-search dedupe as every other warm', async () => {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((r) => (release = r));
+    const fake = fakeIconify({ search: ['tabler:tree'] });
+    const inner = fake.impl.getMockImplementation()!;
+    const impl = vi.fn<typeof fetch>(async (input, init) => {
+      if (/\.json/.test(String(input))) {
+        await gate;
+        return batchAnswer('tabler', new URL(String(input)));
+      }
+      return inner(input, init);
+    });
+    const client = createIconifyClient(iconify, impl);
+    const first = client.search('tree', 10, null);
+    await vi.waitFor(() =>
+      expect(impl.mock.calls.some((c) => /\.json/.test(String(c[0])))).toBe(true)
+    );
+    await client.search('tree', 10, null, { refresh: true });
+    release();
+    await first;
+    expect(impl.mock.calls.filter((c) => /\.json/.test(String(c[0])))).toHaveLength(1);
   });
 
   it('answers a cached search without waiting for the upstream', async () => {
