@@ -127,13 +127,7 @@
           }
         }
       ],
-      "layerOrder": [
-        "accent-bar",
-        "headline",
-        "subline",
-        "body",
-        "cta"
-      ]
+      "layerOrder": ["accent-bar", "headline", "subline", "body", "cta"]
     },
     "studio-quote": {
       "backgroundColor": "#fdf0f5",
@@ -219,11 +213,7 @@
           }
         }
       ],
-      "layerOrder": [
-        "quote-mark",
-        "headline",
-        "subline"
-      ]
+      "layerOrder": ["quote-mark", "headline", "subline"]
     },
     "studio-number": {
       "backgroundColor": "#d4146e",
@@ -309,11 +299,7 @@
           }
         }
       ],
-      "layerOrder": [
-        "number",
-        "headline",
-        "subline"
-      ]
+      "layerOrder": ["number", "headline", "subline"]
     }
   },
   "logo": {
@@ -476,14 +462,7 @@
           }
         }
       ],
-      "layerOrder": [
-        "accent-bar",
-        "brand-logo",
-        "headline",
-        "subline",
-        "body",
-        "cta"
-      ]
+      "layerOrder": ["accent-bar", "brand-logo", "headline", "subline", "body", "cta"]
     },
     "studio-quote": {
       "backgroundColor": "#fdf0f5",
@@ -601,12 +580,7 @@
           }
         }
       ],
-      "layerOrder": [
-        "brand-logo",
-        "quote-mark",
-        "headline",
-        "subline"
-      ]
+      "layerOrder": ["brand-logo", "quote-mark", "headline", "subline"]
     },
     "studio-number": {
       "backgroundColor": "#d4146e",
@@ -724,12 +698,7 @@
           }
         }
       ],
-      "layerOrder": [
-        "brand-logo",
-        "number",
-        "headline",
-        "subline"
-      ]
+      "layerOrder": ["brand-logo", "number", "headline", "subline"]
     }
   }
 }

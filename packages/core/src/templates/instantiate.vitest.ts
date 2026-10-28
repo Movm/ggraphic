@@ -187,6 +187,45 @@ describe('instantiateTemplatePage', () => {
     expect(el.bind).toBeUndefined();
   });
 
+  describe('font fallback', () => {
+    const fontTemplate = () =>
+      template({
+        pages: [
+          {
+            state: {
+              additionalTexts: [
+                { id: 'h', fontFamily: '', bind: { fontFamily: 'font.headline' } },
+                { id: 'q', fontFamily: '', bind: { fontFamily: 'font.quoteEmphasis' } },
+              ],
+            },
+          },
+        ],
+      });
+    const texts = (r: ReturnType<typeof ok>) => r.state['additionalTexts'] as Item[];
+
+    it('appends the host fallback to the field and leaves the binding value bare', () => {
+      const family = logoBrand.fonts.headline;
+      const [h] = texts(ok(fontTemplate(), ctx({ fontFallback: 'Arial, sans-serif' })));
+      expect(h!.fontFamily).toBe(`${family}, Arial, sans-serif`);
+      expect((h!.bind as unknown as Record<string, Entry>)['fontFamily']!.value).toBe(family);
+    });
+
+    it('asks a function fallback per font role', () => {
+      const r = ok(
+        fontTemplate(),
+        ctx({ fontFallback: (role) => (role === 'quoteEmphasis' ? 'Georgia, serif' : 'Arial') })
+      );
+      const [h, q] = texts(r);
+      expect(h!.fontFamily.endsWith(', Arial')).toBe(true);
+      expect(q!.fontFamily.endsWith(', Georgia, serif')).toBe(true);
+    });
+
+    it('writes the bare family without a fallback', () => {
+      const [h] = texts(ok(fontTemplate(), ctx()));
+      expect(h!.fontFamily).toBe(logoBrand.fonts.headline);
+    });
+  });
+
   it('an invalid bind ref refuses the template', () => {
     const t = template({
       pages: [{ state: { additionalTexts: [{ id: 'h', bind: { fill: 'nonsense' } }] } }],
