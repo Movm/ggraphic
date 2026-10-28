@@ -21,7 +21,7 @@ export function photoCreditLine(
     );
   }
   if (names.length === 0) return '';
-  return `${names.length > 1 ? 'Fotos' : 'Foto'}: ${names.join(', ')} auf Unsplash`;
+  return `${names.length > 1 ? 'Photos' : 'Photo'}: ${names.join(', ')} on Unsplash`;
 }
 
 /** Hängt den Bildnachweis mit einer Leerzeile an den Beitragstext. */

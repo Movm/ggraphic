@@ -13,7 +13,7 @@ export const en: Messages = {
     editText: 'Edit text',
     anonymous: 'Anonymous',
     page: (n) => `Page ${n}`,
-    elements: (n) => `${n} elements`,
+    elements: (n) => (n === 1 ? '1 element' : `${n} elements`),
   },
 
   commands: {

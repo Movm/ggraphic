@@ -83,7 +83,7 @@ describe('IconifyCatalog', () => {
   it('shows set, author and licence of the selected hit', async () => {
     renderCatalog(service());
     fireEvent.click(await screen.findByRole('button', { name: /tree-fill/ }));
-    expect(screen.getByText('Icon: Lets Icons von Leonid Tsvetkov, CC-BY-4.0')).toBeTruthy();
+    expect(screen.getByText('Icon: Lets Icons by Leonid Tsvetkov, CC-BY-4.0')).toBeTruthy();
   });
 
   it('places the selected icon as a copy of its svg, with source and licence', async () => {

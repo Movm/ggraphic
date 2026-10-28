@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useIsCanvasTextEditing } from '@ggraphic/editor/components/CanvasTextOverlay';
 import { useRovingToolbar } from '@ggraphic/editor/hooks/useRovingToolbar';
+import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { CANVAS_COMMANDS } from '@ggraphic/editor/utils/canvasCommandRegistry';
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -93,6 +94,7 @@ export function MobileSelectionPill({
   onUnlock,
   onFlip,
 }: MobileSelectionPillProps) {
+  const t = useMessages();
   const [box, setBox] = useState<SelectionBox | null>(null);
   const [manipulating, setManipulating] = useState(false);
   const [pillWidth, setPillWidth] = useState(0);
@@ -135,7 +137,7 @@ export function MobileSelectionPill({
       onKeyDown={onKeyDown}
       onFocus={onFocus}
       role="toolbar"
-      aria-label="Element"
+      aria-label={t.common.element}
       style={{ top, left }}
       className="fixed z-[110] flex items-center gap-0.5 px-1 rounded-full border border-[var(--editor-border-soft)] bg-[var(--editor-surface)] shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
     >
@@ -144,12 +146,12 @@ export function MobileSelectionPill({
         className={BTN}
         onClick={onDuplicate}
         disabled={!canDuplicate}
-        aria-label="Duplizieren"
+        aria-label={t.commands.duplicate}
       >
         <PiCopy size={20} aria-hidden />
       </button>
       {isLocked && onUnlock ? (
-        <button type="button" className={BTN} onClick={onUnlock} aria-label="Entsperren">
+        <button type="button" className={BTN} onClick={onUnlock} aria-label={t.contextMenu.unlock}>
           <PiLockSimpleOpen size={20} aria-hidden />
         </button>
       ) : (
@@ -158,7 +160,7 @@ export function MobileSelectionPill({
           className={BTN}
           onClick={onDelete}
           disabled={!canDelete}
-          aria-label="Löschen"
+          aria-label={t.commands.delete}
         >
           <PiTrash size={20} aria-hidden />
         </button>
@@ -184,7 +186,7 @@ export function MobileSelectionPill({
         </>
       )}
       {onMore && (
-        <button type="button" className={BTN} onClick={onMore} aria-label="Mehr Optionen">
+        <button type="button" className={BTN} onClick={onMore} aria-label="More options">
           <PiDotsThreeBold size={20} aria-hidden />
         </button>
       )}

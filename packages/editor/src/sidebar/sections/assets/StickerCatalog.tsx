@@ -47,7 +47,7 @@ export function StickerCatalog({
   const t = useMessages();
   const { openStickerCreator } = useCanvasEditorServices();
   const scopes = useGalleryScopes();
-  const listLabel = registeredAssetCatalog().elementPanel?.stickerListLabel ?? 'Standard';
+  const listLabel = registeredAssetCatalog().elementPanel?.stickerListLabel ?? 'Default';
   const tabs = useMemo<readonly GalleryTab<StickerTab>[]>(
     () => [{ id: 'catalog', label: listLabel }, ...scopes],
     [listLabel, scopes]

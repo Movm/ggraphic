@@ -21,7 +21,7 @@ export async function collectAltTextPages(
     pages.push({ pageNumber: index + 1, image, texts: ref.getVisibleTexts() });
   }
   if (failedPages.length > 0) {
-    throw new Error(`Seite(n) ${failedPages.join(', ')} konnten nicht erfasst werden`);
+    throw new Error(`Page(s) ${failedPages.join(', ')} could not be captured`);
   }
   return pages;
 }

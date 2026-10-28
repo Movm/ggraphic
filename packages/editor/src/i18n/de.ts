@@ -19,7 +19,7 @@ export const de = {
     editText: 'Text bearbeiten',
     anonymous: 'Anonym',
     page: (n: number) => `Seite ${n}`,
-    elements: (n: number) => `${n} Elemente`,
+    elements: (n: number) => (n === 1 ? '1 Element' : `${n} Elemente`),
   },
 
   commands: {

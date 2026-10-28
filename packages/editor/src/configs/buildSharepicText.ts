@@ -5,22 +5,22 @@ interface AdditionalTextLike {
 }
 
 const FIELD_LABELS: Array<[key: string, label: string]> = [
-  ['quote', 'Zitat'],
+  ['quote', 'Quote'],
   ['name', 'Name'],
-  ['header', 'Überschrift'],
-  ['subheader', 'Unterzeile'],
+  ['header', 'Headline'],
+  ['subheader', 'Subline'],
   ['body', 'Text'],
-  ['eventTitle', 'Veranstaltung'],
-  ['weekday', 'Wochentag'],
-  ['date', 'Datum'],
-  ['time', 'Uhrzeit'],
-  ['locationName', 'Ort'],
-  ['address', 'Adresse'],
-  ['line1', 'Zeile 1'],
-  ['line2', 'Zeile 2'],
-  ['line3', 'Zeile 3'],
-  ['headline', 'Überschrift'],
-  ['title', 'Titel'],
+  ['eventTitle', 'Event'],
+  ['weekday', 'Weekday'],
+  ['date', 'Date'],
+  ['time', 'Time'],
+  ['locationName', 'Place'],
+  ['address', 'Address'],
+  ['line1', 'Line 1'],
+  ['line2', 'Line 2'],
+  ['line3', 'Line 3'],
+  ['headline', 'Headline'],
+  ['title', 'Title'],
 ];
 
 function asString(value: unknown): string | null {
@@ -30,7 +30,7 @@ function asString(value: unknown): string | null {
 }
 
 /**
- * Builds a structured German text description of the current canvas content.
+ * Builds a structured text description of the current canvas content.
  * Used by ChatSection to inject the sharepic content into the chat composer.
  */
 export function buildSharepicText(state: Record<string, unknown>): string {
@@ -38,7 +38,7 @@ export function buildSharepicText(state: Record<string, unknown>): string {
 
   const canvasType = asString(state.canvasType);
   if (canvasType) {
-    lines.push(`Sharepic-Typ: ${canvasType}`);
+    lines.push(`Graphic type: ${canvasType}`);
   }
 
   for (const [key, label] of FIELD_LABELS) {
@@ -54,12 +54,12 @@ export function buildSharepicText(state: Record<string, unknown>): string {
       .map((entry) => asString(entry.text))
       .filter((value): value is string => value !== null);
     if (additionalStrings.length > 0) {
-      lines.push(`Weitere Texte: ${additionalStrings.join(' / ')}`);
+      lines.push(`More texts: ${additionalStrings.join(' / ')}`);
     }
   }
 
   if (lines.length === 0) {
-    return '(Sharepic ist noch leer)';
+    return '(The graphic is still empty)';
   }
 
   return lines.join('\n');

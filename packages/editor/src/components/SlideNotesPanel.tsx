@@ -32,7 +32,7 @@ export function SlideNotesPanel({ value, onChange, readOnly = false }: SlideNote
   if (readOnly && !hasNotes) return null;
 
   return (
-    <section aria-label="Sprechernotizen" className="w-full max-w-[56rem]">
+    <section aria-label="Speaker notes" className="w-full max-w-[56rem]">
       <button
         type="button"
         aria-expanded={open}
@@ -41,18 +41,18 @@ export function SlideNotesPanel({ value, onChange, readOnly = false }: SlideNote
         className="flex min-h-[32px] items-center gap-xs rounded-md px-xs text-xs text-[var(--editor-text-secondary)] hover:text-[var(--editor-text)]"
       >
         <PiNote aria-hidden="true" className="h-4 w-4" />
-        <span>{hasNotes ? 'Notizen (1)' : 'Notizen'}</span>
+        <span>{hasNotes ? 'Notes (1)' : 'Notes'}</span>
       </button>
       {open && (
         <textarea
           ref={fieldRef}
           id={fieldId}
-          aria-label="Sprechernotizen"
+          aria-label="Speaker notes"
           value={value}
           onChange={(e) => onChange(e.target.value)}
           readOnly={readOnly}
           rows={3}
-          placeholder="Notizen für den Vortrag …"
+          placeholder="Notes for the talk …"
           className="mt-xs w-full resize-none rounded-md border border-[var(--editor-border)] bg-transparent p-xs text-xs text-[var(--editor-text-secondary)] placeholder:text-[var(--editor-placeholder)]"
         />
       )}

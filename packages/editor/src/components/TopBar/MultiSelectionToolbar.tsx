@@ -92,18 +92,18 @@ export function MultiSelectionToolbar({
 }: MultiSelectionToolbarProps) {
   const t = useMessages();
   const locked = lockState === 'all';
-  const lockLabel = locked ? 'Entsperren' : 'Sperren';
+  const lockLabel = locked ? t.contextMenu.unlock : t.commands.toggleLock;
   const roving = useRovingToolbar<HTMLDivElement>();
   return (
     <ContextCard>
       <div
         {...roving}
         role="toolbar"
-        aria-label={`${count} Elemente`}
+        aria-label={t.common.elements(count)}
         className="flex items-center gap-0.5"
       >
         <span className="px-2 text-[13px] font-medium text-[var(--editor-text-secondary)] whitespace-nowrap">
-          {count} Elemente
+          {t.common.elements(count)}
         </span>
         <div className={SEP} />
         <button

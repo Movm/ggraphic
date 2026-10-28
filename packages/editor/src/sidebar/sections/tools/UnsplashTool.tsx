@@ -113,7 +113,7 @@ export function UnsplashTool({ onPlaceImageUrl }: UnsplashToolProps) {
 
       {lastQuery && !isLoadingSearch && searchResults.length === 0 && !searchError && !limit && (
         <p role="status" className="m-0 text-xs text-[var(--editor-text-muted)]">
-          Keine Fotos zu „{lastQuery}“ gefunden.
+          No photos for “{lastQuery}” found.
         </p>
       )}
 
@@ -151,7 +151,7 @@ export function UnsplashTool({ onPlaceImageUrl }: UnsplashToolProps) {
               )}
               {placedId === image.filename && (
                 <span role="status" className="text-[11px] text-[var(--editor-active-fg)]">
-                  Eingefügt
+                  Inserted
                 </span>
               )}
             </li>
@@ -171,14 +171,14 @@ export function UnsplashTool({ onPlaceImageUrl }: UnsplashToolProps) {
           onClick={() => void loadMoreResults()}
           className="h-9 rounded-md border border-[var(--editor-border-strong)] bg-transparent text-sm text-[var(--editor-text)] cursor-pointer hover:bg-[var(--editor-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--editor-accent)]"
         >
-          Mehr laden ({searchResults.length} von {totalResults})
+          Load more ({searchResults.length} of {totalResults})
         </button>
       )}
 
       {!limit && <UnsplashRemaining remaining={remaining} />}
 
       <p className="m-0 text-[11px] text-[var(--editor-text-muted)]">
-        Fotos von{' '}
+        Photos from{' '}
         <a
           href={unsplashHome}
           target="_blank"
@@ -187,7 +187,7 @@ export function UnsplashTool({ onPlaceImageUrl }: UnsplashToolProps) {
         >
           Unsplash
         </a>{' '}
-        – kostenlos nutzbar nach der Unsplash-Lizenz.
+        – free to use under the Unsplash licence.
       </p>
     </div>
   );

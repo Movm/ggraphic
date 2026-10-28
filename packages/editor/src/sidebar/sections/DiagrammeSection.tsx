@@ -127,7 +127,7 @@ function ChartCard({
     <button
       type="button"
       onClick={onClick}
-      title={`${name} einfügen`}
+      title={`Insert ${name}`}
       className="group flex flex-col items-center gap-1.5 cursor-pointer bg-transparent border-none p-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--editor-accent)]"
     >
       <span

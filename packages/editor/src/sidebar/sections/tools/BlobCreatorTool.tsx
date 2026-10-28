@@ -60,7 +60,7 @@ function ColorRow({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-xs text-foreground-muted">Farbe</span>
+      <span className="text-xs text-foreground-muted">Colour</span>
       <div className="flex flex-wrap items-center gap-1.5">
         {brandColors().map((c) => (
           <button
@@ -190,7 +190,7 @@ export function BlobCreatorTool({ onJumpToUploads, onPlaceImageUrl }: BlobCreato
 
           <ColorRow selected={color} onSelect={setColor} disabled={disabled} />
           <LabeledRange
-            label={`Punkte: ${numPoints}`}
+            label={`Points: ${numPoints}`}
             value={numPoints}
             min={4}
             max={MAX_POINTS}

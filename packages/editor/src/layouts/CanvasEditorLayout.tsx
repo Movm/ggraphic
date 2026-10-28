@@ -137,7 +137,7 @@ export function CanvasEditorLayout({
           <div className="flex items-center gap-xs py-xs px-sm bg-primary-50 border-b border-primary-100 text-foreground-muted text-[length:var(--font-size-small)] w-full max-canvas-mobile:text-[length:var(--font-size-xsmall)] max-canvas-mobile:py-xxs max-canvas-mobile:px-xs">
             <HiLink className="text-[var(--editor-accent)] text-base shrink-0" />
             <span>
-              Vorlage von <strong className="text-foreground">{templateCreator}</strong>
+              Template by <strong className="text-foreground">{templateCreator}</strong>
             </span>
           </div>
         )}

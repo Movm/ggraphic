@@ -10,7 +10,7 @@ import { MOBILE_INPUT_TEXT } from '../sidebarStyles.js';
 export function composeAltText(canvasText: string): string {
   const text = canvasText.replace(/\s+/g, ' ').trim();
   if (!text) return '';
-  return `Sharepic mit dem Text: ${text}${/[.!?]$/.test(text) ? '' : '.'}`;
+  return `Graphic with the text: ${text}${/[.!?]$/.test(text) ? '' : '.'}`;
 }
 
 /** Hängt die Bildbeschreibung als eigene Zeile an; ein geleertes Feld hängt nichts an. */

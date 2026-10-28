@@ -68,7 +68,7 @@ export function FloatingOutlineControl({
             onClick={toggle}
             type="button"
           >
-            {enabled ? 'Entfernen' : 'Aktivieren'}
+            {enabled ? 'Remove' : 'Enable'}
           </button>
         </div>
 
