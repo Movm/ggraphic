@@ -96,6 +96,10 @@ export const PPTX_UNMAPPED_PAGE_KEYS = {
   lockedLayerIds: 'Sperre im Editor',
   templateRotations: 'Drehung der Vorlagen-Elemente; die gehen nicht in die Folie',
   templateTextAligns: 'Ausrichtung der Vorlagen-Texte; die gehen nicht in die Folie',
+  // Markenbindung (F0): die Werte stehen schon in den Elementen, die Bindung nur im Editor.
+  bind: 'Markenbindung der Felder; die Werte sind schon aufgelöst',
+  brandScheme: 'Farbwelt der Marke; die Farben sind schon aufgelöst',
+  brandStamp: 'Stempel der Markenbindung; nur für den Abgleich im Editor',
 } as const satisfies Record<string, string>;
 
 const KNOWN_KEYS: ReadonlySet<string> = new Set([

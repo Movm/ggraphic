@@ -38,6 +38,11 @@ const PAGE_STYLE_STATE_KEYS = [
   'stashedComposerPlanes',
   'colorSchemeId',
   'colorScheme',
+  // Brand bindings (F0: names and shapes only grow). `brandScheme` is not the
+  // host-owned `colorScheme`.
+  'bind',
+  'brandScheme',
+  'brandStamp',
   'fontSize',
   'customPrimaryFontSize',
   'customSecondaryFontSize',

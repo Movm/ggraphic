@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { type BindingRef } from '@ggraphic/core';
 import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
 import { useCanvasTextFormatting } from '@ggraphic/editor/components/CanvasTextOverlay';
 import { type BackgroundControls } from '@ggraphic/editor/configs/types';
@@ -255,21 +256,26 @@ export function ContextControls({
   // On the photo too: the photo covers the plane, so this is the only way to a colour.
   if ((isPlane || isPhoto) && background?.colors?.length && background.onColorChange) {
     const { onColorChange, onImageChange, colorReplacesImage, paletteOnly } = background;
-    const own = background.colors.map((c) => ({ id: c.id, name: c.label, value: c.color }));
+    const own = background.colors.map((c) => ({
+      id: c.id,
+      name: c.label,
+      value: c.color,
+      ...(c.ref && { ref: c.ref }),
+    }));
     const known = new Set(own.map((c) => c.value.toLowerCase()));
     const palette = paletteOnly
       ? own
       : [...own, ...brandColors().filter((c) => !known.has(c.value.toLowerCase()))];
     const pickColor =
       isPhoto && !colorReplacesImage && onImageChange
-        ? (color: string) => {
+        ? (color: string, ref?: BindingRef) => {
             onImageChange(null, undefined, null);
-            onColorChange(color);
+            onColorChange(color, ref);
             onDeselect?.();
           }
         : isPhoto
-          ? (color: string) => {
-              onColorChange(color);
+          ? (color: string, ref?: BindingRef) => {
+              onColorChange(color, ref);
               onDeselect?.();
             }
           : onColorChange;

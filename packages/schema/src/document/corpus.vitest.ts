@@ -93,3 +93,13 @@ describe('v1 corpus through the test-only v1 → v2 chain', () => {
     expect(migrateDocument(once.document, v1Registry()).status).toBe('newer');
   });
 });
+
+describe('v1 corpus through the shipped v1 → v2 step', () => {
+  it.each(names)('%s is lifted with its pages untouched', (name) => {
+    const result = migrateDocument(load(name));
+    if (result.status !== 'migrated') throw new Error(result.status);
+    const { schemaVersion, ...rest } = result.document;
+    expect(schemaVersion).toBe(2);
+    expect(JSON.stringify(rest)).toBe(JSON.stringify(CORPUS[name]));
+  });
+});

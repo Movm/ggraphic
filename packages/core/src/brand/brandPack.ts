@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { type BindingRef } from './bindings.js';
 
 /**
  * A brand as data: the colours, grounds, fonts and marks a template reads
@@ -64,6 +65,8 @@ export interface BrandSwatch {
   id: string;
   label: string;
   color: string;
+  /** The role this swatch stands for; picking it binds the field so it follows the brand. */
+  ref?: BindingRef;
 }
 
 export interface BrandBackground extends BrandSwatch {

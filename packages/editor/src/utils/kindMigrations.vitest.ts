@@ -28,11 +28,13 @@ describe('a host kind registers its document migrations', () => {
     register([STAMP_V2_STEP]);
     expect(documentMigrations.kindVersion('stampInstances')).toBe(2);
     const result = migrateDocument({
+      schemaVersion: 2,
       pages: [{ configId: 'c', state: { stampInstances: [{ id: 's', offset: { x: 1, y: 1 } }] } }],
     });
     expect(result.status).toBe('migrated');
     if (result.status !== 'migrated') return;
     expect(result.document).toEqual({
+      schemaVersion: 2,
       kindVersions: { stampInstances: 2 },
       pages: [
         { configId: 'c', state: { stampInstances: [{ id: 's', position: { x: 1, y: 1 } }] } },
