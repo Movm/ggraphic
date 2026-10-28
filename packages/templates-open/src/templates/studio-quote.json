@@ -86,7 +86,7 @@
             "text": "— Name of the speaker",
             "x": 0.0,
             "y": 0.780277,
-            "width": 0.45,
+            "width": 1.0,
             "fontSize": 0.035185,
             "align": "left",
             "fontFamily": "",
@@ -108,7 +108,7 @@
       "role": "quote",
       "budget": {
         "maxWords": 25,
-        "maxLines": 4,
+        "maxLines": 5,
         "maxChars": 160
       }
     },
@@ -116,8 +116,8 @@
       "role": "name",
       "budget": {
         "maxWords": 6,
-        "maxLines": 2,
-        "maxChars": 40
+        "maxLines": 1,
+        "maxChars": 50
       }
     }
   },
@@ -133,7 +133,7 @@
   ],
   "locks": [],
   "fixed": {},
-  "logoCorners": ["bottom-right"],
+  "logoCorners": ["bottom-right", "bottom-left"],
   "placeholders": {
     "en": {
       "quote-mark": "“",
