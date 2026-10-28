@@ -6,6 +6,7 @@ import { createApp } from '../src/app.ts';
 import { FixedWindowLimiter } from '../src/auth/rateLimit.ts';
 import { ICONIFY_DEFAULT_LICENCES, type IconifyConfig } from '../src/config.ts';
 import { createDb } from '../src/db/client.ts';
+import { createIconifyClient } from '../src/iconify.ts';
 import { runMigrations } from '../src/db/migrate.ts';
 import { createAuthLimiters } from '../src/routes/auth.ts';
 import { PASSWORD, resetDb, setupAdmin, testConfig } from './helpers.ts';
@@ -50,6 +51,8 @@ interface FakeOptions {
   search?: string[];
   svg?: (prefix: string, name: string) => Response;
   collections?: () => Response;
+  /** `GET /{prefix}.json?icons=a,b`: Iconify's batch lookup. Unset = 404, as an old upstream. */
+  batch?: (prefix: string, url: URL) => Response;
 }
 
 /** A stand-in for api.iconify.design; records every URL it is asked for. */
@@ -82,6 +85,8 @@ function fakeIconify(options: FakeOptions = {}) {
         })
       );
     }
+    const batch = /^\/([a-z0-9-]+)\.json$/.exec(url.pathname);
+    if (batch && options.batch) return Promise.resolve(options.batch(batch[1]!, url));
     const match = /^\/([a-z0-9-]+)\/([a-z0-9-]+)\.svg$/.exec(url.pathname);
     if (match) {
       return Promise.resolve(options.svg?.(match[1]!, match[2]!) ?? svgResponse(SVG));
@@ -334,6 +339,17 @@ describe.skipIf(!hasDb)('/api/assets/icons (Postgres)', () => {
       expect(res.body.error).toBe('not_found');
     });
 
+    it('answers 429 with Retry-After when upstream rate-limits, not 502', async () => {
+      const agent = await loggedIn(
+        fakeIconify({
+          svg: () => new Response('', { status: 429, headers: { 'retry-after': '5' } }),
+        }).impl
+      );
+      const res = await agent.get('/api/assets/icons/tabler/tree.svg').expect(429);
+      expect(res.body.error).toBe('iconify_rate_limited');
+      expect(res.headers['retry-after']).toBe('5');
+    });
+
     it('answers 502 for a body that is no svg we can make safe', async () => {
       for (const body of [
         '<html></html>',
@@ -402,5 +418,97 @@ describe.skipIf(!hasDb)('/api/assets/icons (Postgres)', () => {
       await agent2.get('/api/assets/icons/tabler/tree.svg').expect(200);
       await agent2.get('/api/assets/icons/tabler/house.svg').expect(429);
     });
+  });
+});
+
+/** The batch answer for the icons a request names: one 24 px path each. */
+const batchAnswer = (_prefix: string, url: URL) =>
+  Response.json({
+    prefix: _prefix,
+    width: 24,
+    height: 24,
+    icons: Object.fromEntries(
+      (url.searchParams.get('icons') ?? '')
+        .split(',')
+        .map((n) => [n, { body: '<path fill="currentColor" d="M1 1h22v22H1z"/>' }])
+    ),
+  });
+
+describe('iconify client', () => {
+  it('maps an upstream 429 to a 429 with Retry-After, never a 502', async () => {
+    const fake = fakeIconify({
+      collections: () =>
+        new Response('slow down', { status: 429, headers: { 'retry-after': '7' } }),
+    });
+    const client = createIconifyClient(iconify, fake.impl);
+    await expect(client.search('tree', 10, null)).rejects.toMatchObject({
+      status: 429,
+      body: { error: 'iconify_rate_limited' },
+      retryAfter: 7,
+    });
+  });
+
+  it('falls back to a default Retry-After when upstream names none', async () => {
+    const fake = fakeIconify({ collections: () => new Response('', { status: 429 }) });
+    const client = createIconifyClient(iconify, fake.impl);
+    await expect(client.search('tree', 10, null)).rejects.toMatchObject({
+      status: 429,
+      retryAfter: expect.any(Number),
+    });
+  });
+
+  it('stays off the upstream while it is rate-limiting us', async () => {
+    let t = 1_000;
+    const fake = fakeIconify({
+      collections: () => new Response('', { status: 429, headers: { 'retry-after': '10' } }),
+    });
+    const client = createIconifyClient(iconify, fake.impl, () => t);
+    await expect(client.search('tree', 10, null)).rejects.toMatchObject({ status: 429 });
+    const before = fake.calls.length;
+    t += 3_000;
+    await expect(client.search('house', 10, null)).rejects.toMatchObject({
+      status: 429,
+      retryAfter: 7,
+    });
+    expect(fake.calls.length).toBe(before);
+    t += 8_000;
+    await expect(client.search('house', 10, null)).rejects.toMatchObject({ status: 429 });
+    expect(fake.calls.length).toBeGreaterThan(before);
+  });
+
+  it('fetches the icons of a search in one batch per set, not one request per icon', async () => {
+    const fake = fakeIconify({
+      search: ['tabler:tree', 'tabler:house', 'ri:tree-line', 'lets:tree'],
+      batch: batchAnswer,
+    });
+    const client = createIconifyClient(iconify, fake.impl);
+    await client.search('tree', 10, null);
+    const batches = fake.calls.filter((c) => /^\/[a-z0-9-]+\.json/.test(c));
+    expect(batches).toHaveLength(3);
+    const tabler = batches.find((c) => c.startsWith('/tabler.json'))!;
+    expect(new URL(`http://x${tabler}`).searchParams.get('icons')).toBe('tree,house');
+    // The tiles then come from the cache, sanitised like any other icon.
+    const svg = await client.svg('tabler', 'tree');
+    expect(svg).toContain('viewBox="0 0 24 24"');
+    expect(svg).toContain('<path');
+    expect(fake.calls.filter((c) => c.endsWith('.svg'))).toEqual([]);
+  });
+
+  it('still serves an icon singly when the batch did not cover it', async () => {
+    const fake = fakeIconify({ search: ['tabler:tree'] });
+    const client = createIconifyClient(iconify, fake.impl);
+    await client.search('tree', 10, null);
+    await client.svg('tabler', 'tree');
+    expect(fake.calls.filter((c) => c.endsWith('.svg'))).toEqual(['/tabler/tree.svg']);
+  });
+
+  it('ignores a failing batch: the search itself still answers', async () => {
+    const fake = fakeIconify({
+      search: ['tabler:tree'],
+      batch: () => new Response('', { status: 429 }),
+    });
+    const client = createIconifyClient(iconify, fake.impl);
+    const result = await client.search('tree', 10, null);
+    expect(result.icons).toHaveLength(1);
   });
 });

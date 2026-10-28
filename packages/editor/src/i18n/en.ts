@@ -597,6 +597,8 @@ export const en: Messages = {
         none: 'No more icons found.',
         insert: 'Insert',
         inserting: 'Inserting …',
+        tilesFailed: 'Some icons could not be loaded.',
+        retry: 'Try again',
         insertError: 'The icon could not be loaded.',
         full: (n: number) => `At most ${n} different icons per page.`,
       },

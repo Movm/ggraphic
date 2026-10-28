@@ -607,6 +607,8 @@ export const de = {
         none: 'Keine weiteren Icons gefunden.',
         insert: 'Einfügen',
         inserting: 'Wird eingefügt …',
+        tilesFailed: 'Einige Icons konnten nicht geladen werden.',
+        retry: 'Erneut versuchen',
         insertError: 'Das Icon konnte nicht geladen werden.',
         full: (n: number) => `Pro Seite höchstens ${n} verschiedene Icons.`,
       },

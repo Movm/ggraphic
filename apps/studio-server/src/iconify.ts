@@ -11,6 +11,11 @@ const PREFIX_OR_NAME = /^[a-z0-9-]+$/;
 const MAX_COLLECTIONS_BYTES = 1024 * 1024;
 const MAX_SEARCH_BYTES = 256 * 1024;
 const MAX_SVG_BYTES = 64 * 1024;
+const MAX_BATCH_BYTES = 512 * 1024;
+
+/** How long we stay off a rate-limiting upstream when it names no Retry-After. */
+const DEFAULT_RETRY_AFTER_S = 10;
+const MAX_RETRY_AFTER_S = 60;
 
 const COLLECTIONS_TTL_MS = 60 * 60 * 1000;
 const SEARCH_TTL_MS = 10 * 60 * 1000;
@@ -63,6 +68,16 @@ const timeoutError = () =>
     message: 'The icon service did not answer in time.',
   });
 
+const rateLimitedError = (retryAfter: number) =>
+  new HttpError(
+    429,
+    {
+      error: 'iconify_rate_limited',
+      message: 'The icon service is busy. Try again in a moment.',
+    },
+    retryAfter
+  );
+
 const notFound = () => new HttpError(404, { error: 'not_found' });
 
 function versionAtMost(version: unknown, max: readonly number[]): boolean {
@@ -109,6 +124,38 @@ class TtlCache<T> {
   }
 }
 
+interface BatchIcon {
+  body?: unknown;
+  width?: unknown;
+  height?: unknown;
+  left?: unknown;
+  top?: unknown;
+  hFlip?: unknown;
+  vFlip?: unknown;
+  rotate?: unknown;
+}
+
+interface BatchAnswer extends BatchIcon {
+  icons: Record<string, BatchIcon | undefined>;
+}
+
+const num = (value: unknown, fallback: number): number =>
+  typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+
+/** The SVG for one icon of a `/{prefix}.json` answer, or null when it needs more than that. */
+function batchIconSvg(set: BatchAnswer, icon: BatchIcon | undefined): string | null {
+  if (!icon || typeof icon.body !== 'string') return null;
+  // Flips and rotations are what the single route's own rendering handles.
+  if (icon.hFlip || icon.vFlip || icon.rotate) return null;
+  const left = num(icon.left, num(set.left, 0));
+  const top = num(icon.top, num(set.top, 0));
+  const width = num(icon.width, num(set.width, 16));
+  const height = num(icon.height, num(set.height, 16));
+  return sanitizeSvg(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="${left} ${top} ${width} ${height}">${icon.body}</svg>`
+  );
+}
+
 export interface IconifyClient {
   search(query: string, limit: number, prefix: string | null): Promise<IconSearchResult>;
   svg(prefix: string, name: string): Promise<string>;
@@ -128,6 +175,10 @@ export function createIconifyClient(
   let sets: { allowed: Map<string, SetInfo>; expires: number } | null = null;
   let pendingSets: Promise<Map<string, SetInfo>> | null = null;
 
+  // While the upstream rate-limits us, nothing goes out: every extra call only extends it.
+  let blockedUntil = 0;
+  const cooldownLeft = () => Math.ceil((blockedUntil - now()) / 1000);
+
   const failed = (error: unknown) => {
     const timedOut = error instanceof DOMException && error.name === 'TimeoutError';
     // The cause class only: URLs, hosts and bodies stay out of the log.
@@ -140,6 +191,7 @@ export function createIconifyClient(
     path: string,
     maxBytes: number
   ): Promise<{ body: Buffer; type: string } | null> {
+    if (cooldownLeft() > 0) throw rateLimitedError(cooldownLeft());
     let response: Response;
     try {
       response = await fetchImpl(`${config.url}${path}`, {
@@ -153,6 +205,17 @@ export function createIconifyClient(
     if (response.status === 404) {
       await response.body?.cancel().catch(() => undefined);
       return null;
+    }
+    if (response.status === 429) {
+      console.warn('iconify answered HTTP 429');
+      const asked = Number.parseInt(response.headers.get('retry-after') ?? '', 10);
+      const wait = Math.min(
+        MAX_RETRY_AFTER_S,
+        Number.isFinite(asked) && asked > 0 ? asked : DEFAULT_RETRY_AFTER_S
+      );
+      blockedUntil = now() + wait * 1000;
+      await response.body?.cancel().catch(() => undefined);
+      throw rateLimitedError(wait);
     }
     if (!response.ok) {
       console.warn(`iconify answered HTTP ${response.status}`);
@@ -236,6 +299,35 @@ export function createIconifyClient(
     return pendingSets;
   }
 
+  /**
+   * The icons of a search in one request per set (`/{prefix}.json?icons=a,b`) instead of one per
+   * tile, into the same cache the single route reads. Best effort: whatever this misses is
+   * fetched singly when the tile asks. Everything passes `sanitizeSvg` like a single icon.
+   */
+  async function warm(hits: IconHit[]): Promise<void> {
+    const byPrefix = new Map<string, string[]>();
+    for (const { prefix, name } of hits) {
+      if (cache.get(`svg\0${prefix}\0${name}`) !== undefined) continue;
+      byPrefix.set(prefix, [...(byPrefix.get(prefix) ?? []), name]);
+    }
+    await Promise.all(
+      [...byPrefix].map(async ([prefix, names]) => {
+        try {
+          const params = new URLSearchParams({ icons: names.join(',') });
+          const body = await get(`/${prefix}.json?${params.toString()}`, MAX_BATCH_BYTES);
+          const set = body ? (json(body.body) as BatchAnswer) : null;
+          if (!set || typeof set.icons !== 'object' || set.icons === null) return;
+          for (const name of names) {
+            const svg = batchIconSvg(set, set.icons[name]);
+            if (svg !== null) cache.set(`svg\0${prefix}\0${name}`, svg, SVG_TTL_MS);
+          }
+        } catch {
+          // The tiles fall back to single requests.
+        }
+      })
+    );
+  }
+
   return {
     async search(rawQuery, limit, prefix) {
       // "Tree", " tree " and "tree" are one search.
@@ -271,6 +363,7 @@ export function createIconifyClient(
         total: typeof answer.total === 'number' ? answer.total : icons.length,
       };
       cache.set(key, result, SEARCH_TTL_MS);
+      await warm(icons);
       return result;
     },
 
