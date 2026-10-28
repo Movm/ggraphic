@@ -56,6 +56,7 @@ import { getOptimalContainerWidth } from '@ggraphic/editor/utils/viewport';
 import { blockElementIds, placeBlock, type LiftedBlock } from '../blocks/liftedBlock.js';
 import { hostEmittedStateKeys } from '../collab/pageElementStateKeys.js';
 import { useSelectionAwareness } from '../collab/useSelectionAwareness.js';
+import { readGroups } from '../groups/pageGroups.js';
 import { useYjsPageStateSync } from '../collab/useYjsPageStateSync.js';
 import {
   useCanvasInteractions,
@@ -613,6 +614,13 @@ function GenericCanvasWithRef<
     // eslint-disable-next-line react-hooks/exhaustive-deps -- layoutKey is a stable string derived from layout-relevant state fields
   }, [config, layoutKey, isFontAvailable, fontGeneration]);
 
+  const stateForGroups = useRef(state);
+  stateForGroups.current = state;
+  const getGroups = useCallback(
+    () => readGroups(stateForGroups.current as Record<string, unknown>),
+    []
+  );
+
   const {
     setSelectedElement,
     selectElement,
@@ -620,7 +628,7 @@ function GenericCanvasWithRef<
     handleStageClick,
     handleSnapChange,
     getSnapTargets,
-  } = useCanvasInteractions({ stageRef, marqueeEnabled: interactive });
+  } = useCanvasInteractions({ stageRef, marqueeEnabled: interactive, getGroups });
 
   const store = useCanvasStore();
   const { setSnapLines, updateElementPosition } = store.getState();

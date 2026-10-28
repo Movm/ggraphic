@@ -19,6 +19,7 @@ const CAPS: SelectionCapabilities = {
   canSendBackward: true,
   lock: 'none',
   canLock: true,
+  canUngroup: false,
   canRotate: true,
   canFlip: true,
   rotation: 0,
