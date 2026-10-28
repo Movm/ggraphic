@@ -22,7 +22,7 @@ export default tseslint.config(
   {
     // The editor's sources carry inline disables for these rules, so the plugins must be registered;
     // jsx-a11y runs with its recommended set, as in the source repo.
-    files: ['packages/editor/**/*.{ts,tsx}'],
+    files: ['packages/editor/**/*.{ts,tsx}', 'packages/ui/**/*.{ts,tsx}'],
     plugins: { react, 'react-hooks': reactHooks, 'jsx-a11y': jsxA11y },
     rules: {
       ...jsxA11y.flatConfigs.recommended.rules,
