@@ -10,15 +10,17 @@ import { checkFile } from './gateRun.js';
 const dir = fileURLToPath(new URL('./probes/', import.meta.url));
 const files = readdirSync(dir).filter((f) => f.endsWith('.json'));
 
+/** `rule.json`, or `rule~variant.json` for a further probe of the same rule. */
+const ruleOf = (file: string): string => file.replace(/\.json$/, '').split('~')[0] ?? '';
+
 describe('each probe turns exactly its rule red', () => {
   it('has one probe per rule, plus schema', () => {
-    expect(files.map((f) => f.replace(/\.json$/, '')).sort()).toEqual(
-      [...GATE_RULES, 'schema'].sort()
-    );
+    const rules = new Set(files.map((f) => ruleOf(f)));
+    expect([...rules].sort()).toEqual([...GATE_RULES, 'schema'].sort());
   });
 
   it.each(files)('%s', (file) => {
-    const rule = file.replace(/\.json$/, '');
+    const rule = ruleOf(file);
     const problems = checkFile(JSON.parse(readFileSync(dir + file, 'utf8')));
     expect(problems.length).toBeGreaterThan(0);
     expect(problems.filter((p) => p.rule !== rule)).toEqual([]);

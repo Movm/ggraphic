@@ -18,13 +18,14 @@
   },
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.test.json --noEmit",
     "test": "vitest run"
   },
   "devDependencies": {
     "@ggraphic/core": "workspace:*",
     "@ggraphic/editor": "workspace:*",
     "@ggraphic/schema": "workspace:*",
+    "@types/node": "^26.3.0",
     "typescript": "^6.0.3",
     "vitest": "^5.0.5"
   },

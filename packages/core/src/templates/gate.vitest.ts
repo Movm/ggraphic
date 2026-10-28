@@ -11,6 +11,7 @@ import {
 } from './gate.js';
 
 type Obj = Record<string, unknown>;
+const isObj = (v: unknown): v is Obj => typeof v === 'object' && v !== null && !Array.isArray(v);
 const num = (el: Obj, k: string, d = 0) => (typeof el[k] === 'number' ? (el[k] as number) : d);
 
 /** A small stand-in for an editor's element kinds: top-left boxes, no transforms. */
@@ -19,12 +20,28 @@ const adapter: GateAdapter = {
     additionalTexts: { x: 'x', y: 'y', width: 'w', fontSize: 's' },
     shapeInstances: { x: 'x', y: 'y', width: 'w', height: 'h' },
     userImageInstances: { x: 'x', y: 'y', width: 'w', height: 'h' },
+    frameInstances: { x: 'x', y: 'y', width: 'w', height: 'h' },
+    pillBadgeInstances: { x: 'x', y: 'y' },
   },
   colorFields: {
     page: ['backgroundColor'],
     additionalTexts: ['fill'],
     shapeInstances: ['fill'],
-    userImageInstances: ['src'],
+    pillBadgeInstances: ['backgroundColor', 'textColor'],
+  },
+  assetFields: { userImageInstances: ['src'], frameInstances: ['imageSrc'] },
+  nestedColors(key, el) {
+    const stops =
+      key === 'shapeInstances' && isObj(el['fillGradient']) ? el['fillGradient']['stops'] : [];
+    return [
+      ...(Array.isArray(stops) ? stops : []).map((s: Obj) => ({
+        field: 'fillGradient',
+        value: String(s['color']),
+      })),
+      ...(key === 'additionalTexts' && isObj(el['accent'])
+        ? [{ field: 'accent', value: String(el['accent']['fill']) }]
+        : []),
+    ];
   },
   box: (key, el, lines) =>
     key === 'additionalTexts'
@@ -34,16 +51,34 @@ const adapter: GateAdapter = {
           width: num(el, 'width'),
           height: num(el, 'fontSize') * 1.2 * lines,
         }
-      : { x: num(el, 'x'), y: num(el, 'y'), width: num(el, 'width'), height: num(el, 'height') },
+      : key === 'pillBadgeInstances'
+        ? null
+        : { x: num(el, 'x'), y: num(el, 'y'), width: num(el, 'width'), height: num(el, 'height') },
   text: (key, el) =>
     key === 'additionalTexts'
       ? {
           fill: String(el['fill'] ?? ''),
           fontSize: num(el, 'fontSize'),
           bold: String(el['fontStyle'] ?? '').includes('bold'),
+          opacity: num(el, 'opacity', 1),
         }
-      : null,
-  fill: (key, el) => (key === 'shapeInstances' ? String(el['fill'] ?? '') : null),
+      : key === 'pillBadgeInstances'
+        ? {
+            fill: String(el['textColor']),
+            fontSize: num(el, 'fontSize'),
+            bold: false,
+            opacity: num(el, 'opacity', 1),
+            ground: String(el['backgroundColor']),
+          }
+        : null,
+  cover: (key, el) =>
+    key === 'shapeInstances'
+      ? el['fillGradient'] || num(el, 'opacity', 1) < 1
+        ? { kind: 'unknown' }
+        : { kind: 'solid', fill: String(el['fill'] ?? '') }
+      : key === 'additionalTexts'
+        ? null
+        : { kind: 'unknown' },
 };
 
 const logo = {
@@ -105,7 +140,10 @@ const flat = {
   colors: { ...brandDefault.colors, secondary: brandDefault.colors.primary },
 };
 
-const rules = (t: TemplateInput, ctx = context()) => checkTemplate(t, ctx).map((p) => p.rule);
+/** The rules that fired, once each: one finding per brand, world, format and layout is expected. */
+const rules = (t: TemplateInput, ctx = context()) => [
+  ...new Set(checkTemplate(t, ctx).map((p) => p.rule)),
+];
 
 describe('render gate stage 1', () => {
   it('lists every rule once', () => {
@@ -123,7 +161,11 @@ describe('render gate stage 1', () => {
         slots: { headline: { role: 'headline', budget: { maxLines: 20, maxChars: 60 } } },
       }),
     ],
-    'logo-overlap': () => [template({}, { additionalTexts: [{ ...headline, y: 0 }] }), context()],
+    // The text's centre stays clear of the logo, or its ground would be undeterminable too.
+    'logo-overlap': () => [
+      template({}, { additionalTexts: [{ ...headline, x: 0.3, y: 0, width: 0.7 }] }),
+      context(),
+    ],
     contrast: () => [
       template(
         { fixed: { headline: ['fill'] } },
@@ -198,7 +240,7 @@ describe('render gate stage 1', () => {
   });
 
   it('holds large text to 3.0 and small text to 4.5', () => {
-    // #6d84a3 on #1d3557 is between 3 and 4.5: fine at 24 px+, not below.
+    // #7f93ad on #1d3557 is between 3 and 4.5: fine at 24 px+, not below.
     const grey = (fontSize: number) =>
       template(
         { fixed: { headline: ['fill'] } },
@@ -221,5 +263,173 @@ describe('render gate stage 1', () => {
     expect(
       rules(template({}, { shapeInstances: [panel], layerOrder: ['panel', 'logo', 'headline'] }))
     ).toEqual(['contrast']);
+  });
+
+  describe('fails closed on a ground it cannot determine', () => {
+    const NOT = 'ground not determinable';
+    const fixedFill = (over: Obj) => ({
+      id: 'panel',
+      x: 0,
+      y: 0.25,
+      width: 1,
+      height: 0.3,
+      ...over,
+    });
+    const order = ['panel', 'logo', 'headline'];
+    const withShape = (shape: Obj, fixed: Record<string, string[]> = { panel: ['fill'] }) =>
+      template({ fixed }, { shapeInstances: [shape], layerOrder: order });
+
+    it('a photo under the text', () => {
+      const photo = { id: 'panel', src: '/p.png', x: 0, y: 0.25, width: 1, height: 0.3 };
+      const t = template({}, { userImageInstances: [photo, logo], layerOrder: order });
+      const found = checkTemplate(t, context({ manifestPaths: new Set(['/p.png']) }));
+      expect(found.map((p) => p.rule)).toEqual(['contrast']);
+      expect(found[0]?.detail).toContain(NOT);
+    });
+
+    it.each([
+      ['alpha in the fill', fixedFill({ fill: '#00000080' })],
+      ['opacity below 1', fixedFill({ fill: '#000000', opacity: 0.5 })],
+      [
+        'a gradient',
+        fixedFill({
+          fill: '#000000',
+          fillGradient: { stops: [{ color: '#000000' }, { color: '#ffffff' }] },
+        }),
+      ],
+    ])('a shape with %s', (_name, shape) => {
+      const found = checkTemplate(withShape(shape, { panel: ['fill', 'fillGradient'] }), context());
+      expect(found.map((p) => p.rule)).toEqual(['contrast']);
+      expect(found[0]?.detail).toContain(NOT);
+    });
+
+    it('text with opacity below 1, or a fill with alpha', () => {
+      const dim = template({}, { additionalTexts: [{ ...headline, opacity: 0.5 }] });
+      expect(rules(dim)).toEqual(['contrast']);
+      const ghost = template(
+        { fixed: { headline: ['fill'] } },
+        { additionalTexts: [{ ...headline, fill: '#ffffff80', bind: undefined }] }
+      );
+      expect(rules(ghost)).toEqual(['contrast']);
+    });
+
+    it('a badge below the text, whose extent is unknown', () => {
+      const badge = {
+        id: 'badge',
+        x: 0.1,
+        y: 0.1,
+        textColor: '#ffffff',
+        backgroundColor: '#1d3557',
+        fontSize: 0.03,
+      };
+      const t = template(
+        { fixed: { badge: ['textColor', 'backgroundColor'] } },
+        { pillBadgeInstances: [badge], layerOrder: ['badge', 'logo', 'headline'] }
+      );
+      expect(rules(t)).toEqual(['contrast']);
+    });
+
+    it('a badge text is held against the badge fill', () => {
+      const badge = (textColor: string) => ({
+        id: 'badge',
+        x: 0.1,
+        y: 0.1,
+        textColor,
+        backgroundColor: '#1d3557',
+        fontSize: 0.03,
+      });
+      const make = (textColor: string) =>
+        template(
+          { fixed: { badge: ['textColor', 'backgroundColor'] } },
+          { pillBadgeInstances: [badge(textColor)], layerOrder: ['logo', 'headline', 'badge'] }
+        );
+      expect(rules(make('#ffffff'))).toEqual([]);
+      expect(rules(make('#2a4a70'))).toEqual(['contrast']);
+    });
+
+    it('a text missing from layerOrder', () => {
+      const t = template({}, { layerOrder: ['logo'] });
+      const found = checkTemplate(t, context());
+      expect(found.map((p) => p.rule)).toEqual(['contrast']);
+      expect(found[0]?.detail).toContain(NOT);
+    });
+
+    it('still decides on an opaque solid shape', () => {
+      expect(rules(withShape(fixedFill({ fill: '#ffffff' })))).toEqual(['contrast']);
+      expect(rules(withShape(fixedFill({ fill: '#000000' })))).toEqual([]);
+    });
+  });
+
+  it('holds bold text to the large-text size from 18.67 px', () => {
+    const grey = (extra: Obj) =>
+      template(
+        { fixed: { headline: ['fill'] } },
+        {
+          additionalTexts: [
+            { ...headline, fontSize: 0.02, fill: '#7f93ad', bind: undefined, ...extra },
+          ],
+        }
+      );
+    expect(rules(grey({}))).toEqual(['contrast']);
+    expect(rules(grey({ fontStyle: 'bold' }))).toEqual([]);
+  });
+
+  describe('layout extremes', () => {
+    const low = { ...headline, id: 'low', y: 0.88, width: 0.6 };
+    const slots = { low: { role: 'headline', budget: { maxLines: 1, maxChars: 60 } } };
+    it('a text clear of the default logo box but not of the largest one', () => {
+      const t = template({ logoCorners: ['bottom-right'] }, { additionalTexts: [low] });
+      expect(rules(t, context({ slots }))).toEqual(['logo-overlap']);
+    });
+    it('sweeps only the corners the template declares', () => {
+      const corner = { ...headline, id: 'low', x: 0, y: 0, width: 0.2 };
+      const t = template({ logoCorners: ['bottom-right'] }, { additionalTexts: [corner] });
+      expect(rules(t, context({ slots }))).toEqual([]);
+    });
+  });
+
+  it('checks every image source field the adapter lists', () => {
+    const frame = (imageSrc: string) => ({
+      id: 'frame',
+      imageSrc,
+      x: 0.4,
+      y: 0.7,
+      width: 0.1,
+      height: 0.1,
+    });
+    expect(rules(template({}, { frameInstances: [frame('/nope.jpg')] }))).toEqual([
+      'asset-licence',
+    ]);
+    expect(rules(template({}, { frameInstances: [frame('/ok.png')] }))).toEqual([]);
+  });
+
+  describe('every colour string is a colour', () => {
+    const chip = (over: Obj) => ({ id: 'chip', x: 0.9, y: 0, width: 0.1, height: 0.05, ...over });
+    it.each(['red', 'hsl(10, 50%, 50%)'])('%s on a shape is unbound', (fill) => {
+      expect(rules(template({}, { shapeInstances: [chip({ fill })] }))).toEqual(['unbound-colour']);
+    });
+    it('nested colours need a fixed entry', () => {
+      const gradient = { stops: [{ color: '#ff0000' }, { color: '#00ff00' }] };
+      const shape = chip({ fill: '#ffffff', fillGradient: gradient });
+      expect(rules(template({ fixed: { chip: ['fill'] } }, { shapeInstances: [shape] }))).toEqual([
+        'unbound-colour',
+      ]);
+      expect(
+        rules(template({ fixed: { chip: ['fill', 'fillGradient'] } }, { shapeInstances: [shape] }))
+      ).toEqual([]);
+      const accent = { ...headline, accent: { fill: '#ff0000' } };
+      expect(rules(template({}, { additionalTexts: [accent] }))).toEqual(['unbound-colour']);
+    });
+  });
+
+  it('lists a problem per brand, not only the first', () => {
+    const t = template({}, { additionalTexts: [{ ...headline, y: 0 }] });
+    const found = checkTemplate(
+      t,
+      context({ brands: [brandDefault, { ...brandDefault, id: 'other' }] })
+    );
+    expect(new Set(found.filter((p) => p.rule === 'logo-overlap').map((p) => p.brand))).toEqual(
+      new Set(['default', 'other'])
+    );
   });
 });

@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: MPL-2.0
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { TEMPLATE_GATE_ADAPTER, TEMPLATE_GEOMETRY, UNSCALED_FIELDS } from './templateGeometry.js';
+import {
+  ASSET_FIELDS,
+  TEMPLATE_GATE_ADAPTER,
+  TEMPLATE_GEOMETRY,
+  UNSCALED_FIELDS,
+} from './templateGeometry.js';
 import { CATALOG, defaults, populated, registerAssetCatalog, type Fields } from './testKinds.js';
 
 /** Numbers a type declares that no factory sets and nothing yet reads. */
@@ -98,15 +103,101 @@ describe('template geometry', () => {
     });
   });
 
-  it('the adapter reads text and fill only from the kinds that have them', () => {
+  it('the adapter reads text only from the kinds that have it', () => {
     const text = { fill: '#fff', fontSize: 30, fontStyle: 'bold' };
     expect(TEMPLATE_GATE_ADAPTER.text('additionalTexts', text)).toEqual({
       fill: '#fff',
       fontSize: 30,
       bold: true,
+      opacity: 1,
     });
     expect(TEMPLATE_GATE_ADAPTER.text('shapeInstances', text)).toBeNull();
-    expect(TEMPLATE_GATE_ADAPTER.fill('shapeInstances', { fill: '#000' })).toBe('#000');
-    expect(TEMPLATE_GATE_ADAPTER.fill('additionalTexts', { fill: '#000' })).toBeNull();
+    expect(
+      TEMPLATE_GATE_ADAPTER.text('pillBadgeInstances', {
+        textColor: '#fff',
+        backgroundColor: '#000',
+        fontSize: 20,
+        opacity: 0.5,
+      })
+    ).toEqual({ fill: '#fff', fontSize: 20, bold: false, opacity: 0.5, ground: '#000' });
+    expect(
+      TEMPLATE_GATE_ADAPTER.text('circleBadgeInstances', {
+        textColor: '#fff',
+        backgroundColor: '#000',
+        textLines: [
+          { fontSize: 30, fontWeight: 'bold' },
+          { fontSize: 20, fontWeight: 'normal' },
+        ],
+      })
+    ).toEqual({ fill: '#fff', fontSize: 20, bold: false, opacity: 1, ground: '#000' });
+  });
+
+  it('only a flat, opaque shape is a ground', () => {
+    const cover = (key: string, el: Fields) => TEMPLATE_GATE_ADAPTER.cover(key, el);
+    expect(cover('shapeInstances', { fill: '#000', opacity: 1 })).toEqual({
+      kind: 'solid',
+      fill: '#000',
+    });
+    expect(cover('shapeInstances', { fill: '#000', opacity: 0.9 })).toEqual({ kind: 'unknown' });
+    expect(cover('shapeInstances', { fill: '#000', fillGradient: { stops: [] } })).toEqual({
+      kind: 'unknown',
+    });
+    expect(cover('shapeInstances', { fill: '#000', blendMode: 'multiply' })).toEqual({
+      kind: 'unknown',
+    });
+    expect(cover('additionalTexts', { fill: '#000' })).toBeNull();
+    for (const key of ['userImageInstances', 'frameInstances', 'chartInstances', 'iconStates']) {
+      expect(cover(key, {})).toEqual({ kind: 'unknown' });
+    }
+  });
+
+  it('colorFields holds no font or image field', () => {
+    for (const fields of Object.values(TEMPLATE_GATE_ADAPTER.colorFields)) {
+      expect(fields.filter((f) => f === 'src' || f.startsWith('font'))).toEqual([]);
+    }
+    expect(TEMPLATE_GATE_ADAPTER.colorFields['shapeInstances']).toContain('fill');
+  });
+
+  it('reads the nested colours of gradients, accent, marker and charts', () => {
+    const nested = (key: string, el: Fields) => TEMPLATE_GATE_ADAPTER.nestedColors(key, el);
+    expect(
+      nested('shapeInstances', { fillGradient: { stops: [{ color: '#111' }, { color: '#222' }] } })
+    ).toEqual([
+      { field: 'fillGradient', value: '#111' },
+      { field: 'fillGradient', value: '#222' },
+    ]);
+    expect(
+      nested('additionalTexts', { accent: { fill: '#a' }, marker: { fill: '#b', color: '#c' } })
+    ).toEqual([
+      { field: 'accent', value: '#a' },
+      { field: 'marker', value: '#b' },
+      { field: 'marker', value: '#c' },
+    ]);
+    expect(nested('chartInstances', { colors: ['#1', '#2'] })).toEqual([
+      { field: 'colors', value: '#1' },
+      { field: 'colors', value: '#2' },
+    ]);
+  });
+
+  it('every image-source string field of every kind is an asset field', () => {
+    const missing: string[] = [];
+    for (const group of [kinds, filled]) {
+      for (const [stateKey, instances] of Object.entries(group)) {
+        for (const el of instances) {
+          for (const field of Object.keys(el)) {
+            const looksLikeImage = /(^|[a-z])(src|url|image)$/i.test(field) || field === 'src';
+            if (
+              looksLikeImage &&
+              typeof el[field] === 'string' &&
+              !(ASSET_FIELDS[stateKey] ?? []).includes(field)
+            ) {
+              missing.push(`${stateKey}.${field}`);
+            }
+          }
+        }
+      }
+    }
+    expect([...new Set(missing)]).toEqual([]);
+    expect(ASSET_FIELDS).toEqual(TEMPLATE_GATE_ADAPTER.assetFields);
   });
 });

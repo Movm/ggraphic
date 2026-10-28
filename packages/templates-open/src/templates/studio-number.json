@@ -86,7 +86,7 @@
             "text": "Source or context in one short line",
             "x": 0.0,
             "y": 0.780277,
-            "width": 1.0,
+            "width": 0.45,
             "fontSize": 0.031481,
             "align": "left",
             "fontFamily": "",
@@ -106,7 +106,7 @@
     "number": {
       "role": "number",
       "budget": {
-        "maxWords": 2,
+        "maxWords": 1,
         "maxLines": 1,
         "maxChars": 8
       }
@@ -122,9 +122,9 @@
     "subline": {
       "role": "body",
       "budget": {
-        "maxWords": 12,
-        "maxLines": 2,
-        "maxChars": 80
+        "maxWords": 10,
+        "maxLines": 3,
+        "maxChars": 48
       }
     }
   },
@@ -140,7 +140,7 @@
   ],
   "locks": [],
   "fixed": {},
-  "logoCorners": ["bottom-right", "bottom-left"],
+  "logoCorners": ["bottom-right"],
   "placeholders": {
     "en": {
       "number": "73%",
@@ -148,7 +148,7 @@
       "subline": "Source or context in one short line"
     },
     "de": {
-      "number": "73 %",
+      "number": "73 %",
       "headline": "dessen, wofür diese Zahl steht",
       "subline": "Quelle oder Zusammenhang in einer kurzen Zeile"
     }
