@@ -8,6 +8,8 @@
  * trägt der Host ein (`registerPptxFonts`).
  */
 
+import { aliasFontFamily } from '../../utils/fontAliases.js';
+
 export interface PptxFontFace {
   fontFace: string;
   bold: boolean;
@@ -26,8 +28,8 @@ export const pptxFamily =
   (bold, italic) => ({ fontFace: name, bold, italic });
 
 const OPEN_FONTS: Record<string, PptxFontMapper> = {
-  // PT Sans: eine Familie mit Regular, Bold, Italic.
-  'PT Sans': pptxFamily('PT Sans'),
+  'Instrument Sans': pptxFamily('Instrument Sans'),
+  Fraunces: pptxFamily('Fraunces'),
   Raleway: pptxFamily('Raleway'),
 };
 
@@ -40,7 +42,7 @@ export function registerPptxFonts(table: Record<string, PptxFontMapper>): void {
 
 /** Der erste Eintrag eines CSS-Stacks, ohne Anführungszeichen. */
 function primaryFamily(fontFamily: string): string {
-  return (fontFamily.split(',')[0] ?? '').trim().replace(/^['"]|['"]$/g, '');
+  return aliasFontFamily((fontFamily.split(',')[0] ?? '').trim().replace(/^['"]|['"]$/g, ''));
 }
 
 /** Unbekannte Namen gehen unverändert durch (ohne Fallback-Stack). */

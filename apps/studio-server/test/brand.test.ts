@@ -79,8 +79,10 @@ describe('brand settings', () => {
     'rejects the family name %j',
     (family) => {
       expect(
-        brandSettingsBody.safeParse({ ...SETTINGS, fonts: { headline: family, body: 'PT Sans' } })
-          .success
+        brandSettingsBody.safeParse({
+          ...SETTINGS,
+          fonts: { headline: family, body: 'Instrument Sans' },
+        }).success
       ).toBe(false);
     }
   );
@@ -124,9 +126,9 @@ describe('buildBrandPack', () => {
       defaultBackground: '#123456',
       fonts: {
         headline: 'Raleway',
-        body: 'PT Sans',
+        body: 'Instrument Sans',
         quoteShort: 'Raleway',
-        quoteEmphasis: 'PT Sans',
+        quoteEmphasis: 'Instrument Sans',
       },
       fontFaces: [
         { family: 'Mine', src: `/api/brand-assets/${'a'.repeat(32)}.woff2`, weight: 700 },

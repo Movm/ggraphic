@@ -36,7 +36,7 @@ function treffer(text: string): string | null {
         y={10}
         width={400}
         fontSize={24}
-        fontFamily="PT Sans, Arial, sans-serif"
+        fontFamily="Instrument Sans, Arial, sans-serif"
         editable
         onTextChange={() => {}}
         onSelect={() => {}}

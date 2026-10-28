@@ -19,7 +19,7 @@ describe('measureTextWidthWithFont', () => {
     const createElement = vi.spyOn(document, 'createElement');
 
     for (let i = 0; i < 200; i++) {
-      const width = measureTextWidthWithFont(`Wort ${i}`, 40, 'PT Sans', 'bold');
+      const width = measureTextWidthWithFont(`Wort ${i}`, 40, 'Instrument Sans', 'bold');
       expect(Number.isFinite(width)).toBe(true);
     }
 

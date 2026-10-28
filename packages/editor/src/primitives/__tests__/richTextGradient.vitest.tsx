@@ -35,7 +35,7 @@ function stageOf(text: string) {
         y={10}
         width={500}
         fontSize={24}
-        fontFamily="PT Sans, Arial, sans-serif"
+        fontFamily="Instrument Sans, Arial, sans-serif"
         fill="#FFFFFF"
         fillGradient={GRADIENT}
       />

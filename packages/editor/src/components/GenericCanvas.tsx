@@ -602,7 +602,7 @@ function GenericCanvasWithRef<
   }, [state]);
 
   // `isFontAvailable` schlägt genau einmal um, und zwar sobald die
-  // GRUNDSCHNITTE da sind — bei PT Sans ist das schon beim Seitenaufbau der
+  // GRUNDSCHNITTE da sind — bei Instrument Sans ist das schon beim Seitenaufbau der
   // Fall, weil der Fließtext ihn benutzt. Fett und Kursiv treffen danach ein.
   // `calculateLayout` misst aber mit (Auto-Fit-Schriftgrad, Y-Stapelung), also
   // braucht es den Zähler zusätzlich, sonst stünde ein Slider-Untertext für
@@ -867,7 +867,7 @@ function GenericCanvasWithRef<
    * wird dann in der richtigen Schrift mit den falschen Bruechen gezeichnet.
    * Im Realtest lief „aus Erneuerbaren." so auf drei Zeilen, mit dem Punkt
    * allein auf der letzten — die Ersatzschrift Georgia ist breiter als
-   * Vollkorn und drueckte ihn ueber das Satzmass.
+   * Fraunces und drueckte ihn ueber das Satzmass.
    *
    * `layout` wird an `isFontAvailable` zwar neu berechnet, das rettet aber nur
    * die Faelle, in denen sich dabei eine Eigenschaft aendert. Bleibt der
