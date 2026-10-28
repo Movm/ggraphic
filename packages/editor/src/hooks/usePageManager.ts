@@ -135,7 +135,8 @@ export interface UsePageManagerReturn<TId extends string = TemplateId> {
   removePage: (id: string) => void;
   updatePageState: (id: string, partial: Record<string, unknown>) => void;
   /** Convert an existing page to another template (keeps id, position). */
-  setPageConfig: (id: string, configId: TId) => Promise<void>;
+  /** With `state`, the page takes it as given, also when its config stays the same. */
+  setPageConfig: (id: string, configId: TId, state?: Record<string, unknown>) => Promise<void>;
   canAddMore: boolean;
   pageCount: number;
   getConfigForPage: (configId: TId) => Promise<FullCanvasConfig>;
@@ -454,10 +455,16 @@ export function usePageManager<TId extends string = TemplateId>({
    * from the new config with the shared inheritance contract applied.
    */
   const setPageConfig = useCallback(
-    async (id: string, configId: TId) => {
+    async (id: string, configId: TId, state?: Record<string, unknown>) => {
       if (!yjsPages) return;
       const source = readPages(ydoc).find((p) => p.id === id);
-      if (!source || source.configId === configId) return;
+      if (!source) return;
+      // The host built the new state itself (a free page whose config stays): take it as given.
+      if (state) {
+        yjsPages.setPageConfig(id, configId, state);
+        return;
+      }
+      if (source.configId === configId) return;
       const config = await getConfigForPage(configId);
       const newState = config.createInitialState({
         ...(config.multiPage?.defaultNewPageState || {}),
