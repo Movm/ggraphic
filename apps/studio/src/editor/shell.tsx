@@ -15,7 +15,7 @@ import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { PiSparkle } from 'react-icons/pi';
 
-import { ApiError } from '../api/client';
+import { apiErrorText } from '../ui/errorText';
 import { toast } from '../ui/toast';
 
 import { draftDeckOps } from './aiDraft';
@@ -48,13 +48,14 @@ const FIELD =
 const PRIMARY_BUTTON =
   'inline-flex items-center justify-center gap-2 rounded-lg border-none bg-[var(--editor-accent)] px-4 py-2 text-sm font-semibold text-white cursor-pointer disabled:cursor-default disabled:opacity-60';
 
-function errorText(err: unknown): string {
-  if (err instanceof ApiError) {
-    if (err.code === 'ai_timeout') return 'The AI took too long. Try a shorter briefing.';
-    if (err.code === 'ai_disabled') return 'AI is not available on this server.';
-    return err.message;
-  }
-  return 'The draft could not be created.';
+const DRAFT_FAILED = 'The draft could not be created.';
+
+/** What a failed AI draft tells the person: by code, never the server's text. */
+export function draftErrorText(err: unknown): string {
+  return apiErrorText(err, DRAFT_FAILED, {
+    ai_timeout: 'The AI took too long. Try a shorter briefing.',
+    ai_disabled: 'AI is not available on this server.',
+  });
 }
 
 /** The "AI draft" tab: a briefing in, the draft's texts onto the design. */
@@ -86,7 +87,7 @@ export function AiDraftSection({ formatId, deck, onShowPage, canAddPage }: Edito
       if (inserted) onShowPage(inserted);
       toast(inserted ? 'Draft added as a new page.' : 'Draft applied to this page.');
     } catch (err) {
-      setError(errorText(err));
+      setError(draftErrorText(err));
     } finally {
       setBusy(false);
     }
