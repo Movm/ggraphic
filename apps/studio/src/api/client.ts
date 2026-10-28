@@ -26,7 +26,7 @@ const projectSchema = projectSummarySchema.extend({
 const projectListSchema = z.object({ projects: z.array(projectSummarySchema) });
 
 const configSchema = z.object({
-  features: z.object({ ai: z.boolean() }),
+  features: z.object({ ai: z.boolean(), removeBackground: z.boolean() }),
   limits: z.object({
     uploadBytes: z.number().int(),
     thumbnailBytes: z.number().int(),
@@ -46,6 +46,12 @@ const draftSchema = z.object({
   subline: z.string(),
   body: z.string().optional(),
   callToAction: z.string().optional(),
+});
+
+const pickSchema = z.object({
+  templateId: z.string(),
+  schemeId: z.string().nullable(),
+  fills: z.record(z.string(), z.string()),
 });
 
 const errorSchema = z.object({
@@ -183,6 +189,20 @@ export type Project = z.infer<typeof projectSchema>;
 export type StudioConfig = z.infer<typeof configSchema>;
 export type Upload = z.infer<typeof uploadSchema>;
 export type Draft = z.infer<typeof draftSchema>;
+export type Pick = z.infer<typeof pickSchema>;
+
+/** What the AI may choose from: `apps/studio-server/src/contract.ts` `pickBody`. */
+export interface PickBody {
+  brief: string;
+  templates: {
+    id: string;
+    label: string;
+    description: string;
+    slots: { id: string; label: string; maxChars: number }[];
+  }[];
+  schemes: { id: string; label: string }[];
+  format?: { width: number; height: number } | null;
+}
 
 /** A failed call: HTTP status plus the server's `{ error, message?, currentVersion? }`. */
 export class ApiError extends Error {
@@ -216,11 +236,8 @@ export function onUnauthenticated(listener: () => void): () => void {
   return () => unauthenticatedListeners.delete(listener);
 }
 
-async function request<T>(
-  path: string,
-  schema: z.ZodType<T> | null,
-  init: RequestInit = {}
-): Promise<T> {
+/** One call; a failed answer becomes an `ApiError` from the server's error body. */
+async function send(path: string, init: RequestInit = {}): Promise<Response> {
   const method = (init.method ?? 'GET').toUpperCase();
   const headers = new Headers(init.headers);
   if (method !== 'GET' && csrfToken) headers.set('X-CSRF-Token', csrfToken);
@@ -244,6 +261,15 @@ async function request<T>(
       parsed.success ? (parsed.data.currentVersion ?? null) : null
     );
   }
+  return response;
+}
+
+async function request<T>(
+  path: string,
+  schema: z.ZodType<T> | null,
+  init: RequestInit = {}
+): Promise<T> {
+  const response = await send(path, init);
   if (schema === null) return undefined as T;
   const result = schema.safeParse(await response.json());
   if (!result.success) {
@@ -402,4 +428,12 @@ export const api = {
 
   draft: (body: { briefing: string; width: number; height: number }) =>
     request('/ai/draft', draftSchema, json('POST', body)),
+  /** A transparent PNG of the image; the server forwards it to the instance's rembg service. */
+  removeBackground: async (image: Blob, filename: string) => {
+    const form = new FormData();
+    form.append('file', image, filename);
+    const response = await send('/images/remove-background', { method: 'POST', body: form });
+    return new Blob([await response.arrayBuffer()], { type: 'image/png' });
+  },
+  pick: (body: PickBody) => request('/ai/pick', pickSchema, json('POST', body)),
 };
