@@ -92,7 +92,9 @@ export function buildFontWidthsSource() {
   const lines = [];
   for (const [family, pkg] of Object.entries(FAMILIES)) {
     const dir = join(dirname(require.resolve(`@fontsource/${pkg}/package.json`)), 'files');
-    const files = readdirSync(dir).filter((f) => f.endsWith('.woff')).sort();
+    const files = readdirSync(dir)
+      .filter((f) => f.endsWith('.woff'))
+      .sort();
     for (const [cls, weight] of Object.entries(CLASSES)) {
       const widest = new Map();
       for (const f of files) {
@@ -101,7 +103,9 @@ export function buildFontWidthsSource() {
           widest.set(cp, Math.max(widest.get(cp) ?? 0, w));
         }
       }
-      const entries = [...widest].sort((a, b) => a[0] - b[0]).map(([cp, w]) => `${cp.toString(16)}:${w}`);
+      const entries = [...widest]
+        .sort((a, b) => a[0] - b[0])
+        .map(([cp, w]) => `${cp.toString(16)}:${w}`);
       lines.push(`  ${JSON.stringify(`${family}/${cls}`)}: '${entries.join(',')}',`);
     }
   }
@@ -118,7 +122,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const source = buildFontWidthsSource();
   if (process.argv.includes('--check')) {
     if (readFileSync(OUTPUT, 'utf8') !== source) {
-      console.error('fontWidths.generated.ts is out of date: run node scripts/generate-font-widths.mjs');
+      console.error(
+        'fontWidths.generated.ts is out of date: run node scripts/generate-font-widths.mjs'
+      );
       process.exit(1);
     }
   } else writeFileSync(OUTPUT, source);
