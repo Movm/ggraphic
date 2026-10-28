@@ -15,6 +15,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { studioBrand } from '../../brand';
 import { logoSizeOf, rememberLogoSize } from '../../logoSize';
+import { fontFallbackFor } from './typography';
 
 import golden from './__golden__/code-seeds.json';
 
@@ -63,20 +64,6 @@ function closeTo(actual: unknown, expected: unknown, path: string): string[] {
     : [`${path}: ${JSON.stringify(actual)} vs ${JSON.stringify(expected)}`];
 }
 
-/**
- * Placing writes a font's bare family name where the code seeds wrote the whole stack
- * ("Raleway, Arial, sans-serif"): the first family is what must agree.
- */
-function firstFamilies(state: Obj): Obj {
-  return {
-    ...state,
-    additionalTexts: (state['additionalTexts'] as Obj[]).map((t) => ({
-      ...t,
-      fontFamily: String(t['fontFamily']).split(',')[0]?.trim(),
-    })),
-  };
-}
-
 /** An absent shape list and an empty one are the same page; so are an absent image list and an empty one. */
 function tidy(state: Obj): Obj {
   const out: Obj = { ...state };
@@ -93,12 +80,13 @@ function placed(id: string, brandKey: keyof typeof brands): Obj {
     canvas: { width: 1080, height: 1350 },
     format: '4:5',
     geometry: TEMPLATE_GEOMETRY,
+    fontFallback: fontFallbackFor,
     schemeId: SEED_SCHEME[id] ?? null,
     logoSizeOf,
   });
   if (!result.ok) throw new Error(`${id}: ${result.reason}`);
   const { templateRef: _ref, groups: _groups, ...rest } = result.state;
-  return firstFamilies(tidy(rest));
+  return tidy(rest);
 }
 
 const texts = (state: Obj) => state['additionalTexts'] as Obj[];
@@ -110,9 +98,7 @@ describe('the studio seeds as template files', () => {
     ['logo', golden.logo],
   ] as const) {
     it.each(IDS)(`%s matches the code seed on the ${brandKey} brand`, (id) => {
-      const expected = firstFamilies(
-        tidy(structuredClone((goldenSet as Record<string, unknown>)[id]) as Obj)
-      );
+      const expected = tidy(structuredClone((goldenSet as Record<string, unknown>)[id]) as Obj);
       if (id === 'studio-headline') {
         // The intended difference: the call to action is 60 % of the safe frame wide, not all of it.
         const cta = byId(texts(expected), 'cta');

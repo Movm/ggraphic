@@ -41,6 +41,12 @@ export interface InstantiateContext {
   /** Default 'en'. */
   locale?: string;
   logoSizeOf?: (src: string) => { width: number; height: number } | null;
+  /**
+   * The host's fallback stack for fonts, e.g. `'Arial, sans-serif'`, or a function of the font role
+   * (`'quoteEmphasis'`) when serif roles fall back differently. A bound font field is written as
+   * `<family>, <fallback>`; the binding's `value` stays the bare family.
+   */
+  fontFallback?: string | ((role: string) => string);
 }
 
 /**
@@ -187,7 +193,13 @@ export function instantiateTemplatePage(
       if (resolved === null) continue;
       const color = !ref.startsWith('font.');
       const value = color ? normalizeColor(resolved) : resolved;
-      el[field] = value;
+      const fallback =
+        !color && ctx.fontFallback !== undefined
+          ? typeof ctx.fontFallback === 'function'
+            ? ctx.fontFallback(ref.slice(5))
+            : ctx.fontFallback
+          : '';
+      el[field] = fallback ? `${value}, ${fallback}` : value;
       bind = withBinding(bind as never, field, { ref, value }) as Obj;
     }
     if (bind) el['bind'] = bind;
