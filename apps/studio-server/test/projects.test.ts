@@ -5,7 +5,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../src/app.ts';
 import { createDb } from '../src/db/client.ts';
 import { runMigrations } from '../src/db/migrate.ts';
-import { PNG_1X1, testConfig } from './helpers.ts';
+import { type Client, PASSWORD, PNG_1X1, resetDb, setupAdmin, testConfig } from './helpers.ts';
 
 const hasDb = Boolean(process.env['DATABASE_URL']);
 
@@ -17,8 +17,12 @@ describe.skipIf(!hasDb)('projects (Postgres)', () => {
   beforeAll(async () => {
     await runMigrations(pool);
   });
+  let admin: Client;
+  let list: string;
   beforeEach(async () => {
-    await pool.query('TRUNCATE projects CASCADE');
+    await resetDb(pool);
+    admin = await setupAdmin(app);
+    list = `/api/orgs/${admin.orgId}/projects`;
   });
   afterAll(async () => {
     await pool.end();
@@ -33,8 +37,8 @@ describe.skipIf(!hasDb)('projects (Postgres)', () => {
   });
 
   it('creates, lists, loads, renames and deletes', async () => {
-    const created = await request(app)
-      .post('/api/projects')
+    const created = await admin
+      .post(list)
       .send({ name: 'Plakat', document: { pages: [] }, schemaVersion: 2 })
       .expect(201);
     expect(created.body).toMatchObject({
@@ -46,11 +50,11 @@ describe.skipIf(!hasDb)('projects (Postgres)', () => {
     });
     const id = created.body.id as string;
 
-    const list = await request(app).get('/api/projects').expect(200);
-    expect(list.body.projects).toHaveLength(1);
-    expect(list.body.projects[0]).not.toHaveProperty('document');
+    const listed = await admin.get(list).expect(200);
+    expect(listed.body.projects).toHaveLength(1);
+    expect(listed.body.projects[0]).not.toHaveProperty('document');
 
-    const renamed = await request(app)
+    const renamed = await admin
       .patch(`/api/projects/${id}`)
       .send({ version: 1, name: 'Plakat final' })
       .expect(200);
@@ -60,13 +64,13 @@ describe.skipIf(!hasDb)('projects (Postgres)', () => {
       document: { pages: [] },
     });
 
-    await request(app).delete(`/api/projects/${id}`).expect(204);
-    await request(app).get(`/api/projects/${id}`).expect(404);
-    await request(app).delete(`/api/projects/${id}`).expect(404);
+    await admin.delete(`/api/projects/${id}`).expect(204);
+    await admin.get(`/api/projects/${id}`).expect(404);
+    await admin.delete(`/api/projects/${id}`).expect(404);
   });
 
   it('applies defaults on an empty create', async () => {
-    const res = await request(app).post('/api/projects').send({}).expect(201);
+    const res = await admin.post(list).send({}).expect(201);
     expect(res.body).toMatchObject({
       name: 'Untitled',
       document: {},
@@ -76,44 +80,40 @@ describe.skipIf(!hasDb)('projects (Postgres)', () => {
   });
 
   it('rejects a stale version with 409', async () => {
-    const { body } = await request(app).post('/api/projects').send({ name: 'A' }).expect(201);
-    await request(app)
+    const { body } = await admin.post(list).send({ name: 'A' }).expect(201);
+    await admin
       .patch(`/api/projects/${body.id}`)
       .send({ version: 1, document: { a: 1 } })
       .expect(200);
-    const conflict = await request(app)
+    const conflict = await admin
       .patch(`/api/projects/${body.id}`)
       .send({ version: 1, document: { a: 2 } })
       .expect(409);
     expect(conflict.body).toMatchObject({ error: 'version_conflict', currentVersion: 2 });
-    const current = await request(app).get(`/api/projects/${body.id}`).expect(200);
+    const current = await admin.get(`/api/projects/${body.id}`).expect(200);
     expect(current.body.document).toEqual({ a: 1 });
   });
 
   it('validates input', async () => {
-    const { body } = await request(app).post('/api/projects').send({ name: 'A' }).expect(201);
-    await request(app).post('/api/projects').send({ name: '' }).expect(400);
-    await request(app)
-      .post('/api/projects')
+    const { body } = await admin.post(list).send({ name: 'A' }).expect(201);
+    await admin.post(list).send({ name: '' }).expect(400);
+    await admin
+      .post(list)
       .send({ document: [1, 2] })
       .expect(400);
-    await request(app).patch(`/api/projects/${body.id}`).send({ name: 'B' }).expect(400);
-    await request(app).patch(`/api/projects/${body.id}`).send({ version: 1 }).expect(400);
-    await request(app)
-      .post('/api/projects')
-      .set('content-type', 'application/json')
-      .send('{bad')
-      .expect(400);
-    await request(app).get('/api/projects/not-a-uuid').expect(404);
-    await request(app)
+    await admin.patch(`/api/projects/${body.id}`).send({ name: 'B' }).expect(400);
+    await admin.patch(`/api/projects/${body.id}`).send({ version: 1 }).expect(400);
+    await admin.post(list).set('content-type', 'application/json').send('{bad').expect(400);
+    await admin.get('/api/projects/not-a-uuid').expect(404);
+    await admin
       .patch('/api/projects/00000000-0000-4000-8000-000000000000')
       .send({ version: 1, name: 'x' })
       .expect(404);
   });
 
   it('stores and serves a PNG thumbnail', async () => {
-    const { body } = await request(app).post('/api/projects').send({ name: 'A' }).expect(201);
-    const put = await request(app)
+    const { body } = await admin.post(list).send({ name: 'A' }).expect(201);
+    const put = await admin
       .put(`/api/projects/${body.id}/thumbnail`)
       .set('content-type', 'image/png')
       .send(PNG_1X1)
@@ -123,34 +123,44 @@ describe.skipIf(!hasDb)('projects (Postgres)', () => {
     );
     expect(put.body.version).toBe(1);
 
-    const img = await request(app).get(put.body.thumbnailUrl).expect(200);
+    const img = await admin.get(put.body.thumbnailUrl).expect(200);
     expect(img.headers['content-type']).toBe('image/png');
     expect(Buffer.compare(img.body as Buffer, PNG_1X1)).toBe(0);
 
-    const list = await request(app).get('/api/projects').expect(200);
-    expect(list.body.projects[0].thumbnailUrl).toBe(put.body.thumbnailUrl);
+    const listed = await admin.get(list).expect(200);
+    expect(listed.body.projects[0].thumbnailUrl).toBe(put.body.thumbnailUrl);
 
-    await request(app)
+    await admin
       .put(`/api/projects/${body.id}/thumbnail`)
       .set('content-type', 'image/png')
       .send(Buffer.from('not a png'))
       .expect(415);
-    await request(app)
+    await admin
       .put(`/api/projects/${body.id}/thumbnail`)
       .set('content-type', 'image/jpeg')
       .send(Buffer.from([0xff, 0xd8, 0xff]))
       .expect(415);
 
-    await request(app).delete(`/api/projects/${body.id}`).expect(204);
-    await request(app).get(`/api/projects/${body.id}/thumbnail`).expect(404);
+    await admin.delete(`/api/projects/${body.id}`).expect(204);
+    await admin.get(`/api/projects/${body.id}/thumbnail`).expect(404);
   });
 
   it('caps the thumbnail size', async () => {
     const small = createApp({ config: { ...config, thumbnailMaxBytes: 100 }, db });
-    const { body } = await request(small).post('/api/projects').send({}).expect(201);
-    await request(small)
+    const login = request.agent(small);
+    const session = await login
+      .post('/api/auth/login')
+      .send({ email: 'admin@example.org', password: PASSWORD })
+      .expect(200);
+    const { body } = await login
+      .post(`/api/orgs/${admin.orgId}/projects`)
+      .set('x-csrf-token', session.body.csrfToken)
+      .send({})
+      .expect(201);
+    await login
       .put(`/api/projects/${body.id}/thumbnail`)
       .set('content-type', 'image/png')
+      .set('x-csrf-token', session.body.csrfToken)
       .send(Buffer.concat([PNG_1X1, Buffer.alloc(200)]))
       .expect(413);
   });

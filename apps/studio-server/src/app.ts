@@ -3,23 +3,42 @@ import { existsSync } from 'node:fs';
 import { sql } from 'drizzle-orm';
 import express, { type Express } from 'express';
 import { createDraft } from './ai.ts';
+import { sessionCookie } from './auth/cookies.ts';
+import {
+  csrfGuard,
+  fetchMetadataGuard,
+  requireAuth,
+  sessionMiddleware,
+} from './auth/middleware.ts';
 import type { Config } from './config.ts';
 import { draftBody, type StudioConfig } from './contract.ts';
 import type { Db } from './db/client.ts';
 import { errorHandler, HttpError, parseOr400 } from './http.ts';
-import { projectsRouter } from './routes/projects.ts';
-import { uploadsRouter } from './routes/uploads.ts';
+import { type AuthLimiters, authRouter, createAuthLimiters } from './routes/auth.ts';
+import { organisationsRouter } from './routes/organisations.ts';
+import { organisationProjectsRouter, projectsRouter } from './routes/projects.ts';
+import { organisationUploadsRouter, uploadsRouter } from './routes/uploads.ts';
 import { IMAGE_TYPES } from './uploads.ts';
 
 export interface AppDeps {
   config: Config;
   db: Db;
   fetch?: typeof fetch;
+  /** Login rate limits; tests pass their own to start from zero. */
+  limiters?: AuthLimiters;
 }
 
-export function createApp({ config, db, fetch: fetchImpl = fetch }: AppDeps): Express {
+export function createApp({
+  config,
+  db,
+  fetch: fetchImpl = fetch,
+  limiters = createAuthLimiters(),
+}: AppDeps): Express {
   const app = express();
   app.disable('x-powered-by');
+  // Behind a reverse proxy the client IP (rate limits) comes from X-Forwarded-For.
+  app.set('trust proxy', config.trustProxy);
+  const cookie = sessionCookie(config.cookieSecure);
   app.use((_req, res, next) => {
     res.set('X-Content-Type-Options', 'nosniff');
     next();
@@ -36,6 +55,14 @@ export function createApp({ config, db, fetch: fetchImpl = fetch }: AppDeps): Ex
 
   const api = express.Router();
   api.use(express.json({ limit: config.documentMaxBytes }));
+  api.use(fetchMetadataGuard);
+  api.use(sessionMiddleware(db, cookie));
+  api.use(csrfGuard);
+  // Nothing from the API belongs in a shared cache; routes that may be cached say so.
+  api.use((_req, res, next) => {
+    res.set('Cache-Control', 'no-store');
+    next();
+  });
 
   api.get('/config', (_req, res) => {
     const body: StudioConfig = {
@@ -50,8 +77,15 @@ export function createApp({ config, db, fetch: fetchImpl = fetch }: AppDeps): Ex
     res.json(body);
   });
 
+  api.use('/auth', authRouter(db, config, cookie, limiters));
+
+  // Everything below needs a session.
+  api.use(requireAuth);
+  api.use('/orgs/:orgId/projects', organisationProjectsRouter(db));
+  api.use('/orgs/:orgId/uploads', organisationUploadsRouter(db, config));
+  api.use('/orgs', organisationsRouter(db, config));
   api.use('/projects', projectsRouter(db, config));
-  api.use('/uploads', uploadsRouter(config));
+  api.use('/uploads', uploadsRouter(db, config));
 
   api.post('/ai/draft', async (req, res) => {
     if (!config.ai) {
