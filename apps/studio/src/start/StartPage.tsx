@@ -6,8 +6,8 @@
  * Submitting the prompt creates a project, lets the AI write its texts and opens it.
  */
 import { Button, ChipGroup, PromptComposer, PromptHero, Tile, TileList } from '@ggraphic/ui';
-import { useQueryClient } from '@tanstack/react-query';
-import { useId, useState, type ReactNode } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useId, useMemo, useState, type ReactNode } from 'react';
 import { PiFile, PiQuotes, PiTextT, PiNumberOne } from 'react-icons/pi';
 
 import { ApiError, type StudioConfig } from '../api/client';
@@ -20,7 +20,13 @@ import { useLoggedIn } from '../session/SessionContext';
 import { PageShell } from '../ui/PageShell';
 import { toast } from '../ui/toast';
 
-import { AiPromptError, createFromPrompt, createFromTemplate } from './createFromPrompt';
+import {
+  AiPromptError,
+  TemplateUnavailableError,
+  createFromPrompt,
+  createFromTemplate,
+  loadOrganisationBrand,
+} from './createFromPrompt';
 import { ProjectGrid } from './ProjectGrid';
 
 /** Invented, neutral examples. */
@@ -51,7 +57,7 @@ const FORMAT_OPTIONS = STUDIO_FORMATS.map((f) => ({
 }));
 
 const errorText = (err: unknown) =>
-  err instanceof AiPromptError || err instanceof ApiError
+  err instanceof AiPromptError || err instanceof ApiError || err instanceof TemplateUnavailableError
     ? err.message
     : 'The project could not be created.';
 
@@ -63,6 +69,22 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
   const [busy, setBusy] = useState(false);
   const hintId = useId();
   const ai = config?.features.ai ?? false;
+  // The tiles follow the organisation's brand: its worlds decide which templates can be placed.
+  const brand = useQuery({
+    queryKey: ['start-brand', organisation.id],
+    queryFn: async () => {
+      await loadOrganisationBrand(organisation.id);
+      return true;
+    },
+    gcTime: 0,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+  const templates = useMemo(
+    () => templatesFor(formatId),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the brand query registers the brand `templatesFor` reads
+    [formatId, brand.dataUpdatedAt]
+  );
 
   const submit = async () => {
     const text = prompt.trim();
@@ -174,7 +196,7 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
             <p className="studio-muted">Opens in the format chosen above.</p>
           </div>
           <TileList layout="row" aria-label="Templates">
-            {[BLANK_TILE, ...templatesFor(formatId)].map((template) => (
+            {[BLANK_TILE, ...templates].map((template) => (
               <li key={template.id}>
                 <Tile
                   disabled={busy}
