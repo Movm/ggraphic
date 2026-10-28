@@ -33,6 +33,12 @@ export interface GateAdapter {
     stateKey: string,
     el: Readonly<Record<string, unknown>>
   ): readonly { field: string; value: string }[];
+  /**
+   * How many lines a text element's own content takes at its width (explicit breaks and an
+   * estimate of wrapping); 1 for an element that is not a text. Used for a text the template
+   * has no `maxLines` for, which would otherwise be measured as one line.
+   */
+  lineCount(stateKey: string, el: Readonly<Record<string, unknown>>): number;
   /** The box an element covers in canvas px, or null if it has none. `lines` is a text's line count. */
   box(stateKey: string, el: Readonly<Record<string, unknown>>, lines: number): Box | null;
   /**
@@ -127,6 +133,16 @@ const fmt = (n: number): string => String(Math.round(n * 100) / 100);
 
 function intersects(a: Box, b: Box): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+}
+
+/** Overlap of more than the rounding slack on both axes. */
+function overlaps(a: Box, b: Box): boolean {
+  return (
+    a.x + SLACK < b.x + b.width &&
+    b.x + SLACK < a.x + a.width &&
+    a.y + SLACK < b.y + b.height &&
+    b.y + SLACK < a.y + a.height
+  );
 }
 
 function inside(inner: Box, outer: Box): boolean {
@@ -359,14 +375,19 @@ function checkPlaced(
   const order = Array.isArray(state['layerOrder'])
     ? (state['layerOrder'] as unknown[]).map(String)
     : [];
-  const lines = (id: string) => ctx.slots[id]?.budget.maxLines ?? 1;
+  const lines = (id: string, key: string, el: Obj) =>
+    ctx.slots[id]?.budget.maxLines ?? Math.max(1, ctx.adapter.lineCount(key, el));
 
   const NOT_DETERMINABLE = 'ground not determinable';
   const opaque = (color: string): boolean => parseColor(color)?.a === 1;
 
   for (const [id, { el, key }] of placed) {
-    const box = ctx.adapter.box(key, el, lines(id));
-    if (box) {
+    const box = ctx.adapter.box(key, el, lines(id, key, el));
+    const text = ctx.adapter.text(key, el);
+    // A text of unknown width cannot be placed against any frame: fail closed.
+    if (box && text && !(box.width > 0)) {
+      problem('bounds', `${id} has no width (width unknown)`, where);
+    } else if (box) {
       const frame = t.frames?.[id] ?? 'safe';
       if (!inside(box, frames[frame])) {
         problem(
@@ -376,7 +397,6 @@ function checkPlaced(
         );
       }
     }
-    const text = ctx.adapter.text(key, el);
     if (!text) continue;
     if (box && envelope && intersects(box, envelope)) {
       problem('logo-overlap', `${id} runs into the logo envelope (${layoutLabel(layout)})`, where);
@@ -396,8 +416,8 @@ function checkPlaced(
       fail(`text opacity or alpha is below 1, contrast not determinable`);
       continue;
     }
-    // The ground: the badge's own fill, else the topmost layer below the text that holds its
-    // centre, else the page background.
+    // The ground: the badge's own fill, else the topmost layer below the text that overlaps
+    // it (it must hold the whole box), else the page background.
     let ground: string | null = text.ground ?? null;
     if (ground === null) {
       const at = order.indexOf(id);
@@ -405,8 +425,6 @@ function checkPlaced(
         fail(`${NOT_DETERMINABLE} (the text is not in layerOrder)`);
         continue;
       }
-      const cx = box.x + box.width / 2;
-      const cy = box.y + box.height / 2;
       ground = typeof state['backgroundColor'] === 'string' ? state['backgroundColor'] : '';
       for (const belowId of order.slice(0, at).reverse()) {
         const below = placed.get(belowId);
@@ -421,10 +439,10 @@ function checkPlaced(
           if (cover.kind === 'unknown') break;
           continue;
         }
-        if (cx < area.x || cx > area.x + area.width || cy < area.y || cy > area.y + area.height) {
-          continue;
-        }
-        ground = cover.kind === 'solid' ? cover.fill : null;
+        if (!overlaps(box, area)) continue;
+        // Only a shape holding the whole text box is its ground; one that covers part of it
+        // puts the text on two grounds (or an edge), which is not judged by either.
+        ground = cover.kind === 'solid' && inside(box, area) ? cover.fill : null;
         break;
       }
     }

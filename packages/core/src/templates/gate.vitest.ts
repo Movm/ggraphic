@@ -43,6 +43,8 @@ const adapter: GateAdapter = {
         : []),
     ];
   },
+  lineCount: (key, el) =>
+    key === 'additionalTexts' && typeof el['text'] === 'string' ? el['text'].split('\n').length : 1,
   box: (key, el, lines) =>
     key === 'additionalTexts'
       ? {
@@ -355,6 +357,32 @@ describe('render gate stage 1', () => {
       expect(found[0]?.detail).toContain(NOT);
     });
 
+    it('a text straddling two grounds', () => {
+      const left = fixedFill({ id: 'left', width: 0.5, fill: '#000000' });
+      const right = fixedFill({ id: 'right', x: 0.5, width: 0.5, fill: '#ffffff' });
+      const t = template(
+        { fixed: { left: ['fill'], right: ['fill'] } },
+        { shapeInstances: [left, right], layerOrder: ['left', 'right', 'logo', 'headline'] }
+      );
+      const found = checkTemplate(t, context());
+      expect(found.map((p) => p.rule)).toEqual(['contrast']);
+      expect(found[0]?.detail).toContain(NOT);
+    });
+
+    it('a text wholly inside one of two grounds still decides', () => {
+      const left = fixedFill({ id: 'left', width: 0.5, fill: '#000000' });
+      const right = fixedFill({ id: 'right', x: 0.5, width: 0.5, fill: '#ffffff' });
+      const t = template(
+        { fixed: { left: ['fill'], right: ['fill'] } },
+        {
+          shapeInstances: [left, right],
+          additionalTexts: [{ ...headline, width: 0.4 }],
+          layerOrder: ['left', 'right', 'logo', 'headline'],
+        }
+      );
+      expect(rules(t)).toEqual([]);
+    });
+
     it('a text gradient is not judged by its flat fill', () => {
       const t = template(
         { fixed: { headline: ['fillGradient'] } },
@@ -416,6 +444,34 @@ describe('render gate stage 1', () => {
       const corner = { ...headline, id: 'low', x: 0, y: 0, width: 0.2 };
       const t = template({ logoCorners: ['bottom-right'] }, { additionalTexts: [corner] });
       expect(rules(t, context({ slots }))).toEqual([]);
+    });
+  });
+
+  describe('texts the template has no slot for', () => {
+    // 3 lines of 0.06 x 1080 x 1.2 px from y 0.85 leave the safe frame; one line does not.
+    const note = (over: Obj = {}) => ({
+      id: 'note',
+      text: 'a',
+      x: 0,
+      y: 0.85,
+      width: 0.5,
+      fontSize: 0.06,
+      fill: '#ffffff',
+      bind: { fill: 'ink' },
+      ...over,
+    });
+    const make = (n: Obj) =>
+      template({}, { additionalTexts: [headline, n], layerOrder: ['logo', 'headline', 'note'] });
+
+    it('are measured with the line count of their own text', () => {
+      expect(rules(make(note()))).toEqual([]);
+      expect(rules(make(note({ text: 'a\nb\nc' })))).toEqual(['bounds']);
+    });
+
+    it('fail bounds closed without a width', () => {
+      const found = checkTemplate(make(note({ width: undefined })), context());
+      expect(found.map((p) => p.rule)).toEqual(['bounds']);
+      expect(found[0]?.detail).toContain('width unknown');
     });
   });
 

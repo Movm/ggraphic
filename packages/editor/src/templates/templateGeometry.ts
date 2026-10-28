@@ -143,6 +143,8 @@ const num = (el: El, field: string, fallback = 0): number => {
 
 /** Editor icons are drawn 120 px across at scale 1, centred on their x/y (as `boundsOf`). */
 const ICON_SIZE = 120;
+/** Average glyph width in em for the wrap estimate of a text with no `maxLines`; leans wide. */
+const AVERAGE_CHAR_EM = 0.55;
 
 /**
  * `BINDABLE_FIELDS` without the fields that are not colours: fonts, and `src` (bound only to the logo).
@@ -192,6 +194,19 @@ export const TEMPLATE_GATE_ADAPTER: GateAdapter = {
       for (const color of el['colors']) add('colors', color);
     }
     return out;
+  },
+  lineCount(stateKey, el) {
+    if (stateKey !== 'additionalTexts' || typeof el['text'] !== 'string') return 1;
+    const width = num(el, 'width');
+    const charWidth = num(el, 'fontSize') * AVERAGE_CHAR_EM;
+    // Explicit breaks always count; wrapping is estimated and leans long (fails closed).
+    return el['text']
+      .split('\n')
+      .reduce(
+        (sum, line) =>
+          sum + (width > 0 ? Math.max(1, Math.ceil([...line].length * (charWidth / width))) : 1),
+        0
+      );
   },
   box(stateKey, el, lines) {
     const x = num(el, 'x');
