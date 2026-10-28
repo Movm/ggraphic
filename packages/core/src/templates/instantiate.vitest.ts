@@ -177,6 +177,40 @@ describe('instantiateTemplatePage', () => {
     expect(instantiateTemplatePage(t, ctx())).toEqual({ ok: false, reason: 'geometry' });
   });
 
+  describe('number arrays', () => {
+    const dashed = (dash: unknown, axis: 's' | 'x' = 's') => ({
+      t: template({
+        pages: [
+          { state: { shapeInstances: [{ id: 'r', x: 0, y: 0, width: 1, height: 1, dash }] } },
+        ],
+      }),
+      c: ctx({ geometry: { ...G, shapeInstances: { ...G['shapeInstances'], dash: axis } } }),
+    });
+    const dashOf = (r: ReturnType<typeof ok>) =>
+      (r.state['shapeInstances'] as { dash: unknown }[])[0]!.dash;
+
+    it('scales every element of a dash on the s axis', () => {
+      // s = min(1080, 1350): 1/108 -> 10 and 1/216 -> 5.
+      const { t, c } = dashed([1 / 108, 1 / 216]);
+      expect(dashOf(ok(t, c))).toEqual([10, 5]);
+    });
+
+    it('keeps an empty array empty', () => {
+      const { t, c } = dashed([]);
+      expect(dashOf(ok(t, c))).toEqual([]);
+    });
+
+    it('refuses an array with a non-number in it', () => {
+      const { t, c } = dashed([0.01, 'x']);
+      expect(instantiateTemplatePage(t, c)).toEqual({ ok: false, reason: 'geometry' });
+    });
+
+    it('refuses an array on any other axis', () => {
+      const { t, c } = dashed([0.01, 0.02], 'x');
+      expect(instantiateTemplatePage(t, c)).toEqual({ ok: false, reason: 'geometry' });
+    });
+  });
+
   it("the brand's corner wins when the template leaves it free", () => {
     const brand = {
       ...logoBrand,
