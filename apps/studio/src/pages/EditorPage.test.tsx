@@ -108,6 +108,17 @@ describe('EditorPage', () => {
     expect(calls.filter((c) => c.method !== 'GET')).toEqual([]);
   });
 
+  it('a document naming a missing template opens in the editor', async () => {
+    const stored = newDocument('post-portrait', HEADLINE_TEMPLATE_ID);
+    stored.pages[0]!.configId = 'studio-legacy-gone';
+    const { fetchMock } = fakeServer(stored);
+    vi.stubGlobal('fetch', fetchMock);
+    renderEditor();
+
+    expect(await screen.findByRole('button', { name: /^Text/ })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
   it('opening a v1 project sends no PUT', async () => {
     const { fetchMock, calls } = fakeServer(newDocument('post-portrait'));
     vi.stubGlobal('fetch', fetchMock);

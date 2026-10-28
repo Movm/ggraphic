@@ -9,8 +9,6 @@ import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { readTemplateFile, type TemplateFile, type TemplateFormat } from '@ggraphic/schema';
 import { OPEN_TEMPLATES } from '@ggraphic/templates-open';
 
-import { BLANK_TEMPLATE_ID } from './ids';
-
 export type CatalogSource = 'pack' | 'organisation';
 
 export interface CatalogEntry {
@@ -111,11 +109,15 @@ export function formatAspect(formatId: string): TemplateFormat | null {
   return ASPECT_OF_FORMAT[formatId] ?? null;
 }
 
-/** The templates that lay out on `formatId` and have a colour world `brand` (default: the active one) keeps. */
-export function templatesFor(formatId: string, brand: BrandPack = activeBrand()): CatalogEntry[] {
+/** Of `entries`, the templates that lay out on `formatId` and have a colour world `brand` keeps. */
+export function templatesIn(
+  entries: readonly CatalogEntry[],
+  formatId: string,
+  brand: BrandPack
+): CatalogEntry[] {
   const aspect = formatAspect(formatId);
   if (!aspect) return [];
-  return studioCatalog().entries.filter(
+  return entries.filter(
     (e) =>
       e.kind === 'template' &&
       e.formats.includes(aspect) &&
@@ -123,21 +125,13 @@ export function templatesFor(formatId: string, brand: BrandPack = activeBrand())
   );
 }
 
+/** The catalogue's templates for `formatId`, for `brand` (default: the active one). */
+export function templatesFor(formatId: string, brand: BrandPack = activeBrand()): CatalogEntry[] {
+  return templatesIn(studioCatalog().entries, formatId, brand);
+}
+
 export const FAMILY_LABELS: Readonly<Record<string, string>> = {
   headline: 'Headline',
   quote: 'Quote',
   number: 'Number',
 };
-
-/** The Studio's own default format (`DEFAULT_FORMAT` in `document.ts`; not imported, to keep the modules acyclic). */
-const CATALOG_FORMAT = 'post-portrait';
-
-/** How the pickers name the templates: Blank first, then what the default format offers. */
-export const TEMPLATE_CATALOG: readonly { id: string; label: string; description: string }[] = [
-  { id: BLANK_TEMPLATE_ID, label: 'Blank', description: 'An empty page on a solid ground' },
-  ...templatesFor(CATALOG_FORMAT).map((e) => ({
-    id: e.id,
-    label: e.title,
-    description: e.description,
-  })),
-];

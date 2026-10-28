@@ -1,15 +1,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { deriveSchemes } from '@ggraphic/core';
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { describe, expect, it } from 'vitest';
+import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
+import { afterEach, describe, expect, it } from 'vitest';
+
+import { studioBrand } from '../brand';
 
 import { BLANK_TEMPLATE_ID } from '../editor/templates/ids';
 import { seedFor } from '../editor/templates/seeds';
 
 import { pickOffers } from './aiOffers';
 
+afterEach(() => registerBrandPacks([studioBrand]));
+
 describe('pickOffers', () => {
-  const { templates, schemes } = pickOffers();
+  const { templates, schemes } = pickOffers('post-portrait');
 
   it('offers every template but the blank one', () => {
     expect(templates.map((t) => t.id)).toEqual([
@@ -42,5 +46,26 @@ describe('pickOffers', () => {
     const ids = deriveSchemes(activeBrand()).map((s) => s.id);
     expect(schemes.map((s) => s.id)).toEqual(ids);
     expect(schemes.find((s) => s.id === 'primary')?.label).toBe('Primary');
+  });
+});
+
+describe('pickOffers per call', () => {
+  it('leaves out a template whose worlds the active brand drops', () => {
+    const near = {
+      ...studioBrand,
+      id: 'near',
+      colors: { ...studioBrand.colors, secondary: '#FAFAFA' },
+    };
+    registerBrandPacks([near, studioBrand]);
+    expect(pickOffers('post-portrait', near).templates.map((t) => t.id)).not.toContain(
+      'studio-quote'
+    );
+    expect(pickOffers('post-portrait', studioBrand).templates.map((t) => t.id)).toContain(
+      'studio-quote'
+    );
+  });
+
+  it('offers nothing on a format no template covers', () => {
+    expect(pickOffers('story').templates).toEqual([]);
   });
 });
