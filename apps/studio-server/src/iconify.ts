@@ -18,6 +18,8 @@ const MAX_SVG_BYTES = 64 * 1024;
 const BATCH_CHUNK = 16;
 const MAX_BATCH_TOTAL_BYTES = 4 * 1024 * 1024;
 const BATCH_CONCURRENCY = 4;
+/** Background warms of cached searches running at once, across all searches. */
+const MAX_BACKGROUND_WARMS = 4;
 
 /** How long we stay off a rate-limiting upstream when it names no Retry-After. */
 const DEFAULT_RETRY_AFTER_S = 10;
@@ -185,8 +187,15 @@ export function isIconToken(value: string): boolean {
 export function createIconifyClient(
   config: IconifyConfig,
   fetchImpl: typeof fetch = fetch,
-  now: () => number = Date.now
+  now: () => number = Date.now,
+  /** Test seam: called with the bytes reserved from the batch budgets after every change. */
+  onBudget?: (held: number) => void
 ): IconifyClient {
+  let heldBytes = 0;
+  const hold = (delta: number) => {
+    heldBytes += delta;
+    onBudget?.(heldBytes);
+  };
   const allowedLicences = new Set(config.licences.map((l) => l.toLowerCase()));
   const cache = new TtlCache<unknown>(CACHE_ENTRIES, now);
   let sets: { allowed: Map<string, SetInfo>; expires: number } | null = null;
@@ -255,7 +264,7 @@ export function createIconifyClient(
         if (size > maxBytes) {
           await reader.cancel().catch(() => undefined);
           console.warn('iconify answered more than the allowed size');
-          throw upstreamError();
+          throw Object.assign(upstreamError(), { oversized: true });
         }
         chunks.push(value);
       }
@@ -346,22 +355,32 @@ export function createIconifyClient(
       const reserved = Math.min(names.length * MAX_SVG_BYTES, budget);
       if (reserved < MAX_SVG_BYTES) return;
       budget -= reserved;
+      hold(reserved);
       let used = 0;
       try {
         const params = new URLSearchParams({ icons: names.join(',') });
         const body = await get(`/${prefix}.json?${params.toString()}`, reserved);
         if (body) used = body.body.length;
-        const set = body ? (json(body.body) as BatchAnswer) : null;
+        // A set the upstream does not know, or an answer over the cap, will not get better.
+        if (!body) {
+          for (const name of names) unbatchable.add(`${prefix}:${name}`);
+          return;
+        }
+        const set = json(body.body) as BatchAnswer;
         if (!set || typeof set.icons !== 'object' || set.icons === null) return;
         for (const name of names) {
           const svg = batchIconSvg(set, set.icons[name]);
           if (svg !== null) cache.set(`svg\0${prefix}\0${name}`, svg, SVG_TTL_MS);
           else unbatchable.add(`${prefix}:${name}`);
         }
-      } catch {
+      } catch (error) {
+        if ((error as { oversized?: boolean }).oversized) {
+          for (const name of names) unbatchable.add(`${prefix}:${name}`);
+        }
         // The tiles fall back to single requests.
       } finally {
         budget += reserved - used;
+        hold(-reserved);
       }
     };
     const worker = async (): Promise<void> => {
@@ -372,6 +391,14 @@ export function createIconifyClient(
 
   /** Repeats of a cached search that are still warming, so they do not stack up. */
   const warming = new Set<string>();
+  /** Runs a warm once per search key, and at most `MAX_BACKGROUND_WARMS` in the background. */
+  function warmOnce(key: string, run: () => Promise<void>, background: boolean): Promise<void> {
+    if (warming.has(key) || (background && warming.size >= MAX_BACKGROUND_WARMS)) {
+      return Promise.resolve();
+    }
+    warming.add(key);
+    return run().finally(() => warming.delete(key));
+  }
 
   return {
     async search(rawQuery, limit, prefix, options) {
@@ -383,10 +410,7 @@ export function createIconifyClient(
       if (hit) {
         // Icons a first attempt could not batch (rate limit) are fetched again, still in batches.
         if (options?.refresh) await warm(hit.result.icons, hit.unbatchable);
-        else if (!warming.has(key)) {
-          warming.add(key);
-          void warm(hit.result.icons, hit.unbatchable).finally(() => warming.delete(key));
-        }
+        else void warmOnce(key, () => warm(hit.result.icons, hit.unbatchable), true);
         return hit.result;
       }
       const allowed = await allowedSets();
@@ -418,7 +442,7 @@ export function createIconifyClient(
       };
       const unbatchable = new Set<string>();
       cache.set(key, { result, unbatchable }, SEARCH_TTL_MS);
-      await warm(icons, unbatchable);
+      await warmOnce(key, () => warm(icons, unbatchable), false);
       return result;
     },
 
