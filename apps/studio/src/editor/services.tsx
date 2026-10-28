@@ -5,6 +5,7 @@
  * offered in the Uploads tab, downloads are named `ggraphic-…`, and the
  * AI draft tab appears only when the server has AI turned on. The background
  * removal tool appears only when the server has a rembg service configured.
+ * The other tools need no service: QR code, blob, gradient text and text path.
  *
  * Not supplied, so the editor runs on its fallbacks: stock photos, Unsplash
  * (no key in this version), AI images, gallery autosave
@@ -185,6 +186,7 @@ export function createStudioServices({
     imageUrls: studioImageUrls,
     fileDelivery: { ...browserFileDelivery, filenamePrefix: 'ggraphic', shareTitle: 'ggraphic' },
     unsplashUtmSource: 'ggraphic',
+    qrPreviewUrl: 'https://example.org',
     ...(removeBackground
       ? {
           removeBackgroundFromImage: async (image: File | Blob) => {
