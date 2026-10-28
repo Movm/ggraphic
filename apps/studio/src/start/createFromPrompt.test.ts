@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api, ApiError } from '../api/client';
 
-import { createFromPrompt } from './createFromPrompt';
+import { AiPromptError, createFromPrompt } from './createFromPrompt';
 
 vi.mock('../api/client', async (importOriginal) => {
   const original = await importOriginal<Record<string, unknown>>();
@@ -29,7 +29,7 @@ const textsOf = (page: Page) =>
   Object.fromEntries(
     (page.state['additionalTexts'] as { id: string; text: string }[]).map((t) => [t.id, t.text])
   );
-const saved = () => mocked.updateProject.mock.calls[0]![1];
+const saved = () => mocked.createProject.mock.calls[0]![1];
 
 beforeEach(() => {
   mocked.getBrandPack.mockRejectedValue(new Error('no brand'));
@@ -49,15 +49,16 @@ const run = () =>
   });
 
 describe('createFromPrompt with AI', () => {
-  it('creates the headline project first, then saves the template and colour world the AI picked', async () => {
+  it('creates the project with the template and colour world the AI picked', async () => {
     mocked.pick.mockResolvedValue({
       templateId: 'studio-quote',
       schemeId: 'dark',
       fills: { headline: 'Mut zahlt sich aus', subline: 'Ada' },
     });
     const result = await run();
-    expect(result).toEqual({ projectId: 'p1', draftError: null });
-    expect(pageOf(mocked.createProject.mock.calls[0]![1]).configId).toBe('studio-headline');
+    expect(result).toEqual({ projectId: 'p1' });
+    expect(mocked.createProject).toHaveBeenCalledTimes(1);
+    expect(mocked.updateProject).not.toHaveBeenCalled();
     expect(mocked.draft).not.toHaveBeenCalled();
 
     const page = pageOf(saved());
@@ -84,48 +85,44 @@ describe('createFromPrompt with AI', () => {
     expect(textsOf(page)['number']).toBe('42%');
   });
 
-  it('falls back to the draft when the pick fails', async () => {
-    mocked.pick.mockRejectedValue(new ApiError(502, 'ai_upstream_error', 'bad'));
-    mocked.draft.mockResolvedValue({ headline: 'Aus dem Entwurf', subline: 'S' });
-    const result = await run();
-    expect(result.draftError).toBeNull();
-    const page = pageOf(saved());
-    expect(page.configId).toBe('studio-headline');
-    expect(textsOf(page)['headline']).toBe('Aus dem Entwurf');
-  });
-
-  it('reports the draft error only when both fail', async () => {
-    mocked.pick.mockRejectedValue(new ApiError(502, 'ai_upstream_error', 'bad'));
-    mocked.draft.mockRejectedValue(new ApiError(502, 'ai_timeout', 'slow'));
-    const result = await run();
-    expect(result).toEqual({ projectId: 'p1', draftError: 'The AI took too long to answer.' });
-    expect(mocked.updateProject).not.toHaveBeenCalled();
-  });
-
   it.each([
-    ['a timeout', new ApiError(502, 'ai_timeout', 'slow'), 'The AI took too long to answer.'],
-    [
-      'a disabled AI',
-      new ApiError(503, 'ai_disabled', 'off'),
-      'AI is not available on this server.',
-    ],
-    ['a rate limit', new ApiError(429, 'too_many_requests', 'Slow down.'), 'Slow down.'],
-  ])('does not ask for a draft after %s', async (_name, error, text) => {
+    ['a timeout', new ApiError(502, 'ai_timeout', 'upstream timed out'), 'timeout'],
+    ['a disabled AI', new ApiError(503, 'ai_disabled', 'off'), 'disabled'],
+    ['a provider rate limit', new ApiError(429, 'ai_rate_limited', 'busy'), 'busy'],
+    ['our own rate limit', new ApiError(429, 'rate_limited', 'Too many attempts.'), 'busy'],
+    ['an upstream error', new ApiError(502, 'ai_upstream_error', 'upstream 500'), 'failed'],
+    ['a network error', new TypeError('Failed to fetch'), 'failed'],
+  ])('creates no project and no draft after %s', async (_name, error, kind) => {
     mocked.pick.mockRejectedValue(error);
-    const result = await run();
-    expect(result).toEqual({ projectId: 'p1', draftError: text });
-    expect(mocked.draft).not.toHaveBeenCalled();
+    const failure = await run().then(
+      () => null,
+      (e: unknown) => e
+    );
+    expect(failure).toBeInstanceOf(AiPromptError);
+    expect((failure as AiPromptError).kind).toBe(kind);
+    expect(mocked.createProject).not.toHaveBeenCalled();
     expect(mocked.updateProject).not.toHaveBeenCalled();
+    expect(mocked.draft).not.toHaveBeenCalled();
   });
 
-  it('says "design" when saving fails', async () => {
-    mocked.pick.mockResolvedValue({
-      templateId: 'studio-number',
-      schemeId: null,
-      fills: { number: '1' },
-    });
-    mocked.updateProject.mockRejectedValue(new ApiError(500, 'x', 'Boom'));
-    const result = await run();
-    expect(result.draftError).toBe('The design could not be saved. Boom');
+  it('never shows the raw server text', async () => {
+    mocked.pick.mockRejectedValue(new ApiError(502, 'ai_upstream_error', 'upstream exploded'));
+    const failure = await run().then(
+      () => null,
+      (e: unknown) => e as AiPromptError
+    );
+    expect(failure!.message).not.toMatch(/upstream/i);
+    expect(failure!.message.length).toBeGreaterThan(10);
+  });
+
+  it('treats a pick for a template the Studio lacks as a failed AI, not a draft', async () => {
+    mocked.pick.mockResolvedValue({ templateId: 'nope', schemeId: null, fills: {} });
+    const failure = await run().then(
+      () => null,
+      (e: unknown) => e
+    );
+    expect(failure).toBeInstanceOf(AiPromptError);
+    expect(mocked.createProject).not.toHaveBeenCalled();
+    expect(mocked.draft).not.toHaveBeenCalled();
   });
 });

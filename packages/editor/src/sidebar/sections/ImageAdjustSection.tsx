@@ -71,7 +71,7 @@ export function ImageAdjustSection({
   return (
     <div className="flex flex-col gap-4 p-md w-full min-w-0">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-foreground">Anpassen</span>
+        <span className="text-sm font-semibold text-foreground">{t.sidebar.imageAdjust.title}</span>
         <button
           type="button"
           onClick={() => set(EMPTY_ADJUSTMENTS)}
@@ -101,7 +101,7 @@ export function ImageAdjustSection({
       {/* Crop */}
       {img && (
         <div className="flex flex-col gap-1.5">
-          <span className={GROUP_LABEL}>Ausschnitt</span>
+          <span className={GROUP_LABEL}>{t.topBar.crop}</span>
           <div className="grid grid-cols-4 gap-1.5">
             {CROP_PRESETS.map((preset) => (
               <button
@@ -119,7 +119,7 @@ export function ImageAdjustSection({
 
       {/* Flip */}
       <div className="flex flex-col gap-1.5">
-        <span className={GROUP_LABEL}>Spiegeln</span>
+        <span className={GROUP_LABEL}>{t.sidebar.imageAdjust.flip}</span>
         <div className="grid grid-cols-2 gap-1.5">
           {(
             [
@@ -204,7 +204,7 @@ export function ImageAdjustSection({
 
       {/* Light */}
       <div className="flex flex-col gap-2">
-        <span className={GROUP_LABEL}>Hell</span>
+        <span className={GROUP_LABEL}>{t.sidebar.imageAdjust.light}</span>
         <SidebarSlider
           label={t.sidebar.imageAdjust.brightness}
           value={adj.brightness ?? 0}
@@ -257,7 +257,7 @@ export function ImageAdjustSection({
       {img && (
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
-            <span className={GROUP_LABEL}>Schatten</span>
+            <span className={GROUP_LABEL}>{t.topBar.shadow}</span>
             <button
               type="button"
               onClick={toggleShadow}

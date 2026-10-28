@@ -346,6 +346,12 @@ export interface CanvasIconSearchService {
   svg: (prefix: string, name: string) => Promise<string>;
   /** A URL the browser can show the icon from, for the result grid. */
   previewUrl: (prefix: string, name: string) => string;
+  /**
+   * Asks the host to fetch the icons of a search again, in the same batches as the search itself
+   * (a per-tile retry would be the request burst that got the host rate-limited). Answers how
+   * many seconds to wait before another attempt, or null when the icons are ready.
+   */
+  refresh?: (query: string, signal?: AbortSignal) => Promise<{ retryAfterSeconds: number | null }>;
 }
 
 // ── Print (V.i.S.d.P. / Impressum) ──────────────────────────────────────────

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { messages } from '@ggraphic/editor/i18n/messages';
 import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -40,11 +41,11 @@ export function useAiImageGeneration(): UseAiImageGenerationReturn {
     async (prompt: string, variant: AiVariant): Promise<GeneratedAiImage | null> => {
       const trimmed = prompt.trim();
       if (!trimmed) {
-        setGenerationError('Bitte gib eine Bildbeschreibung ein.');
+        setGenerationError(messages().errors.describeImageFirst);
         return null;
       }
       if (!generateAiImage) {
-        setGenerationError('KI-Bildgenerierung ist in dieser Umgebung nicht verfügbar.');
+        setGenerationError(messages().errors.aiImageUnavailable);
         return null;
       }
 
@@ -65,7 +66,8 @@ export function useAiImageGeneration(): UseAiImageGenerationReturn {
         setRemaining(nextRemaining);
         return next;
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Fehler bei der Bildgenerierung';
+        const message =
+          error instanceof Error ? error.message : messages().errors.imageGenerationFailed;
         setGenerationError(message);
         return null;
       } finally {

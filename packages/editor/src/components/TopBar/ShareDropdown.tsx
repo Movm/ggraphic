@@ -311,12 +311,8 @@ export function ShareDropdown({
         )}
         {photoCredit && (
           <div className="mx-4 mb-4 flex flex-col gap-2 rounded-md border border-[var(--editor-border-soft)] p-3">
-            <p className="m-0 text-xs font-semibold text-foreground">
-              Bildnachweis für deinen Beitrag
-            </p>
-            <p className="m-0 text-xs text-muted-foreground">
-              Das Foto gehört nicht dir: Nenne die Fotograf*in und Unsplash im Beitragstext.
-            </p>
+            <p className="m-0 text-xs font-semibold text-foreground">{t.credit.heading}</p>
+            <p className="m-0 text-xs text-muted-foreground">{t.credit.notYours}</p>
             <p className="m-0 select-all text-sm text-foreground">{photoCredit}</p>
             <Button
               size="sm"

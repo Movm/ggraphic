@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
- * The start page's one action: a prompt becomes a project. The project is
- * created at once (so nothing is lost if the draft fails), the AI writes the
- * texts meanwhile, and the "Headline + text" page is saved with them. Without
- * AI the prompt itself becomes the headline.
- *
- * With AI the model first picks a template and a colour world and writes its texts
- * (`api.pick`); if that fails, the older single draft on the headline template is tried.
+ * The start page's one action: a prompt becomes a project. With AI the model picks a
+ * template and a colour world and writes its texts (`api.pick`), and only then is the
+ * project created. Without AI the prompt itself becomes the headline.
  */
 import { rebindPageState } from '@ggraphic/core';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
@@ -95,27 +91,41 @@ export function pickedDocument(formatId: string, picked: Pick): StudioDocument |
 
 export interface PromptResult {
   projectId: string;
-  /** Set when the AI was asked and could not deliver: the editor opens with the template. */
-  draftError: string | null;
 }
 
-function draftErrorText(err: unknown): string {
-  if (err instanceof ApiError) {
-    if (err.code === 'ai_timeout') return 'The AI took too long to answer.';
-    if (err.code === 'ai_disabled') return 'AI is not available on this server.';
-    return err.message;
+export type AiFailureKind = 'timeout' | 'disabled' | 'busy' | 'failed';
+
+const AI_FAILURE_TEXT: Record<AiFailureKind, string> = {
+  timeout: 'The AI took too long to answer. Please try again.',
+  disabled: 'AI is not available on this server.',
+  busy: 'The AI is busy right now. Please try again in a moment.',
+  failed: 'The AI could not write a design this time. Please try again.',
+};
+
+/**
+ * The AI could not deliver. Nothing was created; `message` is fit to show as it is,
+ * whatever the server said (that text is for logs, not for people).
+ */
+export class AiPromptError extends Error {
+  constructor(readonly kind: AiFailureKind) {
+    super(AI_FAILURE_TEXT[kind]);
+    this.name = 'AiPromptError';
   }
-  return 'The AI draft failed.';
 }
 
-/** The AI is down, switched off or rate-limited: a second request would fail the same way. */
-function isAiWall(err: unknown): boolean {
-  return (
-    err instanceof ApiError &&
-    (err.code === 'ai_timeout' || err.code === 'ai_disabled' || err.status === 429)
-  );
+function failureKind(err: unknown): AiFailureKind {
+  if (err instanceof ApiError) {
+    if (err.code === 'ai_timeout') return 'timeout';
+    if (err.code === 'ai_disabled') return 'disabled';
+    if (err.status === 429) return 'busy';
+  }
+  return 'failed';
 }
 
+/**
+ * With AI there is no fallback: if the model cannot pick and write, no project is made
+ * (an empty placeholder in the list helps nobody) and the caller keeps the prompt.
+ */
 export async function createFromPrompt({
   organisationId,
   prompt,
@@ -129,48 +139,28 @@ export async function createFromPrompt({
 }): Promise<PromptResult> {
   const name = nameFromPrompt(prompt);
   await loadOrganisationBrand(organisationId);
+  let document: StudioDocument;
   if (!ai) {
-    const project = await api.createProject(organisationId, {
-      name,
-      document: filledDocument(formatId, prompt, null) as unknown as Record<string, unknown>,
-    });
-    return { projectId: project.id, draftError: null };
+    document = filledDocument(formatId, prompt, null);
+  } else {
+    const { width, height } = formatSize(formatId);
+    let picked: StudioDocument | null;
+    try {
+      picked = pickedDocument(
+        formatId,
+        await api.pick({ brief: prompt.trim(), ...pickOffers(), format: { width, height } })
+      );
+    } catch (err) {
+      throw new AiPromptError(failureKind(err));
+    }
+    if (!picked) throw new AiPromptError('failed');
+    document = picked;
   }
-
-  const { width, height } = formatSize(formatId);
-  const pick = api.pick({ brief: prompt.trim(), ...pickOffers(), format: { width, height } }).then(
-    (value) => ({ document: pickedDocument(formatId, value), stop: null }),
-    // A draft would meet the same wall: report it instead of asking again.
-    (err: unknown) => ({ document: null, stop: isAiWall(err) ? err : null })
-  );
-  // The template first: if the AI fails, the user still gets a project to work on.
   const project = await api.createProject(organisationId, {
     name,
-    document: newDocument(formatId, HEADLINE_TEMPLATE_ID) as unknown as Record<string, unknown>,
+    document: document as unknown as Record<string, unknown>,
   });
-  const picked = await pick;
-  if (picked.stop) return { projectId: project.id, draftError: draftErrorText(picked.stop) };
-  let document = picked.document;
-  if (!document) {
-    try {
-      const draft = await api.draft({ briefing: prompt.trim(), width, height });
-      document = filledDocument(formatId, prompt, draft);
-    } catch (err) {
-      return { projectId: project.id, draftError: draftErrorText(err) };
-    }
-  }
-  try {
-    await api.updateProject(project.id, {
-      version: project.version,
-      document: document as unknown as Record<string, unknown>,
-    });
-    return { projectId: project.id, draftError: null };
-  } catch (err) {
-    return {
-      projectId: project.id,
-      draftError: `The design could not be saved. ${draftErrorText(err)}`,
-    };
-  }
+  return { projectId: project.id };
 }
 
 /** A project from a template as it comes, in `formatId`; the user fills it in the editor. */

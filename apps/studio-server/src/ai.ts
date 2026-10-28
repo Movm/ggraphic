@@ -87,6 +87,15 @@ async function complete(
     });
   }
 
+  if (response.status === 429) {
+    console.warn('AI provider answered HTTP 429');
+    const asked = Number.parseInt(response.headers.get('retry-after') ?? '', 10);
+    throw new HttpError(
+      429,
+      { error: 'ai_rate_limited', message: 'The AI provider is busy. Try again in a moment.' },
+      Number.isFinite(asked) && asked > 0 ? Math.min(asked, 120) : 10
+    );
+  }
   if (!response.ok) {
     console.warn(`AI provider answered HTTP ${response.status}`);
     throw upstreamError(`The AI provider answered with HTTP ${response.status}.`);

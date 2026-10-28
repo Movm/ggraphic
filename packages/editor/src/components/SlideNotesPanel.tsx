@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { useEffect, useId, useRef, useState } from 'react';
 import { PiNote } from 'react-icons/pi';
 
@@ -17,6 +18,7 @@ const MAX_HEIGHT_PX = 160;
  * (die Komponente bleibt beim Seitenwechsel gemountet), nicht fürs Neuladen.
  */
 export function SlideNotesPanel({ value, onChange, readOnly = false }: SlideNotesPanelProps) {
+  const t = useMessages();
   const [open, setOpen] = useState(false);
   const fieldId = useId();
   const fieldRef = useRef<HTMLTextAreaElement>(null);
@@ -32,7 +34,7 @@ export function SlideNotesPanel({ value, onChange, readOnly = false }: SlideNote
   if (readOnly && !hasNotes) return null;
 
   return (
-    <section aria-label="Sprechernotizen" className="w-full max-w-[56rem]">
+    <section aria-label={t.shell.speakerNotes} className="w-full max-w-[56rem]">
       <button
         type="button"
         aria-expanded={open}
@@ -41,18 +43,18 @@ export function SlideNotesPanel({ value, onChange, readOnly = false }: SlideNote
         className="flex min-h-[32px] items-center gap-xs rounded-md px-xs text-xs text-[var(--editor-text-secondary)] hover:text-[var(--editor-text)]"
       >
         <PiNote aria-hidden="true" className="h-4 w-4" />
-        <span>{hasNotes ? 'Notizen (1)' : 'Notizen'}</span>
+        <span>{hasNotes ? t.shell.notesWithOne : t.shell.notes}</span>
       </button>
       {open && (
         <textarea
           ref={fieldRef}
           id={fieldId}
-          aria-label="Sprechernotizen"
+          aria-label={t.shell.speakerNotes}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           readOnly={readOnly}
           rows={3}
-          placeholder="Notizen für den Vortrag …"
+          placeholder={t.shell.notesPlaceholder}
           className="mt-xs w-full resize-none rounded-md border border-[var(--editor-border)] bg-transparent p-xs text-xs text-[var(--editor-text-secondary)] placeholder:text-[var(--editor-placeholder)]"
         />
       )}
