@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { brandFingerprint, normalizeColor } from '@ggraphic/core';
+import { brandFingerprint, deriveSchemes, normalizeColor } from '@ggraphic/core';
 import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -41,6 +41,34 @@ describe('brand logo on templates', () => {
     }
   );
 
+  it('binds the logo src to brand.logo', () => {
+    rememberLogoSize(LOGO, 400, 100);
+    registerBrandPacks([withLogo, studioBrand]);
+    const logo = (
+      seedPageState(HEADLINE_TEMPLATE_ID, 1080, 1350)['userImageInstances'] as {
+        bind?: Record<string, { ref: string; value: string }>;
+      }[]
+    )[0]!;
+    expect(logo.bind?.['src']).toMatchObject({ ref: 'brand.logo', value: LOGO });
+  });
+
+  it('stores the envelope and fit on the logo binding, and the fit is the box', () => {
+    rememberLogoSize(LOGO, 400, 100);
+    registerBrandPacks([withLogo, studioBrand]);
+    const logo = (
+      seedPageState(HEADLINE_TEMPLATE_ID, 1080, 1350)['userImageInstances'] as {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+        bind?: Record<string, { box?: object; fit?: object }>;
+      }[]
+    )[0]!;
+    const { x, y, width, height } = logo;
+    expect(logo.bind?.['src']?.fit).toEqual({ x, y, width, height });
+    expect(logo.bind?.['src']?.box).toMatchObject({ width: 238, height: 108 });
+  });
+
   it('adds nothing for a brand without a logo or an unmeasured logo', () => {
     expect(seedFor(HEADLINE_TEMPLATE_ID, 1080, 1350).userImageInstances ?? []).toEqual([]);
     rememberLogoSize(LOGO, 0, 0);
@@ -71,6 +99,18 @@ const MAGENTA = '#D4146E';
 const ROSE = '#FF7AB6';
 const BLUSH = '#FDF0F5';
 const WHITE = '#FFFFFF';
+
+describe('seeds under a brand whose light world was deduplicated', () => {
+  it('draw the quote in the world that absorbed it', () => {
+    const near = { ...studioBrand, colors: { ...studioBrand.colors, secondary: '#FAFAFA' } };
+    registerBrandPacks([near, studioBrand]);
+    const quote = stateOf(QUOTE_TEMPLATE_ID);
+    const secondary = deriveSchemes(near).find((s) => s.id === 'secondary')!;
+    expect(quote.brandScheme).toBe('light');
+    expect(same(quote.backgroundColor, secondary.roles.ground)).toBe(true);
+    expect(same(quote.backgroundColor, near.colors.primary)).toBe(false);
+  });
+});
 
 describe('bound seeds', () => {
   const colourOf = (state: SeedState, id: string) =>

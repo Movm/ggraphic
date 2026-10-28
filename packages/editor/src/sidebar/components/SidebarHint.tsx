@@ -2,7 +2,7 @@
 import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { cn } from '@ggraphic/editor/utils/cn';
 import { useState, useRef, useEffect } from 'react';
-import { FaQuestionCircle, FaTimes } from 'react-icons/fa';
+import { PiQuestion, PiX } from 'react-icons/pi';
 
 import { SIDEBAR_HINT } from '../sidebarStyles.js';
 
@@ -64,7 +64,7 @@ export function SidebarHint({ children, className, style }: SidebarHintProps) {
           aria-label={t.sidebar.showHint}
           aria-expanded={isOpen}
         >
-          <FaQuestionCircle size={16} />
+          <PiQuestion size={16} />
         </button>
 
         {isOpen && (
@@ -79,7 +79,7 @@ export function SidebarHint({ children, className, style }: SidebarHintProps) {
               onClick={() => setIsOpen(false)}
               aria-label={t.common.close}
             >
-              <FaTimes size={12} />
+              <PiX size={12} />
             </button>
             <div className="p-md pr-[calc(var(--spacing-medium)+24px)] text-[10px] text-foreground-muted leading-relaxed">
               {children}

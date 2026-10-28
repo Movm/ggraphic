@@ -256,7 +256,12 @@ export function ContextControls({
   // On the photo too: the photo covers the plane, so this is the only way to a colour.
   if ((isPlane || isPhoto) && background?.colors?.length && background.onColorChange) {
     const { onColorChange, onImageChange, colorReplacesImage, paletteOnly } = background;
-    const own = background.colors.map((c) => ({ id: c.id, name: c.label, value: c.color }));
+    const own = background.colors.map((c) => ({
+      id: c.id,
+      name: c.label,
+      value: c.color,
+      ...(c.ref && { ref: c.ref }),
+    }));
     const known = new Set(own.map((c) => c.value.toLowerCase()));
     const palette = paletteOnly
       ? own

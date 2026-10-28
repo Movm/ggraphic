@@ -17,7 +17,6 @@ import {
   type ChartLegendPosition,
   type ChartType,
 } from '@ggraphic/editor/utils/chartUtils';
-import { FaTrash, FaPlus } from 'react-icons/fa';
 import {
   PiChartBar,
   PiChartBarHorizontal,
@@ -25,6 +24,8 @@ import {
   PiChartLine,
   PiChartLineUp,
   PiChartPie,
+  PiTrash,
+  PiPlus,
 } from 'react-icons/pi';
 
 import { MOBILE_INPUT_TEXT } from '@ggraphic/editor/sidebar/sidebarStyles';
@@ -100,7 +101,7 @@ export function ChartSettingsSection({
           className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-red-600 hover:bg-red-500/10"
           title={t.sidebar.chart.deleteChart}
         >
-          <FaTrash size={12} /> {t.commands.delete}
+          <PiTrash size={12} /> {t.commands.delete}
         </button>
       </div>
 
@@ -204,7 +205,7 @@ export function ChartSettingsSection({
                 className="shrink-0 rounded-md p-1.5 text-foreground-muted hover:text-red-600 disabled:opacity-30"
                 title={t.sidebar.chart.removeRow}
               >
-                <FaTrash size={11} />
+                <PiTrash size={11} />
               </button>
             </div>
           ))}
@@ -219,7 +220,7 @@ export function ChartSettingsSection({
                   className="flex w-16 shrink-0 justify-center rounded-md p-1 text-foreground-muted hover:text-red-600"
                   title={t.sidebar.chart.removeSeries(s.name || t.defaults.series(si + 1))}
                 >
-                  <FaTrash size={11} />
+                  <PiTrash size={11} />
                 </button>
               ))}
               <span className="w-[27px] shrink-0" />
@@ -232,7 +233,7 @@ export function ChartSettingsSection({
             onClick={addRow}
             className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-dashed border-editor-border-strong px-2 py-1.5 text-xs text-foreground-muted hover:border-primary-500 hover:text-foreground"
           >
-            <FaPlus size={10} /> Zeile
+            <PiPlus size={10} /> Zeile
           </button>
           {round ? null : (
             <button
@@ -241,7 +242,7 @@ export function ChartSettingsSection({
               disabled={columns.length >= MAX_SERIES}
               className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-dashed border-editor-border-strong px-2 py-1.5 text-xs text-foreground-muted hover:border-primary-500 hover:text-foreground disabled:opacity-40"
             >
-              <FaPlus size={10} /> Datenreihe
+              <PiPlus size={10} /> Datenreihe
             </button>
           )}
         </div>
