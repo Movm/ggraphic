@@ -4,12 +4,24 @@
  * created at once (so nothing is lost if the draft fails), the AI writes the
  * texts meanwhile, and the "Headline + text" page is saved with them. Without
  * AI the prompt itself becomes the headline.
+ *
+ * With AI the model first picks a template and a colour world and writes its texts
+ * (`api.pick`); if that fails, the older single draft on the headline template is tried.
  */
-import { api, ApiError, type Draft } from '../api/client';
+import { rebindPageState } from '@ggraphic/core';
+import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+
+import { api, ApiError, type Draft, type Pick } from '../api/client';
 import { applyBrandPack } from '../brandLoader';
-import { fillTexts } from '../editor/aiDraft';
+import { fillById, fillTexts } from '../editor/aiDraft';
 import { formatSize, newDocument, type StudioDocument } from '../editor/document';
-import { HEADLINE_TEMPLATE_ID, type StudioTemplateId } from '../editor/templates/ids';
+import {
+  HEADLINE_TEMPLATE_ID,
+  isStudioTemplateId,
+  type StudioTemplateId,
+} from '../editor/templates/ids';
+
+import { pickOffers } from './aiOffers';
 
 import { type AdditionalText } from '@ggraphic/editor/configs/types';
 
@@ -59,6 +71,28 @@ async function loadOrganisationBrand(organisationId: string): Promise<void> {
   await applyBrandPack(pack);
 }
 
+/**
+ * The document for what the AI picked: its template with the texts filled and the
+ * colour world set. Null when the pick names a template the Studio does not have.
+ */
+export function pickedDocument(formatId: string, picked: Pick): StudioDocument | null {
+  if (!isStudioTemplateId(picked.templateId)) return null;
+  const doc = newDocument(formatId, picked.templateId);
+  const page = doc.pages[0]!;
+  const texts = page.state['additionalTexts'] as AdditionalText[];
+  let state: Record<string, unknown> = {
+    ...page.state,
+    additionalTexts: fillById(texts, new Map(Object.entries(picked.fills))),
+  };
+  if (picked.schemeId !== null) {
+    // The stamp goes so the rebind below does not take the page for current.
+    const { brandStamp: _stamp, ...rest } = state;
+    state = { ...rest, brandScheme: picked.schemeId };
+  }
+  state = rebindPageState(state, { brand: activeBrand() }).state;
+  return { ...doc, pages: [{ ...page, state }] };
+}
+
 export interface PromptResult {
   projectId: string;
   /** Set when the AI was asked and could not deliver: the editor opens with the template. */
@@ -96,24 +130,28 @@ export async function createFromPrompt({
   }
 
   const { width, height } = formatSize(formatId);
-  const draft = api.draft({ briefing: prompt.trim(), width, height }).then(
-    (value) => ({ value, error: null }),
-    (err: unknown) => ({ value: null, error: draftErrorText(err) })
+  const pick = api.pick({ brief: prompt.trim(), ...pickOffers(), format: { width, height } }).then(
+    (value) => pickedDocument(formatId, value),
+    () => null
   );
-  // The template first: if the draft fails, the user still gets a project to work on.
+  // The template first: if the AI fails, the user still gets a project to work on.
   const project = await api.createProject(organisationId, {
     name,
     document: newDocument(formatId, HEADLINE_TEMPLATE_ID) as unknown as Record<string, unknown>,
   });
-  const result = await draft;
-  if (!result.value) return { projectId: project.id, draftError: result.error };
+  let document = await pick;
+  if (!document) {
+    try {
+      const draft = await api.draft({ briefing: prompt.trim(), width, height });
+      document = filledDocument(formatId, prompt, draft);
+    } catch (err) {
+      return { projectId: project.id, draftError: draftErrorText(err) };
+    }
+  }
   try {
     await api.updateProject(project.id, {
       version: project.version,
-      document: filledDocument(formatId, prompt, result.value) as unknown as Record<
-        string,
-        unknown
-      >,
+      document: document as unknown as Record<string, unknown>,
     });
     return { projectId: project.id, draftError: null };
   } catch (err) {
