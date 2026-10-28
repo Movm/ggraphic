@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -144,14 +144,63 @@ describe('BrandPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Save brand' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
-    const saved = calls.find((c) => c.method === 'PUT')!.body as {
-      colors: Record<string, string>;
-      backgrounds: unknown[];
-      fonts: Record<string, string>;
-    };
-    expect(saved.colors['primary']).toBe('#112233');
-    expect(saved.backgrounds).toHaveLength(studioBrand.backgrounds.length);
-    expect(saved.fonts).toEqual({ headline: 'Raleway', body: 'Instrument Sans' });
+    // Only the three chosen colours go out; the server derives the rest.
+    expect(calls.find((c) => c.method === 'PUT')!.body).toEqual({
+      name: 'Example org',
+      colors: {
+        primary: '#112233',
+        secondary: studioBrand.colors.secondary,
+        accent: studioBrand.colors.accent,
+      },
+      fonts: { headline: 'Raleway', body: 'Instrument Sans' },
+      logoAssetId: null,
+    });
+  });
+
+  it('shows the derived colours and updates them live; attention cannot be edited', async () => {
+    stubServer((method, url) =>
+      url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET' ? json(200, empty) : undefined
+    );
+    const user = userEvent.setup();
+    renderWith(<BrandPage />);
+    const list = await screen.findByLabelText('Derived colours');
+    const surface = () => within(list).getByText('Surface').parentElement!.textContent;
+    const before = surface();
+    expect(within(list).getByText('Attention')).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Attention/)).toBeNull();
+    expect(screen.queryByLabelText(/^Surface/)).toBeNull();
+
+    const primary = screen.getByLabelText(/^Primary Main colour/);
+    await user.clear(primary);
+    await user.type(primary, '#0b3d2e');
+    expect(surface()).not.toBe(before);
+  });
+
+  it('tells the owner that saving re-derives hand-set colours of an existing pack', async () => {
+    const settings = defaultSettings('Org');
+    settings.colors = { ...settings.colors, surface: '#FF00FF' };
+    stubServer((method, url) =>
+      url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET'
+        ? json(200, { ...empty, settings })
+        : undefined
+    );
+    renderWith(<BrandPage />);
+    expect(await screen.findByText(/hand-set colours/)).toBeInTheDocument();
+  });
+
+  it('shows no notice for a new pack or one that already matches the derivation', async () => {
+    const { deriveBrandColors } = await import('@ggraphic/core');
+    const base = defaultSettings('Org');
+    const { primary, secondary, accent } = base.colors;
+    const matching = { ...base, colors: deriveBrandColors({ primary, secondary, accent })! };
+    stubServer((method, url) =>
+      url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET'
+        ? json(200, { ...empty, settings: matching })
+        : undefined
+    );
+    renderWith(<BrandPage />);
+    await screen.findByLabelText(/^Primary Main colour/);
+    expect(screen.queryByText(/hand-set colours/)).toBeNull();
   });
 
   it('shows and saves the successors of replaced font families', async () => {
