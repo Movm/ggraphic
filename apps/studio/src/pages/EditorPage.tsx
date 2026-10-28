@@ -17,7 +17,7 @@ import { rebindStudioDocument } from '../editor/rebind';
 import { createStudioServices } from '../editor/services';
 import { useAutosave, type SaveStatus } from '../editor/useAutosave';
 import { logoSizeOf } from '../logoSize';
-import { navigate } from '../router';
+import { navigate, TRASH_PATH } from '../router';
 
 const STATUS_TEXT: Record<SaveStatus, string> = {
   saved: 'All changes saved',
@@ -26,6 +26,7 @@ const STATUS_TEXT: Record<SaveStatus, string> = {
   error: 'Not saved',
   conflict: 'Changed elsewhere',
   refused: 'Not saved',
+  gone: 'Not saved',
 };
 
 const NOOP = () => {};
@@ -173,6 +174,13 @@ function OpenProject({
 
   const leave = async () => {
     await autosave.flush();
+    // Whatever blocked the save (trashed, newer format, conflict, network): the edits would be lost.
+    if (
+      autosave.hasUnsaved() &&
+      !window.confirm('Your latest changes are not saved. Leave without saving them?')
+    ) {
+      return;
+    }
     navigate('/');
   };
 
@@ -204,6 +212,23 @@ function OpenProject({
             <span className="studio-banner__actions">
               <Button variant="outline" size="sm" onClick={onReload}>
                 Reload
+              </Button>
+            </span>
+          </Alert>
+        ) : null}
+        {autosave.status === 'gone' ? (
+          <Alert tone="danger" role="alert" className="studio-banner">
+            <span>
+              This project was moved to the trash or deleted. Restore it from the{' '}
+              {/* A new tab: leaving this one would drop the unsaved edits. */}
+              <a href={TRASH_PATH} target="_blank" rel="noreferrer">
+                Trash
+              </a>{' '}
+              to keep your changes.
+            </span>
+            <span className="studio-banner__actions">
+              <Button variant="outline" size="sm" onClick={autosave.retry}>
+                Try again
               </Button>
             </span>
           </Alert>
