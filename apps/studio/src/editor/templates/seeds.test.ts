@@ -134,7 +134,8 @@ describe('bound seeds', () => {
 
     const number = stateOf(NUMBER_TEMPLATE_ID);
     expect(same(number.backgroundColor, MAGENTA)).toBe(true);
-    expect(same(colourOf(number, 'number'), ROSE)).toBe(true);
+    // Deliberately not ROSE any more: rose on magenta is 2.11:1, so the world's accent falls back to white (5.09:1).
+    expect(same(colourOf(number, 'number'), WHITE)).toBe(true);
     expect(same(colourOf(number, 'headline'), WHITE)).toBe(true);
     expect(same(colourOf(number, 'subline'), WHITE)).toBe(true);
   });
@@ -163,10 +164,10 @@ describe('bound seeds', () => {
     }
   });
 
-  it('binds the speaker to the secondary colour and the big number to the accent', () => {
+  it('binds the speaker to the secondary colour and the big number to the world accent', () => {
     const speaker = stateOf(QUOTE_TEMPLATE_ID).additionalTexts.find((t) => t.id === 'subline')!;
     expect(speaker.bind?.['fill']?.ref).toBe('brand.secondary');
     const big = stateOf(NUMBER_TEMPLATE_ID).additionalTexts.find((t) => t.id === 'number')!;
-    expect(big.bind?.['fill']?.ref).toBe('brand.accent');
+    expect(big.bind?.['fill']?.ref).toBe('accent');
   });
 });
