@@ -16,7 +16,6 @@ const MAX_SVG_BYTES = 64 * 1024;
  * as emoji still fit) and in total per search, so a hostile or broken upstream stays bounded.
  */
 const BATCH_CHUNK = 16;
-const MAX_CHUNK_BYTES = BATCH_CHUNK * MAX_SVG_BYTES;
 const MAX_BATCH_TOTAL_BYTES = 4 * 1024 * 1024;
 const BATCH_CONCURRENCY = 4;
 

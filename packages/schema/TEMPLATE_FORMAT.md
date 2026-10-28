@@ -71,3 +71,19 @@ would answer `invalid`, not `newer`. Therefore **any new key, top-level or neste
 `TEMPLATE_FORMAT_VERSION`** and adds an identity step to `TEMPLATE_FORMAT_MIGRATIONS`; an older
 build then answers `newer`. A changed meaning of an existing key bumps the same way, with a step
 that rewrites the file from `formatVersion` n to n + 1.
+
+## Names frozen at formatVersion 1
+
+Strictness means the top-level keys above are not the only names old files and old builds
+depend on. These nested names are part of format 1 too: they are read by name by other
+code (the AI offer, the placing step, the gate, the Studio's pickers) and written into files
+already in circulation. None of them is renamed or given another meaning within format 1; a
+change is additive with a migration step, and bumps `formatVersion` (see below).
+
+- `slots.<id>.label`, and `slots.<id>.budget.{maxWords, maxLines, maxChars}`: the AI offer and the gate's `budget` rule read them by name.
+- `blocks[].title`, and `blocks[].elementIds`.
+- `provenance.{author, reviewed, licence}`: the pack's licence check reads `licence`.
+- `tags.{tone, occasions, topics}`; `tone` is the nested name most likely to be forgotten.
+- The localised-map shape of `title`, `description`, `slots.<id>.label` and `blocks[].title`: a record of locale to trimmed string with an `en` entry (see `Localized`). `placeholders` uses the same locale keys, with the element id one level down.
+- Group id = block id: placing a block creates a page group whose id is the block's `id` (`state.groups`, built in `instantiateTemplatePage`), and its `blockRef` is `<template id>/<block id>`, and saved pages point at that group by it.
+- `bind` entries inside element state (`ref`, `value`, `box`, `fit`, `pendingFit`) are the canvas document's, versioned by `schemaVersion`, not by `formatVersion`.
