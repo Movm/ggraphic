@@ -424,8 +424,12 @@ describe('StartPage sections', () => {
     ).toBeInTheDocument();
     // A answers late with a brand that cannot place it; a new format redraws the tiles.
     releaseA();
+    // Wait for the real condition: A's answer has landed in the query cache (and, before the fix,
+    // registered A's brand).
+    await waitFor(() =>
+      expect(client.getQueryState(['start-brand', 'org-a'])?.status).toBe('success')
+    );
     await user.click(screen.getByRole('radio', { name: /1080 × 1080/ }));
-    await waitFor(() => expect(window.location.pathname).toBe('/'));
     expect(within(templates).getByRole('button', { name: /^Light only/ })).toBeInTheDocument();
   });
 

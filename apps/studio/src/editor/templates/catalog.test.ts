@@ -171,13 +171,17 @@ describe('problems are warned once', () => {
       OPEN_TEMPLATES: [{ id: 'broken' }],
       OPEN_TEMPLATE_MANIFEST: { assets: [] },
     }));
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const fresh = await import('./catalog');
-    fresh.studioCatalog();
-    fresh.studioCatalog();
-    fresh.templatesFor('post-portrait');
-    expect(warn).toHaveBeenCalledTimes(1);
-    expect(String(warn.mock.calls[0]![0])).toContain('broken');
-    vi.doUnmock('@ggraphic/templates-open');
+    try {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const fresh = await import('./catalog');
+      fresh.studioCatalog();
+      fresh.studioCatalog();
+      fresh.templatesFor('post-portrait');
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(String(warn.mock.calls[0]![0])).toContain('broken');
+    } finally {
+      vi.doUnmock('@ggraphic/templates-open');
+      vi.resetModules();
+    }
   });
 });
