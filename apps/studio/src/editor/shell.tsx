@@ -3,6 +3,7 @@
  * The Studio's part of the editor shell (`registerEditorShell`): the "AI draft"
  * document tab and the page picker behind "Add page" and "Change template".
  */
+import { SCHEME_IDS } from '@ggraphic/core';
 import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
 import {
   registerEditorShell,
@@ -180,8 +181,13 @@ export function StudioPagePicker({
       onSelectTemplate(id);
     }
   };
-  const placed = (entry: CatalogEntry | undefined) =>
-    entry ? templatePageState(entry, formatId ?? DEFAULT_FORMAT) : null;
+  // The page keeps its colour world on the new template when that offers it; otherwise placing
+  // falls back to the template's first world.
+  const placed = (entry: CatalogEntry | undefined) => {
+    const scheme = currentState?.['brandScheme'];
+    const schemeId = SCHEME_IDS.find((id) => id === scheme) ?? null;
+    return entry ? templatePageState(entry, formatId ?? DEFAULT_FORMAT, { schemeId }) : null;
+  };
   const heldTemplateId = templateRefOf(currentState) ?? currentTemplateId;
   // On the body: a box that opened the picker (the small "Add page" button) must not size or clip it.
   return createPortal(

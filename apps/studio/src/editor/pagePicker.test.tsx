@@ -60,6 +60,26 @@ describe('the page picker in replace mode', () => {
   });
 });
 
+describe('the colour world on Change template', () => {
+  const pickQuote = async (brandScheme: string | undefined) => {
+    const onSelect = open({ currentState: { ...headlinePage(), brandScheme } });
+    await userEvent.click(screen.getByRole('button', { name: /Quote/ }));
+    return (onSelect.mock.calls[0] as [string, Record<string, unknown>])[1];
+  };
+
+  it("keeps the page's world when the new template offers it", async () => {
+    // The quote offers `light` first: staying on `primary` is the page's choice, not the default.
+    expect((await pickQuote('primary'))['brandScheme']).toBe('primary');
+  });
+
+  it.each(['dark', undefined])(
+    "falls back to the template's first world when the page's is %s",
+    async (scheme) => {
+      expect((await pickQuote(scheme))['brandScheme']).toBe('light');
+    }
+  );
+});
+
 describe('where the picker renders', () => {
   it('is mounted on the document body, whatever small box opened it', () => {
     const { container } = render(
