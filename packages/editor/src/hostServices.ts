@@ -57,10 +57,13 @@ export interface CanvasMediaLibraryState {
   loadMore: () => Promise<void>;
 }
 
-export interface CanvasMediaUploadResult {
-  id: string;
-  shareToken: string;
-}
+/**
+ * Ein Upload-Ergebnis trägt immer einen Link: entweder ein `shareToken` (Hosts mit Freigabe-Link)
+ * oder eine direkte Bild-`url`, die zur Platzierungsquelle (`mediaUrl`) wird.
+ */
+export type CanvasMediaUploadResult =
+  | { id: string; shareToken: string; url?: string }
+  | { id: string; url: string; shareToken?: string };
 
 export interface CanvasMediaUploadState {
   upload: (
