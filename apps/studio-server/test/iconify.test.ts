@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // GET /api/assets/icons/* against a fake Iconify API. Needs Postgres (DATABASE_URL) for the login.
 import request from 'supertest';
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../src/app.ts';
 import { FixedWindowLimiter } from '../src/auth/rateLimit.ts';
 import { ICONIFY_DEFAULT_LICENCES, type IconifyConfig } from '../src/config.ts';
@@ -699,6 +699,64 @@ describe('iconify client', () => {
     expect(peak).toBeLessThanOrEqual(4);
     expect(peak).toBeGreaterThan(0);
     release();
+  });
+
+  describe('warm slots at the cap', () => {
+    afterEach(() => vi.useRealTimers());
+
+    /** Four first searches stuck in their warm, so every slot is taken. */
+    async function fullHouse() {
+      vi.useFakeTimers();
+      let release: () => void = () => undefined;
+      const gate = new Promise<void>((r) => (release = r));
+      let failBatch = true;
+      const fake = fakeIconify({ search: ['tabler:tree'] });
+      const inner = fake.impl.getMockImplementation()!;
+      const impl = vi.fn<typeof fetch>(async (input, init) => {
+        if (/\.json/.test(String(input))) {
+          if (failBatch) return new Response('', { status: 500 });
+          await gate;
+          return batchAnswer('tabler', new URL(String(input)));
+        }
+        return inner(input, init);
+      });
+      const client = createIconifyClient(iconify, impl);
+      // Cached with a failed warm, so a repeat is a background warm candidate.
+      await client.search('cached', 10, null);
+      failBatch = false;
+      const batches = () => impl.mock.calls.filter((c) => /\.json/.test(String(c[0]))).length;
+      const before = batches();
+      const blockers = ['q0', 'q1', 'q2', 'q3'].map((q) => client.search(q, 10, null));
+      await vi.advanceTimersByTimeAsync(10);
+      expect(batches() - before).toBe(4);
+      return { client, batches: () => batches() - before, release, blockers };
+    }
+
+    it('lets a first search wait for a free slot only a bounded time, then warms anyway', async () => {
+      const { client, batches, release, blockers } = await fullHouse();
+      let done = false;
+      const first = client.search('fresh', 10, null).then(() => (done = true));
+      await vi.advanceTimersByTimeAsync(2_900);
+      expect(batches()).toBe(4);
+      await vi.advanceTimersByTimeAsync(200);
+      // Past the bound it runs its own warm, one over the cap, while the others still hang.
+      expect(batches()).toBe(5);
+      expect(done).toBe(false);
+      release();
+      await Promise.all([first, ...blockers]);
+      expect(done).toBe(true);
+    });
+
+    it('still lets a background warm at the cap return at once, without a warm', async () => {
+      const { client, batches, release, blockers } = await fullHouse();
+      await expect(client.search('cached', 10, null)).resolves.toMatchObject({
+        icons: [expect.anything()],
+      });
+      await vi.advanceTimersByTimeAsync(5_000);
+      expect(batches()).toBe(4);
+      release();
+      await Promise.all(blockers);
+    });
   });
 
   it('marks names whose batch answer is refused for its Content-Length as unbatchable', async () => {
