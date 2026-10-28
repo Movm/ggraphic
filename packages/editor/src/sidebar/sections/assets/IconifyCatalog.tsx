@@ -84,8 +84,10 @@ export function IconifyCatalog({
     }
     setRefreshing(false);
     if (wait !== null && wait > 0) {
-      setNow(Date.now());
-      setWaitUntil(Date.now() + wait * 1000);
+      // One reading of the clock: two would put the end a little past the wait, shown as 8 s for 7.
+      const start = Date.now();
+      setNow(start);
+      setWaitUntil(start + wait * 1000);
       return;
     }
     setFailedTiles(new Set());
