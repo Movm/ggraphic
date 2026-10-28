@@ -86,6 +86,14 @@ describe('anonymous requests', () => {
       .expect(403);
   });
 
+  it('caps auth request bodies at 16 kB', async () => {
+    const res = await request(makeApp().app)
+      .post('/api/auth/login')
+      .send({ email: 'a@example.org', password: 'x'.repeat(20_000) })
+      .expect(413);
+    expect(res.body.error).toBe('too_large');
+  });
+
   it('marks API answers as not cacheable', async () => {
     const res = await request(makeApp().app).get('/api/config').expect(200);
     expect(res.headers['cache-control']).toBe('no-store');

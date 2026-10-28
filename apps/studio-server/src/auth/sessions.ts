@@ -5,6 +5,8 @@ import { accounts, sessions } from '../db/schema.ts';
 import { randomToken, sha256 } from './tokens.ts';
 
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+/** No session outlives this, counted from login, however often it slides forward. */
+export const SESSION_MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000;
 
 export interface SessionAccount {
   id: string;
@@ -44,6 +46,7 @@ export async function loadSession(db: Db, token: string): Promise<LoadedSession 
     .select({
       csrfToken: sessions.csrfToken,
       expiresAt: sessions.expiresAt,
+      createdAt: sessions.createdAt,
       id: accounts.id,
       email: accounts.email,
       displayName: accounts.displayName,
@@ -51,12 +54,19 @@ export async function loadSession(db: Db, token: string): Promise<LoadedSession 
     })
     .from(sessions)
     .innerJoin(accounts, eq(accounts.id, sessions.accountId))
-    .where(and(eq(sessions.tokenHash, tokenHash), gt(sessions.expiresAt, sql`now()`)));
+    .where(
+      and(
+        eq(sessions.tokenHash, tokenHash),
+        gt(sessions.expiresAt, sql`now()`),
+        gt(sessions.createdAt, sql`now() - ${`${SESSION_MAX_AGE_MS} milliseconds`}::interval`)
+      )
+    );
   if (!row) return null;
   let expiresAt = row.expiresAt;
   let renewed = false;
-  if (expiresAt.getTime() - Date.now() < SESSION_TTL_MS / 2) {
-    expiresAt = new Date(Date.now() + SESSION_TTL_MS);
+  const hardEnd = row.createdAt.getTime() + SESSION_MAX_AGE_MS;
+  if (expiresAt.getTime() - Date.now() < SESSION_TTL_MS / 2 && expiresAt.getTime() < hardEnd) {
+    expiresAt = new Date(Math.min(Date.now() + SESSION_TTL_MS, hardEnd));
     renewed = true;
     await db
       .update(sessions)

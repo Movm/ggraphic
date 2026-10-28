@@ -8,13 +8,14 @@ import {
   csrfGuard,
   fetchMetadataGuard,
   requireAuth,
+  requireSession,
   sessionMiddleware,
 } from './auth/middleware.ts';
 import type { Config } from './config.ts';
 import { draftBody, type StudioConfig } from './contract.ts';
 import type { Db } from './db/client.ts';
 import { errorHandler, HttpError, parseOr400 } from './http.ts';
-import { type AuthLimiters, authRouter, createAuthLimiters } from './routes/auth.ts';
+import { type AuthLimiters, authRouter, createAuthLimiters, tooMany } from './routes/auth.ts';
 import { brandAssetsRouter, organisationBrandRouter } from './routes/brand.ts';
 import { organisationsRouter } from './routes/organisations.ts';
 import { organisationProjectsRouter, projectsRouter } from './routes/projects.ts';
@@ -69,6 +70,8 @@ export function createApp({
   });
 
   const api = express.Router();
+  // Auth bodies are a few fields: a small limit keeps big bodies away from the hasher.
+  api.use('/auth', express.json({ limit: '16kb' }));
   api.use(express.json({ limit: config.documentMaxBytes }));
   api.use(fetchMetadataGuard);
   api.use(sessionMiddleware(db, cookie));
@@ -112,6 +115,10 @@ export function createApp({
       });
     }
     const input = parseOr400(draftBody, req.body);
+    const account = requireSession(res).account.id;
+    const wait = limiters.ai.check(account);
+    if (wait !== null) throw tooMany(wait, res);
+    limiters.ai.hit(account);
     res.json(await createDraft(config.ai, input, fetchImpl));
   });
 

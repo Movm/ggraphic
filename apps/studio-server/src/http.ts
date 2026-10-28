@@ -26,6 +26,31 @@ export function parseOr400<S extends z.ZodType>(schema: S, value: unknown): z.ou
   return result.data;
 }
 
+/**
+ * What the log gets from an unexpected error: name and message, or for a database error
+ * the driver's code and message. Never the error object itself: drizzle's query errors
+ * carry the query parameters (session hashes, CSRF tokens, emails, password hashes) in
+ * their message and fields.
+ */
+export function describeError(err: unknown): string {
+  const codeOf = (e: unknown) => {
+    const code = (e as { code?: unknown } | null)?.code;
+    return typeof code === 'string' ? code : null;
+  };
+  const cause = (err as { cause?: unknown } | null)?.cause;
+  const db =
+    cause instanceof Error && codeOf(cause)
+      ? cause
+      : err instanceof Error && codeOf(err)
+        ? err
+        : null;
+  if (db) return `database error ${codeOf(db)}: ${db.message}`;
+  if (!(err instanceof Error)) return typeof err;
+  // A query error without a driver code still carries its parameters in the message.
+  if (err.message.includes('params:')) return `${err.name} (message withheld)`;
+  return `${err.name}: ${err.message}`;
+}
+
 interface BodyParserError {
   type?: unknown;
 }
@@ -53,6 +78,6 @@ export const errorHandler: ErrorRequestHandler = (err: unknown, _req, res, _next
     res.status(400).json({ error: 'invalid_json' });
     return;
   }
-  console.error('Unhandled error', err);
+  console.error('Unhandled error', describeError(err));
   res.status(500).json({ error: 'internal' });
 };

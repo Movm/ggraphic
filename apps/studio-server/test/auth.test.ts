@@ -201,6 +201,20 @@ describe.skipIf(!hasDb)('accounts and sessions (Postgres)', () => {
       expect(rows[0].renewed).toBe(true);
     });
 
+    it('ends every session 90 days after login, however often it is used', async () => {
+      const admin = await setupAdmin(app);
+      await pool.query(
+        "UPDATE sessions SET created_at = now() - interval '89 days', expires_at = now() + interval '1 day'"
+      );
+      await admin.get('/api/auth/session').expect(200);
+      const { rows } = await pool.query(
+        "SELECT expires_at <= created_at + interval '90 days' AS capped FROM sessions"
+      );
+      expect(rows[0].capped).toBe(true);
+      await pool.query("UPDATE sessions SET created_at = now() - interval '91 days'");
+      await admin.get(`/api/orgs/${DEFAULT_ORG}/projects`).expect(401);
+    });
+
     it('logs no password or token', async () => {
       const spies = (['log', 'warn', 'error', 'info'] as const).map((m) =>
         vi.spyOn(console, m).mockImplementation(() => {})
@@ -270,6 +284,7 @@ describe.skipIf(!hasDb)('accounts and sessions (Postgres)', () => {
         limiters: {
           email: new FixedWindowLimiter({ limit: 100, windowMs: 60_000 }),
           ip: new FixedWindowLimiter({ limit: 2, windowMs: 60_000 }),
+          ai: new FixedWindowLimiter({ limit: 100, windowMs: 60_000 }),
         },
       });
       await request(limited).post('/api/auth/login').send({}).expect(400);

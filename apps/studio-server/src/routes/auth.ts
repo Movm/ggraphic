@@ -36,16 +36,19 @@ export interface AuthLimiters {
   email: FixedWindowLimiter;
   /** Every attempt at login, setup, registration and invitation acceptance per client IP. */
   ip: FixedWindowLimiter;
+  /** AI drafts per account: each one spends the instance's provider budget. */
+  ai: FixedWindowLimiter;
 }
 
 export function createAuthLimiters(): AuthLimiters {
   return {
     email: new FixedWindowLimiter({ limit: 10, windowMs: WINDOW_MS }),
     ip: new FixedWindowLimiter({ limit: 30, windowMs: WINDOW_MS }),
+    ai: new FixedWindowLimiter({ limit: 30, windowMs: WINDOW_MS }),
   };
 }
 
-function tooMany(retryAfter: number, res: Response): HttpError {
+export function tooMany(retryAfter: number, res: Response): HttpError {
   res.set('Retry-After', String(retryAfter));
   return new HttpError(429, {
     error: 'rate_limited',

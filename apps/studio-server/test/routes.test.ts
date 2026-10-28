@@ -3,6 +3,8 @@
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../src/app.ts';
+import { FixedWindowLimiter } from '../src/auth/rateLimit.ts';
+import { createAuthLimiters } from '../src/routes/auth.ts';
 import { createDb } from '../src/db/client.ts';
 import { runMigrations } from '../src/db/migrate.ts';
 import { DEFAULT_ORG, PASSWORD, PNG_1X1, resetDb, setupAdmin, testConfig } from './helpers.ts';
@@ -29,9 +31,18 @@ describe.skipIf(!hasDb)('routes as a member (Postgres)', () => {
   /** The admin, logged in on an app with this config. */
   async function loggedIn(
     overrides: Parameters<typeof testConfig>[0] = {},
-    fetchImpl?: typeof fetch
+    fetchImpl?: typeof fetch,
+    { aiPerWindow = 100 }: { aiPerWindow?: number } = {}
   ) {
-    const app = createApp({ config: { ...base, ...overrides }, db, fetch: fetchImpl });
+    const app = createApp({
+      config: { ...base, ...overrides },
+      db,
+      fetch: fetchImpl,
+      limiters: {
+        ...createAuthLimiters(),
+        ai: new FixedWindowLimiter({ limit: aiPerWindow, windowMs: 60_000 }),
+      },
+    });
     const agent = request.agent(app);
     const res = await agent
       .post('/api/auth/login')
@@ -57,6 +68,22 @@ describe.skipIf(!hasDb)('routes as a member (Postgres)', () => {
 
     it('validates the body', async () => {
       await (await loggedIn({ ai })).post('/api/ai/draft').send({ briefing: '' }).expect(400);
+    });
+
+    it('limits AI drafts per account', async () => {
+      const fetchMock = vi
+        .fn<typeof fetch>()
+        .mockImplementation(() =>
+          Promise.resolve(
+            Response.json({ choices: [{ message: { content: '{"headline":"H","subline":"S"}' } }] })
+          )
+        );
+      const admin = await loggedIn({ ai }, fetchMock, { aiPerWindow: 2 });
+      await admin.post('/api/ai/draft').send({ briefing: 'a' }).expect(200);
+      await admin.post('/api/ai/draft').send({ briefing: 'b' }).expect(200);
+      const limited = await admin.post('/api/ai/draft').send({ briefing: 'c' }).expect(429);
+      expect(Number(limited.headers['retry-after'])).toBeGreaterThan(0);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
     it('returns the parsed draft', async () => {

@@ -58,7 +58,7 @@ Server-side sessions in Postgres. The cookie is `__Host-studio_session` (or
 `http://localhost`; Safari does not, which is what the switch is for. The server refuses to start with
 `COOKIE_SECURE=false` on a non-loopback `HOST` unless `ALLOW_INSECURE_COOKIE=1` is set, and
 warns loudly when it is. Sessions last 30 days
-and slide forward when used after half their lifetime; logout deletes the row; expired rows
+and slide forward when used after half their lifetime, but never beyond 90 days after login; logout deletes the row; expired rows
 are deleted on login.
 
 ## CSRF: a session-bound token plus Fetch Metadata
@@ -88,6 +88,25 @@ verification share a semaphore of four slots with a queue of 64; a full queue an
 the IP window. Behind a reverse proxy, set `TRUST_PROXY` (Express `trust proxy`) so the IP
 is the client's, not the proxy's. The counters are per process; a multi-process deployment
 gets a limit per process (see open risks).
+
+### Accepted trade-offs
+
+- **Per-email lockout.** Ten failed logins lock that email for 15 minutes, also for its
+  owner: anyone who knows an address can keep its owner out by failing on purpose. We accept
+  this denial of service over unlimited guessing; the IP limit does not stop a distributed
+  guesser, the email limit does. An operator can lift a lockout by restarting Studio.
+- **`email_taken` tells whether an account exists.** Registration (when open) and
+  invitation acceptance answer `409 email_taken` for a known address, so the person can log
+  in instead. On a closed instance this is reachable only with a valid invitation link, and
+  both routes share the IP limit; the login itself answers alike for wrong passwords and
+  unknown emails.
+
+### Other limits
+
+Auth request bodies are capped at 16 kB. AI drafts are limited to 30 per account in 15
+minutes (they spend the instance's provider budget). Unexpected errors are logged as name
+and message only, database errors as driver code and message: drizzle's query errors carry
+the query parameters (token hashes, CSRF tokens, emails, password hashes).
 
 ## Authorisation per route
 
