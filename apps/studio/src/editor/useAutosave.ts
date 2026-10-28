@@ -12,7 +12,7 @@ import { useCallback, useEffect, useRef, useState, type RefObject } from 'react'
 
 import { api, ApiError } from '../api/client';
 
-import { serializeDocument } from './document';
+import { serializeDocument, type StudioDocument } from './document';
 
 export type SaveStatus = 'saved' | 'pending' | 'saving' | 'error' | 'conflict';
 
@@ -23,7 +23,8 @@ const THUMBNAIL_WIDTH = 480;
 
 interface Options {
   projectId: string;
-  formatId: string;
+  /** The document as opened: its format and any keys the Studio does not own. */
+  base: StudioDocument;
   initialVersion: number;
   exportApi: RefObject<CanvasEditorExportApi | null>;
   /** Longest thumbnail the server takes, in bytes. */
@@ -34,7 +35,7 @@ interface Options {
 
 export function useAutosave({
   projectId,
-  formatId,
+  base,
   initialVersion,
   exportApi,
   thumbnailMaxBytes,
@@ -51,8 +52,8 @@ export function useAutosave({
   const currentDocument = useCallback(() => {
     const pages = exportApi.current?.getPages();
     if (!pages || pages.length === 0) return null;
-    return serializeDocument(formatId, pages);
-  }, [exportApi, formatId]);
+    return serializeDocument({ ...base, pages });
+  }, [exportApi, base]);
 
   const uploadThumbnail = useCallback(async () => {
     const dataUrl = await exportApi.current?.captureActivePage({ pixelRatio: 0.5 });
