@@ -169,6 +169,16 @@ const LANGUAGE_NEUTRAL = new Set([
   'ok',
 ]);
 
+/**
+ * A Tailwind class list: every token is a known utility shape (`text-xs`, `max-w-20`, `md:flex`),
+ * not just lowercase with a hyphen, so `read-only mode` stays prose.
+ */
+const TAILWIND_TOKEN =
+  /^(?:[a-z0-9-]+:)*-?(?:flex|grid|block|inline|hidden|contents|relative|absolute|fixed|sticky|static|truncate|italic|underline|uppercase|lowercase|capitalize|container|sr-only|(?:size|w|h|min-w|max-w|min-h|max-h|p|px|py|pt|pb|pl|pr|m|mx|my|mt|mb|ml|mr|gap|gap-x|gap-y|space-x|space-y|text|font|leading|tracking|bg|border|rounded|shadow|ring|outline|opacity|z|top|left|right|bottom|inset|grid-cols|col-span|row-span|order|basis|grow|shrink|object|overflow|cursor|select|pointer-events|transition|duration|ease|delay|animate|rotate|scale|translate-x|translate-y|items|justify|content|self|place-items|place-content|fill|stroke|aspect|line-clamp|whitespace|break)-[a-z0-9./[\]%#()_-]+)$/;
+function isClassList(text: string): boolean {
+  return text.split(' ').every((w) => TAILWIND_TOKEN.test(w));
+}
+
 /** Prose: two words, or one capitalised word of four letters or more, that is not a neutral name. */
 function isProse(value: string): boolean {
   const text = value
@@ -178,7 +188,7 @@ function isProse(value: string): boolean {
   if (!/[A-Za-zÄÖÜäöüß]{3}/.test(text)) return false;
   // Markup and class lists (`text-xs max-w-20`) are code, not prose.
   if (text.startsWith('<')) return false;
-  if (text.split(' ').every((w) => /^[a-z0-9:[\]/.%-]+$/.test(w) && /[-:\d]/.test(w))) return false;
+  if (isClassList(text)) return false;
   if (LANGUAGE_NEUTRAL.has(text.toLowerCase())) return false;
   const words = text.split(' ').filter((w) => /[A-Za-zÄÖÜäöüß]{2}/.test(w));
   return words.length >= 2 || /^[A-ZÄÖÜ][a-zäöüß]{3,}$/.test(text);
@@ -256,6 +266,15 @@ function hardcodedUiText(file: string, text = readFileSync(file, 'utf8')): strin
     ) {
       reportProse(node, node.arguments[0]);
     }
+    // `setError('...')`, `userFacingError('...')`: the text ends up on screen.
+    if (
+      ts.isCallExpression(node) &&
+      node.arguments[0] &&
+      ts.isIdentifier(node.expression) &&
+      /^(setError|userFacingError)$/.test(node.expression.text)
+    ) {
+      reportProse(node, node.arguments[0]);
+    }
     // `toast('...')`, `toast.error('...')`.
     if (ts.isCallExpression(node) && node.arguments[0]) {
       const callee = node.expression;
@@ -283,7 +302,12 @@ const PROSE_EXEMPT_FILES = [/^i18n\/en\.ts$/, /^testing\//];
 const DEVELOPER_ERRORS = [
   /^bindCanvasStoreToYMap: /,
   /^GenericCanvasElement: unhandled element type/,
-  /^Unknown canvas type: /,
+  // Thrown by `loadCanvasConfig` for an id nobody registered; StandaloneCanvas checks the registry
+  // first and says it in the catalogue.
+  /^loadCanvasConfig: /,
+  // Thrown by `usePageManager.getConfigForPage` for an id the registry does not know. The page
+  // picker only offers registered ids and stored pages carry registered ones, so no person
+  // reaches it; a host that registers late gets the console error, not a banner.
   /^Invalid config type: /,
   /^useUserUploads must be used within /,
   /^Template ".*" is already registered/,
@@ -332,6 +356,10 @@ describe('the prose guard catches every way of hardcoding English UI text', () =
     ['a variable named like text', "const label = open ? 'Hide panel' : 'Show panel';"],
     ['an error message', "throw new Error('Could not save the design');"],
     ['a template error message', 'throw new Error(`Could not save ${name}`);'],
+    ['a setError text', "setError('Could not load the canvas');"],
+    ['a template setError text', 'setError(`Unknown canvas type: ${id}`);'],
+    ['a userFacingError text', "throw userFacingError('Please pick a smaller photo');"],
+    ['hyphenated English that looks like a class list', "const a = <p title='read-only mode' />;"],
     ['a toast', "toast('Design saved to your project');"],
     ['a toast variant', "toast.error('Upload failed, please retry');"],
   ])('flags %s', (_name, code) => {

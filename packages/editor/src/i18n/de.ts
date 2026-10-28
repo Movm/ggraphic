@@ -158,6 +158,7 @@ export const de = {
   errors: {
     canvasError: 'Canvas-Fehler',
     canvasConfigLoad: 'Die Canvas-Konfiguration konnte nicht geladen werden',
+    unknownCanvasType: (id: string) => `Unbekannter Canvas-Typ: ${id}`,
     exportSlidesPartial: 'Nicht alle Folien konnten exportiert werden',
     exportPagesPartial: 'Nicht alle Seiten konnten exportiert werden',
     slideExport: (n: number) => `Folie ${n} konnte nicht exportiert werden`,
