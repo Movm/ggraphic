@@ -20,6 +20,8 @@ export interface LogoAsset {
   fileName: string;
 }
 
+export type LogoAltAsset = LogoAsset & { ground: 'dark' | 'light' };
+
 const ROLE_LABELS: Record<keyof BrandSettings['colors'], string> = {
   primary: 'Primary',
   secondary: 'Secondary',
@@ -59,7 +61,8 @@ export function buildBrandPack(
   organisationId: string,
   settings: BrandSettings,
   fonts: FontAsset[],
-  logo: LogoAsset | null
+  logo: LogoAsset | null,
+  logoAlt: LogoAltAsset | null
 ): BrandPack {
   const c = settings.colors;
   const backgrounds = settings.backgrounds.map((b, i) => ({
@@ -113,6 +116,8 @@ export function buildBrandPack(
       body: settings.fonts.body,
       quoteShort: settings.fonts.headline,
       quoteEmphasis: settings.fonts.body,
+      ...(settings.fonts.serif ? { serif: settings.fonts.serif } : {}),
+      ...(settings.fonts.condensed ? { condensed: settings.fonts.condensed } : {}),
     },
     fontFaces: fonts.map((f) => ({
       family: f.family,
@@ -124,6 +129,16 @@ export function buildBrandPack(
     logo: logo
       ? { src: `/api/brand-assets/${logo.fileName}`, label: `${settings.name} logo` }
       : null,
+    ...(logoAlt
+      ? {
+          logoAlt: {
+            src: `/api/brand-assets/${logoAlt.fileName}`,
+            label: `${settings.name} logo (alternative)`,
+            ground: logoAlt.ground,
+          },
+        }
+      : {}),
+    ...(settings.layout ? { layout: settings.layout } : {}),
     quoteMark: null,
   };
   return brandPackSchema.parse(pack);

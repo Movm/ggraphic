@@ -75,6 +75,11 @@ export function organisationBrandRouter(db: Db, config: Config): Router {
           backgrounds: row.backgrounds,
           fonts: row.fonts,
           logoAssetId: row.logoAssetId,
+          logoAlt:
+            row.logoAltAssetId && row.logoAltGround
+              ? { assetId: row.logoAltAssetId, ground: row.logoAltGround }
+              : null,
+          layout: row.layout,
         })
       : null;
     const fonts = assets
@@ -86,10 +91,15 @@ export function organisationBrandRouter(db: Db, config: Config): Router {
         style: a.fontStyle!,
       }));
     const logo = assets.find((a) => a.kind === 'logo' && a.id === settings?.logoAssetId) ?? null;
+    const altAsset = assets.find((a) => a.kind === 'logo' && a.id === settings?.logoAlt?.assetId);
+    const logoAlt =
+      altAsset && settings?.logoAlt
+        ? { fileName: altAsset.fileName, ground: settings.logoAlt.ground }
+        : null;
     return {
       settings,
       assets: assets.map(toAsset),
-      pack: settings ? buildBrandPack(orgId, settings, fonts, logo) : null,
+      pack: settings ? buildBrandPack(orgId, settings, fonts, logo, logoAlt) : null,
       bundledFonts: BUNDLED_FONT_FAMILIES,
     };
   }
@@ -110,6 +120,8 @@ export function organisationBrandRouter(db: Db, config: Config): Router {
       fonts: {
         headline: aliasFontFamily(parsed.fonts.headline),
         body: aliasFontFamily(parsed.fonts.body),
+        serif: parsed.fonts.serif && aliasFontFamily(parsed.fonts.serif),
+        condensed: parsed.fonts.condensed && aliasFontFamily(parsed.fonts.condensed),
       },
     });
     if (!body) {
@@ -124,7 +136,7 @@ export function organisationBrandRouter(db: Db, config: Config): Router {
       ...assets.filter((a) => a.kind === 'font').map((a) => a.fontFamily!),
     ]);
     for (const [slot, family] of Object.entries(body.fonts)) {
-      if (!families.has(family)) {
+      if (family !== null && !families.has(family)) {
         throw new HttpError(400, {
           error: 'invalid_request',
           message: `fonts.${slot}: upload a font of family "${family}" first, or pick ${BUNDLED_FONT_FAMILIES.join(', ')}.`,
@@ -137,12 +149,21 @@ export function organisationBrandRouter(db: Db, config: Config): Router {
         message: 'logoAssetId: not a logo of this organisation.',
       });
     }
+    if (body.logoAlt && !assets.some((a) => a.id === body.logoAlt?.assetId && a.kind === 'logo')) {
+      throw new HttpError(400, {
+        error: 'invalid_request',
+        message: 'logoAlt.assetId: not a logo of this organisation.',
+      });
+    }
     const values = {
       name: body.name,
       colors: body.colors,
       backgrounds: body.backgrounds,
       fonts: body.fonts,
       logoAssetId: body.logoAssetId,
+      layout: body.layout,
+      logoAltAssetId: body.logoAlt?.assetId ?? null,
+      logoAltGround: body.logoAlt?.ground ?? null,
     };
     await db
       .insert(brandPacks)

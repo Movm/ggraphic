@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Brand pack routes as owner and editor. Needs a real Postgres (DATABASE_URL).
-import { readdirSync } from 'node:fs';
+import { readdirSync, rmSync } from 'node:fs';
 import { contrastRatio, deriveBrandColors, deriveGrounds } from '@ggraphic/core';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../src/app.ts';
 import { createDb } from '../src/db/client.ts';
 import { runMigrations } from '../src/db/migrate.ts';
@@ -142,7 +142,11 @@ describe.skipIf(!hasDb)('brand packs (Postgres)', () => {
       expect(res.body.settings.backgrounds).toHaveLength(
         deriveGrounds(BRAND_SETTINGS.colors).length
       );
-      expect(res.body.settings.fonts).toEqual(BRAND_SETTINGS.fonts);
+      expect(res.body.settings.fonts).toEqual({
+        ...BRAND_SETTINGS.fonts,
+        serif: null,
+        condensed: null,
+      });
     });
 
     it('answers 400 for an invalid or missing colour', async () => {
@@ -171,12 +175,115 @@ describe.skipIf(!hasDb)('brand packs (Postgres)', () => {
     });
   });
 
+  describe('layout, fonts and the second logo', () => {
+    // The asset directory is shared by the file's tests; leave it as found.
+    afterEach(() => rmSync(assetDir(config), { recursive: true, force: true }));
+
+    const NEW = {
+      fonts: {
+        headline: 'Raleway',
+        body: 'Instrument Sans',
+        serif: 'Fraunces',
+        condensed: 'Raleway',
+      },
+      layout: { margin: 0.06, logoCorner: 'top-left', logoMaxWidth: 0.3, logoMaxHeight: 0.1 },
+    };
+    const uploadLogo = async () =>
+      (await owner.post(`${base}/logo`).attach('file', PNG_1X1, 'l.png').expect(201)).body;
+
+    it('round-trip through PUT and GET', async () => {
+      const alt = await uploadLogo();
+      const saved = await owner
+        .put(base)
+        .send({ ...BRAND_SETTINGS, ...NEW, logoAlt: { assetId: alt.id, ground: 'light' } })
+        .expect(200);
+      expect(saved.body.settings).toMatchObject({
+        ...NEW,
+        logoAlt: { assetId: alt.id, ground: 'light' },
+      });
+      expect(saved.body.pack).toMatchObject({
+        layout: NEW.layout,
+        fonts: { serif: 'Fraunces', condensed: 'Raleway' },
+        logoAlt: { src: alt.url, label: 'Example logo (alternative)', ground: 'light' },
+      });
+      const read = await editor.get(base).expect(200);
+      expect(read.body).toEqual(saved.body);
+      // The three-colour body carries them too.
+      const three = await owner
+        .put(base)
+        .send({
+          name: 'Example',
+          colors: { primary: '#123456', secondary: '#abcdef', accent: '#ffcc00' },
+          ...NEW,
+          logoAlt: { assetId: alt.id, ground: 'dark' },
+        })
+        .expect(200);
+      expect(three.body.settings).toMatchObject({ ...NEW, logoAlt: { ground: 'dark' } });
+      // Saving without them clears them.
+      const cleared = await owner.put(base).send(BRAND_SETTINGS).expect(200);
+      expect(cleared.body.settings).toMatchObject({ layout: null, logoAlt: null });
+      expect(cleared.body.pack).not.toHaveProperty('layout');
+      expect(cleared.body.pack).not.toHaveProperty('logoAlt');
+    });
+
+    it.each([
+      ['margin 0.5', { layout: { ...NEW.layout, margin: 0.5 } }],
+      ['logoCorner middle', { layout: { ...NEW.layout, logoCorner: 'middle' } }],
+      [
+        'logoAlt.ground grey',
+        { logoAlt: { assetId: '00000000-0000-4000-8000-00000000abcd', ground: 'grey' } },
+      ],
+    ])('rejects %s with 400', async (_n, extra) => {
+      await owner
+        .put(base)
+        .send({ ...BRAND_SETTINGS, ...extra })
+        .expect(400);
+    });
+
+    it('rejects a logoAlt asset of another organisation or of kind font with 400', async () => {
+      const font = (await uploadFont({ family: 'Mine', licence: 'OFL-1.1' }).expect(201)).body;
+      await owner
+        .put(base)
+        .send({ ...BRAND_SETTINGS, logoAlt: { assetId: font.id, ground: 'dark' } })
+        .expect(400);
+      const { rows } = await pool.query(
+        "INSERT INTO organisations (name) VALUES ('other') RETURNING id"
+      );
+      const { rows: foreign } = await pool.query(
+        "INSERT INTO brand_assets (organisation_id, kind, file_name, content_type, size) VALUES ($1, 'logo', $2, 'image/png', 1) RETURNING id",
+        [rows[0].id, `${'d'.repeat(32)}.png`]
+      );
+      const res = await owner
+        .put(base)
+        .send({ ...BRAND_SETTINGS, logoAlt: { assetId: foreign[0].id, ground: 'dark' } })
+        .expect(400);
+      expect(res.body.message).toContain('logoAlt');
+    });
+
+    it('deleting the second logo asset clears it from the pack', async () => {
+      const alt = await uploadLogo();
+      await owner
+        .put(base)
+        .send({ ...BRAND_SETTINGS, logoAlt: { assetId: alt.id, ground: 'dark' } })
+        .expect(200);
+      await owner.delete(`${base}/assets/${alt.id}`).expect(204);
+      const read = (await owner.get(base).expect(200)).body;
+      expect(read.settings.logoAlt).toBeNull();
+      expect(read.pack).not.toHaveProperty('logoAlt');
+    });
+  });
+
   it('accepts the replaced font families and stores their successors', async () => {
     const res = await owner
       .put(base)
       .send({ ...BRAND_SETTINGS, fonts: { headline: 'PT Sans', body: 'Vollkorn' } })
       .expect(200);
-    expect(res.body.settings.fonts).toEqual({ headline: 'Instrument Sans', body: 'Fraunces' });
+    expect(res.body.settings.fonts).toEqual({
+      headline: 'Instrument Sans',
+      body: 'Fraunces',
+      serif: null,
+      condensed: null,
+    });
   });
 
   it('validates colours and font families', async () => {

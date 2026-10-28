@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { brandDefault } from '@ggraphic/core';
+import { brandDefault, brandFingerprint } from '@ggraphic/core';
 import { describe, expect, it } from 'vitest';
 import {
   detectFontType,
@@ -117,7 +117,8 @@ describe('buildBrandPack', () => {
       orgId,
       settings,
       [{ fileName: `${'a'.repeat(32)}.woff2`, family: 'Mine', weight: 700, style: 'normal' }],
-      { fileName: `${'b'.repeat(32)}.png` }
+      { fileName: `${'b'.repeat(32)}.png` },
+      null
     );
     expect(brandPackSchema.safeParse(pack).success).toBe(true);
     expect(pack).toMatchObject({
@@ -145,8 +146,42 @@ describe('buildBrandPack', () => {
     expect(Object.keys(pack).sort()).toEqual(Object.keys(brandDefault).sort());
   });
 
+  it('an organisation saved before 0004 builds the same pack', () => {
+    // Settings as stored before layout, serif, condensed and the second logo existed.
+    const settings = brandSettingsBody.parse(SETTINGS);
+    expect(settings.layout).toBeNull();
+    expect(settings.logoAlt).toBeNull();
+    const pack = buildBrandPack(orgId, settings, [], null, null);
+    expect(pack).not.toHaveProperty('layout');
+    expect(pack).not.toHaveProperty('logoAlt');
+    expect(pack.fonts).not.toHaveProperty('serif');
+    expect(pack.fonts).not.toHaveProperty('condensed');
+    // Recorded on the P1 code for these settings.
+    expect(brandFingerprint(pack)).toBe('08323411');
+  });
+
+  it('builds layout, serif, condensed and the second logo when set', () => {
+    const settings = brandSettingsBody.parse({
+      ...SETTINGS,
+      fonts: { ...SETTINGS.fonts, serif: 'Fraunces', condensed: 'Raleway' },
+      layout: { margin: 0.06, logoCorner: 'top-left', logoMaxWidth: 0.3, logoMaxHeight: 0.1 },
+    });
+    const pack = buildBrandPack(orgId, settings, [], null, {
+      fileName: `${'c'.repeat(32)}.png`,
+      ground: 'dark',
+    });
+    expect(brandPackSchema.safeParse(pack).success).toBe(true);
+    expect(pack.layout).toEqual(settings.layout);
+    expect(pack.fonts).toMatchObject({ serif: 'Fraunces', condensed: 'Raleway' });
+    expect(pack.logoAlt).toEqual({
+      src: `/api/brand-assets/${'c'.repeat(32)}.png`,
+      label: 'Example logo (alternative)',
+      ground: 'dark',
+    });
+  });
+
   it('gives the org brand pack swatches their role refs', () => {
-    const pack = buildBrandPack(orgId, brandSettingsBody.parse(SETTINGS), [], null);
+    const pack = buildBrandPack(orgId, brandSettingsBody.parse(SETTINGS), [], null, null);
     const ref = (swatches: { id: string; ref?: string }[], id: string) =>
       swatches.find((s) => s.id === id)?.ref;
     expect(ref(pack.palette, 'primary')).toBe('brand.primary');
@@ -160,7 +195,7 @@ describe('buildBrandPack', () => {
   });
 
   it('refuses a swatch ref that is not a binding ref', () => {
-    const pack = buildBrandPack(orgId, brandSettingsBody.parse(SETTINGS), [], null);
+    const pack = buildBrandPack(orgId, brandSettingsBody.parse(SETTINGS), [], null, null);
     const bad = { ...pack, palette: [{ ...pack.palette[0]!, ref: 'brand.nope' }] };
     expect(brandPackSchema.safeParse(bad).success).toBe(false);
   });
@@ -170,7 +205,7 @@ describe('buildBrandPack', () => {
       ...SETTINGS,
       colors: { ...SETTINGS.colors, primary: '#0F3A52' },
     });
-    const pack = buildBrandPack(orgId, settings, [], null);
+    const pack = buildBrandPack(orgId, settings, [], null, null);
     expect(settings.backgrounds[0]!.color).not.toBe('#0F3A52');
     expect(pack.defaultBackground).toBe('#0F3A52');
   });

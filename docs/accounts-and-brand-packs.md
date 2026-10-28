@@ -9,17 +9,17 @@ what replaces that.
 
 All tables live in `migrations/0002_accounts.sql`; `src/db/schema.ts` mirrors them.
 
-| Table           | Columns (abridged)                                                                                                                                              | Notes                                                                                                                      |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `accounts`      | `id uuid`, `email text`, `display_name`, `password_hash`, `is_instance_admin`, `created_at`                                                                     | Unique on `lower(email)`. `password_hash` is an argon2id PHC string.                                                       |
-| `sessions`      | `token_hash text PK`, `account_id`, `csrf_token`, `created_at`, `expires_at`, `last_seen_at`                                                                    | The cookie carries a random 256-bit token; the table stores only its SHA-256, so a database dump yields no usable session. |
-| `organisations` | `id uuid`, `name`, `created_at`                                                                                                                                 | The default organisation has the fixed id `00000000-0000-4000-8000-000000000001`.                                          |
-| `memberships`   | `organisation_id`, `account_id`, `role ('owner'\|'editor')`, `created_at`                                                                                       | PK on both ids. Written when an account gets its organisation; no route changes members.                                   |
-| `invitations`   | `id`, `token_hash`, `organisation_id`, `role`, `created_by`, `created_at`, `expires_at`, `accepted_at`, `accepted_by`                                           | Dormant: no route reads or writes it while Studio is single-user.                                                          |
-| `projects`      | + `organisation_id uuid NOT NULL`, `deleted_at timestamptz` (`0003_trash.sql`)                                                                                  | Every project belongs to exactly one organisation. `deleted_at` is set while it is in the trash (see Trash).               |
-| `uploads`       | `file_name text PK`, `organisation_id`, `content_type`, `size`, `created_at`                                                                                    | Ties a stored upload file to its organisation.                                                                             |
-| `brand_packs`   | `organisation_id PK`, `name`, `colors jsonb`, `backgrounds jsonb`, `logo_asset_id`, `fonts jsonb`, `updated_at`                                                 | The owner's settings, not the built pack.                                                                                  |
-| `brand_assets`  | `id uuid`, `organisation_id`, `kind ('logo'\|'font')`, `file_name`, `content_type`, `size`, `font_family`, `font_weight`, `font_style`, `licence`, `created_at` | `licence` is `NOT NULL` for fonts (check constraint).                                                                      |
+| Table           | Columns (abridged)                                                                                                                                                                        | Notes                                                                                                                      |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `accounts`      | `id uuid`, `email text`, `display_name`, `password_hash`, `is_instance_admin`, `created_at`                                                                                               | Unique on `lower(email)`. `password_hash` is an argon2id PHC string.                                                       |
+| `sessions`      | `token_hash text PK`, `account_id`, `csrf_token`, `created_at`, `expires_at`, `last_seen_at`                                                                                              | The cookie carries a random 256-bit token; the table stores only its SHA-256, so a database dump yields no usable session. |
+| `organisations` | `id uuid`, `name`, `created_at`                                                                                                                                                           | The default organisation has the fixed id `00000000-0000-4000-8000-000000000001`.                                          |
+| `memberships`   | `organisation_id`, `account_id`, `role ('owner'\|'editor')`, `created_at`                                                                                                                 | PK on both ids. Written when an account gets its organisation; no route changes members.                                   |
+| `invitations`   | `id`, `token_hash`, `organisation_id`, `role`, `created_by`, `created_at`, `expires_at`, `accepted_at`, `accepted_by`                                                                     | Dormant: no route reads or writes it while Studio is single-user.                                                          |
+| `projects`      | + `organisation_id uuid NOT NULL`, `deleted_at timestamptz` (`0003_trash.sql`)                                                                                                            | Every project belongs to exactly one organisation. `deleted_at` is set while it is in the trash (see Trash).               |
+| `uploads`       | `file_name text PK`, `organisation_id`, `content_type`, `size`, `created_at`                                                                                                              | Ties a stored upload file to its organisation.                                                                             |
+| `brand_packs`   | `organisation_id PK`, `name`, `colors jsonb`, `backgrounds jsonb`, `logo_asset_id`, `fonts jsonb`, `layout jsonb`, `logo_alt_asset_id`, `logo_alt_ground ('dark'\|'light')`, `updated_at` | The owner's settings, not the built pack.                                                                                  |
+| `brand_assets`  | `id uuid`, `organisation_id`, `kind ('logo'\|'font')`, `file_name`, `content_type`, `size`, `font_family`, `font_weight`, `font_style`, `licence`, `created_at`                           | `licence` is `NOT NULL` for fonts (check constraint).                                                                      |
 
 Roles: `editor` may create, edit and delete the organisation's projects and uploads and
 read its brand pack. `owner` may additionally change the brand pack. `is_instance_admin`
@@ -136,6 +136,15 @@ owner as soon as the instance has one. No project is moved or deleted.
 
 ## Brand packs
 
+- **Layout, serif/condensed fonts, second logo** (`0004_brand_layout_fonts_logo.sql`, all
+  optional, `null` = not set): `layout` (`margin` 0.04-0.12, `logoCorner`, `logoMaxWidth`
+  0.05-0.4, `logoMaxHeight` 0.03-0.2) is its own jsonb column; `fonts.serif` and
+  `fonts.condensed` live in the existing `fonts` jsonb and follow the same family check as
+  headline and body; `logoAlt` is a logo asset of the organisation plus the ground class
+  (`dark` or `light`) it reads on, stored in `logo_alt_asset_id` / `logo_alt_ground`
+  (`ON DELETE SET NULL`: deleting the asset clears it). The built pack carries `layout`,
+  `fonts.serif`, `fonts.condensed` and `logoAlt` only when set, so an organisation saved
+  before has the same pack and the same `brandFingerprint`.
 - **Edit:** owners set the name, three colours (`primary`, `secondary`, `accent`;
   `#RRGGBB` only), the headline/body families, a logo and fonts. `PUT` derives the other
   five roles of `BrandColors` (`accentOnLight`, `attention`, `textOnDark`, `textOnLight`,

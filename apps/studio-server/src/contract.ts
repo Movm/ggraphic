@@ -1,7 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Request and response shapes of /api. Types are derived from these schemas only.
 import { z } from 'zod';
-import { brandColorsSchema, fontFamily, hexColor } from './brand/brandPackSchema.ts';
+import {
+  brandColorsSchema,
+  brandLayoutSchema,
+  fontFamily,
+  hexColor,
+} from './brand/brandPackSchema.ts';
 
 /** The editor document. Opaque to the server: any JSON object. */
 const documentSchema = z.record(z.string(), z.unknown());
@@ -184,6 +189,17 @@ export const sessionStateSchema = z.object({
 
 // --- Brand packs ------------------------------------------------------------------------
 
+const brandFontsBody = z.object({
+  headline: fontFamily,
+  body: fontFamily,
+  serif: fontFamily.nullable().default(null),
+  condensed: fontFamily.nullable().default(null),
+});
+const brandLogoAltBody = z
+  .object({ assetId: z.uuid(), ground: z.enum(['dark', 'light']) })
+  .nullable()
+  .default(null);
+
 export const brandSettingsBody = z.object({
   name: z.string().trim().min(1).max(100),
   colors: brandColorsSchema,
@@ -191,8 +207,10 @@ export const brandSettingsBody = z.object({
     .array(z.object({ label: z.string().trim().min(1).max(40), color: hexColor, ink: hexColor }))
     .min(1)
     .max(12),
-  fonts: z.object({ headline: fontFamily, body: fontFamily }),
+  fonts: brandFontsBody,
   logoAssetId: z.uuid().nullable().default(null),
+  logoAlt: brandLogoAltBody,
+  layout: brandLayoutSchema.nullable().default(null),
 });
 
 /**
@@ -202,8 +220,10 @@ export const brandSettingsBody = z.object({
 export const brandInputBody = z.object({
   name: z.string().trim().min(1).max(100),
   colors: z.strictObject({ primary: hexColor, secondary: hexColor, accent: hexColor }),
-  fonts: z.object({ headline: fontFamily, body: fontFamily }),
+  fonts: brandFontsBody,
   logoAssetId: z.uuid().nullable().default(null),
+  logoAlt: brandLogoAltBody,
+  layout: brandLayoutSchema.nullable().default(null),
 });
 
 /**
