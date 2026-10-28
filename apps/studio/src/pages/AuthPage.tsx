@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Before a session: first-run setup on an empty instance, otherwise login, and
- * registration when the instance allows it. Also used by the invitation page.
+ * registration when the instance allows it.
  */
 import {
   Alert,
@@ -178,9 +178,6 @@ export function AuthPage({ session }: { session: Session }) {
             {mode === 'login' ? 'Create one' : 'Log in'}
           </button>
         </p>
-      ) : null}
-      {mode === 'login' && !session.registrationOpen ? (
-        <p className="studio-muted">New here? Ask an organisation owner for an invitation link.</p>
       ) : null}
     </StudioAuthLayout>
   );

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -11,7 +11,6 @@ import { studioBrand } from '../brand';
 import { TEST_ORG, WithSession } from '../testing/session';
 import { AuthPage } from './AuthPage';
 import { BrandPage, defaultSettings } from './BrandPage';
-import { MembersPage } from './MembersPage';
 
 const json = (status: number, body: unknown) =>
   new Response(status === 204 ? null : JSON.stringify(body), {
@@ -50,7 +49,6 @@ const anonymous = (over: Partial<Session> = {}): Session => ({
   account: null,
   csrfToken: null,
   organisations: [],
-  canCreateOrganisations: false,
   ...over,
 });
 
@@ -99,6 +97,11 @@ describe('AuthPage', () => {
     });
   });
 
+  it('does not point to invitation links, which no longer exist', () => {
+    renderWith(<AuthPage session={anonymous()} />);
+    expect(screen.queryByText(/invitation/i)).toBeNull();
+  });
+
   it('shows the server message when login fails and hides registration when closed', async () => {
     stubServer(() =>
       json(401, { error: 'invalid_credentials', message: 'Email or password is wrong.' })
@@ -110,65 +113,6 @@ describe('AuthPage', () => {
     await user.type(screen.getByLabelText('Password'), 'x');
     await user.click(screen.getByRole('button', { name: 'Log in' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Email or password is wrong.');
-  });
-});
-
-describe('MembersPage', () => {
-  const members = [
-    { accountId: 'acc-1', email: 'me@example.org', displayName: 'Me', role: 'owner' },
-    { accountId: 'acc-2', email: 'ed@example.org', displayName: 'Ed', role: 'editor' },
-  ];
-
-  it('lets an owner create an invitation link and change a role', async () => {
-    const calls = stubServer((method, url) => {
-      if (url === `/api/orgs/${TEST_ORG}/members`) return json(200, { members });
-      if (url === `/api/orgs/${TEST_ORG}/invitations` && method === 'GET') {
-        return json(200, { invitations: [] });
-      }
-      if (url === `/api/orgs/${TEST_ORG}/invitations` && method === 'POST') {
-        return json(201, {
-          id: 'inv-1',
-          role: 'editor',
-          createdAt: '2026-10-28T10:00:00.000Z',
-          expiresAt: '2026-11-04T10:00:00.000Z',
-          allowsSignup: true,
-          url: '/invite/secret-token',
-        });
-      }
-      if (method === 'PATCH') return json(204, null);
-      return undefined;
-    });
-    const user = userEvent.setup();
-    renderWith(<MembersPage />);
-    await screen.findByText('Ed');
-    const list = within(screen.getByRole('main')).getAllByRole('listitem');
-    expect(within(list[1]!).getByText('Ed')).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Create invitation link' }));
-    expect(
-      await screen.findByDisplayValue(`${window.location.origin}/invite/secret-token`)
-    ).toBeInTheDocument();
-    expect(screen.getByText(/Anyone who has this link can join/)).toBeInTheDocument();
-
-    await user.selectOptions(screen.getByLabelText('Role of Ed'), 'owner');
-    await waitFor(() =>
-      expect(calls.find((c) => c.method === 'PATCH')).toMatchObject({
-        url: `/api/orgs/${TEST_ORG}/members/acc-2`,
-        body: { role: 'owner' },
-      })
-    );
-  });
-
-  it('shows editors the list without management controls', async () => {
-    const calls = stubServer((_m, url) =>
-      url === `/api/orgs/${TEST_ORG}/members` ? json(200, { members }) : undefined
-    );
-    renderWith(<MembersPage />, 'editor');
-    expect(await screen.findByText('Ed')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Create invitation link' })).toBeNull();
-    expect(screen.queryByLabelText('Role of Ed')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Leave' })).toBeInTheDocument();
-    expect(calls.some((c) => c.url.endsWith('/invitations'))).toBe(false);
   });
 });
 
