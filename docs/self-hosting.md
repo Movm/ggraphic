@@ -84,6 +84,19 @@ OPENAI_MODEL=<model name from your LiteLLM config>
 
 The API key stays on the server: it is never sent to the browser and never written to the logs. Briefing texts do go to the provider you configure, so pick one whose data processing you accept.
 
+### Remove background
+
+The editor's "remove background" tool is on when `REMBG_URL` points at a [rembg](https://github.com/danielgatis/rembg) server (`rembg s`, MIT). Studio posts the image to `<REMBG_URL>/api/remove` and returns the PNG; `REMBG_TIMEOUT_MS` (default 60000) bounds one call. The URL is operator configuration: the route only takes image bytes from users, never a URL. Images sent for cutting leave Studio for the rembg server, so keep it on your own network, without a public port and without outbound access once its model is downloaded.
+
+Studio does not ship a rembg container. rembg's server defaults to the `bria-rmbg` model, whose weights are under a licence that requires a paid agreement for commercial use, and the published `danielgatis/rembg` image downloads those weights. Run your own rembg and make sure the model it serves has a licence that suits you (`u2net` is Apache-2.0; check rembg's documentation for how your version selects the model for `rembg s`, which Studio does not tell it). Example with the Python package, then `REMBG_URL=http://host.docker.internal:7000`:
+
+```bash
+pip install "rembg[cpu,cli]"
+rembg s --host 0.0.0.0 --port 7000
+```
+
+Uploads for this tool are limited by `UPLOAD_MAX_BYTES`; SVG is refused.
+
 ## Backups
 
 Back up both the database and the uploads volume; one without the other leaves projects pointing at missing images.
