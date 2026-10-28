@@ -46,6 +46,10 @@ services:
       REMBG_URL: ${REMBG_URL:-}
       REMBG_TIMEOUT_MS: ${REMBG_TIMEOUT_MS:-}
       REMBG_ENABLED: ${REMBG_ENABLED:-}
+      ICONIFY_ENABLED: ${ICONIFY_ENABLED:-}
+      ICONIFY_API_URL: ${ICONIFY_API_URL:-}
+      ICONIFY_LICENCES: ${ICONIFY_LICENCES:-}
+      ICONIFY_TIMEOUT_MS: ${ICONIFY_TIMEOUT_MS:-}
     volumes:
       - studio-data:/data
     # Lets OPENAI_BASE_URL point at a model server on the host (e.g. Ollama), also on Linux.
