@@ -109,23 +109,23 @@ export function BrandPreview({
           style={box(safe)}
         />
         <span
-          aria-hidden={logoUrl ? undefined : true}
-          className="studio-brand-preview__outline studio-brand-preview__envelope"
+          aria-hidden
+          className="studio-brand-preview__outline"
           data-outline="logo-envelope"
-          style={{
-            ...box(envelope),
-            justifyContent: alignH,
-            alignItems: alignV,
-          }}
-        >
-          {logoUrl ? (
+          style={box(envelope)}
+        />
+        {logoUrl ? (
+          <span
+            className="studio-brand-preview__envelope"
+            style={{ ...box(envelope), justifyContent: alignH, alignItems: alignV }}
+          >
             <img
               className="studio-brand-preview__logo"
               src={logoUrl}
               alt={`${settings.name} logo`}
             />
-          ) : null}
-        </span>
+          </span>
+        ) : null}
       </div>
       <figcaption className="studio-muted">Template “Headline + text”</figcaption>
     </figure>

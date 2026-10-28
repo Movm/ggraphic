@@ -1016,8 +1016,7 @@ body {
 }
 .studio-brand-preview__outline {
   box-sizing: border-box;
-  border: 1px dashed currentColor;
-  opacity: 0.5;
+  border: 1px dashed color-mix(in srgb, currentColor 50%, transparent);
   pointer-events: none;
 }
 .studio-brand-preview__envelope {
