@@ -276,6 +276,18 @@ export function checkTemplate(t: TemplateInput, ctx: GateContext): GateProblem[]
     }
   }
 
+  // The renderer draws icons from `selectedIcons`; one without an `iconStates` entry would sit
+  // at the stage centre, where no frame check can see it.
+  const states = isObj(source['iconStates']) ? source['iconStates'] : {};
+  for (const iconId of Array.isArray(source['selectedIcons']) ? source['selectedIcons'] : []) {
+    if (!isObj(states[String(iconId)])) {
+      problem(
+        'bounds',
+        `icon ${String(iconId)} is in selectedIcons but has no iconStates entry; its place is unknown`
+      );
+    }
+  }
+
   // logo-corners
   if (hasLogo) {
     if ((t.logoCorners ?? []).length === 0) {
@@ -400,8 +412,10 @@ function checkPlaced(
   const order = Array.isArray(state['layerOrder'])
     ? (state['layerOrder'] as unknown[]).map(String)
     : [];
+  // A slot's maxLines is what the user may type; the text on the page (the placeholder) is
+  // measured too, and the larger count counts.
   const lines = (id: string, key: string, el: Obj) =>
-    ctx.slots[id]?.budget.maxLines ?? Math.max(1, ctx.adapter.lineCount(key, el));
+    Math.max(ctx.slots[id]?.budget.maxLines ?? 1, ctx.adapter.lineCount(key, el), 1);
 
   const NOT_DETERMINABLE = 'ground not determinable';
   const opaque = (color: string): boolean => parseColor(color)?.a === 1;
@@ -412,6 +426,8 @@ function checkPlaced(
     // A text of unknown width cannot be placed against any frame: fail closed.
     if (box && text && !(box.width > 0)) {
       problem('bounds', `${id} has no width (width unknown)`, where);
+    } else if (box && text && !(text.fontSize > 0)) {
+      problem('bounds', `${id} has no font size (font size unknown)`, where);
     } else if (box) {
       const frame = t.frames?.[id] ?? 'safe';
       if (!inside(box, frames[frame])) {

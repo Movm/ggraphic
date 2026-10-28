@@ -4,9 +4,12 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import {
   ASSET_FIELDS,
   TEMPLATE_GATE_ADAPTER,
+  createTemplateGateAdapter,
+  illustrationLookup,
   TEMPLATE_GEOMETRY,
   UNSCALED_FIELDS,
 } from './templateGeometry.js';
+import type { IllustrationDef } from '../utils/illustrations/types.js';
 import { CATALOG, defaults, populated, registerAssetCatalog, type Fields } from './testKinds.js';
 
 /** Numbers a type declares that no factory sets and nothing yet reads. */
@@ -209,13 +212,38 @@ describe('template geometry', () => {
   });
 });
 
-describe('template gate adapter: assets named by id', () => {
-  const refs = TEMPLATE_GATE_ADAPTER.assetRefs;
+const DEFS: IllustrationDef[] = [
+  { id: 'cat', name: 'Cat', tags: [], source: 'kawaii' },
+  { id: 'op-1', name: 'Peep', filename: 'a.svg', tags: [], source: 'openpeeps' },
+  { id: 'gph-1', name: 'Gopher', filename: 'g.svg', tags: [], source: 'gophers' },
+];
+const adapter = createTemplateGateAdapter(illustrationLookup(DEFS));
+const refs = adapter.assetRefs;
 
-  it('names an illustration by its source and id', () => {
-    expect(refs('illustrationInstances', { source: 'gophers', illustrationId: 'g1' }, 'i')).toEqual(
-      [{ kind: 'illustration', id: 'gophers:g1' }]
+describe('template gate adapter: assets named by id', () => {
+  it('names an illustration by the set its id resolves to, not by the declared source', () => {
+    expect(
+      refs('illustrationInstances', { source: 'gophers', illustrationId: 'gph-1' }, 'i')
+    ).toEqual([{ kind: 'illustration', id: 'gophers:gph-1' }]);
+    // The renderer ignores `source`: this draws the gopher.
+    expect(
+      refs('illustrationInstances', { source: 'openpeeps', illustrationId: 'gph-1' }, 'i')
+    ).toEqual([{ kind: 'illustration', id: 'gophers:gph-1' }]);
+    expect(refs('illustrationInstances', { source: 'kawaii', illustrationId: 'cat' }, 'i')).toEqual(
+      [{ kind: 'illustration', id: 'kawaii:cat' }]
     );
+  });
+
+  it('fails closed on an id it cannot resolve, or a kawaii claim for a non-kawaii id', () => {
+    expect(
+      refs('illustrationInstances', { source: 'openpeeps', illustrationId: 'nope' }, 'i')
+    ).toEqual([{ kind: 'illustration', id: 'unresolved:nope' }]);
+    expect(
+      refs('illustrationInstances', { source: 'kawaii', illustrationId: 'gph-1' }, 'i')
+    ).toEqual([{ kind: 'illustration', id: 'unresolved:gph-1' }]);
+    expect(
+      TEMPLATE_GATE_ADAPTER.assetRefs('illustrationInstances', { illustrationId: 'cat' }, 'i')
+    ).toEqual([{ kind: 'illustration', id: 'unresolved:cat' }]);
   });
 
   it('names a sticker or an emoji by its asset id', () => {
@@ -227,17 +255,26 @@ describe('template gate adapter: assets named by id', () => {
     ]);
   });
 
-  it('names an icon by its catalogue id, a copy by its iconId, an external one by its source', () => {
+  it('names a bundled icon by its catalogue id, a copy by its iconId', () => {
     expect(refs('iconStates', {}, 'tabler:tree')).toEqual([{ kind: 'icon', id: 'tabler:tree' }]);
     expect(refs('iconStates', { iconId: 'lucide:sun' }, 'copy-1')).toEqual([
       { kind: 'icon', id: 'lucide:sun' },
     ]);
-    expect(refs('iconStates', { iconId: 'iconify:mdi:home' }, 'copy-2')).toEqual([
+  });
+
+  it('refuses a stored external svg copy: it cannot be checked against the set offline', () => {
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0"/></svg>';
+    const source = { kind: 'iconify', prefix: 'tabler', name: 'home' };
+    expect(refs('iconStates', { iconId: 'iconify:tabler:home', svg, source }, 'x')).toEqual([
+      { kind: 'stored-svg', id: 'iconify:tabler:home' },
+    ]);
+    // Declared tabler, id says fa6-solid, svg arbitrary.
+    expect(
+      refs('iconStates', { iconId: 'iconify:fa6-solid:house', svg, source }, 'x').map((r) => r.kind)
+    ).toEqual(['stored-svg']);
+    expect(refs('iconStates', { iconId: 'iconify:mdi:home' }, 'x')).toEqual([
       { kind: 'icon', id: 'mdi:home' },
     ]);
-    expect(
-      refs('iconStates', { source: { kind: 'iconify', prefix: 'lets', name: 'tree' } }, 'x')
-    ).toEqual([{ kind: 'icon', id: 'lets:tree' }]);
   });
 
   it('names nothing for kinds without an id-based asset', () => {
@@ -247,11 +284,51 @@ describe('template gate adapter: assets named by id', () => {
 
 describe('template gate adapter: line count of a text', () => {
   const lines = TEMPLATE_GATE_ADAPTER.lineCount;
-  it('counts explicit breaks and estimates wrapping', () => {
-    expect(lines('additionalTexts', { text: 'a\nb\nc', width: 500, fontSize: 20 })).toBe(3);
-    // 40 chars x 20 px x 0.55 = 440 px in a 200 px box: three lines.
-    expect(lines('additionalTexts', { text: 'x'.repeat(40), width: 200, fontSize: 20 })).toBe(3);
-    expect(lines('additionalTexts', { text: 'short', width: 500, fontSize: 20 })).toBe(1);
+  const text = (over: Record<string, unknown>) => ({ width: 223.2, fontSize: 20, ...over });
+  it('counts explicit breaks', () => {
+    expect(lines('additionalTexts', text({ text: 'a\nb\nc' }))).toBe(3);
     expect(lines('shapeInstances', { text: 'a\nb' })).toBe(1);
+  });
+  it('wraps greedily by word, not by character total', () => {
+    // ~18 lowercase chars fit a line. 32 chars in three words still need three lines.
+    expect(lines('additionalTexts', text({ text: 'ABCDEFGHIJ ABCDEFGHIJ ABCDEFGHIJ' }))).toBe(3);
+    expect(lines('additionalTexts', text({ text: 'short' }))).toBe(1);
+  });
+  it('is wider for uppercase, bold and letter spacing', () => {
+    const t = 'aaaaaaaaaa aaaaaaaa';
+    expect(lines('additionalTexts', text({ text: t }))).toBe(2);
+    expect(lines('additionalTexts', text({ text: 'aaaaaaaaaaaaaaa' }))).toBe(1);
+    expect(lines('additionalTexts', text({ text: 'AAAAAAAAAAAAAAA' }))).toBe(2);
+    expect(lines('additionalTexts', text({ text: 'aaaaaaaaaaaaaaaaaa', fontStyle: 'bold' }))).toBe(
+      2
+    );
+    expect(lines('additionalTexts', text({ text: 'aaaaaaaaaaaaaaa', letterSpacing: 3 }))).toBe(2);
+  });
+  it('breaks a word longer than the line across lines', () => {
+    expect(lines('additionalTexts', text({ text: 'a'.repeat(50) }))).toBe(3);
+  });
+});
+
+describe('template gate adapter: badge boxes', () => {
+  it('gives a pill badge its padded text box, scaled, from its top-left', () => {
+    const box = adapter.box(
+      'pillBadgeInstances',
+      { x: 100, y: 50, text: 'aaaa', fontSize: 20, paddingX: 10, paddingY: 5, scale: 2 },
+      1
+    )!;
+    expect(box.x).toBe(100);
+    expect(box.y).toBe(50);
+    expect(box.height).toBe((20 + 10) * 2);
+    expect(box.width).toBeGreaterThanOrEqual((4 * 0.62 * 20 + 20) * 2);
+  });
+  it('gives a circle badge its disc, centred', () => {
+    expect(
+      adapter.box('circleBadgeInstances', { x: 100, y: 100, radius: 30, scale: 2 }, 1)
+    ).toEqual({
+      x: 40,
+      y: 40,
+      width: 120,
+      height: 120,
+    });
   });
 });
