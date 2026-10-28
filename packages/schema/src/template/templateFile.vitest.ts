@@ -1,8 +1,17 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { CANVAS_DOCUMENT_VERSION } from '../document/migrations.js';
-import { readTemplateFile, templateElementIds } from './templateFile.js';
+import {
+  CANVAS_DOCUMENT_VERSION,
+  registerStateKeyMigrations,
+  documentMigrations,
+} from '../document/migrations.js';
+import {
+  TEMPLATE_FORMAT_MIGRATIONS,
+  TEMPLATE_FORMAT_VERSION,
+  readTemplateFile,
+  templateElementIds,
+} from './templateFile.js';
 
 type Raw = Record<string, unknown>;
 
@@ -145,6 +154,135 @@ describe('readTemplateFile', () => {
 
   it('rejects a non-object', () => {
     expect(readTemplateFile(null).status).toBe('invalid');
+  });
+});
+
+describe('bounds and rules', () => {
+  const slot = (budget: Raw) => ({ t1: { role: 'headline', budget } });
+  it('bounds slot budgets', () => {
+    for (const budget of [
+      { maxWords: 0 },
+      { maxWords: 201 },
+      { maxLines: 21 },
+      { maxChars: 2001 },
+    ]) {
+      expect(readTemplateFile(with_({ slots: slot(budget) })).status).toBe('invalid');
+    }
+  });
+  it('allows 12 tags and refuses 13', () => {
+    const tags = (n: number) => Array.from({ length: n }, (_, i) => `t${i}`);
+    expect(readTemplateFile(with_({ tags: { occasions: tags(12), topics: [] } })).status).toBe(
+      'ok'
+    );
+    expect(readTemplateFile(with_({ tags: { occasions: tags(13), topics: [] } })).status).toBe(
+      'invalid'
+    );
+  });
+  it('refuses unknown nested keys', () => {
+    expect(readTemplateFile(with_({ tags: { occasions: [], topics: [], x: 1 } })).status).toBe(
+      'invalid'
+    );
+    expect(
+      readTemplateFile(with_({ slots: { t1: { role: 'headline', budget: {}, extra: 1 } } })).status
+    ).toBe('invalid');
+    expect(
+      readTemplateFile(
+        with_({ provenance: { author: 'a', reviewed: '2026-10-28', licence: 'x', y: 1 } })
+      ).status
+    ).toBe('invalid');
+  });
+  it('refuses an unreal date, huge versions and long text', () => {
+    const prov = (p: Raw) => ({ author: 'a', reviewed: '2026-10-28', licence: 'x', ...p });
+    expect(readTemplateFile(with_({ provenance: prov({ reviewed: '2026-02-31' }) })).status).toBe(
+      'invalid'
+    );
+    expect(readTemplateFile(with_({ provenance: prov({ author: 'a'.repeat(201) }) })).status).toBe(
+      'invalid'
+    );
+    expect(readTemplateFile(with_({ version: 10001 })).status).toBe('invalid');
+    expect(readTemplateFile(with_({ placeholders: { en: { t1: 'x'.repeat(161) } } })).status).toBe(
+      'invalid'
+    );
+  });
+  it('refuses the element id "page"', () => {
+    const result = readTemplateFile(with_({ pages: [{ state: { texts: [{ id: 'page' }] } }] }));
+    expect(result.status).toBe('invalid');
+  });
+  it('refuses a non-string element id', () => {
+    expect(readTemplateFile(with_({ pages: [{ state: { texts: [{ id: 5 }] } }] })).status).toBe(
+      'invalid'
+    );
+  });
+  it('refuses a field that is both fixed and bound', () => {
+    const result = readTemplateFile(with_({ fixed: { t1: ['fill'] } }));
+    expect(result.status).toBe('invalid');
+    if (result.status === 'invalid') expect(result.reason).toContain('fixed.t1');
+  });
+  it('refuses duplicate block ids and an element in two blocks', () => {
+    const block = (id: string) => ({ id, title: { en: 'B' }, elementIds: ['t1'] });
+    expect(readTemplateFile(with_({ blocks: [block('a'), block('a')] })).status).toBe('invalid');
+    const two = readTemplateFile(with_({ blocks: [block('a'), block('b')] }));
+    expect(two.status).toBe('invalid');
+    if (two.status === 'invalid') expect(two.reason).toContain('already in block');
+  });
+  it('refuses a newer per-kind version as newer/pages', () => {
+    registerStateKeyMigrations('texts', []);
+    try {
+      expect(readTemplateFile(with_({ kindVersions: { texts: 4 } }))).toEqual({
+        status: 'newer',
+        scope: 'pages',
+        version: 4,
+      });
+    } finally {
+      documentMigrations.unregisterStateKey('texts');
+    }
+  });
+  it('keeps kindVersions when pages are lifted', () => {
+    registerStateKeyMigrations('texts', []);
+    try {
+      const result = readTemplateFile(with_({ schemaVersion: 1, kindVersions: { texts: 1 } }));
+      expect(result.status).toBe('ok');
+      if (result.status !== 'ok') return;
+      expect(result.migrated).toBe(true);
+      expect(result.template.kindVersions).toEqual({ texts: 1 });
+    } finally {
+      documentMigrations.unregisterStateKey('texts');
+    }
+  });
+});
+
+describe('format steps', () => {
+  const step = {
+    from: 1,
+    migrate: (f: Raw): Raw => ({ ...f, formatVersion: 2, family: 'lifted' }),
+  };
+  it('ships none, and the version agrees', () => {
+    expect(TEMPLATE_FORMAT_MIGRATIONS.length + 1).toBe(TEMPLATE_FORMAT_VERSION);
+  });
+  it('runs an injected 1 to 2 step and reports migrated', () => {
+    const result = readTemplateFile(minimal(), [step]);
+    expect(result.status).toBe('ok');
+    if (result.status !== 'ok') return;
+    expect(result.migrated).toBe(true);
+    expect(result.template.family).toBe('lifted');
+  });
+  it('treats format 2 as newer when no step exists', () => {
+    expect(readTemplateFile(with_({ formatVersion: 3 }), [step]).status).toBe('newer');
+  });
+  it('turns a throwing step into invalid', () => {
+    const boom = {
+      from: 1,
+      migrate: (): Raw => {
+        throw new Error('boom');
+      },
+    };
+    const result = readTemplateFile(minimal(), [boom]);
+    expect(result.status).toBe('invalid');
+    if (result.status === 'invalid') expect(result.reason).toContain('boom');
+  });
+  it('refuses non-contiguous steps and a step that misses the version', () => {
+    expect(readTemplateFile(minimal(), [{ ...step, from: 2 }]).status).toBe('invalid');
+    expect(readTemplateFile(minimal(), [{ from: 1, migrate: (f) => f }]).status).toBe('invalid');
   });
 });
 
