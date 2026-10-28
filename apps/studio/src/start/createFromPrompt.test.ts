@@ -175,7 +175,12 @@ describe('pickedDocument with two logos', () => {
   const ALT = '/api/brand-assets/' + 'd'.repeat(32) + '.png';
   afterEach(() => registerBrandPacks([studioBrand]));
 
-  it.each(['primary', 'light'])('fits the logo of the %s world in its own proportions', (world) => {
+  // The studio brand's `primary` ground is the dark wine, `light` is white: the alternative logo is
+  // meant for dark grounds, so only the `primary` world gets it.
+  it.each([
+    ['primary', ALT],
+    ['light', MAIN],
+  ])('puts the right logo in the %s world, fitted in its own proportions', (world, expected) => {
     rememberLogoSize(MAIN, 400, 100);
     rememberLogoSize(ALT, 100, 100);
     const brand = {
@@ -196,7 +201,8 @@ describe('pickedDocument with two logos', () => {
       height: number;
     }[];
     expect(images).toHaveLength(1);
-    const aspect = images[0]!.src === ALT ? 1 : 4;
+    expect(images[0]!.src).toBe(expected);
+    const aspect = expected === ALT ? 1 : 4;
     expect(images[0]!.width / images[0]!.height).toBeCloseTo(aspect, 1);
   });
 });
