@@ -45,6 +45,7 @@ export function EditorPage({ projectId, config }: { projectId: string; config: S
     mutationFn: () => api.restoreProject(projectId),
     onSuccess: () => void project.refetch(),
   });
+  // The project's own organisation, not the session's: legacy multi-organisation accounts.
   const organisationId = project.data?.organisationId ?? null;
   // The project's organisation brand, registered before the editor mounts.
   const brand = useQuery({
