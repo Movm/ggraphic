@@ -12,7 +12,11 @@ import { applyBrandPack } from '../brandLoader';
 import { fillById, fillTexts } from '../editor/aiDraft';
 import { formatSize, newDocument, type StudioDocument } from '../editor/document';
 import { templatesFor } from '../editor/templates/catalog';
-import { FREE_PAGE_CONFIG_ID, HEADLINE_TEMPLATE_ID } from '../editor/templates/ids';
+import {
+  BLANK_TEMPLATE_ID,
+  FREE_PAGE_CONFIG_ID,
+  HEADLINE_TEMPLATE_ID,
+} from '../editor/templates/ids';
 import { templatePageState } from '../editor/templates/instantiate';
 
 import { pickOffers } from './aiOffers';
@@ -55,7 +59,7 @@ export function filledDocument(
  * The seeds read the registered brand (colours, fonts, logo), so the
  * organisation's pack is put in place before a page is built, as the editor does.
  */
-async function loadOrganisationBrand(organisationId: string): Promise<void> {
+export async function loadOrganisationBrand(organisationId: string): Promise<void> {
   let pack = null;
   try {
     pack = (await api.getBrandPack(organisationId)).pack;
@@ -161,6 +165,14 @@ export async function createFromPrompt({
   return { projectId: project.id };
 }
 
+/** The template cannot be placed on this format in the organisation's brand. */
+export class TemplateUnavailableError extends Error {
+  constructor() {
+    super('This template cannot be placed on this format with your brand.');
+    this.name = 'TemplateUnavailableError';
+  }
+}
+
 /** A project from a template as it comes, in `formatId`; the user fills it in the editor. */
 export async function createFromTemplate({
   organisationId,
@@ -174,6 +186,13 @@ export async function createFromTemplate({
   formatId: string;
 }): Promise<string> {
   await loadOrganisationBrand(organisationId);
+  // The tiles may have been drawn before the brand was known: say so, never start a blank project.
+  if (
+    templateId !== BLANK_TEMPLATE_ID &&
+    !templatesFor(formatId).some((e) => e.id === templateId)
+  ) {
+    throw new TemplateUnavailableError();
+  }
   const project = await api.createProject(organisationId, {
     name,
     document: newDocument(formatId, templateId) as unknown as Record<string, unknown>,

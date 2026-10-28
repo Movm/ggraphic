@@ -16,6 +16,19 @@ import { Toaster } from '../ui/toast';
 import { nameFromPrompt } from './createFromPrompt';
 import { StartPage } from './StartPage';
 
+// The real pack has no template that one brand can fully drop, so add one that lives in the light world only.
+vi.mock('@ggraphic/templates-open', async (importOriginal) => {
+  const original = await importOriginal<{ OPEN_TEMPLATES: readonly Record<string, unknown>[] }>();
+  const quote = original.OPEN_TEMPLATES.find((t) => t['id'] === 'studio-quote')!;
+  const lightOnly = {
+    ...quote,
+    id: 'studio-light-only',
+    title: { en: 'Light only' },
+    schemes: ['light'],
+  };
+  return { ...original, OPEN_TEMPLATES: [...original.OPEN_TEMPLATES, lightOnly] };
+});
+
 const config = (ai: boolean): StudioConfig => ({
   features: { ai, removeBackground: false, iconify: false },
   limits: { uploadBytes: 1e7, thumbnailBytes: 1e6, documentBytes: 5e6 },
@@ -284,6 +297,30 @@ describe('StartPage sections', () => {
     const before = Node.DOCUMENT_POSITION_FOLLOWING;
     expect(prompt.compareDocumentPosition(templates) & before).toBeTruthy();
     expect(templates.compareDocumentPosition(grid) & before).toBeTruthy();
+  });
+
+  it("offers only the templates the organisation's brand can place", async () => {
+    const near = {
+      ...studioBrand,
+      id: 'near',
+      colors: { ...studioBrand.colors, secondary: '#FAFAFA' },
+    };
+    const { fetchMock, calls } = fakeServer({ ai: 'ok', pack: near });
+    vi.stubGlobal('fetch', fetchMock);
+    renderStart(true);
+
+    const templates = screen.getByRole('list', { name: 'Templates' });
+    await waitFor(() =>
+      expect(calls.some((c) => c.url === `/api/orgs/${TEST_ORG}/brand-pack`)).toBe(true)
+    );
+    await waitFor(() =>
+      expect(
+        within(templates).queryByRole('button', { name: /^Light only/ })
+      ).not.toBeInTheDocument()
+    );
+    expect(within(templates).getByRole('button', { name: /^Quote/ })).toBeInTheDocument();
+    expect(within(templates).getByRole('button', { name: /^Headline/ })).toBeInTheDocument();
+    expect(within(templates).getByRole('button', { name: /^Blank/ })).toBeInTheDocument();
   });
 
   it('creates a project from a template in the chosen format', async () => {
