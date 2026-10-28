@@ -1,0 +1,125 @@
+// SPDX-License-Identifier: MPL-2.0
+// Generates packages/editor/src/templates/fontWidths.generated.ts: the widest advance of every
+// code point the Studio's fonts (Raleway, Fraunces, Instrument Sans) cover, per family and per
+// weight class, read from the installed @fontsource WOFF files. The render gate measures text
+// with it, so a width is never below what the font draws. No dependencies: WOFF 1 is zlib
+// tables, and only cmap, head, hhea and hmtx are read.
+//
+//   node scripts/generate-font-widths.mjs          # write the file
+//   node scripts/generate-font-widths.mjs --check  # exit 1 when it is out of date
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { inflateSync } from 'node:zlib';
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+export const OUTPUT = join(root, 'packages/editor/src/templates/fontWidths.generated.ts');
+
+/** Family name as the editor spells it → @fontsource package. */
+const FAMILIES = { Raleway: 'raleway', Fraunces: 'fraunces', 'Instrument Sans': 'instrument-sans' };
+/** Weight class → the fontsource weights it takes the maximum over (normal and italic both). */
+const CLASSES = { regular: '400', bold: '700' };
+
+function tables(buf) {
+  if (buf.toString('latin1', 0, 4) !== 'wOFF') throw new Error('not a WOFF 1 file');
+  const out = {};
+  for (let i = 0, n = buf.readUInt16BE(12); i < n; i++) {
+    const at = 44 + i * 20;
+    const [offset, comp, orig] = [at + 4, at + 8, at + 12].map((o) => buf.readUInt32BE(o));
+    const raw = buf.subarray(offset, offset + comp);
+    out[buf.toString('latin1', at, at + 4)] = comp < orig ? inflateSync(raw) : raw;
+  }
+  return out;
+}
+
+/** code point → glyph id, from every Unicode cmap subtable (formats 4 and 12). */
+function cmap(table) {
+  const map = new Map();
+  for (let i = 0, n = table.readUInt16BE(2); i < n; i++) {
+    const [platform, encoding] = [table.readUInt16BE(4 + i * 8), table.readUInt16BE(6 + i * 8)];
+    if (!(platform === 0 || (platform === 3 && (encoding === 1 || encoding === 10)))) continue;
+    const at = table.readUInt32BE(8 + i * 8);
+    const format = table.readUInt16BE(at);
+    if (format === 12) {
+      for (let g = 0, groups = table.readUInt32BE(at + 12); g < groups; g++) {
+        const [start, end, glyph] = [0, 4, 8].map((o) => table.readUInt32BE(at + 16 + g * 12 + o));
+        for (let cp = start; cp <= end; cp++) map.set(cp, glyph + cp - start);
+      }
+    } else if (format === 4) {
+      const segs = table.readUInt16BE(at + 6) / 2;
+      const ends = at + 14;
+      const starts = ends + segs * 2 + 2;
+      const deltas = starts + segs * 2;
+      const ranges = deltas + segs * 2;
+      for (let s = 0; s < segs; s++) {
+        const [end, start, delta, range] = [
+          table.readUInt16BE(ends + s * 2),
+          table.readUInt16BE(starts + s * 2),
+          table.readInt16BE(deltas + s * 2),
+          table.readUInt16BE(ranges + s * 2),
+        ];
+        for (let cp = start; cp <= end && cp !== 0xffff; cp++) {
+          let glyph;
+          if (range === 0) glyph = (cp + delta) & 0xffff;
+          else {
+            const g = table.readUInt16BE(ranges + s * 2 + range + (cp - start) * 2);
+            glyph = g === 0 ? 0 : (g + delta) & 0xffff;
+          }
+          if (glyph !== 0) map.set(cp, glyph);
+        }
+      }
+    }
+  }
+  return map;
+}
+
+/** code point → advance in 1/1000 em, rounded up. */
+function advances(file) {
+  const t = tables(readFileSync(file));
+  const upem = t['head'].readUInt16BE(18);
+  const metrics = t['hhea'].readUInt16BE(34);
+  const advance = (glyph) => t['hmtx'].readUInt16BE(Math.min(glyph, metrics - 1) * 4);
+  const out = new Map();
+  for (const [cp, glyph] of cmap(t['cmap'])) {
+    if (cp > 0x20 || cp === 0x20) out.set(cp, Math.ceil((advance(glyph) * 1000) / upem));
+  }
+  return out;
+}
+
+export function buildFontWidthsSource() {
+  const require = createRequire(join(root, 'apps/studio/package.json'));
+  const lines = [];
+  for (const [family, pkg] of Object.entries(FAMILIES)) {
+    const dir = join(dirname(require.resolve(`@fontsource/${pkg}/package.json`)), 'files');
+    const files = readdirSync(dir).filter((f) => f.endsWith('.woff')).sort();
+    for (const [cls, weight] of Object.entries(CLASSES)) {
+      const widest = new Map();
+      for (const f of files) {
+        if (!new RegExp(`^${pkg}-[a-z-]+-${weight}-(normal|italic)\\.woff$`).test(f)) continue;
+        for (const [cp, w] of advances(join(dir, f))) {
+          widest.set(cp, Math.max(widest.get(cp) ?? 0, w));
+        }
+      }
+      const entries = [...widest].sort((a, b) => a[0] - b[0]).map(([cp, w]) => `${cp.toString(16)}:${w}`);
+      lines.push(`  ${JSON.stringify(`${family}/${cls}`)}: '${entries.join(',')}',`);
+    }
+  }
+  return `// SPDX-License-Identifier: MPL-2.0
+// GENERATED by scripts/generate-font-widths.mjs from the installed @fontsource files. Do not edit.
+// "family/weight class" -> "codepoint(hex):widest advance in 1/1000 em", comma separated.
+export const FONT_WIDTHS: Readonly<Record<string, string>> = {
+${lines.join('\n')}
+};
+`;
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const source = buildFontWidthsSource();
+  if (process.argv.includes('--check')) {
+    if (readFileSync(OUTPUT, 'utf8') !== source) {
+      console.error('fontWidths.generated.ts is out of date: run node scripts/generate-font-widths.mjs');
+      process.exit(1);
+    }
+  } else writeFileSync(OUTPUT, source);
+}

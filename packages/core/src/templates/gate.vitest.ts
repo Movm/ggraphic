@@ -542,6 +542,21 @@ describe('render gate stage 1', () => {
       expect(found.find((p) => p.rule === 'bounds')?.detail).toContain('font size unknown');
     });
 
+    it('a text the adapter cannot place fails bounds closed with its reason', () => {
+      const stub: GateAdapter = {
+        ...adapter,
+        text: (key, el) => {
+          const base = adapter.text(key, el);
+          return base && el['id'] === 'headline'
+            ? { ...base, boundsProblem: 'rotated, not checkable' }
+            : base;
+        },
+      };
+      const found = checkTemplate(template(), context({ adapter: stub }));
+      expect(found.map((p) => p.rule)).toEqual(['bounds']);
+      expect(found[0]?.detail).toContain('rotated, not checkable');
+    });
+
     it('a slotted text is measured by its placeholder too, not by maxLines alone', () => {
       const many = { ...headline, text: 'a\nb\nc\nd\ne\nf\ng', y: 0.7 };
       const t = template(

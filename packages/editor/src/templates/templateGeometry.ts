@@ -7,8 +7,9 @@
  * number (or number array) that is in neither; the guard runs over the factory default
  * and a populated fixture that sets every optional number. Keyed by `stateKey`, as `BINDABLE_FIELDS` is.
  */
-import type { GateAdapter, GeometryTable } from '@ggraphic/core';
+import { aliasFontFamily, type GateAdapter, type GeometryTable } from '@ggraphic/core';
 
+import { FONT_WIDTHS } from './fontWidths.generated.js';
 import { getAllIllustrations } from '../utils/illustrations/registry.js';
 import type { IllustrationDef } from '../utils/illustrations/types.js';
 
@@ -148,42 +149,106 @@ const num = (el: El, field: string, fallback = 0): number => {
 /** Editor icons are drawn 120 px across at scale 1, centred on their x/y (as `boundsOf`). */
 const ICON_SIZE = 120;
 /**
- * Glyph widths in em for the line estimate. They are deliberately above the fonts the editor
- * ships, so the estimate is an upper bound and the gate fails closed on text it cannot measure.
+ * Text is measured with the widest advance of each code point in the fonts the Studio ships
+ * (`fontWidths.generated.ts`, from `scripts/generate-font-widths.mjs`), so a width is never
+ * below what the font draws. A font family without a table, or a code point the tables do not
+ * cover (CJK, emoji, Thai, ...), cannot be measured: the gate then fails `bounds` closed.
  */
-const LOWER_EM = 0.62;
-const UPPER_EM = 0.75;
-const BOLD_FACTOR = 1.08;
+const FLAT_EM = 1.2; // only to size a box that is flagged anyway
+
+const tables = new Map<string, Map<number, number>>();
+function widthTable(family: string, bold: boolean): Map<number, number> | null {
+  const key = `${family}/${bold ? 'bold' : 'regular'}`;
+  const cached = tables.get(key);
+  if (cached) return cached;
+  const raw = FONT_WIDTHS[key];
+  if (raw === undefined) return null;
+  const table = new Map<number, number>();
+  for (const entry of raw.split(',')) {
+    const [cp, w] = entry.split(':');
+    table.set(parseInt(cp!, 16), Number(w));
+  }
+  tables.set(key, table);
+  return table;
+}
+
+/** The first family of a CSS font stack, unquoted and with legacy names replaced. */
+function familyOf(fontFamily: string): string {
+  const first =
+    fontFamily
+      .split(',')[0]
+      ?.trim()
+      .replace(/^["']|["']$/g, '') ?? '';
+  return first === '' ? '' : aliasFontFamily(first);
+}
 
 interface TextMetrics {
   fontSize: number;
+  fontFamily: string;
   bold: boolean;
   letterSpacing: number;
 }
 
-const charWidth = (ch: string, m: TextMetrics): number =>
-  (ch !== ch.toLowerCase() || /\d/.test(ch) ? UPPER_EM : LOWER_EM) *
-    m.fontSize *
-    (m.bold ? BOLD_FACTOR : 1) +
-  m.letterSpacing;
+/** Advances of a text's characters, or why it cannot be measured. */
+function advancesOf(
+  text: string,
+  m: TextMetrics
+): { widths: number[]; unmeasurable: string | null } {
+  const table = widthTable(familyOf(m.fontFamily), m.bold);
+  let unmeasurable: string | null = null;
+  if (!table && text !== '') {
+    unmeasurable = `text width not checkable (no width table for font "${m.fontFamily}")`;
+  }
+  const widths = [...text].map((ch) => {
+    const w = table?.get(ch.codePointAt(0)!);
+    if (table && w === undefined) {
+      unmeasurable ??= `text width not checkable (U+${ch.codePointAt(0)!.toString(16).toUpperCase()} is outside the font tables)`;
+    }
+    return ((w === undefined ? FLAT_EM * 1000 : w) / 1000) * m.fontSize + m.letterSpacing;
+  });
+  return { widths, unmeasurable };
+}
 
-const widthUpperBound = (text: string, m: TextMetrics): number =>
-  [...text].reduce((sum, ch) => sum + charWidth(ch, m), 0);
+const metricsOf = (el: Readonly<Record<string, unknown>>): TextMetrics => ({
+  fontSize: num(el, 'fontSize'),
+  fontFamily: str(el, 'fontFamily'),
+  bold: str(el, 'fontStyle').includes('bold'),
+  letterSpacing: num(el, 'letterSpacing'),
+});
 
-/** Greedy word wrap with the widths above; a word longer than the line breaks across lines. */
-function wrappedLines(text: string, m: TextMetrics & { width: number }): number {
+/** Greedy word wrap with the widths above; a word longer than the line breaks on a character. */
+function wrapped(
+  text: string,
+  m: TextMetrics,
+  width: number
+): { lines: number; unmeasurable: string | null } {
   let total = 0;
+  let unmeasurable: string | null = null;
   for (const line of text.split('\n')) {
-    if (!(m.width > 0)) {
+    const { widths, unmeasurable: bad } = advancesOf(line, m);
+    unmeasurable ??= bad;
+    if (!(width > 0)) {
       total += 1;
       continue;
     }
-    let used = 0;
+    const chars = [...line];
+    const space = advancesOf(' ', m).widths[0]!;
     let count = 1;
-    const space = charWidth(' ', m);
-    for (const word of line.split(' ')) {
-      let w = widthUpperBound(word, m);
-      if (used > 0 && used + space + w <= m.width) {
+    let used = 0;
+    let at = 0;
+    // Split into words, keeping each word's character widths.
+    const words: number[][] = [];
+    let cur: number[] = [];
+    chars.forEach((ch, i) => {
+      if (ch === ' ') {
+        words.push(cur);
+        cur = [];
+      } else cur.push(widths[i]!);
+    });
+    words.push(cur);
+    for (const word of words) {
+      const w = word.reduce((a, b) => a + b, 0);
+      if (used > 0 && used + space + w <= width) {
         used += space + w;
         continue;
       }
@@ -191,16 +256,38 @@ function wrappedLines(text: string, m: TextMetrics & { width: number }): number 
         count += 1;
         used = 0;
       }
-      // A word wider than the line takes whole lines and continues on the last.
-      while (w > m.width) {
-        count += 1;
-        w -= m.width;
+      at = 0;
+      for (const cw of word) {
+        if (used > 0 && used + cw > width) {
+          count += 1;
+          used = 0;
+        }
+        used += cw;
       }
-      used = w;
+      void at;
     }
     total += count;
   }
-  return total;
+  return { lines: total, unmeasurable };
+}
+
+/** The widest line of a text with explicit breaks only (a pill does not wrap). */
+function widestLine(
+  text: string,
+  m: TextMetrics
+): { width: number; lines: number; unmeasurable: string | null } {
+  let width = 0;
+  let unmeasurable: string | null = null;
+  const parts = text.split('\n');
+  for (const line of parts) {
+    const a = advancesOf(line, m);
+    unmeasurable ??= a.unmeasurable;
+    width = Math.max(
+      width,
+      a.widths.reduce((x, y) => x + y, 0)
+    );
+  }
+  return { width, lines: parts.length, unmeasurable };
 }
 
 /**
@@ -308,12 +395,7 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
     },
     lineCount(stateKey, el) {
       if (stateKey !== 'additionalTexts' || typeof el['text'] !== 'string') return 1;
-      return wrappedLines(el['text'], {
-        width: num(el, 'width'),
-        fontSize: num(el, 'fontSize'),
-        bold: str(el, 'fontStyle').includes('bold'),
-        letterSpacing: num(el, 'letterSpacing'),
-      });
+      return wrapped(el['text'], metricsOf(el), num(el, 'width')).lines;
     },
     box(stateKey, el, lines) {
       const x = num(el, 'x');
@@ -341,19 +423,15 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
           return { x: x - size / 2, y: y - size / 2, width: size, height: size };
         }
         case 'pillBadgeInstances': {
-          // Top-left anchored; the editor measures the text with its font, here an upper bound.
+          // Top-left anchored; the text is as wide as its widest line, one line per break.
           const scale = num(el, 'scale', 1);
-          const fontSize = num(el, 'fontSize');
-          const textWidth = widthUpperBound(str(el, 'text'), {
-            fontSize,
-            bold: str(el, 'fontStyle').includes('bold'),
-            letterSpacing: 0,
-          });
+          const m = metricsOf(el);
+          const { width, lines: count } = widestLine(str(el, 'text'), m);
           return {
             x,
             y,
-            width: (textWidth + num(el, 'paddingX') * 2) * scale,
-            height: (fontSize + num(el, 'paddingY') * 2) * scale,
+            width: (width + num(el, 'paddingX') * 2) * scale,
+            height: (count * m.fontSize + num(el, 'paddingY') * 2) * scale,
           };
         }
         case 'circleBadgeInstances': {
@@ -367,33 +445,64 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
     text(stateKey, el) {
       const style = el['fontStyle'];
       const opacity = num(el, 'opacity', 1);
+      const rotated = num(el, 'rotation') % 360 !== 0;
+      const ROTATED = 'rotated, not checkable';
       if (stateKey === 'additionalTexts') {
+        const unmeasurable = wrapped(str(el, 'text'), metricsOf(el), num(el, 'width')).unmeasurable;
+        const boundsProblem = rotated ? ROTATED : unmeasurable;
         return {
           fill: typeof el['fill'] === 'string' ? el['fill'] : '',
           fontSize: num(el, 'fontSize'),
           bold: typeof style === 'string' && style.includes('bold'),
           opacity,
+          ...(boundsProblem ? { boundsProblem } : {}),
           ...(el['fillGradient'] ? { notCheckable: 'text gradient not checkable' } : {}),
         };
       }
       if (stateKey === 'pillBadgeInstances') {
+        const boundsProblem = rotated
+          ? ROTATED
+          : widestLine(str(el, 'text'), metricsOf(el)).unmeasurable;
         return {
           fill: str(el, 'textColor'),
           fontSize: num(el, 'fontSize'),
           bold: typeof style === 'string' && style.includes('bold'),
           opacity,
           ground: str(el, 'backgroundColor'),
+          ...(boundsProblem ? { boundsProblem } : {}),
         };
       }
       if (stateKey === 'circleBadgeInstances') {
         // Judged on its smallest line, and bold only when every line is.
         const lines = Array.isArray(el['textLines']) ? el['textLines'].filter(isRecord) : [];
+        // Each line is a centred, one-line box 2r wide; its rectangle must sit in the disc.
+        const radius = num(el, 'radius');
+        let boundsProblem: string | null = rotated ? ROTATED : null;
+        for (const l of lines) {
+          if (boundsProblem || str(l, 'text') === '') continue;
+          const fontSize = num(l, 'fontSize');
+          const {
+            width,
+            lines: count,
+            unmeasurable,
+          } = widestLine(str(l, 'text'), {
+            fontSize,
+            fontFamily: str(l, 'fontFamily'),
+            bold: l['fontWeight'] === 'bold',
+            letterSpacing: 0,
+          });
+          const reach = Math.abs(num(l, 'yOffset')) + fontSize / 2;
+          if (unmeasurable) boundsProblem = unmeasurable;
+          else if (count > 1 || width > radius * 2) boundsProblem = 'text wraps inside the disc';
+          else if (Math.hypot(width / 2, reach) > radius) boundsProblem = 'text leaves the disc';
+        }
         return {
           fill: str(el, 'textColor'),
           fontSize: lines.length ? Math.min(...lines.map((l) => num(l, 'fontSize'))) : 0,
           bold: lines.length > 0 && lines.every((l) => l['fontWeight'] === 'bold'),
           opacity,
           ground: str(el, 'backgroundColor'),
+          ...(boundsProblem ? { boundsProblem } : {}),
         };
       }
       return null;
@@ -408,7 +517,8 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
       if (
         (gradient !== undefined && gradient !== null) ||
         num(el, 'opacity', 1) < 1 ||
-        (blend !== undefined && blend !== 'normal')
+        (blend !== undefined && blend !== 'normal') ||
+        num(el, 'rotation') % 360 !== 0
       ) {
         return { kind: 'unknown' };
       }

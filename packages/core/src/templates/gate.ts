@@ -64,6 +64,8 @@ export interface GateAdapter {
     bold: boolean;
     opacity: number;
     ground?: string;
+    /** Set when the text cannot be placed against a frame (rotated, width not measurable): `bounds` then fails closed. */
+    boundsProblem?: string;
     /** Set when the text's colour is not the flat `fill` (a gradient): the reason it cannot be checked. */
     notCheckable?: string;
   } | null;
@@ -424,7 +426,9 @@ function checkPlaced(
     const box = ctx.adapter.box(key, el, lines(id, key, el));
     const text = ctx.adapter.text(key, el);
     // A text of unknown width cannot be placed against any frame: fail closed.
-    if (box && text && !(box.width > 0)) {
+    if (text?.boundsProblem) {
+      problem('bounds', `${id}: ${text.boundsProblem}`, where);
+    } else if (box && text && !(box.width > 0)) {
       problem('bounds', `${id} has no width (width unknown)`, where);
     } else if (box && text && !(text.fontSize > 0)) {
       problem('bounds', `${id} has no font size (font size unknown)`, where);
