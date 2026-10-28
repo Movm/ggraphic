@@ -6,21 +6,23 @@ ggraphic is a brand-neutral, template-based, AI-centred open-source design edito
 
 ## Packages
 
-| Package                             | npm                       | Path                     | Licence  | Status                 |
-| ----------------------------------- | ------------------------- | ------------------------ | -------- | ---------------------- |
-| Document schema                     | `@ggraphic/schema`        | `packages/schema`        | MPL-2.0  | planned (first import) |
-| Core (state, operations, rendering) | `@ggraphic/core`          | `packages/core`          | MPL-2.0  | planned (first import) |
-| Editor UI                           | `@ggraphic/editor`        | `packages/editor`        | MPL-2.0  | planned (first import) |
-| AI helpers                          | `@ggraphic/ai`            | `packages/ai`            | MPL-2.0  | later                  |
-| Default brand                       | `@ggraphic/brand-default` | `packages/brand-default` | MPL-2.0  | later                  |
-| ggraphic Studio (hostable app)      | n/a                       | `apps/studio`            | AGPL-3.0 | later                  |
-| ggraphic Studio server              | n/a                       | `apps/studio-server`     | AGPL-3.0 | MVP                    |
+| Package                             | npm                        | Path                      | Licence  | Status                 |
+| ----------------------------------- | -------------------------- | ------------------------- | -------- | ---------------------- |
+| Document schema                     | `@ggraphic/schema`         | `packages/schema`         | MPL-2.0  | planned (first import) |
+| Core (state, operations, rendering) | `@ggraphic/core`           | `packages/core`           | MPL-2.0  | planned (first import) |
+| Editor UI                           | `@ggraphic/editor`         | `packages/editor`         | MPL-2.0  | planned (first import) |
+| AI helpers                          | `@ggraphic/ai`             | `packages/ai`             | MPL-2.0  | later                  |
+| Default brand                       | `@ggraphic/brand-default`  | `packages/brand-default`  | MPL-2.0  | later                  |
+| Open template pack                  | `@ggraphic/templates-open` | `packages/templates-open` | CC0-1.0  | planned                |
+| ggraphic Studio (hostable app)      | n/a                        | `apps/studio`             | AGPL-3.0 | later                  |
+| ggraphic Studio server              | n/a                        | `apps/studio-server`      | AGPL-3.0 | MVP                    |
 
 ## Licence model
 
 - **Libraries (`packages/*`): MPL-2.0.** File-level copyleft: changes to our files stay open, but you can embed the packages in proprietary or differently licensed applications.
+- **Open template pack (`packages/templates-open`): CC0-1.0.** The template files are public domain, so anyone can copy and adapt them freely; the pack's few source files are CC0 too. `pnpm check:licences` verifies that every file's SPDX id matches its package's licence.
 - **ggraphic Studio (`apps/studio`): AGPL-3.0.** The complete hostable application; if you run a modified Studio as a network service you must offer its source to your users.
-- Full texts: [LICENSE](./LICENSE) (MPL-2.0), [LICENSES/MPL-2.0.txt](./LICENSES/MPL-2.0.txt), [LICENSES/AGPL-3.0.txt](./LICENSES/AGPL-3.0.txt). Each package and app carries its own `LICENSE` file.
+- Full texts: [LICENSE](./LICENSE) (MPL-2.0), [LICENSES/MPL-2.0.txt](./LICENSES/MPL-2.0.txt), [LICENSES/AGPL-3.0.txt](./LICENSES/AGPL-3.0.txt), [LICENSES/CC0-1.0.txt](./LICENSES/CC0-1.0.txt). Each package and app carries its own `LICENSE` file.
 - Contributions are made under the [DCO](./DCO).
 
 ## Provenance
