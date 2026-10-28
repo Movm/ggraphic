@@ -422,7 +422,9 @@ function CanvasEditorInner({
   const templateChangePage = useMemo(() => {
     if (templateChangePageId === null) return null;
     const index = pages.findIndex((p) => p.id === templateChangePageId);
-    return index >= 0 ? { index, configId: pages[index].configId, state: pages[index].state } : null;
+    return index >= 0
+      ? { index, configId: pages[index].configId, state: pages[index].state }
+      : null;
   }, [templateChangePageId, pages]);
 
   // Sidebar handlers - functional setState (Rule 5.5)
