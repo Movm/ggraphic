@@ -1230,7 +1230,7 @@ body {
   background: var(--white);
 }
 .studio-color input:not([type='color']) {
-  width: 8ch;
+  width: 11ch;
   font-family: ui-monospace, monospace;
 }
 .studio-color input[aria-invalid='true'] {
