@@ -49,6 +49,20 @@ describe.skipIf(!hasDb)('trash (Postgres)', () => {
   const count = async (id: string) =>
     (await pool.query('SELECT count(*)::int AS n FROM projects WHERE id = $1', [id])).rows[0].n;
 
+  describe('read of a trashed project', () => {
+    it('says "trashed" to a member of its organisation, "not_found" to everyone else', async () => {
+      const id = await create();
+      const outsider = await otherOrganisation(app, pool, 'outsider@example.org');
+      await admin.delete(`/api/projects/${id}`).expect(204);
+
+      expect((await admin.get(`/api/projects/${id}`).expect(404)).body.error).toBe('trashed');
+      expect((await outsider.get(`/api/projects/${id}`).expect(404)).body.error).toBe('not_found');
+      await admin.get('/api/projects/00000000-0000-4000-8000-000000000000').expect(404);
+      await admin.post(`/api/projects/${id}/restore`).expect(200);
+      await admin.get(`/api/projects/${id}`).expect(200);
+    });
+  });
+
   describe('delete', () => {
     it('keeps the row and hides the project from list, read, update and thumbnail', async () => {
       const id = await create();

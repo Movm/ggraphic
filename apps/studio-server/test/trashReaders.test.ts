@@ -41,6 +41,11 @@ const ALLOWED: Excuse[] = [
   },
   {
     file: 'routes/projects.ts',
+    marker: '.select({ id: projects.id })',
+    reason: 'a read of a trashed project tells its organisation "trashed" instead of "missing"',
+  },
+  {
+    file: 'routes/projects.ts',
     marker: '.set({ deletedAt: null })',
     reason: 'restore clears deleted_at on a project that is in the trash',
   },

@@ -263,4 +263,56 @@ describe('EditorPage', () => {
       expect(screen.getByText('All changes saved')).toBeTruthy();
     }, 25_000);
   });
+
+  describe('a project that is in the trash', () => {
+    it('says so, links the trash and restores it on request', async () => {
+      let trashed = true;
+      const json = (status: number, body: unknown) =>
+        new Response(JSON.stringify(body), {
+          status,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      const stored = {
+        id: 'p1',
+        organisationId: TEST_ORG,
+        name: 'Festival',
+        schemaVersion: 1,
+        version: 1,
+        createdAt: '2026-10-28T10:00:00.000Z',
+        updatedAt: '2026-10-28T10:00:00.000Z',
+        thumbnailUrl: '/api/projects/p1/thumbnail',
+        document: newDocument('post-portrait'),
+      };
+      const calls: string[] = [];
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+          const url = String(input);
+          const method = init?.method ?? 'GET';
+          calls.push(`${method} ${url}`);
+          if (url === '/api/projects/p1/restore' && method === 'POST') {
+            trashed = false;
+            return json(200, { ...stored, document: undefined });
+          }
+          if (url === '/api/projects/p1' && method === 'GET') {
+            if (trashed) return json(404, { error: 'trashed' });
+            return json(200, stored);
+          }
+          if (url === `/api/orgs/${TEST_ORG}/brand-pack`) {
+            return json(200, { settings: null, assets: [], pack: null, bundledFonts: [] });
+          }
+          return json(404, { error: 'not_found' });
+        })
+      );
+      renderEditor();
+
+      expect(await screen.findByText('This project is in the Trash.')).toBeTruthy();
+      expect(screen.getByRole('link', { name: 'Open the Trash' }).getAttribute('href')).toBe(
+        '/trash'
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
+      await waitFor(() => expect(document.querySelector('.konvajs-content canvas')).not.toBeNull());
+      expect(calls).toContain('POST /api/projects/p1/restore');
+    }, 20_000);
+  });
 });
