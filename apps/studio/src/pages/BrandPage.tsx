@@ -157,8 +157,24 @@ function BrandEditor({
     const { primary, secondary, accent } = data.settings.colors;
     const fresh = deriveBrandColors({ primary, secondary, accent });
     if (!fresh) return false;
-    return DERIVED_ROLES.some(
-      ({ role }) => data.settings!.colors[role].toLowerCase() !== fresh[role].toLowerCase()
+    if (
+      DERIVED_ROLES.some(
+        ({ role }) => data.settings!.colors[role].toLowerCase() !== fresh[role].toLowerCase()
+      )
+    ) {
+      return true;
+    }
+    // Saving replaces the stored grounds too.
+    const freshGrounds = deriveGrounds({ primary, secondary, accent });
+    const stored = data.settings.backgrounds;
+    return (
+      stored.length !== freshGrounds.length ||
+      freshGrounds.some(
+        (g, i) =>
+          stored[i]!.label !== g.label ||
+          stored[i]!.color.toLowerCase() !== g.color.toLowerCase() ||
+          stored[i]!.ink.toLowerCase() !== g.ink.toLowerCase()
+      )
     );
   }, [data.settings]);
 
