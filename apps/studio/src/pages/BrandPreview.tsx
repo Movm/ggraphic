@@ -6,23 +6,42 @@
  */
 import { type CSSProperties } from 'react';
 
+import { DEFAULT_BRAND_LAYOUT, type BrandLayout, logoEnvelope, safeArea } from '@ggraphic/core';
+
 import { type BrandSettings } from '../api/client';
 
 const px = (value: number) => `calc(${value} / 1080 * 100cqw)`;
+const CANVAS = { width: 1080, height: 1080 };
+const pct = (value: number) => `${(value / 1080) * 100}%`;
 const family = (name: string, fallback: string) => `"${name}", ${fallback}`;
 
 export function BrandPreview({
   settings,
   ground,
   logoUrl,
+  layout = DEFAULT_BRAND_LAYOUT,
 }: {
   settings: BrandSettings;
   /** The page colour; the seed starts on `primary`. */
   ground: { color: string; ink: string };
   logoUrl: string | null;
+  /** The grid whose safe area and logo box are outlined. */
+  layout?: BrandLayout;
 }) {
   const { colors, fonts } = settings;
-  const margin = px(97);
+  const safe = safeArea(layout, CANVAS);
+  const envelope = logoEnvelope(layout, CANVAS, layout.logoCorner);
+  const margin = px(safe.x);
+  const box = (b: { x: number; y: number; width: number; height: number }): CSSProperties => ({
+    position: 'absolute',
+    left: pct(b.x),
+    top: pct(b.y),
+    width: pct(b.width),
+    height: pct(b.height),
+    color: ground.ink,
+  });
+  const alignH = layout.logoCorner.endsWith('left') ? 'flex-start' : 'flex-end';
+  const alignV = layout.logoCorner.startsWith('top') ? 'flex-start' : 'flex-end';
   const text = (top: number, size: number, style: CSSProperties): CSSProperties => ({
     position: 'absolute',
     left: margin,
@@ -83,14 +102,30 @@ export function BrandPreview({
         >
           Find out more
         </p>
-        {logoUrl ? (
-          <img
-            className="studio-brand-preview__logo"
-            src={logoUrl}
-            alt={`${settings.name} logo`}
-            style={{ right: margin, bottom: margin }}
-          />
-        ) : null}
+        <span
+          aria-hidden
+          className="studio-brand-preview__outline"
+          data-outline="safe-area"
+          style={box(safe)}
+        />
+        <span
+          aria-hidden={logoUrl ? undefined : true}
+          className="studio-brand-preview__outline studio-brand-preview__envelope"
+          data-outline="logo-envelope"
+          style={{
+            ...box(envelope),
+            justifyContent: alignH,
+            alignItems: alignV,
+          }}
+        >
+          {logoUrl ? (
+            <img
+              className="studio-brand-preview__logo"
+              src={logoUrl}
+              alt={`${settings.name} logo`}
+            />
+          ) : null}
+        </span>
       </div>
       <figcaption className="studio-muted">Template “Headline + text”</figcaption>
     </figure>
