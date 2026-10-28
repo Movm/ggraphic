@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import { type Bindings } from '@ggraphic/core';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { type BaseCanvasState } from '@ggraphic/editor/configs/factory/baseTypes';
 import { carryInstanceState } from '@ggraphic/editor/configs/factory/carryInstanceState';
@@ -12,7 +13,7 @@ import { carryInstanceState } from '@ggraphic/editor/configs/factory/carryInstan
 export interface StudioPageState extends BaseCanvasState {
   backgroundColor: string;
   layerOrder: string[];
-  bind?: Record<string, { ref: string; value: string }>;
+  bind?: Bindings;
   brandScheme?: string;
   brandStamp?: string;
 }
@@ -21,7 +22,13 @@ export interface StudioPageState extends BaseCanvasState {
 export type PageSeed = Partial<
   Pick<
     StudioPageState,
-    'backgroundColor' | 'additionalTexts' | 'shapeInstances' | 'userImageInstances'
+    | 'backgroundColor'
+    | 'additionalTexts'
+    | 'shapeInstances'
+    | 'userImageInstances'
+    | 'bind'
+    | 'brandScheme'
+    | 'brandStamp'
   >
 >;
 
@@ -53,7 +60,7 @@ export function pageStateFrom(props: Record<string, unknown>, seed: PageSeed): S
       typeof background === 'string'
         ? background
         : (seed.backgroundColor ?? activeBrand().defaultBackground),
-    ...brandKeysFrom(props),
+    ...brandKeysFrom(seeded),
   };
 }
 

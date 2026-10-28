@@ -296,7 +296,8 @@ describe('StartPage sections', () => {
     await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
 
     const state = firstPageState(calls);
-    expect(state['backgroundColor']).toBe('#0F3A52');
+    // Seeds write colours in canonical (lower-case) form, as the rebind does.
+    expect(state['backgroundColor']).toBe('#0f3a52');
     const images = state['userImageInstances'] as { id: string; src: string }[];
     expect(images.map((i) => [i.id, i.src])).toEqual([['brand-logo', BRAND_LOGO]]);
   });
@@ -313,7 +314,8 @@ describe('StartPage sections', () => {
     await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
 
     const state = firstPageState(calls);
-    expect(state['backgroundColor']).toBe('#0F3A52');
+    // Seeds write colours in canonical (lower-case) form, as the rebind does.
+    expect(state['backgroundColor']).toBe('#0f3a52');
     const images = state['userImageInstances'] as { id: string }[];
     expect(images.map((i) => i.id)).toEqual(['brand-logo']);
   });

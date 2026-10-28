@@ -45,6 +45,7 @@ const role = (settings: BrandSettings, key: keyof BrandSettings['colors']): Bran
   id: key,
   label: ROLE_LABELS[key],
   color: settings.colors[key],
+  ref: `brand.${key}`,
 });
 
 const uniqueColors = (colors: string[]) => [...new Set(colors)];
