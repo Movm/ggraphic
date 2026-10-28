@@ -6,6 +6,7 @@ import { brandDefault, type BrandPack, type Bindings } from '@ggraphic/core';
 import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
 import { FloatingColorPicker } from '@ggraphic/editor/components/TopBar/modules/FloatingColorPicker';
 import { useFloatingModuleHandlers } from '@ggraphic/editor/hooks/useFloatingModuleHandlers';
+import { ContextControls } from '@ggraphic/editor/components/TopBar/ContextControls';
 import { IllustrationSettings } from '@ggraphic/editor/sidebar/sections/IllustrationSettings';
 import { asColorOptions } from '@ggraphic/editor/utils/colorOptions';
 
@@ -73,6 +74,38 @@ describe('FloatingColorPicker', () => {
     );
     fireEvent.click(screen.getByLabelText('Primär'));
     expect(onColorSelect).toHaveBeenCalledWith('#1d3557', 'brand.primary');
+  });
+});
+
+describe('ContextControls background', () => {
+  it('passes the ref of a background swatch to onColorChange', () => {
+    const onColorChange = vi.fn();
+    render(
+      <ContextControls
+        selectedElement={null}
+        activeFloatingModule={{ type: 'background', data: { id: 'bg' } } as FloatingModuleState}
+        canMoveUp={false}
+        canMoveDown={false}
+        canDuplicate={false}
+        handlers={
+          {
+            handleMoveLayer: () => {},
+            handleDuplicate: () => {},
+            handleColorSelect: () => {},
+            handleOpacityChange: () => {},
+            handleFontSizeChange: () => {},
+          } as const
+        }
+        background={{
+          colors: [{ id: 'primary', label: 'Primär', color: '#1d3557', ref: 'brand.primary' }],
+          currentColor: '#ffffff',
+          onColorChange,
+        }}
+      />
+    );
+    fireEvent.click(screen.getByLabelText('Farbpalette öffnen'));
+    fireEvent.click(screen.getByLabelText('Primär'));
+    expect(onColorChange).toHaveBeenCalledWith('#1d3557', 'brand.primary');
   });
 });
 
