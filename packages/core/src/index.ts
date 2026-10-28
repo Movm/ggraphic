@@ -58,3 +58,13 @@ export {
   type BrandFontRole,
   type RebindContext,
 } from './brand/bindings.js';
+export {
+  instantiateTemplatePage,
+  offeredSchemes,
+  type GeometryAxis,
+  type GeometryTable,
+  type InstantiateContext,
+  type InstantiateResult,
+  type TemplateFrameKind,
+  type TemplateInput,
+} from './templates/instantiate.js';
