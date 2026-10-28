@@ -20,3 +20,12 @@ export {
   toHex,
   type Rgba,
 } from './color/color.js';
+export {
+  SCHEME_IDS,
+  SURFACE_ROLES,
+  deriveSchemes,
+  schemeById,
+  type Scheme,
+  type SchemeId,
+  type SurfaceRole,
+} from './brand/schemes.js';
