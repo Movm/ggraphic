@@ -94,6 +94,7 @@ export function uploadsRouter(db: Db, opts: UploadOptions): Router {
       'Content-Type': IMAGE_TYPES[ext],
       // private: a shared cache must not hand one organisation's file to another.
       'Cache-Control': 'private, max-age=31536000, immutable',
+      'Cross-Origin-Resource-Policy': 'same-origin',
       // Uploads are inert data. For SVG this also blocks scripts when opened directly.
       'Content-Security-Policy':
         "sandbox; default-src 'none'; img-src data:; style-src 'unsafe-inline'",

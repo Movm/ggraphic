@@ -28,6 +28,27 @@ export const PNG_1X1 = Buffer.from(
   'base64'
 );
 
+export const BRAND_SETTINGS = {
+  name: 'Example',
+  colors: {
+    primary: '#123456',
+    secondary: '#abcdef',
+    accent: '#FFCC00',
+    accentOnLight: '#AA5500',
+    attention: '#CC0000',
+    textOnDark: '#FFFFFF',
+    textOnLight: '#123456',
+    surface: '#F5F5F5',
+  },
+  backgrounds: [
+    { label: 'Night', color: '#123456', ink: '#FFFFFF' },
+    { label: 'Paper', color: '#F5F5F5', ink: '#123456' },
+  ],
+  fonts: { headline: 'Raleway', body: 'PT Sans' },
+};
+
+export const WOFF2 = Buffer.concat([Buffer.from('wOF2', 'latin1'), Buffer.alloc(60, 1)]);
+
 export const DEFAULT_ORG = '00000000-0000-4000-8000-000000000001';
 export const PASSWORD = 'correct horse battery';
 

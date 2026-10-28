@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Request and response shapes of /api. Types are derived from these schemas only.
 import { z } from 'zod';
+import { brandColorsSchema, fontFamily, hexColor } from './brand/brandPackSchema.ts';
 
 /** The editor document. Opaque to the server: any JSON object. */
 const documentSchema = z.record(z.string(), z.unknown());
@@ -164,6 +165,42 @@ export const invitationInfoSchema = z.object({
   /** Whether a new account can be created with this link. */
   allowsSignup: z.boolean(),
 });
+
+// --- Brand packs ------------------------------------------------------------------------
+
+export const brandSettingsBody = z.object({
+  name: z.string().trim().min(1).max(100),
+  colors: brandColorsSchema,
+  backgrounds: z
+    .array(z.object({ label: z.string().trim().min(1).max(40), color: hexColor, ink: hexColor }))
+    .min(1)
+    .max(12),
+  fonts: z.object({ headline: fontFamily, body: fontFamily }),
+  logoAssetId: z.uuid().nullable().default(null),
+});
+
+export const fontUploadFields = z.object({
+  family: fontFamily,
+  weight: z.coerce.number().int().min(100).max(900).multipleOf(100).default(400),
+  style: z.enum(['normal', 'italic']).default('normal'),
+  /** Required: what the uploader declares, e.g. OFL-1.1, Apache-2.0 or "own licence". */
+  licence: z.string().trim().min(1).max(100),
+});
+
+export const brandAssetSchema = z.object({
+  id: z.uuid(),
+  kind: z.enum(['logo', 'font']),
+  url: z.string(),
+  contentType: z.string(),
+  size: z.int(),
+  family: z.string().nullable(),
+  weight: z.int().nullable(),
+  style: z.enum(['normal', 'italic']).nullable(),
+  licence: z.string().nullable(),
+});
+
+export type BrandSettings = z.output<typeof brandSettingsBody>;
+export type BrandAsset = z.infer<typeof brandAssetSchema>;
 
 export type Role = z.infer<typeof roleSchema>;
 export type SessionState = z.infer<typeof sessionStateSchema>;
