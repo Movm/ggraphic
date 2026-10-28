@@ -101,12 +101,12 @@ function canonicalJson(value: unknown): string {
 
 /**
  * Identifies the parts of a brand a binding can read: colours, fonts without
- * `boldFamilies`, and the logo source. FNV-1a 32 over the UTF-16 code units of
+ * `boldFamilies`, the markers (the colour worlds read them) and the logo source. FNV-1a 32 over the UTF-16 code units of
  * the canonical JSON (keys sorted), as 8 lower-case hex digits.
  */
 export function brandFingerprint(brand: BrandPack): string {
   const { boldFamilies: _bold, ...fonts } = brand.fonts;
-  const text = canonicalJson({ colors: brand.colors, fonts, logo: brand.logo?.src ?? null });
+  const text = canonicalJson({ colors: brand.colors, fonts, markers: brand.markers, logo: brand.logo?.src ?? null });
   let hash = 0x811c9dc5;
   for (let i = 0; i < text.length; i++) {
     hash ^= text.charCodeAt(i);
