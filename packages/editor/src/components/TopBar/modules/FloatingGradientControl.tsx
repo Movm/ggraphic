@@ -126,11 +126,15 @@ export function FloatingGradientControl({
               }}
             />
             <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] text-[var(--editor-text-muted)]">Farbe 1</span>
+              <span className="text-[11px] text-[var(--editor-text-muted)]">
+                {t.sidebar.tools.color1}
+              </span>
               <StopSwatches selected={stop0} onSelect={(c) => setStop(0, c)} />
             </div>
             <div className="flex flex-col gap-1.5">
-              <span className="text-[11px] text-[var(--editor-text-muted)]">Farbe 2</span>
+              <span className="text-[11px] text-[var(--editor-text-muted)]">
+                {t.sidebar.tools.color2}
+              </span>
               <StopSwatches selected={stop1} onSelect={(c) => setStop(1, c)} />
             </div>
             {g.type === 'linear' && (

@@ -28,15 +28,21 @@ const DRAFT = {
   body: 'Old market, 3 pm',
 };
 
+const PICK = {
+  templateId: 'studio-headline',
+  schemeId: null,
+  fills: { headline: DRAFT.headline, subline: DRAFT.subline, body: DRAFT.body },
+};
+
 type Call = { method: string; url: string; body: Record<string, unknown> | null };
 
 /** `fetch` with a Studio server that knows one project after the first POST. */
 function fakeServer({
-  draft,
+  ai,
   listed = [],
   pack = null,
 }: {
-  draft: 'ok' | 'timeout';
+  ai: 'ok' | 'timeout';
   listed?: unknown[];
   pack?: unknown;
 }) {
@@ -68,9 +74,9 @@ function fakeServer({
       return json(201, project(body?.document, 1));
     if (url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET')
       return json(200, { settings: null, assets: [], pack, bundledFonts: [] });
-    if (url === '/api/ai/draft') {
-      return draft === 'ok'
-        ? json(200, DRAFT)
+    if (url === '/api/ai/pick') {
+      return ai === 'ok'
+        ? json(200, PICK)
         : json(502, { error: 'ai_timeout', message: 'The AI provider did not answer in time.' });
     }
     if (url === '/api/projects/p1' && method === 'PATCH') {
@@ -121,8 +127,8 @@ describe('StartPage', () => {
     registerBrandPacks([studioBrand]);
   });
 
-  it('creates a project, fills it with the AI draft and opens it', async () => {
-    const { fetchMock, calls } = fakeServer({ draft: 'ok' });
+  it('creates a project from what the AI picked and opens it', async () => {
+    const { fetchMock, calls } = fakeServer({ ai: 'ok' });
     vi.stubGlobal('fetch', fetchMock);
     const user = userEvent.setup();
     renderStart(true);
@@ -139,16 +145,16 @@ describe('StartPage', () => {
     expect(post.body?.['name']).toBe('Invite everyone to the street festival…');
     expect((post.body?.['document'] as { formatId: string }).formatId).toBe('profile-square');
 
-    const draftCall = calls.find((c) => c.url === '/api/ai/draft')!;
-    expect(draftCall.body).toEqual({
-      briefing: 'Invite everyone to the street festival next Saturday afternoon',
-      width: 1080,
-      height: 1080,
+    const pickCall = calls.find((c) => c.url === '/api/ai/pick')!;
+    expect(pickCall.body).toMatchObject({
+      brief: 'Invite everyone to the street festival next Saturday afternoon',
+      format: { width: 1080, height: 1080 },
     });
 
-    const patch = calls.find((c) => c.method === 'PATCH')!;
-    expect(patch.body?.['version']).toBe(1);
-    const page = headlineOf(patch.body?.['document']);
+    // One project, created with the texts in it: no placeholder first, no later patch.
+    expect(calls.filter((c) => c.method === 'POST' && c.url === TEST_PROJECTS_URL)).toHaveLength(1);
+    expect(calls.some((c) => c.method === 'PATCH')).toBe(false);
+    const page = headlineOf(post.body?.['document']);
     expect(page.configId).toBe('studio-headline');
     expect(page.texts).toMatchObject({
       headline: DRAFT.headline,
@@ -158,7 +164,7 @@ describe('StartPage', () => {
   });
 
   it('without AI puts the prompt into the headline and says how to turn AI on', async () => {
-    const { fetchMock, calls } = fakeServer({ draft: 'ok' });
+    const { fetchMock, calls } = fakeServer({ ai: 'ok' });
     vi.stubGlobal('fetch', fetchMock);
     const user = userEvent.setup();
     renderStart(false);
@@ -170,7 +176,7 @@ describe('StartPage', () => {
     await user.click(screen.getByRole('button', { name: /Create/ }));
 
     await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
-    expect(calls.some((c) => c.url === '/api/ai/draft')).toBe(false);
+    expect(calls.some((c) => c.url === '/api/ai/pick')).toBe(false);
     expect(calls.some((c) => c.method === 'PATCH')).toBe(false);
     const post = calls.find((c) => c.method === 'POST' && c.url === TEST_PROJECTS_URL)!;
     expect(headlineOf(post.body?.['document']).texts['headline']).toBe(
@@ -178,8 +184,8 @@ describe('StartPage', () => {
     );
   });
 
-  it('opens the template with a notice when the draft fails', async () => {
-    const { fetchMock, calls } = fakeServer({ draft: 'timeout' });
+  it('creates nothing and keeps the prompt when the AI fails', async () => {
+    const { fetchMock, calls } = fakeServer({ ai: 'timeout' });
     vi.stubGlobal('fetch', fetchMock);
     const user = userEvent.setup();
     renderStart(true);
@@ -187,21 +193,21 @@ describe('StartPage', () => {
     await user.type(screen.getByLabelText('Describe your graphic'), 'Library opens on Sundays');
     await user.keyboard('{Enter}');
 
-    await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
-    expect(calls.some((c) => c.method === 'PATCH')).toBe(false);
-    expect(await screen.findByText(/took too long.*ready for your own text/)).toBeInTheDocument();
-    // The project was created with the untouched template.
-    const post = calls.find((c) => c.method === 'POST' && c.url === TEST_PROJECTS_URL)!;
-    expect(headlineOf(post.body?.['document']).texts['headline']).toBe('A clear headline');
+    expect(await screen.findByText(/The AI took too long to answer/)).toBeInTheDocument();
+    expect(screen.queryByText(/did not answer in time/)).not.toBeInTheDocument();
+    expect(window.location.pathname).toBe('/');
+    expect(calls.some((c) => c.method === 'POST' && c.url === TEST_PROJECTS_URL)).toBe(false);
+    expect(screen.getByLabelText('Describe your graphic')).toHaveValue('Library opens on Sundays');
+    expect(screen.getByRole('button', { name: /Create/ })).toBeEnabled();
   });
 
   it('shows a loading state while the draft runs', async () => {
     let release: (r: Response) => void = () => {};
-    const { fetchMock } = fakeServer({ draft: 'ok' });
+    const { fetchMock } = fakeServer({ ai: 'ok' });
     vi.stubGlobal(
       'fetch',
       vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
-        String(input) === '/api/ai/draft'
+        String(input) === '/api/ai/pick'
           ? new Promise<Response>((resolve) => (release = resolve))
           : fetchMock(input, init)
       )
@@ -215,7 +221,7 @@ describe('StartPage', () => {
     expect(await screen.findByRole('button', { name: 'Writing your draft…' })).toBeDisabled();
     expect(screen.getByText(/up to a minute/)).toHaveAttribute('role', 'status');
     release(
-      new Response(JSON.stringify(DRAFT), { headers: { 'Content-Type': 'application/json' } })
+      new Response(JSON.stringify(PICK), { headers: { 'Content-Type': 'application/json' } })
     );
     await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
   });
@@ -241,7 +247,7 @@ describe('StartPage sections', () => {
 
   it('lists the projects newest first as links to the editor', async () => {
     const { fetchMock } = fakeServer({
-      draft: 'ok',
+      ai: 'ok',
       listed: [
         listed('old', 'Old poster', '2026-01-01T10:00:00.000Z'),
         listed('new', 'New poster', '2026-10-01T10:00:00.000Z'),
@@ -257,7 +263,7 @@ describe('StartPage sections', () => {
   });
 
   it('shows an empty state instead of the grid without projects', async () => {
-    const { fetchMock, calls } = fakeServer({ draft: 'ok' });
+    const { fetchMock, calls } = fakeServer({ ai: 'ok' });
     vi.stubGlobal('fetch', fetchMock);
     renderStart(true);
     await waitFor(() => expect(calls.some((c) => c.url === TEST_PROJECTS_URL)).toBe(true));
@@ -267,7 +273,7 @@ describe('StartPage sections', () => {
 
   it('puts the templates between the prompt and the project grid', async () => {
     const { fetchMock } = fakeServer({
-      draft: 'ok',
+      ai: 'ok',
       listed: [listed('a', 'A poster', '2026-10-01T10:00:00.000Z')],
     });
     vi.stubGlobal('fetch', fetchMock);
@@ -281,7 +287,7 @@ describe('StartPage sections', () => {
   });
 
   it('creates a project from a template in the chosen format', async () => {
-    const { fetchMock, calls } = fakeServer({ draft: 'ok' });
+    const { fetchMock, calls } = fakeServer({ ai: 'ok' });
     vi.stubGlobal('fetch', fetchMock);
     const user = userEvent.setup();
     renderStart(true);
@@ -296,12 +302,12 @@ describe('StartPage sections', () => {
     const document = post.body?.['document'] as { formatId: string };
     expect(document.formatId).toBe('slide-16-9');
     expect(headlineOf(document).configId).toBe('studio-quote');
-    expect(calls.some((c) => c.url === '/api/ai/draft')).toBe(false);
+    expect(calls.some((c) => c.url === '/api/ai/pick')).toBe(false);
   });
 
   it('builds a template project in the organisation brand, logo included', async () => {
     rememberLogoSize(BRAND_LOGO, 400, 100);
-    const { fetchMock, calls } = fakeServer({ draft: 'ok', pack: orgPack });
+    const { fetchMock, calls } = fakeServer({ ai: 'ok', pack: orgPack });
     vi.stubGlobal('fetch', fetchMock);
     const user = userEvent.setup();
     renderStart(false);
@@ -319,7 +325,7 @@ describe('StartPage sections', () => {
 
   it('builds a prompt project in the organisation brand', async () => {
     rememberLogoSize(BRAND_LOGO, 400, 100);
-    const { fetchMock, calls } = fakeServer({ draft: 'ok', pack: orgPack });
+    const { fetchMock, calls } = fakeServer({ ai: 'ok', pack: orgPack });
     vi.stubGlobal('fetch', fetchMock);
     const user = userEvent.setup();
     renderStart(false);
@@ -337,7 +343,7 @@ describe('StartPage sections', () => {
 
   it('has no axe violations', async () => {
     const { fetchMock, calls } = fakeServer({
-      draft: 'ok',
+      ai: 'ok',
       listed: [listed('a', 'A poster', '2026-10-01T10:00:00.000Z')],
     });
     vi.stubGlobal('fetch', fetchMock);

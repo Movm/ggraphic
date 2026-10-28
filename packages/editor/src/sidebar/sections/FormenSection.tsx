@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { cn } from '@ggraphic/editor/utils/cn';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { brandColors } from '@ggraphic/editor/utils/colorOptions';
@@ -60,7 +61,6 @@ export interface FormenSectionProps {
 
 export interface ShapeDefinition<T extends ShapeType = ShapeType> {
   id: T;
-  title: string;
   renderPreview: () => React.ReactNode;
 }
 
@@ -126,34 +126,28 @@ export const HandShapePreview = ({ type, size = 32 }: { type: HandShapeType; siz
 const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   rect: {
     id: 'rect',
-    title: 'Rechteck hinzufügen',
     renderPreview: () => <div className="w-[32px] h-[32px] bg-current shrink-0" />,
   },
   'rounded-rect': {
     id: 'rounded-rect',
-    title: 'Abgerundetes Rechteck hinzufügen',
     renderPreview: () => <div className="w-[32px] h-[32px] bg-current shrink-0 rounded-[8px]" />,
   },
   circle: {
     id: 'circle',
-    title: 'Kreis hinzufügen',
     renderPreview: () => <div className="w-[32px] h-[32px] bg-current shrink-0 rounded-full" />,
   },
   ellipse: {
     id: 'ellipse',
-    title: 'Ellipse hinzufügen',
     renderPreview: () => <div className="w-[32px] h-[20px] bg-current shrink-0 rounded-full" />,
   },
   ring: {
     id: 'ring',
-    title: 'Ring hinzufügen',
     renderPreview: () => (
       <div className="w-[32px] h-[32px] shrink-0 rounded-full border-[6px] border-current" />
     ),
   },
   triangle: {
     id: 'triangle',
-    title: 'Dreieck hinzufügen',
     renderPreview: () => (
       <div
         className="w-0 h-0 shrink-0"
@@ -167,12 +161,10 @@ const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   },
   diamond: {
     id: 'diamond',
-    title: 'Raute hinzufügen',
     renderPreview: () => <PiDiamondFill size={32} />,
   },
   pentagon: {
     id: 'pentagon',
-    title: 'Fünfeck hinzufügen',
     renderPreview: () => (
       <PreviewSvg>
         <polygon points="50,5 95,38 78,90 22,90 5,38" />
@@ -181,32 +173,26 @@ const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   },
   hexagon: {
     id: 'hexagon',
-    title: 'Sechseck hinzufügen',
     renderPreview: () => <PiHexagonFill size={32} />,
   },
   arrow: {
     id: 'arrow',
-    title: 'Pfeil hinzufügen',
     renderPreview: () => <PiArrowRightBold size={32} />,
   },
   chevron: {
     id: 'chevron',
-    title: 'Chevron hinzufügen',
     renderPreview: () => <PiCaretRightBold size={32} />,
   },
   'double-arrow': {
     id: 'double-arrow',
-    title: 'Doppelpfeil hinzufügen',
     renderPreview: () => <PiArrowsLeftRightBold size={32} />,
   },
   'arrow-curved': {
     id: 'arrow-curved',
-    title: 'Geschwungener Pfeil hinzufügen',
     renderPreview: () => <PiArrowUUpRightBold size={32} />,
   },
   line: {
     id: 'line',
-    title: 'Linie hinzufügen',
     renderPreview: () => (
       <svg width={32} height={12} viewBox="0 0 100 12" aria-hidden="true" className="shrink-0">
         <line
@@ -223,7 +209,6 @@ const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   },
   'line-thick': {
     id: 'line-thick',
-    title: 'Dicke Linie hinzufügen',
     renderPreview: () => (
       <svg width={32} height={16} viewBox="0 0 100 16" aria-hidden="true" className="shrink-0">
         <line
@@ -240,7 +225,6 @@ const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   },
   'line-dashed': {
     id: 'line-dashed',
-    title: 'Gestrichelte Linie hinzufügen',
     renderPreview: () => (
       <svg width={32} height={12} viewBox="0 0 100 12" aria-hidden="true" className="shrink-0">
         <line
@@ -258,7 +242,6 @@ const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   },
   'line-dotted': {
     id: 'line-dotted',
-    title: 'Gepunktete Linie hinzufügen',
     renderPreview: () => (
       <svg width={32} height={12} viewBox="0 0 100 12" aria-hidden="true" className="shrink-0">
         <line
@@ -276,7 +259,6 @@ const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   },
   'line-double': {
     id: 'line-double',
-    title: 'Doppellinie hinzufügen',
     renderPreview: () => (
       <svg width={32} height={16} viewBox="0 0 100 16" aria-hidden="true" className="shrink-0">
         <line x1="2" y1="4" x2="98" y2="4" stroke="currentColor" strokeWidth="3" />
@@ -286,7 +268,6 @@ const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   },
   'line-arrow': {
     id: 'line-arrow',
-    title: 'Linie mit Pfeil hinzufügen',
     renderPreview: () => (
       <svg width={32} height={14} viewBox="0 0 100 14" aria-hidden="true" className="shrink-0">
         <line
@@ -304,7 +285,6 @@ const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   },
   wavy: {
     id: 'wavy',
-    title: 'Wellenlinie hinzufügen',
     renderPreview: () => (
       <PreviewSvg viewBox="0 0 100 40">
         <path
@@ -316,107 +296,86 @@ const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   },
   'hand-kreis': {
     id: 'hand-kreis',
-    title: 'Kringel hinzufügen',
     renderPreview: () => <HandShapePreview type="hand-kreis" />,
   },
   'hand-unterstrich': {
     id: 'hand-unterstrich',
-    title: 'Unterstrich hinzufügen',
     renderPreview: () => <HandShapePreview type="hand-unterstrich" />,
   },
   'hand-pfeil': {
     id: 'hand-pfeil',
-    title: 'Handpfeil hinzufügen',
     renderPreview: () => <HandShapePreview type="hand-pfeil" />,
   },
   'hand-ausruf': {
     id: 'hand-ausruf',
-    title: 'Ausrufstriche hinzufügen',
     renderPreview: () => <HandShapePreview type="hand-ausruf" />,
   },
   'hand-marker': {
     id: 'hand-marker',
-    title: 'Textmarker-Strich hinzufügen',
     renderPreview: () => <HandShapePreview type="hand-marker" />,
   },
   'hand-marker-box': {
     id: 'hand-marker-box',
-    title: 'Textmarker-Box hinzufügen',
     renderPreview: () => <HandShapePreview type="hand-marker-box" />,
   },
   'hand-pfeil-schlaufe': {
     id: 'hand-pfeil-schlaufe',
-    title: 'Schlaufenpfeil hinzufügen',
     renderPreview: () => <HandShapePreview type="hand-pfeil-schlaufe" />,
   },
   'hand-pfeil-welle': {
     id: 'hand-pfeil-welle',
-    title: 'Wellenpfeil hinzufügen',
     renderPreview: () => <HandShapePreview type="hand-pfeil-welle" />,
   },
   'hand-pfeil-bogen': {
     id: 'hand-pfeil-bogen',
-    title: 'Bogenpfeil hinzufügen',
     renderPreview: () => <HandShapePreview type="hand-pfeil-bogen" />,
   },
   'hand-pfeil-haken': {
     id: 'hand-pfeil-haken',
-    title: 'Hakenpfeil hinzufügen',
     renderPreview: () => <HandShapePreview type="hand-pfeil-haken" />,
   },
   'hand-pfeil-herz': {
     id: 'hand-pfeil-herz',
-    title: 'Herzpfeil hinzufügen',
     renderPreview: () => <HandShapePreview type="hand-pfeil-herz" />,
   },
   'hand-pfeil-spirale': {
     id: 'hand-pfeil-spirale',
-    title: 'Kringelpfeil hinzufügen',
     renderPreview: () => <HandShapePreview type="hand-pfeil-spirale" />,
   },
   'hand-winken': {
     id: 'hand-winken',
-    title: 'Winkende Hand hinzufügen',
     renderPreview: () => <HandShapePreview type="hand-winken" />,
   },
   star: {
     id: 'star',
-    title: 'Stern hinzufügen',
     renderPreview: () => <PiStarFill size={32} />,
   },
   sparkle: {
     id: 'sparkle',
-    title: 'Funkeln hinzufügen',
     renderPreview: () => <PiSparkleFill size={32} />,
   },
   asterisk: {
     id: 'asterisk',
-    title: 'Asterisk hinzufügen',
     renderPreview: () => <PiAsteriskBold size={32} />,
   },
   'star-burst': {
     id: 'star-burst',
-    title: 'Sternenexplosion hinzufügen',
     renderPreview: () => <PiStarFourFill size={32} />,
   },
   'speech-round': {
     id: 'speech-round',
-    title: 'Sprechblase hinzufügen',
     renderPreview: () => <PiChatCircleFill size={32} />,
   },
   'speech-rect': {
     id: 'speech-rect',
-    title: 'Eckige Sprechblase hinzufügen',
     renderPreview: () => <PiChatCenteredFill size={32} />,
   },
   'speech-cloud': {
     id: 'speech-cloud',
-    title: 'Denkblase hinzufügen',
     renderPreview: () => <PiChatTeardropFill size={32} />,
   },
   'speech-pointed': {
     id: 'speech-pointed',
-    title: 'Spitze Sprechblase hinzufügen',
     renderPreview: () => (
       <PreviewSvg>
         <path d="M5,8 L95,8 L95,68 L60,68 L72,90 L40,68 L5,68 Z" />
@@ -425,12 +384,10 @@ const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   },
   cloud: {
     id: 'cloud',
-    title: 'Wolke hinzufügen',
     renderPreview: () => <PiCloudFill size={32} />,
   },
   'cloud-fluffy': {
     id: 'cloud-fluffy',
-    title: 'Flauschige Wolke hinzufügen',
     renderPreview: () => (
       <PreviewSvg>
         <path d="M30,55 C20,55 12,48 14,38 C16,28 28,26 34,32 C36,20 52,16 62,28 C68,20 82,22 84,36 C92,38 94,50 86,56 C92,62 88,72 78,70 C72,76 60,76 56,70 C46,76 36,76 32,70 C24,76 16,70 22,62 C14,62 18,55 30,55 Z" />
@@ -439,7 +396,6 @@ const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   },
   'cloud-puff': {
     id: 'cloud-puff',
-    title: 'Wölkchen hinzufügen',
     renderPreview: () => (
       <PreviewSvg>
         <path d="M22,60 C8,60 5,45 18,38 C18,22 38,18 48,30 C58,18 78,22 78,40 C92,40 92,58 78,62 C78,72 60,72 56,66 C50,72 30,72 22,60 Z" />
@@ -448,7 +404,6 @@ const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   },
   'cloud-thin': {
     id: 'cloud-thin',
-    title: 'Schwaden hinzufügen',
     renderPreview: () => (
       <PreviewSvg viewBox="0 0 100 50">
         <path d="M5,28 C5,15 22,8 32,18 C36,8 50,6 58,16 C72,8 88,16 90,28 C95,30 95,38 85,38 L15,38 C5,38 5,30 5,28 Z" />
@@ -457,17 +412,14 @@ const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   },
   heart: {
     id: 'heart',
-    title: 'Herz hinzufügen',
     renderPreview: () => <PiHeartFill size={32} />,
   },
   'heart-broken': {
     id: 'heart-broken',
-    title: 'Gebrochenes Herz hinzufügen',
     renderPreview: () => <PiHeartBreakFill size={32} />,
   },
   'heart-double': {
     id: 'heart-double',
-    title: 'Doppeltes Herz hinzufügen',
     renderPreview: () => (
       <PreviewSvg viewBox="0 0 100 70">
         <path d="M28,62 C28,62 4,48 4,22 C4,2 22,-8 30,10 C38,-8 56,2 56,22 C56,48 28,62 28,62 Z M68,62 C68,62 44,48 44,22 C44,2 62,-8 70,10 C78,-8 96,2 96,22 C96,48 68,62 68,62 Z" />
@@ -476,7 +428,6 @@ const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   },
   'heart-arrow': {
     id: 'heart-arrow',
-    title: 'Herz mit Pfeil hinzufügen',
     renderPreview: () => (
       <PreviewSvg>
         <path d="M50,90 C50,90 12,68 12,38 C12,15 30,5 50,28 C70,5 88,15 88,38 C88,68 50,90 50,90 Z M0,46 L20,46 L20,38 L32,52 L20,66 L20,58 L0,58 Z M68,52 L80,52 L80,44 L100,58 L80,72 L80,64 L68,64 Z" />
@@ -485,17 +436,14 @@ const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   },
   drop: {
     id: 'drop',
-    title: 'Tropfen hinzufügen',
     renderPreview: () => <PiDropFill size={32} />,
   },
   'drop-pin': {
     id: 'drop-pin',
-    title: 'Stecknadel hinzufügen',
     renderPreview: () => <PiMapPinFill size={32} />,
   },
   'drop-tear': {
     id: 'drop-tear',
-    title: 'Träne hinzufügen',
     renderPreview: () => (
       <PreviewSvg>
         <path d="M50,8 C42,28 28,52 32,70 C34,82 42,90 50,90 C58,90 66,82 68,70 C72,52 58,28 50,8 Z" />
@@ -504,12 +452,10 @@ const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   },
   'drop-flame': {
     id: 'drop-flame',
-    title: 'Flamme hinzufügen',
     renderPreview: () => <PiFireFill size={32} />,
   },
   'banner-ribbon': {
     id: 'banner-ribbon',
-    title: 'Banner hinzufügen',
     renderPreview: () => (
       <PreviewSvg viewBox="0 0 100 40">
         <path d="M5,12 L75,12 L95,20 L75,28 L5,28 L20,20 Z" />
@@ -518,32 +464,26 @@ const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   },
   'banner-flag': {
     id: 'banner-flag',
-    title: 'Wimpel hinzufügen',
     renderPreview: () => <PiFlagFill size={32} />,
   },
   'banner-tag': {
     id: 'banner-tag',
-    title: 'Etikett hinzufügen',
     renderPreview: () => <PiTagFill size={32} />,
   },
   'banner-scroll': {
     id: 'banner-scroll',
-    title: 'Schriftrolle hinzufügen',
     renderPreview: () => <PiScrollFill size={32} />,
   },
   gear: {
     id: 'gear',
-    title: 'Zahnrad hinzufügen',
     renderPreview: () => <PiGearFill size={32} />,
   },
   'gear-12': {
     id: 'gear-12',
-    title: 'Zahnrad fein hinzufügen',
     renderPreview: () => <PiGearSixFill size={32} />,
   },
   'gear-6': {
     id: 'gear-6',
-    title: 'Zahnrad grob hinzufügen',
     renderPreview: () => (
       <PreviewSvg>
         <polygon points="50,5 65,18 85,15 82,35 95,50 82,65 85,85 65,82 50,95 35,82 15,85 18,65 5,50 18,35 15,15 35,18" />
@@ -552,7 +492,6 @@ const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   },
   'gear-fine': {
     id: 'gear-fine',
-    title: 'Zahnrad feinverzahnt hinzufügen',
     renderPreview: () => (
       <PreviewSvg>
         <circle cx="50" cy="50" r="40" />
@@ -562,17 +501,14 @@ const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   },
   flower: {
     id: 'flower',
-    title: 'Blume hinzufügen',
     renderPreview: () => <PiFlowerFill size={32} />,
   },
   'flower-8': {
     id: 'flower-8',
-    title: 'Blüte hinzufügen',
     renderPreview: () => <PiFlowerLotusFill size={32} />,
   },
   'blob-2': {
     id: 'blob-2',
-    title: 'Zweiter Blob hinzufügen',
     renderPreview: () => (
       <PreviewSvg>
         <path d="M52,6 C75,12 95,28 92,52 C90,72 75,90 52,92 C32,93 12,82 8,62 C4,42 18,18 30,12 C38,8 45,5 52,6 Z" />
@@ -581,7 +517,6 @@ const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   },
   blob: {
     id: 'blob',
-    title: 'Blob hinzufügen',
     renderPreview: () => (
       <PreviewSvg>
         <path d="M50,4 C72,6 90,22 94,44 C98,66 88,86 70,93 C52,100 30,96 18,82 C6,68 4,46 14,28 C24,10 38,2 50,4 Z" />
@@ -590,42 +525,34 @@ const SHAPE_PREVIEWS: { readonly [K in ShapeType]: ShapeDefinition<K> } = {
   },
   leaf: {
     id: 'leaf',
-    title: 'Blatt hinzufügen',
     renderPreview: () => <PiLeafFill size={32} />,
   },
   tree: {
     id: 'tree',
-    title: 'Baum hinzufügen',
     renderPreview: () => <PiTreeFill size={32} />,
   },
   mountain: {
     id: 'mountain',
-    title: 'Berg hinzufügen',
     renderPreview: () => <PiMountainsFill size={32} />,
   },
   sun: {
     id: 'sun',
-    title: 'Sonne hinzufügen',
     renderPreview: () => <PiSunFill size={32} />,
   },
   checkmark: {
     id: 'checkmark',
-    title: 'Häkchen hinzufügen',
     renderPreview: () => <PiCheckBold size={32} />,
   },
   plus: {
     id: 'plus',
-    title: 'Plus hinzufügen',
     renderPreview: () => <PiPlusBold size={32} />,
   },
   minus: {
     id: 'minus',
-    title: 'Minus hinzufügen',
     renderPreview: () => <PiMinusBold size={32} />,
   },
   'x-mark': {
     id: 'x-mark',
-    title: 'Kreuz hinzufügen',
     renderPreview: () => <PiXBold size={32} />,
   },
 };
@@ -716,6 +643,7 @@ export function FormenSection({
   isExpanded = false,
   searchQuery = '',
 }: FormenSectionProps) {
+  const t = useMessages();
   const q = searchQuery.trim().toLowerCase();
 
   // Collapsed (mobile) view: flat first-N grid, no subheaders.
@@ -743,7 +671,7 @@ export function FormenSection({
         key={shape.id}
         className={SELECTABLE_CARD}
         onClick={() => onAddShape(shape.id, variant.color)}
-        title={shape.title}
+        title={t.common.addShape(t.shapes[shape.id])}
       >
         <div
           className={cn(CARD_PREVIEW, variant.darkPreviewClass)}

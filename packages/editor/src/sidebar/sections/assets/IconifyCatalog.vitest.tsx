@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   CanvasEditorProvider,
@@ -158,5 +158,76 @@ describe('IconifyCatalog', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Die Icon-Suche ist gerade nicht erreichbar.'
     );
+  });
+
+  describe('tiles the host cannot serve', () => {
+    /** jsdom loads no images; this stand-in fails the urls in `failing` and loads the rest. */
+    const failing = new Set<string>();
+    const created: string[] = [];
+    const RealImage = globalThis.Image;
+    beforeEach(() => {
+      failing.clear();
+      created.length = 0;
+      class FakeImage {
+        onload: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        set src(url: string) {
+          created.push(url);
+          queueMicrotask(() => (failing.has(url) ? this.onerror?.() : this.onload?.()));
+        }
+      }
+      globalThis.Image = FakeImage as unknown as typeof Image;
+    });
+    afterEach(() => {
+      globalThis.Image = RealImage;
+    });
+
+    it('says so and lets the user try again, instead of leaving grey tiles', async () => {
+      failing.add('/api/assets/icons/lets/tree-fill.svg');
+      renderCatalog(service());
+      await screen.findByRole('button', { name: /tree-fill/ });
+      const alert = await screen.findByRole('alert');
+      expect(alert).toHaveTextContent('Einige Icons konnten nicht geladen werden.');
+      failing.clear();
+      const before = created.length;
+      fireEvent.click(screen.getByRole('button', { name: 'Erneut versuchen' }));
+      await waitFor(() => expect(created.length).toBeGreaterThan(before));
+      await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
+    });
+
+    it('shows no message when every tile loads', async () => {
+      renderCatalog(service());
+      await screen.findByRole('button', { name: /tree-fill/ });
+      await waitFor(() => expect(created.length).toBeGreaterThan(0));
+      expect(screen.queryByRole('alert')).toBeNull();
+    });
+
+    it('retries through the host refresh, which fetches in batches, not per tile', async () => {
+      failing.add('/api/assets/icons/lets/tree-fill.svg');
+      const refresh = vi.fn(() => Promise.resolve({ retryAfterSeconds: null }));
+      renderCatalog(service({ refresh }));
+      await screen.findByRole('alert');
+      failing.clear();
+      const before = created.length;
+      fireEvent.click(screen.getByRole('button', { name: 'Erneut versuchen' }));
+      await waitFor(() => expect(refresh).toHaveBeenCalledWith('baum'));
+      // The tiles are probed again only after the refresh answered.
+      await waitFor(() => expect(created.length).toBeGreaterThan(before));
+      await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
+    });
+
+    it('disables the button for the wait the host names, and says how long', async () => {
+      failing.add('/api/assets/icons/lets/tree-fill.svg');
+      const refresh = vi.fn(() => Promise.resolve({ retryAfterSeconds: 7 }));
+      renderCatalog(service({ refresh }));
+      await screen.findByRole('alert');
+      const before = created.length;
+      fireEvent.click(screen.getByRole('button', { name: 'Erneut versuchen' }));
+      const button = await screen.findByRole('button', { name: /Erneut versuchen/ });
+      await waitFor(() => expect(button).toBeDisabled());
+      expect(screen.getByRole('alert')).toHaveTextContent('7 s');
+      // Nothing was fetched meanwhile.
+      expect(created.length).toBe(before);
+    });
   });
 });

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
 import { useDebounce } from '@ggraphic/editor/hooks/useDebounce';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { messages, useMessages } from '@ggraphic/editor/i18n/messages';
 import { registeredAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
 import { cn } from '@ggraphic/editor/utils/cn';
 import { addHostElement } from '@ggraphic/editor/utils/elementKinds';
@@ -50,7 +50,7 @@ const BRAND_COUNT = 4;
 const useNoBlocks = (): ElementBlocks | null => null;
 
 function countLabel(n: number): string {
-  return `${n} ${n === 1 ? 'Element' : 'Elemente'}`;
+  return messages().common.elements(n);
 }
 
 function SearchField({
@@ -459,7 +459,9 @@ export function ElementsPanel(props: ExtendedAssetsSectionProps) {
 
       {showNoResults ? (
         <div className="flex flex-col items-center gap-1.5 px-3 py-10 text-center">
-          <strong className="text-[15px] text-[var(--editor-text)]">Nichts gefunden</strong>
+          <strong className="text-[15px] text-[var(--editor-text)]">
+            {t.sidebar.elements.nothingFound}
+          </strong>
           {noResultsHint && (
             <span className="text-sm text-[var(--editor-text-muted)] [text-wrap:pretty]">
               {noResultsHint}

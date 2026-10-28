@@ -29,6 +29,7 @@ interface AltTextResult {
 }
 
 function CopyButton({ text, label }: { text: string; label: string }) {
+  const t = useMessages();
   const [copied, setCopied] = useState(false);
   return (
     <button
@@ -41,7 +42,7 @@ function CopyButton({ text, label }: { text: string; label: string }) {
       }}
       className="text-xs text-primary-600 bg-transparent border-none cursor-pointer hover:underline p-0"
     >
-      {copied ? 'Kopiert' : label}
+      {copied ? t.shell.copied : label}
     </button>
   );
 }
@@ -192,7 +193,7 @@ function AltTextResultField({
         <label htmlFor={fieldId} className="text-xs font-semibold text-foreground">
           {label}
         </label>
-        <CopyButton text={result.text} label="Kopieren" />
+        <CopyButton text={result.text} label={t.commands.copy} />
       </div>
       <textarea
         id={fieldId}
