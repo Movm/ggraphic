@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { readGroups, wholeGroupsIn } from '../groups/pageGroups.js';
 import { canMoveLayer, type CanvasItem } from './canvasLayerManager.js';
 import { hostElementKind } from './elementKinds.js';
 import { findDuplicableEntry, type TemplateEntryLookup } from './duplicateElement.js';
@@ -27,6 +28,8 @@ export interface SelectionCapabilities {
   lock: LockState;
   /** Mindestens ein ausgewähltes Element lässt sich sperren. */
   canLock: boolean;
+  /** Die Auswahl enthält mindestens eine Gruppe ganz. */
+  canUngroup: boolean;
   /** Jedes ausgewählte Element lässt sich drehen (keins gesperrt, kein Lesemodus). */
   canRotate: boolean;
   /** Einzeln: das Element spiegelt; mehrere: jedes lässt sich drehen, Text wandert lesbar mit. */
@@ -76,6 +79,7 @@ export function selectionCapabilities({
     canSendBackward: single !== null && canMoveLayer(renderList, single, 'backward'),
     lock: lockStateOf(lockedIdsOf(state), lockable),
     canLock: lockable.length > 0,
+    canUngroup: wholeGroupsIn(readGroups(state as Record<string, unknown>), ids).length > 0,
     canRotate,
     canFlip: singleDoor ? singleDoor.canFlip : canRotate,
     rotation: singleDoor ? singleDoor.rotation : null,
