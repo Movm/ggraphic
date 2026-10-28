@@ -195,6 +195,24 @@ export const brandSettingsBody = z.object({
   logoAssetId: z.uuid().nullable().default(null),
 });
 
+/**
+ * What the brand form sends: three colours; the other five roles and the grounds are derived
+ * by the server (`deriveBrandColors` / `deriveGrounds` in @ggraphic/core).
+ */
+export const brandInputBody = z.object({
+  name: z.string().trim().min(1).max(100),
+  colors: z.strictObject({ primary: hexColor, secondary: hexColor, accent: hexColor }),
+  fonts: z.object({ headline: fontFamily, body: fontFamily }),
+  logoAssetId: z.uuid().nullable().default(null),
+});
+
+/**
+ * The brand PUT: the three-colour body, or the full body older clients still send. From the
+ * full body only the three inputs count; the rest is derived again, so what is stored never
+ * depends on which shape arrived.
+ */
+export const brandWriteBody = z.union([brandInputBody, brandSettingsBody]);
+
 export const fontUploadFields = z.object({
   family: fontFamily,
   weight: z.coerce.number().int().min(100).max(900).multipleOf(100).default(400),
