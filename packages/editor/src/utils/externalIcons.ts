@@ -11,6 +11,8 @@
  * with the bundled sets.
  */
 
+import { sanitizeSvg } from '@ggraphic/schema';
+
 import type { IconDef } from './canvasIcons.js';
 
 /** Where a placed icon came from; the licence and author are shown and stored. */
@@ -30,16 +32,13 @@ export interface ExternalIconPayload {
 }
 
 const NAMESPACE = 'iconify:';
-/** Plain vector markup only: nothing that runs, loads or links elsewhere. */
-const UNSAFE_SVG =
-  /<script|<foreignObject|<image|<iframe|<object|<embed|<!ENTITY|<!DOCTYPE|\son[a-z]+\s*=|javascript:|@import|url\(\s*["']?(?!#)|(?:xlink:)?href\s*=\s*["']?(?!#)/i;
-const MAX_SVG_CHARS = 64 * 1024;
 
 interface Entry {
   def: IconDef;
   svg: string;
 }
 
+/** Keyed by id AND content (`externalIconKey`), so one id with two markups is two icons. */
 const registry = new Map<string, Entry>();
 let version = 0;
 
@@ -51,13 +50,43 @@ export const isExternalIconId = (id: string): boolean => id.startsWith(NAMESPACE
 /** Bumps whenever the registry changes; lets a cache of derived views know. */
 export const externalIconsVersion = (): number => version;
 
-export function isPlainSvg(svg: unknown): svg is string {
-  return (
-    typeof svg === 'string' &&
-    svg.length <= MAX_SVG_CHARS &&
-    /^\s*<svg[\s>]/.test(svg) &&
-    !UNSAFE_SVG.test(svg)
-  );
+/** A short non-cryptographic hash (cyrb53): enough to tell two markups apart. */
+function shortHash(text: string): string {
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c6ce57;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+
+/** Sanitising is the expensive part; a page redraws often, so remember the answers. */
+const cleaned = new Map<string, string | null>();
+const MAX_CLEANED = 500;
+
+/** The sanitised markup, or null when it cannot be made safe. */
+export function cleanIconSvg(svg: unknown): string | null {
+  if (typeof svg !== 'string') return null;
+  if (cleaned.has(svg)) return cleaned.get(svg) ?? null;
+  const result = sanitizeSvg(svg);
+  if (cleaned.size >= MAX_CLEANED) cleaned.clear();
+  cleaned.set(svg, result);
+  return result;
+}
+
+/**
+ * The registry key of an icon: its catalog id plus a hash of its sanitised
+ * markup (`iconify:lets:tree@1abc…`), or null when the markup is not safe.
+ * Two documents can carry different markup for the same catalog id; the
+ * content decides which icon is drawn, so neither changes the other's.
+ */
+export function externalIconKey(id: string, svg: unknown): string | null {
+  const clean = cleanIconSvg(svg);
+  return clean === null ? null : `${id}@${shortHash(clean)}`;
 }
 
 const formatName = (name: string) =>
@@ -66,22 +95,30 @@ const formatName = (name: string) =>
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
 
-export function registerExternalIcon(id: string, svg: string, source: IconSource | null): void {
-  if (!isExternalIconId(id) || !isPlainSvg(svg)) return;
-  if (registry.get(id)?.svg === svg) return;
+/** Registers the (sanitised) icon and returns its key; null when it is not an external icon or not safe. */
+export function registerExternalIcon(
+  id: string,
+  svg: string,
+  source: IconSource | null
+): string | null {
+  const clean = cleanIconSvg(svg);
+  if (!isExternalIconId(id) || clean === null) return null;
+  const key = `${id}@${shortHash(clean)}`;
+  if (registry.has(key)) return key;
   const name = source?.name ?? id.slice(id.lastIndexOf(':') + 1);
-  registry.set(id, {
-    svg,
-    def: { id, name: formatName(name), library: source?.setTitle ?? 'Iconify' },
+  registry.set(key, {
+    svg: clean,
+    def: { id: key, name: formatName(name), library: source?.setTitle ?? 'Iconify' },
   });
   version++;
+  return key;
 }
 
-export function getExternalIcon(id: string): Entry | null {
-  return registry.get(id) ?? null;
+export function getExternalIcon(key: string): Entry | null {
+  return registry.get(key) ?? null;
 }
 
-/** The registered icons by catalog id, for the renderer's lookup map. */
+/** The registered icons by key, for the renderer's lookup map. */
 export function externalIconDefs(): Record<string, IconDef> {
   return Object.fromEntries([...registry].map(([id, entry]) => [id, entry.def]));
 }
@@ -89,6 +126,7 @@ export function externalIconDefs(): Record<string, IconDef> {
 /** Test seam: forget every registered icon. */
 export function resetExternalIcons(): void {
   registry.clear();
+  cleaned.clear();
   version++;
 }
 
@@ -123,13 +161,19 @@ function toBase64(text: string): string {
   return btoa(binary);
 }
 
+const SAFE_COLOR = /^(?:#[0-9a-f]{3,8}|(?:rgb|hsl)a?\(\s*[\d.%\s,/-]+\)|[a-z]{3,30})$/i;
+
+/** A colour that cannot break out of an attribute: hex, rgb(a), hsl(a) or a name. */
+const isSafeColor = (color: string) => SAFE_COLOR.test(color);
+
 /** The SVG as a data URL of `size` px, `currentColor` replaced by `color`, for the canvas. */
 export function externalIconDataUrl(svg: string, size: number, color: string): string {
+  const ink = isSafeColor(color) ? color : '#000000';
   const sized = svg.replace(/<svg\b([^>]*)>/i, (_match, attrs: string) => {
     const rest = attrs.replace(/\s(?:width|height)="[^"]*"/gi, '');
     return `<svg${rest} width="${size}" height="${size}">`;
   });
-  return `data:image/svg+xml;base64,${toBase64(sized.replace(/currentColor/g, color))}`;
+  return `data:image/svg+xml;base64,${toBase64(sized.replace(/currentColor/g, () => ink))}`;
 }
 
 /** "Icon: <set> by <author>, <licence>" for the picker and for credits. */
