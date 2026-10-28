@@ -188,11 +188,43 @@ describe('BrandPage', () => {
     expect(await screen.findByText(/hand-set colours/)).toBeInTheDocument();
   });
 
-  it('shows no notice for a new pack or one that already matches the derivation', async () => {
-    const { deriveBrandColors } = await import('@ggraphic/core');
+  it('also tells the owner when only the stored grounds differ from the derived ones', async () => {
+    const { deriveBrandColors, deriveGrounds } = await import('@ggraphic/core');
     const base = defaultSettings('Org');
     const { primary, secondary, accent } = base.colors;
-    const matching = { ...base, colors: deriveBrandColors({ primary, secondary, accent })! };
+    const grounds = deriveGrounds({ primary, secondary, accent }).map(({ label, color, ink }) => ({
+      label,
+      color,
+      ink,
+    }));
+    grounds[0] = { ...grounds[0]!, color: '#FF00FF' };
+    const edited = {
+      ...base,
+      colors: deriveBrandColors({ primary, secondary, accent })!,
+      backgrounds: grounds,
+    };
+    stubServer((method, url) =>
+      url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET'
+        ? json(200, { ...empty, settings: edited })
+        : undefined
+    );
+    renderWith(<BrandPage />);
+    expect(await screen.findByText(/hand-set colours/)).toBeInTheDocument();
+  });
+
+  it('shows no notice for a new pack or one that already matches the derivation', async () => {
+    const { deriveBrandColors, deriveGrounds } = await import('@ggraphic/core');
+    const base = defaultSettings('Org');
+    const { primary, secondary, accent } = base.colors;
+    const matching = {
+      ...base,
+      colors: deriveBrandColors({ primary, secondary, accent })!,
+      backgrounds: deriveGrounds({ primary, secondary, accent }).map(({ label, color, ink }) => ({
+        label,
+        color,
+        ink,
+      })),
+    };
     stubServer((method, url) =>
       url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET'
         ? json(200, { ...empty, settings: matching })
