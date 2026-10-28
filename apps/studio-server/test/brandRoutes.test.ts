@@ -362,9 +362,19 @@ describe.skipIf(!hasDb)('brand packs (Postgres)', () => {
             throw new Error('the PUT never reached brand_assets');
           };
           await blocked();
-          // Another save sets a new layout. Under the row lock it has to wait for the PUT.
-          const newer = pool.query('update brand_packs set layout = $1', [JSON.stringify(next)]);
-          await Promise.race([newer, sleep(300)]);
+          // Another save sets a new layout. Under the row lock it has to wait for the PUT; without
+          // it, it commits at once. Wait for whichever happens, by an explicit signal.
+          let newerDone = false;
+          const newer = pool
+            .query('update brand_packs set layout = $1', [JSON.stringify(next)])
+            .then(() => (newerDone = true));
+          for (let i = 0; i < 200 && !newerDone; i++) {
+            const { rows } = await pool.query(
+              "select 1 from pg_stat_activity where wait_event_type = 'Lock' and query ilike 'update brand_packs%'"
+            );
+            if (rows.length > 0) break;
+            await sleep(20);
+          }
           await holder.query('rollback');
           const [res] = await Promise.all([stale, newer]);
           expect(res.status).toBe(200);

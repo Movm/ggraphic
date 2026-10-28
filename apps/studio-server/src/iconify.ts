@@ -390,15 +390,29 @@ export function createIconifyClient(
     await Promise.all(Array.from({ length: Math.min(BATCH_CONCURRENCY, queue.length) }, worker));
   }
 
-  /** Repeats of a cached search that are still warming, so they do not stack up. */
-  const warming = new Set<string>();
-  /** Runs a warm once per search key, and at most `MAX_BACKGROUND_WARMS` in the background. */
-  function warmOnce(key: string, run: () => Promise<void>, background: boolean): Promise<void> {
-    if (warming.has(key) || (background && warming.size >= MAX_BACKGROUND_WARMS)) {
-      return Promise.resolve();
+  /** Warms in progress by search key, so repeats do not stack up. */
+  const warming = new Map<string, Promise<void>>();
+  /**
+   * Runs a warm once per search key. A background caller that finds one running, or the cap of
+   * `MAX_BACKGROUND_WARMS` reached, returns at once. A caller that needs the outcome (a refresh,
+   * the first search) joins the running warm and waits for it, or waits for a free slot first;
+   * the upstream's own timeout bounds every wait.
+   */
+  async function warmOnce(
+    key: string,
+    run: () => Promise<void>,
+    background: boolean
+  ): Promise<void> {
+    for (;;) {
+      const running = warming.get(key);
+      if (running) return background ? undefined : running;
+      if (warming.size < MAX_BACKGROUND_WARMS) break;
+      if (background) return;
+      await Promise.race(warming.values());
     }
-    warming.add(key);
-    return run().finally(() => warming.delete(key));
+    const done = run().finally(() => warming.delete(key));
+    warming.set(key, done);
+    return done;
   }
 
   return {
@@ -410,9 +424,11 @@ export function createIconifyClient(
         { result: IconSearchResult; unbatchable: Set<string> } | undefined;
       if (hit) {
         // Icons a first attempt could not batch (rate limit) are fetched again, still in batches.
-        const run = warmOnce(key, () => warm(hit.result.icons, hit.unbatchable), true);
-        // A refresh waits for the retry; both share the per-search dedupe and the cap.
-        if (options?.refresh) await run;
+        const refresh = options?.refresh === true;
+        // A refresh waits for the retry (its own, or the one already running); a plain repeat
+        // answers at once. Both share the per-search dedupe and the cap.
+        const run = warmOnce(key, () => warm(hit.result.icons, hit.unbatchable), !refresh);
+        if (refresh) await run;
         return hit.result;
       }
       const allowed = await allowedSets();
