@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
 // Generates packages/editor/src/templates/fontWidths.generated.ts: the widest advance of every
-// code point the Studio's fonts (Raleway, Fraunces, Instrument Sans) cover, per family and per
-// weight class, read from the installed @fontsource WOFF files. The render gate measures text
+// code point the Studio's fonts (Raleway, Fraunces, Instrument Sans) draw, per family and per
+// weight class, read from the installed @fontsource WOFF files and the @font-face rules the
+// Studio loads. A code point counts only when every face of the class has the glyph AND its
+// CSS unicode-range admits it; the browser draws any other in a fallback font. The render gate measures text
 // with it, so a width is never below what the font draws. No dependencies: WOFF 1 is zlib
 // tables, and only cmap, head, hhea and hmtx are read.
 //
@@ -18,8 +20,12 @@ export const OUTPUT = join(root, 'packages/editor/src/templates/fontWidths.gener
 
 /** Family name as the editor spells it → @fontsource package. */
 const FAMILIES = { Raleway: 'raleway', Fraunces: 'fraunces', 'Instrument Sans': 'instrument-sans' };
-/** Weight class → the fontsource weights it takes the maximum over (normal and italic both). */
-const CLASSES = { regular: '400', bold: '700' };
+/**
+ * Weight class → the stylesheets the Studio loads for it (`apps/studio/src/fonts.ts`), both
+ * styles: a text may be italic in either class, so a code point counts only when every face
+ * of the class draws it.
+ */
+const CLASSES = { regular: ['400.css', '400-italic.css'], bold: ['700.css', '700-italic.css'] };
 
 function tables(buf) {
   if (buf.toString('latin1', 0, 4) !== 'wOFF') throw new Error('not a WOFF 1 file');
@@ -87,21 +93,48 @@ function advances(file) {
   return out;
 }
 
+/** The `@font-face` blocks of a fontsource stylesheet: file and CSS unicode-range. */
+function faces(css) {
+  const out = [];
+  for (const block of css.match(/@font-face\s*{[^}]*}/g) ?? []) {
+    const file = /url\(\.\/files\/([^)]+?)\.woff2\)/.exec(block)?.[1];
+    const range = /unicode-range:\s*([^;]+);/.exec(block)?.[1];
+    if (!file || !range) throw new Error('unexpected @font-face block');
+    const ranges = range.split(',').map((r) => {
+      const [from, to] = r.trim().replace(/^U\+/i, '').split('-');
+      if (from.includes('?'))
+        return [parseInt(from.replace(/\?/g, '0'), 16), parseInt(from.replace(/\?/g, 'f'), 16)];
+      return [parseInt(from, 16), parseInt(to ?? from, 16)];
+    });
+    out.push({ file, ranges });
+  }
+  return out;
+}
+
+/** code point → widest advance a stylesheet's faces draw: in the glyphs AND in the unicode-range. */
+function drawable(pkgDir, stylesheet) {
+  const out = new Map();
+  for (const { file, ranges } of faces(readFileSync(join(pkgDir, stylesheet), 'utf8'))) {
+    for (const [cp, w] of advances(join(pkgDir, 'files', `${file}.woff`))) {
+      if (!ranges.some(([from, to]) => cp >= from && cp <= to)) continue;
+      out.set(cp, Math.max(out.get(cp) ?? 0, w));
+    }
+  }
+  return out;
+}
+
 export function buildFontWidthsSource() {
   const require = createRequire(join(root, 'apps/studio/package.json'));
   const lines = [];
   for (const [family, pkg] of Object.entries(FAMILIES)) {
-    const dir = join(dirname(require.resolve(`@fontsource/${pkg}/package.json`)), 'files');
-    const files = readdirSync(dir)
-      .filter((f) => f.endsWith('.woff'))
-      .sort();
-    for (const [cls, weight] of Object.entries(CLASSES)) {
+    const dir = dirname(require.resolve(`@fontsource/${pkg}/package.json`));
+    for (const [cls, sheets] of Object.entries(CLASSES)) {
+      const perStyle = sheets.map((sheet) => drawable(dir, sheet));
       const widest = new Map();
-      for (const f of files) {
-        if (!new RegExp(`^${pkg}-[a-z-]+-${weight}-(normal|italic)\\.woff$`).test(f)) continue;
-        for (const [cp, w] of advances(join(dir, f))) {
-          widest.set(cp, Math.max(widest.get(cp) ?? 0, w));
-        }
+      for (const [cp, w] of perStyle[0]) {
+        const others = perStyle.slice(1).map((m) => m.get(cp));
+        if (others.some((o) => o === undefined)) continue;
+        widest.set(cp, Math.max(w, ...others));
       }
       const entries = [...widest]
         .sort((a, b) => a[0] - b[0])

@@ -8,7 +8,11 @@
  * and a populated fixture that sets every optional number. Keyed by `stateKey`, as `BINDABLE_FIELDS` is.
  */
 import { aliasFontFamily, type GateAdapter, type GeometryTable } from '@ggraphic/core';
+import { layoutRichTextBlock, PLAIN_STYLE, type MeasureRun } from '@ggraphic/schema';
 
+import { plainTextLines } from '../utils/plainTextLayout.js';
+import { usesRichText } from '../utils/textRouting.js';
+import { createRunMeasurer, type MeasureWidth, type TextAccent } from '../utils/textUtils.js';
 import { FONT_WIDTHS } from './fontWidths.generated.js';
 import { getAllIllustrations } from '../utils/illustrations/registry.js';
 import type { IllustrationDef } from '../utils/illustrations/types.js';
@@ -146,15 +150,24 @@ const num = (el: El, field: string, fallback = 0): number => {
   return typeof v === 'number' && Number.isFinite(v) ? v : fallback;
 };
 
+const ROTATED = 'rotated, not checkable';
+const isRotated = (el: Readonly<Record<string, unknown>>): boolean =>
+  num(el, 'rotation') % 360 !== 0;
+
 /** Editor icons are drawn 120 px across at scale 1, centred on their x/y (as `boundsOf`). */
 const ICON_SIZE = 120;
 /**
- * Text is measured with the widest advance of each code point in the fonts the Studio ships
- * (`fontWidths.generated.ts`, from `scripts/generate-font-widths.mjs`), so a width is never
- * below what the font draws. A font family without a table, or a code point the tables do not
- * cover (CJK, emoji, Thai, ...), cannot be measured: the gate then fails `bounds` closed.
+ * Text is laid out by the renderer's own code (`plainTextLines`, a port of Konva's wrap, and
+ * `layoutRichTextBlock`, routed by `usesRichText` as `CanvasText` routes), with the glyph
+ * measure replaced by the widest advance of each code point in the fonts the Studio ships
+ * (`fontWidths.generated.ts`, from `scripts/generate-font-widths.mjs`) plus a kerning margin per
+ * glyph pair. A width is thus never below what the font draws. A font family without a table, or a
+ * code point the tables do not cover (CJK, emoji, a code point the browser draws in a fallback
+ * font), cannot be measured: the gate then fails `bounds` closed.
  */
 const FLAT_EM = 1.2; // only to size a box that is flagged anyway
+/** The widest positive kerning pair of the shipped fonts is about 0.15 em; 0.06 em per pair covers every realistic pair. */
+const KERN_EM = 0.06;
 
 const tables = new Map<string, Map<number, number>>();
 function widthTable(family: string, bold: boolean): Map<number, number> | null {
@@ -182,112 +195,136 @@ function familyOf(fontFamily: string): string {
   return first === '' ? '' : aliasFontFamily(first);
 }
 
-interface TextMetrics {
-  fontSize: number;
-  fontFamily: string;
-  bold: boolean;
-  letterSpacing: number;
+/** `normal`, `italic`, `bold` or `bold italic`: a weight of 600 or more, or the word bold, is bold. */
+function normalFontStyle(fontStyle: string): 'normal' | 'italic' | 'bold' | 'bold italic' {
+  const tokens = fontStyle.toLowerCase().split(/\s+/);
+  const bold = tokens.some(
+    (t) => t === 'bold' || t === 'bolder' || (/^\d+$/.test(t) && Number(t) >= 600)
+  );
+  const italic = tokens.some((t) => t === 'italic' || t === 'oblique');
+  return bold ? (italic ? 'bold italic' : 'bold') : italic ? 'italic' : 'normal';
 }
 
-/** Advances of a text's characters, or why it cannot be measured. */
-function advancesOf(
+interface Note {
+  reason: string | null;
+}
+
+/** Width of `text` under one face, from the tables; records why it cannot when it cannot. */
+function tableWidth(
   text: string,
-  m: TextMetrics
-): { widths: number[]; unmeasurable: string | null } {
-  const table = widthTable(familyOf(m.fontFamily), m.bold);
-  let unmeasurable: string | null = null;
-  if (!table && text !== '') {
-    unmeasurable = `text width not checkable (no width table for font "${m.fontFamily}")`;
+  fontSize: number,
+  family: string,
+  bold: boolean,
+  note: Note
+): number {
+  if (text === '') return 0;
+  const table = widthTable(familyOf(family), bold);
+  if (!table) {
+    note.reason ??= `text width not checkable (no width table for font "${family}")`;
   }
-  const widths = [...text].map((ch) => {
+  let units = 0;
+  let count = 0;
+  for (const ch of text) {
     const w = table?.get(ch.codePointAt(0)!);
     if (table && w === undefined) {
-      unmeasurable ??= `text width not checkable (U+${ch.codePointAt(0)!.toString(16).toUpperCase()} is outside the font tables)`;
+      note.reason ??= `text width not checkable (U+${ch.codePointAt(0)!.toString(16).toUpperCase()} is outside the font tables)`;
     }
-    return ((w === undefined ? FLAT_EM * 1000 : w) / 1000) * m.fontSize + m.letterSpacing;
-  });
-  return { widths, unmeasurable };
-}
-
-const metricsOf = (el: Readonly<Record<string, unknown>>): TextMetrics => ({
-  fontSize: num(el, 'fontSize'),
-  fontFamily: str(el, 'fontFamily'),
-  bold: str(el, 'fontStyle').includes('bold'),
-  letterSpacing: num(el, 'letterSpacing'),
-});
-
-/** Greedy word wrap with the widths above; a word longer than the line breaks on a character. */
-function wrapped(
-  text: string,
-  m: TextMetrics,
-  width: number
-): { lines: number; unmeasurable: string | null } {
-  let total = 0;
-  let unmeasurable: string | null = null;
-  for (const line of text.split('\n')) {
-    const { widths, unmeasurable: bad } = advancesOf(line, m);
-    unmeasurable ??= bad;
-    if (!(width > 0)) {
-      total += 1;
-      continue;
-    }
-    const chars = [...line];
-    const space = advancesOf(' ', m).widths[0]!;
-    let count = 1;
-    let used = 0;
-    let at = 0;
-    // Split into words, keeping each word's character widths.
-    const words: number[][] = [];
-    let cur: number[] = [];
-    chars.forEach((ch, i) => {
-      if (ch === ' ') {
-        words.push(cur);
-        cur = [];
-      } else cur.push(widths[i]!);
-    });
-    words.push(cur);
-    for (const word of words) {
-      const w = word.reduce((a, b) => a + b, 0);
-      if (used > 0 && used + space + w <= width) {
-        used += space + w;
-        continue;
-      }
-      if (used > 0) {
-        count += 1;
-        used = 0;
-      }
-      at = 0;
-      for (const cw of word) {
-        if (used > 0 && used + cw > width) {
-          count += 1;
-          used = 0;
-        }
-        used += cw;
-      }
-      void at;
-    }
-    total += count;
+    units += w === undefined ? FLAT_EM * 1000 : w;
+    count += 1;
   }
-  return { lines: total, unmeasurable };
+  return (units / 1000 + KERN_EM * (count - 1)) * fontSize;
 }
 
-/** The widest line of a text with explicit breaks only (a pill does not wrap). */
+interface TextProps {
+  text: string;
+  fontSize: number;
+  fontFamily: string;
+  fontStyle: 'normal' | 'italic' | 'bold' | 'bold italic';
+  width: number;
+  letterSpacing: number;
+  accent: TextAccent | null;
+  wrap: 'word' | 'char' | 'none';
+  padding: number;
+  richText: boolean;
+}
+
+const textPropsOf = (el: Readonly<Record<string, unknown>>): TextProps => {
+  const accent = el['accent'];
+  const wrap = el['wrap'];
+  return {
+    text: str(el, 'text'),
+    fontSize: num(el, 'fontSize'),
+    fontFamily: str(el, 'fontFamily'),
+    fontStyle: normalFontStyle(str(el, 'fontStyle')),
+    width: num(el, 'width'),
+    // The plain path renders no letter spacing today; a positive value is counted anyway.
+    letterSpacing: Math.max(0, num(el, 'letterSpacing')),
+    accent: isRecord(accent) ? (accent as unknown as TextAccent) : null,
+    wrap: wrap === 'char' || wrap === 'none' ? wrap : 'word',
+    padding: num(el, 'padding'),
+    richText: el['richText'] === true,
+  };
+};
+
+/** The run measure of the renderer, backed by the tables. */
+function tableRunMeasure(p: TextProps, note: Note): MeasureRun {
+  const accentBold = p.accent?.fontStyle
+    ? normalFontStyle(p.accent.fontStyle).includes('bold')
+    : false;
+  const measured: MeasureWidth = (text, size, family, style) => {
+    // A bold request on an italic run draws the italic face (maybe synthetically emboldened):
+    // use the bold table whenever bold is asked anywhere.
+    const bold = style.includes('bold') || p.fontStyle.includes('bold') || accentBold;
+    return tableWidth(text, size, family, bold, note);
+  };
+  return createRunMeasurer(measured, p.fontSize, p.fontFamily, p.fontStyle, p.accent);
+}
+
+interface TextLayout {
+  lines: number;
+  unmeasurable: string | null;
+}
+
+/** Line count of a text by the renderer's own layout. */
+function layoutText(p: TextProps): TextLayout {
+  const note: Note = { reason: null };
+  const run = tableRunMeasure(p, note);
+  const inner = p.width > 0 ? Math.max(p.width - 2 * p.padding, 1) : Number.POSITIVE_INFINITY;
+  let lines: number;
+  if (
+    usesRichText(
+      { text: p.text, richText: p.richText, width: p.width, wrap: p.wrap, padding: p.padding },
+      run
+    )
+  ) {
+    lines = layoutRichTextBlock(p.text, inner, run).length;
+  } else if (p.wrap === 'none') {
+    lines = p.text.split('\n').length;
+  } else {
+    lines = plainTextLines(
+      p.text,
+      inner,
+      (text, graphemes) => run(text, PLAIN_STYLE) + p.letterSpacing * graphemes,
+      p.wrap
+    ).length;
+  }
+  return { lines: Math.max(1, lines), unmeasurable: note.reason };
+}
+
+/** The widest explicit line of a text that does not wrap (a badge), and how many lines it has. */
 function widestLine(
   text: string,
-  m: TextMetrics
+  fontSize: number,
+  fontFamily: string,
+  fontStyle: string
 ): { width: number; lines: number; unmeasurable: string | null } {
-  let width = 0;
-  let unmeasurable: string | null = null;
+  const note: Note = { reason: null };
+  const bold = normalFontStyle(fontStyle).includes('bold');
   const parts = text.split('\n');
-  for (const line of parts) {
-    const a = advancesOf(line, m);
-    unmeasurable ??= a.unmeasurable;
-    width = Math.max(
-      width,
-      a.widths.reduce((x, y) => x + y, 0)
-    );
-  }
-  return { width, lines: parts.length, unmeasurable };
+  const width = Math.max(
+    ...parts.map((line) => tableWidth(line, fontSize, fontFamily, bold, note))
+  );
+  return { width, lines: parts.length, unmeasurable: note.reason };
 }
 
 /**
@@ -395,27 +432,50 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
     },
     lineCount(stateKey, el) {
       if (stateKey !== 'additionalTexts' || typeof el['text'] !== 'string') return 1;
-      return wrapped(el['text'], metricsOf(el), num(el, 'width')).lines;
+      return layoutText(textPropsOf(el)).lines;
+    },
+    boundsProblem(stateKey, el) {
+      // Images, frames and charts turn about a pivot of their own and their paint is not
+      // modelled: a rotated one cannot be placed against a frame.
+      if (
+        (stateKey === 'userImageInstances' ||
+          stateKey === 'frameInstances' ||
+          stateKey === 'chartInstances') &&
+        isRotated(el)
+      ) {
+        return ROTATED;
+      }
+      return null;
     },
     box(stateKey, el, lines) {
       const x = num(el, 'x');
       const y = num(el, 'y');
       switch (stateKey) {
-        case 'additionalTexts':
-          // Scale and rotation are ignored on purpose: the gate checks the laid-out text
-          // against its own width, not where a transform puts it.
+        case 'additionalTexts': {
+          // The node is scaled as a whole: layout at the unscaled width, drawn `scale` times larger.
+          const scale = num(el, 'scale', 1) || 1;
           return {
             x,
             y,
-            width: num(el, 'width'),
-            height: num(el, 'fontSize') * num(el, 'lineHeight', 1.2) * lines,
+            width: num(el, 'width') * scale,
+            height: num(el, 'fontSize') * num(el, 'lineHeight', 1.2) * lines * scale,
           };
+        }
         case 'shapeInstances': {
           const width = num(el, 'width') * num(el, 'scaleX', 1);
           const height = num(el, 'height') * num(el, 'scaleY', 1);
-          return { x: x - width / 2, y: y - height / 2, width, height };
+          // A shape turns about its centre: its extent is the box of the turned rectangle.
+          const angle = (num(el, 'rotation') * Math.PI) / 180;
+          const cos = Math.abs(Math.cos(angle));
+          const sin = Math.abs(Math.sin(angle));
+          const w = width * cos + height * sin;
+          const h = width * sin + height * cos;
+          return { x: x - w / 2, y: y - h / 2, width: w, height: h };
         }
-        case 'chartInstances':
+        case 'chartInstances': {
+          const scale = num(el, 'scale', 1) || 1;
+          return { x, y, width: num(el, 'width') * scale, height: num(el, 'height') * scale };
+        }
         case 'userImageInstances':
           return { x, y, width: num(el, 'width'), height: num(el, 'height') };
         case 'iconStates': {
@@ -425,13 +485,18 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
         case 'pillBadgeInstances': {
           // Top-left anchored; the text is as wide as its widest line, one line per break.
           const scale = num(el, 'scale', 1);
-          const m = metricsOf(el);
-          const { width, lines: count } = widestLine(str(el, 'text'), m);
+          const fontSize = num(el, 'fontSize');
+          const { width, lines: count } = widestLine(
+            str(el, 'text'),
+            fontSize,
+            str(el, 'fontFamily'),
+            str(el, 'fontStyle')
+          );
           return {
             x,
             y,
             width: (width + num(el, 'paddingX') * 2) * scale,
-            height: (count * m.fontSize + num(el, 'paddingY') * 2) * scale,
+            height: (count * fontSize + num(el, 'paddingY') * 2) * scale,
           };
         }
         case 'circleBadgeInstances': {
@@ -443,30 +508,31 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
       }
     },
     text(stateKey, el) {
-      const style = el['fontStyle'];
       const opacity = num(el, 'opacity', 1);
-      const rotated = num(el, 'rotation') % 360 !== 0;
-      const ROTATED = 'rotated, not checkable';
+      const rotated = isRotated(el);
+      const scale = num(el, 'scale', 1) || 1;
       if (stateKey === 'additionalTexts') {
-        const unmeasurable = wrapped(str(el, 'text'), metricsOf(el), num(el, 'width')).unmeasurable;
-        const boundsProblem = rotated ? ROTATED : unmeasurable;
+        const props = textPropsOf(el);
+        const boundsProblem = rotated ? ROTATED : layoutText(props).unmeasurable;
         return {
           fill: typeof el['fill'] === 'string' ? el['fill'] : '',
-          fontSize: num(el, 'fontSize'),
-          bold: typeof style === 'string' && style.includes('bold'),
+          fontSize: props.fontSize * scale,
+          bold: props.fontStyle.includes('bold'),
           opacity,
           ...(boundsProblem ? { boundsProblem } : {}),
           ...(el['fillGradient'] ? { notCheckable: 'text gradient not checkable' } : {}),
         };
       }
       if (stateKey === 'pillBadgeInstances') {
+        const fontSize = num(el, 'fontSize');
         const boundsProblem = rotated
           ? ROTATED
-          : widestLine(str(el, 'text'), metricsOf(el)).unmeasurable;
+          : widestLine(str(el, 'text'), fontSize, str(el, 'fontFamily'), str(el, 'fontStyle'))
+              .unmeasurable;
         return {
           fill: str(el, 'textColor'),
-          fontSize: num(el, 'fontSize'),
-          bold: typeof style === 'string' && style.includes('bold'),
+          fontSize: fontSize * scale,
+          bold: normalFontStyle(str(el, 'fontStyle')).includes('bold'),
           opacity,
           ground: str(el, 'backgroundColor'),
           ...(boundsProblem ? { boundsProblem } : {}),
@@ -485,12 +551,12 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
             width,
             lines: count,
             unmeasurable,
-          } = widestLine(str(l, 'text'), {
+          } = widestLine(
+            str(l, 'text'),
             fontSize,
-            fontFamily: str(l, 'fontFamily'),
-            bold: l['fontWeight'] === 'bold',
-            letterSpacing: 0,
-          });
+            str(l, 'fontFamily'),
+            l['fontWeight'] === 'bold' ? 'bold' : 'normal'
+          );
           const reach = Math.abs(num(l, 'yOffset')) + fontSize / 2;
           if (unmeasurable) boundsProblem = unmeasurable;
           else if (count > 1 || width > radius * 2) boundsProblem = 'text wraps inside the disc';
@@ -498,7 +564,7 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
         }
         return {
           fill: str(el, 'textColor'),
-          fontSize: lines.length ? Math.min(...lines.map((l) => num(l, 'fontSize'))) : 0,
+          fontSize: (lines.length ? Math.min(...lines.map((l) => num(l, 'fontSize'))) : 0) * scale,
           bold: lines.length > 0 && lines.every((l) => l['fontWeight'] === 'bold'),
           opacity,
           ground: str(el, 'backgroundColor'),
@@ -518,7 +584,7 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
         (gradient !== undefined && gradient !== null) ||
         num(el, 'opacity', 1) < 1 ||
         (blend !== undefined && blend !== 'normal') ||
-        num(el, 'rotation') % 360 !== 0
+        isRotated(el)
       ) {
         return { kind: 'unknown' };
       }
