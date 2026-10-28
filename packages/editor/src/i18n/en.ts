@@ -111,7 +111,6 @@ export const en: Messages = {
     area: 'Area',
     shapeCircle: 'Shape: Circle',
     group: 'Group',
-    bar: 'Banner',
     icon: 'Icon',
     shape: (name) => `Shape: ${name}`,
     frame: 'Frame',
@@ -164,6 +163,16 @@ export const en: Messages = {
     partlySent: (sent) =>
       `${sent === 1 ? 'Page 1 was' : `Pages 1 to ${sent} were`} sent individually, page ${sent + 1} was not.`,
     allSent: 'The pages were sent individually.',
+  },
+
+  formats: {
+    groups: {
+      sharepic: 'Sharepics',
+      'sharepic-tall': 'Sharepics 3:4',
+      profilbild: 'Profile picture',
+      praesentation: 'Presentations',
+      print: 'Print',
+    },
   },
 
   uploads: {
@@ -386,6 +395,7 @@ export const en: Messages = {
     },
     layers: {
       title: 'Layers',
+      tabAriaLabel: 'Layers: all elements on the page',
       hint: 'The frontmost element is at the top.',
       empty: 'There are no elements on this page.',
     },
@@ -429,16 +439,6 @@ export const en: Messages = {
       seriesName: (n: number) => `Name of series ${n}`,
       removeSeries: (name: string) => `Remove ${name}`,
     },
-    bars: {
-      duplicate: 'Duplicate bar',
-      remove: 'Remove bar',
-      colorScheme: 'Color scheme',
-      width: 'Bar width',
-      fineTune: 'Fine tuning',
-      selected: 'Selected bar',
-      colorHint:
-        'Choose a color scheme that makes your bars easy to read. The preview shows how the three bars will be colored. Make sure there is good contrast between the bar color and the text.',
-    },
     text: {
       placeholderHeader: 'Heading...',
       placeholderSubheader: 'Subtitle...',
@@ -466,10 +466,6 @@ export const en: Messages = {
     badges: {
       addPill: 'Add pill badge',
       addCircle: 'Add burst badge',
-      addBar: 'Add single bar',
-      oneBar: '1 bar',
-      addTripleBar: 'Add triple bar',
-      threeBars: '3 bars',
       circle: 'Burst badge',
     },
     tools: {
@@ -637,6 +633,68 @@ export const en: Messages = {
     fontSize: 'Font size',
   },
 
+  shell: {
+    addPage: 'Add page',
+    addNewPage: 'Add new page',
+    editPage: (n) => `Edit page ${n}`,
+    pageThumbnail: (n, selected) => `Page ${n}${selected ? ' (selected)' : ''}`,
+    pageOf: (n, total) => `Page ${n} of ${total}`,
+    zoomOut: 'Zoom out',
+    zoomIn: 'Zoom in',
+    fullscreen: 'Fullscreen',
+    exitFullscreen: 'Exit fullscreen',
+    skipToLayers: 'Skip to layers',
+    share: 'Share',
+    shareTabAriaLabel: 'Share: pass the image on',
+    shared: 'Shared!',
+    download: 'Download',
+    downloading: 'Downloading...',
+    downloadAndShare: 'Download & share',
+    downloadImage: 'Download image',
+    shareImage: 'Share image',
+    downloadTab: 'Download',
+    template: 'Template',
+    saveAsTemplate: 'Save as template',
+    templateHint:
+      'Save this sharepic as a template for yourself – or submit it to the public template gallery.',
+    thisPagePng: 'This page (PNG)',
+    allPagesZip: (n) => `All ${n} pages (ZIP)`,
+    exporting: 'Exporting...',
+    shareThisPage: 'Share this page',
+    shareAllPages: 'Share all pages',
+    pagesProgress: (current, total) => `${current}/${total} pages`,
+    retry: 'Try again',
+    syncing: 'Syncing...',
+    savedToGallery: 'Saved to gallery',
+    toGallery: 'To gallery',
+    saveError: 'Could not save',
+    people: 'People',
+    feedback: 'Feedback',
+    copied: 'Copied',
+    copyPhotoCredit: 'Copy photo credit',
+    schemaRefusal: {
+      newer:
+        'This design was saved with a newer version and cannot be edited here. Update the app or reload the page.',
+      invalid: 'This design cannot be opened safely here and stays unchanged.',
+    },
+    downloadPanel: {
+      format: 'Format',
+      pdfPrint: 'PDF (print)',
+      resolution: 'Resolution',
+      transparentBackground: 'Transparent background',
+      currentPage: 'Current page',
+      selectPages: 'Select pages',
+      defaultMark: '(default)',
+      impressumMissingNotice: 'The imprint is not complete yet – you can still download.',
+      impressumHeading: 'Complete the imprint',
+      impressumNameRequired: (field) => `Please enter ${field}.`,
+      impressumAddress: 'Address',
+      impressumAddressPlaceholder: 'Street no., postcode city',
+      impressumAddressRequired: 'Please enter the address.',
+      impressumSubmit: 'Apply',
+    },
+  },
+
   topBar: {
     editSelection: 'Edit selection',
     nothingDeletable: 'None of this can be deleted',
@@ -658,6 +716,7 @@ export const en: Messages = {
     autoCrop: 'Choose crop automatically',
     cancelCrop: 'Cancel (discard crop)',
     doneCrop: 'Done (Esc)',
+    saved: 'Saved',
     saveShort: 'Saving …',
     saveErrorShort: 'Could not save',
     saving: 'Saving...',

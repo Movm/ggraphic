@@ -34,3 +34,13 @@ Signed-off-by: <Name> <email>
 ```
 
 The body line "Initial import from netzbegruenung/Gruenerator@<sha>" must stay verbatim so provenance is greppable.
+
+## Re-import (three-way)
+
+Later imports are three-way merges, so ggraphic's own changes to the core packages survive.
+
+1. **Import commit on the previous import.** Branch a local `import/gruenerator-<sha>` from the previous import commit (for example `c55d402`). `rsync -a --delete` the export of each `packages/ggraphic-<p>/` over `packages/<p>/`, excluding the files rewritten at the last import: the four package `tsconfig.json` files and `packages/editor/package.json`. For those files, replay Gruenerator's own delta by hand: `diff` the previous export against the new one and apply that delta to the ggraphic version. An empty delta keeps the file as is. Never take Gruenerator's version wholesale.
+2. **Check the commit holds only the package trees**: `git status --short | grep -v '^.. packages/\(schema\|core\|editor\|collab\)/'` prints nothing.
+3. **Commit with `git commit -s`** and the verbatim provenance line `Initial import from netzbegruenung/Gruenerator@<full sha>` in the body, plus the four source packages and the Gruenerator PR whose head the tree equals.
+4. **Merge with `--no-ff`** into a branch created from `main`. Resolve conflicts file by file and keep both intents. Then build and typecheck: a clean textual merge can still leave duplicate identifiers or imports.
+5. **Keep the import branch local**, never push it. After the merge its commit is reachable, so delete the branch with `git branch -D`.
