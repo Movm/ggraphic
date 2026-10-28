@@ -3,6 +3,7 @@
  * The logged-in account and the organisation it works in. The organisation choice
  * is remembered per browser (a convenience: the server checks membership anyway).
  */
+import { Alert } from '@ggraphic/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
 
@@ -68,12 +69,10 @@ export function SessionProvider({
 
 function NoOrganisation() {
   return (
-    <main className="studio-page">
-      <div role="alert" className="studio-error">
-        <p>
-          Your account is not a member of any organisation. Ask an owner for an invitation link.
-        </p>
-      </div>
+    <main className="ui-root studio-standalone">
+      <Alert tone="danger">
+        Your account is not a member of any organisation. Ask an owner for an invitation link.
+      </Alert>
     </main>
   );
 }

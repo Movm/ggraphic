@@ -3,8 +3,16 @@
  * The current organisation's brand pack: name, the eight colour roles, the grounds,
  * fonts and logo, with a live preview. Owners only; the server checks that too.
  */
+import { Alert, Button, Card, Select, TextField } from '@ggraphic/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useId, useMemo, useState, type FormEvent } from 'react';
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useState,
+  type FormEvent,
+  type InputHTMLAttributes,
+} from 'react';
 
 import {
   api,
@@ -16,7 +24,7 @@ import {
 import { studioBrand } from '../brand';
 import { loadBrandFonts } from '../brandLoader';
 import { useLoggedIn } from '../session/SessionContext';
-import { AccountBar } from '../ui/AccountBar';
+import { PageShell, PageTitle } from '../ui/PageShell';
 import { toast } from '../ui/toast';
 import { BrandPreview } from './BrandPreview';
 
@@ -34,6 +42,8 @@ export const COLOR_ROLES: readonly { role: ColorRole; label: string; hint: strin
 ];
 
 const MAX_GROUNDS = 12;
+// Radix Select items cannot carry an empty value.
+const NO_LOGO = 'none';
 let keyCounter = 0;
 const newKey = () => `ground-${keyCounter++}`;
 const HEX = /^#[0-9A-Fa-f]{6}$/;
@@ -67,11 +77,7 @@ export function BrandPage() {
   } else if (brand.isPending) {
     content = <p className="studio-muted">Loading the brand…</p>;
   } else if (brand.isError) {
-    content = (
-      <p role="alert" className="studio-error">
-        {errorText(brand.error)}
-      </p>
-    );
+    content = <Alert tone="danger">{errorText(brand.error)}</Alert>;
   } else {
     content = (
       <BrandEditor
@@ -84,13 +90,12 @@ export function BrandPage() {
   }
 
   return (
-    <main className="studio-page">
+    <PageShell>
       <header className="studio-header">
-        <h1 className="studio-logo">Brand of {organisation.name}</h1>
-        <AccountBar />
+        <PageTitle>Brand of {organisation.name}</PageTitle>
       </header>
       {content}
-    </main>
+    </PageShell>
   );
 }
 
@@ -110,7 +115,6 @@ function BrandEditor({
   const [groundIndex, setGroundIndex] = useState<number | 'primary'>('primary');
   // Stable list keys for the grounds, which have no id of their own until the server builds one.
   const [groundKeys, setGroundKeys] = useState(() => settings.backgrounds.map(newKey));
-  const id = useId();
   const fonts = useMemo(() => data.assets.filter((a) => a.kind === 'font'), [data.assets]);
   const logos = data.assets.filter((a) => a.kind === 'logo');
   const families = [...new Set([...data.bundledFonts, ...fonts.map((f) => f.family ?? '')])].filter(
@@ -169,16 +173,13 @@ function BrandEditor({
           if (!invalid && !save.isPending) save.mutate();
         }}
       >
-        <div className="studio-field">
-          <label htmlFor={`${id}-name`}>Brand name</label>
-          <input
-            id={`${id}-name`}
-            required
-            maxLength={100}
-            value={settings.name}
-            onChange={(e) => setSettings((s) => ({ ...s, name: e.target.value }))}
-          />
-        </div>
+        <TextField
+          label="Brand name"
+          required
+          maxLength={100}
+          value={settings.name}
+          onChange={(e) => setSettings((s) => ({ ...s, name: e.target.value }))}
+        />
 
         <fieldset className="studio-brand__group">
           <legend>Colours</legend>
@@ -201,24 +202,22 @@ function BrandEditor({
           <ul className="studio-brand__grounds">
             {settings.backgrounds.map((b, i) => (
               <li key={groundKeys[i]} className="studio-brand__ground">
-                <label>
-                  <span className="studio-visually-hidden">Name of ground {i + 1}</span>
-                  <input
-                    value={b.label}
-                    maxLength={40}
-                    required
-                    onChange={(e) => setGround(i, { label: e.target.value })}
-                  />
-                </label>
+                <TextField
+                  label={`Name of ground ${i + 1}`}
+                  value={b.label}
+                  maxLength={40}
+                  required
+                  onChange={(e) => setGround(i, { label: e.target.value })}
+                />
                 <ColorField
                   label="Colour"
                   value={b.color}
                   onChange={(color) => setGround(i, { color })}
                 />
                 <ColorField label="Text" value={b.ink} onChange={(ink) => setGround(i, { ink })} />
-                <button
-                  type="button"
-                  className="studio-button"
+                <Button
+                  variant="outline"
+                  size="sm"
                   disabled={settings.backgrounds.length <= 1}
                   onClick={() => {
                     setGroundIndex('primary');
@@ -230,13 +229,14 @@ function BrandEditor({
                   }}
                 >
                   Remove
-                </button>
+                </Button>
               </li>
             ))}
           </ul>
-          <button
-            type="button"
-            className="studio-button"
+          <Button
+            variant="outline"
+            size="sm"
+            className="studio-brand__add"
             disabled={settings.backgrounds.length >= MAX_GROUNDS}
             onClick={() => {
               setGroundKeys((keys) => [...keys, newKey()]);
@@ -250,30 +250,21 @@ function BrandEditor({
             }}
           >
             Add a ground
-          </button>
+          </Button>
         </fieldset>
 
         <fieldset className="studio-brand__group">
           <legend>Fonts</legend>
           {(['headline', 'body'] as const).map((slot) => (
-            <div key={slot} className="studio-field">
-              <label htmlFor={`${id}-${slot}`}>
-                {slot === 'headline' ? 'Headlines' : 'Body text'}
-              </label>
-              <select
-                id={`${id}-${slot}`}
-                value={settings.fonts[slot]}
-                onChange={(e) =>
-                  setSettings((s) => ({ ...s, fonts: { ...s.fonts, [slot]: e.target.value } }))
-                }
-              >
-                {families.map((f) => (
-                  <option key={f} value={f}>
-                    {f}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Select
+              key={slot}
+              label={slot === 'headline' ? 'Headlines' : 'Body text'}
+              value={settings.fonts[slot]}
+              onValueChange={(family) =>
+                setSettings((s) => ({ ...s, fonts: { ...s.fonts, [slot]: family } }))
+              }
+              options={families.map((f) => ({ value: f, label: f }))}
+            />
           ))}
           <FontUpload orgId={orgId} onUploaded={() => void reload()} />
           <AssetList
@@ -296,23 +287,20 @@ function BrandEditor({
             }}
           />
           {logos.length > 0 ? (
-            <div className="studio-field">
-              <label htmlFor={`${id}-logo`}>Logo in use</label>
-              <select
-                id={`${id}-logo`}
-                value={settings.logoAssetId ?? ''}
-                onChange={(e) =>
-                  setSettings((s) => ({ ...s, logoAssetId: e.target.value || null }))
-                }
-              >
-                <option value="">No logo</option>
-                {logos.map((l, i) => (
-                  <option key={l.id} value={l.id}>
-                    Logo {i + 1} ({l.contentType === 'image/png' ? 'PNG' : 'WebP'})
-                  </option>
-                ))}
-              </select>
-            </div>
+            <Select
+              label="Logo in use"
+              value={settings.logoAssetId ?? NO_LOGO}
+              onValueChange={(value) =>
+                setSettings((s) => ({ ...s, logoAssetId: value === NO_LOGO ? null : value }))
+              }
+              options={[
+                { value: NO_LOGO, label: 'No logo' },
+                ...logos.map((l, i) => ({
+                  value: l.id,
+                  label: `Logo ${i + 1} (${l.contentType === 'image/png' ? 'PNG' : 'WebP'})`,
+                })),
+              ]}
+            />
           ) : null}
           <AssetList
             orgId={orgId}
@@ -328,18 +316,10 @@ function BrandEditor({
           />
         </fieldset>
 
-        {invalid ? (
-          <p role="alert" className="studio-auth__error">
-            Every colour must be written as #RRGGBB.
-          </p>
-        ) : null}
-        <button
-          type="submit"
-          className="studio-button studio-button--primary"
-          disabled={invalid || save.isPending}
-        >
+        {invalid ? <Alert tone="danger">Every colour must be written as #RRGGBB.</Alert> : null}
+        <Button type="submit" className="studio-brand__save" disabled={invalid || save.isPending}>
           {save.isPending ? 'Saving…' : 'Save brand'}
-        </button>
+        </Button>
       </form>
 
       <aside className="studio-brand__preview" aria-label="Live preview">
@@ -383,30 +363,72 @@ function ColorField({
   value: string;
   onChange: (color: string) => void;
 }) {
-  const id = useId();
   const valid = HEX.test(value);
   return (
-    <div className="studio-color">
-      <label htmlFor={`${id}-text`}>
-        {label}
-        {hint ? <small className="studio-muted"> {hint}</small> : null}
-      </label>
-      <span className="studio-color__inputs">
+    <TextField
+      className="studio-color"
+      label={
+        <>
+          {label}
+          {hint ? <small className="studio-muted"> {hint}</small> : null}
+        </>
+      }
+      value={value}
+      maxLength={7}
+      spellCheck={false}
+      aria-invalid={!valid}
+      onChange={(e) => onChange(e.target.value.trim())}
+      endAdornment={
         <input
           type="color"
+          className="studio-color__picker"
           aria-label={`${label}: colour picker`}
           value={valid ? value.toLowerCase() : '#000000'}
           onChange={(e) => onChange(e.target.value.toUpperCase())}
         />
-        <input
-          id={`${id}-text`}
-          value={value}
-          maxLength={7}
-          spellCheck={false}
-          aria-invalid={!valid}
-          onChange={(e) => onChange(e.target.value.trim())}
-        />
-      </span>
+      }
+    />
+  );
+}
+
+/** A file input in the kit's field frame (the kit has no file field yet). */
+function FileField({
+  label,
+  hint,
+  error,
+  ...input
+}: {
+  label: string;
+  hint?: string;
+  error?: string | null;
+} & Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'className'>) {
+  const id = useId();
+  const describedBy = [hint ? `${id}-hint` : null, error ? `${id}-error` : null]
+    .filter(Boolean)
+    .join(' ');
+  return (
+    <div className={`ui-field${error ? ' ui-field--invalid' : ''}`}>
+      <label htmlFor={id} className="ui-field__label">
+        {label}
+      </label>
+      <input
+        {...input}
+        id={id}
+        type="file"
+        className="studio-file"
+        aria-invalid={error ? true : undefined}
+        aria-describedby={describedBy || undefined}
+      />
+      {hint ? (
+        <p id={`${id}-hint`} className="ui-field__hint">
+          {hint}
+        </p>
+      ) : null}
+      {error ? (
+        <Alert id={`${id}-error`} tone="danger">
+          {error}
+        </Alert>
+      ) : null}
     </div>
   );
 }
@@ -418,6 +440,7 @@ function FontUpload({ orgId, onUploaded }: { orgId: string; onUploaded: () => vo
   const [style, setStyle] = useState<'normal' | 'italic'>('normal');
   const [licence, setLicence] = useState('');
   const [formKey, setFormKey] = useState(0);
+  const [fileError, setFileError] = useState<string | null>(null);
   const id = useId();
   const upload = useMutation({
     mutationFn: () =>
@@ -431,91 +454,77 @@ function FontUpload({ orgId, onUploaded }: { orgId: string; onUploaded: () => vo
       setFile(null);
       setFamily('');
       setLicence('');
+      setFileError(null);
       setFormKey((k) => k + 1);
       onUploaded();
     },
-    onError: (err) => toast.error(errorText(err)),
+    onError: (err) => setFileError(errorText(err)),
   });
   const ready = file && family.trim() && licence.trim();
 
   return (
     <div className="studio-brand__upload" key={formKey}>
-      <h3 className="studio-subtitle">Add a font</h3>
-      <div className="studio-field">
-        <label htmlFor={`${id}-file`}>File (WOFF2, TTF or OTF)</label>
-        <input
-          id={`${id}-file`}
-          type="file"
-          accept=".woff2,.ttf,.otf,font/woff2,font/ttf,font/otf"
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-        />
-      </div>
-      <div className="studio-field">
-        <label htmlFor={`${id}-family`}>Family name</label>
-        <input
-          id={`${id}-family`}
-          maxLength={60}
-          value={family}
-          placeholder="e.g. Source Sans"
-          onChange={(e) => setFamily(e.target.value)}
-        />
-      </div>
+      <h2 className="studio-subtitle">Add a font</h2>
+      <FileField
+        label="File (WOFF2, TTF or OTF)"
+        accept=".woff2,.ttf,.otf,font/woff2,font/ttf,font/otf"
+        error={fileError}
+        onChange={(e) => {
+          setFile(e.target.files?.[0] ?? null);
+          setFileError(null);
+        }}
+      />
+      <TextField
+        label="Family name"
+        maxLength={60}
+        value={family}
+        placeholder="e.g. Source Sans"
+        onChange={(e) => setFamily(e.target.value)}
+      />
       <div className="studio-brand__row">
-        <div className="studio-field">
-          <label htmlFor={`${id}-weight`}>Weight</label>
-          <select
-            id={`${id}-weight`}
-            value={weight}
-            onChange={(e) => setWeight(Number(e.target.value))}
-          >
-            {[100, 200, 300, 400, 500, 600, 700, 800, 900].map((w) => (
-              <option key={w} value={w}>
-                {w}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="studio-field">
-          <label htmlFor={`${id}-style`}>Style</label>
-          <select
-            id={`${id}-style`}
-            value={style}
-            onChange={(e) => setStyle(e.target.value as 'normal' | 'italic')}
-          >
-            <option value="normal">Normal</option>
-            <option value="italic">Italic</option>
-          </select>
-        </div>
-      </div>
-      <div className="studio-field">
-        <label htmlFor={`${id}-licence`}>Licence (required)</label>
-        <input
-          id={`${id}-licence`}
-          aria-required="true"
-          maxLength={100}
-          value={licence}
-          list={`${id}-licences`}
-          placeholder="e.g. OFL-1.1"
-          aria-describedby={`${id}-licence-hint`}
-          onChange={(e) => setLicence(e.target.value)}
+        <Select
+          label="Weight"
+          value={String(weight)}
+          onValueChange={(value) => setWeight(Number(value))}
+          options={[100, 200, 300, 400, 500, 600, 700, 800, 900].map((w) => ({
+            value: String(w),
+            label: String(w),
+          }))}
         />
-        <datalist id={`${id}-licences`}>
-          <option value="OFL-1.1" />
-          <option value="Apache-2.0" />
-          <option value="own licence" />
-        </datalist>
-        <small id={`${id}-licence-hint`} className="studio-muted">
-          Under which licence you may use this font. It is stored with the file.
-        </small>
+        <Select
+          label="Style"
+          value={style}
+          onValueChange={(value) => setStyle(value as 'normal' | 'italic')}
+          options={[
+            { value: 'normal', label: 'Normal' },
+            { value: 'italic', label: 'Italic' },
+          ]}
+        />
       </div>
-      <button
-        type="button"
-        className="studio-button"
+      <TextField
+        label="Licence (required)"
+        aria-required="true"
+        maxLength={100}
+        value={licence}
+        list={`${id}-licences`}
+        placeholder="e.g. OFL-1.1"
+        hint="Under which licence you may use this font. It is stored with the file."
+        onChange={(e) => setLicence(e.target.value)}
+      />
+      <datalist id={`${id}-licences`}>
+        <option value="OFL-1.1" />
+        <option value="Apache-2.0" />
+        <option value="own licence" />
+      </datalist>
+      <Button
+        variant="outline"
+        size="sm"
+        className="studio-brand__add"
         disabled={!ready || upload.isPending}
         onClick={() => upload.mutate()}
       >
         {upload.isPending ? 'Uploading…' : 'Upload font'}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -527,27 +536,30 @@ function LogoUpload({
   orgId: string;
   onUploaded: (asset: BrandAsset) => void;
 }) {
-  const id = useId();
+  const [error, setError] = useState<string | null>(null);
   const upload = useMutation({
     mutationFn: (file: File) => api.uploadLogo(orgId, file, file.name),
-    onSuccess: onUploaded,
-    onError: (err) => toast.error(errorText(err)),
+    onSuccess: (asset) => {
+      setError(null);
+      onUploaded(asset);
+    },
+    // Shown next to the field and kept until the next attempt: a toast is gone in seconds, and
+    // the server's reason ("SVG is not accepted") is what the person needs to read.
+    onError: (err) => setError(errorText(err)),
   });
   return (
-    <div className="studio-field">
-      <label htmlFor={`${id}-logo-file`}>Upload a logo (PNG or WebP; SVG is not accepted)</label>
-      <input
-        id={`${id}-logo-file`}
-        type="file"
-        accept="image/png,image/webp"
-        disabled={upload.isPending}
-        onChange={(e) => {
-          const file = e.target.files?.[0];
-          if (file) upload.mutate(file);
-          e.target.value = '';
-        }}
-      />
-    </div>
+    <FileField
+      label="Upload a logo (PNG or WebP; SVG is not accepted)"
+      accept="image/png,image/webp"
+      disabled={upload.isPending}
+      error={error}
+      onChange={(e) => {
+        const file = e.target.files?.[0];
+        setError(null);
+        if (file) upload.mutate(file);
+        e.target.value = '';
+      }}
+    />
   );
 }
 
@@ -573,18 +585,21 @@ function AssetList({
   return (
     <ul className="studio-members">
       {assets.map((a, i) => (
-        <li key={a.id} className="studio-member">
-          {preview ? <img className="studio-brand__thumb" src={a.url} alt="" /> : null}
-          <span className="studio-member__who">{describe(a, i)}</span>
-          <button
-            type="button"
-            className="studio-button studio-button--danger"
-            disabled={remove.isPending}
-            onClick={() => remove.mutate(a)}
-          >
-            Delete
-          </button>
-        </li>
+        <Card asChild variant="outlined" key={a.id}>
+          <li className="studio-member">
+            {preview ? <img className="studio-brand__thumb" src={a.url} alt="" /> : null}
+            <span className="studio-member__who">{describe(a, i)}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="studio-danger"
+              disabled={remove.isPending}
+              onClick={() => remove.mutate(a)}
+            >
+              Delete
+            </Button>
+          </li>
+        </Card>
       ))}
     </ul>
   );
