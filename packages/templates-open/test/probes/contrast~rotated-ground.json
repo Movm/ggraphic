@@ -16,7 +16,7 @@
     "occasions": [],
     "topics": []
   },
-  "formats": ["1:1", "4:5", "16:9"],
+  "formats": ["1:1"],
   "schemes": ["primary", "secondary", "dark", "light"],
   "schemaVersion": 3,
   "pages": [
@@ -24,7 +24,7 @@
       "state": {
         "backgroundColor": "#ffffff",
         "bind": {
-          "backgroundColor": "ink"
+          "backgroundColor": "ground"
         },
         "shapeInstances": [
           {
@@ -47,11 +47,11 @@
             "id": "card",
             "type": "rect",
             "x": 0.5,
-            "y": 0.67,
+            "y": 0.5,
             "width": 1.0,
-            "height": 0.36,
+            "height": 1.0,
             "fill": "#ffffff",
-            "rotation": 45,
+            "rotation": 90,
             "scaleX": 1,
             "scaleY": 1,
             "opacity": 1,

@@ -34,6 +34,11 @@ export interface GateAdapter {
     el: Readonly<Record<string, unknown>>
   ): readonly { field: string; value: string }[];
   /**
+   * Why an element cannot be placed against a frame at all (a rotated image, say), or null.
+   * `bounds` then fails closed for it.
+   */
+  boundsProblem?(stateKey: string, el: Readonly<Record<string, unknown>>): string | null;
+  /**
    * The assets an element names by id rather than by file: icons, illustrations, stickers,
    * emoji. `id` is the element's id (an icon's key in `iconStates`). The ids are checked against
    * `GateContext.allowedAssets`.
@@ -425,8 +430,11 @@ function checkPlaced(
   for (const [id, { el, key }] of placed) {
     const box = ctx.adapter.box(key, el, lines(id, key, el));
     const text = ctx.adapter.text(key, el);
+    const placement = ctx.adapter.boundsProblem?.(key, el) ?? null;
     // A text of unknown width cannot be placed against any frame: fail closed.
-    if (text?.boundsProblem) {
+    if (placement) {
+      problem('bounds', `${id}: ${placement}`, where);
+    } else if (text?.boundsProblem) {
       problem('bounds', `${id}: ${text.boundsProblem}`, where);
     } else if (box && text && !(box.width > 0)) {
       problem('bounds', `${id} has no width (width unknown)`, where);

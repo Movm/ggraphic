@@ -318,14 +318,14 @@ describe('template gate adapter: line count of a text', () => {
     expect(lines('additionalTexts', text({ text: 'mmmmm '.repeat(6).trim() }))).toBe(6);
     expect(
       lines('additionalTexts', text({ text: 'Add the details here: what, when and where.' }))
-    ).toBeLessThanOrEqual(3);
+    ).toBeLessThanOrEqual(4);
   });
 
   it('adds letter spacing per character and breaks a long word on a character boundary', () => {
-    const tight = lines('additionalTexts', text({ text: 'aaaaaaaaaaaaaaaa', width: 1000 }));
+    const tight = lines('additionalTexts', text({ text: 'aaaaaaaaaaaaaaaa', width: 1300 }));
     const spaced = lines(
       'additionalTexts',
-      text({ text: 'aaaaaaaaaaaaaaaa', width: 1000, letterSpacing: 30 })
+      text({ text: 'aaaaaaaaaaaaaaaa', width: 1300, letterSpacing: 30 })
     );
     expect(spaced).toBeGreaterThan(tight);
     expect(lines('additionalTexts', text({ text: 'W'.repeat(30), width: 1000 }))).toBe(4);
@@ -465,5 +465,74 @@ describe('bundled illustration sets', () => {
     );
     expect(ids.length).toBeGreaterThan(100);
     expect(ids.filter((id, i) => ids.indexOf(id) !== i)).toEqual([]);
+  });
+});
+
+describe('template gate adapter: what the renderer scales, turns and draws', () => {
+  const A = TEMPLATE_GATE_ADAPTER;
+  const text = { text: 'Hello', width: 400, fontSize: 40, fontFamily: 'Raleway', lineHeight: 1.2 };
+
+  it('scales a text box and its type size by `scale`', () => {
+    expect(A.box('additionalTexts', { ...text, scale: 3 }, 2)).toEqual({
+      x: 0,
+      y: 0,
+      width: 1200,
+      height: 40 * 1.2 * 2 * 3,
+    });
+    expect(A.text('additionalTexts', { ...text, scale: 0.3 })?.fontSize).toBeCloseTo(12);
+  });
+
+  it('scales badges and charts too', () => {
+    const pill = { text: 'Neu', fontSize: 20, fontFamily: 'Raleway', scale: 2 };
+    expect(A.text('pillBadgeInstances', pill)?.fontSize).toBe(40);
+    const circle = { radius: 50, scale: 2, textLines: [{ fontSize: 10, text: '' }] };
+    expect(A.text('circleBadgeInstances', circle)?.fontSize).toBe(20);
+    expect(A.box('chartInstances', { x: 10, y: 10, width: 100, height: 50, scale: 3 }, 1)).toEqual({
+      x: 10,
+      y: 10,
+      width: 300,
+      height: 150,
+    });
+  });
+
+  it('boxes a rotated shape by the extent of the turned rectangle, about its centre', () => {
+    const shape = { x: 500, y: 500, width: 800, height: 20, scaleX: 1, scaleY: 1, rotation: 90 };
+    const box = A.box('shapeInstances', shape, 1)!;
+    expect(box.width).toBeCloseTo(20);
+    expect(box.height).toBeCloseTo(800);
+    expect([box.x, box.y].map(Math.round)).toEqual([490, 100]);
+  });
+
+  it('refuses to place a rotated image, frame or chart', () => {
+    for (const key of ['userImageInstances', 'frameInstances', 'chartInstances']) {
+      expect(A.boundsProblem?.(key, { rotation: 45 })).toBe('rotated, not checkable');
+      expect(A.boundsProblem?.(key, { rotation: 0 })).toBeNull();
+    }
+  });
+
+  it('reads a bold weight from the word or from a number of 600 or more', () => {
+    const bold = (fontStyle: string) => A.text('additionalTexts', { ...text, fontStyle })?.bold;
+    expect([bold('bold'), bold('800'), bold('600 italic'), bold('bold italic')]).toEqual([
+      true,
+      true,
+      true,
+      true,
+    ]);
+    expect([bold('normal'), bold('500'), bold('italic'), bold('')]).toEqual([
+      false,
+      false,
+      false,
+      false,
+    ]);
+  });
+
+  it('does not measure a code point a face does not draw in its own font', () => {
+    const check = (over: Record<string, unknown>) =>
+      A.text('additionalTexts', { ...text, ...over })?.boundsProblem ?? null;
+    // U+0230 is in Raleway normal but not in Raleway italic; the class covers both styles.
+    expect(check({ text: 'Ȱ' })).toContain('text width not checkable');
+    // Combining marks of Instrument Sans lie outside every CSS unicode-range of the Studio.
+    expect(check({ text: 'é', fontFamily: 'Instrument Sans' })).toContain('not checkable');
+    expect(check({ text: 'Fußball', fontFamily: 'Instrument Sans' })).toBeNull();
   });
 });

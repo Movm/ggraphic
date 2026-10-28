@@ -108,6 +108,18 @@ describe('readTemplateFile', () => {
     expect(readTemplateFile(with_({ pages: [{ state }] })).status).toBe('ok');
   });
 
+  it.each(['normal', 'italic', 'bold', 'bold italic'])('accepts fontStyle "%s"', (fontStyle) => {
+    const state = { texts: [{ id: 't1', text: 'Hello', fontStyle, bind: { fill: 'ink' } }] };
+    expect(readTemplateFile(with_({ pages: [{ state }] })).status).toBe('ok');
+  });
+
+  it.each(['800', '600 italic', 'Bold', 'heavy', 5])('rejects fontStyle %j', (fontStyle) => {
+    const state = { texts: [{ id: 't1', text: 'Hello', fontStyle, bind: { fill: 'ink' } }] };
+    const result = readTemplateFile(with_({ pages: [{ state }] }));
+    expect(result.status).toBe('invalid');
+    if (result.status === 'invalid') expect(result.reason).toContain('fontStyle');
+  });
+
   it('a block naming a missing element is invalid', () => {
     const result = readTemplateFile(
       with_({ blocks: [{ id: 'b', title: { en: 'B' }, elementIds: ['nope'] }] })
