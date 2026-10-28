@@ -6,7 +6,7 @@ import { useState, type FormEvent } from 'react';
 
 import { api, ApiError, type ProjectSummary } from '../api/client';
 import { PROJECTS_QUERY_KEY, projectsKey } from '../projects/projectsKey';
-import { editorPath, navigate } from '../router';
+import { editorPath, navigate, TRASH_PATH } from '../router';
 import { useLoggedIn } from '../session/SessionContext';
 import { toast } from '../ui/toast';
 
@@ -38,7 +38,17 @@ export function ProjectGrid() {
         <h2 id="projects-heading" className="studio-start__heading">
           Your projects
         </h2>
-        {/* TODO(T11): the "Trash" link goes here, next to the search field. */}
+        <a
+          className="ui-link studio-link"
+          href={TRASH_PATH}
+          onClick={(e) => {
+            if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+            e.preventDefault();
+            navigate(TRASH_PATH);
+          }}
+        >
+          Trash
+        </a>
         {all.length > 0 ? (
           <TextField
             type="search"
@@ -111,16 +121,27 @@ function ProjectCard({ project, onChanged }: { project: ProjectSummary; onChange
     }
   };
 
-  const remove = async () => {
-    if (!window.confirm(`Delete "${project.name}"? This cannot be undone.`)) return;
+  const moveToTrash = async () => {
     setBusy(true);
     try {
       await api.deleteProject(project.id);
-      onChanged();
     } catch (err) {
       toast.error(errorText(err));
       setBusy(false);
+      return;
     }
+    onChanged();
+    toast(`“${project.name}” is in the trash.`, {
+      duration: 8000,
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          api.restoreProject(project.id).then(onChanged, (err: unknown) => {
+            toast.error(errorText(err));
+          });
+        },
+      },
+    });
   };
 
   return (
@@ -187,12 +208,11 @@ function ProjectCard({ project, onChanged }: { project: ProjectSummary; onChange
             <Button
               variant="outline"
               size="sm"
-              className="studio-danger"
               disabled={busy}
-              aria-label={`Delete ${project.name}`}
-              onClick={() => void remove()}
+              aria-label={`Move to trash: ${project.name}`}
+              onClick={() => void moveToTrash()}
             >
-              Delete
+              Move to trash
             </Button>
           </div>
         </CardBody>

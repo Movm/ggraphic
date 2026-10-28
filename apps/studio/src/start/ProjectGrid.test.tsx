@@ -6,6 +6,7 @@ import { axe } from 'vitest-axe';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TEST_ORG, TEST_PROJECTS_URL, WithSession } from '../testing/session';
+import { Toaster } from '../ui/toast';
 import { ProjectGrid } from './ProjectGrid';
 
 interface Summary {
@@ -34,6 +35,7 @@ const summary = (id: string, name: string, extra: Partial<Summary> = {}): Summar
 /** A tiny in-memory Studio server behind `fetch`. */
 function fakeServer(initial: Summary[]) {
   let projects = [...initial];
+  let trashed: Summary[] = [];
   const calls: { method: string; url: string; body: unknown }[] = [];
   const json = (status: number, body: unknown) =>
     new Response(status === 204 ? null : JSON.stringify(body), {
@@ -58,8 +60,16 @@ function fakeServer(initial: Summary[]) {
       return json(200, { ...next, document: {} });
     }
     if (id && method === 'DELETE') {
+      trashed = projects.filter((p) => p.id === id);
       projects = projects.filter((p) => p.id !== id);
       return json(204, null);
+    }
+    const restoreId = /^\/api\/projects\/([^/]+)\/restore$/.exec(url)?.[1];
+    if (restoreId && method === 'POST') {
+      const back = trashed.find((p) => p.id === restoreId)!;
+      trashed = trashed.filter((p) => p.id !== restoreId);
+      projects = [...projects, back];
+      return json(200, back);
     }
     return json(404, { error: 'not_found' });
   });
@@ -74,6 +84,7 @@ function renderGrid() {
         <main>
           <ProjectGrid />
         </main>
+        <Toaster />
       </WithSession>
     </QueryClientProvider>
   );
@@ -143,7 +154,7 @@ describe('ProjectGrid', () => {
     await user.type(screen.getByRole('searchbox', { name: 'Search projects' }), 'SUMMER');
     expect(screen.queryByRole('heading', { name: 'Event invite' })).toBeNull();
     expect(screen.getByRole('heading', { name: 'Summer poster' })).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('2 of 3 projects');
+    expect(screen.getByText('2 of 3 projects')).toBeInTheDocument();
 
     await user.type(screen.getByRole('searchbox', { name: 'Search projects' }), ' nothing');
     expect(screen.getByText(/No project matches/)).toBeInTheDocument();
@@ -165,29 +176,43 @@ describe('ProjectGrid', () => {
     expect(calls.find((c) => c.method === 'PATCH')?.body).toEqual({ version: 3, name: 'New name' });
   });
 
-  it('deletes a project after confirmation', async () => {
+  it('moves a project to the trash without asking, and offers undo', async () => {
     const { fetchMock, calls } = fakeServer([summary('a', 'Doomed'), summary('b', 'Kept')]);
     vi.stubGlobal('fetch', fetchMock);
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    const confirm = vi.spyOn(window, 'confirm');
     const user = userEvent.setup();
     renderGrid();
 
-    await user.click(await screen.findByRole('button', { name: 'Delete Doomed' }));
+    await user.click(await screen.findByRole('button', { name: 'Move to trash: Doomed' }));
 
     await waitFor(() => expect(screen.queryByRole('heading', { name: 'Doomed' })).toBeNull());
     expect(screen.getByRole('heading', { name: 'Kept' })).toBeInTheDocument();
+    expect(confirm).not.toHaveBeenCalled();
     expect(calls.some((c) => c.method === 'DELETE' && c.url === '/api/projects/a')).toBe(true);
+    expect(screen.getByText(/“Doomed” is in the trash/)).toBeInTheDocument();
   });
 
-  it('keeps a project when the deletion is not confirmed', async () => {
-    const { fetchMock, calls } = fakeServer([summary('a', 'Precious')]);
+  it('brings the project back with Undo', async () => {
+    const { fetchMock, calls } = fakeServer([summary('a', 'Doomed')]);
     vi.stubGlobal('fetch', fetchMock);
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
     const user = userEvent.setup();
     renderGrid();
 
-    await user.click(await screen.findByRole('button', { name: 'Delete Precious' }));
-    expect(calls.some((c) => c.method === 'DELETE')).toBe(false);
+    await user.click(await screen.findByRole('button', { name: 'Move to trash: Doomed' }));
+    const undo = await screen.findAllByRole('button', { name: 'Undo' });
+    await user.click(undo.at(-1)!);
+
+    expect(await screen.findByRole('heading', { name: 'Doomed' })).toBeInTheDocument();
+    expect(calls.some((c) => c.method === 'POST' && c.url === '/api/projects/a/restore')).toBe(
+      true
+    );
+  });
+
+  it('links to the trash', async () => {
+    vi.stubGlobal('fetch', fakeServer([]).fetchMock);
+    renderGrid();
+    const link = await screen.findByRole('link', { name: 'Trash' });
+    expect(link).toHaveAttribute('href', '/trash');
   });
 
   it('has no axe violations', async () => {

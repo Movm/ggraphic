@@ -23,6 +23,15 @@ const projectSchema = projectSummarySchema.extend({
   document: z.record(z.string(), z.unknown()),
 });
 
+const trashItemSchema = z.object({
+  id: z.string(),
+  organisationId: z.string(),
+  name: z.string(),
+  deletedAt: z.string(),
+  purgeAt: z.string(),
+  daysLeft: z.number().int(),
+});
+
 const projectListSchema = z.object({ projects: z.array(projectSummarySchema) });
 
 const configSchema = z.object({
@@ -152,6 +161,7 @@ const brandPackResponseSchema = z.object({
   bundledFonts: z.array(z.string()),
 });
 
+export type TrashItem = z.infer<typeof trashItemSchema>;
 export type ProjectSummary = z.infer<typeof projectSummarySchema>;
 export type Role = z.infer<typeof roleSchema>;
 export type Organisation = z.infer<typeof organisationSchema>;
@@ -356,6 +366,20 @@ export const api = {
 
   deleteProject: (id: string) =>
     request(`/projects/${encodeURIComponent(id)}`, null, { method: 'DELETE' }),
+
+  listTrash: async (orgId: string) =>
+    (await request(`${org(orgId)}/trash`, z.object({ projects: z.array(trashItemSchema) })))
+      .projects,
+
+  /** Idempotent: a project that is not in the trash comes back unchanged. */
+  restoreProject: (id: string) =>
+    request(`/projects/${encodeURIComponent(id)}/restore`, projectSummarySchema, {
+      method: 'POST',
+    }),
+
+  /** "Delete now": only works on a trashed project, and cannot be undone. */
+  purgeProject: (id: string) =>
+    request(`/projects/${encodeURIComponent(id)}/purge`, null, { method: 'DELETE' }),
 
   putThumbnail: (id: string, png: Blob) =>
     request(`/projects/${encodeURIComponent(id)}/thumbnail`, projectSummarySchema, {

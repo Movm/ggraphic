@@ -9,3 +9,10 @@ describe('parseRoute', () => {
     expect(parseRoute('/invite/abc')).toEqual({ name: 'start' });
   });
 });
+
+describe('parseRoute trash', () => {
+  it('knows the trash page', () => {
+    expect(parseRoute('/trash')).toEqual({ name: 'trash' });
+    expect(parseRoute('/trash/')).toEqual({ name: 'trash' });
+  });
+});
