@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Request and response shapes of /api. Types are derived from these schemas only.
+import { OFFER_ID_PATTERN } from '@ggraphic/schema';
 import { z } from 'zod';
 import {
   brandColorsSchema,
@@ -85,7 +86,7 @@ export const draftSchema = z.object({
     .transform((v) => v || undefined),
 });
 
-const offerId = z.string().regex(/^[a-z0-9-]{1,64}$/);
+const offerId = z.string().regex(OFFER_ID_PATTERN);
 const offerText = z.string().trim().min(1).max(200);
 
 /** The templates and colour worlds the model may choose from, and the brief to choose for. */

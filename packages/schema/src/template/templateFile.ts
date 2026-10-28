@@ -70,6 +70,12 @@ export type TemplateSlot = {
   budget: { maxWords?: number; maxLines?: number; maxChars?: number };
 };
 
+/**
+ * The id pattern shared by element ids and the AI offer (`pickBody` in the Studio server): a slot is
+ * offered to the model under its element id, so an id the offer rejects would break every prompt.
+ */
+export const OFFER_ID_PATTERN = /^[a-z0-9-]{1,64}$/;
+
 const elementId = z.string().min(1).max(64);
 const idList = z.array(elementId).max(200);
 const versionNumber = z.int().min(1).max(10000);
@@ -214,6 +220,13 @@ function crossReferences(file: TemplateFile): string | null {
   const known = new Set(ids);
   const dupe = ids.find((id, i) => ids.indexOf(id) !== i);
   if (dupe !== undefined) return `pages.0.state: duplicate element id "${dupe}"`;
+  // Array elements are what slots name, so theirs are held to the pattern; record keys are page fields.
+  const arrayIds = Object.values(state).flatMap((value) =>
+    Array.isArray(value) ? value.flatMap((e) => (isRecord(e) ? [String(e['id'])] : [])) : []
+  );
+  const odd = arrayIds.find((id) => !OFFER_ID_PATTERN.test(id));
+  if (odd !== undefined)
+    return `pages.0.state: element id "${odd}" must be 1-64 of a-z, 0-9 and "-"`;
   if (known.has('page')) return 'pages.0.state: "page" is reserved and cannot be an element id';
   const missing = (key: string, id: string) => `${key}: no element "${id}" in pages[0].state`;
   for (const id of Object.keys(file.frames)) if (!known.has(id)) return missing(`frames.${id}`, id);

@@ -124,6 +124,16 @@ describe('readTemplateFile', () => {
     if (result.status === 'invalid') expect(result.reason).toContain('t1');
   });
 
+  it('an element id the AI offer cannot carry is invalid', () => {
+    for (const id of ['Head_1', 'a b', 'x'.repeat(65)]) {
+      const result = readTemplateFile(with_({ pages: [{ state: { texts: [{ id }] } }] }));
+      expect(result.status, id).toBe('invalid');
+    }
+    expect(
+      readTemplateFile(with_({ pages: [{ state: { texts: [{ id: 'head-1' }] } }] })).status
+    ).toBe('ok');
+  });
+
   it('an unknown top-level key is invalid', () => {
     expect(readTemplateFile(with_({ extra: 1 })).status).toBe('invalid');
   });
