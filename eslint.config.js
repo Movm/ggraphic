@@ -1,4 +1,5 @@
 import js from '@eslint/js';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
 import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import globals from 'globals';
@@ -19,10 +20,13 @@ export default tseslint.config(
     },
   },
   {
-    // The editor's sources carry inline disables for these two rules, so the plugins must be registered.
+    // The editor's sources carry inline disables for these rules, so the plugins must be registered;
+    // jsx-a11y runs with its recommended set, as in the source repo.
     files: ['packages/editor/**/*.{ts,tsx}'],
-    plugins: { react, 'react-hooks': reactHooks },
+    plugins: { react, 'react-hooks': reactHooks, 'jsx-a11y': jsxA11y },
     rules: {
+      ...jsxA11y.flatConfigs.recommended.rules,
+      'jsx-a11y/no-autofocus': ['warn', { ignoreNonDOM: true }],
       'react-hooks/exhaustive-deps': 'warn',
       'react/no-array-index-key': 'warn',
     },
