@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { existsSync } from 'node:fs';
+import { pickAndFill } from '@ggraphic/ai';
 import { sql } from 'drizzle-orm';
-import express, { type Express } from 'express';
-import { createDraft } from './ai.ts';
+import express, { type Express, type Response } from 'express';
+import { createCallObject, createDraft } from './ai.ts';
 import { sessionCookie } from './auth/cookies.ts';
 import {
   csrfGuard,
@@ -11,8 +12,8 @@ import {
   requireSession,
   sessionMiddleware,
 } from './auth/middleware.ts';
-import type { Config } from './config.ts';
-import { draftBody, type StudioConfig } from './contract.ts';
+import type { AiConfig, Config } from './config.ts';
+import { draftBody, pickBody, type StudioConfig } from './contract.ts';
 import type { Db } from './db/client.ts';
 import { errorHandler, HttpError, parseOr400 } from './http.ts';
 import { type AuthLimiters, authRouter, createAuthLimiters, tooMany } from './routes/auth.ts';
@@ -107,19 +108,42 @@ export function createApp({
   api.use('/projects', projectsRouter(db, config));
   api.use('/uploads', uploadsRouter(db, config));
 
-  api.post('/ai/draft', async (req, res) => {
+  // Shared by the /ai routes: the 503 when AI is off, and the per-account rate limit.
+  const aiOrDisabled = (): AiConfig => {
     if (!config.ai) {
       throw new HttpError(503, {
         error: 'ai_disabled',
         message: 'AI is not configured on this instance.',
       });
     }
-    const input = parseOr400(draftBody, req.body);
+    return config.ai;
+  };
+  const aiRateLimit = (res: Response) => {
     const account = requireSession(res).account.id;
     const wait = limiters.ai.check(account);
     if (wait !== null) throw tooMany(wait, res);
     limiters.ai.hit(account);
-    res.json(await createDraft(config.ai, input, fetchImpl));
+  };
+
+  api.post('/ai/draft', async (req, res) => {
+    const ai = aiOrDisabled();
+    const input = parseOr400(draftBody, req.body);
+    aiRateLimit(res);
+    res.json(await createDraft(ai, input, fetchImpl));
+  });
+
+  api.post('/ai/pick', async (req, res) => {
+    const ai = aiOrDisabled();
+    const input = parseOr400(pickBody, req.body);
+    aiRateLimit(res);
+    const result = await pickAndFill(createCallObject(ai, fetchImpl), input);
+    if (!result.ok) {
+      throw new HttpError(502, {
+        error: 'ai_upstream_error',
+        message: 'The AI provider returned an unusable answer.',
+      });
+    }
+    res.json(result.data);
   });
 
   api.use(() => {
