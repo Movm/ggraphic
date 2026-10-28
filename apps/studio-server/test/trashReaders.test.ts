@@ -48,10 +48,15 @@ const ALLOWED: Excuse[] = [
     marker: '.delete(projects)',
     reason: '"delete now" removes a project that is already in the trash',
   },
+  {
+    file: 'trashPurge.ts',
+    marker: 'lt(projects.deletedAt, cutoff)',
+    reason: 'the purge removes projects whose time in the trash is up',
+  },
 ];
 
 /** Files that read `projects`; a new one is a decision to make here, not a surprise. */
-const READER_FILES = ['routes/projects.ts'];
+const READER_FILES = ['routes/projects.ts', 'trashPurge.ts'];
 
 interface Statement {
   file: string;
