@@ -7,7 +7,8 @@
 import { offeredSchemes, type BrandPack, type SchemeId } from '@ggraphic/core';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { readTemplateFile, type TemplateFile, type TemplateFormat } from '@ggraphic/schema';
-import { OPEN_TEMPLATES } from '@ggraphic/templates-open';
+import { TEMPLATE_GATE_ADAPTER } from '@ggraphic/editor/templates/templateGeometry';
+import { OPEN_TEMPLATES, OPEN_TEMPLATE_MANIFEST } from '@ggraphic/templates-open';
 
 export type CatalogSource = 'pack' | 'organisation';
 
@@ -37,9 +38,51 @@ const idOf = (raw: unknown): string | null =>
     ? (raw as { id: string }).id
     : null;
 
-/** Every readable file as an entry, in source order; the rest as problems. The first of a duplicate id wins. */
+const isRecord = (v: unknown): v is Record<string, unknown> =>
+  typeof v === 'object' && v !== null && !Array.isArray(v);
+
+const OPEN_MANIFEST_PATHS: ReadonlySet<string> = new Set(
+  OPEN_TEMPLATE_MANIFEST.assets.map((a) => a.path)
+);
+
+/**
+ * The first image reference of a template that its pack does not list, as a reason; null when
+ * every one is listed. The logo (a `src` bound to `brand.logo`) is the brand's, not the pack's.
+ * The same rule the pack's own gate enforces (`asset-licence`), run again because the catalogue
+ * also reads files that never passed that gate.
+ */
+function unlistedAsset(template: TemplateFile, manifestPaths: ReadonlySet<string>): string | null {
+  for (const page of template.pages) {
+    const state: unknown = page.state;
+    if (!isRecord(state)) continue;
+    for (const [key, fields] of Object.entries(TEMPLATE_GATE_ADAPTER.assetFields)) {
+      const value = state[key];
+      const elements = Array.isArray(value) ? value : isRecord(value) ? Object.values(value) : [];
+      for (const el of elements) {
+        if (!isRecord(el)) continue;
+        const bind = isRecord(el['bind']) ? el['bind'] : {};
+        const logo = isRecord(bind['src']) ? bind['src']['ref'] : bind['src'];
+        for (const field of fields) {
+          const src = el[field];
+          if (typeof src !== 'string' || src === '') continue;
+          if (field === 'src' && logo === 'brand.logo') continue;
+          if (!manifestPaths.has(src)) {
+            return `${String(el['id'] ?? key)}.${field} "${src}" is not in the pack manifest`;
+          }
+        }
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Every readable file as an entry, in source order; the rest as problems. The first of a duplicate
+ * id wins. A file whose image paths are not in `manifestPaths` is a problem too.
+ */
 export function buildCatalog(
-  sources: readonly { source: CatalogSource; files: readonly unknown[] }[]
+  sources: readonly { source: CatalogSource; files: readonly unknown[] }[],
+  manifestPaths: ReadonlySet<string> = OPEN_MANIFEST_PATHS
 ): { entries: CatalogEntry[]; problems: CatalogProblem[] } {
   const entries: CatalogEntry[] = [];
   const problems: CatalogProblem[] = [];
@@ -56,6 +99,11 @@ export function buildCatalog(
         continue;
       }
       const t = read.template;
+      const unlisted = unlistedAsset(t, manifestPaths);
+      if (unlisted) {
+        problems.push({ source, id: t.id, reason: unlisted });
+        continue;
+      }
       if (seen.has(t.id)) {
         problems.push({ source, id: t.id, reason: 'duplicate id: the first one is kept' });
         continue;
