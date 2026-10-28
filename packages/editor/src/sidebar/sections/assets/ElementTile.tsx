@@ -4,7 +4,7 @@ import { cn } from '@ggraphic/editor/utils/cn';
 import { onThumbnailHover } from '@ggraphic/editor/utils/illustrations/svgCache';
 import { takeDropPlaced } from '@ggraphic/editor/utils/mediaDrop';
 import { memo, type CSSProperties, type DragEvent } from 'react';
-import { FaCheck } from 'react-icons/fa';
+import { PiCheck } from 'react-icons/pi';
 
 import { ElementThumb, thumbFillsTile, thumbNeedsDarkTile } from './ElementThumb.js';
 import { dragDataFor, type ElementItem } from './elementTypes.js';
@@ -131,7 +131,7 @@ export const ElementTile = memo(function ElementTile({
         </span>
         {selected && (
           <span className="absolute top-1.5 right-1.5 size-4 rounded-full bg-[var(--editor-active-fg)] text-[var(--editor-surface)] grid place-items-center">
-            <FaCheck size={8} />
+            <PiCheck size={8} />
           </span>
         )}
       </button>
