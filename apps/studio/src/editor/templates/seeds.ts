@@ -9,6 +9,9 @@
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { type AdditionalText } from '@ggraphic/editor/configs/types';
 import { createShape } from '@ggraphic/editor/utils/shapes';
+import { type UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+
+import { logoSizeOf } from '../../logoSize';
 
 import {
   BLANK_TEMPLATE_ID,
@@ -68,6 +71,34 @@ function text(
   };
 }
 
+/**
+ * The brand's logo, bottom right inside the margins, in its own proportions. An
+ * ordinary placed image: the user can move, resize or delete it. Nothing when the
+ * brand has no logo or the logo's size is not known (it did not load).
+ */
+function logoImages(f: Frame): UserImageInstance[] {
+  const logo = activeBrand().logo;
+  const size = logo ? logoSizeOf(logo.src) : null;
+  if (!logo || !size) return [];
+  const scale = Math.min((f.width * 0.22) / size.width, (f.height * 0.08) / size.height);
+  const width = Math.round(size.width * scale);
+  const height = Math.round(size.height * scale);
+  return [
+    {
+      id: 'brand-logo',
+      src: logo.src,
+      fileName: logo.label,
+      x: f.width - f.m - width,
+      y: f.height - f.m - height,
+      width,
+      height,
+      rotation: 0,
+      scale: 1,
+      opacity: 1,
+    },
+  ];
+}
+
 function headlineSeed(f: Frame): PageSeed {
   const bar = {
     ...createShape(
@@ -83,6 +114,7 @@ function headlineSeed(f: Frame): PageSeed {
   return {
     backgroundColor: activeBrand().colors.primary,
     shapeInstances: [bar],
+    userImageInstances: logoImages(f),
     additionalTexts: [
       text(f, TEXT_ROLES.headline, 'header', 'A clear headline', 0.28, {
         size: 104,
@@ -114,6 +146,7 @@ function headlineSeed(f: Frame): PageSeed {
 function quoteSeed(f: Frame): PageSeed {
   return {
     backgroundColor: activeBrand().colors.surface,
+    userImageInstances: logoImages(f),
     additionalTexts: [
       text(f, 'quote-mark', 'header', '“', 0.08, {
         size: 280,
@@ -141,6 +174,7 @@ function quoteSeed(f: Frame): PageSeed {
 function numberSeed(f: Frame): PageSeed {
   return {
     backgroundColor: activeBrand().colors.secondary,
+    userImageInstances: logoImages(f),
     additionalTexts: [
       text(f, 'number', 'header', '73%', 0.16, {
         size: 300,
@@ -191,10 +225,12 @@ export function seedPageState(
   const seed = seedFor(templateId, width, height);
   const shapes = seed.shapeInstances ?? [];
   const texts = seed.additionalTexts ?? [];
+  const images = seed.userImageInstances ?? [];
   return {
     ...(seed.backgroundColor ? { backgroundColor: seed.backgroundColor } : {}),
     shapeInstances: shapes,
+    ...(images.length ? { userImageInstances: images } : {}),
     additionalTexts: texts,
-    layerOrder: [...shapes, ...texts].map((e) => e.id),
+    layerOrder: [...shapes, ...images, ...texts].map((e) => e.id),
   };
 }
