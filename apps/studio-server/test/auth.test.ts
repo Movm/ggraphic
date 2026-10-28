@@ -14,10 +14,12 @@ import {
   resetDb,
   setupAdmin,
   testConfig,
+  TEST_SETUP_TOKEN,
 } from './helpers.ts';
 
 const hasDb = Boolean(process.env['DATABASE_URL']);
 const signup = (email: string) => ({ email, displayName: 'Someone', password: PASSWORD });
+const setupBody = (email: string, setupToken = TEST_SETUP_TOKEN) => ({ ...signup(email), setupToken });
 
 describe.skipIf(!hasDb)('accounts and sessions (Postgres)', () => {
   const config = testConfig();
@@ -71,27 +73,64 @@ describe.skipIf(!hasDb)('accounts and sessions (Postgres)', () => {
 
     it('allows setup once, also when two arrive at the same time', async () => {
       const results = await Promise.all([
-        request(app).post('/api/auth/setup').send(signup('a@example.org')),
-        request(app).post('/api/auth/setup').send(signup('b@example.org')),
+        request(app).post('/api/auth/setup').send(setupBody('a@example.org')),
+        request(app).post('/api/auth/setup').send(setupBody('b@example.org')),
       ]);
       expect(results.map((r) => r.status).sort()).toEqual([201, 409]);
       const { rows } = await pool.query('SELECT count(*)::int AS n FROM accounts');
       expect(rows[0].n).toBe(1);
-      await request(app).post('/api/auth/setup').send(signup('c@example.org')).expect(409);
+      await request(app).post('/api/auth/setup').send(setupBody('c@example.org')).expect(409);
+    });
+
+    it('requires the setup token printed at start', async () => {
+      const missing = await request(app)
+        .post('/api/auth/setup')
+        .send(signup('a@example.org'))
+        .expect(403);
+      expect(missing.body.error).toBe('setup_token_invalid');
+      await request(app)
+        .post('/api/auth/setup')
+        .send(setupBody('a@example.org', 'wrong-token'))
+        .expect(403);
+      const { rows } = await pool.query('SELECT count(*)::int AS n FROM accounts');
+      expect(rows[0].n).toBe(0);
+      // An instance started without a token (accounts existed then) cannot be claimed.
+      const tokenless = createApp({ config: { ...config, setupToken: null }, db });
+      await request(tokenless)
+        .post('/api/auth/setup')
+        .send(setupBody('a@example.org'))
+        .expect(403);
+      await request(app).post('/api/auth/setup').send(setupBody('a@example.org')).expect(201);
+    });
+
+    it('invalidates the setup token with the first account', async () => {
+      await setupAdmin(app);
+      await pool.query('TRUNCATE accounts CASCADE');
+      // Even if the table empties again, the used token does not claim it a second time.
+      await request(app).post('/api/auth/setup').send(setupBody('b@example.org')).expect(403);
+    });
+
+    it('checks for an existing account before hashing', async () => {
+      await setupAdmin(app);
+      const res = await request(app)
+        .post('/api/auth/setup')
+        .send(setupBody('b@example.org', 'wrong'))
+        .expect(409);
+      expect(res.body.error).toBe('already_set_up');
     });
 
     it('validates the setup body', async () => {
       await request(app)
         .post('/api/auth/setup')
-        .send({ ...signup('a@example.org'), password: 'short' })
+        .send({ ...setupBody('a@example.org'), password: 'short' })
         .expect(400);
-      await request(app).post('/api/auth/setup').send(signup('not-an-email')).expect(400);
+      await request(app).post('/api/auth/setup').send(setupBody('not-an-email')).expect(400);
     });
   });
 
   describe('sessions', () => {
     it('sets an httpOnly, SameSite=Lax cookie and stores only hashes', async () => {
-      const res = await request(app).post('/api/auth/setup').send(signup('a@example.org'));
+      const res = await request(app).post('/api/auth/setup').send(setupBody('a@example.org'));
       const cookie = String(res.headers['set-cookie']);
       expect(cookie).toMatch(
         /^studio_session=[A-Za-z0-9_-]{43}; Path=\/; Max-Age=\d+; HttpOnly; SameSite=Lax$/
@@ -107,7 +146,7 @@ describe.skipIf(!hasDb)('accounts and sessions (Postgres)', () => {
 
     it('uses a __Host- Secure cookie by default', async () => {
       const secure = createApp({ config: { ...config, cookieSecure: true }, db });
-      const res = await request(secure).post('/api/auth/setup').send(signup('a@example.org'));
+      const res = await request(secure).post('/api/auth/setup').send(setupBody('a@example.org'));
       expect(String(res.headers['set-cookie'])).toMatch(
         /^__Host-studio_session=[^;]+; Path=\/; Max-Age=\d+; HttpOnly; SameSite=Lax; Secure$/
       );

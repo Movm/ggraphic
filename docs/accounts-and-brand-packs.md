@@ -30,8 +30,11 @@ organisations the admin is not a member of.
 ## Accounts and registration
 
 - **First run:** while `accounts` is empty, `POST /api/auth/setup` creates the first account,
-  marks it instance admin and makes it owner of the default organisation. The insert runs
-  under an advisory lock and re-checks the table, so two concurrent setups cannot both win.
+  marks it instance admin and makes it owner of the default organisation. It requires the
+  setup token: `SETUP_TOKEN`, or a random token the server prints once at start when the
+  instance has no account. The route checks for an existing account and the token
+  (constant time) before hashing anything; the insert runs under an advisory lock and
+  re-checks the table, and the token is cleared in that transaction.
 - **Afterwards:** `POST /api/auth/register` works only with `ALLOW_REGISTRATION=true`
   (default `false`) and gives the new account its own organisation. Otherwise new people
   join through an invitation link that an organisation owner creates on the members page;

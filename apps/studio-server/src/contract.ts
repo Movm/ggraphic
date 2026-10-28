@@ -105,6 +105,9 @@ export const signupBody = z.object({
   password: passwordSchema,
 });
 
+/** First-run setup: a signup plus the token the server printed at start. */
+export const setupBody = signupBody.extend({ setupToken: z.string().max(200).default('') });
+
 // Login checks no length rule: a wrong password is just wrong.
 export const loginBody = z.object({
   email: emailSchema,

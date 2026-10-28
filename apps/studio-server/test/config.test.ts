@@ -53,6 +53,12 @@ describe('loadConfig', () => {
     expect(() => loadConfig({ ...base, COOKIE_SECURE: 'yes' })).toThrow(/COOKIE_SECURE/);
   });
 
+  it('reads a setup token of at least 16 characters', () => {
+    expect(loadConfig(base).setupToken).toBeNull();
+    expect(loadConfig({ ...base, SETUP_TOKEN: 'a'.repeat(16) }).setupToken).toBe('a'.repeat(16));
+    expect(() => loadConfig({ ...base, SETUP_TOKEN: 'short' })).toThrow(/SETUP_TOKEN/);
+  });
+
   it('names invalid fields without echoing values', () => {
     expect(() => loadConfig({ PORT: 'abc', OPENAI_API_KEY: 'sk-secret' })).toThrow(
       /DATABASE_URL, PORT$/

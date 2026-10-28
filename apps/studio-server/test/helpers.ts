@@ -8,6 +8,8 @@ import request from 'supertest';
 import { expect } from 'vitest';
 import { type Config, loadConfig } from '../src/config.ts';
 
+export const TEST_SETUP_TOKEN = 'test-setup-token-0123456789';
+
 /** Config for tests. Without DATABASE_URL the pool points nowhere and is never queried. */
 export function testConfig(overrides: Partial<Config> = {}): Config {
   const dataDir = mkdtempSync(join(tmpdir(), 'studio-server-test-'));
@@ -18,6 +20,7 @@ export function testConfig(overrides: Partial<Config> = {}): Config {
       STATIC_DIR: join(dataDir, 'no-web-app'),
       // supertest talks plain HTTP; its cookie jar drops Secure cookies there.
       COOKIE_SECURE: 'false',
+      SETUP_TOKEN: TEST_SETUP_TOKEN,
     }),
     ...overrides,
   };
@@ -101,7 +104,7 @@ export async function setupAdmin(app: Express, email = 'admin@example.org'): Pro
   const agent = request.agent(app);
   const res = await agent
     .post('/api/auth/setup')
-    .send({ email, displayName: 'Admin', password: PASSWORD });
+    .send({ email, displayName: 'Admin', password: PASSWORD, setupToken: TEST_SETUP_TOKEN });
   expect(res.status).toBe(201);
   return client(agent, res.body as SessionBody);
 }

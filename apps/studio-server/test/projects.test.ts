@@ -12,7 +12,8 @@ const hasDb = Boolean(process.env['DATABASE_URL']);
 describe.skipIf(!hasDb)('projects (Postgres)', () => {
   const config = testConfig({ ai: null });
   const { pool, db } = createDb(config.databaseUrl);
-  const app = createApp({ config, db });
+  // A fresh app per test: the setup token is single use.
+  let app = createApp({ config, db });
 
   beforeAll(async () => {
     await runMigrations(pool);
@@ -21,6 +22,7 @@ describe.skipIf(!hasDb)('projects (Postgres)', () => {
   let list: string;
   beforeEach(async () => {
     await resetDb(pool);
+    app = createApp({ config, db });
     admin = await setupAdmin(app);
     list = `/api/orgs/${admin.orgId}/projects`;
   });

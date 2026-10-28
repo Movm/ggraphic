@@ -32,6 +32,8 @@ export interface Credentials {
   email: string;
   displayName: string;
   password: string;
+  /** Only in setup mode. */
+  setupToken: string;
 }
 
 /** The email/name/password form. `onSubmit` throws to show an error. */
@@ -44,6 +46,7 @@ export function CredentialsForm({
   submitLabel?: string;
   onSubmit: (credentials: Credentials) => Promise<unknown>;
 }) {
+  const [setupToken, setSetupToken] = useState('');
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
@@ -58,7 +61,7 @@ export function CredentialsForm({
     setBusy(true);
     setError(null);
     try {
-      await onSubmit({ email, displayName, password });
+      await onSubmit({ email, displayName, password, setupToken });
     } catch (err) {
       setError(errorText(err));
       setBusy(false);
@@ -67,6 +70,25 @@ export function CredentialsForm({
 
   return (
     <form className="studio-auth__form" onSubmit={(e) => void submit(e)} aria-busy={busy}>
+      {mode === 'setup' ? (
+        <div className="studio-field">
+          <label htmlFor={`${id}-token`}>Setup token</label>
+          <input
+            id={`${id}-token`}
+            required
+            autoComplete="off"
+            spellCheck={false}
+            maxLength={200}
+            value={setupToken}
+            aria-describedby={`${id}-token-hint`}
+            onChange={(e) => setSetupToken(e.target.value.trim())}
+          />
+          <small id={`${id}-token-hint`} className="studio-muted">
+            Printed in the server log at the first start (docker compose logs studio), or the
+            SETUP_TOKEN you set.
+          </small>
+        </div>
+      ) : null}
       <div className="studio-field">
         <label htmlFor={`${id}-email`}>Email</label>
         <input
@@ -130,8 +152,12 @@ export function AuthPage({ session }: { session: Session }) {
 
   const submit = async (c: Credentials) => {
     if (mode === 'setup') done(await api.setup(c));
-    else if (mode === 'register') done(await api.register(c));
-    else done(await api.login({ email: c.email, password: c.password }));
+    // The token field is only filled in setup mode; register sends no token.
+    else if (mode === 'register') {
+      done(
+        await api.register({ email: c.email, displayName: c.displayName, password: c.password })
+      );
+    } else done(await api.login({ email: c.email, password: c.password }));
   };
 
   return (

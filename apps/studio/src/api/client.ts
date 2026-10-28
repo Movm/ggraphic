@@ -277,7 +277,8 @@ export const api = {
 
   // ── Session ──────────────────────────────────────────────────────────────
   getSession: () => withSession(request('/auth/session', sessionSchema)),
-  setup: (body: Signup) => withSession(request('/auth/setup', sessionSchema, json('POST', body))),
+  setup: (body: Signup & { setupToken: string }) =>
+    withSession(request('/auth/setup', sessionSchema, json('POST', body))),
   login: (body: { email: string; password: string }) =>
     withSession(request('/auth/login', sessionSchema, json('POST', body))),
   register: (body: Signup) =>

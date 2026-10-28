@@ -105,7 +105,13 @@ export function InvitePage({ token, session }: { token: string; session: Session
               await api.login({ email: c.email, password: c.password });
               joined(await api.acceptInvitation(token, null));
             } else {
-              joined(await api.acceptInvitation(token, c));
+              joined(
+                await api.acceptInvitation(token, {
+                  email: c.email,
+                  displayName: c.displayName,
+                  password: c.password,
+                })
+              );
             }
           }}
         />

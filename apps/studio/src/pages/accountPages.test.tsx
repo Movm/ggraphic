@@ -68,6 +68,7 @@ describe('AuthPage', () => {
     const user = userEvent.setup();
     renderWith(<AuthPage session={anonymous({ setupRequired: true })} />);
     expect(screen.getByRole('heading', { name: 'Set up ggraphic Studio' })).toBeInTheDocument();
+    await user.type(screen.getByLabelText('Setup token'), 'printed-token');
     await user.type(screen.getByLabelText('Email'), 'admin@example.org');
     await user.type(screen.getByLabelText('Name'), 'Admin');
     await user.type(screen.getByLabelText('Password'), 'long enough password');
@@ -77,6 +78,7 @@ describe('AuthPage', () => {
       email: 'admin@example.org',
       displayName: 'Admin',
       password: 'long enough password',
+      setupToken: 'printed-token',
     });
   });
 

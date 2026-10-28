@@ -2,7 +2,7 @@
 
 ggraphic Studio is the hostable design app: organisations with their own projects, members and brand pack, image uploads and optional AI text drafts. It runs on your own machine or server with Docker Compose. There is no hosted service and no billing; every instance brings its own AI key if it wants AI at all.
 
-> **First visit sets the instance up.** On an empty instance the first person who opens Studio creates the admin account. Do this right after the first start, before the instance is reachable by anyone else. The compose file binds Studio to `127.0.0.1`; see [Security](#security) before exposing it.
+> **First run needs the setup token.** On an empty instance Studio prints a one-time setup token to its log at start (`docker compose logs studio`); the admin account can only be created with it. Set `SETUP_TOKEN` in `.env` instead to choose it yourself. The compose file binds Studio to `127.0.0.1`; see [Security](#security) before exposing it.
 
 ## Requirements
 
@@ -20,7 +20,7 @@ sed -i.bak "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(openssl rand -hex 24)/" 
 docker compose up -d --build
 ```
 
-Open <http://localhost:8080> and create the admin account. Check the state with `docker compose ps` and `curl http://localhost:8080/healthz` (answers `{"status":"ok"}` when the database is reachable). Logs: `docker compose logs -f studio`.
+Read the setup token with `docker compose logs studio`, open <http://localhost:8080> and create the admin account with it. The token works once and is not printed again; if you lose it before setup, restart Studio for a new one. Check the state with `docker compose ps` and `curl http://localhost:8080/healthz` (answers `{"status":"ok"}` when the database is reachable). Logs: `docker compose logs -f studio`.
 
 The database schema is created and upgraded automatically when Studio starts.
 
@@ -117,7 +117,7 @@ Postgres major versions (e.g. 17 to 18) are not upgraded in place: dump, switch 
 
 ## Security
 
-- **Set the instance up first.** Until the admin account exists, anyone who reaches Studio can claim it.
+- **First-run setup is gated by a token** printed once at start (or `SETUP_TOKEN`). It is compared in constant time and becomes invalid with the first account.
 - **TLS in front.** To share an instance, keep the `127.0.0.1` binding and put a TLS-terminating reverse proxy (Caddy, nginx, Traefik) in front. Set `TRUST_PROXY` to the proxy's hops or addresses so login rate limits see client addresses, not the proxy's.
 - **Sessions** are server-side rows in Postgres; the browser holds a random token in an `HttpOnly`, `SameSite=Lax`, `Secure` cookie (`__Host-studio_session`) and the database only its SHA-256. Passwords are hashed with argon2id.
 - **CSRF:** every state-changing request needs the session's CSRF token in `X-CSRF-Token`; requests a browser marks as cross-site are refused; the login endpoints accept JSON only.

@@ -12,9 +12,9 @@ import {
   type LoadedSession,
   loadSession,
 } from '../auth/sessions.ts';
-import { sha256 } from '../auth/tokens.ts';
+import { safeEqual, sha256 } from '../auth/tokens.ts';
 import type { Config } from '../config.ts';
-import { type InvitationInfo, loginBody, type SessionState, signupBody } from '../contract.ts';
+import { type InvitationInfo, loginBody, type SessionState, setupBody, signupBody } from '../contract.ts';
 import type { Db } from '../db/client.ts';
 import { accounts, DEFAULT_ORGANISATION_ID, invitations, organisations } from '../db/schema.ts';
 import { HttpError, parseOr400 } from '../http.ts';
@@ -52,6 +52,9 @@ const invalidInvitation = () =>
     message: 'This invitation link is invalid, used or expired.',
   });
 
+const alreadySetUp = () =>
+  new HttpError(409, { error: 'already_set_up', message: 'This instance is set up.' });
+
 const emailTaken = () =>
   new HttpError(409, {
     error: 'email_taken',
@@ -70,6 +73,8 @@ export function authRouter(
   limiters: AuthLimiters
 ): Router {
   const router = Router();
+  // Single use: cleared in the transaction that creates the first account.
+  let setupToken = config.setupToken;
   const maxAge = (expiresAt: Date) => Math.floor((expiresAt.getTime() - Date.now()) / 1000);
 
   async function instanceIsEmpty(tx: Tx = db): Promise<boolean> {
@@ -111,22 +116,29 @@ export function authRouter(
 
   router.post('/setup', async (req, res) => {
     limitIp(req, res);
-    const body = parseOr400(signupBody, req.body);
+    const { setupToken: sent, ...body } = parseOr400(setupBody, req.body);
+    // Cheap checks first: nothing is hashed for a request that cannot succeed.
+    if (!(await instanceIsEmpty())) throw alreadySetUp();
+    if (!setupToken || !safeEqual(sent, setupToken)) {
+      throw new HttpError(403, {
+        error: 'setup_token_invalid',
+        message: 'Enter the setup token from the server log (or SETUP_TOKEN).',
+      });
+    }
     const passwordHash = await hashPassword(body.password);
     const accountId = await db.transaction(async (tx) => {
       await tx.execute(sql`SELECT pg_advisory_xact_lock(${SETUP_LOCK_KEY})`);
-      if (!(await instanceIsEmpty(tx))) return null;
+      if (!(await instanceIsEmpty(tx)) || !setupToken) return null;
       const [account] = await tx
         .insert(accounts)
         .values({ ...body, passwordHash, isInstanceAdmin: true })
         .returning({ id: accounts.id });
       // Everything that existed before accounts belongs to the default organisation.
       await addMember(tx, DEFAULT_ORGANISATION_ID, account!.id, 'owner');
+      setupToken = null;
       return account!.id;
     });
-    if (!accountId) {
-      throw new HttpError(409, { error: 'already_set_up', message: 'This instance is set up.' });
-    }
+    if (!accountId) throw alreadySetUp();
     res.status(201).json(await stateFor(res, accountId));
   });
 
