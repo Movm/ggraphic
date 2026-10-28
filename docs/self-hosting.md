@@ -37,16 +37,21 @@ All settings are environment variables in `.env`; `.env.example` documents each 
 
 ### Accounts and organisations
 
+Studio is a single-user tool for now: one person, one organisation.
+
 - The first account is the **instance admin** and owner of the default organisation, which holds every project that existed before accounts (upgrades keep all projects; existing upload files are assigned to it at start).
-- Every account belongs to one or more organisations as **owner** (projects, members, invitations, brand) or **editor** (projects).
-- New people join through **invitation links**: an owner creates one on the Members page and passes it on; Studio sends no email. A link works once and for seven days. While self-registration is off, only links created by the instance admin can create new accounts; links from other owners need an existing account.
-- `ALLOW_REGISTRATION=true` opens self-registration; each new account gets its own organisation.
-- Only the instance admin creates further organisations (everyone, when registration is open).
+- There are no invitation links and no member management. The tables and the `/api/orgs/:orgId/...` URLs stay, so this can come back; no endpoint creates organisations, members or invitations today.
+- A second person gets an account only when you set `ALLOW_REGISTRATION=true` (default `false`) and they register on the login page; each new account gets its own organisation and sees nothing of yours. There is no admin screen to create accounts.
+- Every account has an organisation to work in. An account that has none (for example one that was removed from an organisation by hand in the database) gets a personal one, named after the person, at its next login or session check. An account with several memberships works in the organisation it owns, otherwise in its oldest membership.
 - There is no password reset yet. If someone forgets their password, the admin can set a new hash in the database: `docker compose exec studio node -e "import('argon2').then(a=>a.hash(process.argv[1],{type:a.argon2id})).then(console.log)" 'new password'`, then `UPDATE accounts SET password_hash = '<hash>' WHERE email = '...'; DELETE FROM sessions WHERE account_id = (SELECT id FROM accounts WHERE email = '...');`.
+
+### Trash
+
+Deleting a project moves it to the trash (`/trash` in the app); from there it can be restored or deleted for good. A project is removed for good 30 days after it was deleted, by a job inside the server process that checks every six hours (the first time ten minutes after start; with several instances on one database only one runs it at a time). Each run logs `Trash purge: removed N projects` and nothing else. `TRASH_PURGE_ENABLED=false` switches the job off: deleted projects then stay in the trash until they are deleted by hand. Uploaded images are shared by an organisation's projects and are not removed with a project.
 
 ### Brand packs
 
-Owners set their organisation's brand on the Brand page: name, the eight colour roles, the grounds a page can sit on, headline and body fonts, a logo (PNG or WebP; SVG is refused) and font files (WOFF2, TTF, OTF) with a required licence note that is stored with the file. Make sure you may use a font on a web server before uploading it. The editor opens every project with its organisation's brand; without one it uses Studio's own colours.
+Owners set their organisation's brand on the Brand page: name, three colours (primary, secondary, accent), headline and body fonts, a logo (PNG or WebP; SVG is refused) and font files (WOFF2, TTF, OTF) with a required licence note that is stored with the file. Studio derives the other five roles (accent on light, attention, text on dark, text on light, surface) and the grounds a page can sit on from the three colours, so that text and accents stay readable; they cannot be set by hand. Saving a brand that was set by hand replaces its hand-set values with derived ones. Make sure you may use a font on a web server before uploading it. The editor opens every project with its organisation's brand; without one it uses Studio's own colours.
 
 ### Tools that need an outside service
 
