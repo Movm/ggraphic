@@ -729,9 +729,16 @@ describe('iconify client', () => {
     await vi.waitFor(() =>
       expect(impl.mock.calls.some((c) => /\.json/.test(String(c[0])))).toBe(true)
     );
-    await client.search('tree', 10, null, { refresh: true });
+    // A refresh that joins the running warm waits for it, and starts no second one.
+    let refreshed = false;
+    const refresh = client
+      .search('tree', 10, null, { refresh: true })
+      .then(() => (refreshed = true));
+    await new Promise((r) => setTimeout(r, 30));
+    expect(refreshed).toBe(false);
     release();
-    await first;
+    await Promise.all([first, refresh]);
+    expect(refreshed).toBe(true);
     expect(impl.mock.calls.filter((c) => /\.json/.test(String(c[0])))).toHaveLength(1);
   });
 
