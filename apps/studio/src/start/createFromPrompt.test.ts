@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import { brandFingerprint, resolveScheme } from '@ggraphic/core';
+import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api, ApiError } from '../api/client';
@@ -60,15 +62,17 @@ describe('createFromPrompt with AI', () => {
 
     const page = pageOf(saved());
     expect(page.configId).toBe('studio-quote');
+    // The page is rebound into the picked world and stamped with the brand it was made under.
     expect(page.state['brandScheme']).toBe('dark');
-    expect(page.state).not.toHaveProperty('brandStamp');
+    expect(page.state['backgroundColor']).toBe(resolveScheme(activeBrand(), 'dark')!.roles.ground);
+    expect(page.state['brandStamp']).toBe(brandFingerprint(activeBrand()));
     expect(textsOf(page)).toMatchObject({ headline: 'Mut zahlt sich aus', subline: 'Ada' });
     const body = mocked.pick.mock.calls[0]![0];
     expect(body.brief).toBe('Eine Zitatkarte');
     expect(body.templates.map((t) => t.id)).not.toContain('studio-blank');
   });
 
-  it('leaves the colour world alone when the AI picked none', async () => {
+  it("keeps the template's own colour world when the AI picked none", async () => {
     mocked.pick.mockResolvedValue({
       templateId: 'studio-number',
       schemeId: null,
@@ -76,7 +80,7 @@ describe('createFromPrompt with AI', () => {
     });
     await run();
     const page = pageOf(saved());
-    expect(page.state).not.toHaveProperty('brandScheme');
+    expect(page.state['brandScheme']).toBe('secondary');
     expect(textsOf(page)['number']).toBe('42%');
   });
 
