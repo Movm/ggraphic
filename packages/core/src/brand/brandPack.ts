@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 import { type BindingRef } from './bindings.js';
+import { type BrandLayout } from './layout.js';
 
 /**
  * A brand as data: the colours, grounds, fonts and marks a template reads
@@ -36,6 +37,8 @@ export interface BrandPack {
   logo: BrandImage | null;
   /** A second logo for grounds of one class; absent = `logo` everywhere. */
   logoAlt?: BrandLogoAlt | null;
+  /** Margin and logo corner templates place content by; absent = `DEFAULT_BRAND_LAYOUT`. Not part of `brandFingerprint`. */
+  layout?: BrandLayout;
   /** The quotation-mark graphic; null = typographic quotes. */
   quoteMark: { src: string } | null;
 }
