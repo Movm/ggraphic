@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { brandDefault } from './brandDefault.js';
 import { type BrandPack } from './brandPack.js';
 import { brandFingerprint, rebindPageState, rebindPages } from './bindings.js';
-import { deriveSchemes } from './schemes.js';
+import { deriveSchemes, schemeById } from './schemes.js';
 
 const brand: BrandPack = {
   ...brandDefault,
@@ -129,6 +129,63 @@ describe('rebindPageState', () => {
     const other: BrandPack = { ...brand, fonts: { ...brand.fonts, headline: 'Lora' } };
     const text = (rebindPageState(state, { brand: other }).state['textInstances'] as any[])[0]!;
     expect(text.fontFamily).toBe('Lora');
+  });
+});
+
+describe('rebindPageState edge cases', () => {
+  it('a deduplicated scheme falls back to the first derived scheme', () => {
+    const same: BrandPack = {
+      ...brand,
+      colors: { ...brand.colors, secondary: brand.colors.primary },
+    };
+    expect(schemeById(same, 'secondary')).toBeNull();
+    const first = deriveSchemes(same)[0]!;
+    const state = {
+      brandScheme: 'secondary',
+      textInstances: [{ fill: '#123456', bind: { fill: { ref: 'ink', value: '#123456' } } }],
+    };
+    const text = (rebindPageState(state, { brand: same }).state['textInstances'] as any[])[0];
+    expect(text.fill).toBe(first.roles.ink);
+  });
+
+  it('a logo binding on src follows the new logo', () => {
+    const logoBrand: BrandPack = { ...brand, logo: { src: 'new.svg', label: 'Logo' } };
+    const state = {
+      images: [{ src: 'old.svg', bind: { src: { ref: 'brand.logo', value: 'old.svg' } } }],
+    };
+    const img = (rebindPageState(state, { brand: logoBrand }).state['images'] as any[])[0];
+    expect(img.src).toBe('new.svg');
+    expect(img.bind.src.value).toBe('new.svg');
+  });
+
+  it('an invalid binding is dropped and the field kept', () => {
+    const state = {
+      textInstances: [
+        {
+          fill: '#123456',
+          fontFamily: 'X',
+          bind: {
+            fill: { ref: 'nonsense', value: '#123456' },
+            fontFamily: { ref: 'font.body', value: 5 },
+          },
+        },
+      ],
+    };
+    const text = (rebindPageState(state, ctx).state['textInstances'] as any[])[0];
+    expect(text.fill).toBe('#123456');
+    expect(text.fontFamily).toBe('X');
+    expect(text.bind).toBeUndefined();
+  });
+
+  it('a stale stamp is written even when every binding was dropped', () => {
+    const state = {
+      textInstances: [
+        { fill: '#ff0000', bind: { fill: { ref: 'brand.primary', value: '#1d3557' } } },
+      ],
+    };
+    const r = rebindPageState(state, ctx);
+    expect(r.changed).toBe(true);
+    expect(r.state['brandStamp']).toBe(brandFingerprint(brand));
   });
 });
 
