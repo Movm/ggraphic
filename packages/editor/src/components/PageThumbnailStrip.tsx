@@ -132,8 +132,8 @@ export const PageThumbnailStrip = memo(function PageThumbnailStrip({
                 ref={chevronRef}
                 className="h-8 max-canvas-mobile:h-11 max-canvas-mobile:min-w-11 px-1.5 flex items-center justify-center text-[var(--editor-text-secondary)] hover:bg-[var(--editor-surface-hover)] hover:text-[var(--editor-active-fg)] transition-colors"
                 onClick={handleToggleFlyout}
-                title="Vorlage auswählen"
-                aria-label="Vorlage auswählen"
+                title={t.pageBar.chooseTemplate}
+                aria-label={t.pageBar.chooseTemplate}
                 type="button"
                 aria-expanded={isFlyoutOpen}
               >

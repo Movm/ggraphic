@@ -216,6 +216,7 @@ export function createStudioServices({
           iconSearch: {
             search: (query, signal) => api.searchIcons(query, ICON_SEARCH_LIMIT, signal),
             svg: (prefix, name) => api.iconSvg(prefix, name),
+            refresh: (query) => api.refreshIcons(query, ICON_SEARCH_LIMIT),
             previewUrl: (prefix, name) => iconPreviewUrl(prefix, name),
           },
         }

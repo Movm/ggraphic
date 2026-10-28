@@ -410,3 +410,21 @@ export function printGeometry(format: PrintCanvasFormat): {
     safe: inset(bleedMm + safeMm),
   };
 }
+
+/** The format's name in the active language; the built-in names come from the message catalogue. */
+export function formatLabel(format: CanvasFormat): string {
+  const name = messages().formats.names[format.id];
+  if (!name) return format.label;
+  return format.print ? `${name} · ${format.print.trimMm.w} × ${format.print.trimMm.h} mm` : name;
+}
+
+/** The format's size line in the active language. */
+export function formatDescription(format: CanvasFormat): string {
+  const m = messages().formats;
+  if (format.print) {
+    const { trimMm, bleedMm, seiten } = format.print;
+    return m.printDescription(`${trimMm.w} × ${trimMm.h} mm`, bleedMm, seiten);
+  }
+  if (format.id === 'slide-16-9') return m.slidesDescription('1920 × 1080 · 16:9');
+  return format.description;
+}

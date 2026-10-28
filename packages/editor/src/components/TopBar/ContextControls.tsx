@@ -508,7 +508,7 @@ export function ContextControls({
         type="button"
       >
         <CropIcon />
-        {isCropping ? 'Fertig' : 'Zuschneiden'}
+        {isCropping ? t.topBar.done : t.topBar.cropAction}
       </button>
     );
   }
@@ -525,7 +525,7 @@ export function ContextControls({
         key="credit"
         className="inline-flex items-center gap-1 h-8 shrink-0 px-1 text-[12px] text-[var(--editor-text-muted)] whitespace-nowrap"
       >
-        Foto von
+        {t.credit.photoBy}
         <a
           href={credit.profileUrl}
           target="_blank"
@@ -534,7 +534,7 @@ export function ContextControls({
         >
           {credit.photographer}
         </a>
-        auf
+        {t.credit.on}
         <a
           href={unsplashHome}
           target="_blank"
@@ -612,7 +612,7 @@ export function ContextControls({
     canLock &&
     handlers.handleToggleLock
   ) {
-    const label = isLocked ? 'Entsperren' : 'Sperren';
+    const label = isLocked ? t.contextMenu.unlock : t.commands.toggleLock;
     groups.push(
       <button
         key="lock"

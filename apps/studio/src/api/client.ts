@@ -238,7 +238,9 @@ export class ApiError extends Error {
     readonly status: number,
     readonly code: string,
     message: string,
-    readonly currentVersion: number | null = null
+    readonly currentVersion: number | null = null,
+    /** Seconds from a Retry-After header, when the server sent one. */
+    readonly retryAfter: number | null = null
   ) {
     super(message);
     this.name = 'ApiError';
@@ -265,6 +267,11 @@ export function onUnauthenticated(listener: () => void): () => void {
 }
 
 /** One call; a failed answer becomes an `ApiError` from the server's error body. */
+function secondsOf(header: string | null): number | null {
+  const seconds = Number.parseInt(header ?? '', 10);
+  return Number.isFinite(seconds) && seconds > 0 ? seconds : null;
+}
+
 async function send(path: string, init: RequestInit = {}): Promise<Response> {
   const method = (init.method ?? 'GET').toUpperCase();
   const headers = new Headers(init.headers);
@@ -286,7 +293,8 @@ async function send(path: string, init: RequestInit = {}): Promise<Response> {
       parsed.success ? parsed.data.error : 'http_error',
       (parsed.success ? parsed.data.message : undefined) ??
         `The request failed (HTTP ${response.status}).`,
-      parsed.success ? (parsed.data.currentVersion ?? null) : null
+      parsed.success ? (parsed.data.currentVersion ?? null) : null,
+      secondsOf(response.headers.get('Retry-After'))
     );
   }
   return response;
@@ -449,6 +457,22 @@ export const api = {
       signal ? { signal } : {}
     );
     return result.icons;
+  },
+  /**
+   * Asks the server to fetch the icons of a search again in batches. Answers the wait it asks for
+   * before another attempt (a Retry-After on the answer or on a 429), or null when they are ready.
+   */
+  refreshIcons: async (query: string, limit: number) => {
+    const params = new URLSearchParams({ q: query, limit: String(limit), refresh: '1' });
+    try {
+      const response = await send(`/assets/icons/search?${params.toString()}`);
+      return { retryAfterSeconds: secondsOf(response.headers.get('Retry-After')) };
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 429) {
+        return { retryAfterSeconds: err.retryAfter ?? 10 };
+      }
+      throw err;
+    }
   },
   /** One icon as SVG markup, through the same proxy. */
   iconSvg: async (prefix: string, name: string) => {

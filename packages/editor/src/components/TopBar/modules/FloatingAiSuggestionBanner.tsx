@@ -41,7 +41,7 @@ export function FloatingAiSuggestionBanner({
 
   if (!pending) return null;
 
-  const noun = pending.source === 'vorlage' ? 'Vorlage' : 'Vorschlag';
+  const noun = pending.source === 'vorlage' ? t.topBar.aiTemplate : t.topBar.aiSuggestionNoun;
   const Icon = pending.source === 'vorlage' ? LayoutTemplate : Sparkles;
   const handleAccept = () => setPending(null);
 
@@ -94,8 +94,8 @@ export function FloatingAiSuggestionBanner({
         type="button"
         onClick={handleReject}
         className="size-8 max-canvas-mobile:size-10 rounded-full border-none bg-transparent flex items-center justify-center text-white/90 transition-[background-color,color] duration-200 hover:bg-white/15 hover:text-white cursor-pointer"
-        title={`${noun} verwerfen (Rückgängig)`}
-        aria-label={`${noun} verwerfen`}
+        title={t.topBar.aiDiscardUndo(noun)}
+        aria-label={t.topBar.aiDiscard(noun)}
       >
         <RotateCcw className="size-4" />
       </button>
@@ -103,8 +103,8 @@ export function FloatingAiSuggestionBanner({
         type="button"
         onClick={handleAccept}
         className="size-8 max-canvas-mobile:size-10 rounded-full border-none bg-primary flex items-center justify-center text-white transition-opacity duration-200 hover:opacity-90 cursor-pointer"
-        title={`${noun} behalten`}
-        aria-label={`${noun} behalten`}
+        title={t.topBar.aiKeep(noun)}
+        aria-label={t.topBar.aiKeep(noun)}
       >
         <Check className="size-4" />
       </button>
