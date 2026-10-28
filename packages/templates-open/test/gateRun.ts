@@ -6,6 +6,17 @@ import { readTemplateFile } from '@ggraphic/schema';
 import { OPEN_TEMPLATE_MANIFEST } from '../src/index.js';
 import { testBrandPacks } from './testBrands.js';
 
+/**
+ * Assets a template of the open pack may name by id: sets under CC0, MIT, ISC or Apache-2.0
+ * (the icon sets' licences are read from their `info.json`; the illustration sets' from the
+ * header of their module). CC BY sets such as gophers are out: a template carries no
+ * attribution. Stickers and emoji are not allowed at all.
+ */
+const OPEN_ALLOWED_ASSETS = {
+  icon: ['bi:', 'flowbite:', 'heroicons:', 'iconoir:', 'lucide:', 'ri:', 'tabler:'],
+  illustration: ['kawaii:', 'illlustrations:', 'openpeeps:'],
+};
+
 export const CANVASES = {
   '1:1': { width: 1080, height: 1080 },
   '4:5': { width: 1080, height: 1350 },
@@ -28,6 +39,7 @@ export function checkFile(raw: unknown): GateProblem[] {
     brands: testBrandPacks(),
     canvases: CANVASES,
     adapter: TEMPLATE_GATE_ADAPTER,
+    allowedAssets: OPEN_ALLOWED_ASSETS,
     manifestPaths: new Set(OPEN_TEMPLATE_MANIFEST.assets.map((a) => a.path)),
     slots: t.slots,
     placeholderTexts: t.placeholders['en'] ?? {},
