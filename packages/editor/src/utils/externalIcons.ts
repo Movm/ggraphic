@@ -176,9 +176,9 @@ export function externalIconDataUrl(svg: string, size: number, color: string): s
   return `data:image/svg+xml;base64,${toBase64(sized.replace(/currentColor/g, () => ink))}`;
 }
 
-/** "Icon: <set> by <author>, <licence>" for the picker and for credits. */
+/** "Icon: <Set> von <Autor>, <Lizenz>" for the picker. German, like the photo credit line. */
 export function attributionLine(source: IconSource): string {
-  const by = source.author ? ` by ${source.author}` : '';
+  const by = source.author ? ` von ${source.author}` : '';
   return `Icon: ${source.setTitle}${by}, ${source.licence}`;
 }
 
@@ -192,22 +192,26 @@ export function pageIconSources(state: Record<string, unknown>): IconSource[] {
   });
 }
 
+/** Public domain asks for no credit; every other licence (MIT, Apache, CC BY …) does. */
+const NEEDS_NO_CREDIT = /^(CC0(-|$)|Unlicense$)/i;
+
 /**
- * The credit line for the icons of a design: only licences that ask for
- * attribution (CC BY), each set once. Empty when none does.
+ * The credit line for the icons of a design, for the share text: every set
+ * once, with its licence and a link to the licence text. Empty when none needs
+ * one. German, like `photoCreditLine`.
  */
 export function iconCreditLine(sources: readonly IconSource[]): string {
   const seen = new Set<string>();
-  const sets: IconSource[] = [];
+  const entries: string[] = [];
   for (const source of sources) {
     const key = `${source.prefix}\0${source.licence}`;
-    if (!/^CC-BY(-|$)/i.test(source.licence) || seen.has(key)) continue;
+    if (NEEDS_NO_CREDIT.test(source.licence) || seen.has(key)) continue;
     seen.add(key);
-    sets.push(source);
+    const by = source.author ? ` von ${source.author}` : '';
+    entries.push(
+      `${source.setTitle}${by} (${source.licence}, https://spdx.org/licenses/${encodeURIComponent(source.licence)}.html)`
+    );
   }
-  const [only] = sets;
-  if (!only) return '';
-  if (sets.length === 1) return attributionLine(only);
-  const names = sets.map((s) => `${s.setTitle}${s.author ? ` by ${s.author}` : ''} (${s.licence})`);
-  return `Icons: ${names.join(', ')}`;
+  if (entries.length === 0) return '';
+  return `${entries.length > 1 ? 'Icons' : 'Icon'}: ${entries.join(', ')}`;
 }
