@@ -24,6 +24,8 @@ import {
 } from '../api/client';
 import {
   aliasFontFamily,
+  BRAND_LAYOUT_BOUNDS,
+  clampBrandLayout,
   DEFAULT_BRAND_LAYOUT,
   deriveBrandColors,
   deriveGrounds,
@@ -154,7 +156,7 @@ function BrandEditor({
       },
       logoAssetId: stored.logoAssetId,
       logoAlt: stored.logoAlt,
-      layout: stored.layout ?? DEFAULT_BRAND_LAYOUT,
+      layout: clampBrandLayout(stored.layout ?? DEFAULT_BRAND_LAYOUT),
     };
   });
   // The second logo is picked first and given its ground second: until then it is not valid.
@@ -328,8 +330,8 @@ function BrandEditor({
           </p>
           <RangeField
             label="Margin"
-            min={4}
-            max={12}
+            min={pct(BRAND_LAYOUT_BOUNDS.margin.min)}
+            max={pct(BRAND_LAYOUT_BOUNDS.margin.max)}
             value={layout.margin}
             onChange={(margin) => setLayout({ margin })}
           />
@@ -349,15 +351,15 @@ function BrandEditor({
           </fieldset>
           <RangeField
             label="Logo width"
-            min={5}
-            max={40}
+            min={pct(BRAND_LAYOUT_BOUNDS.logoMaxWidth.min)}
+            max={pct(BRAND_LAYOUT_BOUNDS.logoMaxWidth.max)}
             value={layout.logoMaxWidth}
             onChange={(logoMaxWidth) => setLayout({ logoMaxWidth })}
           />
           <RangeField
             label="Logo height"
-            min={3}
-            max={20}
+            min={pct(BRAND_LAYOUT_BOUNDS.logoMaxHeight.min)}
+            max={pct(BRAND_LAYOUT_BOUNDS.logoMaxHeight.max)}
             value={layout.logoMaxHeight}
             onChange={(logoMaxHeight) => setLayout({ logoMaxHeight })}
           />
@@ -518,6 +520,9 @@ function BrandEditor({
     </div>
   );
 }
+
+/** A fraction as a whole percent, for a slider's bounds. */
+const pct = (fraction: number): number => Math.round(fraction * 100);
 
 /** A percentage slider over a 0–1 fraction (the layout stores fractions). */
 function RangeField({

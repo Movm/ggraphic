@@ -372,6 +372,34 @@ describe('BrandPage', () => {
     expect(screen.getByRole('button', { name: 'Save brand' })).toBeEnabled();
   });
 
+  it('limits the logo box to 5–30 % wide and 3–12 % high and shows an older value clamped', async () => {
+    const settings = {
+      ...defaultSettings('Org'),
+      layout: { margin: 0.06, logoCorner: 'top-right', logoMaxWidth: 0.4, logoMaxHeight: 0.2 },
+    };
+    const stored = { ...empty, settings };
+    const calls = stubServer((method, url, body) => {
+      if (url !== `/api/orgs/${TEST_ORG}/brand-pack`) return undefined;
+      if (method === 'GET') return json(200, stored);
+      return json(200, { ...stored, settings: body });
+    });
+    const user = userEvent.setup();
+    renderWith(<BrandPage />);
+    const width = await screen.findByLabelText(/^Logo width/);
+    const height = screen.getByLabelText(/^Logo height/);
+    expect(width).toHaveAttribute('min', '5');
+    expect(width).toHaveAttribute('max', '30');
+    expect(height).toHaveAttribute('min', '3');
+    expect(height).toHaveAttribute('max', '12');
+    expect(width).toHaveValue('30');
+    expect(height).toHaveValue('12');
+    await user.click(screen.getByRole('button', { name: 'Save brand' }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
+    expect(
+      (calls.find((c) => c.method === 'PUT')!.body as { layout: Record<string, number> }).layout
+    ).toMatchObject({ logoMaxWidth: 0.3, logoMaxHeight: 0.12 });
+  });
+
   it('keeps a stored layout and second logo when saving untouched', async () => {
     const layout = {
       margin: 0.06,
