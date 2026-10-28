@@ -58,6 +58,7 @@ export {
   type BrandFontRole,
   type RebindContext,
 } from './brand/bindings.js';
+export type { GateAdapter } from './templates/gate.js';
 export {
   instantiateTemplatePage,
   offeredSchemes,

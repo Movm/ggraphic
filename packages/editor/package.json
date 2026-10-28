@@ -272,6 +272,7 @@
     "./stores/createCanvasEditorStore": "./src/stores/createCanvasEditorStore.ts",
     "./stores/useAutoSaveStore": "./src/stores/useAutoSaveStore.ts",
     "./templates/registry": "./src/templates/registry.ts",
+    "./templates/templateGeometry": "./src/templates/templateGeometry.ts",
     "./types/editorTypes": "./src/types/editorTypes.ts",
     "./ui/alert-dialog": "./src/ui/alert-dialog.tsx",
     "./ui/button": "./src/ui/button.tsx",
