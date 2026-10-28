@@ -6,7 +6,6 @@ import type {
   ToolbarStateReport,
 } from '@ggraphic/editor/components/GenericCanvas';
 import type { ShadowPatch } from '@ggraphic/editor/hooks/useFloatingModuleHandlers';
-import type { SelectionGeometry } from '@ggraphic/editor/utils/canvasCommands';
 import type { PageCommandId } from '@ggraphic/editor/utils/canvasCommandRegistry';
 import { type SelectionGeometry } from '@ggraphic/editor/utils/canvasCommands';
 import type { CropAspectId } from '@ggraphic/editor/utils/cropAspect';
