@@ -13,11 +13,13 @@ import {
   randomAssetName,
 } from '../brand/assets.ts';
 import { buildBrandPack, BUNDLED_FONT_FAMILIES } from '../brand/build.ts';
+import { settingsFromInput } from '../brand/derive.ts';
 import type { Config } from '../config.ts';
 import {
   type BrandAsset,
   brandSettingsBody,
   type BrandSettings,
+  brandWriteBody,
   fontUploadFields,
 } from '../contract.ts';
 import type { Db } from '../db/client.ts';
@@ -101,15 +103,21 @@ export function organisationBrandRouter(db: Db, config: Config): Router {
   router.put('/', async (req, res) => {
     const orgId = orgParam(req.params);
     await requireMembership(db, me(res), orgId, 'owner');
-    const parsed = parseOr400(brandSettingsBody, req.body);
+    const parsed = parseOr400(brandWriteBody, req.body);
     // Old clients may still send a replaced family ("PT Sans"); store its successor.
-    const body = {
+    const body = settingsFromInput({
       ...parsed,
       fonts: {
         headline: aliasFontFamily(parsed.fonts.headline),
         body: aliasFontFamily(parsed.fonts.body),
       },
-    };
+    });
+    if (!body) {
+      throw new HttpError(400, {
+        error: 'invalid_request',
+        message: 'colors: cannot derive a brand.',
+      });
+    }
     const assets = await db.select().from(brandAssets).where(eq(brandAssets.organisationId, orgId));
     const families = new Set<string>([
       ...BUNDLED_FONT_FAMILIES,
