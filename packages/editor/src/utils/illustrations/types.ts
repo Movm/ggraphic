@@ -49,12 +49,7 @@ export interface KawaiiInstance {
 
 // SVG Illustration types
 export type SvgSource =
-  | 'opendoodles'
-  | 'illlustrations'
-  | 'gophers'
-  | 'transhumans'
-  | 'humaaans'
-  | 'openpeeps';
+  'opendoodles' | 'illlustrations' | 'gophers' | 'transhumans' | 'humaaans' | 'openpeeps';
 
 export interface SvgDef {
   id: string;
