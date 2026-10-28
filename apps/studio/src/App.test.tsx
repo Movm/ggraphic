@@ -19,7 +19,6 @@ const loggedIn: Session = {
   account: { id: 'a1', email: 'admin@example.org', displayName: 'Admin', isInstanceAdmin: true },
   csrfToken: 'csrf',
   organisations: [{ id: 'org-1', name: 'Example org', role: 'owner' }],
-  canCreateOrganisations: true,
 };
 const loggedOut: Session = { ...loggedIn, account: null, csrfToken: null, organisations: [] };
 

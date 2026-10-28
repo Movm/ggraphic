@@ -89,7 +89,6 @@ describe('api client', () => {
       account: { id: 'a', email: 'a@example.org', displayName: 'A', isInstanceAdmin: false },
       csrfToken: 'tok-123',
       organisations: [],
-      canCreateOrganisations: false,
     };
     vi.stubGlobal('fetch', reply(200, session));
     await api.getSession();

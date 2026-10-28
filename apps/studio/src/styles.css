@@ -410,16 +410,6 @@ body {
   flex-wrap: wrap;
   gap: var(--ui-space-2) var(--ui-space-4);
 }
-.studio-topnav__org {
-  font-weight: var(--ui-weight-bold);
-  color: var(--ui-color-text);
-}
-/* A native select in the kit's field look, compact (the kit's Select cannot be driven natively). */
-.studio-select {
-  width: auto;
-  height: var(--ui-control-sm);
-  padding: 0 var(--ui-space-3);
-}
 
 .studio-page {
   max-width: 1120px;
@@ -937,31 +927,6 @@ body {
   flex: 1 1 200px;
   min-width: 0;
   overflow-wrap: anywhere;
-}
-.studio-invite {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--ui-space-2) var(--ui-space-3);
-  margin: var(--ui-space-3) 0;
-}
-.studio-invite__role,
-.studio-invite__field {
-  flex: 0 1 320px;
-}
-.studio-invite__link {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--ui-space-3);
-  margin: var(--ui-space-3) 0;
-}
-.studio-invite__link .studio-invite__field {
-  width: 100%;
-  max-width: none;
-}
-.studio-invite__link input {
-  font-family: var(--ui-font-mono);
 }
 .studio-brand {
   display: grid;

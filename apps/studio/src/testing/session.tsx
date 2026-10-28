@@ -16,10 +16,8 @@ export function testSession(role: Role = 'owner'): LoggedIn {
       account: { id: 'acc-1', email: 'me@example.org', displayName: 'Me', isInstanceAdmin: true },
       csrfToken: 'csrf-1',
       organisations: [{ id: TEST_ORG, name: 'Example org', role }],
-      canCreateOrganisations: true,
     },
     organisation: { id: TEST_ORG, name: 'Example org', role },
-    selectOrganisation: () => {},
     refresh: () => Promise.resolve(),
   };
 }
