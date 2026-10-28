@@ -70,6 +70,14 @@ describe.skipIf(!hasDb)('brand packs (Postgres)', () => {
       .expect(403);
   });
 
+  it('accepts the replaced font families and stores their successors', async () => {
+    const res = await owner
+      .put(base)
+      .send({ ...BRAND_SETTINGS, fonts: { headline: 'PT Sans', body: 'Vollkorn' } })
+      .expect(200);
+    expect(res.body.settings.fonts).toEqual({ headline: 'Instrument Sans', body: 'Fraunces' });
+  });
+
   it('validates colours and font families', async () => {
     await owner
       .put(base)
