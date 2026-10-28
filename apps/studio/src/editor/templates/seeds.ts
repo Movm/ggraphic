@@ -250,7 +250,7 @@ function numberSeed(f: Frame): PageSeed {
         size: 300,
         font: 'headline',
         fontStyle: 'bold',
-        fill: 'brand.accent',
+        fill: 'accent',
         lineHeight: 1,
       }),
       text(f, TEXT_ROLES.headline, 'header', 'of what this number stands for', 0.5, {
