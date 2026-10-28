@@ -266,6 +266,7 @@ function BrandEditor({
   const setLayout = (patch: Partial<BrandLayout>) =>
     setInput((s) => ({ ...s, layout: { ...(s.layout ?? DEFAULT_BRAND_LAYOUT), ...patch } }));
   const logoUrl = logos.find((l) => l.id === input.logoAssetId)?.url ?? null;
+  const altUrl = alt?.ground ? (logos.find((l) => l.id === alt.assetId)?.url ?? null) : null;
 
   return (
     <div className="studio-brand">
@@ -501,7 +502,13 @@ function BrandEditor({
       </form>
 
       <aside className="studio-brand__preview" aria-label="Live preview">
-        <BrandPreview settings={settings} ground={ground} logoUrl={logoUrl} layout={layout} />
+        <BrandPreview
+          settings={settings}
+          ground={ground}
+          logoUrl={logoUrl}
+          logoAlt={altUrl && alt?.ground ? { url: altUrl, ground: alt.ground } : null}
+          layout={layout}
+        />
         <fieldset className="studio-chips">
           <legend className="studio-muted">Preview on</legend>
           {grounds.map((b, i) => (

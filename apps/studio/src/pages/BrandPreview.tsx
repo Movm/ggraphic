@@ -6,7 +6,13 @@
  */
 import { type CSSProperties } from 'react';
 
-import { DEFAULT_BRAND_LAYOUT, type BrandLayout, logoEnvelope, safeArea } from '@ggraphic/core';
+import {
+  DEFAULT_BRAND_LAYOUT,
+  groundClass,
+  logoEnvelope,
+  safeArea,
+  type BrandLayout,
+} from '@ggraphic/core';
 
 import { type BrandSettings } from '../api/client';
 
@@ -19,16 +25,20 @@ export function BrandPreview({
   settings,
   ground,
   logoUrl,
+  logoAlt = null,
   layout = DEFAULT_BRAND_LAYOUT,
 }: {
   settings: BrandSettings;
   /** The page colour; the seed starts on `primary`. */
   ground: { color: string; ink: string };
   logoUrl: string | null;
+  /** The second logo and the class of ground it is for; it replaces the main logo there. */
+  logoAlt?: { url: string; ground: 'dark' | 'light' } | null;
   /** The grid whose safe area and logo box are outlined. */
   layout?: BrandLayout;
 }) {
   const { colors, fonts } = settings;
+  const shownLogo = logoAlt && logoAlt.ground === groundClass(ground.color) ? logoAlt.url : logoUrl;
   const safe = safeArea(layout, CANVAS);
   const envelope = logoEnvelope(layout, CANVAS, layout.logoCorner);
   const margin = px(safe.x);
@@ -114,14 +124,14 @@ export function BrandPreview({
           data-outline="logo-envelope"
           style={box(envelope)}
         />
-        {logoUrl ? (
+        {shownLogo ? (
           <span
             className="studio-brand-preview__envelope"
             style={{ ...box(envelope), justifyContent: alignH, alignItems: alignV }}
           >
             <img
               className="studio-brand-preview__logo"
-              src={logoUrl}
+              src={shownLogo}
               alt={`${settings.name} logo`}
             />
           </span>
