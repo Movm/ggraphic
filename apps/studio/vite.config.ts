@@ -6,13 +6,18 @@ import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
 const schemaSrc = path.resolve(import.meta.dirname, '../../packages/schema/src');
+const uiSrc = path.resolve(import.meta.dirname, '../../packages/ui/src/index.ts');
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     // @ggraphic/schema points `import` at a dist nobody builds in the workspace; read its source,
     // as the editor's own lanes do (they resolve the `development` condition).
-    alias: [{ find: /^@ggraphic\/schema(\/.*)?$/, replacement: `${schemaSrc}$1` }],
+    // @ggraphic/ui likewise points `import` at an unbuilt dist; its CSS subpaths resolve as exported.
+    alias: [
+      { find: /^@ggraphic\/schema(\/.*)?$/, replacement: `${schemaSrc}$1` },
+      { find: /^@ggraphic\/ui$/, replacement: uiSrc },
+    ],
     // One React: @tanstack/react-query and the editor must not bring their own copy.
     dedupe: ['react', 'react-dom'],
   },
