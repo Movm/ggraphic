@@ -3,7 +3,8 @@
  * The host services the Studio hands the editor (`CanvasEditorProvider`):
  * uploads go to `POST /api/orgs/:orgId/uploads`, the organisation's logo is
  * offered in the Uploads tab, downloads are named `ggraphic-…`, and the
- * AI draft tab appears only when the server has AI turned on.
+ * AI draft tab appears only when the server has AI turned on. The Tools tab
+ * needs no service: it offers QR code, blob, gradient text and text path.
  *
  * Not supplied, so the editor runs on its fallbacks: stock photos, Unsplash
  * (no key in this version), AI images, background removal, gallery autosave
@@ -181,6 +182,7 @@ export function createStudioServices({
     imageUrls: studioImageUrls,
     fileDelivery: { ...browserFileDelivery, filenamePrefix: 'ggraphic', shareTitle: 'ggraphic' },
     unsplashUtmSource: 'ggraphic',
+    qrPreviewUrl: 'https://example.org',
     ...(ai
       ? {
           aiDraft: {

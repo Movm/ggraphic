@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The one page config every Studio template shares: a colour ground and the
- * editor's free elements, with the Text, Elements and Uploads tabs. Templates
+ * editor's free elements, with the Text, Elements, Uploads and Tools tabs. Templates
  * differ only in what a fresh page starts with (`seeds.ts`). The config lays
  * out on the document's format, so one template serves every format.
  */
@@ -13,10 +13,11 @@ import { getCanvasFormatOrDefault } from '@ggraphic/editor/formats/index';
 import {
   AssetsSection,
   CombinedTextSection,
+  ToolsSection,
   UploadsSection,
 } from '@ggraphic/editor/sidebar/sections/index';
 import { defineTemplate, registerTemplates } from '@ggraphic/editor/templates/registry';
-import { PiSquaresFour, PiTextAa, PiUploadSimple } from 'react-icons/pi';
+import { PiSquaresFour, PiTextAa, PiToolbox, PiUploadSimple } from 'react-icons/pi';
 
 import { createStudioActions, type StudioActions } from './actions';
 import { STUDIO_TEMPLATE_IDS, type StudioTemplateId } from './ids';
@@ -56,6 +57,12 @@ export function createStudioConfig(
         label: 'Uploads',
         ariaLabel: 'Uploads: your own images',
       },
+      {
+        id: 'tools',
+        icon: PiToolbox,
+        label: 'Tools',
+        ariaLabel: 'Tools: QR code, blob, gradient text and text on a path',
+      },
     ],
 
     sections: {
@@ -77,6 +84,10 @@ export function createStudioConfig(
       uploads: section({
         component: UploadsSection,
         propsFactory: (_state, actions) => ({ onPlaceFromUrl: actions.addUserImageFromUrl }),
+      }),
+      tools: section({
+        component: ToolsSection,
+        propsFactory: (_state, actions) => ({ onPlaceImageUrl: actions.addUserImageFromUrl }),
       }),
     },
 
