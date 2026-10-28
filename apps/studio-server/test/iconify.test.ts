@@ -43,6 +43,9 @@ Object.assign(COLLECTIONS, { 'ri-new': set('Remix Icon', 'Apache-2.0', { version
 const SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M0 0h24v24H0z"/></svg>';
 
+const svgResponse = (body: string, init: ResponseInit = {}) =>
+  new Response(body, { ...init, headers: { 'content-type': 'image/svg+xml', ...init.headers } });
+
 interface FakeOptions {
   search?: string[];
   svg?: (prefix: string, name: string) => Response;
@@ -81,10 +84,7 @@ function fakeIconify(options: FakeOptions = {}) {
     }
     const match = /^\/([a-z0-9-]+)\/([a-z0-9-]+)\.svg$/.exec(url.pathname);
     if (match) {
-      return Promise.resolve(
-        options.svg?.(match[1]!, match[2]!) ??
-          new Response(SVG, { headers: { 'content-type': 'image/svg+xml' } })
-      );
+      return Promise.resolve(options.svg?.(match[1]!, match[2]!) ?? svgResponse(SVG));
     }
     return Promise.resolve(new Response('404', { status: 404 }));
   });
@@ -209,6 +209,20 @@ describe.skipIf(!hasDb)('/api/assets/icons (Postgres)', () => {
       expect(fake.calls.filter((c) => c === '/collections')).toHaveLength(1);
     });
 
+    it('treats case and spacing in a search term as one search', async () => {
+      const fake = fakeIconify();
+      const agent = await loggedIn(fake.impl);
+      await agent.get('/api/assets/icons/search?q=Tree').expect(200);
+      await agent.get('/api/assets/icons/search?q=%20tree%20').expect(200);
+      await agent.get('/api/assets/icons/search?q=TREE').expect(200);
+      await agent.get('/api/assets/icons/search?q=big%20%20Tree').expect(200);
+      await agent.get('/api/assets/icons/search?q=big%20tree').expect(200);
+      const searches = fake.calls.filter((c) => c.startsWith('/search'));
+      expect(searches).toHaveLength(2);
+      expect(new URL(`http://x${searches[0]}`).searchParams.get('query')).toBe('tree');
+      expect(new URL(`http://x${searches[1]}`).searchParams.get('query')).toBe('big tree');
+    });
+
     it.each([
       ['/api/assets/icons/search'],
       ['/api/assets/icons/search?q='],
@@ -320,22 +334,58 @@ describe.skipIf(!hasDb)('/api/assets/icons (Postgres)', () => {
       expect(res.body.error).toBe('not_found');
     });
 
-    it('answers 502 for a body that is no plain svg', async () => {
+    it('answers 502 for a body that is no svg we can make safe', async () => {
       for (const body of [
         '<html></html>',
-        '<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
-        '<svg xmlns="http://www.w3.org/2000/svg" onload="x()"></svg>',
-        '<svg xmlns="http://www.w3.org/2000/svg"><foreignObject/></svg>',
-        '<svg xmlns="http://www.w3.org/2000/svg"><image href="http://evil/x.png"/></svg>',
+        '<svg/onload=alert(1) xmlns="http://www.w3.org/2000/svg"></svg>',
+        '<svg xmlns="http://www.w3.org/2000/svg" a="1"onload="x()"></svg>',
+        '<!DOCTYPE svg [<!ENTITY x "y">]><svg xmlns="http://www.w3.org/2000/svg">&x;</svg>',
       ]) {
-        const agent = await loggedIn(fakeIconify({ svg: () => new Response(body) }).impl);
+        const agent = await loggedIn(fakeIconify({ svg: () => svgResponse(body) }).impl);
         await agent.get('/api/assets/icons/tabler/tree.svg').expect(502);
       }
     });
 
+    it('serves the sanitised svg, not what upstream sent', async () => {
+      const dirty =
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><script>alert(1)</script>' +
+        '<image href="http://evil/x.png"/><style>@\\69mport "x";</style>' +
+        '<path d="M0 0h24" onclick="x()" style="fill:red" fill="url(#g)"/>' +
+        '<use href="#a"/><a href="javascript:x"><animate attributeName="href" values="javascript&#58;x"/></a></svg>';
+      const agent = await loggedIn(fakeIconify({ svg: () => svgResponse(dirty) }).impl);
+      const res = await agent.get('/api/assets/icons/tabler/tree.svg').expect(200);
+      expect(Buffer.from(res.body as Buffer).toString()).toBe(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24" fill="url(#g)"/><use href="#a"/></svg>'
+      );
+    });
+
+    it('answers 502 when upstream does not say it sends an svg', async () => {
+      for (const type of ['text/html', 'application/json', 'text/plain']) {
+        const agent = await loggedIn(
+          fakeIconify({ svg: () => new Response(SVG, { headers: { 'content-type': type } }) }).impl
+        );
+        await agent.get('/api/assets/icons/tabler/tree.svg').expect(502);
+      }
+    });
+
+    it('answers 502 when Content-Length already says too much', async () => {
+      const agent = await loggedIn(
+        fakeIconify({ svg: () => svgResponse(SVG, { headers: { 'content-length': '999999' } }) })
+          .impl
+      );
+      await agent.get('/api/assets/icons/tabler/tree.svg').expect(502);
+      const agent2 = await loggedIn(
+        fakeIconify({
+          collections: () =>
+            Response.json(COLLECTIONS, { headers: { 'content-length': '99999999' } }),
+        }).impl
+      );
+      await agent2.get('/api/assets/icons/search?q=tree').expect(502);
+    });
+
     it('answers 502 for an oversize body', async () => {
       const big = '<svg xmlns="http://www.w3.org/2000/svg">' + ' '.repeat(200 * 1024) + '</svg>';
-      const agent = await loggedIn(fakeIconify({ svg: () => new Response(big) }).impl);
+      const agent = await loggedIn(fakeIconify({ svg: () => svgResponse(big) }).impl);
       await agent.get('/api/assets/icons/tabler/tree.svg').expect(502);
     });
 
