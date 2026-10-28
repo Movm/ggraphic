@@ -6,6 +6,7 @@ import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import { api, onUnauthenticated, type StudioConfig } from './api/client';
 import { AuthPage } from './pages/AuthPage';
 import { BrandPage } from './pages/BrandPage';
+import { TrashPage } from './pages/TrashPage';
 import { StartPage } from './start/StartPage';
 import { parseRoute, redirect, usePathname, type Route } from './router';
 import { SESSION_QUERY_KEY, SessionProvider, type LoggedIn } from './session/SessionContext';
@@ -44,6 +45,7 @@ function RedirectToStart() {
 function LoggedInRoutes({ route, config }: { route: Route; config: StudioConfig | undefined }) {
   if (route.name === 'start') return <StartPage config={config} />;
   if (route.name === 'projects') return <RedirectToStart />;
+  if (route.name === 'trash') return <TrashPage />;
   if (route.name === 'brand') return <BrandPage />;
   if (route.name !== 'editor') return null;
   if (!config) return loading('Connecting…');

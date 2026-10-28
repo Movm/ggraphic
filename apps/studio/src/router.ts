@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Routes on the History API: `/` (the start page with the prompt), `/projects`
- * (redirects to `/`, where the projects are), `/p/:id` (the editor) and `/brand` (the current
+ * (redirects to `/`, where the projects are), `/trash`, `/p/:id` (the editor) and `/brand` (the current
  * organisation). The server answers every other path with index.html.
  */
 import { useSyncExternalStore } from 'react';
@@ -9,6 +9,7 @@ import { useSyncExternalStore } from 'react';
 export type Route =
   | { name: 'start' }
   | { name: 'projects' }
+  | { name: 'trash' }
   | { name: 'brand' }
   | { name: 'editor'; projectId: string };
 
@@ -24,11 +25,13 @@ export function parseRoute(pathname: string): Route {
   const editor = /^\/p\/([^/]+)\/?$/.exec(pathname);
   if (editor) return { name: 'editor', projectId: decode(editor[1]) };
   if (/^\/projects\/?$/.test(pathname)) return { name: 'projects' };
+  if (/^\/trash\/?$/.test(pathname)) return { name: 'trash' };
   if (/^\/brand\/?$/.test(pathname)) return { name: 'brand' };
   return { name: 'start' };
 }
 
 export const PROJECTS_PATH = '/projects';
+export const TRASH_PATH = '/trash';
 export const BRAND_PATH = '/brand';
 
 export const editorPath = (projectId: string) => `/p/${encodeURIComponent(projectId)}`;
