@@ -98,7 +98,6 @@ describe('v1 corpus through the shipped v1 → v2 step', () => {
   it.each(names)('%s is lifted with its pages untouched', (name) => {
     const result = migrateDocument(load(name));
     if (result.status !== 'migrated') throw new Error(result.status);
-    expect(result.document.schemaVersion).toBe(2);
     const { schemaVersion, ...rest } = result.document;
     expect(schemaVersion).toBe(2);
     expect(JSON.stringify(rest)).toBe(JSON.stringify(CORPUS[name]));
