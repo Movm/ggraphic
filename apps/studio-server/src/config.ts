@@ -9,6 +9,22 @@ const optionalString = z
   .nullable()
   .default(null);
 
+const flag = (fallback: boolean) =>
+  z
+    .enum(['true', 'false'])
+    .default(fallback ? 'true' : 'false')
+    .transform((v) => v === 'true');
+
+// Express `trust proxy`: true/false, a hop count, or a list of addresses/subnets.
+const trustProxy = z
+  .string()
+  .default('false')
+  .transform((v): boolean | number | string => {
+    if (v === 'true') return true;
+    if (v === 'false') return false;
+    return /^\d+$/.test(v) ? Number(v) : v;
+  });
+
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   HOST: z.string().default('127.0.0.1'),
@@ -31,6 +47,14 @@ const envSchema = z.object({
     .int()
     .positive()
     .default(5 * 1024 * 1024),
+  FONT_MAX_BYTES: z.coerce
+    .number()
+    .int()
+    .positive()
+    .default(5 * 1024 * 1024),
+  COOKIE_SECURE: flag(true),
+  ALLOW_REGISTRATION: flag(false),
+  TRUST_PROXY: trustProxy,
   OPENAI_BASE_URL: optionalString,
   OPENAI_API_KEY: optionalString,
   OPENAI_MODEL: optionalString,
@@ -53,6 +77,14 @@ export interface Config {
   uploadMaxBytes: number;
   thumbnailMaxBytes: number;
   documentMaxBytes: number;
+  fontMaxBytes: number;
+  /** Data directory: uploads and brand assets live below it. */
+  dataDir: string;
+  /** false only for plain-HTTP setups whose browser drops Secure cookies (Safari on localhost). */
+  cookieSecure: boolean;
+  /** Self-registration after the first account. Off by default; invitations always work. */
+  allowRegistration: boolean;
+  trustProxy: boolean | number | string;
   /** null when AI is not configured; the feature is then switched off. */
   ai: AiConfig | null;
 }
@@ -81,11 +113,16 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     databaseUrl: e.DATABASE_URL,
     host: e.HOST,
     port: e.PORT,
+    dataDir: e.DATA_DIR.replace(/\/+$/, ''),
     uploadDir: `${e.DATA_DIR.replace(/\/+$/, '')}/uploads`,
     staticDir: e.STATIC_DIR,
     uploadMaxBytes: e.UPLOAD_MAX_BYTES,
     thumbnailMaxBytes: e.THUMBNAIL_MAX_BYTES,
     documentMaxBytes: e.DOCUMENT_MAX_BYTES,
+    fontMaxBytes: e.FONT_MAX_BYTES,
+    cookieSecure: e.COOKIE_SECURE,
+    allowRegistration: e.ALLOW_REGISTRATION,
+    trustProxy: e.TRUST_PROXY,
     ai,
   };
 }
