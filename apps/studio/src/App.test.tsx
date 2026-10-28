@@ -56,9 +56,10 @@ describe('App', () => {
       </QueryClientProvider>
     );
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Log out' }));
+    await userEvent.click(await screen.findByRole('button', { name: /^Account/ }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Log out' }));
 
     expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Log out' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Log out' })).not.toBeInTheDocument();
   });
 });
