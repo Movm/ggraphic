@@ -7,6 +7,8 @@
  */
 import { type ReplaceDeckOps } from '@ggraphic/editor/collab/pagesDoc';
 import { type AdditionalText } from '@ggraphic/editor/configs/types';
+import { runMeasurer } from '@ggraphic/editor/utils/textUtils';
+import { fitFontSizeToSlot, PLAIN_STYLE } from '@ggraphic/schema';
 
 import { type Draft } from '../api/client';
 
@@ -41,8 +43,30 @@ export function fillTexts(texts: readonly AdditionalText[], draft: Draft): Addit
   if (!fillable) return null;
   return texts.map((t) => {
     const value = byRole.get(t.id);
-    return value === undefined ? t : { ...t, text: value };
+    return value === undefined ? t : fitToSlot({ ...t, text: value }, texts);
   });
+}
+
+/**
+ * A text grows downwards, so a long one runs into the next text below it. Shrink it
+ * until it ends above that text; a word that does not fit even hyphenated shrinks too.
+ */
+function fitToSlot(text: AdditionalText, texts: readonly AdditionalText[]): AdditionalText {
+  const { fontSize, width, fontFamily } = text;
+  const below = texts.filter((other) => other.y > text.y).map((other) => other.y);
+  if (!fontSize || !width || below.length === 0) return text;
+  const fitted = fitFontSizeToSlot(
+    text.text,
+    {
+      width,
+      maxHeight: Math.min(...below) - text.y,
+      fontSize,
+      lineHeight: text.lineHeight ?? 1,
+    },
+    (size) => (line) =>
+      runMeasurer(size, fontFamily ?? '', text.fontStyle ?? 'normal')(line, PLAIN_STYLE)
+  );
+  return fitted === fontSize ? text : { ...text, fontSize: fitted };
 }
 
 /**

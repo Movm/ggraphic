@@ -8,7 +8,7 @@
  * - This prevents re-renders during drag for smooth UX
  */
 
-import { hasInlineMarks, hasListMarkers } from '@ggraphic/schema';
+import { hasInlineMarks, hasListMarkers, PLAIN_STYLE } from '@ggraphic/schema';
 import { useRef, useEffect, useState, useCallback, memo } from 'react';
 import { Text as KonvaText, Transformer } from 'react-konva';
 
@@ -21,6 +21,7 @@ import {
   useGeometryReporter,
   type GeometryReporter,
 } from '@ggraphic/editor/hooks/useGeometryReporter';
+import { useFontGeneration } from '@ggraphic/editor/hooks/useFontGeneration';
 import { useSnapScheduler } from '@ggraphic/editor/hooks/useSnapScheduler';
 import { gradientFillProps, type GradientFill } from '@ggraphic/editor/utils/gradientFill';
 import { isGroupDrag } from '@ggraphic/editor/utils/multiSelect';
@@ -31,6 +32,7 @@ import {
   frameBounds,
   snapByBounds,
 } from '@ggraphic/editor/utils/snapping';
+import { runMeasurer } from '@ggraphic/editor/utils/textUtils';
 
 import { resolveFontFamily } from '../utils/fontAliases.js';
 import { CanvasRichText } from './CanvasRichText.js';
@@ -454,6 +456,20 @@ function CanvasTextInner({
 }
 
 /**
+ * Ein Wort, das breiter ist als das Feld: Konva bräche es mitten im Wort um,
+ * ohne Trennstrich („Gemeinschaftsga / rten"). Der Rich-Text-Renderer setzt
+ * die vorberechneten Zeilen des geteilten Layouts, das an Silbengrenzen trennt —
+ * im Editor und im Export dieselben Zeilen.
+ */
+function hasOverlongWord(props: CanvasTextProps, fontGeneration: number): boolean {
+  const { width, text, wrap = 'word', fontSize = 24, fontFamily = 'Arial' } = props;
+  if (!width || wrap !== 'word') return false;
+  const inner = width - 2 * (props.padding ?? 0);
+  const measure = runMeasurer(fontSize, fontFamily, props.fontStyle ?? 'normal', fontGeneration);
+  return text.split(/\s+/).some((word) => word !== '' && measure(word, PLAIN_STYLE) > inner);
+}
+
+/**
  * Aufzählungen brauchen einen hängenden Einzug und Auszeichnung gemischte
  * Schnitte — beides kennt ein einzelner Konva.Text nicht, das zeichnet
  * {@link CanvasRichText} als Gruppe aus Marker-, Lauf- und Textknoten. Ein
@@ -462,7 +478,11 @@ function CanvasTextInner({
  * eine Textknoten.
  */
 function CanvasTextSwitch(props: CanvasTextProps) {
-  return props.richText || hasListMarkers(props.text) || hasInlineMarks(props.text) ? (
+  const fontGeneration = useFontGeneration();
+  return props.richText ||
+    hasListMarkers(props.text) ||
+    hasInlineMarks(props.text) ||
+    hasOverlongWord(props, fontGeneration) ? (
     <CanvasRichText {...props} />
   ) : (
     <CanvasTextInner {...props} />
