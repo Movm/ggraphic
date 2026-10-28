@@ -38,6 +38,7 @@ import { studioBrand } from '../brand';
 import { loadBrandFonts } from '../brandLoader';
 import { useLoggedIn } from '../session/SessionContext';
 import { PageShell, PageTitle } from '../ui/PageShell';
+import { apiErrorText } from '../ui/errorText';
 import { toast } from '../ui/toast';
 import { BrandPreview } from './BrandPreview';
 
@@ -91,9 +92,6 @@ export function defaultSettings(name: string): BrandSettings {
   };
 }
 
-const errorText = (err: unknown) =>
-  err instanceof ApiError ? err.message : 'Something went wrong.';
-
 export function BrandPage() {
   const { organisation } = useLoggedIn();
   const brand = useQuery({
@@ -109,7 +107,7 @@ export function BrandPage() {
   } else if (brand.isPending) {
     content = <p className="studio-muted">Loading the brand…</p>;
   } else if (brand.isError) {
-    content = <Alert tone="danger">{errorText(brand.error)}</Alert>;
+    content = <Alert tone="danger">{apiErrorText(brand.error)}</Alert>;
   } else {
     content = (
       <BrandEditor
@@ -252,7 +250,7 @@ function BrandEditor({
       setData(next);
       toast('Brand saved. Projects opened from now on use it.');
     },
-    onError: (err) => toast.error(errorText(err)),
+    onError: (err) => toast.error(apiErrorText(err)),
   });
 
   const setColor = (role: InputRole, color: string) =>
@@ -672,7 +670,12 @@ function FontUpload({ orgId, onUploaded }: { orgId: string; onUploaded: () => vo
       setFormKey((k) => k + 1);
       onUploaded();
     },
-    onError: (err) => setFileError(errorText(err)),
+    onError: (err) =>
+      setFileError(
+        apiErrorText(err, undefined, {
+          unsupported_media_type: 'Fonts must be WOFF2, TTF or OTF.',
+        })
+      ),
   });
   const ready = file && family.trim() && licence.trim();
 
@@ -759,7 +762,12 @@ function LogoUpload({
     },
     // Shown next to the field and kept until the next attempt: a toast is gone in seconds, and
     // the server's reason ("SVG is not accepted") is what the person needs to read.
-    onError: (err) => setError(errorText(err)),
+    onError: (err) =>
+      setError(
+        apiErrorText(err, undefined, {
+          unsupported_media_type: 'Logos must be PNG or WebP. SVG is not accepted.',
+        })
+      ),
   });
   return (
     <FileField
@@ -793,7 +801,7 @@ function AssetList({
   const remove = useMutation({
     mutationFn: (asset: BrandAsset) => api.deleteBrandAsset(orgId, asset.id),
     onSuccess: (_v, asset) => onDeleted(asset),
-    onError: (err) => toast.error(errorText(err)),
+    onError: (err) => toast.error(apiErrorText(err)),
   });
   if (assets.length === 0) return null;
   return (
