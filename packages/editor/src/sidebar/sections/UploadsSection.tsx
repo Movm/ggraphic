@@ -8,7 +8,7 @@ import { cn } from '@ggraphic/editor/utils/cn';
 import { MEDIA_DRAG_TYPE, type MediaDragPayload } from '@ggraphic/editor/utils/mediaDrop';
 import { downscaleImageForUpload } from '@ggraphic/editor/utils/userImageUtils';
 import { useRef, useState } from 'react';
-import { FaTrash } from 'react-icons/fa';
+import { PiTrash } from 'react-icons/pi';
 import { HiArrowUpTray, HiMagnifyingGlass } from 'react-icons/hi2';
 
 import { useIsCanvasMobile } from '@ggraphic/editor/hooks/useIsCanvasMobile';
@@ -235,7 +235,7 @@ export function UploadsSection({
                 className="absolute top-1 right-1 size-6 flex items-center justify-center bg-black/60 text-white border-none rounded-md cursor-pointer opacity-0 transition-opacity duration-150 group-hover:opacity-100 focus:opacity-100 max-canvas-mobile:top-0 max-canvas-mobile:right-0 max-canvas-mobile:size-11 max-canvas-mobile:bg-transparent max-canvas-mobile:opacity-100"
               >
                 <span className="flex items-center justify-center max-canvas-mobile:size-6 max-canvas-mobile:rounded-md max-canvas-mobile:bg-black/60">
-                  <FaTrash size={10} />
+                  <PiTrash size={10} />
                 </span>
               </button>
             </div>
@@ -356,7 +356,7 @@ export function UploadsSection({
                 className="absolute top-1 right-1 size-6 flex items-center justify-center bg-black/60 text-white border-none rounded-md cursor-pointer opacity-0 transition-opacity duration-150 group-hover:opacity-100 focus:opacity-100 max-canvas-mobile:top-0 max-canvas-mobile:right-0 max-canvas-mobile:size-11 max-canvas-mobile:bg-transparent max-canvas-mobile:opacity-100"
               >
                 <span className="flex items-center justify-center max-canvas-mobile:size-6 max-canvas-mobile:rounded-md max-canvas-mobile:bg-black/60">
-                  <FaTrash size={10} />
+                  <PiTrash size={10} />
                 </span>
               </button>
             </MasonryItem>

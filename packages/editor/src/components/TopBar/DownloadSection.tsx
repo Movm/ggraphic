@@ -15,7 +15,7 @@ import { Skeleton } from '@ggraphic/editor/ui/skeleton';
 import { Switch } from '@ggraphic/editor/ui/switch';
 import { downloadErrorMessage } from '@ggraphic/editor/utils/downloadError';
 import { useId, useState, type FormEvent } from 'react';
-import { FaDownload } from 'react-icons/fa';
+import { PiDownloadSimple } from 'react-icons/pi';
 
 import { MOBILE_INPUT_TEXT } from '@ggraphic/editor/sidebar/sidebarStyles';
 import { DownloadNotice } from '@ggraphic/editor/components/DownloadNotice';
@@ -377,7 +377,7 @@ export function DownloadSection({
         {isDownloading || isMultiExporting ? (
           <Skeleton className="size-3.5 rounded-full" />
         ) : (
-          <FaDownload className="size-3.5" />
+          <PiDownloadSimple className="size-3.5" />
         )}
         {isDownloading ? t.shell.downloading : t.shell.download}
       </Button>

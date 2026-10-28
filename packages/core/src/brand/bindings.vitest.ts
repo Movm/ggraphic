@@ -5,6 +5,20 @@ import { type BrandPack } from './brandPack.js';
 import { brandFingerprint, rebindPageState, rebindPages } from './bindings.js';
 import { deriveSchemes, schemeById } from './schemes.js';
 
+/** A page item as the tests read it back. */
+interface Item {
+  fill?: string;
+  color?: string;
+  fontFamily?: string;
+  src?: string;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  bind?: { fill?: Binding; src?: Binding; fontFamily?: Binding };
+}
+type Binding = { ref: string; value: string; box?: object; fit?: object };
+
 const brand: BrandPack = {
   ...brandDefault,
   colors: { ...brandDefault.colors, primary: '#0F3A52' },
@@ -40,10 +54,10 @@ describe('rebindPageState', () => {
       ],
     };
     const r = rebindPageState(state, ctx);
-    const text = (r.state['textInstances'] as any[])[0]!;
+    const text = (r.state['textInstances'] as Item[])[0]!;
     expect(r.changed).toBe(true);
     expect(text.fill).toBe('#0f3a52');
-    expect(text.bind.fill.value).toBe('#0f3a52');
+    expect(text.bind?.fill?.value).toBe('#0f3a52');
     expect(r.state['brandStamp']).toBe(brandFingerprint(brand));
   });
 
@@ -53,7 +67,7 @@ describe('rebindPageState', () => {
         { fill: '#ff0000', bind: { fill: { ref: 'brand.primary', value: '#1d3557' } } },
       ],
     };
-    const text = (rebindPageState(state, ctx).state['textInstances'] as any[])[0]!;
+    const text = (rebindPageState(state, ctx).state['textInstances'] as Item[])[0]!;
     expect(text.fill).toBe('#ff0000');
     expect(text.bind?.fill).toBeUndefined();
   });
@@ -64,7 +78,7 @@ describe('rebindPageState', () => {
         { fill: '#1D3557', bind: { fill: { ref: 'brand.primary', value: '#1d3557' } } },
       ],
     };
-    const text = (rebindPageState(state, ctx).state['textInstances'] as any[])[0]!;
+    const text = (rebindPageState(state, ctx).state['textInstances'] as Item[])[0]!;
     expect(text.fill).toBe('#0f3a52');
   });
 
@@ -74,7 +88,7 @@ describe('rebindPageState', () => {
       brandScheme: 'light',
       textInstances: [{ fill: '#123456', bind: { fill: { ref: 'ink', value: '#123456' } } }],
     };
-    const text = (rebindPageState(state, ctx).state['textInstances'] as any[])[0]!;
+    const text = (rebindPageState(state, ctx).state['textInstances'] as Item[])[0]!;
     expect(text.fill).toBe(light.roles.ink);
   });
 
@@ -82,7 +96,7 @@ describe('rebindPageState', () => {
     const state = {
       textInstances: [{ fill: '#123456', bind: { fill: { ref: 'ink', value: '#123456' } } }],
     };
-    const text = (rebindPageState(state, ctx).state['textInstances'] as any[])[0]!;
+    const text = (rebindPageState(state, ctx).state['textInstances'] as Item[])[0]!;
     expect(text.fill).toBe('#123456');
     expect(text.bind?.fill).toBeUndefined();
   });
@@ -104,7 +118,7 @@ describe('rebindPageState', () => {
       },
     };
     const r = rebindPageState(state, ctx);
-    const icons = r.state['iconStates'] as any;
+    const icons = r.state['iconStates'] as { a: Item; b: Item };
     expect(icons.a.color).toBe('#0f3a52');
     expect(icons.b).toBe(state['iconStates'].b);
   });
@@ -127,7 +141,7 @@ describe('rebindPageState', () => {
       ],
     };
     const other: BrandPack = { ...brand, fonts: { ...brand.fonts, headline: 'Lora' } };
-    const text = (rebindPageState(state, { brand: other }).state['textInstances'] as any[])[0]!;
+    const text = (rebindPageState(state, { brand: other }).state['textInstances'] as Item[])[0]!;
     expect(text.fontFamily).toBe('Lora');
   });
 });
@@ -144,7 +158,7 @@ describe('rebindPageState edge cases', () => {
       brandScheme: 'secondary',
       textInstances: [{ fill: '#123456', bind: { fill: { ref: 'ink', value: '#123456' } } }],
     };
-    const text = (rebindPageState(state, { brand: same }).state['textInstances'] as any[])[0];
+    const text = (rebindPageState(state, { brand: same }).state['textInstances'] as Item[])[0]!;
     expect(text.fill).toBe(first.roles.ink);
   });
 
@@ -153,9 +167,151 @@ describe('rebindPageState edge cases', () => {
     const state = {
       images: [{ src: 'old.svg', bind: { src: { ref: 'brand.logo', value: 'old.svg' } } }],
     };
-    const img = (rebindPageState(state, { brand: logoBrand }).state['images'] as any[])[0];
+    const img = (rebindPageState(state, { brand: logoBrand }).state['images'] as Item[])[0]!;
     expect(img.src).toBe('new.svg');
-    expect(img.bind.src.value).toBe('new.svg');
+    expect(img.bind?.src?.value).toBe('new.svg');
+  });
+
+  describe('logo box', () => {
+    const logoBrand: BrandPack = { ...brand, logo: { src: 'new.svg', label: 'Logo' } };
+    const pageSize = { width: 1080, height: 1350 };
+    const stateWith = () => ({
+      images: [
+        {
+          src: 'old.svg',
+          x: 900,
+          y: 1200,
+          width: 120,
+          height: 80,
+          bind: { src: { ref: 'brand.logo', value: 'old.svg' } },
+        },
+      ],
+    });
+    const imgOf = (r: { state: Record<string, unknown> }) => (r.state['images'] as Item[])[0]!;
+
+    it('rebind swaps src and fits the box when the logo size is known', () => {
+      const img = imgOf(
+        rebindPageState(stateWith(), {
+          brand: logoBrand,
+          logoSize: { width: 400, height: 100 },
+          pageSize,
+        })
+      );
+      expect(img.src).toBe('new.svg');
+      expect([img.x, img.y, img.width, img.height]).toEqual([900, 1250, 120, 30]);
+    });
+
+    it('rebind swaps src but keeps the box when the size is unknown', () => {
+      const img = imgOf(
+        rebindPageState(stateWith(), { brand: logoBrand, logoSize: null, pageSize })
+      );
+      expect(img.src).toBe('new.svg');
+      expect([img.x, img.y, img.width, img.height]).toEqual([900, 1200, 120, 80]);
+    });
+
+    it('a second rebind changes nothing', () => {
+      const first = rebindPageState(stateWith(), {
+        brand: logoBrand,
+        logoSize: { width: 400, height: 100 },
+        pageSize,
+      });
+      const second = rebindPageState(first.state, {
+        brand: logoBrand,
+        logoSize: { width: 400, height: 100 },
+        pageSize,
+      });
+      expect(second.changed).toBe(false);
+      expect(second.state).toBe(first.state);
+    });
+
+    it('an unchanged src leaves a user-moved box alone', () => {
+      const state = {
+        images: [
+          {
+            src: 'new.svg',
+            x: 10,
+            y: 20,
+            width: 300,
+            height: 200,
+            bind: { src: { ref: 'brand.logo', value: 'new.svg' } },
+          },
+        ],
+      };
+      const img = imgOf(
+        rebindPageState(state, {
+          brand: logoBrand,
+          logoSize: { width: 400, height: 100 },
+          pageSize,
+        })
+      );
+      expect([img.x, img.y, img.width, img.height]).toEqual([10, 20, 300, 200]);
+    });
+
+    describe('logo envelope', () => {
+      const WIDE = { width: 400, height: 100 };
+      const SQUARE = { width: 100, height: 100 };
+      const ENVELOPE = { x: 800, y: 1150, width: 238, height: 108 };
+      const brandOf = (src: string): BrandPack => ({ ...brand, logo: { src, label: 'Logo' } });
+      const seeded = (box: typeof ENVELOPE) => ({
+        images: [
+          {
+            src: 'seed.svg',
+            ...box,
+            bind: { src: { ref: 'brand.logo', value: 'seed.svg', box: ENVELOPE, fit: box } },
+          },
+        ],
+      });
+      const box = (img: Item) => [img.x, img.y, img.width, img.height];
+      const swap = (state: Record<string, unknown>, src: string, size: typeof WIDE) =>
+        rebindPageState(state, { brand: brandOf(src), logoSize: size, pageSize }).state;
+
+      it('wide, square, wide never ends smaller than the first wide fit', () => {
+        const first = swap(seeded({ ...ENVELOPE, width: 238, height: 59, y: 1199 }), 'a.svg', WIDE);
+        const second = swap(first, 'b.svg', SQUARE);
+        const third = swap(second, 'c.svg', WIDE);
+        expect(box(imgOf({ state: third }))).toEqual(box(imgOf({ state: first })));
+      });
+
+      it('a square after a wide logo fits like a fresh seed', () => {
+        const afterWide = swap(
+          swap(seeded({ ...ENVELOPE, width: 238, height: 59, y: 1199 }), 'a.svg', WIDE),
+          'b.svg',
+          SQUARE
+        );
+        const fresh = swap(seeded({ ...ENVELOPE }), 'b.svg', SQUARE);
+        expect(box(imgOf({ state: afterWide }))).toEqual(box(imgOf({ state: fresh })));
+      });
+
+      it('a box moved by hand becomes the new envelope', () => {
+        const fitted = swap(
+          seeded({ ...ENVELOPE, width: 238, height: 59, y: 1199 }),
+          'a.svg',
+          WIDE
+        );
+        const img = imgOf({ state: fitted });
+        const moved = {
+          images: [{ ...img, x: 100, y: 100, width: 300, height: 200 }],
+        };
+        const next = imgOf({ state: swap(moved, 'b.svg', SQUARE) });
+        expect(box(next)).toEqual([100, 100, 200, 200]);
+      });
+
+      it('a binding written before the envelope existed uses the current box once, then stores it', () => {
+        const legacy = swap(stateWith(), 'new.svg', WIDE);
+        const bind = imgOf({ state: legacy }).bind?.src as unknown as { box: object; fit: object };
+        expect(bind.box).toEqual({ x: 900, y: 1200, width: 120, height: 80 });
+        const back = swap(swap(legacy, 'b.svg', SQUARE), 'c.svg', WIDE);
+        expect(box(imgOf({ state: back }))).toEqual(box(imgOf({ state: legacy })));
+      });
+    });
+
+    it('a brand without a logo keeps the image and drops the binding', () => {
+      const img = imgOf(
+        rebindPageState(stateWith(), { brand: { ...brand, logo: null }, logoSize: null, pageSize })
+      );
+      expect(img.src).toBe('old.svg');
+      expect(img.bind).toBeUndefined();
+    });
   });
 
   it('an invalid binding is dropped and the field kept', () => {
@@ -171,7 +327,7 @@ describe('rebindPageState edge cases', () => {
         },
       ],
     };
-    const text = (rebindPageState(state, ctx).state['textInstances'] as any[])[0];
+    const text = (rebindPageState(state, ctx).state['textInstances'] as Item[])[0]!;
     expect(text.fill).toBe('#123456');
     expect(text.fontFamily).toBe('X');
     expect(text.bind).toBeUndefined();
@@ -186,6 +342,27 @@ describe('rebindPageState edge cases', () => {
     const r = rebindPageState(state, ctx);
     expect(r.changed).toBe(true);
     expect(r.state['brandStamp']).toBe(brandFingerprint(brand));
+  });
+});
+
+describe('a page whose world was deduplicated', () => {
+  // A near-white secondary absorbs `light`: its ground stands in for the surface world.
+  const near: BrandPack = {
+    ...brandDefault,
+    colors: { ...brandDefault.colors, secondary: '#FAFAFA' },
+  };
+
+  it('follows the kept world that absorbed it, not the first one', () => {
+    expect(deriveSchemes(near).some((x) => x.id === 'light')).toBe(false);
+    const state = {
+      brandScheme: 'light',
+      backgroundColor: '#f6f4ef',
+      bind: { backgroundColor: { ref: 'ground', value: '#f6f4ef' } },
+    };
+    const r = rebindPageState(state, { brand: near });
+    const secondary = deriveSchemes(near).find((x) => x.id === 'secondary')!;
+    expect(r.state['backgroundColor']).toBe(secondary.roles.ground);
+    expect(r.state['backgroundColor']).not.toBe(deriveSchemes(near)[0]!.roles.ground);
   });
 });
 

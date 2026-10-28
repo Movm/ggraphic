@@ -25,10 +25,12 @@ export {
   SURFACE_ROLES,
   deriveSchemes,
   schemeById,
+  resolveScheme,
   type Scheme,
   type SchemeId,
   type SurfaceRole,
 } from './brand/schemes.js';
+export { fitLogoBox } from './brand/logoFit.js';
 export {
   brandFingerprint,
   isBindingRef,

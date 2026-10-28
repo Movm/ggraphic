@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { useCallback, useRef, useEffect } from 'react';
-import { FaMinus, FaPlus } from 'react-icons/fa';
+import { PiMinus, PiPlus } from 'react-icons/pi';
 
 import { MOBILE_INPUT_TEXT } from '../sidebarStyles.js';
 
@@ -44,7 +44,7 @@ export function FontSizeStepper({ value, onChange, min = 12, max = 200 }: FontSi
         disabled={value <= min}
         aria-label={t.sidebar.fontSizeDecrease}
       >
-        <FaMinus size={10} />
+        <PiMinus size={10} />
       </button>
       <input
         type="number"
@@ -62,7 +62,7 @@ export function FontSizeStepper({ value, onChange, min = 12, max = 200 }: FontSi
         disabled={value >= max}
         aria-label={t.sidebar.fontSizeIncrease}
       >
-        <FaPlus size={10} />
+        <PiPlus size={10} />
       </button>
     </div>
   );

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MPL-2.0
 import { normalizeColor } from '../color/color.js';
+import { fitLogoBox, type Box } from './logoFit.js';
 import { type BrandColors, type BrandFonts, type BrandPack } from './brandPack.js';
 import {
-  deriveSchemes,
   SCHEME_IDS,
   SURFACE_ROLES,
-  schemeById,
+  resolveScheme,
   type Scheme,
   type SchemeId,
   type SurfaceRole,
@@ -18,10 +18,16 @@ export type BrandFontRole = Exclude<keyof BrandFonts, 'boldFamilies'>;
 export type BindingRef =
   SurfaceRole | `brand.${BrandColorRole}` | `font.${BrandFontRole}` | 'brand.logo';
 
-/** `value` is what the field held when the binding last wrote it; a different value means a hand edit. */
+/**
+ * `value` is what the field held when the binding last wrote it; a different value means a hand edit.
+ * A logo binding also carries `box`, the envelope every logo is fitted into, and `fit`, the box
+ * the last fit gave it. Without them each swap would fit into the previous, already smaller box.
+ */
 export interface Binding {
   ref: BindingRef;
   value: string;
+  box?: Box;
+  fit?: Box;
 }
 
 /** Per field name. */
@@ -29,8 +35,10 @@ export type Bindings = Readonly<Record<string, Binding>>;
 
 export interface RebindContext {
   brand: BrandPack;
-  /** Natural size of the logo, for fitting its box (used from a later task on). */
+  /** Natural size of the brand's logo; a swapped logo is fitted into its old box when known. */
   logoSize?: { width: number; height: number } | null;
+  /** Size of the page, needed with `logoSize` to pick the corner a logo box keeps. */
+  pageSize?: { width: number; height: number } | null;
 }
 
 // Record types make a missing or extra key a compile error.
@@ -134,8 +142,39 @@ function hasBindings(obj: Obj): boolean {
   return isPlainObject(obj['bind']) && Object.keys(obj['bind']).length > 0;
 }
 
+function boxOf(obj: Obj): Box | null {
+  const { x, y, width, height } = obj;
+  if (![x, y, width, height].every((n) => typeof n === 'number' && Number.isFinite(n))) return null;
+  if ((width as number) <= 0 || (height as number) <= 0) return null;
+  return { x, y, width, height } as Box;
+}
+
+const sameBox = (a: Box, b: Box) =>
+  a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
+
+/**
+ * Fits a swapped logo into its envelope when the logo and page sizes are known, and returns the
+ * envelope and fit to store. The envelope is the binding's `box`; a box that is not the last fit
+ * was changed by hand (or the binding predates envelopes), so the current box becomes the envelope.
+ */
+function fitLogo(
+  obj: Obj,
+  binding: Binding,
+  { logoSize, pageSize }: RebindContext
+): { box: Box; fit: Box } | null {
+  if (!logoSize || !pageSize) return null;
+  const current = boxOf(obj);
+  if (!current) return null;
+  const envelope =
+    binding.box && binding.fit && sameBox(binding.fit, current) ? binding.box : current;
+  const fit = fitLogoBox(envelope, logoSize, pageSize);
+  Object.assign(obj, fit);
+  return { box: envelope, fit };
+}
+
 /** Rebinds one object's fields; the same object when nothing changes. */
-function rebindObject(obj: Obj, brand: BrandPack, scheme: Scheme | null): Obj {
+function rebindObject(obj: Obj, ctx: RebindContext, scheme: Scheme | null): Obj {
+  const { brand } = ctx;
   if (!isPlainObject(obj['bind'])) return obj;
   const bind = obj['bind'] as Record<string, Binding>;
   let next: Obj | null = null;
@@ -160,8 +199,10 @@ function rebindObject(obj: Obj, brand: BrandPack, scheme: Scheme | null): Obj {
     if (current === value && binding.value === value) continue;
     next ??= { ...obj };
     next[field] = value;
+    const fitted =
+      binding.ref === 'brand.logo' && current !== value ? fitLogo(next, binding, ctx) : null;
     nextBind ??= { ...bind };
-    nextBind[field] = { ref: binding.ref, value };
+    nextBind[field] = { ...binding, ref: binding.ref, value, ...fitted };
   }
   if (!next && !nextBind) return obj;
   next ??= { ...obj };
@@ -173,7 +214,7 @@ function rebindObject(obj: Obj, brand: BrandPack, scheme: Scheme | null): Obj {
 function schemeOf(state: Obj, brand: BrandPack): Scheme | null {
   const id = state['brandScheme'];
   if (typeof id !== 'string' || !(SCHEME_IDS as readonly string[]).includes(id)) return null;
-  return schemeById(brand, id as SchemeId) ?? deriveSchemes(brand)[0] ?? null;
+  return resolveScheme(brand, id as SchemeId);
 }
 
 /**
@@ -202,7 +243,7 @@ export function rebindPageState(
   if (!bound || state['brandStamp'] === stamp) return { state: state as Obj, changed: false };
 
   const scheme = schemeOf(state, brand);
-  let next: Obj = rebindObject(state, brand, scheme);
+  let next: Obj = rebindObject(state, ctx, scheme);
   for (const [key, value] of Object.entries(state)) {
     if (key === 'bind') continue;
     let replaced: unknown = value;
@@ -210,7 +251,7 @@ export function rebindPageState(
       let items: unknown[] | null = null;
       value.forEach((item, i) => {
         if (!isPlainObject(item)) return;
-        const out = rebindObject(item, brand, scheme);
+        const out = rebindObject(item, ctx, scheme);
         if (out !== item) (items ??= [...value])[i] = out;
       });
       if (items) replaced = items;
@@ -218,7 +259,7 @@ export function rebindPageState(
       let record: Obj | null = null;
       for (const [id, item] of Object.entries(value)) {
         if (!isPlainObject(item)) continue;
-        const out = rebindObject(item, brand, scheme);
+        const out = rebindObject(item, ctx, scheme);
         if (out !== item) (record ??= { ...value })[id] = out;
       }
       if (record) replaced = record;

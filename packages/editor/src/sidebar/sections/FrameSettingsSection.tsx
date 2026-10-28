@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { useCallback, useEffect, useState } from 'react';
-import { FaTrash } from 'react-icons/fa';
+import { PiTrash } from 'react-icons/pi';
 
 import {
   ACTION_BTN_DANGER,
@@ -67,7 +67,7 @@ export function FrameSettingsSection({
           onClick={() => onRemoveFrame(selectedFrame.id)}
           title={t.sidebar.frame.remove}
         >
-          <FaTrash size={12} />
+          <PiTrash size={12} />
         </button>
       </div>
 

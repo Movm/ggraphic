@@ -160,14 +160,18 @@ function buildScheme(brand: BrandPack, id: SchemeId, ground: string): Scheme {
  * cannot be parsed, or sits within 1.2:1 of an earlier ground, is left out;
  * `photo` always stays, its ground stands for a shaded photo. Never throws.
  */
-export function deriveSchemes(brand: BrandPack): Scheme[] {
-  const grounds: Record<SchemeId, string | null> = {
+function groundsOf(brand: BrandPack): Record<SchemeId, string | null> {
+  return {
     primary: norm(brand.colors.primary),
     secondary: norm(brand.colors.secondary),
     light: norm(brand.colors.surface),
     dark: mixColors(brand.colors.primary, BLACK, 0.7),
     photo: BLACK,
   };
+}
+
+export function deriveSchemes(brand: BrandPack): Scheme[] {
+  const grounds = groundsOf(brand);
   const schemes: Scheme[] = [];
   const kept: string[] = [];
   for (const id of SCHEME_IDS) {
@@ -182,4 +186,28 @@ export function deriveSchemes(brand: BrandPack): Scheme[] {
 
 export function schemeById(brand: BrandPack, id: SchemeId): Scheme | null {
   return deriveSchemes(brand).find((s) => s.id === id) ?? null;
+}
+
+/**
+ * The world a page of `id` is drawn in. A world the brand left out (its ground
+ * sat within 1.2:1 of an earlier one) resolves to the kept world whose ground
+ * absorbed it, so a page keeps its look; the first world when none can be told.
+ * Null only when the brand yields no world at all.
+ */
+export function resolveScheme(brand: BrandPack, id: SchemeId): Scheme | null {
+  const schemes = deriveSchemes(brand);
+  const exact = schemes.find((s) => s.id === id);
+  if (exact) return exact;
+  const dropped = groundsOf(brand)[id];
+  if (dropped === null) return schemes[0] ?? null;
+  let nearest: Scheme | null = null;
+  let lowest = Infinity;
+  for (const s of schemes) {
+    const c = contrast(s.roles.ground, dropped);
+    if (c < DISTINCT_GROUND && c < lowest) {
+      lowest = c;
+      nearest = s;
+    }
+  }
+  return nearest ?? schemes[0] ?? null;
 }

@@ -36,7 +36,7 @@
   --editor-secondary-fg: var(--ui-color-text-secondary);
   --editor-danger-fg: var(--ui-color-danger);
   --editor-danger-bg: var(--ui-color-danger-bg);
-  --editor-tanne-preview: var(--ui-color-accent);
+  --editor-primary-preview: var(--ui-color-accent);
   --editor-switch-off: var(--ui-color-border-control);
   --editor-switch-thumb-on: var(--ui-white);
   --editor-switch-thumb-off: var(--ui-white);
