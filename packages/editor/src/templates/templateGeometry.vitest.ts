@@ -503,6 +503,35 @@ describe('template gate adapter: what the renderer scales, turns and draws', () 
     expect([box.x, box.y].map(Math.round)).toEqual([490, 100]);
   });
 
+  it('wraps a text as the renderer draws it, whatever wrap, padding or richText it carries', () => {
+    // The renderer passes none of the three to the text node: word wrap, no padding, routed by content.
+    const long = { ...text, text: 'Klimaschutz jetzt '.repeat(8).trim(), width: 300 };
+    const drawn = A.lineCount('additionalTexts', long);
+    expect(drawn).toBeGreaterThan(1);
+    for (const over of [{ wrap: 'none' }, { wrap: 'char' }, { padding: 40 }, { richText: true }]) {
+      expect(A.lineCount('additionalTexts', { ...long, ...over }), JSON.stringify(over)).toBe(
+        drawn
+      );
+    }
+  });
+
+  it('scales a user image about its top-left', () => {
+    const image = { x: 10, y: 20, width: 100, height: 50, scale: 2 };
+    expect(A.box('userImageInstances', image, 1)).toEqual({
+      x: 10,
+      y: 20,
+      width: 200,
+      height: 100,
+    });
+  });
+
+  it('boxes a rotated icon by the extent of the turned square, about its centre', () => {
+    const flat = A.box('iconStates', { x: 500, y: 500, scale: 1, rotation: 0 }, 1)!;
+    const turned = A.box('iconStates', { x: 500, y: 500, scale: 1, rotation: 45 }, 1)!;
+    expect(turned.width).toBeCloseTo(flat.width * Math.SQRT2);
+    expect(turned.x + turned.width / 2).toBeCloseTo(500);
+  });
+
   it('refuses to place a rotated image, frame or chart', () => {
     for (const key of ['userImageInstances', 'frameInstances', 'chartInstances']) {
       expect(A.boundsProblem?.(key, { rotation: 45 })).toBe('rotated, not checkable');
