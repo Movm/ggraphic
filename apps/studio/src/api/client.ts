@@ -26,7 +26,7 @@ const projectSchema = projectSummarySchema.extend({
 const projectListSchema = z.object({ projects: z.array(projectSummarySchema) });
 
 const configSchema = z.object({
-  features: z.object({ ai: z.boolean() }),
+  features: z.object({ ai: z.boolean(), removeBackground: z.boolean() }),
   limits: z.object({
     uploadBytes: z.number().int(),
     thumbnailBytes: z.number().int(),

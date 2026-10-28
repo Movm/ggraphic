@@ -48,9 +48,13 @@ All settings are environment variables in `.env`; `.env.example` documents each 
 
 Owners set their organisation's brand on the Brand page: name, the eight colour roles, the grounds a page can sit on, headline and body fonts, a logo (PNG or WebP; SVG is refused) and font files (WOFF2, TTF, OTF) with a required licence note that is stored with the file. Make sure you may use a font on a web server before uploading it. The editor opens every project with its organisation's brand; without one it uses Studio's own colours.
 
+### Tools that need an outside service
+
+Studio's tools that call an outside service all follow one rule: a tool is **on when its key or URL is set**. `<TOOL>_ENABLED=false` switches a configured tool off (for example `AI_ENABLED=false`), and `<TOOL>_ENABLED=true` without its key or URL stops the server at start with an error, so a typo does not leave you with a silently missing tool. Tools whose service is not configured are hidden in the editor, and their routes answer `{"error":"feature_disabled"}` (the AI routes keep `ai_disabled`). `GET /api/config` tells the app which tools are on, as booleans only; keys and hosts never leave the server.
+
 ### AI drafts
 
-AI drafts are off unless `OPENAI_BASE_URL`, `OPENAI_API_KEY` and `OPENAI_MODEL` are all set. The app asks `GET /api/config` and hides AI features when they are off. Studio calls `<OPENAI_BASE_URL>/chat/completions` with JSON mode (`response_format: {"type": "json_object"}`), so the model must support JSON output.
+AI drafts are off unless `OPENAI_BASE_URL`, `OPENAI_API_KEY` and `OPENAI_MODEL` are all set (or `AI_ENABLED=false`). The app asks `GET /api/config` and hides AI features when they are off. Studio calls `<OPENAI_BASE_URL>/chat/completions` with JSON mode (`response_format: {"type": "json_object"}`), so the model must support JSON output.
 
 Mistral:
 
