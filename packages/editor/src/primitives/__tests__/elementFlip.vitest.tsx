@@ -18,7 +18,13 @@ vi.mock('@ggraphic/editor/utils/canvasIcons', () => ({
 }));
 vi.mock('@ggraphic/editor/utils/illustrations/registry', () => ({
   findIllustrationById: vi.fn(() =>
-    Promise.resolve({ id: 'ill', name: 'ill', filename: 'ill.svg', source: 'opendoodles', tags: [] })
+    Promise.resolve({
+      id: 'ill',
+      name: 'ill',
+      filename: 'ill.svg',
+      source: 'opendoodles',
+      tags: [],
+    })
   ),
   getIllustrationPath: vi.fn(() => 'https://example.org/ill.svg'),
 }));
