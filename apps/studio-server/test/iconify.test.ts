@@ -582,38 +582,29 @@ describe('iconify client', () => {
     expect(fake.calls.filter((c) => c.startsWith('/search'))).toHaveLength(1);
   });
 
-  it('never holds more than the total batch budget at once', async () => {
-    // 20 sets, one name each: every chunk may read up to 64 KB; all start together.
-    const prefixes = Array.from({ length: 80 }, (_, i) => `set${i}`);
-    const collections = Object.fromEntries(prefixes.map((p) => [p, set(p, 'MIT')]));
-    let open = 0;
-    let peakCap = 0;
-    const fat = '<path d="' + 'M0 0h1'.repeat(10000) + '"/>';
-    const fake = fakeIconify({
-      collections: () => Response.json(collections),
-      search: prefixes.map((p) => `${p}:a`),
+  describe('batch budget', () => {
+    const names = Array.from({ length: 160 }, (_, i) => `icon-${i}`);
+    const run = async (batch: (prefix: string, url: URL) => Response) => {
+      const held: number[] = [];
+      const fake = fakeIconify({ search: names.map((n) => `tabler:${n}`), batch });
+      const client = createIconifyClient(iconify, fake.impl, Date.now, (bytes) => held.push(bytes));
+      await client.search('tree', 160, null);
+      return { held, fake };
+    };
+
+    it('reserves each chunk before it starts: held bytes stay within 4 MB and return to 0', async () => {
+      // 10 chunks of 16 names reserve 1 MB each; unreserved they would hold 10 MB at once.
+      const { held } = await run(batchAnswer);
+      expect(Math.max(...held)).toBeLessThanOrEqual(4 * 1024 * 1024);
+      expect(Math.max(...held)).toBeGreaterThan(0);
+      expect(held.at(-1)).toBe(0);
     });
-    const inner = fake.impl.getMockImplementation()!;
-    const impl = vi.fn<typeof fetch>(async (input, init) => {
-      const url = new URL(String(input));
-      if (/^\/set\d+\.json$/.test(url.pathname)) {
-        open += 1;
-        // Each in-flight chunk holds at most its reservation; the body here is ~60 KB.
-        peakCap = Math.max(peakCap, open * 60_000);
-        await new Promise((r) => setTimeout(r, 5));
-        open -= 1;
-        return Response.json({
-          width: 24,
-          height: 24,
-          icons: { a: { body: fat } },
-        });
-      }
-      return inner(input, init);
+
+    it('refunds the reservation of a chunk that fails', async () => {
+      const { held } = await run(() => new Response('', { status: 500 }));
+      expect(Math.max(...held)).toBeLessThanOrEqual(4 * 1024 * 1024);
+      expect(held.at(-1)).toBe(0);
     });
-    const client = createIconifyClient(iconify, impl);
-    await client.search('tree', 80, null);
-    // 4 MB budget / 64 KB per single-name chunk = at most 64 concurrent requests.
-    expect(peakCap / 60_000).toBeLessThanOrEqual(64);
   });
 
   it('does not ask the upstream again for names it said it cannot batch', async () => {
@@ -634,6 +625,78 @@ describe('iconify client', () => {
     await client.search('tree', 10, null);
     await new Promise((r) => setTimeout(r, 20));
     expect(fake.calls.filter((c) => /^\/tabler\.json/.test(c))).toHaveLength(1);
+  });
+
+  it('remembers names of an oversized chunk and of a set the upstream does not know', async () => {
+    const fake = fakeIconify({
+      search: ['tabler:big', 'lets:gone'],
+      batch: (prefix) =>
+        prefix === 'lets'
+          ? new Response('', { status: 404 })
+          : new Response(
+              new ReadableStream({ pull: (c) => c.enqueue(new Uint8Array(512 * 1024)) })
+            ),
+    });
+    const client = createIconifyClient(iconify, fake.impl);
+    await client.search('tree', 10, null);
+    const before = fake.calls.filter((c) => /\.json/.test(c)).length;
+    expect(before).toBe(2);
+    await client.search('tree', 10, null);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(fake.calls.filter((c) => /\.json/.test(c))).toHaveLength(before);
+  });
+
+  it('does not start a second warm while the first search is still warming', async () => {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((r) => (release = r));
+    const fake = fakeIconify({ search: ['tabler:tree'] });
+    const inner = fake.impl.getMockImplementation()!;
+    const impl = vi.fn<typeof fetch>(async (input, init) => {
+      if (/\.json/.test(String(input))) {
+        await gate;
+        return batchAnswer('tabler', new URL(String(input)));
+      }
+      return inner(input, init);
+    });
+    const client = createIconifyClient(iconify, impl);
+    const first = client.search('tree', 10, null);
+    await vi.waitFor(() =>
+      expect(impl.mock.calls.some((c) => /\.json/.test(String(c[0])))).toBe(true)
+    );
+    await client.search('tree', 10, null);
+    release();
+    await first;
+    expect(impl.mock.calls.filter((c) => /\.json/.test(String(c[0])))).toHaveLength(1);
+  });
+
+  it('caps the background warms running at once', async () => {
+    const queries = Array.from({ length: 8 }, (_, i) => `q${i}`);
+    let open = 0;
+    let peak = 0;
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((r) => (release = r));
+    let failBatch = true;
+    const fake = fakeIconify({ search: ['tabler:tree'] });
+    const inner = fake.impl.getMockImplementation()!;
+    const impl = vi.fn<typeof fetch>(async (input, init) => {
+      if (/\.json/.test(String(input))) {
+        if (failBatch) return new Response('', { status: 500 });
+        open += 1;
+        peak = Math.max(peak, open);
+        await gate;
+        open -= 1;
+        return batchAnswer('tabler', new URL(String(input)));
+      }
+      return inner(input, init);
+    });
+    const client = createIconifyClient(iconify, impl);
+    for (const q of queries) await client.search(q, 10, null);
+    failBatch = false;
+    for (const q of queries) await client.search(q, 10, null);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(peak).toBeLessThanOrEqual(4);
+    expect(peak).toBeGreaterThan(0);
+    release();
   });
 
   it('answers a cached search without waiting for the upstream', async () => {
