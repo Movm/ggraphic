@@ -671,9 +671,10 @@ body {
 }
 .studio-banner {
   position: fixed;
-  top: 64px;
+  /* Under the editor's floating toolbar slot (a sticky 3.5rem band below the top bar, z-index 90). */
+  top: calc(var(--editor-topbar-height) + 3.5rem + 8px);
   left: 50%;
-  z-index: 60;
+  z-index: 100;
   align-items: center;
   flex-wrap: wrap;
   max-width: min(720px, calc(100vw - 32px));
