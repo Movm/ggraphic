@@ -290,6 +290,9 @@ importers:
 
   apps/studio-server:
     dependencies:
+      '@ggraphic/ai':
+        specifier: workspace:*
+        version: link:../../packages/ai
       '@ggraphic/core':
         specifier: workspace:*
         version: link:../../packages/core
