@@ -101,7 +101,7 @@
             "text": "Add the details here: what, when and where.",
             "x": 0.0,
             "y": 0.640138,
-            "width": 0.45,
+            "width": 1.0,
             "fontSize": 0.031481,
             "align": "left",
             "fontFamily": "",
@@ -118,7 +118,7 @@
             "text": "Find out more",
             "x": 0.0,
             "y": 0.897059,
-            "width": 0.45,
+            "width": 0.6,
             "fontSize": 0.031481,
             "align": "left",
             "fontFamily": "",
@@ -155,9 +155,9 @@
     "body": {
       "role": "body",
       "budget": {
-        "maxWords": 14,
-        "maxLines": 4,
-        "maxChars": 80
+        "maxWords": 25,
+        "maxLines": 3,
+        "maxChars": 150
       }
     },
     "cta": {
@@ -165,7 +165,7 @@
       "budget": {
         "maxWords": 4,
         "maxLines": 1,
-        "maxChars": 20
+        "maxChars": 30
       }
     }
   },
