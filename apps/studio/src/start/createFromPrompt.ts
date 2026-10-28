@@ -60,17 +60,19 @@ function draftErrorText(err: unknown): string {
 }
 
 export async function createFromPrompt({
+  organisationId,
   prompt,
   formatId,
   ai,
 }: {
+  organisationId: string;
   prompt: string;
   formatId: string;
   ai: boolean;
 }): Promise<PromptResult> {
   const name = nameFromPrompt(prompt);
   if (!ai) {
-    const project = await api.createProject({
+    const project = await api.createProject(organisationId, {
       name,
       document: filledDocument(formatId, prompt, null) as unknown as Record<string, unknown>,
     });
@@ -83,7 +85,7 @@ export async function createFromPrompt({
     (err: unknown) => ({ value: null, error: draftErrorText(err) })
   );
   // The template first: if the draft fails, the user still gets a project to work on.
-  const project = await api.createProject({
+  const project = await api.createProject(organisationId, {
     name,
     document: newDocument(formatId, HEADLINE_TEMPLATE_ID) as unknown as Record<string, unknown>,
   });

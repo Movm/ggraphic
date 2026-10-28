@@ -10,8 +10,10 @@ import { PiArrowRight } from 'react-icons/pi';
 
 import { api, ApiError, type StudioConfig } from '../api/client';
 import { DEFAULT_FORMAT, STUDIO_FORMATS, type StudioFormatId } from '../editor/document';
-import { PROJECTS_QUERY_KEY } from '../pages/ProjectListPage';
+import { PROJECTS_QUERY_KEY, projectsKey } from '../pages/ProjectListPage';
 import { editorPath, navigate, PROJECTS_PATH } from '../router';
+import { useLoggedIn } from '../session/SessionContext';
+import { AccountBar } from '../ui/AccountBar';
 import { toast } from '../ui/toast';
 
 import { createFromPrompt } from './createFromPrompt';
@@ -31,6 +33,7 @@ const errorText = (err: unknown) =>
 
 export function StartPage({ config }: { config: StudioConfig | undefined }) {
   const queryClient = useQueryClient();
+  const { organisation } = useLoggedIn();
   const [prompt, setPrompt] = useState('');
   const [formatId, setFormatId] = useState<StudioFormatId>(DEFAULT_FORMAT);
   const [busy, setBusy] = useState(false);
@@ -44,7 +47,12 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
     if (!text || busy || !config) return;
     setBusy(true);
     try {
-      const { projectId, draftError } = await createFromPrompt({ prompt: text, formatId, ai });
+      const { projectId, draftError } = await createFromPrompt({
+        organisationId: organisation.id,
+        prompt: text,
+        formatId,
+        ai,
+      });
       void queryClient.invalidateQueries({ queryKey: PROJECTS_QUERY_KEY });
       if (draftError) toast.error(`${draftError} The template is ready for your own text.`);
       navigate(editorPath(projectId));
@@ -66,16 +74,7 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
     <main className="studio-start">
       <header className="studio-start__bar">
         <span className="studio-logo">ggraphic Studio</span>
-        <a
-          className="studio-link"
-          href={PROJECTS_PATH}
-          onClick={(e) => {
-            e.preventDefault();
-            navigate(PROJECTS_PATH);
-          }}
-        >
-          All projects
-        </a>
+        <AccountBar />
       </header>
 
       <section className="studio-start__hero" aria-labelledby={promptId + '-title'}>
@@ -155,7 +154,11 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
 }
 
 function RecentProjects() {
-  const projects = useQuery({ queryKey: PROJECTS_QUERY_KEY, queryFn: api.listProjects });
+  const { organisation } = useLoggedIn();
+  const projects = useQuery({
+    queryKey: projectsKey(organisation.id),
+    queryFn: () => api.listProjects(organisation.id),
+  });
   const recent = projects.data?.slice(0, RECENT_COUNT) ?? [];
   if (recent.length === 0) return null;
   return (

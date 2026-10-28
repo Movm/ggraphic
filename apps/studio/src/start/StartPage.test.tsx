@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type StudioConfig } from '../api/client';
+import { TEST_ORG, TEST_PROJECTS_URL, WithSession } from '../testing/session';
 import { Toaster } from '../ui/toast';
 
 import { nameFromPrompt } from './createFromPrompt';
@@ -29,6 +30,7 @@ function fakeServer({ draft }: { draft: 'ok' | 'timeout' }) {
   const calls: Call[] = [];
   const project = (document: unknown, version: number) => ({
     id: 'p1',
+    organisationId: TEST_ORG,
     name: 'x',
     schemaVersion: 1,
     version,
@@ -48,8 +50,9 @@ function fakeServer({ draft }: { draft: 'ok' | 'timeout' }) {
     const body =
       typeof init?.body === 'string' ? (JSON.parse(init.body) as Record<string, unknown>) : null;
     calls.push({ method, url, body });
-    if (url === '/api/projects' && method === 'GET') return json(200, { projects: [] });
-    if (url === '/api/projects' && method === 'POST') return json(201, project(body?.document, 1));
+    if (url === TEST_PROJECTS_URL && method === 'GET') return json(200, { projects: [] });
+    if (url === TEST_PROJECTS_URL && method === 'POST')
+      return json(201, project(body?.document, 1));
     if (url === '/api/ai/draft') {
       return draft === 'ok'
         ? json(200, DRAFT)
@@ -74,7 +77,9 @@ function renderStart(ai: boolean) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <StartPage config={config(ai)} />
+      <WithSession>
+        <StartPage config={config(ai)} />
+      </WithSession>
       <Toaster />
     </QueryClientProvider>
   );
@@ -98,7 +103,7 @@ describe('StartPage', () => {
     await user.click(screen.getByRole('button', { name: /Create/ }));
 
     await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
-    const post = calls.find((c) => c.method === 'POST' && c.url === '/api/projects')!;
+    const post = calls.find((c) => c.method === 'POST' && c.url === TEST_PROJECTS_URL)!;
     expect(post.body?.['name']).toBe('Invite everyone to the street festival…');
     expect((post.body?.['document'] as { formatId: string }).formatId).toBe('profile-square');
 
@@ -135,7 +140,7 @@ describe('StartPage', () => {
     await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
     expect(calls.some((c) => c.url === '/api/ai/draft')).toBe(false);
     expect(calls.some((c) => c.method === 'PATCH')).toBe(false);
-    const post = calls.find((c) => c.method === 'POST' && c.url === '/api/projects')!;
+    const post = calls.find((c) => c.method === 'POST' && c.url === TEST_PROJECTS_URL)!;
     expect(headlineOf(post.body?.['document']).texts['headline']).toBe(
       'A quote about why small steps matter'
     );
@@ -154,7 +159,7 @@ describe('StartPage', () => {
     expect(calls.some((c) => c.method === 'PATCH')).toBe(false);
     expect(await screen.findByText(/took too long.*ready for your own text/)).toBeInTheDocument();
     // The project was created with the untouched template.
-    const post = calls.find((c) => c.method === 'POST' && c.url === '/api/projects')!;
+    const post = calls.find((c) => c.method === 'POST' && c.url === TEST_PROJECTS_URL)!;
     expect(headlineOf(post.body?.['document']).texts['headline']).toBe('A clear headline');
   });
 

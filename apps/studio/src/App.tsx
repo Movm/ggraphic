@@ -1,11 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { useQuery } from '@tanstack/react-query';
-import { lazy, Suspense, type ReactNode } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 
-import { api } from './api/client';
+import { api, onUnauthenticated, type StudioConfig } from './api/client';
+import { AuthPage } from './pages/AuthPage';
+import { BrandPage } from './pages/BrandPage';
+import { InvitePage } from './pages/InvitePage';
+import { MembersPage } from './pages/MembersPage';
 import { ProjectListPage } from './pages/ProjectListPage';
 import { StartPage } from './start/StartPage';
-import { parseRoute, usePathname } from './router';
+import { parseRoute, usePathname, type Route } from './router';
+import { SESSION_QUERY_KEY, SessionProvider, type LoggedIn } from './session/SessionContext';
 import { Toaster } from './ui/toast';
 
 // The editor is most of the bundle; the project list does not wait for it.
@@ -19,34 +24,65 @@ const loading = (label: string) => (
   </div>
 );
 
+function unreachable(retry: () => void) {
+  return (
+    <main className="studio-page">
+      <div role="alert" className="studio-error">
+        <p>The Studio server is not reachable.</p>
+        <button type="button" className="studio-button" onClick={retry}>
+          Try again
+        </button>
+      </div>
+    </main>
+  );
+}
+
+function LoggedInRoutes({ route, config }: { route: Route; config: StudioConfig | undefined }) {
+  if (route.name === 'start') return <StartPage config={config} />;
+  if (route.name === 'projects') return <ProjectListPage />;
+  if (route.name === 'members') return <MembersPage />;
+  if (route.name === 'brand') return <BrandPage />;
+  if (route.name !== 'editor') return null;
+  if (!config) return loading('Connecting…');
+  return (
+    <Suspense fallback={loading('Opening the editor…')}>
+      <EditorPage projectId={route.projectId} config={config} />
+    </Suspense>
+  );
+}
+
 export function App() {
   const route = parseRoute(usePathname());
+  const queryClient = useQueryClient();
   const config = useQuery({ queryKey: ['config'], queryFn: api.getConfig, staleTime: Infinity });
+  const session = useQuery({ queryKey: SESSION_QUERY_KEY, queryFn: api.getSession });
+
+  // A 401 anywhere means the session ended: reload it, which shows the login.
+  useEffect(
+    () =>
+      onUnauthenticated(() => void queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY })),
+    [queryClient]
+  );
 
   let content: ReactNode;
-  if (route.name === 'start') {
-    content = <StartPage config={config.data} />;
-  } else if (route.name === 'projects') {
-    content = <ProjectListPage />;
-  } else if (config.data) {
-    content = (
-      <Suspense fallback={loading('Opening the editor…')}>
-        <EditorPage projectId={route.projectId} config={config.data} />
-      </Suspense>
-    );
-  } else if (config.isError) {
-    content = (
-      <main className="studio-page">
-        <div role="alert" className="studio-error">
-          <p>The Studio server is not reachable.</p>
-          <button type="button" className="studio-button" onClick={() => void config.refetch()}>
-            Try again
-          </button>
-        </div>
-      </main>
-    );
-  } else {
+  if (session.isPending) {
     content = loading('Connecting…');
+  } else if (session.isError) {
+    content = unreachable(() => void session.refetch());
+  } else if (route.name === 'invite') {
+    content = <InvitePage token={route.token} session={session.data} />;
+  } else if (!session.data.account) {
+    content = <AuthPage session={session.data} />;
+  } else {
+    content = (
+      <SessionProvider session={session.data as LoggedIn['session']}>
+        {config.isError && route.name === 'editor' ? (
+          unreachable(() => void config.refetch())
+        ) : (
+          <LoggedInRoutes route={route} config={config.data} />
+        )}
+      </SessionProvider>
+    );
   }
 
   return (

@@ -4,10 +4,13 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { TEST_ORG, TEST_PROJECTS_URL, WithSession } from '../testing/session';
+
 import { ProjectListPage } from './ProjectListPage';
 
 interface Summary {
   id: string;
+  organisationId: string;
   name: string;
   schemaVersion: number;
   version: number;
@@ -18,6 +21,7 @@ interface Summary {
 
 const summary = (id: string, name: string, extra: Partial<Summary> = {}): Summary => ({
   id,
+  organisationId: TEST_ORG,
   name,
   schemaVersion: 1,
   version: 1,
@@ -42,8 +46,8 @@ function fakeServer(initial: Summary[]) {
     const body = typeof init?.body === 'string' ? (JSON.parse(init.body) as unknown) : null;
     calls.push({ method, url, body });
     const id = /^\/api\/projects\/([^/]+)$/.exec(url)?.[1];
-    if (url === '/api/projects' && method === 'GET') return json(200, { projects });
-    if (url === '/api/projects' && method === 'POST') {
+    if (url === TEST_PROJECTS_URL && method === 'GET') return json(200, { projects });
+    if (url === TEST_PROJECTS_URL && method === 'POST') {
       const created = { ...summary('new-id', (body as { name: string }).name), document: {} };
       projects = [created, ...projects];
       return json(201, created);
@@ -71,7 +75,9 @@ function renderPage() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <ProjectListPage />
+      <WithSession>
+        <ProjectListPage />
+      </WithSession>
     </QueryClientProvider>
   );
 }

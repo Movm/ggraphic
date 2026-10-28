@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { api, ApiError } from './client';
+import { api, ApiError, onUnauthenticated } from './client';
 
 const reply = (status: number, body: unknown) =>
   vi.fn<typeof fetch>().mockResolvedValue(
@@ -27,12 +27,13 @@ describe('api client', () => {
 
   it('rejects an answer that does not match the contract', async () => {
     vi.stubGlobal('fetch', reply(200, { projects: [{ id: 1 }] }));
-    await expect(api.listProjects()).rejects.toMatchObject({ code: 'invalid_response' });
+    await expect(api.listProjects('org-1')).rejects.toMatchObject({ code: 'invalid_response' });
   });
 
   it('sends the patch with the version it read', async () => {
     const fetchMock = reply(200, {
       id: 'p1',
+      organisationId: 'org-1',
       name: 'x',
       schemaVersion: 1,
       version: 4,
@@ -53,5 +54,38 @@ describe('api client', () => {
       version: 3,
       document: { formatId: 'post-portrait', pages: [] },
     });
+  });
+
+  it('sends the session CSRF token on state-changing calls only', async () => {
+    const session = {
+      setupRequired: false,
+      registrationOpen: false,
+      account: { id: 'a', email: 'a@example.org', displayName: 'A', isInstanceAdmin: false },
+      csrfToken: 'tok-123',
+      organisations: [],
+      canCreateOrganisations: false,
+    };
+    vi.stubGlobal('fetch', reply(200, session));
+    await api.getSession();
+    const fetchMock = reply(200, { projects: [] });
+    vi.stubGlobal('fetch', fetchMock);
+    await api.listProjects('org-1');
+    await api.deleteProject('p1').catch(() => undefined);
+    const [getUrl, getInit] = fetchMock.mock.calls[0]!;
+    expect(getUrl).toBe('/api/orgs/org-1/projects');
+    expect(new Headers(getInit?.headers).get('X-CSRF-Token')).toBeNull();
+    const [, delInit] = fetchMock.mock.calls[1]!;
+    expect(new Headers(delInit?.headers).get('X-CSRF-Token')).toBe('tok-123');
+  });
+
+  it('reports a 401 to the listeners, except for the auth calls themselves', async () => {
+    const listener = vi.fn();
+    const off = onUnauthenticated(listener);
+    vi.stubGlobal('fetch', reply(401, { error: 'unauthenticated' }));
+    await api.listProjects('org-1').catch(() => undefined);
+    expect(listener).toHaveBeenCalledTimes(1);
+    await api.login({ email: 'a@example.org', password: 'x' }).catch(() => undefined);
+    expect(listener).toHaveBeenCalledTimes(1);
+    off();
   });
 });

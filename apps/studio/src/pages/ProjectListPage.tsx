@@ -12,9 +12,12 @@ import {
 import { TEMPLATE_CATALOG } from '../editor/templates/catalog';
 import { BLANK_TEMPLATE_ID, type StudioTemplateId } from '../editor/templates/ids';
 import { editorPath, navigate } from '../router';
+import { useLoggedIn } from '../session/SessionContext';
+import { AccountBar } from '../ui/AccountBar';
 import { toast } from '../ui/toast';
 
 export const PROJECTS_QUERY_KEY = ['projects'] as const;
+export const projectsKey = (orgId: string) => [...PROJECTS_QUERY_KEY, orgId] as const;
 
 const errorText = (err: unknown) =>
   err instanceof ApiError ? err.message : 'Something went wrong.';
@@ -23,13 +26,18 @@ const dateFormat = new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyl
 
 export function ProjectListPage() {
   const queryClient = useQueryClient();
-  const projects = useQuery({ queryKey: PROJECTS_QUERY_KEY, queryFn: api.listProjects });
+  const { organisation } = useLoggedIn();
+  const projects = useQuery({
+    queryKey: projectsKey(organisation.id),
+    queryFn: () => api.listProjects(organisation.id),
+  });
   const refresh = () => queryClient.invalidateQueries({ queryKey: PROJECTS_QUERY_KEY });
 
   return (
     <main className="studio-page">
       <header className="studio-header">
         <h1 className="studio-logo">All projects</h1>
+        <AccountBar />
         <a
           className="studio-link"
           href="/"
@@ -72,6 +80,7 @@ export function ProjectListPage() {
 
 function NewProjectForm() {
   const queryClient = useQueryClient();
+  const { organisation } = useLoggedIn();
   const [name, setName] = useState('');
   const [formatId, setFormatId] = useState<StudioFormatId>(DEFAULT_FORMAT);
   const [templateId, setTemplateId] = useState<StudioTemplateId>(BLANK_TEMPLATE_ID);
@@ -79,7 +88,7 @@ function NewProjectForm() {
 
   const create = useMutation({
     mutationFn: () =>
-      api.createProject({
+      api.createProject(organisation.id, {
         name: name.trim() || 'Untitled',
         document: newDocument(formatId, templateId) as unknown as Record<string, unknown>,
       }),

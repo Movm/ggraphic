@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import { type BrandPack } from '@ggraphic/core';
 import { CanvasEditorProvider } from '@ggraphic/editor/CanvasEditorProvider';
 import { CanvasEditorShell } from '@ggraphic/editor/components/CanvasEditor/CanvasEditorShell';
 import { type CanvasEditorExportApi } from '@ggraphic/editor/components/CanvasEditor/types';
@@ -7,6 +8,7 @@ import { useMemo, useRef } from 'react';
 import { PiArrowLeft } from 'react-icons/pi';
 
 import { api, ApiError, type Project, type StudioConfig } from '../api/client';
+import { applyBrandPack } from '../brandLoader';
 import { parseDocument } from '../editor/document';
 import { createStudioServices } from '../editor/services';
 import { useAutosave, type SaveStatus } from '../editor/useAutosave';
@@ -32,8 +34,28 @@ export function EditorPage({ projectId, config }: { projectId: string; config: S
     refetchOnWindowFocus: false,
     retry: false,
   });
+  const organisationId = project.data?.organisationId ?? null;
+  // The project's organisation brand, registered before the editor mounts.
+  const brand = useQuery({
+    queryKey: ['editor-brand', organisationId],
+    queryFn: async (): Promise<BrandPack | null> => {
+      let pack: BrandPack | null = null;
+      try {
+        pack = (await api.getBrandPack(organisationId!)).pack;
+      } catch {
+        // No brand reachable: the editor opens with the Studio's own pack.
+      }
+      await applyBrandPack(pack);
+      return pack;
+    },
+    enabled: organisationId !== null,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
 
-  if (project.isPending) {
+  if (project.isPending || (project.isSuccess && brand.isPending)) {
     return (
       <div className="studio-editor-loading" role="status">
         Opening the project…
@@ -59,6 +81,7 @@ export function EditorPage({ projectId, config }: { projectId: string; config: S
       key={`${project.data.id}:${project.dataUpdatedAt}`}
       project={project.data}
       config={config}
+      logo={brand.data?.logo ?? null}
       onReload={() => void project.refetch()}
     />
   );
@@ -67,16 +90,26 @@ export function EditorPage({ projectId, config }: { projectId: string; config: S
 function ProjectEditor({
   project,
   config,
+  logo,
   onReload,
 }: {
   project: Project;
   config: StudioConfig;
+  logo: BrandPack['logo'];
   onReload: () => void;
 }) {
   const exportApi = useRef<CanvasEditorExportApi>(null);
   // The editor takes its pages on mount and owns them afterwards.
   const doc = useMemo(() => parseDocument(project.document), [project.document]);
-  const services = useMemo(() => createStudioServices({ ai: config.features.ai }), [config]);
+  const services = useMemo(
+    () =>
+      createStudioServices({
+        ai: config.features.ai,
+        organisationId: project.organisationId,
+        logo,
+      }),
+    [config, project.organisationId, logo]
+  );
   const autosave = useAutosave({
     projectId: project.id,
     formatId: doc.formatId,

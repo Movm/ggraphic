@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The host services the Studio hands the editor (`CanvasEditorProvider`):
- * uploads go to `POST /api/uploads`, downloads are named `ggraphic-…`, and the
+ * uploads go to `POST /api/orgs/:orgId/uploads`, the organisation's logo is
+ * offered in the Uploads tab, downloads are named `ggraphic-…`, and the
  * AI draft tab appears only when the server has AI turned on.
  *
  * Not supplied, so the editor runs on its fallbacks: stock photos, Unsplash
@@ -37,8 +38,12 @@ declare module '@ggraphic/editor/CanvasEditorProvider' {
 // ── Uploads ────────────────────────────────────────────────────────────────
 
 /** Uploads one image and returns its durable URL. */
-export async function uploadImage(file: Blob, filename = 'image'): Promise<string> {
-  const { url } = await api.upload(file, filename);
+export async function uploadImage(
+  organisationId: string,
+  file: Blob,
+  filename = 'image'
+): Promise<string> {
+  const { url } = await api.upload(organisationId, file, filename);
   return url;
 }
 
@@ -77,7 +82,7 @@ const useSessionUploads: CanvasMediaLibraryService['useMediaLibrary'] = () => {
   };
 };
 
-const useStudioUpload = (): CanvasMediaUploadState => {
+const makeUseStudioUpload = (organisationId: string) => (): CanvasMediaUploadState => {
   const [active, setActive] = useState(0);
   const [error, setError] = useState<string | null>(null);
   return {
@@ -85,7 +90,7 @@ const useStudioUpload = (): CanvasMediaUploadState => {
       setActive((n) => n + 1);
       setError(null);
       try {
-        const url = await uploadImage(file, file.name);
+        const url = await uploadImage(organisationId, file, file.name);
         const item: CanvasMediaItem = {
           id: url,
           shareToken: url,
@@ -135,12 +140,42 @@ export function resetSessionUploads(): void {
 
 // ── The services object ────────────────────────────────────────────────────
 
-export function createStudioServices({ ai }: { ai: boolean }): CanvasEditorServices {
+let uploadsOrganisation: string | null = null;
+
+export function createStudioServices({
+  ai,
+  organisationId,
+  logo = null,
+}: {
+  ai: boolean;
+  organisationId: string;
+  /** The organisation's logo, offered first in the Uploads tab. */
+  logo?: { src: string; label: string } | null;
+}): CanvasEditorServices {
+  // The list is per organisation: another organisation's images are not offered.
+  if (uploadsOrganisation !== organisationId) {
+    uploadsOrganisation = organisationId;
+    setSessionUploads([]);
+  }
+  if (logo && !sessionUploads.some((item) => item.id === logo.src)) {
+    setSessionUploads([
+      {
+        id: logo.src,
+        shareToken: logo.src,
+        title: logo.label,
+        thumbnailUrl: logo.src,
+        mediaUrl: logo.src,
+        altText: logo.label,
+        originalFilename: logo.label,
+      },
+      ...sessionUploads,
+    ]);
+  }
   return {
-    uploadImage: (file, opts) => uploadImage(file, opts?.filename),
+    uploadImage: (file, opts) => uploadImage(organisationId, file, opts?.filename),
     mediaLibrary: {
       useMediaLibrary: useSessionUploads,
-      useMediaUpload: useStudioUpload,
+      useMediaUpload: makeUseStudioUpload(organisationId),
       MediaThumb: UploadThumb,
     },
     imageUrls: studioImageUrls,

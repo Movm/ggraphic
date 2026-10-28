@@ -24,7 +24,7 @@ function mount({ ai }: { ai: boolean }) {
   const exportApi = createRef<CanvasEditorExportApi>();
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <CanvasEditorProvider services={createStudioServices({ ai })}>
+      <CanvasEditorProvider services={createStudioServices({ ai, organisationId: 'org-1' })}>
         <CanvasEditorShell
           initialConfigId={HEADLINE_TEMPLATE_ID}
           initialPages={newDocument('post-portrait', HEADLINE_TEMPLATE_ID).pages}
