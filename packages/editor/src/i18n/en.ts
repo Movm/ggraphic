@@ -599,6 +599,7 @@ export const en: Messages = {
         inserting: 'Inserting …',
         tilesFailed: 'Some icons could not be loaded.',
         retry: 'Try again',
+        busy: (seconds: number) => `The icon service is busy. You can try again in ${seconds} s.`,
         insertError: 'The icon could not be loaded.',
         full: (n: number) => `At most ${n} different icons per page.`,
       },

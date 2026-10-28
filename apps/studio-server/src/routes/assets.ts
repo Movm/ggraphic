@@ -16,6 +16,8 @@ const searchQuery = z.object({
   q: z.string().trim().min(1).max(64),
   limit: z.coerce.number().int().min(1).max(64).default(32),
   prefix: token.optional(),
+  /** Run the search again so missing icons are fetched in batches; answers how long to wait. */
+  refresh: z.enum(['1']).optional(),
 });
 
 const iconParams = z.object({ prefix: token, name: token });
@@ -48,11 +50,16 @@ export function assetsRouter(
 
   router.get('/icons/search', async (req, res) => {
     const icons = enabled();
-    const { q, limit, prefix } = parseOr400(searchQuery, req.query);
+    const { q, limit, prefix, refresh } = parseOr400(searchQuery, req.query);
     limited(limiters.iconifySearch, res);
-    res
-      .set('Cache-Control', 'private, max-age=60')
-      .json(await icons.search(q, limit, prefix ?? null));
+    const result = await icons.search(q, limit, prefix ?? null);
+    if (refresh) {
+      const wait = icons.cooldownSeconds();
+      if (wait > 0) res.set('Retry-After', String(wait));
+      res.set('Cache-Control', 'no-store').json(result);
+      return;
+    }
+    res.set('Cache-Control', 'private, max-age=60').json(result);
   });
 
   router.get('/icons/:prefix/:name.svg', async (req, res) => {

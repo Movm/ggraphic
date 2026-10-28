@@ -609,6 +609,8 @@ export const de = {
         inserting: 'Wird eingefügt …',
         tilesFailed: 'Einige Icons konnten nicht geladen werden.',
         retry: 'Erneut versuchen',
+        busy: (seconds: number) =>
+          `Der Icon-Dienst ist gerade ausgelastet. Nochmal in ${seconds} s versuchen.`,
         insertError: 'Das Icon konnte nicht geladen werden.',
         full: (n: number) => `Pro Seite höchstens ${n} verschiedene Icons.`,
       },
