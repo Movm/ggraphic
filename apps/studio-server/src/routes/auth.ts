@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { and, count, eq, gt, isNull, sql } from 'drizzle-orm';
 import { type Request, type Response, Router } from 'express';
+import { clientKey } from '../auth/clientKey.ts';
 import type { SessionCookie } from '../auth/cookies.ts';
 import { requireSession, sessionOf } from '../auth/middleware.ts';
 import { hashPassword, verifyAgainstDummy, verifyPassword } from '../auth/passwords.ts';
@@ -14,7 +15,13 @@ import {
 } from '../auth/sessions.ts';
 import { safeEqual, sha256 } from '../auth/tokens.ts';
 import type { Config } from '../config.ts';
-import { type InvitationInfo, loginBody, type SessionState, setupBody, signupBody } from '../contract.ts';
+import {
+  type InvitationInfo,
+  loginBody,
+  type SessionState,
+  setupBody,
+  signupBody,
+} from '../contract.ts';
 import type { Db } from '../db/client.ts';
 import { accounts, DEFAULT_ORGANISATION_ID, invitations, organisations } from '../db/schema.ts';
 import { HttpError, parseOr400 } from '../http.ts';
@@ -104,7 +111,7 @@ export function authRouter(
   }
 
   function limitIp(req: Request, res: Response): void {
-    const key = req.ip ?? 'unknown';
+    const key = clientKey(req.ip);
     const wait = limiters.ip.check(key);
     if (wait !== null) throw tooMany(wait, res);
     limiters.ip.hit(key);

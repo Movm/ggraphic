@@ -48,10 +48,19 @@ describe('loadConfig', () => {
       trustProxy: 1,
       fontMaxBytes: 1000,
     });
-    expect(loadConfig({ ...base, TRUST_PROXY: 'loopback' }).trustProxy).toBe('loopback');
-    expect(loadConfig({ ...base, TRUST_PROXY: 'true' }).trustProxy).toBe(true);
+    expect(loadConfig({ ...base, TRUST_PROXY: 'loopback' }).trustProxy).toEqual(['loopback']);
+    expect(
+      loadConfig({ ...base, TRUST_PROXY: '10.0.0.0/8, 192.168.1.5,fd00::/8' }).trustProxy
+    ).toEqual(['10.0.0.0/8', '192.168.1.5', 'fd00::/8']);
     expect(() => loadConfig({ ...base, COOKIE_SECURE: 'yes' })).toThrow(/COOKIE_SECURE/);
   });
+
+  it.each(['true', 'yes', '10.0.0.0/33', 'example.org', '1.2.3', '-1', '10.0.0.0/8,'])(
+    'rejects TRUST_PROXY=%s: trusting every hop lets clients pick their address',
+    (value) => {
+      expect(() => loadConfig({ ...base, TRUST_PROXY: value })).toThrow(/TRUST_PROXY/);
+    }
+  );
 
   it('reads a setup token of at least 16 characters', () => {
     expect(loadConfig(base).setupToken).toBeNull();

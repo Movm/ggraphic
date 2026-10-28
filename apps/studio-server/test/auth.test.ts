@@ -19,7 +19,10 @@ import {
 
 const hasDb = Boolean(process.env['DATABASE_URL']);
 const signup = (email: string) => ({ email, displayName: 'Someone', password: PASSWORD });
-const setupBody = (email: string, setupToken = TEST_SETUP_TOKEN) => ({ ...signup(email), setupToken });
+const setupBody = (email: string, setupToken = TEST_SETUP_TOKEN) => ({
+  ...signup(email),
+  setupToken,
+});
 
 describe.skipIf(!hasDb)('accounts and sessions (Postgres)', () => {
   const config = testConfig();
@@ -96,10 +99,7 @@ describe.skipIf(!hasDb)('accounts and sessions (Postgres)', () => {
       expect(rows[0].n).toBe(0);
       // An instance started without a token (accounts existed then) cannot be claimed.
       const tokenless = createApp({ config: { ...config, setupToken: null }, db });
-      await request(tokenless)
-        .post('/api/auth/setup')
-        .send(setupBody('a@example.org'))
-        .expect(403);
+      await request(tokenless).post('/api/auth/setup').send(setupBody('a@example.org')).expect(403);
       await request(app).post('/api/auth/setup').send(setupBody('a@example.org')).expect(201);
     });
 

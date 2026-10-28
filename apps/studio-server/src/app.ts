@@ -39,6 +39,18 @@ export function createApp({
   app.disable('x-powered-by');
   // Behind a reverse proxy the client IP (rate limits) comes from X-Forwarded-For.
   app.set('trust proxy', config.trustProxy);
+  let warnedForwarded = false;
+  if (config.trustProxy === false) {
+    app.use((req, _res, next) => {
+      if (!warnedForwarded && req.headers['x-forwarded-for'] !== undefined) {
+        warnedForwarded = true;
+        console.warn(
+          'Requests carry X-Forwarded-For, but TRUST_PROXY is off: rate limits see the proxy, not the clients. Set TRUST_PROXY to the hop count or proxy addresses (docs/self-hosting.md).'
+        );
+      }
+      next();
+    });
+  }
   const cookie = sessionCookie(config.cookieSecure);
   app.use((_req, res, next) => {
     res.set('X-Content-Type-Options', 'nosniff');

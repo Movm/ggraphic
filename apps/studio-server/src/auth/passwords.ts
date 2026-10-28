@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import argon2 from 'argon2';
+import { Semaphore } from './semaphore.ts';
 
 // OWASP's minimum for argon2id: 19 MiB, two passes, one lane. Light enough for small hosts,
 // and login attempts are rate limited, which bounds the memory a flood can claim.
@@ -9,16 +10,21 @@ export const PASSWORD_MIN = 10;
 // argon2 accepts any length; the cap keeps one request from hashing megabytes.
 export const PASSWORD_MAX = 256;
 
+/** Four hashes at once (≈ 76 MiB), 64 waiting; more answers 503 instead of piling up. */
+export const hashSlots = new Semaphore(4, 64);
+
 export function hashPassword(password: string): Promise<string> {
-  return argon2.hash(password, OPTIONS);
+  return hashSlots.run(() => argon2.hash(password, OPTIONS));
 }
 
-export async function verifyPassword(hash: string, password: string): Promise<boolean> {
-  try {
-    return await argon2.verify(hash, password);
-  } catch {
-    return false;
-  }
+export function verifyPassword(hash: string, password: string): Promise<boolean> {
+  return hashSlots.run(async () => {
+    try {
+      return await argon2.verify(hash, password);
+    } catch {
+      return false;
+    }
+  });
 }
 
 let dummy: Promise<string> | null = null;

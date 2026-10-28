@@ -80,7 +80,9 @@ cookies; a token stored in the session row cannot be planted.
 ## Login rate limiting
 
 In-process fixed windows: 10 failed attempts per email and 30 per client IP within 15
-minutes, then `429` with `Retry-After`. Setup, registration and invitation acceptance share
+minutes, then `429` with `Retry-After`. IPv6 clients are keyed by their /64. Hashing and
+verification share a semaphore of four slots with a queue of 64; a full queue answers `503`.
+`TRUST_PROXY=true` is refused at start: only a hop count or proxy addresses are accepted. Setup, registration and invitation acceptance share
 the IP window. Behind a reverse proxy, set `TRUST_PROXY` (Express `trust proxy`) so the IP
 is the client's, not the proxy's. The counters are per process; a multi-process deployment
 gets a limit per process (see open risks).

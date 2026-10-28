@@ -3,7 +3,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import request from 'supertest';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createApp } from '../src/app.ts';
 import { createDb } from '../src/db/client.ts';
 import { testConfig } from './helpers.ts';
@@ -90,5 +90,32 @@ describe('anonymous requests', () => {
     const res = await request(makeApp().app).get('/api/config').expect(200);
     expect(res.headers['cache-control']).toBe('no-store');
     expect(res.headers['referrer-policy']).toBe('same-origin');
+  });
+});
+
+describe('proxy headers', () => {
+  it('warns once when X-Forwarded-For arrives while trust proxy is off', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const { app } = makeApp();
+      await request(app).get('/api/config').set('x-forwarded-for', '198.51.100.1');
+      await request(app).get('/api/config').set('x-forwarded-for', '198.51.100.2');
+      const proxyWarnings = warn.mock.calls.filter((c) => String(c[0]).includes('TRUST_PROXY'));
+      expect(proxyWarnings).toHaveLength(1);
+      expect(String(proxyWarnings[0]![0])).not.toContain('198.51.100');
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
+  it('stays quiet when trust proxy is configured', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const { app } = makeApp({ trustProxy: 1 });
+      await request(app).get('/api/config').set('x-forwarded-for', '198.51.100.1');
+      expect(warn.mock.calls.filter((c) => String(c[0]).includes('TRUST_PROXY'))).toHaveLength(0);
+    } finally {
+      warn.mockRestore();
+    }
   });
 });
