@@ -49,14 +49,17 @@ describe('seedFor', () => {
       OPEN_TEMPLATES: [{ ...(quote as object), id: 'portrait-only', formats: ['4:5'] }],
       OPEN_TEMPLATE_MANIFEST,
     }));
-    const fresh = await import('./seeds');
-    // The same template places on the aspect it declares ...
-    expect(fresh.seedFor('portrait-only', 1080, 1350).additionalTexts?.length).toBeGreaterThan(0);
-    // ... and is not stretched onto one it does not (a square and a wide sheet).
-    expect(fresh.seedFor('portrait-only', 1080, 1080)).toEqual({});
-    expect(fresh.seedFor('portrait-only', 1920, 1080)).toEqual({});
-    vi.doUnmock('@ggraphic/templates-open');
-    vi.resetModules();
+    try {
+      const fresh = await import('./seeds');
+      // The same template places on the aspect it declares ...
+      expect(fresh.seedFor('portrait-only', 1080, 1350).additionalTexts?.length).toBeGreaterThan(0);
+      // ... and is not stretched onto one it does not (a square and a wide sheet).
+      expect(fresh.seedFor('portrait-only', 1080, 1080)).toEqual({});
+      expect(fresh.seedFor('portrait-only', 1920, 1080)).toEqual({});
+    } finally {
+      vi.doUnmock('@ggraphic/templates-open');
+      vi.resetModules();
+    }
   });
 
   it('gives a catalogue id the placed page of the matching format', () => {
