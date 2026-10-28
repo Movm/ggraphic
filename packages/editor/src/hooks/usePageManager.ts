@@ -289,6 +289,7 @@ export function usePageManager<TId extends string = TemplateId>({
         id: view.id,
         configId: view.configId as TId,
         state: view.state,
+        stateEpoch: view.stateEpoch,
       };
       cache.set(view.id, { view, page });
       return page;

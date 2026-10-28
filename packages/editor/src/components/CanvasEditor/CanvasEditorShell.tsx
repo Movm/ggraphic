@@ -1685,7 +1685,8 @@ function CanvasEditorInner({
 
                   return (
                     <PageWrapper
-                      key={page.id}
+                      // A replaced state (convert, undo) mounts the page afresh on the new state.
+                      key={`${page.id}:${page.stateEpoch ?? 0}`}
                       page={page}
                       index={index}
                       pageCount={pageCount}
