@@ -29,15 +29,13 @@ const SEED_SCHEME: Record<string, SchemeId> = {
 const IDS = Object.keys(SEED_SCHEME);
 
 /**
- * The intended differences from the code seeds: text boxes narrowed to 45 % of the safe frame
- * so that they clear a logo box of up to 40 % of the canvas width (render gate, layout extremes).
+ * The intended difference from the code seeds: the headline's call to action is 60 % of the safe
+ * frame wide, not all of it (a text that wide ran into the logo box on a wide left-right layout).
+ * Every other text keeps the width of the code seed.
  */
-const NARROWED: Record<string, readonly string[]> = {
-  'studio-headline': ['body', 'cta'],
-  'studio-quote': ['subline'],
-  'studio-number': ['subline'],
+const NARROWED: Record<string, Record<string, number>> = {
+  'studio-headline': { cta: 0.6 },
 };
-const NARROWED_TO = 0.45;
 
 const LOGO = '/test-logo.png';
 const brands = {
@@ -110,22 +108,21 @@ describe('the studio seeds as template files', () => {
   ] as const) {
     it.each(IDS)(`%s matches the code seed on the ${brandKey} brand`, (id) => {
       const expected = tidy(structuredClone((goldenSet as Record<string, unknown>)[id]) as Obj);
-      for (const textId of NARROWED[id] ?? []) {
+      for (const [textId, fraction] of Object.entries(NARROWED[id] ?? {})) {
         const text = byId(texts(expected), textId);
-        // The code seeds gave every one of them the full 886 px of the 4:5 safe frame.
+        // The code seeds gave it the full 886 px of the 4:5 safe frame.
         expect(text['width']).toBe(886);
-        text['width'] = Math.round(886 * NARROWED_TO);
+        text['width'] = Math.round(886 * fraction);
       }
       expect(closeTo(placed(id, brandKey), expected, id)).toEqual([]);
     });
   }
 
-  it('narrows the boxes that sit in the logo band to 399 px', () => {
-    for (const [id, textIds] of Object.entries(NARROWED)) {
-      for (const textId of textIds) {
-        expect(byId(texts(placed(id, 'plain')), textId)['width']).toBe(399);
-      }
-    }
+  it('sets the headline call to action to 532 px wide and narrows nothing else', () => {
+    expect(byId(texts(placed('studio-headline', 'plain')), 'cta')['width']).toBe(532);
+    expect(byId(texts(placed('studio-headline', 'plain')), 'body')['width']).toBe(886);
+    expect(byId(texts(placed('studio-quote', 'plain')), 'subline')['width']).toBe(886);
+    expect(byId(texts(placed('studio-number', 'plain')), 'subline')['width']).toBe(886);
   });
 
   it('binds the big number to the accent role of the secondary world', () => {
