@@ -6,7 +6,7 @@ import { useId, type MouseEvent } from 'react';
 
 import { api } from '../api/client';
 import { BRAND_PATH, MEMBERS_PATH, navigate, PROJECTS_PATH } from '../router';
-import { SESSION_QUERY_KEY, useLoggedIn } from '../session/SessionContext';
+import { useLoggedIn } from '../session/SessionContext';
 import { toast } from './toast';
 
 /** Plain clicks on the bar's links route in-app; modified clicks keep the browser's behaviour. */
@@ -32,8 +32,9 @@ export function AccountBar() {
       toast.error('Logging out failed. Try again.');
       return;
     }
-    queryClient.clear();
-    await queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY });
+    // reset, not clear: clear() drops the session query from the cache, so a
+    // following refetch finds nothing to reload and the page keeps the old session.
+    await queryClient.resetQueries();
     navigate('/');
   };
 
