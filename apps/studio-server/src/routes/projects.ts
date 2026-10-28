@@ -177,7 +177,20 @@ export function projectsRouter(db: Db, opts: { thumbnailMaxBytes: number }): Rou
   }
 
   router.get('/:id', async (req, res) => {
-    res.json(await loadProject(res, idParam(req.params.id)));
+    const id = idParam(req.params.id);
+    try {
+      res.json(await loadProject(res, id));
+    } catch (err) {
+      if (!(err instanceof HttpError) || err.status !== 404) throw err;
+      // trashedProbe: `owned` limits this to the caller's organisations, so a project of another
+      // organisation stays a plain not_found. The client says "in the Trash" instead of "missing".
+      const [inTrash] = await db
+        .select({ id: projects.id })
+        .from(projects)
+        .where(and(owned(res, id), isNotNull(projects.deletedAt)));
+      if (inTrash) throw new HttpError(404, { error: 'trashed' });
+      throw err;
+    }
   });
 
   router.patch('/:id', async (req, res) => {

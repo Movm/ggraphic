@@ -6,7 +6,7 @@ import { messages } from '@ggraphic/editor/i18n/messages';
 import { CanvasEditorShell } from '@ggraphic/editor/components/CanvasEditor/CanvasEditorShell';
 import { type CanvasEditorExportApi } from '@ggraphic/editor/components/CanvasEditor/types';
 import { Alert, Button } from '@ggraphic/ui';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useMemo, useRef } from 'react';
 import { PiArrowLeft } from 'react-icons/pi';
 
@@ -41,6 +41,10 @@ export function EditorPage({ projectId, config }: { projectId: string; config: S
     refetchOnWindowFocus: false,
     retry: false,
   });
+  const restore = useMutation({
+    mutationFn: () => api.restoreProject(projectId),
+    onSuccess: () => void project.refetch(),
+  });
   const organisationId = project.data?.organisationId ?? null;
   // The project's organisation brand, registered before the editor mounts.
   const brand = useQuery({
@@ -73,12 +77,40 @@ export function EditorPage({ projectId, config }: { projectId: string; config: S
     );
   }
   if (project.isError) {
-    const missing = project.error instanceof ApiError && project.error.status === 404;
+    const failure = project.error instanceof ApiError ? project.error : null;
+    if (failure?.code === 'trashed') {
+      return (
+        <main className="ui-root studio-standalone">
+          <Alert tone="warning" role="alert">
+            <p className="studio-alert-text">This project is in the Trash.</p>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={restore.isPending}
+              onClick={() => restore.mutate()}
+            >
+              Restore
+            </Button>{' '}
+            <a
+              href={TRASH_PATH}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate(TRASH_PATH);
+              }}
+            >
+              Open the Trash
+            </a>
+          </Alert>
+        </main>
+      );
+    }
     return (
       <main className="ui-root studio-standalone">
         <Alert tone="danger">
           <p className="studio-alert-text">
-            {missing ? 'This project does not exist.' : 'The project could not be opened.'}
+            {failure?.status === 404
+              ? 'This project does not exist.'
+              : 'The project could not be opened.'}
           </p>
           <Button variant="outline" size="sm" onClick={() => navigate('/')}>
             Back to projects
