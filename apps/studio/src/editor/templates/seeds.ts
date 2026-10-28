@@ -38,7 +38,11 @@ export function seedFor(templateId: string, width: number, height: number): Page
   if (templateId === BLANK_TEMPLATE_ID) return {};
   const entry = catalogTemplate(templateId);
   if (!entry) return {};
-  return (placeTemplate(entry, { width, height }, aspectOfSize(width, height)) ?? {}) as PageSeed;
+  // The nearest aspect is picked from all three, not from the template's: say so here instead of
+  // leaving it to the placer, so a template never lands on a sheet it did not declare.
+  const aspect = aspectOfSize(width, height);
+  if (!entry.formats.includes(aspect)) return {};
+  return (placeTemplate(entry, { width, height }, aspect) ?? {}) as PageSeed;
 }
 
 /**

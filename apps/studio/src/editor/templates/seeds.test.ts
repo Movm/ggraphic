@@ -6,7 +6,7 @@
  */
 import { contrastRatio, deriveBrandColors, offeredSchemes } from '@ggraphic/core';
 import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { studioBrand } from '../../brand';
 import { formatSize } from '../document';
@@ -39,6 +39,24 @@ describe('seedFor', () => {
     expect(seedFor('studio-blank', 1080, 1350)).toEqual({});
     expect(seedFor('studio-gone', 1080, 1350)).toEqual({});
     expect(seedPageState('studio-gone', 1080, 1350)['additionalTexts']).toEqual([]);
+  });
+
+  it("gives a blank page where the template does not declare the sheet's aspect", async () => {
+    vi.resetModules();
+    const { OPEN_TEMPLATES, OPEN_TEMPLATE_MANIFEST } = await import('@ggraphic/templates-open');
+    const quote = OPEN_TEMPLATES.find((t) => (t as { id: string }).id === 'studio-quote')!;
+    vi.doMock('@ggraphic/templates-open', () => ({
+      OPEN_TEMPLATES: [{ ...(quote as object), id: 'portrait-only', formats: ['4:5'] }],
+      OPEN_TEMPLATE_MANIFEST,
+    }));
+    const fresh = await import('./seeds');
+    // The same template places on the aspect it declares ...
+    expect(fresh.seedFor('portrait-only', 1080, 1350).additionalTexts?.length).toBeGreaterThan(0);
+    // ... and is not stretched onto one it does not (a square and a wide sheet).
+    expect(fresh.seedFor('portrait-only', 1080, 1080)).toEqual({});
+    expect(fresh.seedFor('portrait-only', 1920, 1080)).toEqual({});
+    vi.doUnmock('@ggraphic/templates-open');
+    vi.resetModules();
   });
 
   it('gives a catalogue id the placed page of the matching format', () => {
