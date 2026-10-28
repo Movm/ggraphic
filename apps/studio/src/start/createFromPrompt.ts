@@ -4,7 +4,7 @@
  * template and a colour world and writes its texts (`api.pick`), and only then is the
  * project created. Without AI the prompt itself becomes the headline.
  */
-import { rebindPageState } from '@ggraphic/core';
+import { offeredSchemes, rebindPageState } from '@ggraphic/core';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 
 import { api, ApiError, type Draft, type Pick } from '../api/client';
@@ -69,7 +69,8 @@ async function loadOrganisationBrand(organisationId: string): Promise<void> {
  * colour world set. Null when the pick names a template the Studio does not offer on this format.
  */
 export function pickedDocument(formatId: string, picked: Pick): StudioDocument | null {
-  if (!templatesFor(formatId).some((e) => e.id === picked.templateId)) return null;
+  const entry = templatesFor(formatId).find((e) => e.id === picked.templateId);
+  if (!entry) return null;
   const doc = newDocument(formatId, picked.templateId);
   const page = doc.pages[0]!;
   const texts = page.state['additionalTexts'] as AdditionalText[];
@@ -78,9 +79,12 @@ export function pickedDocument(formatId: string, picked: Pick): StudioDocument |
     additionalTexts: fillById(texts, new Map(Object.entries(picked.fills))),
   };
   if (picked.schemeId !== null) {
+    // A world the template does not offer falls back to its first offered one.
+    const worlds: string[] = offeredSchemes(entry.template, activeBrand());
+    const world = worlds.includes(picked.schemeId) ? picked.schemeId : worlds[0];
     // The stamp goes so the rebind below does not take the page for current.
     const { brandStamp: _stamp, ...rest } = state;
-    state = { ...rest, brandScheme: picked.schemeId };
+    state = world === undefined ? rest : { ...rest, brandScheme: world };
   }
   state = rebindPageState(state, { brand: activeBrand() }).state;
   return { ...doc, pages: [{ ...page, state }] };

@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api, ApiError } from '../api/client';
 
-import { AiPromptError, createFromPrompt } from './createFromPrompt';
+import { AiPromptError, createFromPrompt, pickedDocument } from './createFromPrompt';
 
 vi.mock('../api/client', async (importOriginal) => {
   const original = await importOriginal<Record<string, unknown>>();
@@ -52,7 +52,7 @@ describe('createFromPrompt with AI', () => {
   it('creates the project with the template and colour world the AI picked', async () => {
     mocked.pick.mockResolvedValue({
       templateId: 'studio-quote',
-      schemeId: 'dark',
+      schemeId: 'primary',
       fills: { headline: 'Mut zahlt sich aus', subline: 'Ada' },
     });
     const result = await run();
@@ -65,13 +65,27 @@ describe('createFromPrompt with AI', () => {
     expect(page.configId).toBe('studio-blank');
     expect((page.state['templateRef'] as { id: string }).id).toBe('studio-quote');
     // The page is rebound into the picked world and stamped with the brand it was made under.
-    expect(page.state['brandScheme']).toBe('dark');
-    expect(page.state['backgroundColor']).toBe(resolveScheme(activeBrand(), 'dark')!.roles.ground);
+    expect(page.state['brandScheme']).toBe('primary');
+    expect(page.state['backgroundColor']).toBe(
+      resolveScheme(activeBrand(), 'primary')!.roles.ground
+    );
     expect(page.state['brandStamp']).toBe(brandFingerprint(activeBrand()));
     expect(textsOf(page)).toMatchObject({ headline: 'Mut zahlt sich aus', subline: 'Ada' });
     const body = mocked.pick.mock.calls[0]![0];
     expect(body.brief).toBe('Eine Zitatkarte');
     expect(body.templates.map((t) => t.id)).not.toContain('studio-blank');
+  });
+
+  it('falls back to the first world the template offers when the picked one is not offered', async () => {
+    mocked.pick.mockResolvedValue({
+      templateId: 'studio-quote',
+      schemeId: 'dark',
+      fills: { headline: 'Mut zahlt sich aus' },
+    });
+    await run();
+    const page = pageOf(saved());
+    expect(page.state['brandScheme']).toBe('light');
+    expect(page.state['backgroundColor']).toBe(resolveScheme(activeBrand(), 'light')!.roles.ground);
   });
 
   it("keeps the template's own colour world when the AI picked none", async () => {
@@ -125,5 +139,13 @@ describe('createFromPrompt with AI', () => {
     expect(failure).toBeInstanceOf(AiPromptError);
     expect(mocked.createProject).not.toHaveBeenCalled();
     expect(mocked.draft).not.toHaveBeenCalled();
+  });
+});
+
+describe('pickedDocument', () => {
+  it('gives no document for an unknown template id', () => {
+    expect(
+      pickedDocument('post-portrait', { templateId: 'nope', schemeId: null, fills: {} })
+    ).toBeNull();
   });
 });
