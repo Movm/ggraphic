@@ -48,6 +48,12 @@ const draftSchema = z.object({
   callToAction: z.string().optional(),
 });
 
+const pickSchema = z.object({
+  templateId: z.string(),
+  schemeId: z.string().nullable(),
+  fills: z.record(z.string(), z.string()),
+});
+
 const errorSchema = z.object({
   error: z.string(),
   message: z.string().optional(),
@@ -183,6 +189,20 @@ export type Project = z.infer<typeof projectSchema>;
 export type StudioConfig = z.infer<typeof configSchema>;
 export type Upload = z.infer<typeof uploadSchema>;
 export type Draft = z.infer<typeof draftSchema>;
+export type Pick = z.infer<typeof pickSchema>;
+
+/** What the AI may choose from: `apps/studio-server/src/contract.ts` `pickBody`. */
+export interface PickBody {
+  brief: string;
+  templates: {
+    id: string;
+    label: string;
+    description: string;
+    slots: { id: string; label: string; maxChars: number }[];
+  }[];
+  schemes: { id: string; label: string }[];
+  format?: { width: number; height: number } | null;
+}
 
 /** A failed call: HTTP status plus the server's `{ error, message?, currentVersion? }`. */
 export class ApiError extends Error {
@@ -392,4 +412,5 @@ export const api = {
 
   draft: (body: { briefing: string; width: number; height: number }) =>
     request('/ai/draft', draftSchema, json('POST', body)),
+  pick: (body: PickBody) => request('/ai/pick', pickSchema, json('POST', body)),
 };
