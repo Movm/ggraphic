@@ -26,7 +26,7 @@ const projectSchema = projectSummarySchema.extend({
 const projectListSchema = z.object({ projects: z.array(projectSummarySchema) });
 
 const configSchema = z.object({
-  features: z.object({ ai: z.boolean(), removeBackground: z.boolean() }),
+  features: z.object({ ai: z.boolean(), removeBackground: z.boolean(), iconify: z.boolean() }),
   limits: z.object({
     uploadBytes: z.number().int(),
     thumbnailBytes: z.number().int(),
@@ -34,6 +34,16 @@ const configSchema = z.object({
   }),
   uploadTypes: z.array(z.string()),
 });
+
+const iconHitSchema = z.object({
+  prefix: z.string(),
+  name: z.string(),
+  setTitle: z.string(),
+  licence: z.string(),
+  author: z.string(),
+});
+
+const iconSearchSchema = z.object({ icons: z.array(iconHitSchema), total: z.number().int() });
 
 const uploadSchema = z.object({
   url: z.string(),
@@ -434,6 +444,23 @@ export const api = {
     form.append('file', image, filename);
     const response = await send('/images/remove-background', { method: 'POST', body: form });
     return new Blob([await response.arrayBuffer()], { type: 'image/png' });
+  },
+  /** Icons from the instance's Iconify proxy; only licences the operator allows come back. */
+  searchIcons: async (query: string, limit: number, signal?: AbortSignal) => {
+    const params = new URLSearchParams({ q: query, limit: String(limit) });
+    const result = await request(
+      `/assets/icons/search?${params.toString()}`,
+      iconSearchSchema,
+      signal ? { signal } : {}
+    );
+    return result.icons;
+  },
+  /** One icon as SVG markup, through the same proxy. */
+  iconSvg: async (prefix: string, name: string) => {
+    const response = await send(
+      `/assets/icons/${encodeURIComponent(prefix)}/${encodeURIComponent(name)}.svg`
+    );
+    return response.text();
   },
   pick: (body: PickBody) => request('/ai/pick', pickSchema, json('POST', body)),
 };

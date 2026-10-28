@@ -17,6 +17,32 @@ describe('createStudioServices', () => {
     ).not.toHaveProperty('removeBackgroundFromImage');
   });
 
+  it('leaves icon search out unless the server has it on', () => {
+    expect(createStudioServices({ ai: false, organisationId: 'o1' })).not.toHaveProperty(
+      'iconSearch'
+    );
+    expect(
+      createStudioServices({ ai: false, iconify: false, organisationId: 'o1' })
+    ).not.toHaveProperty('iconSearch');
+  });
+
+  it('hands the editor an icon search when the server has it on', async () => {
+    const hit = {
+      prefix: 'tabler',
+      name: 'tree',
+      setTitle: 'Tabler Icons',
+      licence: 'MIT',
+      author: 'Paweł Kuna',
+    };
+    const search = vi.spyOn(api, 'searchIcons').mockResolvedValue([hit]);
+    vi.spyOn(api, 'iconSvg').mockResolvedValue('<svg></svg>');
+    const { iconSearch } = createStudioServices({ ai: false, iconify: true, organisationId: 'o1' });
+    expect(await iconSearch!.search('tree')).toEqual([hit]);
+    expect(search).toHaveBeenCalledWith('tree', 60, undefined);
+    expect(await iconSearch!.svg('tabler', 'tree')).toBe('<svg></svg>');
+    expect(iconSearch!.previewUrl('tabler', 'tree')).toBe('/api/assets/icons/tabler/tree.svg');
+  });
+
   it('hands the editor a background remover when the server has it on', async () => {
     vi.spyOn(api, 'removeBackground').mockResolvedValue(new Blob(['png'], { type: 'image/png' }));
     vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: () => 'blob:cut' }));

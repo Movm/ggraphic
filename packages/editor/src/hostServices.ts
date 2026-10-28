@@ -323,6 +323,31 @@ export const useNoUnsplashSearch: UseCanvasUnsplashSearch = () => {
   };
 };
 
+// ── Icon search (a host's catalogue beyond the bundled icon sets) ───────────
+
+/** One search hit; the licence and author are the icon set's. */
+export interface CanvasIconHit {
+  prefix: string;
+  name: string;
+  setTitle: string;
+  /** SPDX id, e.g. `MIT` or `CC-BY-4.0`. */
+  licence: string;
+  author: string;
+}
+
+/**
+ * Searches a large icon catalogue through the host (so the host decides which
+ * licences and sources are offered). When the host omits it, the Elements tab
+ * searches the bundled icons only and shows nothing extra.
+ */
+export interface CanvasIconSearchService {
+  search: (query: string, signal?: AbortSignal) => Promise<CanvasIconHit[]>;
+  /** The icon as SVG markup; the editor stores a copy of it in the design. */
+  svg: (prefix: string, name: string) => Promise<string>;
+  /** A URL the browser can show the icon from, for the result grid. */
+  previewUrl: (prefix: string, name: string) => string;
+}
+
 // ── Print (V.i.S.d.P. / Impressum) ──────────────────────────────────────────
 
 /** The country form an impressum line is written in. */

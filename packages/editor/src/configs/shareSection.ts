@@ -6,8 +6,8 @@ import {
   GenericShareSection,
   type GenericShareSectionProps,
 } from '@ggraphic/editor/sidebar/sections/index';
-import { photoCreditLine, withPhotoCredit } from '@ggraphic/editor/utils/photoCredit';
-import { pagePhotoCredits } from '@ggraphic/editor/utils/photoCredits';
+import { withPhotoCredit } from '@ggraphic/editor/utils/photoCredit';
+import { creditLines } from '@ggraphic/editor/utils/photoCredits';
 
 import { messages } from '@ggraphic/editor/i18n/messages';
 
@@ -53,7 +53,7 @@ export function createShareSection<TState, TActions = unknown>(
       const imageText = stripInlineMarks(getCanvasText(state));
       const canvasText = withPhotoCredit(
         imageText,
-        photoCreditLine(pagePhotoCredits(state as Record<string, unknown>))
+        creditLines([state as Record<string, unknown>])
       );
 
       // Note: autoSaveStatus removed - DownloadSubsection reads directly from useAutoSaveStore

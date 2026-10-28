@@ -45,6 +45,36 @@ const threeSuns = (): IconTestState => ({
   },
 });
 
+describe('toggleIcon with an external icon', () => {
+  it('stores a copy of the svg and its source in the design', () => {
+    const h = harness({ selectedIcons: [], iconStates: {} });
+    const source = {
+      kind: 'iconify' as const,
+      prefix: 'lets',
+      name: 'tree',
+      setTitle: 'Lets Icons',
+      licence: 'CC-BY-4.0',
+      author: 'Leonid Tsvetkov',
+    };
+    h.actions.toggleIcon('iconify:lets:tree', true, undefined, { svg: '<svg></svg>', source });
+
+    expect(h.current().selectedIcons).toEqual(['iconify:lets:tree']);
+    expect(h.current().iconStates['iconify:lets:tree']).toMatchObject({
+      svg: '<svg></svg>',
+      source,
+      x: 540,
+      y: 540,
+    });
+  });
+
+  it('adds nothing for a bundled icon', () => {
+    const h = harness({ selectedIcons: [], iconStates: {} });
+    h.actions.toggleIcon('tabler-sun', true);
+    expect(h.current().iconStates['tabler-sun']).not.toHaveProperty('svg');
+    expect(h.current().iconStates['tabler-sun']).not.toHaveProperty('source');
+  });
+});
+
 describe('toggleIcon', () => {
   it('legt das erste Exemplar unter der Katalog-ID ab', () => {
     // Kein `iconId` — genau die Form, in der alle Dokumente von vor #3404
