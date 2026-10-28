@@ -25,6 +25,7 @@ export {
   SURFACE_ROLES,
   deriveSchemes,
   schemeById,
+  resolveScheme,
   type Scheme,
   type SchemeId,
   type SurfaceRole,

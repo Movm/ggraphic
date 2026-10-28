@@ -287,6 +287,27 @@ describe('rebindPageState edge cases', () => {
   });
 });
 
+describe('a page whose world was deduplicated', () => {
+  // A near-white secondary absorbs `light`: its ground stands in for the surface world.
+  const near: BrandPack = {
+    ...brandDefault,
+    colors: { ...brandDefault.colors, secondary: '#FAFAFA' },
+  };
+
+  it('follows the kept world that absorbed it, not the first one', () => {
+    expect(deriveSchemes(near).some((x) => x.id === 'light')).toBe(false);
+    const state = {
+      brandScheme: 'light',
+      backgroundColor: '#f6f4ef',
+      bind: { backgroundColor: { ref: 'ground', value: '#f6f4ef' } },
+    };
+    const r = rebindPageState(state, { brand: near });
+    const secondary = deriveSchemes(near).find((x) => x.id === 'secondary')!;
+    expect(r.state['backgroundColor']).toBe(secondary.roles.ground);
+    expect(r.state['backgroundColor']).not.toBe(deriveSchemes(near)[0]!.roles.ground);
+  });
+});
+
 describe('rebindPages', () => {
   it('keeps unchanged pages and reports changes', () => {
     const bound = {
