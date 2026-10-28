@@ -106,6 +106,31 @@ describe('IconifyCatalog', () => {
     });
   });
 
+  it('stores the sanitised svg, whatever the service returned', async () => {
+    const dirty = SVG.replace('<path', '<script>x()</script><path onclick="x()"');
+    const { onAdd } = renderCatalog(service({ svg: vi.fn(() => Promise.resolve(dirty)) }));
+    fireEvent.click(await screen.findByRole('button', { name: /tree-fill/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Einfügen' }));
+    await waitFor(() => expect(onAdd).toHaveBeenCalledTimes(1));
+    const stored = (onAdd.mock.calls[0]![1] as { svg: string }).svg;
+    expect(stored).not.toMatch(/script|onclick/);
+    expect(stored).toContain('<path');
+  });
+
+  it('places nothing when the svg cannot be made safe', async () => {
+    const { onAdd } = renderCatalog(
+      service({
+        svg: vi.fn(() => Promise.resolve('<svg xmlns="http://www.w3.org/2000/svg"/onload=x()>')),
+      })
+    );
+    fireEvent.click(await screen.findByRole('button', { name: /tree-fill/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Einfügen' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Das Icon konnte nicht geladen werden.'
+    );
+    expect(onAdd).not.toHaveBeenCalled();
+  });
+
   it('places nothing and says so when the icon cannot be fetched', async () => {
     const { onAdd } = renderCatalog(
       service({ svg: vi.fn(() => Promise.reject(new Error('502'))) })

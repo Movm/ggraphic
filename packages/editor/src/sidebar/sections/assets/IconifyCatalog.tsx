@@ -5,6 +5,7 @@ import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { cn } from '@ggraphic/editor/utils/cn';
 import {
   attributionLine,
+  cleanIconSvg,
   externalIconId,
   type ExternalIconPayload,
   type IconSource,
@@ -65,7 +66,9 @@ export function IconifyCatalog({
     setPlacing(true);
     setPlaceFailed(false);
     try {
-      const svg = await iconSearch.svg(current.prefix, current.name);
+      // The design keeps a copy; it is rebuilt from an allowlist first, whatever the host sent.
+      const svg = cleanIconSvg(await iconSearch.svg(current.prefix, current.name));
+      if (svg === null) throw new Error('unsafe svg');
       onAdd(externalIconId(current.prefix, current.name), { svg, source: sourceOf(current) });
     } catch {
       setPlaceFailed(true);

@@ -100,11 +100,16 @@ const ID = /^[A-Za-z0-9_.:-]+$/;
 const URL_CALL = /url\(/gi;
 const URL_FRAGMENT = /url\(\s*(?:"#[A-Za-z0-9_.:-]+"|'#[A-Za-z0-9_.:-]+'|#[A-Za-z0-9_.:-]+)\s*\)/gi;
 
+function hasControlChar(value: string): boolean {
+  for (let i = 0; i < value.length; i++) if (value.charCodeAt(i) < 0x20) return true;
+  return false;
+}
+
 /** The value if it may stay, else null. Presentation attributes are parsed as CSS, so escapes go. */
 function safeValue(name: string, value: string): string | null {
   if (name === 'href') return FRAGMENT.test(value) ? value : null;
   if (name === 'id') return ID.test(value) ? value : null;
-  if (value.includes('\\') || /[\u0000-\u001f]/.test(value)) return null;
+  if (value.includes('\\') || hasControlChar(value)) return null;
   const calls = value.match(URL_CALL)?.length ?? 0;
   if (calls === 0) return value;
   // Every url( must be a reference to an element in this same file.
