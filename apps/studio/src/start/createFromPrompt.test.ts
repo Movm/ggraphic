@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { brandFingerprint, resolveScheme } from '@ggraphic/core';
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api, ApiError } from '../api/client';
+import { studioBrand } from '../brand';
+import { rememberLogoSize } from '../logoSize';
 
 import { AiPromptError, createFromPrompt, pickedDocument } from './createFromPrompt';
 
@@ -147,5 +149,36 @@ describe('pickedDocument', () => {
     expect(
       pickedDocument('post-portrait', { templateId: 'nope', schemeId: null, fills: {} })
     ).toBeNull();
+  });
+});
+
+describe('pickedDocument with two logos', () => {
+  const MAIN = '/api/brand-assets/' + 'c'.repeat(32) + '.png';
+  const ALT = '/api/brand-assets/' + 'd'.repeat(32) + '.png';
+  afterEach(() => registerBrandPacks([studioBrand]));
+
+  it.each(['primary', 'light'])('fits the logo of the %s world in its own proportions', (world) => {
+    rememberLogoSize(MAIN, 400, 100);
+    rememberLogoSize(ALT, 100, 100);
+    const brand = {
+      ...studioBrand,
+      id: 'two-logos',
+      logo: { src: MAIN, label: 'Main' },
+      logoAlt: { src: ALT, label: 'Alt', ground: 'dark' as const },
+    };
+    registerBrandPacks([brand, studioBrand]);
+    const doc = pickedDocument('post-portrait', {
+      templateId: 'studio-headline',
+      schemeId: world as never,
+      fills: {},
+    })!;
+    const images = doc.pages[0]!.state['userImageInstances'] as {
+      src: string;
+      width: number;
+      height: number;
+    }[];
+    expect(images).toHaveLength(1);
+    const aspect = images[0]!.src === ALT ? 1 : 4;
+    expect(images[0]!.width / images[0]!.height).toBeCloseTo(aspect, 1);
   });
 });
