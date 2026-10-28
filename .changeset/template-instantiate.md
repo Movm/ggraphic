@@ -10,3 +10,5 @@ The editor declares per element kind how its numbers scale when a template is pl
 `checkTemplate` is stage 1 of the render gate: it places a template on each brand, colour world, format and logo corner and checks bounds, logo overlap, contrast, slot budgets, unbound colours, asset licences, marker roles, world coverage and logo corners (`GATE_RULES`).
 
 The gate fails closed: a text whose ground it cannot prove opaque and flat (a photo, a translucent or gradient shape, a badge) is a `contrast` failure. It sweeps the layout extremes (margin 0.04 and 0.12, logo box 0.4 × 0.2 and 0.05 × 0.03) for every logo corner a template declares. The gate adapter lists image fields (`assetFields`) and nested colours (`nestedColors`) and describes grounds through `cover`, which replaces `fill`.
+
+The logo box of a brand layout is bounded to 30 % of the canvas width and 12 % of its height (`BRAND_LAYOUT_BOUNDS`, was 40 % and 20 %); `clampBrandLayout` pulls a stored layout into the bounds.

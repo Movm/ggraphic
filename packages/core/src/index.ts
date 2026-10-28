@@ -36,7 +36,9 @@ export {
   LOGO_CORNERS,
   type BrandLayout,
   type LogoCorner,
+  BRAND_LAYOUT_BOUNDS,
   brandLayout,
+  clampBrandLayout,
   logoEnvelope,
   safeArea,
 } from './brand/layout.js';

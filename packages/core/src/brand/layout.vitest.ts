@@ -2,9 +2,11 @@
 import { describe, expect, it } from 'vitest';
 import { brandDefault } from './brandDefault.js';
 import {
+  BRAND_LAYOUT_BOUNDS,
   DEFAULT_BRAND_LAYOUT,
   LOGO_CORNERS,
   brandLayout,
+  clampBrandLayout,
   logoEnvelope,
   safeArea,
 } from './layout.js';
@@ -85,9 +87,30 @@ describe('brand layout grid', () => {
     expect(of({ ...DEFAULT_BRAND_LAYOUT, margin: 0.5 }).margin).toBe(0.12);
     expect(of({ ...DEFAULT_BRAND_LAYOUT, margin: 0 }).margin).toBe(0.04);
     expect(of({ ...DEFAULT_BRAND_LAYOUT, margin: NaN }).margin).toBe(0.09);
-    expect(of({ ...DEFAULT_BRAND_LAYOUT, logoMaxWidth: 9 }).logoMaxWidth).toBe(0.4);
+    expect(of({ ...DEFAULT_BRAND_LAYOUT, logoMaxWidth: 9 }).logoMaxWidth).toBe(0.3);
     expect(of({ ...DEFAULT_BRAND_LAYOUT, logoMaxHeight: 0 }).logoMaxHeight).toBe(0.03);
+    expect(of({ ...DEFAULT_BRAND_LAYOUT, logoMaxHeight: 0.2 }).logoMaxHeight).toBe(0.12);
     expect(of({ ...DEFAULT_BRAND_LAYOUT, logoCorner: 'middle' }).logoCorner).toBe('bottom-right');
     expect(brandLayout(brandDefault)).toEqual(DEFAULT_BRAND_LAYOUT);
+  });
+
+  it('names the bounds: margin 4–12 %, logo box up to 30 × 12 %', () => {
+    expect(BRAND_LAYOUT_BOUNDS).toEqual({
+      margin: { min: 0.04, max: 0.12 },
+      logoMaxWidth: { min: 0.05, max: 0.3 },
+      logoMaxHeight: { min: 0.03, max: 0.12 },
+    });
+  });
+
+  it('clampBrandLayout pulls a stored layout into the bounds and keeps the rest', () => {
+    expect(
+      clampBrandLayout({
+        margin: 0.2,
+        logoCorner: 'top-left',
+        logoMaxWidth: 0.4,
+        logoMaxHeight: 0.2,
+      })
+    ).toEqual({ margin: 0.12, logoCorner: 'top-left', logoMaxWidth: 0.3, logoMaxHeight: 0.12 });
+    expect(clampBrandLayout(DEFAULT_BRAND_LAYOUT)).toEqual(DEFAULT_BRAND_LAYOUT);
   });
 });

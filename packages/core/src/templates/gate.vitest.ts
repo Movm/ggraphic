@@ -375,11 +375,18 @@ describe('render gate stage 1', () => {
   });
 
   describe('layout extremes', () => {
-    const low = { ...headline, id: 'low', y: 0.88, width: 0.6 };
+    const low = { ...headline, id: 'low', y: 0.88, width: 0.7 };
     const slots = { low: { role: 'headline', budget: { maxLines: 1, maxChars: 60 } } };
     it('a text clear of the default logo box but not of the largest one', () => {
       const t = template({ logoCorners: ['bottom-right'] }, { additionalTexts: [low] });
       expect(rules(t, context({ slots }))).toEqual(['logo-overlap']);
+    });
+    it('sweeps the bounds of the layout, 30 × 12 percent at most', () => {
+      const t = template(
+        { logoCorners: ['bottom-right'] },
+        { additionalTexts: [{ ...low, width: 0.6 }] }
+      );
+      expect(rules(t, context({ slots }))).toEqual([]);
     });
     it('sweeps only the corners the template declares', () => {
       const corner = { ...headline, id: 'low', x: 0, y: 0, width: 0.2 };
