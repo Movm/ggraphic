@@ -11,11 +11,8 @@ import { api, ApiError, type Draft, type Pick } from '../api/client';
 import { applyBrandPack } from '../brandLoader';
 import { fillById, fillTexts } from '../editor/aiDraft';
 import { formatSize, newDocument, type StudioDocument } from '../editor/document';
-import {
-  HEADLINE_TEMPLATE_ID,
-  isStudioTemplateId,
-  type StudioTemplateId,
-} from '../editor/templates/ids';
+import { templatesFor } from '../editor/templates/catalog';
+import { HEADLINE_TEMPLATE_ID } from '../editor/templates/ids';
 
 import { pickOffers } from './aiOffers';
 
@@ -69,10 +66,10 @@ async function loadOrganisationBrand(organisationId: string): Promise<void> {
 
 /**
  * The document for what the AI picked: its template with the texts filled and the
- * colour world set. Null when the pick names a template the Studio does not have.
+ * colour world set. Null when the pick names a template the Studio does not offer on this format.
  */
 export function pickedDocument(formatId: string, picked: Pick): StudioDocument | null {
-  if (!isStudioTemplateId(picked.templateId)) return null;
+  if (!templatesFor(formatId).some((e) => e.id === picked.templateId)) return null;
   const doc = newDocument(formatId, picked.templateId);
   const page = doc.pages[0]!;
   const texts = page.state['additionalTexts'] as AdditionalText[];
@@ -171,7 +168,7 @@ export async function createFromTemplate({
   formatId,
 }: {
   organisationId: string;
-  templateId: StudioTemplateId;
+  templateId: string;
   name: string;
   formatId: string;
 }): Promise<string> {
