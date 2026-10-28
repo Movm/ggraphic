@@ -14,9 +14,15 @@ import {
 import { Skeleton } from '@ggraphic/editor/ui/skeleton';
 import { stripInlineMarks } from '@ggraphic/schema';
 import { useCallback, useMemo, useState } from 'react';
-import { FaCheck, FaDownload, FaSave, FaUserPlus } from 'react-icons/fa';
 import { IoShareOutline } from 'react-icons/io5';
-import { PiArrowLeft, PiMegaphone } from 'react-icons/pi';
+import {
+  PiArrowLeft,
+  PiMegaphone,
+  PiCheck,
+  PiDownloadSimple,
+  PiFloppyDisk,
+  PiUserPlus,
+} from 'react-icons/pi';
 
 import { useIsCanvasMobile } from '@ggraphic/editor/hooks/useIsCanvasMobile';
 import {
@@ -238,7 +244,7 @@ export function ShareDropdown({
             <IconButtonRow gap="lg" padding="md" className="justify-center py-3">
               <IconButton
                 size="sm"
-                icon={<FaDownload />}
+                icon={<PiDownloadSimple />}
                 label={t.shell.downloadTab}
                 onClick={() => setView('download')}
               />
@@ -250,7 +256,7 @@ export function ShareDropdown({
                     isSharing ? (
                       <Skeleton className="size-4 rounded-full" />
                     ) : shareSuccess ? (
-                      <FaCheck />
+                      <PiCheck />
                     ) : (
                       <IoShareOutline />
                     )
@@ -264,7 +270,7 @@ export function ShareDropdown({
               {onSaveAsTemplate && (
                 <IconButton
                   size="sm"
-                  icon={<FaSave />}
+                  icon={<PiFloppyDisk />}
                   label={t.shell.template}
                   onClick={() => {
                     setOpen(false);
@@ -276,7 +282,7 @@ export function ShareDropdown({
               {onInvitePeople && (
                 <IconButton
                   size="sm"
-                  icon={<FaUserPlus />}
+                  icon={<PiUserPlus />}
                   label={t.shell.people}
                   onClick={() => {
                     setOpen(false);
@@ -322,7 +328,7 @@ export function ShareDropdown({
                 });
               }}
             >
-              {creditCopied ? <FaCheck className="size-3" /> : null}
+              {creditCopied ? <PiCheck className="size-3" /> : null}
               {creditCopied ? t.shell.copied : t.shell.copyPhotoCredit}
             </Button>
           </div>
