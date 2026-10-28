@@ -13,6 +13,27 @@ import {
   type TemplateInput,
 } from './instantiate.js';
 
+/** The fields of a placed element that the tests read. */
+interface Entry {
+  ref: string;
+  value: string;
+  box: { x: number; y: number; width: number; height: number };
+  fit: Record<string, unknown>;
+}
+interface Item {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  fill: string;
+  fontFamily: string;
+  text: string;
+  src: string;
+  lineHeight: number;
+  letterSpacing: number;
+  bind: Record<'fill' | 'src' | 'opacity', Entry>;
+}
+
 const G: GeometryTable = {
   additionalTexts: { x: 'x', y: 'y', width: 'w', fontSize: 's' },
   shapeInstances: { x: 'x', y: 'y', width: 'w', height: 'h' },
@@ -117,7 +138,7 @@ describe('instantiateTemplatePage', () => {
       pages: [{ state: { additionalTexts: [{ id: 'h', fill: '', bind: { fill: 'ink' } }] } }],
     });
     const ink = deriveSchemes(logoBrand).find((s) => s.id === 'light')!.roles.ink;
-    const el = (ok(t, ctx()).state['additionalTexts'] as any[])[0]!;
+    const el = (ok(t, ctx()).state['additionalTexts'] as Item[])[0]!;
     expect(el.fill).toBe(ink);
     expect(el.bind.fill).toEqual({ ref: 'ink', value: ink });
   });
@@ -129,7 +150,7 @@ describe('instantiateTemplatePage', () => {
         { state: { additionalTexts: [{ id: 'h', fill: '#123456', bind: { fill: 'ink' } }] } },
       ],
     });
-    const el = (ok(t, ctx()).state['additionalTexts'] as any[])[0]!;
+    const el = (ok(t, ctx()).state['additionalTexts'] as Item[])[0]!;
     expect(el.fill).toBe('#123456');
     expect(el.bind).toBeUndefined();
   });
@@ -141,7 +162,10 @@ describe('instantiateTemplatePage', () => {
     const r = ok(t, ctx());
     const ground = deriveSchemes(logoBrand).find((s) => s.id === r.schemeId)!.roles.ground;
     expect(r.state['backgroundColor']).toBe(ground);
-    expect((r.state['bind'] as any).backgroundColor).toEqual({ ref: 'ground', value: ground });
+    expect((r.state['bind'] as { backgroundColor: unknown }).backgroundColor).toEqual({
+      ref: 'ground',
+      value: ground,
+    });
   });
 
   it('an unresolvable ref keeps the literal and drops the binding', () => {
@@ -158,7 +182,7 @@ describe('instantiateTemplatePage', () => {
       ...logoBrand,
       fonts: { ...logoBrand.fonts, serif: undefined, quoteEmphasis: undefined },
     } as unknown as BrandPack;
-    const el = (ok(t, ctx({ brand: noAccent })).state['additionalTexts'] as any[])[0]!;
+    const el = (ok(t, ctx({ brand: noAccent })).state['additionalTexts'] as Item[])[0]!;
     expect(el.fontFamily).toBe('Arial');
     expect(el.bind).toBeUndefined();
   });
@@ -218,7 +242,7 @@ describe('instantiateTemplatePage', () => {
     };
     const r = ok(logoTemplate(), ctx({ brand }));
     const env = logoEnvelope(brandLayout(brand), canvas, 'top-left');
-    const logo = (r.state['userImageInstances'] as any[])[0]!;
+    const logo = (r.state['userImageInstances'] as Item[])[0]!;
     expect(logo.x).toBeGreaterThanOrEqual(env.x);
     expect(logo.y).toBeGreaterThanOrEqual(env.y);
     expect(logo.x + logo.width).toBeLessThanOrEqual(env.x + env.width);
@@ -237,7 +261,7 @@ describe('instantiateTemplatePage', () => {
     const t = logoTemplate({ logoCorners: ['top-right'] });
     const r = ok(t, ctx());
     const env = logoEnvelope(brandLayout(logoBrand), canvas, 'top-right');
-    expect((r.state['userImageInstances'] as any[])[0]!.bind.src.box).toEqual(env);
+    expect((r.state['userImageInstances'] as Item[])[0]!.bind.src.box).toEqual(env);
   });
 
   it.each([
@@ -287,7 +311,7 @@ describe('instantiateTemplatePage', () => {
   it('placeholders follow the locale and fall back to en', () => {
     const t = template({ placeholders: { en: { h: 'Hello' }, de: { h: 'Hallo' } } });
     const text = (c: Partial<InstantiateContext>) =>
-      (ok(t, ctx(c)).state['additionalTexts'] as any[])[0]!.text;
+      (ok(t, ctx(c)).state['additionalTexts'] as Item[])[0]!.text;
     expect(text({ locale: 'de' })).toBe('Hallo');
     expect(text({ locale: 'fr' })).toBe('Hello');
     expect(text({})).toBe('Hello');
@@ -297,7 +321,7 @@ describe('instantiateTemplatePage', () => {
     const t = template({
       pages: [{ state: { additionalTexts: [{ id: 'a' }, { id: 'b', lineHeight: 1 }] } }],
     });
-    const els = ok(t, ctx()).state['additionalTexts'] as any[];
+    const els = ok(t, ctx()).state['additionalTexts'] as Item[];
     expect(els[0]!.lineHeight).toBe(logoBrand.lineHeightFactor);
     expect(els[1]!.lineHeight).toBe(1);
   });
@@ -313,7 +337,7 @@ describe('instantiateTemplatePage', () => {
 
   it('layerOrder defaults to shapes, images, texts', () => {
     const t = logoTemplate();
-    delete (t.pages[0]!.state as any).layerOrder;
+    delete (t.pages[0]!.state as Record<string, unknown>)['layerOrder'];
     expect(ok(t, ctx()).state['layerOrder']).toEqual(['s', 'logo', 'h']);
   });
 
@@ -347,7 +371,7 @@ describe('instantiateTemplatePage', () => {
         },
       })
     );
-    const logo = (r.state['userImageInstances'] as any[])[0];
+    const logo = (r.state['userImageInstances'] as Item[])[0]!;
     expect(logo.src).toBe('alt.svg');
     expect(logo.bind.src.value).toBe('alt.svg');
     expect(seen).toEqual(['alt.svg']);
@@ -361,10 +385,10 @@ describe('instantiateTemplatePage', () => {
 
   it('other bindings on the logo survive', () => {
     const t = logoTemplate();
-    const logo = (t.pages[0]!.state['userImageInstances'] as any[])[0];
-    logo.bind = { src: 'brand.logo', opacity: 'ink' };
+    const logo = (t.pages[0]!.state['userImageInstances'] as Record<string, unknown>[])[0]!;
+    logo['bind'] = { src: 'brand.logo', opacity: 'ink' };
     const r = ok(t, ctx());
-    const bind = (r.state['userImageInstances'] as any[])[0].bind;
+    const bind = (r.state['userImageInstances'] as Item[])[0]!.bind;
     expect(bind.opacity).toMatchObject({ ref: 'ink' });
     expect(bind.src.ref).toBe('brand.logo');
   });
@@ -396,12 +420,12 @@ describe('instantiateTemplatePage', () => {
     });
     const r = ok(t, ctx({ format, canvas: size, geometry: g }));
     const safe = Math.round(S * 0.09);
-    expect((r.state['additionalTexts'] as any[])[0]).toMatchObject({
+    expect((r.state['additionalTexts'] as Item[])[0]).toMatchObject({
       fontSize: Math.round(0.1 * S),
       letterSpacing: (0.5 * S) / 1080,
       height: Math.round(0.25 * (size.height - 2 * safe)),
     });
-    expect((r.state['additionalTexts'] as any[])[0].letterSpacing).not.toBe(
+    expect((r.state['additionalTexts'] as Item[])[0]!.letterSpacing).not.toBe(
       Math.round((0.5 * S) / 1080)
     );
   });
