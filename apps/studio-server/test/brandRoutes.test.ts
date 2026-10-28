@@ -245,11 +245,76 @@ describe.skipIf(!hasDb)('brand packs (Postgres)', () => {
         })
         .expect(200);
       expect(three.body.settings).toMatchObject({ ...NEW, logoAlt: { ground: 'dark' } });
-      // Saving without them clears them.
-      const cleared = await owner.put(base).send(BRAND_SETTINGS).expect(200);
+      // An explicit null clears them.
+      const cleared = await owner
+        .put(base)
+        .send({
+          ...BRAND_SETTINGS,
+          fonts: { ...BRAND_SETTINGS.fonts, serif: null, condensed: null },
+          logoAlt: null,
+          layout: null,
+        })
+        .expect(200);
       expect(cleared.body.settings).toMatchObject({ layout: null, logoAlt: null });
       expect(cleared.body.pack).not.toHaveProperty('layout');
       expect(cleared.body.pack).not.toHaveProperty('logoAlt');
+    });
+
+    describe('a body from an older client (keys missing)', () => {
+      const oldShape = (extra: Record<string, unknown> = {}) => ({
+        name: 'Example',
+        colors: { primary: '#123456', secondary: '#abcdef', accent: '#ffcc00' },
+        fonts: { headline: 'Raleway', body: 'Instrument Sans' },
+        ...extra,
+      });
+
+      it.each([
+        ['three-colour body', () => oldShape({ logoAssetId: null })],
+        ['full body', () => ({ ...BRAND_SETTINGS, name: 'Renamed' })],
+      ])('keeps the stored layout, logoAlt, serif and condensed (%s)', async (_label, body) => {
+        const alt = await uploadLogo();
+        await owner
+          .put(base)
+          .send(oldShape({ ...NEW, logoAlt: { assetId: alt.id, ground: 'light' } }))
+          .expect(200);
+        const res = await owner.put(base).send(body()).expect(200);
+        expect(res.body.settings).toMatchObject({
+          ...NEW,
+          logoAlt: { assetId: alt.id, ground: 'light' },
+        });
+        expect(res.body.pack.fonts).toMatchObject({ serif: 'Fraunces', condensed: 'Raleway' });
+      });
+
+      it('clears each one only on an explicit null', async () => {
+        const alt = await uploadLogo();
+        await owner
+          .put(base)
+          .send(oldShape({ ...NEW, logoAlt: { assetId: alt.id, ground: 'light' } }))
+          .expect(200);
+        const res = await owner
+          .put(base)
+          .send(
+            oldShape({
+              fonts: { ...NEW.fonts, serif: null },
+              layout: null,
+            })
+          )
+          .expect(200);
+        expect(res.body.settings.fonts).toMatchObject({ serif: null, condensed: 'Raleway' });
+        expect(res.body.settings.layout).toBeNull();
+        expect(res.body.settings.logoAlt).toMatchObject({ assetId: alt.id });
+        const cleared = await owner
+          .put(base)
+          .send(oldShape({ ...NEW, logoAlt: null }))
+          .expect(200);
+        expect(cleared.body.settings.logoAlt).toBeNull();
+      });
+
+      it('has nothing to keep on a first save', async () => {
+        const res = await owner.put(base).send(oldShape()).expect(200);
+        expect(res.body.settings).toMatchObject({ layout: null, logoAlt: null });
+        expect(res.body.settings.fonts).toMatchObject({ serif: null, condensed: null });
+      });
     });
 
     it.each([

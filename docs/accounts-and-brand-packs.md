@@ -145,6 +145,11 @@ owner as soon as the instance has one. No project is moved or deleted.
   (`ON DELETE SET NULL`: deleting the asset clears it). The built pack carries `layout`,
   `fonts.serif`, `fonts.condensed` and `logoAlt` only when set, so an organisation saved
   before has the same pack and the same `brandFingerprint`.
+- **`PUT` and missing keys:** for `layout`, `logoAlt`, `fonts.serif` and `fonts.condensed` a
+  **missing** key keeps the stored value and an explicit `null` clears it, so a client that
+  predates these fields (it never sends them) cannot wipe them. The Studio brand page always
+  sends all four. The same holds for the three-colour and the full body. On a first save a
+  missing key means "not set".
 - **Edit:** owners set the name, three colours (`primary`, `secondary`, `accent`;
   `#RRGGBB` only), the headline/body families, a logo and fonts. `PUT` derives the other
   five roles of `BrandColors` (`accentOnLight`, `attention`, `textOnDark`, `textOnLight`,
