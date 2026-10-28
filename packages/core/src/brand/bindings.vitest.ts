@@ -28,6 +28,16 @@ const ctx = { brand };
 
 const v1State = { textInstances: [{ id: 't', fill: '#ff0000' }], backgroundColor: '#ffffff' };
 
+describe('brandFingerprint', () => {
+  it('changes when only the markers change', () => {
+    const swatches = [{ id: 'x', label: 'X', color: '#123456' }];
+    const a = { ...brand, markers: { ...brand.markers, swatches } };
+    expect(brandFingerprint(a)).not.toBe(brandFingerprint(brand));
+    const b = { ...brand, markers: { ...brand.markers, ink: '#010203' } };
+    expect(brandFingerprint(b)).not.toBe(brandFingerprint(brand));
+  });
+});
+
 describe('rebindPageState', () => {
   it('a page without bindings comes back as the same object', () => {
     const r = rebindPageState(v1State, ctx);
