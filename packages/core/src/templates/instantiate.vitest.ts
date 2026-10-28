@@ -302,9 +302,11 @@ describe('instantiateTemplatePage', () => {
       layout: { ...brandLayout(logoBrand), logoCorner: 'top-left' as const },
     };
     const boxOf = (corners: ('top-left' | 'top-right' | 'bottom-left' | 'bottom-right')[]) =>
-      (ok(logoTemplate({ logoCorners: corners }), ctx({ brand: topLeft })).state[
-        'userImageInstances'
-      ] as Item[])[0]!.bind.src.box;
+      (
+        ok(logoTemplate({ logoCorners: corners }), ctx({ brand: topLeft })).state[
+          'userImageInstances'
+        ] as Item[]
+      )[0]!.bind.src.box;
     const envelope = (corner: 'top-right' | 'bottom-right') =>
       logoEnvelope(brandLayout(topLeft), canvas, corner);
 

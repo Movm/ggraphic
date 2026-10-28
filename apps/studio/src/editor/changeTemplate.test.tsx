@@ -55,7 +55,9 @@ describe('Change template on a free page', () => {
     await user.click(await screen.findByRole('button', { name: /^Text/ }));
     await waitFor(() => expect(shownTexts()).toContain(HEADLINE));
 
-    await user.click(await screen.findByRole('button', { name: /^Vorlage ändern|^Change template/ }));
+    await user.click(
+      await screen.findByRole('button', { name: /^Vorlage ändern|^Change template/ })
+    );
     const dialog = await screen.findByRole('dialog');
     await user.click(within(dialog).getByRole('button', { name: /Blank/ }));
 
