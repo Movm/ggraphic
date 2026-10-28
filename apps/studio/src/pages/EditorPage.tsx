@@ -182,6 +182,8 @@ function OpenProject({
     return rebindStudioDocument(parsed, {
       brand,
       logoSize: brand.logo ? logoSizeOf(brand.logo.src) : null,
+      // A second logo has its own proportions.
+      logoSizeOf,
     });
   }, [parsed, rebind]);
   const exportApi = useRef<CanvasEditorExportApi>(null);
