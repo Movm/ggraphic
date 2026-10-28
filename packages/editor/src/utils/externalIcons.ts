@@ -164,8 +164,6 @@ export function iconCreditLine(sources: readonly IconSource[]): string {
   const [only] = sets;
   if (!only) return '';
   if (sets.length === 1) return attributionLine(only);
-  const names = sets.map(
-    (s) => `${s.setTitle}${s.author ? ` by ${s.author}` : ''} (${s.licence})`
-  );
+  const names = sets.map((s) => `${s.setTitle}${s.author ? ` by ${s.author}` : ''} (${s.licence})`);
   return `Icons: ${names.join(', ')}`;
 }

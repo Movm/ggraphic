@@ -121,7 +121,9 @@ describe('icon credits', () => {
   });
 
   it('credits only licences that ask for attribution, once per set', () => {
-    expect(iconCreditLine([ccBy, ccBy, mit])).toBe('Icon: Lets Icons by Leonid Tsvetkov, CC-BY-4.0');
+    expect(iconCreditLine([ccBy, ccBy, mit])).toBe(
+      'Icon: Lets Icons by Leonid Tsvetkov, CC-BY-4.0'
+    );
     expect(iconCreditLine([mit])).toBe('');
   });
 
