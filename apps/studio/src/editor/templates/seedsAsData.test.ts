@@ -98,6 +98,8 @@ function placed(id: string, brandKey: keyof typeof brands): Obj {
   return tidy(rest);
 }
 
+const QUOTE_PLACEHOLDER = 'Small steps, taken together, get us there.';
+
 const texts = (state: Obj) => state['additionalTexts'] as Obj[];
 const byId = (list: Obj[], id: string) => list.find((e) => e['id'] === id) as Obj;
 
@@ -114,9 +116,26 @@ describe('the studio seeds as template files', () => {
         expect(text['width']).toBe(886);
         text['width'] = Math.round(886 * fraction);
       }
+      if (id === 'studio-quote') {
+        // The other intended difference: the code seed quoted a real designer; the file's placeholder is neutral.
+        const quote = byId(texts(expected), 'headline');
+        expect(quote['text']).toBe('Good design is as little design as possible.');
+        quote['text'] = QUOTE_PLACEHOLDER;
+      }
       expect(closeTo(placed(id, brandKey), expected, id)).toEqual([]);
     });
   }
+
+  it('keeps a real person out of the quote placeholder, in every language', () => {
+    const file = templateFile('studio-quote').template as unknown as {
+      placeholders: Record<string, Record<string, string>>;
+    };
+    expect(file.placeholders['en']!['headline']).toBe(QUOTE_PLACEHOLDER);
+    expect(file.placeholders['de']!['headline']).toBe(
+      'Kleine Schritte, gemeinsam gegangen, führen ans Ziel.'
+    );
+    expect(JSON.stringify(file)).not.toMatch(/little design|Gutes Design/);
+  });
 
   it('sets the headline call to action to 532 px wide and narrows nothing else', () => {
     expect(byId(texts(placed('studio-headline', 'plain')), 'cta')['width']).toBe(532);
