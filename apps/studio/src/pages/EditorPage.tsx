@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { type BrandPack } from '@ggraphic/core';
 import { CanvasEditorProvider } from '@ggraphic/editor/CanvasEditorProvider';
+import { messages } from '@ggraphic/editor/i18n/messages';
 import { CanvasEditorShell } from '@ggraphic/editor/components/CanvasEditor/CanvasEditorShell';
 import { type CanvasEditorExportApi } from '@ggraphic/editor/components/CanvasEditor/types';
 import { Alert, Button } from '@ggraphic/ui';
@@ -10,7 +11,7 @@ import { PiArrowLeft } from 'react-icons/pi';
 
 import { api, ApiError, type Project, type StudioConfig } from '../api/client';
 import { applyBrandPack } from '../brandLoader';
-import { parseDocument } from '../editor/document';
+import { parseDocument, type StudioDocument } from '../editor/document';
 import { createStudioServices } from '../editor/services';
 import { useAutosave, type SaveStatus } from '../editor/useAutosave';
 import { navigate } from '../router';
@@ -90,20 +91,43 @@ export function EditorPage({ projectId, config }: { projectId: string; config: S
   );
 }
 
-function ProjectEditor({
-  project,
-  config,
-  logo,
-  onReload,
-}: {
+function ProjectEditor(props: {
   project: Project;
   config: StudioConfig;
   logo: BrandPack['logo'];
   onReload: () => void;
 }) {
+  const parsed = useMemo(() => parseDocument(props.project.document), [props.project.document]);
+  if (parsed.kind === 'refused') {
+    // No editor, no autosave: saving would store the old shape over a newer document.
+    return (
+      <main className="ui-root studio-standalone">
+        <Alert tone="danger" role="alert">
+          <p className="studio-alert-text">{messages().shell.schemaRefusal[parsed.reason]}</p>
+          <Button variant="outline" size="sm" onClick={() => navigate('/')}>
+            Back to projects
+          </Button>
+        </Alert>
+      </main>
+    );
+  }
+  return <OpenProject {...props} doc={parsed.doc} />;
+}
+
+function OpenProject({
+  project,
+  config,
+  logo,
+  onReload,
+  doc,
+}: {
+  project: Project;
+  config: StudioConfig;
+  logo: BrandPack['logo'];
+  onReload: () => void;
+  doc: StudioDocument;
+}) {
   const exportApi = useRef<CanvasEditorExportApi>(null);
-  // The editor takes its pages on mount and owns them afterwards.
-  const doc = useMemo(() => parseDocument(project.document), [project.document]);
   const services = useMemo(
     () =>
       createStudioServices({
@@ -115,7 +139,7 @@ function ProjectEditor({
   );
   const autosave = useAutosave({
     projectId: project.id,
-    formatId: doc.formatId,
+    base: doc,
     initialVersion: project.version,
     exportApi,
     thumbnailMaxBytes: config.limits.thumbnailBytes,

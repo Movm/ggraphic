@@ -4,7 +4,8 @@
  * the pages (template id plus state each). The server treats it as opaque JSON.
  */
 import { getCanvasFormat } from '@ggraphic/editor/formats/index';
-import { parseInitialPages, type InitialPageDef } from '@ggraphic/editor/hooks/usePageManager';
+import { readInitialDocument, type InitialPageDef } from '@ggraphic/editor/hooks/usePageManager';
+import { migrateDocument, stampDocument } from '@ggraphic/schema';
 
 import { BLANK_TEMPLATE_ID, type StudioTemplateId } from './templates/ids';
 import { seedPageState } from './templates/seeds';
@@ -27,7 +28,17 @@ export const DEFAULT_FORMAT: StudioFormatId = 'post-portrait';
 export interface StudioDocument {
   formatId: string;
   pages: InitialPageDef[];
+  /** The core format version; absent reads as 1. Passed through. */
+  schemaVersion?: number;
+  /** Versions of host element kinds; absent reads as 1. Passed through. */
+  kindVersions?: Record<string, number>;
+  /** Anything else a stored document carries survives a round trip. */
+  [key: string]: unknown;
 }
+
+/** A stored document read for opening, or the reason it must not be opened for editing. */
+export type ParsedStudioDocument =
+  { kind: 'ok'; doc: StudioDocument } | { kind: 'refused'; reason: 'newer' | 'invalid' };
 
 export function formatSize(formatId: string): { width: number; height: number } {
   const format = getCanvasFormat(formatId) ?? getCanvasFormat(DEFAULT_FORMAT);
@@ -46,32 +57,42 @@ export function newDocument(
   };
 }
 
-/** Reads a stored document; anything unreadable becomes a blank portrait page. */
-export function parseDocument(raw: Record<string, unknown>): StudioDocument {
+/**
+ * Reads a stored document through the core's versioned reader. A document
+ * from a newer build, or with a malformed version envelope, is refused: the
+ * editor must not open it, because saving would store the old shape over it.
+ * A readable document with unusable pages becomes a blank portrait page.
+ */
+export function parseDocument(raw: unknown): ParsedStudioDocument {
+  const read = readInitialDocument(raw);
+  if (read.refusal) return { kind: 'refused', reason: read.refusal.status as 'newer' | 'invalid' };
+  const migrated = migrateDocument(raw);
+  // `readInitialDocument` accepted it, so the migration has a document.
+  const stored = (
+    migrated.status === 'newer' || migrated.status === 'invalid' ? {} : migrated.document
+  ) as Record<string, unknown>;
   const formatId =
-    typeof raw['formatId'] === 'string' && getCanvasFormat(raw['formatId'])
-      ? raw['formatId']
+    typeof stored['formatId'] === 'string' && getCanvasFormat(stored['formatId'])
+      ? stored['formatId']
       : DEFAULT_FORMAT;
-  const pages = parseInitialPages(raw['pages']) ?? newDocument(formatId).pages;
-  return { formatId, pages };
+  const pages = read.pages ?? newDocument(formatId).pages;
+  return { kind: 'ok', doc: { ...stored, formatId, pages } };
 }
 
 /**
- * The document to store. Page state can hold `File`/`Blob` objects and
- * `blob:` URLs of images still uploading; neither survives a reload, so they
- * are dropped here and the page keeps only durable data.
+ * The document to store, stamped with this build's version. Page state can
+ * hold `File`/`Blob` objects and `blob:` URLs of images still uploading;
+ * neither survives a reload, so they are dropped here and the page keeps
+ * only durable data.
  */
-export function serializeDocument(
-  formatId: string,
-  pages: readonly { configId: string; state: Record<string, unknown> }[]
-): StudioDocument {
-  return {
-    formatId,
-    pages: pages.map((page) => ({
+export function serializeDocument(doc: StudioDocument): StudioDocument {
+  return stampDocument({
+    ...doc,
+    pages: doc.pages.map((page) => ({
       configId: page.configId,
       state: JSON.parse(JSON.stringify(page.state, durableValue)) as Record<string, unknown>,
     })),
-  };
+  });
 }
 
 const isBlobUrl = (value: unknown) => typeof value === 'string' && value.startsWith('blob:');

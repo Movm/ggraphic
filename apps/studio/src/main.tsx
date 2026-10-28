@@ -7,6 +7,7 @@ import '@ggraphic/ui/fonts.css';
 import '@ggraphic/ui/tokens.css';
 import '@ggraphic/ui/editor-bridge.css';
 import '@ggraphic/ui/styles.css';
+import '@ggraphic/editor/styles';
 import './fonts';
 import './styles.css';
 import { App } from './App';
