@@ -5,7 +5,7 @@
  * differ only in what a fresh page starts with (`seeds.ts`). The config lays
  * out on the document's format, so one template serves every format.
  */
-import { studioBrand } from '../../brand';
+import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { makeSectionDefiner } from '@ggraphic/editor/configs/factory/defineSection';
 import { injectFeatureProps } from '@ggraphic/editor/configs/featureInjector';
 import { type FullCanvasConfig } from '@ggraphic/editor/configs/types';
@@ -25,11 +25,9 @@ import { seedFor } from './seeds';
 
 const section = makeSectionDefiner<StudioPageState, StudioActions>();
 
-const BACKGROUND_COLORS = studioBrand.palette.map(({ id, label, color }) => ({
-  id,
-  label,
-  color,
-}));
+// Read when the picker renders, so a project of another organisation offers its colours.
+const backgroundColors = () =>
+  activeBrand().palette.map(({ id, label, color }) => ({ id, label, color }));
 
 export function createStudioConfig(
   templateId: StudioTemplateId,
@@ -42,7 +40,7 @@ export function createStudioConfig(
     features: { icons: true, shapes: true },
     multiPage: { enabled: true, maxPages: 10, heterogeneous: true },
     backgroundType: 'color',
-    fonts: { primary: studioBrand.fonts.headline, fontSize: 60, requireFontLoad: true },
+    fonts: { primary: activeBrand().fonts.headline, fontSize: 60, requireFontLoad: true },
 
     tabs: [
       { id: 'text', icon: PiTextAa, label: 'Text', ariaLabel: 'Text: add and edit text' },
@@ -83,7 +81,7 @@ export function createStudioConfig(
     },
 
     background: (state, actions) => ({
-      colors: BACKGROUND_COLORS,
+      colors: backgroundColors(),
       currentColor: state.backgroundColor,
       onColorChange: actions.setBackgroundColor,
     }),

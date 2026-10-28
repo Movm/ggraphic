@@ -6,7 +6,7 @@
  *
  * Texts carry role ids (`TEXT_ROLES`) so the AI draft knows which one to fill.
  */
-import { studioBrand } from '../../brand';
+import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { type AdditionalText } from '@ggraphic/editor/configs/types';
 import { createShape } from '@ggraphic/editor/utils/shapes';
 
@@ -27,10 +27,6 @@ export const TEXT_ROLES = {
   body: 'body',
   callToAction: 'cta',
 } as const;
-
-const { colors } = studioBrand;
-const SURFACE = colors.surface;
-const PRIMARY = colors.primary;
 
 interface Frame {
   width: number;
@@ -67,44 +63,49 @@ function text(
     width: f.inner,
     fontSize: Math.round(size * f.s),
     align: 'left',
-    lineHeight: studioBrand.lineHeightFactor,
+    lineHeight: activeBrand().lineHeightFactor,
     ...rest,
   };
 }
 
 function headlineSeed(f: Frame): PageSeed {
   const bar = {
-    ...createShape('rect', f.m + 60 * f.s, Math.round(f.height * 0.24), colors.accent),
+    ...createShape(
+      'rect',
+      f.m + 60 * f.s,
+      Math.round(f.height * 0.24),
+      activeBrand().colors.accent
+    ),
     id: 'accent-bar',
     width: Math.round(120 * f.s),
     height: Math.round(14 * f.s),
   };
   return {
-    backgroundColor: PRIMARY,
+    backgroundColor: activeBrand().colors.primary,
     shapeInstances: [bar],
     additionalTexts: [
       text(f, TEXT_ROLES.headline, 'header', 'A clear headline', 0.28, {
         size: 104,
         fontFamily: headlineFont(),
         fontStyle: 'bold',
-        fill: colors.textOnDark,
+        fill: activeBrand().colors.textOnDark,
       }),
       text(f, TEXT_ROLES.subline, 'subheader', 'One line that says why it matters', 0.5, {
         size: 48,
         fontFamily: headlineFont(),
-        fill: colors.accent,
+        fill: activeBrand().colors.accent,
       }),
       text(f, TEXT_ROLES.body, 'body', 'Add the details here: what, when and where.', 0.62, {
         size: 34,
         fontFamily: bodyFont(),
-        fill: colors.textOnDark,
+        fill: activeBrand().colors.textOnDark,
         lineHeight: 1.35,
       }),
       text(f, TEXT_ROLES.callToAction, 'body', 'Find out more', 0.84, {
         size: 34,
         fontFamily: bodyFont(),
         fontStyle: 'bold',
-        fill: colors.accent,
+        fill: activeBrand().colors.accent,
       }),
     ],
   };
@@ -112,26 +113,26 @@ function headlineSeed(f: Frame): PageSeed {
 
 function quoteSeed(f: Frame): PageSeed {
   return {
-    backgroundColor: SURFACE,
+    backgroundColor: activeBrand().colors.surface,
     additionalTexts: [
       text(f, 'quote-mark', 'header', '“', 0.08, {
         size: 280,
         fontFamily: quoteFont(),
-        fill: colors.accentOnLight,
+        fill: activeBrand().colors.accentOnLight,
         lineHeight: 1,
       }),
       text(f, TEXT_ROLES.headline, 'header', 'Good design is as little design as possible.', 0.3, {
         size: 72,
         fontFamily: quoteFont(),
         fontStyle: 'italic',
-        fill: colors.textOnLight,
+        fill: activeBrand().colors.textOnLight,
         lineHeight: 1.2,
       }),
       text(f, TEXT_ROLES.subline, 'subheader', '— Name of the speaker', 0.74, {
         size: 38,
         fontFamily: bodyFont(),
         fontStyle: 'bold',
-        fill: colors.secondary,
+        fill: activeBrand().colors.secondary,
       }),
     ],
   };
@@ -139,25 +140,25 @@ function quoteSeed(f: Frame): PageSeed {
 
 function numberSeed(f: Frame): PageSeed {
   return {
-    backgroundColor: colors.secondary,
+    backgroundColor: activeBrand().colors.secondary,
     additionalTexts: [
       text(f, 'number', 'header', '73%', 0.16, {
         size: 300,
         fontFamily: headlineFont(),
         fontStyle: 'bold',
-        fill: colors.accent,
+        fill: activeBrand().colors.accent,
         lineHeight: 1,
       }),
       text(f, TEXT_ROLES.headline, 'header', 'of what this number stands for', 0.5, {
         size: 64,
         fontFamily: headlineFont(),
         fontStyle: 'bold',
-        fill: colors.textOnDark,
+        fill: activeBrand().colors.textOnDark,
       }),
       text(f, TEXT_ROLES.subline, 'body', 'Source or context in one short line', 0.74, {
         size: 34,
         fontFamily: bodyFont(),
-        fill: colors.textOnDark,
+        fill: activeBrand().colors.textOnDark,
       }),
     ],
   };

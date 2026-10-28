@@ -7,7 +7,7 @@
  *
  * Every action is one user intent and records one history entry.
  */
-import { studioBrand } from '../../brand';
+import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { type IconState } from '@ggraphic/editor/configs/factory/baseTypes';
 import { type AdditionalText } from '@ggraphic/editor/configs/types';
 import { iconInstanceIdsFor } from '@ggraphic/editor/utils/iconInstances';
@@ -37,15 +37,15 @@ const withoutLayer = (order: readonly string[] | undefined, id: string) =>
 
 /** A readable ink on the page's current background. */
 function inkFor(background: string): string {
-  const match = studioBrand.backgrounds.find(
+  const match = activeBrand().backgrounds.find(
     (b) => b.color.toLowerCase() === background.toLowerCase()
   );
   if (match) return match.ink;
   const hex = background.replace('#', '');
-  if (hex.length !== 6) return studioBrand.colors.textOnDark;
+  if (hex.length !== 6) return activeBrand().colors.textOnDark;
   const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
   const luminance = 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
-  return luminance > 0.5 ? studioBrand.colors.textOnLight : studioBrand.colors.textOnDark;
+  return luminance > 0.5 ? activeBrand().colors.textOnLight : activeBrand().colors.textOnDark;
 }
 
 const TEXT_PRESETS = {
@@ -85,7 +85,7 @@ export function createStudioActions(
       fontStyle: preset.style,
       fill: inkFor(getState().backgroundColor),
       align: 'center',
-      lineHeight: type === 'body' ? 1.3 : studioBrand.lineHeightFactor,
+      lineHeight: type === 'body' ? 1.3 : activeBrand().lineHeightFactor,
     };
     commit((prev) => ({
       ...prev,
@@ -120,7 +120,7 @@ export function createStudioActions(
     // ── Shapes ───────────────────────────────────────────────────────────────
     addShape: (type: ShapeType, color?: string, options?: ElementPlacement) => {
       const center = options?.center ?? { x: width / 2, y: height / 2 };
-      const shape = createShape(type, center.x, center.y, studioBrand.colors.secondary, color);
+      const shape = createShape(type, center.x, center.y, activeBrand().colors.secondary, color);
       const placed: ShapeInstance = { ...shape, id: newId('shape') };
       commit((prev) => ({
         ...prev,
