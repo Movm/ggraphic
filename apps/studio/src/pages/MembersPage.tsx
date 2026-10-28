@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /** The current organisation's members and invitation links; owners manage, editors read. */
+import { Alert, Button, Card, Select, TextField } from '@ggraphic/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useId, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 
 import { api, ApiError, type Invitation, type Role } from '../api/client';
 import { navigate } from '../router';
 import { useLoggedIn } from '../session/SessionContext';
-import { AccountBar } from '../ui/AccountBar';
+import { PageShell, PageTitle } from '../ui/PageShell';
 import { toast } from '../ui/toast';
 
 const ROLE_LABEL: Record<Role, string> = { owner: 'Owner', editor: 'Editor' };
@@ -33,7 +34,6 @@ export function MembersPage() {
   });
   const [lastLink, setLastLink] = useState<string | null>(null);
   const [inviteRole, setInviteRole] = useState<Role>('editor');
-  const roleId = useId();
 
   const reloadMembers = () => queryClient.invalidateQueries({ queryKey: membersKey });
   const reloadInvitations = () => queryClient.invalidateQueries({ queryKey: invitationsKey });
@@ -87,10 +87,9 @@ export function MembersPage() {
   };
 
   return (
-    <main className="studio-page">
+    <PageShell>
       <header className="studio-header">
-        <h1 className="studio-logo">Members of {organisation.name}</h1>
-        <AccountBar />
+        <PageTitle>Members of {organisation.name}</PageTitle>
       </header>
 
       <section className="studio-section" aria-labelledby="members-heading">
@@ -98,60 +97,60 @@ export function MembersPage() {
           Members
         </h2>
         {members.isPending ? <p className="studio-muted">Loading members…</p> : null}
-        {members.isError ? (
-          <p role="alert" className="studio-error">
-            {errorText(members.error)}
-          </p>
-        ) : null}
+        {members.isError ? <Alert tone="danger">{errorText(members.error)}</Alert> : null}
         {members.data ? (
           <ul className="studio-members">
             {members.data.map((m) => {
               const self = m.accountId === session.account.id;
               return (
-                <li key={m.accountId} className="studio-member">
-                  <span className="studio-member__who">
-                    <strong>
-                      {m.displayName}
-                      {self ? ' (you)' : ''}
-                    </strong>
-                    <span className="studio-muted">{m.email}</span>
-                  </span>
-                  {isOwner ? (
-                    <label className="studio-member__role">
-                      <span className="studio-visually-hidden">Role of {m.displayName}</span>
-                      <select
-                        value={m.role}
-                        disabled={changeRole.isPending}
-                        onChange={(e) =>
-                          changeRole.mutate({
-                            accountId: m.accountId,
-                            role: e.target.value as Role,
-                          })
-                        }
+                <Card asChild variant="outlined" key={m.accountId}>
+                  <li className="studio-member">
+                    <span className="studio-member__who">
+                      <strong>
+                        {m.displayName}
+                        {self ? ' (you)' : ''}
+                      </strong>
+                      <span className="studio-muted">{m.email}</span>
+                    </span>
+                    {isOwner ? (
+                      <label className="studio-member__role">
+                        <span className="studio-visually-hidden">Role of {m.displayName}</span>
+                        <select
+                          className="ui-field__input studio-select"
+                          value={m.role}
+                          disabled={changeRole.isPending}
+                          onChange={(e) =>
+                            changeRole.mutate({
+                              accountId: m.accountId,
+                              role: e.target.value as Role,
+                            })
+                          }
+                        >
+                          <option value="editor">{ROLE_LABEL.editor}</option>
+                          <option value="owner">{ROLE_LABEL.owner}</option>
+                        </select>
+                      </label>
+                    ) : (
+                      <span className="studio-member__role">{ROLE_LABEL[m.role]}</span>
+                    )}
+                    {isOwner || self ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="studio-danger"
+                        disabled={remove.isPending}
+                        onClick={() => {
+                          const question = self
+                            ? `Leave ${organisation.name}?`
+                            : `Remove ${m.displayName} from ${organisation.name}?`;
+                          if (window.confirm(question)) remove.mutate(m.accountId);
+                        }}
                       >
-                        <option value="editor">{ROLE_LABEL.editor}</option>
-                        <option value="owner">{ROLE_LABEL.owner}</option>
-                      </select>
-                    </label>
-                  ) : (
-                    <span className="studio-member__role">{ROLE_LABEL[m.role]}</span>
-                  )}
-                  {isOwner || self ? (
-                    <button
-                      type="button"
-                      className="studio-button studio-button--danger"
-                      disabled={remove.isPending}
-                      onClick={() => {
-                        const question = self
-                          ? `Leave ${organisation.name}?`
-                          : `Remove ${m.displayName} from ${organisation.name}?`;
-                        if (window.confirm(question)) remove.mutate(m.accountId);
-                      }}
-                    >
-                      {self ? 'Leave' : 'Remove'}
-                    </button>
-                  ) : null}
-                </li>
+                        {self ? 'Leave' : 'Remove'}
+                      </Button>
+                    ) : null}
+                  </li>
+                </Card>
               );
             })}
           </ul>
@@ -177,37 +176,37 @@ export function MembersPage() {
               if (!invite.isPending) invite.mutate();
             }}
           >
-            <label htmlFor={roleId}>Role</label>
-            <select
-              id={roleId}
+            <Select
+              label="Role"
+              className="studio-invite__role"
               value={inviteRole}
-              onChange={(e) => setInviteRole(e.target.value as Role)}
-            >
-              <option value="editor">{ROLE_LABEL.editor}: edits projects</option>
-              <option value="owner">{ROLE_LABEL.owner}: also members and brand</option>
-            </select>
-            <button
-              type="submit"
-              className="studio-button studio-button--primary"
-              disabled={invite.isPending}
-            >
+              onValueChange={(value) => setInviteRole(value as Role)}
+              options={[
+                { value: 'editor', label: `${ROLE_LABEL.editor}: edits projects` },
+                { value: 'owner', label: `${ROLE_LABEL.owner}: also members and brand` },
+              ]}
+            />
+            <Button type="submit" disabled={invite.isPending}>
               Create invitation link
-            </button>
+            </Button>
           </form>
           {lastLink ? (
-            <div className="studio-invite__link" role="status">
-              <label>
-                <span>Invitation link (shown once)</span>
-                <input readOnly value={lastLink} onFocus={(e) => e.currentTarget.select()} />
-              </label>
-              <p className="studio-invite__warning">
+            <div className="studio-invite__link">
+              <TextField
+                label="Invitation link (shown once)"
+                className="studio-invite__field"
+                readOnly
+                value={lastLink}
+                onFocus={(e) => e.currentTarget.select()}
+              />
+              <Alert tone="warning" className="studio-invite__warning">
                 Anyone who has this link can join {organisation.name} until it is used or expires.
                 Send it only to the person you mean, through a private channel; revoke it below if
                 it went to the wrong place.
-              </p>
-              <button type="button" className="studio-button" onClick={() => void copy()}>
+              </Alert>
+              <Button variant="outline" size="sm" onClick={() => void copy()}>
                 Copy
-              </button>
+              </Button>
             </div>
           ) : null}
           {invitations.data && invitations.data.length > 0 ? (
@@ -215,22 +214,24 @@ export function MembersPage() {
               <h3 className="studio-subtitle">Open invitations</h3>
               <ul className="studio-members">
                 {invitations.data.map((inv) => (
-                  <li key={inv.id} className="studio-member">
-                    <span className="studio-member__who">
-                      <strong>{ROLE_LABEL[inv.role]}</strong>
-                      <span className="studio-muted">
-                        valid until {dateFormat.format(new Date(inv.expiresAt))}
+                  <Card asChild variant="outlined" key={inv.id}>
+                    <li className="studio-member">
+                      <span className="studio-member__who">
+                        <strong>{ROLE_LABEL[inv.role]}</strong>
+                        <span className="studio-muted">
+                          valid until {dateFormat.format(new Date(inv.expiresAt))}
+                        </span>
                       </span>
-                    </span>
-                    <button
-                      type="button"
-                      className="studio-button"
-                      disabled={revoke.isPending}
-                      onClick={() => revoke.mutate(inv.id)}
-                    >
-                      Revoke
-                    </button>
-                  </li>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={revoke.isPending}
+                        onClick={() => revoke.mutate(inv.id)}
+                      >
+                        Revoke
+                      </Button>
+                    </li>
+                  </Card>
                 ))}
               </ul>
             </>
@@ -239,14 +240,13 @@ export function MembersPage() {
       ) : null}
 
       {session.canCreateOrganisations ? <NewOrganisation /> : null}
-    </main>
+    </PageShell>
   );
 }
 
 function NewOrganisation() {
   const { refresh, selectOrganisation } = useLoggedIn();
   const [name, setName] = useState('');
-  const nameId = useId();
   const create = useMutation({
     mutationFn: () => api.createOrganisation(name.trim()),
     onSuccess: async (org) => {
@@ -269,11 +269,16 @@ function NewOrganisation() {
           if (name.trim() && !create.isPending) create.mutate();
         }}
       >
-        <label htmlFor={nameId}>Name</label>
-        <input id={nameId} value={name} maxLength={100} onChange={(e) => setName(e.target.value)} />
-        <button type="submit" className="studio-button" disabled={!name.trim() || create.isPending}>
+        <TextField
+          label="Name"
+          className="studio-invite__field"
+          value={name}
+          maxLength={100}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <Button type="submit" variant="outline" disabled={!name.trim() || create.isPending}>
           Create organisation
-        </button>
+        </Button>
       </form>
     </section>
   );

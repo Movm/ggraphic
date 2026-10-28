@@ -2,8 +2,10 @@
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers';
 import { cleanup } from '@testing-library/react';
 import { afterEach, expect } from 'vitest';
+import * as axeMatchers from 'vitest-axe/matchers';
 
 expect.extend(jestDomMatchers);
+expect.extend(axeMatchers);
 afterEach(cleanup);
 
 // jsdom has no 2D canvas; Konva needs one to build a stage. @napi-rs/canvas
