@@ -13,7 +13,7 @@ import {
 import type { Db } from '../db/client.ts';
 import { memberships, type ProjectRow, projects, projectThumbnails } from '../db/schema.ts';
 import { HttpError, parseOr400 } from '../http.ts';
-import { live, TRASH_RETENTION_MS } from '../trash.ts';
+import { live, TRASH_RETENTION_DAYS } from '../trash.ts';
 import { isPng } from '../uploads.ts';
 
 type SummaryRow = Omit<ProjectRow, 'document' | 'ownerId' | 'deletedAt'> & {
@@ -110,22 +110,21 @@ export function organisationTrashRouter(db: Db): Router {
         organisationId: projects.organisationId,
         name: projects.name,
         deletedAt: projects.deletedAt,
+        // From the database clock that stamped deleted_at, not from this process's.
+        purgeAt: sql<Date>`${projects.deletedAt} + make_interval(days => ${TRASH_RETENTION_DAYS})`,
+        daysLeft: sql<number>`greatest(0, ceil(extract(epoch from (${projects.deletedAt} + make_interval(days => ${TRASH_RETENTION_DAYS}) - now())) / 86400))::int`,
       })
       .from(projects)
       .where(and(eq(projects.organisationId, orgId), isNotNull(projects.deletedAt)))
       .orderBy(desc(projects.deletedAt));
-    const now = Date.now();
-    const items: TrashItem[] = rows.map((row) => {
-      const purgeAt = row.deletedAt!.getTime() + TRASH_RETENTION_MS;
-      return {
-        id: row.id,
-        organisationId: row.organisationId,
-        name: row.name,
-        deletedAt: row.deletedAt!.toISOString(),
-        purgeAt: new Date(purgeAt).toISOString(),
-        daysLeft: Math.max(0, Math.ceil((purgeAt - now) / (24 * 60 * 60 * 1000))),
-      };
-    });
+    const items: TrashItem[] = rows.map((row) => ({
+      id: row.id,
+      organisationId: row.organisationId,
+      name: row.name,
+      deletedAt: row.deletedAt!.toISOString(),
+      purgeAt: new Date(row.purgeAt).toISOString(),
+      daysLeft: row.daysLeft,
+    }));
     res.json({ projects: items });
   });
 
@@ -233,12 +232,12 @@ export function projectsRouter(db: Db, opts: { thumbnailMaxBytes: number }): Rou
   router.post('/:id/restore', async (req, res) => {
     const id = idParam(req.params.id);
     // Only deleted_at changes: the project returns to its old place with its old version.
-    const restored = await db
+    // Idempotent: a project that is already live is answered with its summary; one that does
+    // not exist, or is not the caller's, is a 404 from loadSummary.
+    await db
       .update(projects)
       .set({ deletedAt: null })
-      .where(and(owned(res, id), isNotNull(projects.deletedAt)))
-      .returning({ id: projects.id });
-    if (restored.length === 0) throw notFound();
+      .where(and(owned(res, id), isNotNull(projects.deletedAt)));
     res.json(await loadSummary(res, id));
   });
 

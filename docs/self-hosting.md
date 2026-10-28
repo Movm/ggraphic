@@ -1,6 +1,6 @@
 # Self-hosting ggraphic Studio
 
-ggraphic Studio is the hostable design app: organisations with their own projects, members and brand pack, image uploads and optional AI text drafts. It runs on your own machine or server with Docker Compose. There is no hosted service and no billing; every instance brings its own AI key if it wants AI at all.
+ggraphic Studio is the hostable design app: organisations with their own projects and brand pack, image uploads and optional AI text drafts. It runs on your own machine or server with Docker Compose. There is no hosted service and no billing; every instance brings its own AI key if it wants AI at all.
 
 > **First run needs the setup token.** On an empty instance Studio prints a one-time setup token to its log at start (`docker compose logs studio`); the admin account can only be created with it. Set `SETUP_TOKEN` in `.env` instead to choose it yourself. The compose file binds Studio to `127.0.0.1`; see [Security](#security) before exposing it.
 
@@ -42,7 +42,7 @@ Studio is a single-user tool for now: one person, one organisation.
 - The first account is the **instance admin** and owner of the default organisation, which holds every project that existed before accounts (upgrades keep all projects; existing upload files are assigned to it at start).
 - There are no invitation links and no member management. The tables and the `/api/orgs/:orgId/...` URLs stay, so this can come back; no endpoint creates organisations, members or invitations today.
 - A second person gets an account only when you set `ALLOW_REGISTRATION=true` (default `false`) and they register on the login page; each new account gets its own organisation and sees nothing of yours. There is no admin screen to create accounts.
-- Every account has an organisation to work in. An account that has none (for example one that was removed from an organisation by hand in the database) gets a personal one, named after the person, at its next login or session check. An account with several memberships works in the organisation it owns, otherwise in its oldest membership.
+- Every account owns an organisation to work in. An account that owns none (a new one, or one that only has editor memberships left over from earlier invitations) gets a personal one, named after the person, at its next login or session check, and works there; its other memberships stay and are listed after it.
 - There is no password reset yet. If someone forgets their password, the admin can set a new hash in the database: `docker compose exec studio node -e "import('argon2').then(a=>a.hash(process.argv[1],{type:a.argon2id})).then(console.log)" 'new password'`, then `UPDATE accounts SET password_hash = '<hash>' WHERE email = '...'; DELETE FROM sessions WHERE account_id = (SELECT id FROM accounts WHERE email = '...');`.
 
 ### Trash
@@ -144,7 +144,7 @@ Postgres major versions (e.g. 17 to 18) are not upgraded in place: dump, switch 
 - **Sessions** are server-side rows in Postgres; the browser holds a random token in an `HttpOnly`, `SameSite=Lax`, `Secure` cookie (`__Host-studio_session`) and the database only its SHA-256. Passwords are hashed with argon2id. `COOKIE_SECURE=false` is refused on a non-loopback `HOST` (as in the container) unless `ALLOW_INSECURE_COOKIE=1` is set, and Studio then prints a warning at every start.
 - **CSRF:** every state-changing request needs the session's CSRF token in `X-CSRF-Token`; requests a browser marks as cross-site are refused; the login endpoints accept JSON only.
 - **Login rate limits:** 10 failed attempts per email and 30 attempts per client IP (IPv6: per /64) within 15 minutes, per Studio process. At most four password hashes run at once; when 64 more are waiting, further logins get `503`.
-- **Organisations are isolated:** a project, upload, member list or brand pack of an organisation you are not a member of answers `404`.
+- **Organisations are isolated:** a project, upload or brand pack of an organisation you are not a member of answers `404`.
 - Uploads are checked by their content (PNG, JPEG, GIF, WebP, AVIF, SVG), stored under random names and served with `Content-Security-Policy: sandbox`; SVGs are additionally served as attachments so their scripts never run as a page.
 - Logos and fonts are checked by their content as well, stored under random names and served only to members of their organisation.
 

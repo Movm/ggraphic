@@ -57,6 +57,9 @@ export async function runTrashPurge(
   now = new Date()
 ): Promise<number | null> {
   const lock = await pool.connect();
+  // A connection whose unlock failed may still hold the session lock: destroy it, which
+  // ends the session and with it the lock, instead of handing it back to the pool.
+  let broken: Error | undefined;
   try {
     const { rows } = await lock.query<{ got: boolean }>('SELECT pg_try_advisory_lock($1) AS got', [
       TRASH_PURGE_LOCK_KEY,
@@ -65,10 +68,15 @@ export async function runTrashPurge(
     try {
       return await purgeExpiredTrash(db, now);
     } finally {
-      await lock.query('SELECT pg_advisory_unlock($1)', [TRASH_PURGE_LOCK_KEY]);
+      try {
+        await lock.query('SELECT pg_advisory_unlock($1)', [TRASH_PURGE_LOCK_KEY]);
+      } catch (err) {
+        broken = err instanceof Error ? err : new Error('unlock failed');
+        throw broken;
+      }
     }
   } finally {
-    lock.release();
+    lock.release(broken);
   }
 }
 

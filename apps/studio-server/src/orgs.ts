@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { asc, eq, sql } from 'drizzle-orm';
+import { and, asc, eq, sql } from 'drizzle-orm';
 import type { Organisation } from './contract.ts';
 import type { Db } from './db/client.ts';
 import { memberships, organisations, type Role } from './db/schema.ts';
@@ -16,23 +16,31 @@ export async function createOrganisation(tx: Tx, name: string, ownerId: string):
 }
 
 /**
- * The organisation an account without one works in: a personal organisation named after
- * the person, owned by them. An account that already has a membership is left alone.
- * Serialised per account, so concurrent logins create one organisation, not several.
+ * The organisation an account works in. Studio is single-user, so every account needs one it
+ * OWNS: an account that owns none (no membership at all, or only editor memberships left
+ * from invitations) gets a personal organisation named after the person. Serialised per
+ * account, so concurrent requests create one, not several. Returns the owned organisation.
+ *
+ * The common case, an account that owns one, is a single read: no transaction, no lock.
  */
 export async function ensurePersonalOrganisation(
   db: Db,
   account: { id: string; displayName: string }
 ): Promise<string> {
-  return db.transaction(async (tx) => {
-    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${account.id}))`);
-    const [existing] = await tx
+  const owned = (tx: Tx) =>
+    tx
       .select({ organisationId: memberships.organisationId })
       .from(memberships)
-      .where(eq(memberships.accountId, account.id))
-      .orderBy(...membershipOrder)
+      .where(and(eq(memberships.accountId, account.id), eq(memberships.role, 'owner')))
+      .orderBy(asc(memberships.createdAt), asc(memberships.organisationId))
       .limit(1);
-    return existing?.organisationId ?? createOrganisation(tx, account.displayName, account.id);
+  const [existing] = await owned(db);
+  if (existing) return existing.organisationId;
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${account.id}))`);
+    // Look again under the lock: a concurrent request may have created it meanwhile.
+    const [again] = await owned(tx);
+    return again?.organisationId ?? createOrganisation(tx, account.displayName, account.id);
   });
 }
 
