@@ -77,8 +77,6 @@ function ensureXmlns(svgText: string): string {
  */
 function replaceColors(svgText: string, color: string): string {
   let result = svgText;
-  // Replace unDraw primary color (case insensitive)
-  result = result.replace(/#6c63ff/gi, color);
   // Replace Open Doodles primary color
   result = result.replace(/#ff5678/gi, color);
   return result;

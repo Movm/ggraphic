@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { headlineFontStack } from '@ggraphic/editor/brand/brandRegistry';
+import { activeBrand, headlineFontStack } from '@ggraphic/editor/brand/brandRegistry';
 import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { cn } from '@ggraphic/editor/utils/cn';
-import { brandColors } from '@ggraphic/editor/utils/colorOptions';
 import { Suspense, useEffect, useId, useState } from 'react';
 import { HiSparkles } from 'react-icons/hi';
 import {
@@ -100,17 +99,16 @@ interface ToolCard {
   available: boolean;
 }
 
-const brandColor = (id: string) => brandColors().find((c) => c.id === id)?.value;
-
 // The letters carry the gradient themselves, so the tile shows what the tool makes.
-function GradientTextIcon({ size = 24, className }: { size?: number; className?: string }) {
+export function GradientTextIcon({ size = 24, className }: { size?: number; className?: string }) {
   const gradientId = useId();
+  const { secondary, accent } = activeBrand().colors;
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden="true">
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor={brandColor('grashalm')} />
-          <stop offset="1" stopColor={brandColor('himmel')} />
+          <stop offset="0" stopColor={secondary} />
+          <stop offset="1" stopColor={accent} />
         </linearGradient>
       </defs>
       <text

@@ -51,7 +51,7 @@
   --editor-secondary-fg: #1d4ed8;
   --editor-danger-fg: #d32f2f;
   --editor-danger-bg: #fef2f2;
-  --editor-tanne-preview: #1e3a8a;
+  --editor-primary-preview: #1e3a8a;
   --editor-control-border: #dcdcdc;
   --editor-control-bg: transparent;
   --editor-control-bg-hover: transparent;
@@ -75,7 +75,6 @@
   --grey-text-val: #6d6d6d;
   --grey-text-weak-val: #767676;
   --error-red: #d32f2f;
-  --klee: var(--editor-accent);
 
   /* Semantic names, bound to the editor tokens (so dark mode follows) */
   --interactive-accent-color: var(--editor-accent);
@@ -152,7 +151,7 @@
     --editor-secondary-fg: #93c5fd;
     --editor-danger-fg: #f87171;
     --editor-danger-bg: #450a0a;
-    --editor-tanne-preview: #93c5fd;
+    --editor-primary-preview: #93c5fd;
     --editor-control-border: #525252;
     --editor-control-bg: rgba(55, 65, 81, 0.3);
     --editor-control-bg-hover: rgba(55, 65, 81, 0.5);
@@ -189,7 +188,7 @@
   --editor-secondary-fg: #93c5fd;
   --editor-danger-fg: #f87171;
   --editor-danger-bg: #450a0a;
-  --editor-tanne-preview: #93c5fd;
+  --editor-primary-preview: #93c5fd;
   --editor-control-border: #525252;
   --editor-control-bg: rgba(55, 65, 81, 0.3);
   --editor-control-bg-hover: rgba(55, 65, 81, 0.5);

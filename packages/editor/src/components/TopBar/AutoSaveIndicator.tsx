@@ -3,7 +3,7 @@ import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { useAutoSaveStore } from '@ggraphic/editor/stores/useAutoSaveStore';
 import { cn } from '@ggraphic/editor/utils/cn';
 import { useEffect, useState } from 'react';
-import { FaCheck, FaExclamationTriangle } from 'react-icons/fa';
+import { PiCheck, PiWarning } from 'react-icons/pi';
 
 /**
  * Autosave status as a single glyph: spinner while saving, a check that fades
@@ -66,7 +66,7 @@ export function AutoSaveIndicator({ onDark = false }: { onDark?: boolean }) {
         />
       )}
       {showSaved && (
-        <FaCheck
+        <PiCheck
           aria-hidden="true"
           size={14}
           className={cn('animate-auto-save-check', onDark ? 'text-white' : 'text-green-500')}
@@ -79,7 +79,7 @@ export function AutoSaveIndicator({ onDark = false }: { onDark?: boolean }) {
           aria-label={t.topBar.saveRetry}
           type="button"
         >
-          <FaExclamationTriangle
+          <PiWarning
             aria-hidden="true"
             size={14}
             className={onDark ? 'text-amber-300' : 'text-red-500'}
