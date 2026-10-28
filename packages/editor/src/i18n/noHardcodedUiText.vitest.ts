@@ -123,6 +123,23 @@ const UI_ATTRIBUTES = new Set([
   'label',
   'actionLabel',
 ]);
+/** Object properties whose string value a panel, menu or dialog renders. */
+const UI_PROPERTIES = new Set([
+  'title',
+  'label',
+  'tooltip',
+  'description',
+  'placeholder',
+  'hint',
+  'message',
+  'ariaLabel',
+  'caption',
+  'heading',
+  'subtitle',
+]);
+/** Variables named like the text they hold. */
+const UI_VARIABLE =
+  /^(title|label|text|message|msg|tooltip|hint|caption|heading|description|placeholder)$|(Label|Title|Message|Tooltip|Hint|Caption|Heading|Text|Description)$/;
 /** Names and formats that read the same in every language. */
 const LANGUAGE_NEUTRAL = new Set([
   'unsplash',
@@ -159,18 +176,16 @@ function isProse(value: string): boolean {
     .replace(/\s+/g, ' ')
     .trim();
   if (!/[A-Za-zÄÖÜäöüß]{3}/.test(text)) return false;
+  // Markup and class lists (`text-xs max-w-20`) are code, not prose.
+  if (text.startsWith('<')) return false;
+  if (text.split(' ').every((w) => /^[a-z0-9:[\]/.%-]+$/.test(w) && /[-:\d]/.test(w))) return false;
   if (LANGUAGE_NEUTRAL.has(text.toLowerCase())) return false;
   const words = text.split(' ').filter((w) => /[A-Za-zÄÖÜäöüß]{2}/.test(w));
   return words.length >= 2 || /^[A-ZÄÖÜ][a-zäöüß]{3,}$/.test(text);
 }
 
-function hardcodedUiText(file: string): string[] {
-  const source = ts.createSourceFile(
-    file,
-    readFileSync(file, 'utf8'),
-    ts.ScriptTarget.Latest,
-    true
-  );
+function hardcodedUiText(file: string, text = readFileSync(file, 'utf8')): string[] {
+  const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
   const found: string[] = [];
   const report = (node: ts.Node, value: string) => {
     const line = source.getLineAndCharacterOfPosition(node.getStart()).line + 1;
@@ -178,28 +193,107 @@ function hardcodedUiText(file: string): string[] {
       `${path.relative(path.dirname(SRC), file)}:${line} ${JSON.stringify(value.trim().slice(0, 70))}`
     );
   };
-  const literalText = (e: ts.Node): string | null => {
-    if (ts.isStringLiteral(e) || ts.isNoSubstitutionTemplateLiteral(e)) return e.text;
+  /** Every string a UI expression can show: both ternary branches, `||`/`??`/`+` operands. */
+  const literals = (e: ts.Node): string[] => {
+    if (ts.isStringLiteral(e) || ts.isNoSubstitutionTemplateLiteral(e)) return [e.text];
     if (ts.isTemplateExpression(e)) {
-      return e.head.text + e.templateSpans.map((s) => '${}' + s.literal.text).join('');
+      return [
+        e.head.text + e.templateSpans.map((s) => '${}' + s.literal.text).join(''),
+        // `${x || `Reihe ${n}`}`: a fallback inside the placeholder is shown as well.
+        ...e.templateSpans.flatMap((s) => literals(s.expression)),
+      ];
     }
-    return null;
+    if (ts.isParenthesizedExpression(e) || ts.isAsExpression(e) || ts.isNonNullExpression(e)) {
+      return literals(e.expression);
+    }
+    if (ts.isConditionalExpression(e)) return [...literals(e.whenTrue), ...literals(e.whenFalse)];
+    if (ts.isBinaryExpression(e)) {
+      const op = e.operatorToken.kind;
+      if (
+        op === ts.SyntaxKind.BarBarToken ||
+        op === ts.SyntaxKind.QuestionQuestionToken ||
+        op === ts.SyntaxKind.PlusToken ||
+        op === ts.SyntaxKind.AmpersandAmpersandToken
+      ) {
+        return [...literals(e.left), ...literals(e.right)];
+      }
+    }
+    return [];
   };
+  const reportProse = (at: ts.Node, expr: ts.Node) => {
+    for (const value of literals(expr)) {
+      if (isProse(value) && !DEVELOPER_ERRORS.some((re) => re.test(value))) report(at, value);
+    }
+  };
+  const nameOf = (n: ts.PropertyName): string | null =>
+    ts.isIdentifier(n) || ts.isStringLiteral(n) ? n.text : null;
   const visit = (node: ts.Node) => {
     if (ts.isJsxText(node) && isProse(node.text)) report(node, node.text);
     if (ts.isJsxAttribute(node) && UI_ATTRIBUTES.has(node.name.getText()) && node.initializer) {
       const init = node.initializer;
-      const value =
-        ts.isJsxExpression(init) && init.expression
-          ? literalText(init.expression)
-          : literalText(init);
-      if (value !== null && isProse(value)) report(init, value);
+      reportProse(init, ts.isJsxExpression(init) && init.expression ? init.expression : init);
+    }
+    // `title: 'Add circle'`: an object property that a panel or menu renders.
+    if (ts.isPropertyAssignment(node)) {
+      const key = nameOf(node.name);
+      if (key !== null && UI_PROPERTIES.has(key)) reportProse(node.initializer, node.initializer);
+    }
+    // `const label = open ? 'Hide' : 'Show'`.
+    if (
+      ts.isVariableDeclaration(node) &&
+      ts.isIdentifier(node.name) &&
+      UI_VARIABLE.test(node.name.text) &&
+      node.initializer
+    ) {
+      reportProse(node.initializer, node.initializer);
+    }
+    // `throw new Error('...')`: the message reaches a person through an error banner or toast.
+    if (
+      ts.isNewExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      /^(Error|TypeError|RangeError)$/.test(node.expression.text) &&
+      node.arguments?.[0]
+    ) {
+      reportProse(node, node.arguments[0]);
+    }
+    // `toast('...')`, `toast.error('...')`.
+    if (ts.isCallExpression(node) && node.arguments[0]) {
+      const callee = node.expression;
+      const base = ts.isPropertyAccessExpression(callee) ? callee.expression : callee;
+      if (ts.isIdentifier(base) && /^toast$/i.test(base.text)) {
+        reportProse(node, node.arguments[0]);
+      }
     }
     ts.forEachChild(node, visit);
   };
   visit(source);
   return found;
 }
+
+/**
+ * Files exempt from the prose check. The English catalogue is where English text belongs; testing
+ * fixtures are sample templates, not editor UI.
+ */
+const PROSE_EXEMPT_FILES = [/^i18n\/en\.ts$/, /^testing\//];
+/**
+ * `new Error(...)` messages that are programmer errors (an invariant, a misused hook, an
+ * exhaustiveness check) or are caught and swallowed before any person sees them. Everything else
+ * in an `Error` is assumed to reach an error banner (`err.message` is shown in the tool panels).
+ */
+const DEVELOPER_ERRORS = [
+  /^bindCanvasStoreToYMap: /,
+  /^GenericCanvasElement: unhandled element type/,
+  /^Unknown canvas type: /,
+  /^Invalid config type: /,
+  /^useUserUploads must be used within /,
+  /^Template ".*" is already registered/,
+  /^".*" is a core element kind/,
+  /^Unexpected value: /,
+  // smartcrop and the stock-photo / Iconify loaders catch these and fall back silently.
+  /^smartcrop: /,
+  /^no catalogue$/,
+  /^unsafe svg$/,
+];
 
 const isEditorUiFile = (rel: string) => !ALLOWED_FILES.some((re) => re.test(rel));
 const relOf = (file: string) => path.relative(SRC, file).split(path.sep).join('/');
@@ -214,12 +308,44 @@ describe('UI text lives in the message catalogue', () => {
 
   it('has no prose hardcoded in JSX text or UI attributes, in any language', () => {
     const stray = sourceFiles(SRC).flatMap((file) =>
-      isEditorUiFile(relOf(file)) ? hardcodedUiText(file) : []
+      isEditorUiFile(relOf(file)) && !PROSE_EXEMPT_FILES.some((re) => re.test(relOf(file)))
+        ? hardcodedUiText(file)
+        : []
     );
     expect(stray).toEqual([]);
   });
 
   it('has no German in the Studio app either (the Studio is English by design)', () => {
     expect(sourceFiles(STUDIO_SRC).flatMap(germanStrings)).toEqual([]);
+  });
+});
+
+describe('the prose guard catches every way of hardcoding English UI text', () => {
+  const found = (code: string) => hardcodedUiText('probe.tsx', code);
+
+  it.each([
+    ['JSX text', 'const a = <p>Delete this page</p>;'],
+    ['an attribute', "const a = <button title='Add circle' />;"],
+    ['a ternary in an attribute', "const a = <button title={on ? 'Hide layer' : 'Show layer'} />;"],
+    ['a fallback in an attribute', "const a = <button aria-label={name || 'Unnamed layer'} />;"],
+    ['an object property', "const item = { title: 'Add circle', run };"],
+    ['a variable named like text', "const label = open ? 'Hide panel' : 'Show panel';"],
+    ['an error message', "throw new Error('Could not save the design');"],
+    ['a template error message', 'throw new Error(`Could not save ${name}`);'],
+    ['a toast', "toast('Design saved to your project');"],
+    ['a toast variant', "toast.error('Upload failed, please retry');"],
+  ])('flags %s', (_name, code) => {
+    expect(found(code)).not.toEqual([]);
+  });
+
+  it.each([
+    ['catalogue text', 'const a = <button title={t.common.close} />;'],
+    ['a single neutral word', "const a = <button title='PDF' />;"],
+    ['a class list', "const size = { label: 'text-xs max-w-20' };"],
+    ['markup', 'const svg = `<svg xmlns="x"></svg>`;'],
+    ['a developer invariant', "throw new Error('Unexpected value: x');"],
+    ['an id-like property', "const a = { title: 'rect', label: 'x' };"],
+  ])('lets %s through', (_name, code) => {
+    expect(found(code)).toEqual([]);
   });
 });

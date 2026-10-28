@@ -567,6 +567,7 @@ export const de = {
       legendRight: 'Rechts',
       legendBottom: 'Unten',
       seriesName: (n: number) => `Name der Reihe ${n}`,
+      valueOf: (name: string) => `Wert ${name}`,
       removeSeries: (name: string) => `${name} entfernen`,
     },
     text: {
