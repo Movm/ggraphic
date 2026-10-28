@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
+import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { Button } from '@ggraphic/editor/ui/button';
 import { Input } from '@ggraphic/editor/ui/input';
 import { Label } from '@ggraphic/editor/ui/label';
@@ -69,6 +70,7 @@ function ImpressumForm({
   gate: PrintImpressumGate;
   impressum: CanvasImpressumService;
 }) {
+  const t = useMessages();
   const { isFilled } = impressum;
   const fieldId = useId();
   const labels = impressum.labels[gate.locale];
@@ -78,8 +80,10 @@ function ImpressumForm({
   const [anschrift, setAnschrift] = useState(initial(current.anschrift));
   const [touched, setTouched] = useState(false);
   const valid = impressum.isComplete({ name, anschrift });
-  const nameError = touched && !isFilled(name) ? `Bitte ${labels.name} eintragen.` : null;
-  const anschriftError = touched && !isFilled(anschrift) ? 'Bitte Anschrift eintragen.' : null;
+  const nameError =
+    touched && !isFilled(name) ? t.shell.downloadPanel.impressumNameRequired(labels.name) : null;
+  const anschriftError =
+    touched && !isFilled(anschrift) ? t.shell.downloadPanel.impressumAddressRequired : null;
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -89,7 +93,9 @@ function ImpressumForm({
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-2" noValidate>
-      <h4 className="m-0 text-sm font-semibold text-foreground">Impressum ergänzen</h4>
+      <h4 className="m-0 text-sm font-semibold text-foreground">
+        {t.shell.downloadPanel.impressumHeading}
+      </h4>
       <p className="m-0 text-xs text-foreground-muted">{labels.hint}</p>
       <div className="flex flex-col gap-1.5">
         <Label htmlFor={`${fieldId}-name`} className="text-xs font-medium text-foreground-muted">
@@ -115,13 +121,13 @@ function ImpressumForm({
           htmlFor={`${fieldId}-anschrift`}
           className="text-xs font-medium text-foreground-muted"
         >
-          Anschrift
+          {t.shell.downloadPanel.impressumAddress}
         </Label>
         <Input
           id={`${fieldId}-anschrift`}
           className={MOBILE_INPUT_TEXT}
           value={anschrift}
-          placeholder="Straße Nr., PLZ Ort"
+          placeholder={t.shell.downloadPanel.impressumAddressPlaceholder}
           onChange={(e) => setAnschrift(e.target.value)}
           aria-invalid={anschriftError !== null}
           {...(anschriftError ? { 'aria-describedby': `${fieldId}-anschrift-error` } : {})}
@@ -137,7 +143,7 @@ function ImpressumForm({
         )}
       </div>
       <Button type="submit" variant="brand" className="w-full rounded-lg">
-        Übernehmen
+        {t.shell.downloadPanel.impressumSubmit}
       </Button>
     </form>
   );
@@ -187,6 +193,7 @@ export function DownloadSection({
   printExport = null,
   slideDeck = null,
 }: DownloadSectionProps) {
+  const t = useMessages();
   const [choice, setChoice] = useState<DownloadChoice>(
     printExport ? 'pdf' : slideDeck ? 'pptx' : 'png'
   );
@@ -251,14 +258,14 @@ export function DownloadSection({
     <div className="flex flex-col gap-3">
       <div className="flex flex-col gap-1.5">
         <Label htmlFor={`${fieldId}-format`} className="text-xs font-medium text-foreground-muted">
-          Format
+          {t.shell.downloadPanel.format}
         </Label>
         <Select value={choice} onValueChange={(v) => setChoice(v as DownloadChoice)}>
           <SelectTrigger id={`${fieldId}-format`} size="sm" className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent position="popper" className="z-[10001]">
-            {printExport && <SelectItem value="pdf">PDF (Druck)</SelectItem>}
+            {printExport && <SelectItem value="pdf">{t.shell.downloadPanel.pdfPrint}</SelectItem>}
             {slideDeck && <SelectItem value="pptx">PowerPoint (.pptx)</SelectItem>}
             {slideDeck && <SelectItem value="pdf">PDF</SelectItem>}
             <SelectItem value="png">PNG</SelectItem>
@@ -277,7 +284,7 @@ export function DownloadSection({
               htmlFor={`${fieldId}-scale`}
               className="text-xs font-medium text-foreground-muted"
             >
-              Auflösung
+              {t.shell.downloadPanel.resolution}
             </Label>
             <Select value={String(scale)} onValueChange={(v) => setScale(Number(v))}>
               <SelectTrigger id={`${fieldId}-scale`} size="sm" className="w-full">
@@ -286,7 +293,7 @@ export function DownloadSection({
               <SelectContent position="popper" className="z-[10001]">
                 {SCALE_OPTIONS.map((s) => (
                   <SelectItem key={s} value={String(s)}>
-                    {s}× {s === DEFAULT_RASTER_PIXEL_RATIO ? '(Standard)' : ''}
+                    {s}× {s === DEFAULT_RASTER_PIXEL_RATIO ? t.shell.downloadPanel.defaultMark : ''}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -299,7 +306,7 @@ export function DownloadSection({
                 htmlFor={`${fieldId}-transparent`}
                 className="text-xs font-medium text-foreground-muted"
               >
-                Transparenter Hintergrund
+                {t.shell.downloadPanel.transparentBackground}
               </Label>
               <Switch
                 id={`${fieldId}-transparent`}
@@ -314,7 +321,7 @@ export function DownloadSection({
       {isMultiPage && (
         <div className="flex flex-col gap-1.5">
           <Label htmlFor={`${fieldId}-pages`} className="text-xs font-medium text-foreground-muted">
-            Seiten auswählen
+            {t.shell.downloadPanel.selectPages}
           </Label>
           <Select
             value={pageSelection}
@@ -324,8 +331,8 @@ export function DownloadSection({
               <SelectValue />
             </SelectTrigger>
             <SelectContent position="popper" className="z-[10001]">
-              <SelectItem value="current">Aktuelle Seite</SelectItem>
-              <SelectItem value="all">Alle {pageCount} Seiten (ZIP)</SelectItem>
+              <SelectItem value="current">{t.shell.downloadPanel.currentPage}</SelectItem>
+              <SelectItem value="all">{t.shell.allPagesZip(pageCount)}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -339,7 +346,7 @@ export function DownloadSection({
       {impressumMissing && impressumGate && impressum && (
         <>
           <DownloadNotice tone="info">
-            Noch kein vollständiges Impressum – herunterladen kannst du trotzdem.
+            {t.shell.downloadPanel.impressumMissingNotice}
           </DownloadNotice>
           <ImpressumForm gate={impressumGate} impressum={impressum} />
         </>
@@ -372,7 +379,7 @@ export function DownloadSection({
         ) : (
           <FaDownload className="size-3.5" />
         )}
-        {isDownloading ? 'Wird heruntergeladen...' : 'Herunterladen'}
+        {isDownloading ? t.shell.downloading : t.shell.download}
       </Button>
     </div>
   );
