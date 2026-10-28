@@ -238,7 +238,8 @@ function quoteSeed(f: Frame): PageSeed {
         size: 38,
         font: 'body',
         fontStyle: 'bold',
-        fill: 'brand.secondary',
+        // A role of the page's world: the brand's secondary is a ground colour, not a text one.
+        fill: 'ink2',
       }),
     ],
   };
