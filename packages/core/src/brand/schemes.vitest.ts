@@ -11,6 +11,11 @@ function withColors(colors: Partial<BrandPack['colors']>): BrandPack {
 
 const brands: [string, BrandPack][] = [
   ['default', brandDefault],
+  ['accent "red"', withColors({ accent: 'red' })],
+  ['accent "#abc"', withColors({ accent: '#abc' })],
+  ['accent "rgb(0 0 0)"', withColors({ accent: 'rgb(0 0 0)' })],
+  ['unparseable textOnDark', withColors({ textOnDark: 'banana' })],
+  ['unparseable textOnLight', withColors({ textOnLight: 'banana' })],
   ['yellow primary', withColors({ primary: '#FFE600' })],
   ['primary equals secondary', withColors({ secondary: brandDefault.colors.primary })],
   ['near-white secondary', withColors({ secondary: '#FAFAFA' })],
@@ -45,6 +50,17 @@ describe('deriveSchemes', () => {
   it.each(brands)('ink is readable on every ground: %s', (_name, brand) => {
     for (const scheme of deriveSchemes(brand)) {
       expect(contrastRatio(scheme.roles.ink, scheme.roles.ground)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it.each(brands)('does not throw and yields parseable roles: %s', (_name, brand) => {
+    const schemes = deriveSchemes(brand);
+    expect(schemes.length).toBeGreaterThan(0);
+    for (const scheme of schemes) {
+      for (const role of Object.values(scheme.roles)) {
+        expect(role).toMatch(/^#[0-9a-f]{6}$/);
+      }
+      expect(Number.isNaN(contrastRatio(scheme.roles.ink, scheme.roles.ground))).toBe(false);
     }
   });
 
