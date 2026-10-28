@@ -11,14 +11,34 @@ import {
 } from '@ggraphic/editor/components/CanvasEditor/editorShell';
 import { Button } from '@ggraphic/ui';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { PiSparkle } from 'react-icons/pi';
 
 import { ApiError } from '../api/client';
 import { toast } from '../ui/toast';
 
 import { draftDeckOps } from './aiDraft';
-import { formatSize } from './document';
-import { TEMPLATE_CATALOG } from './templates/catalog';
+import { DEFAULT_FORMAT, formatSize } from './document';
+import { templatesFor, type CatalogEntry } from './templates/catalog';
+import { BLANK_TEMPLATE_ID, FREE_PAGE_CONFIG_ID, isStudioTemplateId } from './templates/ids';
+import { templatePageState } from './templates/instantiate';
+
+/** The id of the template a page was placed from, if its state says so. */
+function templateRefOf(state: Record<string, unknown> | undefined): string | null {
+  const ref = state?.['templateRef'];
+  return typeof ref === 'object' && ref !== null && typeof (ref as { id?: unknown }).id === 'string'
+    ? (ref as { id: string }).id
+    : null;
+}
+
+/** An emptied page: no elements and no template, the ground and its binding stay. */
+function blankPageState(current: Record<string, unknown> | undefined): Record<string, unknown> {
+  const kept: Record<string, unknown> = {};
+  for (const key of ['backgroundColor', 'bind', 'brandScheme', 'brandStamp']) {
+    if (current && key in current) kept[key] = current[key];
+  }
+  return { ...kept, shapeInstances: [], additionalTexts: [], layerOrder: [] };
+}
 
 export const AI_DRAFT_TAB_ID = 'ai-draft';
 
@@ -110,7 +130,10 @@ export function StudioPagePicker({
   onClose,
   mode,
   currentTemplateId,
+  formatId,
   onSelectTemplate,
+  addPage,
+  currentState,
   onDuplicateCurrent,
 }: EditorPagePickerProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -127,7 +150,41 @@ export function StudioPagePicker({
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
-  return (
+  const options = [
+    { id: BLANK_TEMPLATE_ID, label: 'Blank', description: 'An empty page on a solid ground' },
+    ...templatesFor(formatId ?? DEFAULT_FORMAT).map((e) => ({
+      id: e.id,
+      label: e.title,
+      description: e.description,
+    })),
+  ];
+  const select = (id: string) => {
+    const entry = templatesFor(formatId ?? DEFAULT_FORMAT).find((e) => e.id === id);
+    if (mode === 'add' && addPage) {
+      const state = entry ? templatePageState(entry, formatId ?? DEFAULT_FORMAT) : null;
+      if (entry && !state) {
+        // Say so instead of adding a blank page the user did not ask for.
+        toast.error('This template cannot be placed on the current format and brand.');
+        return;
+      }
+      void addPage(FREE_PAGE_CONFIG_ID, false, state ?? undefined);
+    } else if (mode === 'replace') {
+      // Every page is a free page whose config stays, so the new state travels with the choice.
+      const state = id === BLANK_TEMPLATE_ID ? blankPageState(currentState) : placed(entry);
+      if (!state) {
+        toast.error('This template cannot be placed on the current format and brand.');
+        return;
+      }
+      onSelectTemplate(FREE_PAGE_CONFIG_ID, state);
+    } else if (isStudioTemplateId(id)) {
+      onSelectTemplate(id);
+    }
+  };
+  const placed = (entry: CatalogEntry | undefined) =>
+    entry ? templatePageState(entry, formatId ?? DEFAULT_FORMAT) : null;
+  const heldTemplateId = templateRefOf(currentState) ?? currentTemplateId;
+  // On the body: a box that opened the picker (the small "Add page" button) must not size or clip it.
+  return createPortal(
     <div className="studio-overlay">
       {/* Clicking beside the dialog closes it; Escape does the same from the keyboard. */}
       <div className="studio-overlay__backdrop" onClick={onClose} role="presentation" />
@@ -142,14 +199,14 @@ export function StudioPagePicker({
           {mode === 'add' ? 'Add a page' : 'Change template'}
         </h2>
         <ul className="studio-template-list">
-          {TEMPLATE_CATALOG.map((template) => (
+          {options.map((template) => (
             <li key={template.id}>
               <button
                 type="button"
                 className="studio-template-option"
-                aria-current={template.id === currentTemplateId ? 'true' : undefined}
+                aria-current={template.id === heldTemplateId ? 'true' : undefined}
                 onClick={() => {
-                  onSelectTemplate(template.id);
+                  select(template.id);
                   onClose();
                 }}
               >
@@ -177,7 +234,8 @@ export function StudioPagePicker({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

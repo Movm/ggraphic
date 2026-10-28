@@ -4,7 +4,12 @@ import { runMeasurer } from '@ggraphic/editor/utils/textUtils';
 import { describe, expect, it } from 'vitest';
 
 import { draftDeckOps, draftTexts, fillTexts } from './aiDraft';
-import { BLANK_TEMPLATE_ID, HEADLINE_TEMPLATE_ID, QUOTE_TEMPLATE_ID } from './templates/ids';
+import {
+  BLANK_TEMPLATE_ID,
+  FREE_PAGE_CONFIG_ID,
+  HEADLINE_TEMPLATE_ID,
+  QUOTE_TEMPLATE_ID,
+} from './templates/ids';
 import { seedFor } from './templates/seeds';
 import { headlineFont } from './templates/typography';
 
@@ -93,7 +98,7 @@ describe('draftDeckOps', () => {
     expect(ops.inserts).toHaveLength(1);
     const insert = ops.inserts[0]!;
     expect(insert.afterPageId).toBe('a');
-    expect(insert.configId).toBe(HEADLINE_TEMPLATE_ID);
+    expect(insert.configId).toBe(FREE_PAGE_CONFIG_ID);
     const texts = insert.state['additionalTexts'] as { id: string; text: string }[];
     // No call to action in the draft: its text is left off the new page.
     expect(texts.map((t) => t.id)).toEqual(['headline', 'subline', 'body']);

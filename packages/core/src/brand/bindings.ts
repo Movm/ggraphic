@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { normalizeColor } from '../color/color.js';
+import { contrastRatio, normalizeColor } from '../color/color.js';
 import { fitLogoBox, type Box } from './logoFit.js';
 import { type BrandColors, type BrandFonts, type BrandPack } from './brandPack.js';
 import {
@@ -40,6 +40,8 @@ export interface RebindContext {
   brand: BrandPack;
   /** Natural size of the brand's logo; a swapped logo is fitted into its old box when known. */
   logoSize?: { width: number; height: number } | null;
+  /** Natural size of any logo by source; wins over `logoSize`, which only knows the main one. */
+  logoSizeOf?: (src: string) => { width: number; height: number } | null;
   /** Size of the page, needed with `logoSize` to pick the corner a logo box keeps. */
   pageSize?: { width: number; height: number } | null;
 }
@@ -60,6 +62,8 @@ const BRAND_FONT_KEYS: Record<BrandFontRole, true> = {
   body: true,
   quoteShort: true,
   quoteEmphasis: true,
+  serif: true,
+  condensed: true,
 };
 
 export function isBindingRef(value: unknown): value is BindingRef {
@@ -77,13 +81,24 @@ export function resolveRef(
   brand: BrandPack,
   scheme: Scheme | null
 ): string | null {
-  if (ref === 'brand.logo') return brand.logo?.src ?? null;
+  if (ref === 'brand.logo') {
+    const alt = brand.logoAlt;
+    if (scheme && alt && alt.ground === groundClass(scheme.roles.ground)) return alt.src;
+    return brand.logo?.src ?? alt?.src ?? null;
+  }
   if (ref.startsWith('brand.')) {
     const v = (brand.colors as unknown as Record<string, unknown>)[ref.slice(6)];
     return typeof v === 'string' ? v : null;
   }
   if (ref.startsWith('font.')) {
-    const v = (brand.fonts as unknown as Record<string, unknown>)[ref.slice(5)];
+    const fonts = brand.fonts;
+    const role = ref.slice(5);
+    const v =
+      role === 'serif'
+        ? (fonts.serif ?? fonts.quoteEmphasis)
+        : role === 'condensed'
+          ? (fonts.condensed ?? fonts.headline)
+          : (fonts as unknown as Record<string, unknown>)[role];
     return typeof v === 'string' ? v : null;
   }
   return scheme?.roles[ref as SurfaceRole] ?? null;
@@ -114,6 +129,8 @@ export function brandFingerprint(brand: BrandPack): string {
     fonts,
     markers: brand.markers,
     logo: brand.logo?.src ?? null,
+    // Only when present, so a brand without a second logo keeps its old fingerprint.
+    ...(brand.logoAlt ? { logoAlt: { src: brand.logoAlt.src, ground: brand.logoAlt.ground } } : {}),
   });
   let hash = 0x811c9dc5;
   for (let i = 0; i < text.length; i++) {
@@ -169,6 +186,18 @@ const familyKey = (family: string) =>
 
 const firstFamilyKey = (stack: string) => familyKey(splitStack(stack).first);
 
+/** The first family of a font stack, as the comparison key: 'Raleway, Arial' → 'raleway'. */
+export function firstFontFamily(value: string): string {
+  return firstFamilyKey(value);
+}
+
+/** Whether a ground is dark: it contrasts at least as much with white as with black. */
+export function groundClass(ground: string): 'dark' | 'light' {
+  const white = contrastRatio(ground, '#ffffff');
+  const black = contrastRatio(ground, '#000000');
+  return white !== null && black !== null && white < black ? 'light' : 'dark';
+}
+
 function hasBindings(obj: Obj): boolean {
   return isPlainObject(obj['bind']) && Object.keys(obj['bind']).length > 0;
 }
@@ -198,14 +227,16 @@ const sameBox = (a: Box, b: Box) =>
 function fitLogo(
   obj: Obj,
   binding: Binding,
-  { logoSize, pageSize }: RebindContext
+  { logoSize, logoSizeOf, pageSize }: RebindContext,
+  src: string
 ): { box: Box; fit: Box } | null {
-  if (!logoSize || !pageSize) return null;
+  const size = logoSizeOf?.(src) ?? logoSize;
+  if (!size || !pageSize) return null;
   const current = boxOf(obj);
   if (!current) return null;
   const envelope =
     binding.box && binding.fit && sameBox(binding.fit, current) ? binding.box : current;
-  return { box: envelope, fit: fitLogoBox(envelope, logoSize, pageSize) };
+  return { box: envelope, fit: fitLogoBox(envelope, size, pageSize) };
 }
 
 /** Rebinds one object's fields; the same object when nothing changes. */
@@ -244,7 +275,7 @@ function rebindObject(obj: Obj, ctx: RebindContext, scheme: Scheme | null): Obj 
     const logo = binding.ref === 'brand.logo';
     // A swapped logo is fitted now; so is one whose fit was left pending, once its size is known.
     const fitted =
-      logo && (!sameField || binding.pendingFit) ? fitLogo(next ?? obj, binding, ctx) : null;
+      logo && (!sameField || binding.pendingFit) ? fitLogo(next ?? obj, binding, ctx, value) : null;
     if (sameField && binding.value === value && !fitted) continue;
     next ??= { ...obj };
     if (fitted) Object.assign(next, fitted.fit);

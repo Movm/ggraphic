@@ -413,8 +413,8 @@ function CanvasEditorInner({
     setTemplateChangePageId(null);
   }, []);
   const handleSelectTemplateChange = useCallback(
-    (configId: string) => {
-      if (templateChangePageId) void setPageConfig(templateChangePageId, configId);
+    (configId: string, state?: Record<string, unknown>) => {
+      if (templateChangePageId) void setPageConfig(templateChangePageId, configId, state);
       setTemplateChangePageId(null);
     },
     [templateChangePageId, setPageConfig]
@@ -422,7 +422,9 @@ function CanvasEditorInner({
   const templateChangePage = useMemo(() => {
     if (templateChangePageId === null) return null;
     const index = pages.findIndex((p) => p.id === templateChangePageId);
-    return index >= 0 ? { index, configId: pages[index].configId } : null;
+    return index >= 0
+      ? { index, configId: pages[index].configId, state: pages[index].state }
+      : null;
   }, [templateChangePageId, pages]);
 
   // Sidebar handlers - functional setState (Rule 5.5)
@@ -1683,7 +1685,8 @@ function CanvasEditorInner({
 
                   return (
                     <PageWrapper
-                      key={page.id}
+                      // A replaced state (convert, undo) mounts the page afresh on the new state.
+                      key={`${page.id}:${page.stateEpoch ?? 0}`}
                       page={page}
                       index={index}
                       pageCount={pageCount}
@@ -1730,6 +1733,7 @@ function CanvasEditorInner({
                     onSelectTemplate={handleSelectTemplateChange}
                     onClose={handleCloseTemplateChange}
                     currentTemplateId={templateChangePage.configId}
+                    currentState={templateChangePage.state}
                     activeTemplateId={currentTemplateId}
                     pages={pages}
                     formatId={formatId}

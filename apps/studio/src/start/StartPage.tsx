@@ -6,27 +6,27 @@
  * Submitting the prompt creates a project, lets the AI write its texts and opens it.
  */
 import { Button, ChipGroup, PromptComposer, PromptHero, Tile, TileList } from '@ggraphic/ui';
-import { useQueryClient } from '@tanstack/react-query';
-import { useId, useState, type ReactNode } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useId, useMemo, useState, type ReactNode } from 'react';
 import { PiFile, PiQuotes, PiTextT, PiNumberOne } from 'react-icons/pi';
 
 import { ApiError, type StudioConfig } from '../api/client';
 import { DEFAULT_FORMAT, STUDIO_FORMATS, type StudioFormatId } from '../editor/document';
-import { TEMPLATE_CATALOG } from '../editor/templates/catalog';
-import {
-  BLANK_TEMPLATE_ID,
-  HEADLINE_TEMPLATE_ID,
-  NUMBER_TEMPLATE_ID,
-  QUOTE_TEMPLATE_ID,
-  type StudioTemplateId,
-} from '../editor/templates/ids';
+import { templatesFor } from '../editor/templates/catalog';
+import { BLANK_TEMPLATE_ID } from '../editor/templates/ids';
 import { PROJECTS_QUERY_KEY } from '../projects/projectsKey';
 import { editorPath, navigate } from '../router';
 import { useLoggedIn } from '../session/SessionContext';
 import { PageShell } from '../ui/PageShell';
 import { toast } from '../ui/toast';
 
-import { AiPromptError, createFromPrompt, createFromTemplate } from './createFromPrompt';
+import {
+  AiPromptError,
+  TemplateUnavailableError,
+  createFromPrompt,
+  createFromTemplate,
+  loadOrganisationBrand,
+} from './createFromPrompt';
 import { ProjectGrid } from './ProjectGrid';
 
 /** Invented, neutral examples. */
@@ -37,11 +37,17 @@ export const EXAMPLE_PROMPTS = [
   'Share that 120 volunteers planted 800 trees this spring',
 ] as const;
 
-const TEMPLATE_ICONS: Record<StudioTemplateId, ReactNode> = {
-  [BLANK_TEMPLATE_ID]: <PiFile aria-hidden />,
-  [HEADLINE_TEMPLATE_ID]: <PiTextT aria-hidden />,
-  [QUOTE_TEMPLATE_ID]: <PiQuotes aria-hidden />,
-  [NUMBER_TEMPLATE_ID]: <PiNumberOne aria-hidden />,
+/** The tile icon by template family; a family without one gets the generic page. */
+const FAMILY_ICONS: Record<string, ReactNode> = {
+  headline: <PiTextT aria-hidden />,
+  quote: <PiQuotes aria-hidden />,
+  number: <PiNumberOne aria-hidden />,
+};
+const BLANK_TILE = {
+  id: BLANK_TEMPLATE_ID,
+  family: 'blank',
+  title: 'Blank',
+  description: 'An empty page on a solid ground',
 };
 
 const FORMAT_OPTIONS = STUDIO_FORMATS.map((f) => ({
@@ -51,7 +57,7 @@ const FORMAT_OPTIONS = STUDIO_FORMATS.map((f) => ({
 }));
 
 const errorText = (err: unknown) =>
-  err instanceof AiPromptError || err instanceof ApiError
+  err instanceof AiPromptError || err instanceof ApiError || err instanceof TemplateUnavailableError
     ? err.message
     : 'The project could not be created.';
 
@@ -63,6 +69,22 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
   const [busy, setBusy] = useState(false);
   const hintId = useId();
   const ai = config?.features.ai ?? false;
+  // The tiles follow the organisation's brand: its worlds decide which templates can be placed.
+  const brand = useQuery({
+    queryKey: ['start-brand', organisation.id],
+    queryFn: async () => {
+      await loadOrganisationBrand(organisation.id);
+      return true;
+    },
+    gcTime: 0,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+  const templates = useMemo(
+    () => templatesFor(formatId),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- the brand query registers the brand `templatesFor` reads
+    [formatId, brand.dataUpdatedAt]
+  );
 
   const submit = async () => {
     const text = prompt.trim();
@@ -84,7 +106,7 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
     }
   };
 
-  const startFromTemplate = async (templateId: StudioTemplateId, name: string) => {
+  const startFromTemplate = async (templateId: string, name: string) => {
     if (busy) return;
     setBusy(true);
     try {
@@ -174,19 +196,19 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
             <p className="studio-muted">Opens in the format chosen above.</p>
           </div>
           <TileList layout="row" aria-label="Templates">
-            {TEMPLATE_CATALOG.map((template) => (
+            {[BLANK_TILE, ...templates].map((template) => (
               <li key={template.id}>
                 <Tile
                   disabled={busy}
                   ratio="4 / 5"
                   media={
                     <span className="studio-template-icon" data-template={template.id}>
-                      {TEMPLATE_ICONS[template.id]}
+                      {FAMILY_ICONS[template.family] ?? <PiFile aria-hidden />}
                     </span>
                   }
-                  title={template.label}
+                  title={template.title}
                   meta={template.description}
-                  onClick={() => void startFromTemplate(template.id, template.label)}
+                  onClick={() => void startFromTemplate(template.id, template.title)}
                 />
               </li>
             ))}

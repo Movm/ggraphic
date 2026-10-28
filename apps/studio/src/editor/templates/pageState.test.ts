@@ -22,3 +22,33 @@ describe('pageStateFrom brand keys', () => {
     expect(state).not.toHaveProperty('brandStamp');
   });
 });
+
+describe('pageStateFrom template keys', () => {
+  it('keeps templateRef and groups across a re-seed and drops malformed ones', () => {
+    const groups = [{ id: 'g1', elementIds: ['a', 'b'] }];
+    const kept = pageStateFrom(
+      { additionalTexts: [], templateRef: { id: 't', version: 2 }, groups },
+      {}
+    );
+    expect(kept.templateRef).toEqual({ id: 't', version: 2 });
+    expect(kept.groups).toEqual(groups);
+
+    for (const templateRef of [
+      { id: 1, version: 1 },
+      { id: 't', version: 0 },
+      { id: 't', version: 1.5 },
+      'x',
+      null,
+    ]) {
+      expect(pageStateFrom({ additionalTexts: [], templateRef }, {})).not.toHaveProperty(
+        'templateRef'
+      );
+    }
+    expect(pageStateFrom({ additionalTexts: [], groups: 'g' }, {})).not.toHaveProperty('groups');
+    const mixed = pageStateFrom(
+      { additionalTexts: [], groups: [groups[0], { id: 1 }, null, { id: 'g2', elementIds: 'x' }] },
+      {}
+    );
+    expect(mixed.groups).toEqual(groups);
+  });
+});

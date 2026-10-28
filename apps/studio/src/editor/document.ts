@@ -7,8 +7,9 @@ import { getCanvasFormat } from '@ggraphic/editor/formats/index';
 import { readInitialDocument, type InitialPageDef } from '@ggraphic/editor/hooks/usePageManager';
 import { migrateDocument, stampDocument } from '@ggraphic/schema';
 
-import { BLANK_TEMPLATE_ID, type StudioTemplateId } from './templates/ids';
-import { seedPageState } from './templates/seeds';
+import { catalogTemplate, templatesFor } from './templates/catalog';
+import { BLANK_TEMPLATE_ID, FREE_PAGE_CONFIG_ID, isStudioTemplateId } from './templates/ids';
+import { templatePageState } from './templates/instantiate';
 
 /**
  * The formats a new project can take, all from the editor's format registry.
@@ -45,16 +46,22 @@ export function formatSize(formatId: string): { width: number; height: number } 
   return { width: format?.width ?? 1080, height: format?.height ?? 1350 };
 }
 
-/** A fresh document: one page of `templateId`, laid out on the format. */
+/**
+ * A fresh document: one free page holding `templateId`, laid out on the format. A template
+ * that is unknown, or not offered on this format and brand, leaves the page blank.
+ */
 export function newDocument(
   formatId: string,
-  templateId: StudioTemplateId = BLANK_TEMPLATE_ID
+  templateId: string = BLANK_TEMPLATE_ID
 ): StudioDocument {
-  const { width, height } = formatSize(formatId);
-  return {
-    formatId,
-    pages: [{ configId: templateId, state: seedPageState(templateId, width, height) }],
+  const entry = catalogTemplate(templateId);
+  const offered = entry && templatesFor(formatId).some((e) => e.id === entry.id);
+  const state = (offered && templatePageState(entry, formatId)) || {
+    shapeInstances: [],
+    additionalTexts: [],
+    layerOrder: [],
   };
+  return { formatId, pages: [{ configId: FREE_PAGE_CONFIG_ID, state }] };
 }
 
 /**
@@ -75,7 +82,11 @@ export function parseDocument(raw: unknown): ParsedStudioDocument {
     typeof stored['formatId'] === 'string' && getCanvasFormat(stored['formatId'])
       ? stored['formatId']
       : DEFAULT_FORMAT;
-  const pages = read.pages ?? newDocument(formatId).pages;
+  // A page whose config the editor does not register (a template that is gone) opens as a free page.
+  const pages =
+    read.pages?.map((page) =>
+      isStudioTemplateId(page.configId) ? page : { ...page, configId: FREE_PAGE_CONFIG_ID }
+    ) ?? newDocument(formatId).pages;
   return { kind: 'ok', doc: { ...stored, formatId, pages } };
 }
 

@@ -19,6 +19,8 @@ export interface HeterogeneousPage<TConfigId extends string = string> {
   configId: TConfigId;
   /** Runtime state - config interprets this based on its state type */
   state: Record<string, unknown>;
+  /** Changes when the page's whole state is replaced (convert, undo of it); the page then mounts afresh. */
+  stateEpoch?: number;
 }
 
 /**

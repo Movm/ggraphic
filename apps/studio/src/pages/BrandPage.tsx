@@ -22,7 +22,17 @@ import {
   type BrandInput,
   type BrandSettings,
 } from '../api/client';
-import { aliasFontFamily, deriveBrandColors, deriveGrounds } from '@ggraphic/core';
+import {
+  aliasFontFamily,
+  BRAND_LAYOUT_BOUNDS,
+  clampBrandLayout,
+  DEFAULT_BRAND_LAYOUT,
+  deriveBrandColors,
+  deriveGrounds,
+  LOGO_CORNERS,
+  type BrandLayout,
+  type LogoCorner,
+} from '@ggraphic/core';
 
 import { studioBrand } from '../brand';
 import { loadBrandFonts } from '../brandLoader';
@@ -50,6 +60,17 @@ const DERIVED_ROLES = [
 
 // Radix Select items cannot carry an empty value.
 const NO_LOGO = 'none';
+const SAME_FONT = 'same';
+
+const CORNER_LABELS: Record<LogoCorner, string> = {
+  'top-left': 'Top left',
+  'top-right': 'Top right',
+  'bottom-left': 'Bottom left',
+  'bottom-right': 'Bottom right',
+};
+const GROUND_LABELS = { dark: 'For dark grounds', light: 'For light grounds' } as const;
+
+const percent = (fraction: number) => `${Math.round(fraction * 100)} %`;
 const HEX = /^#[0-9A-Fa-f]{6}$/;
 
 /** What the form starts with before an organisation has saved a brand. */
@@ -58,8 +79,15 @@ export function defaultSettings(name: string): BrandSettings {
     name,
     colors: { ...studioBrand.colors },
     backgrounds: studioBrand.backgrounds.map(({ label, color, ink }) => ({ label, color, ink })),
-    fonts: { headline: studioBrand.fonts.headline, body: studioBrand.fonts.body },
+    fonts: {
+      headline: studioBrand.fonts.headline,
+      body: studioBrand.fonts.body,
+      serif: null,
+      condensed: null,
+    },
     logoAssetId: null,
+    logoAlt: null,
+    layout: null,
   };
 }
 
@@ -123,10 +151,28 @@ function BrandEditor({
       fonts: {
         headline: aliasFontFamily(stored.fonts.headline),
         body: aliasFontFamily(stored.fonts.body),
+        serif: stored.fonts.serif && aliasFontFamily(stored.fonts.serif),
+        condensed: stored.fonts.condensed && aliasFontFamily(stored.fonts.condensed),
       },
       logoAssetId: stored.logoAssetId,
+      logoAlt: stored.logoAlt,
+      layout: clampBrandLayout(stored.layout ?? DEFAULT_BRAND_LAYOUT),
     };
   });
+  // The second logo is picked first and given its ground second: until then it is not valid.
+  // A stored one whose asset is gone, or is now the main logo, shows as none.
+  const [alt, setAlt] = useState<{ assetId: string; ground: 'dark' | 'light' | null } | null>(
+    () => {
+      const stored = data.settings?.logoAlt;
+      const usable =
+        stored &&
+        stored.assetId !== data.settings?.logoAssetId &&
+        data.assets.some((x) => x.kind === 'logo' && x.id === stored.assetId);
+      return usable ? { assetId: stored.assetId, ground: stored.ground } : null;
+    }
+  );
+  const layout = input.layout ?? DEFAULT_BRAND_LAYOUT;
+  const altIncomplete = alt !== null && alt.ground === null;
   const [groundIndex, setGroundIndex] = useState(0);
   const fonts = useMemo(() => data.assets.filter((a) => a.kind === 'font'), [data.assets]);
   const logos = data.assets.filter((a) => a.kind === 'logo');
@@ -150,6 +196,8 @@ function BrandEditor({
     backgrounds: grounds,
     fonts: input.fonts,
     logoAssetId: input.logoAssetId,
+    logoAlt: input.logoAlt,
+    layout,
   };
   // E4: a pack saved with hand-set roles changes them on the next save.
   const rederives = useMemo(() => {
@@ -195,7 +243,11 @@ function BrandEditor({
   const reload = () => queryClient.invalidateQueries({ queryKey: ['brand-pack', orgId] });
 
   const save = useMutation({
-    mutationFn: () => api.saveBrandPack(orgId, input),
+    mutationFn: () =>
+      api.saveBrandPack(orgId, {
+        ...input,
+        logoAlt: alt?.ground ? { assetId: alt.assetId, ground: alt.ground } : null,
+      }),
     onSuccess: (next) => {
       setData(next);
       toast('Brand saved. Projects opened from now on use it.');
@@ -211,7 +263,10 @@ function BrandEditor({
       color: previewColors.primary,
       ink: previewColors.textOnDark,
     };
+  const setLayout = (patch: Partial<BrandLayout>) =>
+    setInput((s) => ({ ...s, layout: { ...(s.layout ?? DEFAULT_BRAND_LAYOUT), ...patch } }));
   const logoUrl = logos.find((l) => l.id === input.logoAssetId)?.url ?? null;
+  const altUrl = alt?.ground ? (logos.find((l) => l.id === alt.assetId)?.url ?? null) : null;
 
   return (
     <div className="studio-brand">
@@ -219,7 +274,7 @@ function BrandEditor({
         className="studio-brand__form"
         onSubmit={(e: FormEvent) => {
           e.preventDefault();
-          if (!invalid && !save.isPending) save.mutate();
+          if (!invalid && !altIncomplete && !save.isPending) save.mutate();
         }}
       >
         <TextField
@@ -270,6 +325,48 @@ function BrandEditor({
         </fieldset>
 
         <fieldset className="studio-brand__group">
+          <legend>Layout</legend>
+          <p className="studio-muted">
+            Where templates keep their content and the logo. The preview outlines both.
+          </p>
+          <RangeField
+            label="Margin"
+            min={pct(BRAND_LAYOUT_BOUNDS.margin.min)}
+            max={pct(BRAND_LAYOUT_BOUNDS.margin.max)}
+            value={layout.margin}
+            onChange={(margin) => setLayout({ margin })}
+          />
+          <fieldset className="studio-chips">
+            <legend className="studio-muted">Logo corner</legend>
+            {LOGO_CORNERS.map((corner) => (
+              <label key={corner} className="studio-chip">
+                <input
+                  type="radio"
+                  name="logo-corner"
+                  checked={layout.logoCorner === corner}
+                  onChange={() => setLayout({ logoCorner: corner })}
+                />
+                <span>{CORNER_LABELS[corner]}</span>
+              </label>
+            ))}
+          </fieldset>
+          <RangeField
+            label="Logo width"
+            min={pct(BRAND_LAYOUT_BOUNDS.logoMaxWidth.min)}
+            max={pct(BRAND_LAYOUT_BOUNDS.logoMaxWidth.max)}
+            value={layout.logoMaxWidth}
+            onChange={(logoMaxWidth) => setLayout({ logoMaxWidth })}
+          />
+          <RangeField
+            label="Logo height"
+            min={pct(BRAND_LAYOUT_BOUNDS.logoMaxHeight.min)}
+            max={pct(BRAND_LAYOUT_BOUNDS.logoMaxHeight.max)}
+            value={layout.logoMaxHeight}
+            onChange={(logoMaxHeight) => setLayout({ logoMaxHeight })}
+          />
+        </fieldset>
+
+        <fieldset className="studio-brand__group">
           <legend>Fonts</legend>
           {(['headline', 'body'] as const).map((slot) => (
             <Select
@@ -280,6 +377,26 @@ function BrandEditor({
                 setInput((s) => ({ ...s, fonts: { ...s.fonts, [slot]: family } }))
               }
               options={families.map((f) => ({ value: f, label: f }))}
+            />
+          ))}
+          {(['serif', 'condensed'] as const).map((slot) => (
+            <Select
+              key={slot}
+              label={slot === 'serif' ? 'Serif' : 'Condensed'}
+              value={input.fonts[slot] ?? SAME_FONT}
+              onValueChange={(family) =>
+                setInput((s) => ({
+                  ...s,
+                  fonts: { ...s.fonts, [slot]: family === SAME_FONT ? null : family },
+                }))
+              }
+              options={[
+                {
+                  value: SAME_FONT,
+                  label: slot === 'serif' ? 'Same as quotes' : 'Same as headlines',
+                },
+                ...families.map((f) => ({ value: f, label: f })),
+              ]}
             />
           ))}
           <FontUpload orgId={orgId} onUploaded={() => void reload()} />
@@ -306,9 +423,10 @@ function BrandEditor({
             <Select
               label="Logo in use"
               value={input.logoAssetId ?? NO_LOGO}
-              onValueChange={(value) =>
-                setInput((s) => ({ ...s, logoAssetId: value === NO_LOGO ? null : value }))
-              }
+              onValueChange={(value) => {
+                setInput((s) => ({ ...s, logoAssetId: value === NO_LOGO ? null : value }));
+                if (alt?.assetId === value) setAlt(null);
+              }}
               options={[
                 { value: NO_LOGO, label: 'No logo' },
                 ...logos.map((l, i) => ({
@@ -318,6 +436,44 @@ function BrandEditor({
               ]}
             />
           ) : null}
+          {logos.length > 1 ? (
+            <>
+              <Select
+                label="Second logo"
+                hint="Used on grounds of one kind, instead of the logo in use."
+                value={alt?.assetId ?? NO_LOGO}
+                onValueChange={(value) =>
+                  setAlt(value === NO_LOGO ? null : { assetId: value, ground: null })
+                }
+                options={[
+                  { value: NO_LOGO, label: 'No second logo' },
+                  ...logos
+                    .map((l, i) => ({
+                      id: l.id,
+                      value: l.id,
+                      label: `Logo ${i + 1} (${l.contentType === 'image/png' ? 'PNG' : 'WebP'})`,
+                    }))
+                    .filter((o) => o.id !== input.logoAssetId),
+                ]}
+              />
+              {alt ? (
+                <fieldset className="studio-chips">
+                  <legend className="studio-muted">Second logo is used</legend>
+                  {(['dark', 'light'] as const).map((g) => (
+                    <label key={g} className="studio-chip">
+                      <input
+                        type="radio"
+                        name="logo-alt-ground"
+                        checked={alt.ground === g}
+                        onChange={() => setAlt({ assetId: alt.assetId, ground: g })}
+                      />
+                      <span>{GROUND_LABELS[g]}</span>
+                    </label>
+                  ))}
+                </fieldset>
+              ) : null}
+            </>
+          ) : null}
           <AssetList
             orgId={orgId}
             assets={logos}
@@ -325,6 +481,7 @@ function BrandEditor({
               if (input.logoAssetId === asset.id) {
                 setInput((s) => ({ ...s, logoAssetId: null }));
               }
+              if (alt?.assetId === asset.id) setAlt(null);
               void reload();
             }}
             describe={(a, i) => `Logo ${i + 1}`}
@@ -332,14 +489,26 @@ function BrandEditor({
           />
         </fieldset>
 
-        {invalid ? <Alert tone="danger">Every colour must be written as #RRGGBB.</Alert> : null}
-        <Button type="submit" className="studio-brand__save" disabled={invalid || save.isPending}>
+        {altIncomplete ? (
+          <Alert tone="warning">Choose which grounds the second logo is for.</Alert>
+        ) : null}
+        <Button
+          type="submit"
+          className="studio-brand__save"
+          disabled={invalid || altIncomplete || save.isPending}
+        >
           {save.isPending ? 'Saving…' : 'Save brand'}
         </Button>
       </form>
 
       <aside className="studio-brand__preview" aria-label="Live preview">
-        <BrandPreview settings={settings} ground={ground} logoUrl={logoUrl} />
+        <BrandPreview
+          settings={settings}
+          ground={ground}
+          logoUrl={logoUrl}
+          logoAlt={altUrl && alt?.ground ? { url: altUrl, ground: alt.ground } : null}
+          layout={layout}
+        />
         <fieldset className="studio-chips">
           <legend className="studio-muted">Preview on</legend>
           {grounds.map((b, i) => (
@@ -355,6 +524,44 @@ function BrandEditor({
           ))}
         </fieldset>
       </aside>
+    </div>
+  );
+}
+
+/** A fraction as a whole percent, for a slider's bounds. */
+const pct = (fraction: number): number => Math.round(fraction * 100);
+
+/** A percentage slider over a 0–1 fraction (the layout stores fractions). */
+function RangeField({
+  label,
+  min,
+  max,
+  value,
+  onChange,
+}: {
+  label: string;
+  min: number;
+  max: number;
+  value: number;
+  onChange: (fraction: number) => void;
+}) {
+  const id = useId();
+  return (
+    <div className="ui-field">
+      <label htmlFor={id} className="ui-field__label">
+        {label}: {percent(value)}
+      </label>
+      <input
+        id={id}
+        type="range"
+        className="studio-brand__range"
+        min={min}
+        max={max}
+        step={1}
+        aria-valuetext={percent(value)}
+        value={Math.round(value * 100)}
+        onChange={(e) => onChange(Number(e.target.value) / 100)}
+      />
     </div>
   );
 }
@@ -383,7 +590,7 @@ function ColorField({
       value={value}
       maxLength={7}
       spellCheck={false}
-      aria-invalid={!valid}
+      error={valid ? undefined : 'Write the colour as #RRGGBB.'}
       onChange={(e) => onChange(e.target.value.trim())}
       endAdornment={
         <input

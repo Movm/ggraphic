@@ -26,7 +26,7 @@ function mount({ ai }: { ai: boolean }) {
     <QueryClientProvider client={new QueryClient()}>
       <CanvasEditorProvider services={createStudioServices({ ai, organisationId: 'org-1' })}>
         <CanvasEditorShell
-          initialConfigId={HEADLINE_TEMPLATE_ID}
+          initialConfigId="studio-blank"
           initialPages={newDocument('post-portrait', HEADLINE_TEMPLATE_ID).pages}
           initialProps={{}}
           formatId="post-portrait"

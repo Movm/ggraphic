@@ -4,18 +4,20 @@
  * template and a colour world and writes its texts (`api.pick`), and only then is the
  * project created. Without AI the prompt itself becomes the headline.
  */
-import { rebindPageState } from '@ggraphic/core';
+import { offeredSchemes, type SchemeId } from '@ggraphic/core';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 
 import { api, ApiError, type Draft, type Pick } from '../api/client';
 import { applyBrandPack } from '../brandLoader';
 import { fillById, fillTexts } from '../editor/aiDraft';
 import { formatSize, newDocument, type StudioDocument } from '../editor/document';
+import { templatesFor } from '../editor/templates/catalog';
 import {
+  BLANK_TEMPLATE_ID,
+  FREE_PAGE_CONFIG_ID,
   HEADLINE_TEMPLATE_ID,
-  isStudioTemplateId,
-  type StudioTemplateId,
 } from '../editor/templates/ids';
+import { templatePageState } from '../editor/templates/instantiate';
 
 import { pickOffers } from './aiOffers';
 
@@ -57,7 +59,7 @@ export function filledDocument(
  * The seeds read the registered brand (colours, fonts, logo), so the
  * organisation's pack is put in place before a page is built, as the editor does.
  */
-async function loadOrganisationBrand(organisationId: string): Promise<void> {
+export async function loadOrganisationBrand(organisationId: string): Promise<void> {
   let pack = null;
   try {
     pack = (await api.getBrandPack(organisationId)).pack;
@@ -69,24 +71,24 @@ async function loadOrganisationBrand(organisationId: string): Promise<void> {
 
 /**
  * The document for what the AI picked: its template with the texts filled and the
- * colour world set. Null when the pick names a template the Studio does not have.
+ * colour world set. Null when the pick names a template the Studio does not offer on this format.
  */
 export function pickedDocument(formatId: string, picked: Pick): StudioDocument | null {
-  if (!isStudioTemplateId(picked.templateId)) return null;
-  const doc = newDocument(formatId, picked.templateId);
-  const page = doc.pages[0]!;
-  const texts = page.state['additionalTexts'] as AdditionalText[];
-  let state: Record<string, unknown> = {
-    ...page.state,
+  const entry = templatesFor(formatId).find((e) => e.id === picked.templateId);
+  if (!entry) return null;
+  // A world the template does not offer falls back to the template's own first one.
+  const worlds: string[] = offeredSchemes(entry.template, activeBrand());
+  const world =
+    picked.schemeId !== null && worlds.includes(picked.schemeId) ? picked.schemeId : null;
+  // Placed straight into its world, so the logo is fitted for that world's ground.
+  const placed = templatePageState(entry, formatId, { schemeId: world as SchemeId | null });
+  if (!placed) return null;
+  const texts = placed['additionalTexts'] as AdditionalText[];
+  const state = {
+    ...placed,
     additionalTexts: fillById(texts, new Map(Object.entries(picked.fills))),
   };
-  if (picked.schemeId !== null) {
-    // The stamp goes so the rebind below does not take the page for current.
-    const { brandStamp: _stamp, ...rest } = state;
-    state = { ...rest, brandScheme: picked.schemeId };
-  }
-  state = rebindPageState(state, { brand: activeBrand() }).state;
-  return { ...doc, pages: [{ ...page, state }] };
+  return { formatId, pages: [{ configId: FREE_PAGE_CONFIG_ID, state }] };
 }
 
 export interface PromptResult {
@@ -148,7 +150,7 @@ export async function createFromPrompt({
     try {
       picked = pickedDocument(
         formatId,
-        await api.pick({ brief: prompt.trim(), ...pickOffers(), format: { width, height } })
+        await api.pick({ brief: prompt.trim(), ...pickOffers(formatId), format: { width, height } })
       );
     } catch (err) {
       throw new AiPromptError(failureKind(err));
@@ -163,6 +165,14 @@ export async function createFromPrompt({
   return { projectId: project.id };
 }
 
+/** The template cannot be placed on this format in the organisation's brand. */
+export class TemplateUnavailableError extends Error {
+  constructor() {
+    super('This template cannot be placed on this format with your brand.');
+    this.name = 'TemplateUnavailableError';
+  }
+}
+
 /** A project from a template as it comes, in `formatId`; the user fills it in the editor. */
 export async function createFromTemplate({
   organisationId,
@@ -171,11 +181,18 @@ export async function createFromTemplate({
   formatId,
 }: {
   organisationId: string;
-  templateId: StudioTemplateId;
+  templateId: string;
   name: string;
   formatId: string;
 }): Promise<string> {
   await loadOrganisationBrand(organisationId);
+  // The tiles may have been drawn before the brand was known: say so, never start a blank project.
+  if (
+    templateId !== BLANK_TEMPLATE_ID &&
+    !templatesFor(formatId).some((e) => e.id === templateId)
+  ) {
+    throw new TemplateUnavailableError();
+  }
   const project = await api.createProject(organisationId, {
     name,
     document: newDocument(formatId, templateId) as unknown as Record<string, unknown>,

@@ -20,6 +20,7 @@
     "@ggraphic/core": "workspace:*",
     "@ggraphic/editor": "workspace:*",
     "@ggraphic/schema": "workspace:*",
+    "@ggraphic/templates-open": "workspace:*",
     "@ggraphic/ui": "workspace:*",
     "@tanstack/react-query": "^5.104.1",
     "konva": "^10.9.0",
