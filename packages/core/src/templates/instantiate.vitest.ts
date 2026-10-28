@@ -296,6 +296,33 @@ describe('instantiateTemplatePage', () => {
     expect(logo.src).toBe('logo.svg');
   });
 
+  describe('a brand corner the template does not declare', () => {
+    const topLeft = {
+      ...logoBrand,
+      layout: { ...brandLayout(logoBrand), logoCorner: 'top-left' as const },
+    };
+    const boxOf = (corners: ('top-left' | 'top-right' | 'bottom-left' | 'bottom-right')[]) =>
+      (ok(logoTemplate({ logoCorners: corners }), ctx({ brand: topLeft })).state[
+        'userImageInstances'
+      ] as Item[])[0]!.bind.src.box;
+    const envelope = (corner: 'top-right' | 'bottom-right') =>
+      logoEnvelope(brandLayout(topLeft), canvas, corner);
+
+    it('takes the declared corner on the same horizontal edge', () => {
+      expect(boxOf(['bottom-right', 'top-right'])).toEqual(envelope('top-right'));
+    });
+
+    it('takes the first declared corner when none is on that edge', () => {
+      expect(boxOf(['bottom-right', 'bottom-left'])).toEqual(envelope('bottom-right'));
+    });
+
+    it('uses a declared corner as it is', () => {
+      expect(boxOf(['bottom-right', 'top-left'])).toEqual(
+        logoEnvelope(brandLayout(topLeft), canvas, 'top-left')
+      );
+    });
+  });
+
   it('the first free corner is used otherwise', () => {
     const t = logoTemplate({ logoCorners: ['top-right'] });
     const r = ok(t, ctx());

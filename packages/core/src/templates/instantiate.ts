@@ -237,9 +237,12 @@ export function instantiateTemplatePage(
     Array.isArray(state[key]) ? (state[key] as Obj[]).map((e) => String(e['id'])) : [];
   const images = state['userImageInstances'];
   if (Array.isArray(images)) {
-    const corner = t.logoCorners?.includes(layout.logoCorner)
+    // The brand's corner if declared; else a declared corner on the same horizontal edge; else the first.
+    const declared = t.logoCorners ?? [];
+    const edge = layout.logoCorner.split('-')[0];
+    const corner = declared.includes(layout.logoCorner)
       ? layout.logoCorner
-      : t.logoCorners?.[0];
+      : (declared.find((c) => c.split('-')[0] === edge) ?? declared[0]);
     state['userImageInstances'] = images.filter((raw) => {
       const el = raw as Obj;
       if (!isObj(el['bind']) || refOf(el['bind']['src']) !== 'brand.logo') return true;
