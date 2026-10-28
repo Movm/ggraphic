@@ -95,6 +95,20 @@ describe('createDraft', () => {
     await expectHttpError(createDraft(ai, { briefing: 'x' }, fetchMock), 502, 'ai_upstream_error');
   });
 
+  it('maps a provider rate limit to 429 ai_rate_limited with Retry-After', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response('{}', { status: 429, headers: { 'retry-after': '12' } }));
+    const err = await createDraft(ai, { briefing: 'x' }, fetchMock).then(
+      () => null,
+      (e: unknown) => e
+    );
+    expect(err).toBeInstanceOf(HttpError);
+    expect((err as HttpError).status).toBe(429);
+    expect((err as HttpError).body.error).toBe('ai_rate_limited');
+    expect((err as HttpError).retryAfter).toBe(12);
+  });
+
   it('maps an unusable answer to 502', async () => {
     const fetchMock = vi
       .fn<typeof fetch>()
