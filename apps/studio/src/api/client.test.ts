@@ -56,6 +56,42 @@ describe('api client', () => {
     });
   });
 
+  it('searches icons and parses the hits', async () => {
+    const hit = {
+      prefix: 'tabler',
+      name: 'tree',
+      setTitle: 'Tabler Icons',
+      licence: 'MIT',
+      author: 'Paweł Kuna',
+    };
+    const fetchMock = reply(200, { icons: [hit], total: 1 });
+    vi.stubGlobal('fetch', fetchMock);
+    const icons = await api.searchIcons('bäume & co', 20);
+    expect(icons).toEqual([hit]);
+    expect(fetchMock.mock.calls[0]![0]).toBe(
+      '/api/assets/icons/search?q=b%C3%A4ume+%26+co&limit=20'
+    );
+  });
+
+  it('turns a failed icon search into an ApiError', async () => {
+    vi.stubGlobal('fetch', reply(503, { error: 'feature_disabled' }));
+    await expect(api.searchIcons('tree', 20)).rejects.toMatchObject({
+      status: 503,
+      code: 'feature_disabled',
+    });
+  });
+
+  it('fetches an icon as svg text', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        new Response('<svg></svg>', { headers: { 'Content-Type': 'image/svg+xml' } })
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await api.iconSvg('tabler', 'tree')).toBe('<svg></svg>');
+    expect(fetchMock.mock.calls[0]![0]).toBe('/api/assets/icons/tabler/tree.svg');
+  });
+
   it('sends the patch with the version it read', async () => {
     const fetchMock = reply(200, {
       id: 'p1',
@@ -89,7 +125,6 @@ describe('api client', () => {
       account: { id: 'a', email: 'a@example.org', displayName: 'A', isInstanceAdmin: false },
       csrfToken: 'tok-123',
       organisations: [],
-      canCreateOrganisations: false,
     };
     vi.stubGlobal('fetch', reply(200, session));
     await api.getSession();

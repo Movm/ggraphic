@@ -27,6 +27,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@xmldom/xmldom": "^0.9.12",
     "zod": "^4.6.6"
   },
   "devDependencies": {

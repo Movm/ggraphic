@@ -14,3 +14,4 @@ export * from './text/fitText.js';
 export * from './document/migrations.js';
 export * from './document/verifyMigrations.js';
 export * from './template/templateFile.js';
+export * from './svg/sanitizeSvg.js';

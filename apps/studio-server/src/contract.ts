@@ -40,6 +40,18 @@ export const projectSummarySchema = z.object({
   thumbnailUrl: z.string().nullable(),
 });
 
+/** A project in the trash. Without a document or thumbnail: it can only be restored or purged. */
+export const trashItemSchema = z.object({
+  id: z.uuid(),
+  organisationId: z.uuid(),
+  name: z.string(),
+  deletedAt: z.iso.datetime(),
+  /** When the purge may remove it for good. */
+  purgeAt: z.iso.datetime(),
+  /** Whole days until then, rounded up; 0 once it is due. */
+  daysLeft: z.int(),
+});
+
 export const projectSchema = projectSummarySchema.extend({ document: documentSchema });
 
 export const draftBody = z.object({
@@ -101,7 +113,7 @@ export const pickSchema = z.object({
 });
 
 export const configSchema = z.object({
-  features: z.object({ ai: z.boolean(), removeBackground: z.boolean() }),
+  features: z.object({ ai: z.boolean(), removeBackground: z.boolean(), iconify: z.boolean() }),
   limits: z.object({
     uploadBytes: z.int(),
     thumbnailBytes: z.int(),
@@ -129,7 +141,6 @@ const emailSchema = z.string().trim().toLowerCase().pipe(z.email().max(254));
 const displayNameSchema = z.string().trim().min(1).max(100);
 // Length bounds mirror src/auth/passwords.ts.
 const passwordSchema = z.string().min(10).max(256);
-const orgNameSchema = z.string().trim().min(1).max(100);
 
 export const signupBody = z.object({
   email: emailSchema,
@@ -167,38 +178,8 @@ export const sessionStateSchema = z.object({
   /** Send as X-CSRF-Token on every non-GET request. */
   csrfToken: z.string().nullable(),
   organisations: z.array(organisationSchema),
-  /** Whether this account may create organisations. */
+  /** Always false: one organisation per person. Deprecated, kept for older web clients. */
   canCreateOrganisations: z.boolean(),
-});
-
-export const createOrganisationBody = z.object({ name: orgNameSchema });
-
-export const memberSchema = z.object({
-  accountId: z.uuid(),
-  email: z.string(),
-  displayName: z.string(),
-  role: roleSchema,
-});
-
-export const updateMemberBody = z.object({ role: roleSchema });
-
-export const createInvitationBody = z.object({ role: roleSchema.default('editor') });
-
-export const invitationSchema = z.object({
-  id: z.uuid(),
-  role: roleSchema,
-  createdAt: z.iso.datetime(),
-  expiresAt: z.iso.datetime(),
-  allowsSignup: z.boolean(),
-  /** Only in the answer to the create call: the token is not stored. */
-  url: z.string().optional(),
-});
-
-export const invitationInfoSchema = z.object({
-  organisationName: z.string(),
-  role: roleSchema,
-  /** Whether a new account can be created with this link. */
-  allowsSignup: z.boolean(),
 });
 
 // --- Brand packs ------------------------------------------------------------------------
@@ -213,6 +194,24 @@ export const brandSettingsBody = z.object({
   fonts: z.object({ headline: fontFamily, body: fontFamily }),
   logoAssetId: z.uuid().nullable().default(null),
 });
+
+/**
+ * What the brand form sends: three colours; the other five roles and the grounds are derived
+ * by the server (`deriveBrandColors` / `deriveGrounds` in @ggraphic/core).
+ */
+export const brandInputBody = z.object({
+  name: z.string().trim().min(1).max(100),
+  colors: z.strictObject({ primary: hexColor, secondary: hexColor, accent: hexColor }),
+  fonts: z.object({ headline: fontFamily, body: fontFamily }),
+  logoAssetId: z.uuid().nullable().default(null),
+});
+
+/**
+ * The brand PUT: the three-colour body, or the full body older clients still send. From the
+ * full body only the three inputs count; the rest is derived again, so what is stored never
+ * depends on which shape arrived.
+ */
+export const brandWriteBody = z.union([brandInputBody, brandSettingsBody]);
 
 export const fontUploadFields = z.object({
   family: fontFamily,
@@ -240,14 +239,12 @@ export type BrandAsset = z.infer<typeof brandAssetSchema>;
 export type Role = z.infer<typeof roleSchema>;
 export type SessionState = z.infer<typeof sessionStateSchema>;
 export type Organisation = z.infer<typeof organisationSchema>;
-export type Member = z.infer<typeof memberSchema>;
-export type Invitation = z.infer<typeof invitationSchema>;
-export type InvitationInfo = z.infer<typeof invitationInfoSchema>;
 
 export type CreateProjectBody = z.infer<typeof createProjectBody>;
 export type UpdateProjectBody = z.infer<typeof updateProjectBody>;
 export type ProjectSummary = z.infer<typeof projectSummarySchema>;
 export type Project = z.infer<typeof projectSchema>;
+export type TrashItem = z.infer<typeof trashItemSchema>;
 export type DraftBody = z.infer<typeof draftBody>;
 export type PickBody = z.infer<typeof pickBody>;
 export type Pick = z.infer<typeof pickSchema>;

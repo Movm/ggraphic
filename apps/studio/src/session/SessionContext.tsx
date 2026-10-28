@@ -1,42 +1,26 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
- * The logged-in account and the organisation it works in. The organisation choice
- * is remembered per browser (a convenience: the server checks membership anyway).
+ * The logged-in account and the organisation it works in. There is one person
+ * per instance, so the Studio never asks which organisation: an account that
+ * belongs to several (an older instance) works in an organisation it owns first, else in
+ * its first membership (the server lists them oldest first).
  */
 import { Alert } from '@ggraphic/ui';
 import { useQueryClient } from '@tanstack/react-query';
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react';
 
 import { type Organisation, type Session } from '../api/client';
 
 export const SESSION_QUERY_KEY = ['session'] as const;
-const STORAGE_KEY = 'studio.organisation';
 
 export interface LoggedIn {
   session: Session & { account: NonNullable<Session['account']> };
   organisation: Organisation;
-  selectOrganisation: (id: string) => void;
-  /** Reloads the session, e.g. after joining or creating an organisation. */
+  /** Reloads the session. */
   refresh: () => Promise<void>;
 }
 
 const Context = createContext<LoggedIn | null>(null);
-
-function stored(): string | null {
-  try {
-    return window.localStorage.getItem(STORAGE_KEY);
-  } catch {
-    return null;
-  }
-}
-
-function remember(id: string): void {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, id);
-  } catch {
-    // Private mode or blocked storage: the choice lasts for this page only.
-  }
-}
 
 export function SessionProvider({
   session,
@@ -46,22 +30,17 @@ export function SessionProvider({
   children: ReactNode;
 }) {
   const queryClient = useQueryClient();
-  const [chosen, setChosen] = useState<string | null>(stored);
   const organisation =
-    session.organisations.find((o) => o.id === chosen) ?? session.organisations[0];
+    session.organisations.find((o) => o.role === 'owner') ?? session.organisations[0];
 
-  const selectOrganisation = useCallback((id: string) => {
-    remember(id);
-    setChosen(id);
-  }, []);
   const refresh = useCallback(
     () => queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY }),
     [queryClient]
   );
 
   const value = useMemo(
-    () => (organisation ? { session, organisation, selectOrganisation, refresh } : null),
-    [session, organisation, selectOrganisation, refresh]
+    () => (organisation ? { session, organisation, refresh } : null),
+    [session, organisation, refresh]
   );
   if (!value) return <NoOrganisation />;
   return <Context.Provider value={value}>{children}</Context.Provider>;
@@ -71,7 +50,8 @@ function NoOrganisation() {
   return (
     <main className="ui-root studio-standalone">
       <Alert tone="danger">
-        Your account is not a member of any organisation. Ask an owner for an invitation link.
+        Your account does not belong to an organisation yet. Reload the page; if this stays, the
+        instance needs an update.
       </Alert>
     </main>
   );

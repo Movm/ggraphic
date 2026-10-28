@@ -6,6 +6,7 @@ import type { Express } from 'express';
 import type pg from 'pg';
 import request from 'supertest';
 import { expect } from 'vitest';
+import { hashPassword } from '../src/auth/passwords.ts';
 import { type Config, loadConfig } from '../src/config.ts';
 
 export const TEST_SETUP_TOKEN = 'test-setup-token-0123456789';
@@ -109,35 +110,37 @@ export async function setupAdmin(app: Express, email = 'admin@example.org'): Pro
   return client(agent, res.body as SessionBody);
 }
 
-/** A new account that joined `orgId` through an invitation created by `owner`. */
-export async function invite(
+/** A new account with a membership of `orgId`, logged in. */
+export async function memberOf(
   app: Express,
-  owner: Client,
+  pool: pg.Pool,
   orgId: string,
   email: string,
   role: 'owner' | 'editor' = 'editor'
 ): Promise<Client> {
-  const inv = await owner.post(`/api/orgs/${orgId}/invitations`).send({ role });
-  expect(inv.status).toBe(201);
-  const token = String(inv.body.url).split('/').pop();
+  const { rows } = await pool.query<{ id: string }>(
+    'INSERT INTO accounts (email, display_name, password_hash) VALUES ($1, $2, $3) RETURNING id',
+    [email, email.split('@')[0], await hashPassword(PASSWORD)]
+  );
+  await pool.query(
+    'INSERT INTO memberships (organisation_id, account_id, role) VALUES ($1, $2, $3)',
+    [orgId, rows[0]!.id, role]
+  );
   const agent = request.agent(app);
-  const res = await agent
-    .post(`/api/auth/invitations/${token}/accept`)
-    .send({ email, displayName: email.split('@')[0], password: PASSWORD });
-  expect(res.status).toBe(201);
+  const res = await agent.post('/api/auth/login').send({ email, password: PASSWORD });
+  expect(res.status).toBe(200);
   return client(agent, res.body as SessionBody);
 }
 
-/** A second organisation, created by the admin, with `email` as its only owner. */
+/** A second organisation with `email` as its only owner. */
 export async function otherOrganisation(
   app: Express,
-  admin: Client,
+  pool: pg.Pool,
   email: string
 ): Promise<Client> {
-  const org = await admin.post('/api/orgs').send({ name: 'Other' });
-  expect(org.status).toBe(201);
-  const member = await invite(app, admin, org.body.id as string, email, 'owner');
-  // The admin created it and is owner too; leave so only `email` remains.
-  await admin.delete(`/api/orgs/${org.body.id}/members/${admin.accountId}`).expect(204);
-  return { ...member, orgId: org.body.id as string };
+  const { rows } = await pool.query<{ id: string }>(
+    "INSERT INTO organisations (name) VALUES ('Other') RETURNING id"
+  );
+  const orgId = rows[0]!.id;
+  return { ...(await memberOf(app, pool, orgId, email, 'owner')), orgId };
 }

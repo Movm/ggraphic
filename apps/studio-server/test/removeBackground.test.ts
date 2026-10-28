@@ -19,7 +19,7 @@ const cutOut = () =>
 
 describe('anonymous', () => {
   it('needs a session', async () => {
-    const config = testConfig({ features: { removeBackground: rembg } });
+    const config = testConfig({ features: { removeBackground: rembg, iconify: null } });
     const app = createApp({ config, db: createDb(config.databaseUrl).db });
     await request(app).post(PATH).attach('file', PNG_1X1, 'a.png').expect(401);
   });
@@ -63,7 +63,7 @@ describe.skipIf(!hasDb)('POST /api/images/remove-background (Postgres)', () => {
     return { post: () => agent.post(PATH).set('x-csrf-token', csrf) };
   }
 
-  const on = { features: { removeBackground: rembg } };
+  const on = { features: { removeBackground: rembg, iconify: null } };
 
   it('forwards the image to rembg and returns the PNG', async () => {
     const fetchMock = vi.fn<typeof fetch>().mockImplementation(() => Promise.resolve(cutOut()));
@@ -84,7 +84,7 @@ describe.skipIf(!hasDb)('POST /api/images/remove-background (Postgres)', () => {
   it('answers feature_disabled when no rembg is configured', async () => {
     const fetchMock = vi.fn<typeof fetch>();
     const res = await (
-      await loggedIn({ features: { removeBackground: null } }, fetchMock)
+      await loggedIn({ features: { removeBackground: null, iconify: null } }, fetchMock)
     )
       .post()
       .attach('file', PNG_1X1, 'a.png')

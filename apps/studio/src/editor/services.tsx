@@ -140,6 +140,14 @@ export function resetSessionUploads(): void {
   setSessionUploads([]);
 }
 
+// ── Icon search ────────────────────────────────────────────────────────────
+
+const ICON_SEARCH_LIMIT = 60;
+
+/** Where the browser shows an icon from: the server's proxy, never the third party. */
+const iconPreviewUrl = (prefix: string, name: string) =>
+  `/api/assets/icons/${encodeURIComponent(prefix)}/${encodeURIComponent(name)}.svg`;
+
 // ── The services object ────────────────────────────────────────────────────
 
 let uploadsOrganisation: string | null = null;
@@ -147,12 +155,15 @@ let uploadsOrganisation: string | null = null;
 export function createStudioServices({
   ai,
   removeBackground = false,
+  iconify = false,
   organisationId,
   logo = null,
 }: {
   ai: boolean;
   /** `features.removeBackground` of `GET /api/config`. */
   removeBackground?: boolean;
+  /** `features.iconify` of `GET /api/config`. */
+  iconify?: boolean;
   organisationId: string;
   /** The organisation's logo, offered first in the Uploads tab. */
   logo?: { src: string; label: string } | null;
@@ -197,6 +208,15 @@ export function createStudioServices({
             const base = image instanceof File ? image.name.replace(/\.[^.]+$/, '') : 'image';
             const file = new File([png], `${base}-cutout.png`, { type: 'image/png' });
             return { file, objectUrl: URL.createObjectURL(file) };
+          },
+        }
+      : {}),
+    ...(iconify
+      ? {
+          iconSearch: {
+            search: (query, signal) => api.searchIcons(query, ICON_SEARCH_LIMIT, signal),
+            svg: (prefix, name) => api.iconSvg(prefix, name),
+            previewUrl: (prefix, name) => iconPreviewUrl(prefix, name),
           },
         }
       : {}),
