@@ -3,10 +3,12 @@
  * The host services the Studio hands the editor (`CanvasEditorProvider`):
  * uploads go to `POST /api/orgs/:orgId/uploads`, the organisation's logo is
  * offered in the Uploads tab, downloads are named `ggraphic-…`, and the
- * AI draft tab appears only when the server has AI turned on.
+ * AI draft tab appears only when the server has AI turned on. The background
+ * removal tool appears only when the server has a rembg service configured.
+ * The other tools need no service: QR code, blob, gradient text and text path.
  *
  * Not supplied, so the editor runs on its fallbacks: stock photos, Unsplash
- * (no key in this version), AI images, background removal, gallery autosave
+ * (no key in this version), AI images, gallery autosave
  * (`imageShares`: the Studio saves the document itself), print, carousel.
  */
 import { type CanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
@@ -144,10 +146,13 @@ let uploadsOrganisation: string | null = null;
 
 export function createStudioServices({
   ai,
+  removeBackground = false,
   organisationId,
   logo = null,
 }: {
   ai: boolean;
+  /** `features.removeBackground` of `GET /api/config`. */
+  removeBackground?: boolean;
   organisationId: string;
   /** The organisation's logo, offered first in the Uploads tab. */
   logo?: { src: string; label: string } | null;
@@ -181,6 +186,20 @@ export function createStudioServices({
     imageUrls: studioImageUrls,
     fileDelivery: { ...browserFileDelivery, filenamePrefix: 'ggraphic', shareTitle: 'ggraphic' },
     unsplashUtmSource: 'ggraphic',
+    qrPreviewUrl: 'https://example.org',
+    ...(removeBackground
+      ? {
+          removeBackgroundFromImage: async (image: File | Blob) => {
+            const png = await api.removeBackground(
+              image,
+              image instanceof File ? image.name : 'image'
+            );
+            const base = image instanceof File ? image.name.replace(/\.[^.]+$/, '') : 'image';
+            const file = new File([png], `${base}-cutout.png`, { type: 'image/png' });
+            return { file, objectUrl: URL.createObjectURL(file) };
+          },
+        }
+      : {}),
     ...(ai
       ? {
           aiDraft: {

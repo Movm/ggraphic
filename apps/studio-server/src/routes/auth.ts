@@ -38,6 +38,7 @@ export interface AuthLimiters {
   ip: FixedWindowLimiter;
   /** AI drafts per account: each one spends the instance's provider budget. */
   ai: FixedWindowLimiter;
+  removeBackground: FixedWindowLimiter;
 }
 
 export function createAuthLimiters(): AuthLimiters {
@@ -45,6 +46,7 @@ export function createAuthLimiters(): AuthLimiters {
     email: new FixedWindowLimiter({ limit: 10, windowMs: WINDOW_MS }),
     ip: new FixedWindowLimiter({ limit: 30, windowMs: WINDOW_MS }),
     ai: new FixedWindowLimiter({ limit: 30, windowMs: WINDOW_MS }),
+    removeBackground: new FixedWindowLimiter({ limit: 30, windowMs: WINDOW_MS }),
   };
 }
 

@@ -48,9 +48,13 @@ All settings are environment variables in `.env`; `.env.example` documents each 
 
 Owners set their organisation's brand on the Brand page: name, the eight colour roles, the grounds a page can sit on, headline and body fonts, a logo (PNG or WebP; SVG is refused) and font files (WOFF2, TTF, OTF) with a required licence note that is stored with the file. Make sure you may use a font on a web server before uploading it. The editor opens every project with its organisation's brand; without one it uses Studio's own colours.
 
+### Tools that need an outside service
+
+Studio's tools that call an outside service all follow one rule: a tool is **on when its key or URL is set**. `<TOOL>_ENABLED=false` switches a configured tool off (for example `AI_ENABLED=false`), and `<TOOL>_ENABLED=true` without its key or URL stops the server at start with an error, so a typo does not leave you with a silently missing tool. Tools whose service is not configured are hidden in the editor, and their routes answer `{"error":"feature_disabled"}` (the AI routes keep `ai_disabled`). `GET /api/config` tells the app which tools are on, as booleans only; keys and hosts never leave the server.
+
 ### AI drafts
 
-AI drafts are off unless `OPENAI_BASE_URL`, `OPENAI_API_KEY` and `OPENAI_MODEL` are all set. The app asks `GET /api/config` and hides AI features when they are off. Studio calls `<OPENAI_BASE_URL>/chat/completions` with JSON mode (`response_format: {"type": "json_object"}`), so the model must support JSON output.
+AI drafts are off unless `OPENAI_BASE_URL`, `OPENAI_API_KEY` and `OPENAI_MODEL` are all set (or `AI_ENABLED=false`). The app asks `GET /api/config` and hides AI features when they are off. Studio calls `<OPENAI_BASE_URL>/chat/completions` with JSON mode (`response_format: {"type": "json_object"}`), so the model must support JSON output.
 
 Mistral:
 
@@ -79,6 +83,19 @@ OPENAI_MODEL=<model name from your LiteLLM config>
 ```
 
 The API key stays on the server: it is never sent to the browser and never written to the logs. Briefing texts do go to the provider you configure, so pick one whose data processing you accept.
+
+### Remove background
+
+The editor's "remove background" tool is on when `REMBG_URL` points at a [rembg](https://github.com/danielgatis/rembg) server (`rembg s`, MIT). Studio posts the image to `<REMBG_URL>/api/remove` and returns the PNG; `REMBG_TIMEOUT_MS` (default 60000) bounds one call. The URL is operator configuration: the route only takes image bytes from users, never a URL. Images sent for cutting leave Studio for the rembg server, so keep it on your own network, without a public port and without outbound access once its model is downloaded.
+
+Studio does not ship a rembg container. rembg's README lists `bria-rmbg` as the default model and says its BRIA licence requires a paid agreement for commercial use; it also says model weights carry their own licences, independent of rembg's MIT licence. Its Dockerfile runs `rembg d bria-rmbg`, so the published image carries those weights (checked against rembg's `main` branch, October 2026). Run your own rembg and check the licence of the model it serves; the README documents `-m u2net` for the command line, but how the server picks its model is not something Studio controls or that I verified. Example with the Python package, then `REMBG_URL=http://host.docker.internal:7000`:
+
+```bash
+pip install "rembg[cpu,cli]"
+rembg s --host 0.0.0.0 --port 7000
+```
+
+Uploads for this tool are limited by `UPLOAD_MAX_BYTES`; SVG is refused.
 
 ## Backups
 
