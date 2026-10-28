@@ -39,6 +39,9 @@ export interface AuthLimiters {
   /** AI drafts per account: each one spends the instance's provider budget. */
   ai: FixedWindowLimiter;
   removeBackground: FixedWindowLimiter;
+  /** Icon searches and icon fetches (one search shows up to 64 previews) per account. */
+  iconifySearch: FixedWindowLimiter;
+  iconifySvg: FixedWindowLimiter;
 }
 
 export function createAuthLimiters(): AuthLimiters {
@@ -47,6 +50,8 @@ export function createAuthLimiters(): AuthLimiters {
     ip: new FixedWindowLimiter({ limit: 30, windowMs: WINDOW_MS }),
     ai: new FixedWindowLimiter({ limit: 30, windowMs: WINDOW_MS }),
     removeBackground: new FixedWindowLimiter({ limit: 30, windowMs: WINDOW_MS }),
+    iconifySearch: new FixedWindowLimiter({ limit: 120, windowMs: WINDOW_MS }),
+    iconifySvg: new FixedWindowLimiter({ limit: 3000, windowMs: WINDOW_MS }),
   };
 }
 

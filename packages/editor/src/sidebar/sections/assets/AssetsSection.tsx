@@ -12,6 +12,7 @@ import type { ChartInstance, ChartType } from '@ggraphic/editor/utils/chartUtils
 import type { FrameClipType, FrameInstance } from '@ggraphic/editor/utils/frameUtils';
 import type { IllustrationInstance } from '@ggraphic/editor/utils/illustrations/types';
 import type { StickerRef } from '@ggraphic/schema';
+import type { ExternalIconPayload } from '@ggraphic/editor/utils/externalIcons';
 
 export interface ExtendedAssetsSectionProps {
   recommendedAssetIds?: string[];
@@ -35,6 +36,8 @@ export interface ExtendedAssetsSectionProps {
   onRemoveCircleBadge?: (id: string) => void;
   selectedIcons?: string[];
   onIconToggle?: (iconId: string, selected: boolean) => void;
+  /** Places an icon from the host's icon search, with a copy of its SVG (`iconSearch` service). */
+  onAddExternalIcon?: (iconId: string, payload: ExternalIconPayload) => void;
   maxIconSelections?: number;
   /** The host kinds this editor can add (`registerElementKind` with `add`). */
   addableHostKinds?: readonly string[];

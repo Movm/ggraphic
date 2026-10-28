@@ -321,6 +321,7 @@
     "./utils/emoji/emojiCatalog": "./src/utils/emoji/emojiCatalog.ts",
     "./utils/ensureFontsReady": "./src/utils/ensureFontsReady.ts",
     "./utils/expandImage": "./src/utils/expandImage.ts",
+    "./utils/externalIcons": "./src/utils/externalIcons.ts",
     "./utils/filterUtils": "./src/utils/filterUtils.ts",
     "./utils/followStage": "./src/utils/followStage.ts",
     "./utils/fontMarkSupport": "./src/utils/fontMarkSupport.ts",

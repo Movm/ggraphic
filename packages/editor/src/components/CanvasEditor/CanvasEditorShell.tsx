@@ -84,8 +84,7 @@ import { SidebarPanel } from '@ggraphic/editor/sidebar/SidebarPanel';
 import { SidebarTabBar } from '@ggraphic/editor/sidebar/SidebarTabBar';
 import { LayersSection } from '@ggraphic/editor/sidebar/sections/LayersSection';
 import { collectAltTextPages as collectCapturedAltTextPages } from '@ggraphic/editor/utils/collectAltTextPages';
-import { photoCreditLine } from '@ggraphic/editor/utils/photoCredit';
-import { pagePhotoCredits } from '@ggraphic/editor/utils/photoCredits';
+import { creditLines } from '@ggraphic/editor/utils/photoCredits';
 import { scrollBehavior } from '@ggraphic/editor/utils/scrollBehavior';
 import { CanvasAnnouncer } from '@ggraphic/editor/components/CanvasAnnouncer';
 import { CanvasContextMenu } from '@ggraphic/editor/components/CanvasContextMenu/CanvasContextMenu';
@@ -1268,7 +1267,7 @@ function CanvasEditorInner({
 
   const noop = useCallback(() => {}, []);
   const getPhotoCredit = useCallback(
-    () => photoCreditLine(serializeDeck(pagesDoc).flatMap((page) => pagePhotoCredits(page.state))),
+    () => creditLines(serializeDeck(pagesDoc).map((page) => page.state)),
     [pagesDoc]
   );
   // Als String, damit Notiz-Tippen (neues `pages`) die Leiste nicht neu baut

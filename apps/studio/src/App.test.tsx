@@ -40,7 +40,7 @@ describe('App', () => {
         }
         if (url === '/api/config') {
           return json(200, {
-            features: { ai: false, removeBackground: false },
+            features: { ai: false, removeBackground: false, iconify: false },
             limits: { uploadBytes: 1e7, thumbnailBytes: 1e6, documentBytes: 5e6 },
             uploadTypes: ['image/png'],
           });
