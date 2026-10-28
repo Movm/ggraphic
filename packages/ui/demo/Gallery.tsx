@@ -9,6 +9,7 @@ import {
   ArrowUpIcon,
   AuthForm,
   AuthLayout,
+  Avatar,
   Badge,
   Button,
   Card,
@@ -17,6 +18,7 @@ import {
   CardText,
   CardTitle,
   Checkbox,
+  ChipGroup,
   Divider,
   EyeIcon,
   FeatureGrid,
@@ -26,7 +28,9 @@ import {
   PasswordField,
   PillList,
   ProgressSteps,
+  PromptComposer,
   PromptField,
+  PromptHero,
   Section,
   Select,
   SideRail,
@@ -36,6 +40,8 @@ import {
   TabsList,
   TabsTrigger,
   TextField,
+  Tile,
+  TileList,
   TopNav,
   Wordmark,
 } from '../src/index.js';
@@ -63,6 +69,7 @@ const FOOTER_LINKS = [
 
 export function Gallery() {
   const [mode, setMode] = useState('signup');
+  const [format, setFormat] = useState('poster');
   return (
     <div className="ui-root">
       <Hero
@@ -167,6 +174,40 @@ export function Gallery() {
             submitLabel="Senden"
           />
         </div>
+      </Block>
+
+      <Block title="Start page: prompt, chips, tiles">
+        <div style={row}>
+          <Avatar name="Anna" label="Konto" />
+          <Avatar name="Ben" label="Konto" size="lg" />
+        </div>
+        <PromptHero title="Was willst du erzählen?" footer="Die KI gestaltet in eurer Marke.">
+          <PromptComposer
+            label="Beschreibe deine Grafik"
+            placeholder="z. B. Plakat für unsere Baumpflanzaktion"
+            submitLabel="Gestalten"
+            options={
+              <ChipGroup
+                legend="Format"
+                name="gallery-format"
+                value={format}
+                onChange={setFormat}
+                options={[
+                  { value: 'poster', label: 'Plakat' },
+                  { value: 'post', label: 'Social Post', detail: '1080 × 1080' },
+                  { value: 'story', label: 'Story' },
+                ]}
+              />
+            }
+          />
+        </PromptHero>
+        <TileList layout="row" aria-label="Zuletzt bearbeitet">
+          {['Aktionstag', 'Demo-Aufruf', 'Sommerfest'].map((name) => (
+            <li key={name}>
+              <Tile href="#tile" media={<img src={DOTS} alt="" />} title={name} meta="vor 2 Std." />
+            </li>
+          ))}
+        </TileList>
       </Block>
 
       <Block title="Badges, notices, tabs, steps">

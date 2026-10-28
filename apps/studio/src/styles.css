@@ -412,7 +412,7 @@ body {
 }
 .studio-topnav__org {
   font-weight: var(--ui-weight-bold);
-  color: var(--ui-color-accent);
+  color: var(--ui-color-text);
 }
 /* A native select in the kit's field look, compact (the kit's Select cannot be driven natively). */
 .studio-select {
@@ -613,59 +613,9 @@ body {
 
 /* ── Start page ─────────────────────────────────────────────────────────── */
 
-.studio-start__hero {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--ui-space-4);
-  width: 100%;
-  max-width: 760px;
-  margin: 4vh auto var(--ui-space-12);
-}
-.studio-start__title {
-  margin: 0;
-  font-size: var(--ui-text-title);
-  font-weight: var(--ui-weight-bold);
-  letter-spacing: var(--ui-tracking-title);
-  line-height: 1.05;
-  text-align: center;
-}
-.studio-composer {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-space-3);
-  width: 100%;
-  padding: var(--ui-space-4);
-  border: 1.5px solid var(--ui-color-border-control);
-  border-radius: var(--ui-radius-lg);
-  background: var(--ui-color-surface);
-  box-shadow: var(--ui-shadow-md);
-}
-.studio-composer:focus-within {
-  border-color: var(--ui-color-accent);
-}
-.studio-composer__input {
-  width: 100%;
-  min-height: 84px;
-  border: none;
-  background: transparent;
-  color: var(--ui-color-text);
-  font: inherit;
-  font-size: var(--ui-text-lg);
-  resize: vertical;
-}
-.studio-composer__input::placeholder {
-  color: var(--ui-color-text-muted);
-}
-.studio-composer__input:focus {
-  outline: none;
-}
-.studio-composer__row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ui-space-3);
+.studio-shell--flush .ui-shell__main {
+  padding: 0;
+  background: var(--ui-color-bg);
 }
 .studio-chips {
   display: flex;
@@ -707,11 +657,8 @@ body {
   outline-offset: var(--ui-focus-offset);
 }
 .studio-start__hint {
-  margin: 0;
-  max-width: 620px;
-  color: var(--ui-color-text-muted);
+  margin: 0 0 var(--ui-space-4);
   font-size: var(--ui-text-sm);
-  text-align: center;
 }
 .studio-examples {
   display: flex;
@@ -725,55 +672,53 @@ body {
 .studio-example {
   height: auto;
   padding-block: var(--ui-space-2);
+  max-width: 100%;
   text-align: left;
+  white-space: normal;
   font-weight: var(--ui-weight-regular);
 }
-.studio-recent {
-  width: 100%;
-}
-.studio-recent__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-}
-.studio-recent__list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: var(--ui-space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.studio-recent__item {
+.studio-start__body {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  color: inherit;
-  text-decoration: none;
+  gap: clamp(3.5rem, 7vw, 5.5rem);
+  padding: clamp(3rem, 6vw, 5rem) var(--ui-gutter) var(--ui-space-16);
 }
-.studio-recent__item:focus-visible {
-  outline: var(--ui-focus-ring);
-  outline-offset: var(--ui-focus-offset);
+.studio-start__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-6);
 }
-.studio-recent__thumb {
+.studio-start__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ui-space-2) var(--ui-space-4);
+}
+.studio-start__head .studio-muted {
+  margin: 0;
+}
+.studio-start__heading {
+  margin: 0;
+  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-weight: var(--ui-weight-black);
+  letter-spacing: var(--ui-tracking-title);
+  line-height: 1;
+}
+.studio-template-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  aspect-ratio: 1;
-  overflow: hidden;
-  border: 1px solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-surface);
+  width: 100%;
+  height: 100%;
+  background: var(--ui-color-bg-subtle);
+  color: var(--ui-color-accent);
+  font-size: 2.5rem;
 }
-.studio-recent__thumb img {
-  max-width: 100%;
-  max-height: 100%;
-}
-.studio-recent__name {
-  overflow: hidden;
-  font-size: var(--ui-text-sm);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+@media (max-width: 36rem) {
+  .studio-example {
+    width: 100%;
+  }
 }
 
 /* ── Editor page ────────────────────────────────────────────────────────── */
