@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import { Alert, Button } from '@ggraphic/ui';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 
@@ -26,13 +27,13 @@ const loading = (label: string) => (
 
 function unreachable(retry: () => void) {
   return (
-    <main className="studio-page">
-      <div role="alert" className="studio-error">
-        <p>The Studio server is not reachable.</p>
-        <button type="button" className="studio-button" onClick={retry}>
+    <main className="ui-root studio-standalone">
+      <Alert tone="danger">
+        <p className="studio-alert-text">The Studio server is not reachable.</p>
+        <Button variant="outline" size="sm" onClick={retry}>
           Try again
-        </button>
-      </div>
+        </Button>
+      </Alert>
     </main>
   );
 }

@@ -1,0 +1,8 @@
+/* SPDX-License-Identifier: MPL-2.0 */
+/*
+ * Bricolage Grotesque (SIL OFL 1.1), variable weight and optical size, from
+ * the self-hostable @fontsource-variable package: no request to a font CDN.
+ * Optional: a host that ships its own face skips this file and sets
+ * --ui-font-display / --ui-font-body.
+ */
+@import '@fontsource-variable/bricolage-grotesque/opsz.css';

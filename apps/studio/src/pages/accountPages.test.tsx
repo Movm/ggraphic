@@ -4,6 +4,7 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { axe } from 'vitest-axe';
 
 import { type Role, type Session } from '../api/client';
 import { studioBrand } from '../brand';
@@ -58,7 +59,23 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+// jsdom has no layout or colours: contrast is measured by the kit's token review instead.
+const axeOptions = { rules: { 'color-contrast': { enabled: false } } };
+
 describe('AuthPage', () => {
+  it.each([
+    ['login', anonymous()],
+    ['registration', anonymous({ registrationOpen: true })],
+    ['setup', anonymous({ setupRequired: true })],
+  ])('has no axe violations on the %s screen', async (_name, session) => {
+    const { container } = render(
+      <QueryClientProvider client={new QueryClient()}>
+        <AuthPage session={session} />
+      </QueryClientProvider>
+    );
+    expect(await axe(container, axeOptions)).toHaveNoViolations();
+  });
+
   it('sets up the first account on an empty instance', async () => {
     const calls = stubServer((method, url) =>
       method === 'POST' && url === '/api/auth/setup'
@@ -123,7 +140,8 @@ describe('MembersPage', () => {
     });
     const user = userEvent.setup();
     renderWith(<MembersPage />);
-    const list = await screen.findAllByRole('listitem');
+    await screen.findByText('Ed');
+    const list = within(screen.getByRole('main')).getAllByRole('listitem');
     expect(within(list[1]!).getByText('Ed')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: 'Create invitation link' }));
@@ -224,6 +242,15 @@ describe('BrandPage', () => {
     expect(screen.getByRole('button', { name: 'Save brand' })).toBeDisabled();
   });
 
+  it('has no axe violations on the brand page', async () => {
+    stubServer((method, url) =>
+      url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET' ? json(200, empty) : undefined
+    );
+    const { container } = renderWith(<BrandPage />);
+    await screen.findByLabelText('Brand name');
+    expect(await axe(container, axeOptions)).toHaveNoViolations();
+  });
+
   it('requires a licence before a font can be uploaded', async () => {
     stubServer((method, url) =>
       url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET' ? json(200, empty) : undefined
@@ -237,6 +264,26 @@ describe('BrandPage', () => {
     expect(button).toBeDisabled();
     await user.type(screen.getByLabelText('Licence (required)'), 'OFL-1.1');
     expect(button).toBeEnabled();
+  });
+
+  it('shows the server reason next to the field when a logo is refused', async () => {
+    const message = 'Logos must be PNG or WebP. SVG is not accepted.';
+    stubServer((method, url) => {
+      if (url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET') return json(200, empty);
+      if (url === `/api/orgs/${TEST_ORG}/brand-pack/logo` && method === 'POST') {
+        return json(415, { error: 'unsupported_media_type', message });
+      }
+      return undefined;
+    });
+    // The picker's accept filter hides SVG, but "All files" still lets one through.
+    const user = userEvent.setup({ applyAccept: false });
+    renderWith(<BrandPage />);
+    const input = await screen.findByLabelText(/Upload a logo/);
+    await user.upload(input, new File(['<svg/>'], 'logo.svg', { type: 'image/svg+xml' }));
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(message);
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(input.getAttribute('aria-describedby')).toContain(alert.id);
   });
 
   it('tells editors that only owners edit the brand', async () => {
