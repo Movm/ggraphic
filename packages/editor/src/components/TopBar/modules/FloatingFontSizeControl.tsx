@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useMessages } from '@ggraphic/editor/i18n/messages';
 import React from 'react';
-import { FaPlus, FaMinus } from 'react-icons/fa';
+import { PiPlus, PiMinus } from 'react-icons/pi';
 
 const fontBtn =
   'touch-target size-7 rounded-md border-none bg-transparent cursor-pointer flex items-center justify-center text-[var(--editor-text-secondary)] transition-colors duration-150 hover:enabled:bg-[var(--editor-surface-hover)] hover:enabled:text-[var(--editor-active-fg)] disabled:opacity-30 disabled:cursor-not-allowed';
@@ -35,7 +35,7 @@ export function FloatingFontSizeControl({
         aria-label={t.topBar.fontSmaller}
         type="button"
       >
-        <FaMinus size={10} />
+        <PiMinus size={10} />
       </button>
       <span className="text-[13px] font-semibold text-[var(--editor-text)] min-w-8 text-center tabular-nums">
         {Math.round(fontSize)}
@@ -47,7 +47,7 @@ export function FloatingFontSizeControl({
         aria-label={t.topBar.fontLarger}
         type="button"
       >
-        <FaPlus size={10} />
+        <PiPlus size={10} />
       </button>
     </div>
   );

@@ -3,7 +3,7 @@ import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { CustomColorSwatch } from '@ggraphic/editor/components/CustomColorSwatch';
 import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { cn } from '@ggraphic/editor/utils/cn';
-import { FaTrash, FaCopy } from 'react-icons/fa';
+import { PiTrash, PiCopy } from 'react-icons/pi';
 
 import { SidebarSlider } from '../components/SidebarSlider.js';
 import {
@@ -57,7 +57,7 @@ export function IllustrationSettings({
             onClick={() => onDuplicateIllustration(selectedIllustration.id)}
             title={t.commands.duplicate}
           >
-            <FaCopy size={12} />
+            <PiCopy size={12} />
           </button>
         )}
         <button
@@ -65,7 +65,7 @@ export function IllustrationSettings({
           onClick={() => onRemoveIllustration(selectedIllustration.id)}
           title="Entfernen"
         >
-          <FaTrash size={12} />
+          <PiTrash size={12} />
         </button>
       </div>
 

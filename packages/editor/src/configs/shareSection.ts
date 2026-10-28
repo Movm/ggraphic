@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 import { stripInlineMarks } from '@ggraphic/schema';
-import { FaShare } from 'react-icons/fa';
+import { PiShareFat } from 'react-icons/pi';
 
 import {
   GenericShareSection,
@@ -17,7 +17,7 @@ import type { SectionConfig } from '@ggraphic/editor/configs/types';
 
 export const shareTab = {
   id: 'share' as const,
-  icon: FaShare,
+  icon: PiShareFat,
   get label() {
     return messages().shell.share;
   },
