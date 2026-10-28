@@ -9,7 +9,9 @@ export const quoteFont = () => `${activeBrand().fonts.quoteEmphasis}, Georgia, s
 
 /** The fallbacks behind a bound font role's family, the same as above. */
 export const fontFallbackFor = (role: string) =>
-  role === 'quoteShort' || role === 'quoteEmphasis' ? 'Georgia, serif' : 'Arial, sans-serif';
+  role === 'quoteShort' || role === 'quoteEmphasis' || role === 'serif'
+    ? 'Georgia, serif'
+    : 'Arial, sans-serif';
 
 /** The stack for a bound font role: the brand's family, then the same fallbacks as above. */
 export const fontStackFor = (role: BrandFontRole, family: string) =>
