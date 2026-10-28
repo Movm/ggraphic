@@ -149,6 +149,7 @@ export const en: Messages = {
   errors: {
     canvasError: 'Canvas error',
     canvasConfigLoad: 'Failed to load canvas config',
+    unknownCanvasType: (id) => `Unknown canvas type: ${id}`,
     exportSlidesPartial: 'Not all slides could be exported',
     exportPagesPartial: 'Not all pages could be exported',
     slideExport: (n) => `Slide ${n} could not be exported`,
@@ -557,6 +558,7 @@ export const en: Messages = {
       legendRight: 'Right',
       legendBottom: 'Bottom',
       seriesName: (n: number) => `Name of series ${n}`,
+      valueOf: (name: string) => `Value ${name}`,
       removeSeries: (name: string) => `Remove ${name}`,
     },
     text: {

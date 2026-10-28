@@ -38,6 +38,81 @@ describe('the catalogue', () => {
     expect(problems[1]!.reason).not.toBe(problems[0]!.reason);
   });
 
+  describe('asset references', () => {
+    /** The pack's first template with one more element on its first page. */
+    const withElement = (key: string, el: Record<string, unknown>) => {
+      const copy = structuredClone(valid) as {
+        id: string;
+        pages: { state: Record<string, unknown> }[];
+      };
+      copy.id = 'with-asset';
+      const state = copy.pages[0]!.state;
+      state[key] = [...((state[key] as unknown[] | undefined) ?? []), el];
+      return copy;
+    };
+    const image = (src: string, bind?: unknown) => ({
+      id: 'extra',
+      src,
+      fileName: '',
+      x: 0.1,
+      y: 0.1,
+      width: 0.2,
+      height: 0.2,
+      rotation: 0,
+      scale: 1,
+      opacity: 1,
+      ...(bind ? { bind } : {}),
+    });
+
+    it('rejects a src that is not in the pack manifest, with the field and the path', () => {
+      const { entries, problems } = buildCatalog([
+        { source: 'pack', files: [withElement('userImageInstances', image('/assets/stray.png'))] },
+      ]);
+      expect(entries).toEqual([]);
+      expect(problems).toHaveLength(1);
+      expect(problems[0]).toMatchObject({ source: 'pack', id: 'with-asset' });
+      expect(problems[0]!.reason).toMatch(/extra\.src/);
+      expect(problems[0]!.reason).toMatch(/\/assets\/stray\.png/);
+      expect(problems[0]!.reason).toMatch(/manifest/);
+    });
+
+    it('rejects an imageSrc on a frame the same way', () => {
+      const frame = {
+        id: 'fr',
+        imageSrc: '/assets/stray.png',
+        x: 0,
+        y: 0,
+        width: 0.5,
+        height: 0.5,
+      };
+      const { entries, problems } = buildCatalog([
+        { source: 'pack', files: [withElement('frameInstances', frame)] },
+      ]);
+      expect(entries).toEqual([]);
+      expect(problems[0]!.reason).toMatch(/fr\.imageSrc/);
+    });
+
+    it('lets the logo through: its src is bound to the brand and empty in the file', () => {
+      const { entries, problems } = buildCatalog([
+        {
+          source: 'pack',
+          files: [withElement('userImageInstances', image('/assets/x.png', { src: 'brand.logo' }))],
+        },
+      ]);
+      expect(problems).toEqual([]);
+      expect(entries).toHaveLength(1);
+    });
+
+    it('accepts a src that the manifest lists', () => {
+      const { entries, problems } = buildCatalog(
+        [{ source: 'pack', files: [withElement('userImageInstances', image('/assets/ok.png'))] }],
+        new Set(['/assets/ok.png'])
+      );
+      expect(problems).toEqual([]);
+      expect(entries).toHaveLength(1);
+    });
+  });
+
   it('a duplicate id keeps the first', () => {
     const second = { ...(valid as object), version: 7 };
     const { entries, problems } = buildCatalog([
@@ -94,14 +169,19 @@ describe('problems are warned once', () => {
     vi.resetModules();
     vi.doMock('@ggraphic/templates-open', () => ({
       OPEN_TEMPLATES: [{ id: 'broken' }],
+      OPEN_TEMPLATE_MANIFEST: { assets: [] },
     }));
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const fresh = await import('./catalog');
-    fresh.studioCatalog();
-    fresh.studioCatalog();
-    fresh.templatesFor('post-portrait');
-    expect(warn).toHaveBeenCalledTimes(1);
-    expect(String(warn.mock.calls[0]![0])).toContain('broken');
-    vi.doUnmock('@ggraphic/templates-open');
+    try {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const fresh = await import('./catalog');
+      fresh.studioCatalog();
+      fresh.studioCatalog();
+      fresh.templatesFor('post-portrait');
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(String(warn.mock.calls[0]![0])).toContain('broken');
+    } finally {
+      vi.doUnmock('@ggraphic/templates-open');
+      vi.resetModules();
+    }
   });
 });

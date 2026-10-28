@@ -8,10 +8,8 @@ import { api, ApiError, type ProjectSummary } from '../api/client';
 import { PROJECTS_QUERY_KEY, projectsKey } from '../projects/projectsKey';
 import { editorPath, navigate, TRASH_PATH } from '../router';
 import { useLoggedIn } from '../session/SessionContext';
+import { apiErrorText } from '../ui/errorText';
 import { toast } from '../ui/toast';
-
-const errorText = (err: unknown) =>
-  err instanceof ApiError ? err.message : 'Something went wrong.';
 
 const dateFormat = new Intl.DateTimeFormat('en', { dateStyle: 'medium', timeStyle: 'short' });
 
@@ -63,7 +61,7 @@ export function ProjectGrid() {
       {projects.isPending ? <p className="studio-muted">Loading projects…</p> : null}
       {projects.isError ? (
         <Alert tone="danger">
-          <p className="studio-alert-text">{errorText(projects.error)}</p>
+          <p className="studio-alert-text">{apiErrorText(projects.error)}</p>
           <Button variant="outline" size="sm" onClick={() => void refresh()}>
             Try again
           </Button>
@@ -113,7 +111,7 @@ function ProjectCard({ project, onChanged }: { project: ProjectSummary; onChange
       toast.error(
         err instanceof ApiError && err.isVersionConflict
           ? 'The project changed in the meantime. The list was refreshed; try again.'
-          : errorText(err)
+          : apiErrorText(err)
       );
       onChanged();
     } finally {
@@ -126,7 +124,7 @@ function ProjectCard({ project, onChanged }: { project: ProjectSummary; onChange
     try {
       await api.deleteProject(project.id);
     } catch (err) {
-      toast.error(errorText(err));
+      toast.error(apiErrorText(err));
       setBusy(false);
       return;
     }
@@ -137,7 +135,7 @@ function ProjectCard({ project, onChanged }: { project: ProjectSummary; onChange
         label: 'Undo',
         onClick: () => {
           api.restoreProject(project.id).then(onChanged, (err: unknown) => {
-            toast.error(errorText(err));
+            toast.error(apiErrorText(err));
           });
         },
       },

@@ -97,6 +97,20 @@ describe('ProjectGrid', () => {
     vi.restoreAllMocks();
   });
 
+  it('does not show the server text when the projects cannot be loaded', async () => {
+    const leak = 'SQLSTATE 23505 duplicate key in projects_pkey';
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ error: 'internal', message: leak }), { status: 500 })
+      )
+    );
+    renderGrid();
+    expect(await screen.findByText(/something went wrong/i)).toBeInTheDocument();
+    expect(screen.queryByText(leak)).not.toBeInTheDocument();
+  });
+
   it('lists the projects, newest first, with name, thumbnail and update time', async () => {
     const { fetchMock } = fakeServer([
       summary('b', 'Event invite', { updatedAt: '2026-10-20T09:30:00.000Z' }),

@@ -103,6 +103,31 @@ describe('AuthPage', () => {
     expect(screen.queryByText(/invitation/i)).toBeNull();
   });
 
+  it('does not show server text it has no fixed wording for', async () => {
+    const leak = 'SQLSTATE 23505 duplicate key in accounts_email_key';
+    stubServer(() => json(500, { error: 'internal', message: leak }));
+    const user = userEvent.setup();
+    renderWith(<AuthPage session={anonymous()} />);
+    await user.type(screen.getByLabelText('Email'), 'a@example.org');
+    await user.type(screen.getByLabelText('Password'), 'x');
+    await user.click(screen.getByRole('button', { name: 'Log in' }));
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(/something went wrong/i);
+    expect(alert).not.toHaveTextContent(leak);
+  });
+
+  it('says the fixed reason for a known code whatever text the server sent', async () => {
+    stubServer(() => json(401, { error: 'invalid_credentials', message: 'raw: bad hash' }));
+    const user = userEvent.setup();
+    renderWith(<AuthPage session={anonymous()} />);
+    await user.type(screen.getByLabelText('Email'), 'a@example.org');
+    await user.type(screen.getByLabelText('Password'), 'x');
+    await user.click(screen.getByRole('button', { name: 'Log in' }));
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Email or password is wrong.');
+    expect(alert).not.toHaveTextContent('raw: bad hash');
+  });
+
   it('shows the server message when login fails and hides registration when closed', async () => {
     stubServer(() =>
       json(401, { error: 'invalid_credentials', message: 'Email or password is wrong.' })
@@ -525,6 +550,14 @@ describe('BrandPage', () => {
     expect(alert).toHaveTextContent(message);
     expect(input).toHaveAttribute('aria-invalid', 'true');
     expect(input.getAttribute('aria-describedby')).toContain(alert.id);
+  });
+
+  it('does not show the server text when the brand cannot be loaded', async () => {
+    const leak = 'SQLSTATE 23505 duplicate key in brand_packs_pkey';
+    stubServer(() => json(500, { error: 'internal', message: leak }));
+    renderWith(<BrandPage />);
+    expect(await screen.findByRole('alert')).toHaveTextContent(/something went wrong/i);
+    expect(screen.queryByText(leak)).not.toBeInTheDocument();
   });
 
   it('tells editors that only owners edit the brand', async () => {
