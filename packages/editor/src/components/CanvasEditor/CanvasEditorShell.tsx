@@ -891,7 +891,7 @@ function CanvasEditorInner({
         const ext = format === 'jpeg' ? 'jpg' : format;
         await fileDelivery.downloadDataUrl(
           dataUrl,
-          `${filenamePrefix}-seite-${currentPageIndex + 1}.${ext}`
+          `${filenamePrefix}-page-${currentPageIndex + 1}.${ext}`
         );
         onDownload?.(dataUrl);
       }
@@ -1068,7 +1068,7 @@ function CanvasEditorInner({
 
     if (route === 'native-host') {
       dataUrls.forEach((dataUrl, i) =>
-        fileDelivery.shareDataUrlViaNativeHost(dataUrl, `${filenamePrefix}-seite-${i + 1}.png`, {
+        fileDelivery.shareDataUrlViaNativeHost(dataUrl, `${filenamePrefix}-page-${i + 1}.png`, {
           title: shareTitle,
         })
       );
@@ -1078,7 +1078,7 @@ function CanvasEditorInner({
     const files = await Promise.all(
       dataUrls.map(async (dataUrl, i) => {
         const blob = await (await fetch(dataUrl)).blob();
-        return new File([blob], `${filenamePrefix}-seite-${i + 1}.png`, { type: 'image/png' });
+        return new File([blob], `${filenamePrefix}-page-${i + 1}.png`, { type: 'image/png' });
       })
     );
 
@@ -1109,7 +1109,7 @@ function CanvasEditorInner({
           if (dataUrl) {
             await fileDelivery.downloadDataUrl(
               dataUrl,
-              `${filenamePrefix}-slider-seite-${currentPageIndex + 1}.png`
+              `${filenamePrefix}-slider-page-${currentPageIndex + 1}.png`
             );
           }
         }
