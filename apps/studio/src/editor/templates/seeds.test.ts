@@ -1,11 +1,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { brandFingerprint, deriveSchemes, normalizeColor } from '@ggraphic/core';
+import {
+  brandFingerprint,
+  contrastRatio,
+  deriveBrandColors,
+  deriveSchemes,
+  normalizeColor,
+  rebindPageState,
+  resolveScheme,
+} from '@ggraphic/core';
 import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { studioBrand } from '../../brand';
 import { rememberLogoSize } from '../../logoSize';
-import { HEADLINE_TEMPLATE_ID, NUMBER_TEMPLATE_ID, QUOTE_TEMPLATE_ID } from './ids';
+import {
+  HEADLINE_TEMPLATE_ID,
+  NUMBER_TEMPLATE_ID,
+  QUOTE_TEMPLATE_ID,
+  STUDIO_TEMPLATE_IDS,
+} from './ids';
 import { seedFor, seedPageState } from './seeds';
 
 const LOGO = '/api/brand-assets/' + 'a'.repeat(32) + '.png';
@@ -130,7 +143,10 @@ describe('bound seeds', () => {
     expect(same(quote.backgroundColor, BLUSH)).toBe(true);
     expect(same(colourOf(quote, 'quote-mark'), MAGENTA)).toBe(true);
     expect(same(colourOf(quote, 'headline'), WINE)).toBe(true);
-    expect(same(colourOf(quote, 'subline'), MAGENTA)).toBe(true);
+    // The speaker line is the world's softer ink: magenta/yellow secondaries do not read on a light ground.
+    expect(same(colourOf(quote, 'subline'), resolveScheme(studioBrand, 'light')!.roles.ink2)).toBe(
+      true
+    );
 
     const number = stateOf(NUMBER_TEMPLATE_ID);
     expect(same(number.backgroundColor, MAGENTA)).toBe(true);
@@ -167,10 +183,53 @@ describe('bound seeds', () => {
     }
   });
 
-  it('binds the speaker to the secondary colour and the big number to the world accent', () => {
+  it('binds the speaker to the softer ink and the big number to the world accent', () => {
     const speaker = stateOf(QUOTE_TEMPLATE_ID).additionalTexts.find((t) => t.id === 'subline')!;
-    expect(speaker.bind?.['fill']?.ref).toBe('brand.secondary');
+    expect(speaker.bind?.['fill']?.ref).toBe('ink2');
     const big = stateOf(NUMBER_TEMPLATE_ID).additionalTexts.find((t) => t.id === 'number')!;
     expect(big.bind?.['fill']?.ref).toBe('accent');
+  });
+});
+
+describe('text contrast', () => {
+  /** The pack the browser test used: a green primary with a yellow secondary. */
+  const greenColors = deriveBrandColors({
+    primary: '#0F5F3A',
+    secondary: '#F2B705',
+    accent: '#7FD1A0',
+  })!;
+  const brands = [studioBrand, { ...studioBrand, id: 'green', colors: greenColors }];
+  const LARGE_TEXT_PX = 24;
+
+  describe.each(brands)('on the $id brand', (brand) => {
+    const worlds = () => deriveSchemes(brand).map((s) => s.id);
+
+    it('every text of every template reads on the ground of every world the brand offers', () => {
+      registerBrandPacks([brand, studioBrand]);
+      const failures: string[] = [];
+      for (const template of STUDIO_TEMPLATE_IDS) {
+        const seeded = seedPageState(template, 1080, 1350);
+        for (const world of worlds()) {
+          // The AI can put a template in any offered world: bind the page into it the same way.
+          const { brandStamp: _stamp, ...rest } = seeded;
+          const page = rebindPageState({ ...rest, brandScheme: world }, { brand }).state;
+          const ground = page['backgroundColor'] as string;
+          for (const t of page['additionalTexts'] as {
+            id: string;
+            fill: string;
+            fontSize: number;
+          }[]) {
+            const ratio = contrastRatio(t.fill, ground) ?? 0;
+            const need = t.fontSize >= LARGE_TEXT_PX ? 3 : 4.5;
+            if (ratio < need) {
+              failures.push(
+                `${template}/${world}/${t.id}: ${ratio.toFixed(2)} < ${need} (${t.fill} on ${ground})`
+              );
+            }
+          }
+        }
+      }
+      expect(failures).toEqual([]);
+    });
   });
 });
