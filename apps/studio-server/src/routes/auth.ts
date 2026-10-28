@@ -25,7 +25,13 @@ import {
 import type { Db } from '../db/client.ts';
 import { accounts, DEFAULT_ORGANISATION_ID, invitations, organisations } from '../db/schema.ts';
 import { HttpError, parseOr400 } from '../http.ts';
-import { addMember, createOrganisation, organisationsOf, type Tx } from '../orgs.ts';
+import {
+  addMember,
+  createOrganisation,
+  ensurePersonalOrganisation,
+  organisationsOf,
+  type Tx,
+} from '../orgs.ts';
 
 const WINDOW_MS = 15 * 60 * 1000;
 // Arbitrary constant: serialises concurrent first-run setups.
@@ -123,7 +129,10 @@ export function authRouter(
   }
 
   router.get('/session', async (_req, res) => {
-    res.set('Cache-Control', 'no-store').json(await state(sessionOf(res)));
+    const session = sessionOf(res);
+    // An account that lost its last membership gets an organisation back.
+    if (session) await ensurePersonalOrganisation(db, session.account);
+    res.set('Cache-Control', 'no-store').json(await state(session));
   });
 
   router.post('/setup', async (req, res) => {
@@ -160,7 +169,11 @@ export function authRouter(
     const wait = limiters.email.check(body.email);
     if (wait !== null) throw tooMany(wait, res);
     const [account] = await db
-      .select({ id: accounts.id, passwordHash: accounts.passwordHash })
+      .select({
+        id: accounts.id,
+        displayName: accounts.displayName,
+        passwordHash: accounts.passwordHash,
+      })
       .from(accounts)
       .where(eq(sql`lower(${accounts.email})`, body.email));
     const ok = account
@@ -175,6 +188,7 @@ export function authRouter(
     }
     limiters.email.reset(body.email);
     await deleteExpiredSessions(db);
+    await ensurePersonalOrganisation(db, account);
     res.json(await stateFor(res, account.id));
   });
 
