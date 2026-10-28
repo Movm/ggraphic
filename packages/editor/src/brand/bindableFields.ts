@@ -63,14 +63,22 @@ export const BINDABLE_FIELDS: Readonly<Record<string, readonly string[]>> = BIND
 
 const NESTED = 'nested/array; bound by templates in P2';
 
-/** stateKey -> colour field that is never bound, with the reason. */
-export const EXEMPT_FIELDS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
-  shapeInstances: { fillGradient: NESTED },
+// A field name that no longer exists on its type is a compile error here too.
+type Exempt<T> = { readonly [K in T extends unknown ? keyof T & string : never]?: string };
+
+const EXEMPT = {
+  shapeInstances: { fillGradient: NESTED } satisfies Exempt<ShapeInstance>,
   additionalTexts: {
     fillGradient: NESTED,
     accent: NESTED,
     marker: NESTED,
-  },
-  circleBadgeInstances: { textLines: NESTED },
-  chartInstances: { colors: NESTED },
+  } satisfies Exempt<AdditionalText>,
+  circleBadgeInstances: { textLines: NESTED } satisfies Exempt<CircleBadgeInstance>,
+  chartInstances: { colors: NESTED } satisfies Exempt<ChartInstance>,
 };
+
+/** stateKey -> colour field that is never bound, with the reason. */
+export const EXEMPT_FIELDS: Readonly<Record<string, Readonly<Record<string, string>>>> = EXEMPT;
+
+/** Compile-time probe target: a bogus exempt field must not type-check. */
+export type { Exempt };
