@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { contrastRatio } from '../color/color.js';
 import { brandDefault } from './brandDefault.js';
 import { type BrandPack } from './brandPack.js';
-import { deriveSchemes, type SchemeId } from './schemes.js';
+import { deriveSchemes, resolveScheme, type SchemeId } from './schemes.js';
 
 function withColors(colors: Partial<BrandPack['colors']>): BrandPack {
   return { ...brandDefault, colors: { ...brandDefault.colors, ...colors } };
@@ -85,5 +85,19 @@ describe('deriveSchemes', () => {
 
   it('deterministic', () => {
     expect(deriveSchemes(brandDefault)).toEqual(deriveSchemes(brandDefault));
+  });
+});
+
+describe('resolveScheme', () => {
+  const near = withColors({ secondary: '#FAFAFA' });
+
+  it('returns the world itself when the brand has it', () => {
+    expect(resolveScheme(brandDefault, 'light')).toEqual(
+      deriveSchemes(brandDefault).find((x) => x.id === 'light')
+    );
+  });
+
+  it('returns the kept world that absorbed a deduplicated one', () => {
+    expect(resolveScheme(near, 'light')?.id).toBe('secondary');
   });
 });

@@ -336,7 +336,7 @@ exports[`duplicateElementInState per kind > illustration 1`] = `
       {
         "flipX": true,
         "id": "ill-1",
-        "illustrationId": "undraw-x",
+        "illustrationId": "opendoodles-x",
         "rotation": 5,
         "scale": 1,
         "x": 10,
@@ -345,7 +345,7 @@ exports[`duplicateElementInState per kind > illustration 1`] = `
       {
         "flipX": true,
         "id": "illustration-1700000000000-4fzzzxjyl",
-        "illustrationId": "undraw-x",
+        "illustrationId": "opendoodles-x",
         "rotation": 5,
         "scale": 1,
         "x": 30,
@@ -998,7 +998,7 @@ exports[`floatingModuleFor per kind > illustration 1`] = `
   "data": {
     "flipX": true,
     "id": "ill-1",
-    "illustrationId": "undraw-x",
+    "illustrationId": "opendoodles-x",
     "rotation": 5,
     "scale": 1,
     "x": 10,

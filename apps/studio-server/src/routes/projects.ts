@@ -98,6 +98,15 @@ export function orgParam(params: Record<string, unknown>): string {
   return idParam(typeof raw === 'string' ? raw : undefined);
 }
 
+/** The format version a document names itself, 1 when it names none (or an invalid one). */
+function documentVersion(document: unknown): number {
+  const v =
+    typeof document === 'object' && document !== null
+      ? (document as Record<string, unknown>)['schemaVersion']
+      : undefined;
+  return typeof v === 'number' && Number.isInteger(v) && v > 0 ? v : 1;
+}
+
 /** `/api/projects/:id`: every call is limited to projects of the caller's organisations. */
 export function projectsRouter(db: Db, opts: { thumbnailMaxBytes: number }): Router {
   const router = Router();
@@ -134,12 +143,15 @@ export function projectsRouter(db: Db, opts: { thumbnailMaxBytes: number }): Rou
 
   router.patch('/:id', async (req, res) => {
     const id = idParam(req.params.id);
-    const { version, ...changes } = parseOr400(updateProjectBody, req.body);
+    const { version, ...parsed } = parseOr400(updateProjectBody, req.body);
     // An old client must not downgrade a newer document: the stored format version only rises.
-    const notLower =
-      changes.schemaVersion === undefined
-        ? undefined
-        : lte(projects.schemaVersion, changes.schemaVersion);
+    // A document write is judged by the version it carries, also when the body names none.
+    const incoming =
+      parsed.document === undefined
+        ? parsed.schemaVersion
+        : (parsed.schemaVersion ?? documentVersion(parsed.document));
+    const changes = incoming === undefined ? parsed : { ...parsed, schemaVersion: incoming };
+    const notLower = incoming === undefined ? undefined : lte(projects.schemaVersion, incoming);
     const updated = await db
       .update(projects)
       .set({ ...changes, version: sql`${projects.version} + 1`, updatedAt: sql`now()` })

@@ -28,7 +28,12 @@ const section = makeSectionDefiner<StudioPageState, StudioActions>();
 
 // Read when the picker renders, so a project of another organisation offers its colours.
 const backgroundColors = () =>
-  activeBrand().palette.map(({ id, label, color }) => ({ id, label, color }));
+  activeBrand().palette.map(({ id, label, color, ref }) => ({
+    id,
+    label,
+    color,
+    ...(ref && { ref }),
+  }));
 
 export function createStudioConfig(
   templateId: StudioTemplateId,

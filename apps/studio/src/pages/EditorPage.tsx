@@ -16,6 +16,7 @@ import { parseDocument, type StudioDocument } from '../editor/document';
 import { rebindStudioDocument } from '../editor/rebind';
 import { createStudioServices } from '../editor/services';
 import { useAutosave, type SaveStatus } from '../editor/useAutosave';
+import { logoSizeOf } from '../logoSize';
 import { navigate } from '../router';
 
 const STATUS_TEXT: Record<SaveStatus, string> = {
@@ -43,15 +44,18 @@ export function EditorPage({ projectId, config }: { projectId: string; config: S
   // The project's organisation brand, registered before the editor mounts.
   const brand = useQuery({
     queryKey: ['editor-brand', organisationId],
-    queryFn: async (): Promise<BrandPack | null> => {
+    queryFn: async (): Promise<{ pack: BrandPack | null; reachable: boolean }> => {
       let pack: BrandPack | null = null;
+      let reachable = true;
       try {
         pack = (await api.getBrandPack(organisationId!)).pack;
       } catch {
-        // No brand reachable: the editor opens with the Studio's own pack.
+        // Not "no pack saved": the brand is unknown. The editor shows the Studio's own pack,
+        // but the document is opened as stored, never rebound against it.
+        reachable = false;
       }
       await applyBrandPack(pack);
-      return pack;
+      return { pack, reachable };
     },
     enabled: organisationId !== null,
     staleTime: 0,
@@ -88,7 +92,8 @@ export function EditorPage({ projectId, config }: { projectId: string; config: S
       key={`${project.data.id}:${project.dataUpdatedAt}`}
       project={project.data}
       config={config}
-      logo={brand.data?.logo ?? null}
+      logo={brand.data?.pack?.logo ?? null}
+      rebind={brand.data?.reachable ?? true}
       onReload={() => void project.refetch()}
     />
   );
@@ -98,6 +103,8 @@ function ProjectEditor(props: {
   project: Project;
   config: StudioConfig;
   logo: BrandPack['logo'];
+  /** False when the brand could not be loaded: the document stays as stored. */
+  rebind: boolean;
   onReload: () => void;
 }) {
   const parsed = useMemo(() => parseDocument(props.project.document), [props.project.document]);
@@ -121,21 +128,28 @@ function OpenProject({
   project,
   config,
   logo,
+  rebind,
   onReload,
   parsed,
 }: {
   project: Project;
   config: StudioConfig;
   logo: BrandPack['logo'];
+  rebind: boolean;
   onReload: () => void;
   parsed: StudioDocument;
 }) {
   // The brand query has settled, so the organisation's pack is the active one: bound page
   // fields follow it before the editor opens. What is saved is judged against `parsed`.
-  const { doc, changed } = useMemo(
-    () => rebindStudioDocument(parsed, { brand: activeBrand(), logoSize: null }),
-    [parsed]
-  );
+  const { doc, changed } = useMemo(() => {
+    if (!rebind) return { doc: parsed, changed: false };
+    // The brand loader measured the logo before the query settled; a failed measurement is null.
+    const brand = activeBrand();
+    return rebindStudioDocument(parsed, {
+      brand,
+      logoSize: brand.logo ? logoSizeOf(brand.logo.src) : null,
+    });
+  }, [parsed, rebind]);
   const exportApi = useRef<CanvasEditorExportApi>(null);
   const services = useMemo(
     () =>
