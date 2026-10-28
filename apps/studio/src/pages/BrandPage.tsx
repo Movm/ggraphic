@@ -158,12 +158,19 @@ function BrandEditor({
     };
   });
   // The second logo is picked first and given its ground second: until then it is not valid.
-  const [altGround, setAltGround] = useState<'dark' | 'light' | null>(
-    () => data.settings?.logoAlt?.ground ?? null
+  // A stored one whose asset is gone, or is now the main logo, shows as none.
+  const [alt, setAlt] = useState<{ assetId: string; ground: 'dark' | 'light' | null } | null>(
+    () => {
+      const stored = data.settings?.logoAlt;
+      const usable =
+        stored &&
+        stored.assetId !== data.settings?.logoAssetId &&
+        data.assets.some((x) => x.kind === 'logo' && x.id === stored.assetId);
+      return usable ? { assetId: stored.assetId, ground: stored.ground } : null;
+    }
   );
-  const [altId, setAltId] = useState<string | null>(() => data.settings?.logoAlt?.assetId ?? null);
   const layout = input.layout ?? DEFAULT_BRAND_LAYOUT;
-  const altIncomplete = altId !== null && altGround === null;
+  const altIncomplete = alt !== null && alt.ground === null;
   const [groundIndex, setGroundIndex] = useState(0);
   const fonts = useMemo(() => data.assets.filter((a) => a.kind === 'font'), [data.assets]);
   const logos = data.assets.filter((a) => a.kind === 'logo');
@@ -237,7 +244,7 @@ function BrandEditor({
     mutationFn: () =>
       api.saveBrandPack(orgId, {
         ...input,
-        logoAlt: altId && altGround ? { assetId: altId, ground: altGround } : null,
+        logoAlt: alt?.ground ? { assetId: alt.assetId, ground: alt.ground } : null,
       }),
     onSuccess: (next) => {
       setData(next);
@@ -413,9 +420,10 @@ function BrandEditor({
             <Select
               label="Logo in use"
               value={input.logoAssetId ?? NO_LOGO}
-              onValueChange={(value) =>
-                setInput((s) => ({ ...s, logoAssetId: value === NO_LOGO ? null : value }))
-              }
+              onValueChange={(value) => {
+                setInput((s) => ({ ...s, logoAssetId: value === NO_LOGO ? null : value }));
+                if (alt?.assetId === value) setAlt(null);
+              }}
               options={[
                 { value: NO_LOGO, label: 'No logo' },
                 ...logos.map((l, i) => ({
@@ -430,20 +438,22 @@ function BrandEditor({
               <Select
                 label="Second logo"
                 hint="Used on grounds of one kind, instead of the logo in use."
-                value={altId ?? NO_LOGO}
-                onValueChange={(value) => {
-                  setAltId(value === NO_LOGO ? null : value);
-                  if (value === NO_LOGO) setAltGround(null);
-                }}
+                value={alt?.assetId ?? NO_LOGO}
+                onValueChange={(value) =>
+                  setAlt(value === NO_LOGO ? null : { assetId: value, ground: null })
+                }
                 options={[
                   { value: NO_LOGO, label: 'No second logo' },
-                  ...logos.map((l, i) => ({
-                    value: l.id,
-                    label: `Logo ${i + 1} (${l.contentType === 'image/png' ? 'PNG' : 'WebP'})`,
-                  })),
+                  ...logos
+                    .map((l, i) => ({
+                      id: l.id,
+                      value: l.id,
+                      label: `Logo ${i + 1} (${l.contentType === 'image/png' ? 'PNG' : 'WebP'})`,
+                    }))
+                    .filter((o) => o.id !== input.logoAssetId),
                 ]}
               />
-              {altId ? (
+              {alt ? (
                 <fieldset className="studio-chips">
                   <legend className="studio-muted">Second logo is used</legend>
                   {(['dark', 'light'] as const).map((g) => (
@@ -451,8 +461,8 @@ function BrandEditor({
                       <input
                         type="radio"
                         name="logo-alt-ground"
-                        checked={altGround === g}
-                        onChange={() => setAltGround(g)}
+                        checked={alt.ground === g}
+                        onChange={() => setAlt({ assetId: alt.assetId, ground: g })}
                       />
                       <span>{GROUND_LABELS[g]}</span>
                     </label>
@@ -468,10 +478,7 @@ function BrandEditor({
               if (input.logoAssetId === asset.id) {
                 setInput((s) => ({ ...s, logoAssetId: null }));
               }
-              if (altId === asset.id) {
-                setAltId(null);
-                setAltGround(null);
-              }
+              if (alt?.assetId === asset.id) setAlt(null);
               void reload();
             }}
             describe={(a, i) => `Logo ${i + 1}`}
@@ -479,7 +486,6 @@ function BrandEditor({
           />
         </fieldset>
 
-        {invalid ? <Alert tone="danger">Every colour must be written as #RRGGBB.</Alert> : null}
         {altIncomplete ? (
           <Alert tone="warning">Choose which grounds the second logo is for.</Alert>
         ) : null}
@@ -540,6 +546,7 @@ function RangeField({
         min={min}
         max={max}
         step={1}
+        aria-valuetext={percent(value)}
         value={Math.round(value * 100)}
         onChange={(e) => onChange(Number(e.target.value) / 100)}
       />
@@ -571,7 +578,7 @@ function ColorField({
       value={value}
       maxLength={7}
       spellCheck={false}
-      aria-invalid={!valid}
+      error={valid ? undefined : 'Write the colour as #RRGGBB.'}
       onChange={(e) => onChange(e.target.value.trim())}
       endAdornment={
         <input

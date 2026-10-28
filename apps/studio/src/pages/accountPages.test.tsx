@@ -117,6 +117,45 @@ describe('AuthPage', () => {
   });
 });
 
+const logoAsset = (id: string) => ({
+  id,
+  kind: 'logo',
+  url: `/api/brand-assets/${id}.png`,
+  contentType: 'image/png',
+  size: 10,
+  family: null,
+  weight: null,
+  style: null,
+  licence: null,
+});
+const LOGO_A = '11111111-1111-4111-8111-111111111111';
+const LOGO_B = '22222222-2222-4222-8222-222222222222';
+
+// jsdom lacks the pointer-capture and scroll APIs Radix Select calls; restored after each test.
+const radixMethods = [
+  'hasPointerCapture',
+  'releasePointerCapture',
+  'setPointerCapture',
+  'scrollIntoView',
+] as const;
+const originalMethods = new Map(radixMethods.map((m) => [m, Element.prototype[m]]));
+function polyfillRadix() {
+  for (const m of radixMethods) {
+    Object.defineProperty(Element.prototype, m, {
+      value: m === 'hasPointerCapture' ? () => false : () => undefined,
+      configurable: true,
+      writable: true,
+    });
+  }
+}
+afterEach(() => {
+  for (const m of radixMethods) {
+    const original = originalMethods.get(m);
+    if (original) Element.prototype[m] = original as never;
+    else delete (Element.prototype as unknown as Record<string, unknown>)[m];
+  }
+});
+
 describe('BrandPage', () => {
   const empty = {
     settings: null,
@@ -271,7 +310,8 @@ describe('BrandPage', () => {
     const accent = await screen.findByLabelText(/^Accent Emphasis on dark/);
     await user.clear(accent);
     await user.type(accent, 'pink');
-    expect(screen.getByRole('alert')).toHaveTextContent('#RRGGBB');
+    expect(accent).toHaveAccessibleDescription(/#RRGGBB/);
+    expect(accent).toBeInvalid();
     expect(screen.getByRole('button', { name: 'Save brand' })).toBeDisabled();
   });
 
@@ -316,36 +356,13 @@ describe('BrandPage', () => {
   });
 
   it('a second logo needs a ground', async () => {
-    const logo = (id: string) => ({
-      id,
-      kind: 'logo',
-      url: `/api/brand-assets/${id}.png`,
-      contentType: 'image/png',
-      size: 10,
-      family: null,
-      weight: null,
-      style: null,
-      licence: null,
-    });
-    const withLogos = {
-      ...empty,
-      assets: [
-        logo('11111111-1111-4111-8111-111111111111'),
-        logo('22222222-2222-4222-8222-222222222222'),
-      ],
-    };
+    const withLogos = { ...empty, assets: [logoAsset(LOGO_A), logoAsset(LOGO_B)] };
     stubServer((method, url) =>
       url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET'
         ? json(200, withLogos)
         : undefined
     );
-    // jsdom lacks the pointer-capture and scroll APIs Radix Select calls.
-    Object.assign(Element.prototype, {
-      hasPointerCapture: () => false,
-      releasePointerCapture: () => undefined,
-      setPointerCapture: () => undefined,
-      scrollIntoView: () => undefined,
-    });
+    polyfillRadix();
     const user = userEvent.setup();
     renderWith(<BrandPage />);
     await user.click(await screen.findByLabelText('Second logo'));
@@ -353,6 +370,89 @@ describe('BrandPage', () => {
     expect(screen.getByRole('button', { name: 'Save brand' })).toBeDisabled();
     await user.click(screen.getByRole('radio', { name: 'For dark grounds' }));
     expect(screen.getByRole('button', { name: 'Save brand' })).toBeEnabled();
+  });
+
+  it('keeps a stored layout and second logo when saving untouched', async () => {
+    const layout = {
+      margin: 0.06,
+      logoCorner: 'top-right',
+      logoMaxWidth: 0.3,
+      logoMaxHeight: 0.12,
+    };
+    const settings = {
+      ...defaultSettings('Org'),
+      layout,
+      logoAssetId: LOGO_A,
+      logoAlt: { assetId: LOGO_B, ground: 'light' },
+    };
+    const stored = { ...empty, settings, assets: [logoAsset(LOGO_A), logoAsset(LOGO_B)] };
+    const calls = stubServer((method, url, body) => {
+      if (url !== `/api/orgs/${TEST_ORG}/brand-pack`) return undefined;
+      if (method === 'GET') return json(200, stored);
+      return json(200, { ...stored, settings: body });
+    });
+    const user = userEvent.setup();
+    renderWith(<BrandPage />);
+    await screen.findByLabelText(/^Primary Main colour/);
+    await user.click(screen.getByRole('button', { name: 'Save brand' }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
+    const saved = calls.find((c) => c.method === 'PUT')!.body as Record<string, unknown>;
+    expect(saved.layout).toEqual(layout);
+    expect(saved.logoAlt).toEqual({ assetId: LOGO_B, ground: 'light' });
+    expect(saved.logoAssetId).toBe(LOGO_A);
+  });
+
+  it('shows a stored second logo whose asset is gone as none and saves null', async () => {
+    const settings = {
+      ...defaultSettings('Org'),
+      logoAlt: { assetId: LOGO_B, ground: 'dark' },
+    };
+    const stored = {
+      ...empty,
+      settings,
+      assets: [logoAsset(LOGO_A), logoAsset(LOGO_A.replace('1', '3'))],
+    };
+    const calls = stubServer((method, url, body) => {
+      if (url !== `/api/orgs/${TEST_ORG}/brand-pack`) return undefined;
+      if (method === 'GET') return json(200, stored);
+      return json(200, { ...stored, settings: body });
+    });
+    const user = userEvent.setup();
+    renderWith(<BrandPage />);
+    expect(await screen.findByLabelText('Second logo')).toHaveTextContent('No second logo');
+    await user.click(screen.getByRole('button', { name: 'Save brand' }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
+    expect(
+      (calls.find((c) => c.method === 'PUT')!.body as { logoAlt: unknown }).logoAlt
+    ).toBeNull();
+  });
+
+  it('does not offer the logo in use as the second logo', async () => {
+    const settings = { ...defaultSettings('Org'), logoAssetId: LOGO_A };
+    const stored = { ...empty, settings, assets: [logoAsset(LOGO_A), logoAsset(LOGO_B)] };
+    stubServer((method, url) =>
+      url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET' ? json(200, stored) : undefined
+    );
+    polyfillRadix();
+    const user = userEvent.setup();
+    renderWith(<BrandPage />);
+    await user.click(await screen.findByLabelText('Second logo'));
+    expect(await screen.findByRole('option', { name: 'Logo 2 (PNG)' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Logo 1 (PNG)' })).toBeNull();
+  });
+
+  it('draws the preview logo at full opacity, outside the dashed outlines', async () => {
+    const settings = { ...defaultSettings('Org'), logoAssetId: LOGO_A };
+    const stored = { ...empty, settings, assets: [logoAsset(LOGO_A)] };
+    stubServer((method, url) =>
+      url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET' ? json(200, stored) : undefined
+    );
+    renderWith(<BrandPage />);
+    const figure = await screen.findByRole('figure', { name: /Preview/ });
+    const img = within(figure).getByRole('img');
+    for (let el: HTMLElement | null = img; el && el !== figure; el = el.parentElement) {
+      expect(el.className).not.toContain('studio-brand-preview__outline');
+    }
   });
 
   it('has no axe violations on the brand page', async () => {

@@ -15,6 +15,7 @@ const orgPack = {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   void applyBrandPack(null);
 });
 
@@ -55,7 +56,6 @@ describe('applyBrandPack', () => {
       '/api/brand-assets/a.png',
       '/api/brand-assets/b.png',
     ]);
-    measure.mockRestore();
   });
 
   it('falls back to the Studio pack alone', async () => {
