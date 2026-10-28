@@ -72,6 +72,11 @@ export interface IconState {
    * Icons from a host's icon search: a COPY of the SVG (so exports and reloads work offline,
    * and nothing is hotlinked) and where it came from, for the licence and credit line.
    * Bundled icons carry neither.
+   *
+   * This is the markup as it was stored, possibly by another client: NEVER read or draw it
+   * directly. `registerStoredExternalIcons` sanitises it into the registry
+   * (`utils/externalIcons.ts`), and `resolveIconDef` / `externalIconKey` look it up there.
+   * It is not rewritten in place on load, because that would save every document on open.
    */
   svg?: string;
   source?: IconSource;
