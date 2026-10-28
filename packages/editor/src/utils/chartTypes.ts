@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
+import { type Bindings } from '@ggraphic/core';
+
 /**
  * The chart element's data shape. Its own module so types that name a chart
  * (base state, layer list, lifted blocks) need not import `chartUtils.ts`,
@@ -22,6 +24,8 @@ export type ChartLegendPosition = 'right' | 'bottom';
 
 export interface ChartInstance {
   id: string;
+  /** Fields that follow a brand role; see `@ggraphic/core` bindings. */
+  bind?: Bindings;
   x: number;
   y: number;
   width: number;

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { type Bindings } from '@ggraphic/core';
 import {
   PiCircleFill,
   PiCircleDashedBold,
@@ -53,6 +54,8 @@ export type FrameCategory = 'geometric' | 'soft' | 'organic' | 'stars' | 'speech
 
 export interface FrameInstance {
   id: string;
+  /** Fields that follow a brand role; see `@ggraphic/core` bindings. */
+  bind?: Bindings;
   clipType: FrameClipType;
   x: number;
   y: number;
