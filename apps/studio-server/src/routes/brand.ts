@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { mkdir, unlink, writeFile } from 'node:fs/promises';
-import type { BrandPack } from '@ggraphic/core';
+import { aliasFontFamily, type BrandPack } from '@ggraphic/core';
 import { and, asc, eq, inArray, sql } from 'drizzle-orm';
 import { type RequestHandler, type Response, Router } from 'express';
 import multer from 'multer';
@@ -101,7 +101,15 @@ export function organisationBrandRouter(db: Db, config: Config): Router {
   router.put('/', async (req, res) => {
     const orgId = orgParam(req.params);
     await requireMembership(db, me(res), orgId, 'owner');
-    const body = parseOr400(brandSettingsBody, req.body);
+    const parsed = parseOr400(brandSettingsBody, req.body);
+    // Old clients may still send a replaced family ("PT Sans"); store its successor.
+    const body = {
+      ...parsed,
+      fonts: {
+        headline: aliasFontFamily(parsed.fonts.headline),
+        body: aliasFontFamily(parsed.fonts.body),
+      },
+    };
     const assets = await db.select().from(brandAssets).where(eq(brandAssets.organisationId, orgId));
     const families = new Set<string>([
       ...BUNDLED_FONT_FAMILIES,

@@ -12,20 +12,20 @@ describe('canvasFontFamilies', () => {
     const config = {
       fonts: { primary: 'FixtureSans', fontSize: 60 },
       elements: [
-        { type: 'text', fontFamily: 'PT Sans, Arial, sans-serif' },
+        { type: 'text', fontFamily: 'Instrument Sans, Arial, sans-serif' },
         { type: 'text', fontFamily: 'FixtureSans, Arial, sans-serif' },
         { type: 'image' },
       ],
     } as unknown as FontInput;
 
-    expect(canvasFontFamilies(config)).toEqual(['FixtureSans', 'PT Sans']);
+    expect(canvasFontFamilies(config)).toEqual(['FixtureSans', 'Instrument Sans']);
   });
 
   it('kommt ohne `fonts` aus', () => {
     const config = {
-      elements: [{ type: 'text', fontFamily: 'PT Sans' }],
+      elements: [{ type: 'text', fontFamily: 'Instrument Sans' }],
     } as unknown as FontInput;
 
-    expect(canvasFontFamilies(config)).toEqual(['PT Sans']);
+    expect(canvasFontFamilies(config)).toEqual(['Instrument Sans']);
   });
 });

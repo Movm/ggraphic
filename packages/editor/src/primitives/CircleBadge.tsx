@@ -24,6 +24,7 @@ import { ELEMENT_TRANSFORMER, normalizeRotation } from '@ggraphic/editor/utils/o
 import { boxFrame, createBoxFrame, snapByBounds } from '@ggraphic/editor/utils/snapping';
 import { stageCssScale } from '@ggraphic/editor/utils/stageCssScale';
 
+import { resolveFontFamily } from '../utils/fontAliases.js';
 import { useTextEditorOpener } from '../utils/textEditorOpeners.js';
 
 import type { SnapTarget } from '@ggraphic/editor/utils/snapping';
@@ -208,7 +209,7 @@ function CircleBadgeInner({
       input.value = line.text;
       input.setAttribute('aria-label', messages().common.editText);
       input.style.position = 'absolute';
-      input.style.fontFamily = `${line.fontFamily}, Arial, sans-serif`;
+      input.style.fontFamily = `${resolveFontFamily(line.fontFamily)}, Arial, sans-serif`;
       input.style.fontWeight = line.fontWeight === 'bold' ? 'bold' : 'normal';
       input.style.color = textColor;
       input.style.textAlign = 'center';
@@ -322,7 +323,7 @@ function CircleBadgeInner({
               y={line.yOffset - line.fontSize / 2}
               width={radius * 2}
               fontSize={line.fontSize}
-              fontFamily={`${line.fontFamily}, Arial, sans-serif`}
+              fontFamily={`${resolveFontFamily(line.fontFamily)}, Arial, sans-serif`}
               fontStyle={line.fontWeight === 'bold' ? 'bold' : 'normal'}
               fill={textColor}
               align="center"

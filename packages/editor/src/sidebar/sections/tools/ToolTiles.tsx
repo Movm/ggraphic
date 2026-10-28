@@ -147,7 +147,7 @@ function AltTextTile() {
           fontSize="7"
           fontWeight="700"
           fill="#fff"
-          fontFamily="PT Sans, sans-serif"
+          fontFamily="Instrument Sans, sans-serif"
         >
           ALT
         </text>

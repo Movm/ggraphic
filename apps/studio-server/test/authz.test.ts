@@ -152,7 +152,7 @@ describe.skipIf(!hasDb)('organisation isolation (Postgres)', () => {
       .expect(400);
     await bob
       .put(`/api/orgs/${bob.orgId}/brand-pack`)
-      .send({ ...BRAND_SETTINGS, fonts: { headline: 'Alice Sans', body: 'PT Sans' } })
+      .send({ ...BRAND_SETTINGS, fonts: { headline: 'Alice Sans', body: 'Instrument Sans' } })
       .expect(400);
   });
 

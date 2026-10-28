@@ -34,12 +34,14 @@ function selectAll(container: HTMLElement) {
   return content;
 }
 
-const PT_SANS = 'PT Sans, Arial, sans-serif';
+const INSTRUMENT_SANS = 'Instrument Sans, Arial, sans-serif';
 const BRAND_TYPE = 'FixtureSans, Arial, sans-serif';
 
 describe('RichTextField', () => {
-  it('bietet auf PT Sans Fett, Kursiv, Unterstrichen und beide Listen', () => {
-    render(<RichTextField value="Hallo" onChange={() => {}} marks={fontMarkSupport(PT_SANS)} />);
+  it('bietet auf Instrument Sans Fett, Kursiv, Unterstrichen und beide Listen', () => {
+    render(
+      <RichTextField value="Hallo" onChange={() => {}} marks={fontMarkSupport(INSTRUMENT_SANS)} />
+    );
 
     expect(screen.getByRole('toolbar', { name: 'Textformatierung' })).toBeInTheDocument();
     for (const label of [/Fett/, /Kursiv/, /Unterstrichen/, /^Aufzählung$/, /Nummerierte/]) {
@@ -61,7 +63,11 @@ describe('RichTextField', () => {
   it('Fett auf der Auswahl schreibt **…** in den Feldtext', () => {
     const onChange = vi.fn();
     const { container } = render(
-      <RichTextField value="Hallo Welt" onChange={onChange} marks={fontMarkSupport(PT_SANS)} />
+      <RichTextField
+        value="Hallo Welt"
+        onChange={onChange}
+        marks={fontMarkSupport(INSTRUMENT_SANS)}
+      />
     );
 
     selectAll(container);
@@ -101,7 +107,7 @@ describe('RichTextField', () => {
       <RichTextField
         value="• Bus"
         onChange={onChange}
-        marks={fontMarkSupport(PT_SANS)}
+        marks={fontMarkSupport(INSTRUMENT_SANS)}
         onEditorReady={(e) => {
           editor = e;
         }}
@@ -140,7 +146,7 @@ describe('RichTextField', () => {
       <RichTextField
         value="Hallo"
         onChange={() => {}}
-        marks={fontMarkSupport(PT_SANS)}
+        marks={fontMarkSupport(INSTRUMENT_SANS)}
         showToolbar={false}
       />
     );
@@ -157,7 +163,7 @@ describe('RichTextField', () => {
       <RichTextField
         value="Hallo"
         onChange={() => {}}
-        marks={fontMarkSupport(PT_SANS)}
+        marks={fontMarkSupport(INSTRUMENT_SANS)}
         onEditorReady={onEditorReady}
       />
     );
@@ -177,7 +183,7 @@ describe('RichTextField', () => {
       <RichTextField
         value={'**fett** _kursiv_ <u>unter</u>\n• Punkt'}
         onChange={() => {}}
-        marks={fontMarkSupport(PT_SANS)}
+        marks={fontMarkSupport(INSTRUMENT_SANS)}
       />
     );
 
@@ -196,7 +202,7 @@ describe('RichTextField: Fokus beim Öffnen', () => {
       <RichTextField
         value="Alter Text"
         onChange={onChange}
-        marks={fontMarkSupport(PT_SANS)}
+        marks={fontMarkSupport(INSTRUMENT_SANS)}
         autoFocus
       />
     );
@@ -217,7 +223,7 @@ describe('RichTextField: Fokus beim Öffnen', () => {
       <RichTextField
         value={'• eins\n• zwei\n• drei'}
         onChange={() => {}}
-        marks={fontMarkSupport(PT_SANS)}
+        marks={fontMarkSupport(INSTRUMENT_SANS)}
         onEditorReady={(e) => {
           editor = e;
         }}
@@ -244,7 +250,7 @@ describe('RichTextField: Fokus beim Öffnen', () => {
       <RichTextField
         value="=={#E6007E}Das== ist ++{#FFFFFF}ungerecht.++"
         onChange={onChange}
-        marks={fontMarkSupport(PT_SANS)}
+        marks={fontMarkSupport(INSTRUMENT_SANS)}
       />
     );
     const accent = container.querySelector('mark[data-accent]');
@@ -261,7 +267,7 @@ describe('RichTextField: Fokus beim Öffnen', () => {
   it('Akzent-Farbe auf der Auswahl schreibt =={#…}…== in den Feldtext', () => {
     const onChange = vi.fn();
     const { container } = render(
-      <RichTextField value="Hallo" onChange={onChange} marks={fontMarkSupport(PT_SANS)} />
+      <RichTextField value="Hallo" onChange={onChange} marks={fontMarkSupport(INSTRUMENT_SANS)} />
     );
     selectAll(container);
     act(() => screen.getByRole('button', { name: 'Akzent' }).click());
@@ -273,7 +279,7 @@ describe('RichTextField: Fokus beim Öffnen', () => {
   it('Vorlagenfarbe gibt es nur, wo der Text einen Stil hat, und schreibt ++…++ ohne Farbe', () => {
     const onChange = vi.fn();
     const { container, rerender } = render(
-      <RichTextField value="Hallo" onChange={onChange} marks={fontMarkSupport(PT_SANS)} />
+      <RichTextField value="Hallo" onChange={onChange} marks={fontMarkSupport(INSTRUMENT_SANS)} />
     );
     act(() => screen.getByRole('button', { name: 'Textmarker' }).click());
     expect(screen.queryByRole('button', { name: 'Vorlagenfarbe' })).not.toBeInTheDocument();
@@ -283,7 +289,7 @@ describe('RichTextField: Fokus beim Öffnen', () => {
       <RichTextField
         value="Hallo"
         onChange={onChange}
-        marks={{ ...fontMarkSupport(PT_SANS), marker: true }}
+        marks={{ ...fontMarkSupport(INSTRUMENT_SANS), marker: true }}
       />
     );
     selectAll(container);
@@ -298,7 +304,7 @@ describe('RichTextField: Fokus beim Öffnen', () => {
       <RichTextField
         value="++{#9EE493}Hallo++"
         onChange={onChange}
-        marks={fontMarkSupport(PT_SANS)}
+        marks={fontMarkSupport(INSTRUMENT_SANS)}
       />
     );
     selectAll(container);
@@ -319,7 +325,7 @@ describe('RichTextField: die Werkzeugleiste per Tastatur', () => {
       <RichTextField
         value="Hallo"
         onChange={() => {}}
-        marks={fontMarkSupport(PT_SANS)}
+        marks={fontMarkSupport(INSTRUMENT_SANS)}
         onBlur={onBlur}
       />
     );
@@ -342,7 +348,7 @@ describe('RichTextField: die Werkzeugleiste per Tastatur', () => {
             {editor && (
               <TextFormatControls
                 editor={editor}
-                marks={fontMarkSupport(PT_SANS)}
+                marks={fontMarkSupport(INSTRUMENT_SANS)}
                 variant="contextBar"
               />
             )}
@@ -350,7 +356,7 @@ describe('RichTextField: die Werkzeugleiste per Tastatur', () => {
           <RichTextField
             value="Hallo"
             onChange={() => {}}
-            marks={fontMarkSupport(PT_SANS)}
+            marks={fontMarkSupport(INSTRUMENT_SANS)}
             showToolbar={false}
             onEditorReady={setEditor}
           />
@@ -374,7 +380,7 @@ describe('RichTextField: die Werkzeugleiste per Tastatur', () => {
       <RichTextField
         value="Hallo"
         onChange={() => {}}
-        marks={fontMarkSupport(PT_SANS)}
+        marks={fontMarkSupport(INSTRUMENT_SANS)}
         onEscape={onEscape}
       />
     );
@@ -395,7 +401,7 @@ describe('RichTextField: die Werkzeugleiste per Tastatur', () => {
         <RichTextField
           value="Hallo"
           onChange={() => {}}
-          marks={fontMarkSupport(PT_SANS)}
+          marks={fontMarkSupport(INSTRUMENT_SANS)}
           onBlur={onBlur}
         />
         <button type="button">Woanders</button>
@@ -415,7 +421,7 @@ describe('RichTextField: die Werkzeugleiste per Tastatur', () => {
       <RichTextField
         value="Hallo"
         onChange={() => {}}
-        marks={fontMarkSupport(PT_SANS)}
+        marks={fontMarkSupport(INSTRUMENT_SANS)}
         onBlur={onBlur}
       />
     );

@@ -199,13 +199,13 @@ importers:
 
   apps/studio:
     dependencies:
-      '@fontsource/pt-sans':
+      '@fontsource/fraunces':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/instrument-sans':
         specifier: ^5.3.0
         version: 5.3.0
       '@fontsource/raleway':
-        specifier: ^5.3.0
-        version: 5.3.0
-      '@fontsource/vollkorn':
         specifier: ^5.3.0
         version: 5.3.0
       '@ggraphic/core':
@@ -867,14 +867,14 @@ packages:
   '@fontsource-variable/bricolage-grotesque@5.3.0':
     resolution: {integrity: sha512-TLi9Q4hJjS2UvoTMRSS2nHu6c4R56lAw60NR9QYtVRCHn0XtsFpiEhNffZ8Glsoxu6wEEwLKBP8lb94J52PNBA==}
 
-  '@fontsource/pt-sans@5.3.0':
-    resolution: {integrity: sha512-qisFKuquwSWlELeuQHQldOa4oSxDAOFpak2hj3FjFcdo4eCUGV0trhIBk3qt+Py50L8JKWHKnnL7/JPxRH0TPw==}
+  '@fontsource/fraunces@5.3.0':
+    resolution: {integrity: sha512-LEHTOBiZufQzAvnAe2rZ8ZknbDS28Q9kzwb0L+gZJEmjLGr8hhZ/5NuHXwDuHBWhVXYoiGGXmrb0H6Ko/RrHTg==}
+
+  '@fontsource/instrument-sans@5.3.0':
+    resolution: {integrity: sha512-QwXc4hb/px3XvSPS2CPAOgey8nyrQFxgxrmXQQ+pN+P51hKdAcchxpg8rSbjANFfPu6VKXhDqkVDucXMZ9CM5g==}
 
   '@fontsource/raleway@5.3.0':
     resolution: {integrity: sha512-BTWr1I14Ji0DWpS/KCIq/CXcvxXWgMO73gynWpbYv7A5wlPhLevozgRmdPJvZmUf0fhH+Lju+F4nigJ6Ums24A==}
-
-  '@fontsource/vollkorn@5.3.0':
-    resolution: {integrity: sha512-ES6Z36o16TZTKigivtUc8s4ZJ5rOSjU1dBNjESCCL5u+x2JaP2RoinQqg+tUOYULPJ9rNvqZUPRSIznVvg1A/A==}
 
   '@hocuspocus/common@4.7.1':
     resolution: {integrity: sha512-+N4t8AdBIWBUK+yHsuBvCcBm96eV2E3quIewma9+TYomqVMXhrovAf3dA6XFbYHRM7ggtXklHt2mFqTcpiMdAQ==}
@@ -5170,11 +5170,11 @@ snapshots:
 
   '@fontsource-variable/bricolage-grotesque@5.3.0': {}
 
-  '@fontsource/pt-sans@5.3.0': {}
+  '@fontsource/fraunces@5.3.0': {}
+
+  '@fontsource/instrument-sans@5.3.0': {}
 
   '@fontsource/raleway@5.3.0': {}
-
-  '@fontsource/vollkorn@5.3.0': {}
 
   '@hocuspocus/common@4.7.1':
     dependencies:

@@ -26,6 +26,7 @@ import { boxFrame, createBoxFrame, snapByBounds } from '@ggraphic/editor/utils/s
 import { stageCssScale } from '@ggraphic/editor/utils/stageCssScale';
 
 import { calculatePillBadgeDimensions } from '../utils/pillBadgeUtils.js';
+import { resolveFontFamily } from '../utils/fontAliases.js';
 import { useTextEditorOpener } from '../utils/textEditorOpeners.js';
 
 import type { PillBadgeFontStyle } from '../utils/pillBadgeUtils.js';
@@ -195,7 +196,7 @@ function PillBadgeInner({
     textarea.value = text;
     textarea.setAttribute('aria-label', messages().common.editText);
     textarea.style.position = 'absolute';
-    textarea.style.fontFamily = `${fontFamily}, Arial, sans-serif`;
+    textarea.style.fontFamily = `${resolveFontFamily(fontFamily)}, Arial, sans-serif`;
     textarea.style.fontStyle = fontStyle.includes('italic') ? 'italic' : 'normal';
     textarea.style.fontWeight = fontStyle.includes('bold') ? 'bold' : 'normal';
     textarea.style.color = textColor;
@@ -329,7 +330,7 @@ function PillBadgeInner({
           y={paddingY}
           text={text}
           fontSize={fontSize}
-          fontFamily={`${fontFamily}, Arial, sans-serif`}
+          fontFamily={`${resolveFontFamily(fontFamily)}, Arial, sans-serif`}
           fontStyle={fontStyle}
           fill={textColor}
           align="left"

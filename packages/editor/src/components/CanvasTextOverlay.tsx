@@ -86,6 +86,7 @@ import {
 import { normalizeRotation } from '@ggraphic/editor/utils/orientation';
 import { stageCssScale } from '@ggraphic/editor/utils/stageCssScale';
 
+import { resolveFontFamily } from '../utils/fontAliases.js';
 import { fontMarkSupport } from '../utils/fontMarkSupport.js';
 import { defaultTextMarker } from '../utils/markerColors.js';
 import {
@@ -586,7 +587,7 @@ function TextEditorRoot({ children }: { children: ReactNode }) {
           transform: contentTransform,
           transformOrigin: 'top left',
           pointerEvents: 'auto',
-          fontFamily: session.fontFamily,
+          fontFamily: resolveFontFamily(session.fontFamily),
           fontStyle: session.fontStyle.includes('italic') ? 'italic' : 'normal',
           fontWeight: session.fontStyle.includes('bold') ? 'bold' : 'normal',
           color: session.fill,
@@ -604,7 +605,9 @@ function TextEditorRoot({ children }: { children: ReactNode }) {
             '--canvas-rte-marker-color': (session.marker ?? defaultTextMarker()).color,
             ...(session.accent && {
               '--canvas-rte-accent-color': session.accent.fill,
-              '--canvas-rte-accent-font': session.accent.fontFamily ?? session.fontFamily,
+              '--canvas-rte-accent-font': resolveFontFamily(
+                session.accent.fontFamily ?? session.fontFamily
+              ),
               '--canvas-rte-accent-style': session.accent.fontStyle?.includes('italic')
                 ? 'italic'
                 : 'inherit',

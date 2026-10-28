@@ -116,7 +116,7 @@ export interface TextElementConfig<
   /**
    * Der Text trägt Markdown-lite (`**fett**`, `_kursiv_`, `<u>…</u>`, Listen)
    * und wird mit dem Rich-Text-Editor bearbeitet. Nur für Felder in einer
-   * Schrift mit echten Fett-/Kursiv-Schnitten (PT Sans) setzen — eine Display-Schrift
+   * Schrift mit echten Fett-/Kursiv-Schnitten (Instrument Sans) setzen — eine Display-Schrift
    * mit nur einem Schnitt, dort würde beides synthetisiert.
    */
   richText?: boolean;
@@ -523,7 +523,7 @@ export interface FullCanvasConfig<
   useUnifiedTabs?: boolean;
   /** Font configuration for canvas rendering */
   fonts?: {
-    /** Primary font family used in canvas (e.g., 'PT Sans') */
+    /** Primary font family used in canvas (e.g., 'Instrument Sans') */
     primary: string;
     /** Font size for preloading (affects text metrics) */
     fontSize: number;

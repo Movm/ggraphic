@@ -66,9 +66,9 @@ export const brandDefault: BrandPack = {
   },
   fonts: {
     headline: 'Raleway',
-    body: 'PT Sans',
+    body: 'Instrument Sans',
     quoteShort: 'Raleway',
-    quoteEmphasis: 'Vollkorn',
+    quoteEmphasis: 'Fraunces',
   },
   fontFaces: [],
   lineHeightFactor: 1.1,

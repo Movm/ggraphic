@@ -12,6 +12,7 @@ import { layoutRichTextBlock, wrapLines, type MeasureRun, type RunStyle } from '
 import { registeredBrands } from '@ggraphic/editor/brand/brandRegistry';
 import { notifyFontLoaded } from '@ggraphic/editor/hooks/useFontGeneration';
 
+import { aliasFontFamily, resolveFontFamily } from './fontAliases.js';
 import { primaryFontFamily } from './fontMarkSupport.js';
 
 // The bundler replaces `process.env.NODE_ENV`; outside one, `process` may not exist.
@@ -89,7 +90,7 @@ function requestFace(fontSize: number, fontFamily: string, style: string, text: 
  *
  * @param text - The text to measure
  * @param fontSize - Font size in pixels
- * @param fontFamily - Font family name (e.g., 'Raleway', 'PT Sans')
+ * @param fontFamily - Font family name (e.g., 'Raleway', 'Instrument Sans')
  * @param fontStyle - CSS font style (e.g., 'normal', 'bold', 'italic', 'bold italic')
  */
 export function measureTextWidthWithFont(
@@ -105,8 +106,9 @@ export function measureTextWidthWithFont(
   }
 
   // Build CSS font string (e.g., "bold italic 90px Raleway, Arial, sans-serif")
-  ctx.font = `${fontStyle} ${fontSize}px ${fontFamily}, Arial, sans-serif`;
-  requestFace(fontSize, fontFamily, fontStyle, text);
+  const resolved = resolveFontFamily(fontFamily);
+  ctx.font = `${fontStyle} ${fontSize}px ${resolved}, Arial, sans-serif`;
+  requestFace(fontSize, resolved, fontStyle, text);
 
   return ctx.measureText(text).width;
 }
@@ -123,7 +125,7 @@ export function measureTextWidthWithFont(
  * und bräche in Vorschau und Export an anderer Stelle um — genau das, was der
  * geteilte Umbruch verhindern soll. Also fragen beide Seiten nur `italic` an;
  * ein kursives Wort in einem fetten Block ist dann nicht fett, aber überall
- * gleich. Ausnahme Vollkorn, das einen echten Fett-Kursiv-Schnitt hat: siehe
+ * gleich. Ausnahme Fraunces, das einen echten Fett-Kursiv-Schnitt hat: siehe
  * `runFont`.
  */
 export function fontStyleForRun(
@@ -136,7 +138,7 @@ export function fontStyleForRun(
 
 /**
  * Wie ein `==Akzent==`-Lauf aussieht. Die Marke entscheidet das, nicht der
- * Text: AT setzt das Wort gelb in Vollkorn kursiv, DE nur in einer
+ * Text: AT setzt das Wort gelb in Fraunces kursiv, DE nur in einer
  * anderen Farbe. Ohne `accent` am Text bleibt ein Akzentlauf unauffällig.
  */
 export interface TextAccent {
@@ -164,12 +166,12 @@ export interface TextMarker {
 
 /**
  * Familien, deren `bold italic` in `typography.css` ein echter Schnitt ist:
- * Vollkorn trägt dort Bold Italic als `italic` und Black Italic als
+ * Fraunces trägt dort Bold Italic als `italic` und Black Italic als
  * `bold italic`. Nur hier gilt „kursiv schlägt fett" nicht — der Browser
  * fettet nichts synthetisch, er lädt den Black-Schnitt. Den braucht die
  * Betonung einiger Markenpakete.
  */
-const REAL_BOLD_ITALIC: ReadonlySet<string> = new Set(['Vollkorn']);
+const REAL_BOLD_ITALIC: ReadonlySet<string> = new Set(['Fraunces']);
 
 /**
  * The family that carries the bold cut of `family`, when a registered brand
@@ -194,7 +196,7 @@ export function runFont(
   // Eine eigene Passagenfarbe färbt nur: die Akzentschrift der Vorlage gehört
   // zur Vorlagenfarbe. Sonst verschöbe ein eingefärbter Buchstabe den Umbruch.
   const asAccent = !!style.accent && !!accent && !style.accentColor;
-  const family = asAccent ? (accent?.fontFamily ?? fontFamily) : fontFamily;
+  const family = aliasFontFamily(asAccent ? (accent?.fontFamily ?? fontFamily) : fontFamily);
   const requested = asAccent ? (accent?.fontStyle ?? baseStyle) : baseStyle;
   const bold = !!style.bold || requested.includes('bold');
   const italic = !!style.italic || requested.includes('italic');

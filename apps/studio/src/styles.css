@@ -140,7 +140,7 @@
 }
 
 @theme {
-  --font-sans: 'PT Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
 
   --color-primary: var(--primary-600);
   --color-primary-foreground: var(--white);
@@ -400,7 +400,7 @@ body {
   margin: 0;
   background: var(--background-color);
   color: var(--font-color);
-  font-family: 'PT Sans', ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
 }
 
 .studio-shell .ui-shell__main {

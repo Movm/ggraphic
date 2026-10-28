@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+export { FONT_FAMILY_ALIASES, aliasFontFamily } from './brand/fontAliases.js';
 export { brandDefault } from './brand/brandDefault.js';
 export {
   type BrandBackground,
