@@ -12,7 +12,9 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { layoutRichTextBlock, PLAIN_STYLE, type MeasureRun } from '@ggraphic/schema';
+import type KonvaNs from 'konva';
+import type * as NapiCanvas from '@napi-rs/canvas';
+import { layoutRichTextBlock, type MeasureRun } from '@ggraphic/schema';
 import { describe, expect, it } from 'vitest';
 
 import { usesRichText } from '../utils/textRouting.js';
@@ -20,14 +22,13 @@ import { runFont } from '../utils/textUtils.js';
 import { TEMPLATE_GATE_ADAPTER as adapter } from './templateGeometry.js';
 
 const req = createRequire(import.meta.url);
-const { createCanvas, GlobalFonts } = req('@napi-rs/canvas') as typeof import('@napi-rs/canvas');
+const { createCanvas, GlobalFonts } = req('@napi-rs/canvas') as typeof NapiCanvas;
 const konvaModule = req('konva/lib/index.js') as { default?: unknown };
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Konva has no node typings for this entry
-const Konva: any = konvaModule.default ?? konvaModule;
+const Konva = (konvaModule.default ?? konvaModule) as typeof KonvaNs;
 // Konva in node needs a canvas factory.
 Konva.Util.createCanvasElement = () => {
-  const canvas = createCanvas(300, 150) as unknown as { style: object };
-  canvas.style = {};
+  const canvas = createCanvas(300, 150) as unknown as HTMLCanvasElement;
+  (canvas as unknown as { style: object }).style = {};
   return canvas;
 };
 

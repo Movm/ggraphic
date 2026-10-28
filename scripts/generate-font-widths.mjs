@@ -9,7 +9,7 @@
 //
 //   node scripts/generate-font-widths.mjs          # write the file
 //   node scripts/generate-font-widths.mjs --check  # exit 1 when it is out of date
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
