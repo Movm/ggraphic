@@ -43,9 +43,14 @@ export interface InstantiateContext {
   logoSizeOf?: (src: string) => { width: number; height: number } | null;
 }
 
+/**
+ * Refusals: `format` (the canvas aspect is not declared), `no-scheme` (the brand keeps none of the
+ * template's worlds), `bind` (an unknown bind ref), `geometry` (a fraction outside 0..1) and
+ * `empty` (the template has no page).
+ */
 export type InstantiateResult =
   | { ok: true; state: Record<string, unknown>; schemeId: SchemeId }
-  | { ok: false; reason: 'format' | 'no-scheme' | 'bind' | 'geometry' };
+  | { ok: false; reason: 'format' | 'no-scheme' | 'bind' | 'geometry' | 'empty' };
 
 type Obj = Record<string, unknown>;
 
@@ -69,12 +74,23 @@ function refOf(entry: unknown): unknown {
   return isObj(entry) ? entry['ref'] : entry;
 }
 
+/** Page keys that hold page metadata, never elements. */
+const PAGE_KEYS = new Set([
+  'bind',
+  'templateRef',
+  'groups',
+  'brandScheme',
+  'brandStamp',
+  'layerOrder',
+]);
+
 /** Every element of the page: array items and record entries, with the state key they sit under. */
 function forEachElement(state: Obj, visit: (el: Obj, key: string, id: string) => void): void {
   for (const [key, value] of Object.entries(state)) {
+    if (PAGE_KEYS.has(key)) continue;
     if (Array.isArray(value)) {
       for (const el of value) if (isObj(el)) visit(el, key, String(el['id'] ?? ''));
-    } else if (isObj(value) && key !== 'bind') {
+    } else if (isObj(value)) {
       for (const [id, el] of Object.entries(value))
         if (isObj(el)) visit(el, key, String(el['id'] ?? id));
     }
@@ -98,7 +114,7 @@ export function instantiateTemplatePage(
   const scheme = deriveSchemes(ctx.brand).find((s) => s.id === schemeId) as Scheme;
 
   const src = t.pages[0]?.state;
-  if (!src) return { ok: false, reason: 'format' };
+  if (!src) return { ok: false, reason: 'empty' };
   const state = clone(src) as Obj;
 
   // Validate first, so a refusal never depends on what the later steps would have skipped.
@@ -210,7 +226,12 @@ export function instantiateTemplatePage(
       el['src'] = logo;
       const known = [ctx.brand.logo, ctx.brand.logoAlt].find((l) => l?.src === logo);
       if (known) el['fileName'] = known.label;
-      el['bind'] = withBinding(undefined, 'src', { ref: 'brand.logo', value: logo, box, fit });
+      el['bind'] = withBinding(el['bind'] as never, 'src', {
+        ref: 'brand.logo',
+        value: logo,
+        box,
+        fit,
+      });
       return true;
     });
   }

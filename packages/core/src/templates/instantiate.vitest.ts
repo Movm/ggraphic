@@ -296,4 +296,94 @@ describe('instantiateTemplatePage', () => {
     const b = instantiateTemplatePage(t, ctx());
     expect(a).toEqual(b);
   });
+
+  it('the second logo is chosen by the ground and sized by its own src', () => {
+    const brand: BrandPack = {
+      ...logoBrand,
+      logoAlt: { src: 'alt.svg', label: 'Alt', ground: 'light' },
+    };
+    const seen: string[] = [];
+    const r = ok(
+      logoTemplate({ schemes: ['light'] }),
+      ctx({
+        brand,
+        logoSizeOf: (s) => {
+          seen.push(s);
+          return sizeOf();
+        },
+      })
+    );
+    const logo = (r.state['userImageInstances'] as any[])[0];
+    expect(logo.src).toBe('alt.svg');
+    expect(logo.bind.src.value).toBe('alt.svg');
+    expect(seen).toEqual(['alt.svg']);
+  });
+
+  it('an unknown world id in the template is ignored', () => {
+    const t = template({ schemes: ['bogus' as never, 'primary'] });
+    expect(offeredSchemes(t, logoBrand)).toEqual(['primary']);
+    expect(ok(t, ctx()).schemeId).toBe(deriveSchemes(logoBrand)[0]!.id);
+  });
+
+  it('other bindings on the logo survive', () => {
+    const t = logoTemplate();
+    const logo = (t.pages[0]!.state['userImageInstances'] as any[])[0];
+    logo.bind = { src: 'brand.logo', opacity: 'ink' };
+    const r = ok(t, ctx());
+    const bind = (r.state['userImageInstances'] as any[])[0].bind;
+    expect(bind.opacity).toMatchObject({ ref: 'ink' });
+    expect(bind.src.ref).toBe('brand.logo');
+  });
+
+  it('a template without pages is refused as empty', () => {
+    expect(instantiateTemplatePage(template({ pages: [] }), ctx())).toEqual({
+      ok: false,
+      reason: 'empty',
+    });
+  });
+
+  it.each([
+    ['16:9', { width: 1920, height: 1080 }],
+    ['1:1', { width: 1000, height: 1000 }],
+  ])('%s: s and k follow the short side, h the frame height', (format, size) => {
+    const S = Math.min(size.width, size.height);
+    const g: GeometryTable = {
+      additionalTexts: { fontSize: 's', letterSpacing: 'k', height: 'h' },
+    };
+    const t = template({
+      formats: [format],
+      pages: [
+        {
+          state: {
+            additionalTexts: [{ id: 'a', fontSize: 0.1, letterSpacing: 0.5, height: 0.25 }],
+          },
+        },
+      ],
+    });
+    const r = ok(t, ctx({ format, canvas: size, geometry: g }));
+    const safe = Math.round(S * 0.09);
+    expect((r.state['additionalTexts'] as any[])[0]).toMatchObject({
+      fontSize: Math.round(0.1 * S),
+      letterSpacing: (0.5 * S) / 1080,
+      height: Math.round(0.25 * (size.height - 2 * safe)),
+    });
+    expect((r.state['additionalTexts'] as any[])[0].letterSpacing).not.toBe(
+      Math.round((0.5 * S) / 1080)
+    );
+  });
+
+  it('page metadata keys are not walked as elements', () => {
+    const t = template({
+      pages: [
+        {
+          state: {
+            additionalTexts: [{ id: 'h', x: 0 }],
+            groups: [{ id: 'g', x: 7, bind: { fill: 'nonsense' } }],
+          },
+        },
+      ],
+    });
+    const r = instantiateTemplatePage(t, ctx({ geometry: { ...G, groups: { x: 'x' } } }));
+    expect(r.ok).toBe(true);
+  });
 });
