@@ -22,6 +22,9 @@
     "test": "vitest run"
   },
   "devDependencies": {
+    "@ggraphic/core": "workspace:*",
+    "@ggraphic/editor": "workspace:*",
+    "@ggraphic/schema": "workspace:*",
     "typescript": "^6.0.3",
     "vitest": "^5.0.5"
   },

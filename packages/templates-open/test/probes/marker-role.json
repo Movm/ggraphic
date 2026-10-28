@@ -1,0 +1,204 @@
+{
+  "formatVersion": 1,
+  "id": "studio-headline",
+  "version": 1,
+  "kind": "template",
+  "family": "headline",
+  "title": {
+    "en": "Headline + text",
+    "de": "Überschrift + Text"
+  },
+  "description": {
+    "en": "Headline, subline, body and a call to action",
+    "de": "Überschrift, Unterzeile, Fließtext und Handlungsaufforderung"
+  },
+  "tags": {
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["1:1", "4:5", "16:9"],
+  "schemes": ["primary", "secondary", "dark", "light"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "accent-bar",
+            "type": "rect",
+            "x": 0.06772,
+            "y": 0.196367,
+            "width": 0.13544,
+            "height": 0.012111,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "marker"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "A clear headline",
+            "x": 0.0,
+            "y": 0.24308,
+            "width": 1.0,
+            "fontSize": 0.096296,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "subline",
+            "type": "subheader",
+            "text": "One line that says why it matters",
+            "x": 0.0,
+            "y": 0.5,
+            "width": 1.0,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "body",
+            "type": "body",
+            "text": "Add the details here: what, when and where.",
+            "x": 0.0,
+            "y": 0.640138,
+            "width": 1.0,
+            "fontSize": 0.031481,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.35,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "cta",
+            "type": "body",
+            "text": "Find out more",
+            "x": 0.0,
+            "y": 0.897059,
+            "width": 0.6,
+            "fontSize": 0.031481,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": ["accent-bar", "brand-logo", "headline", "subline", "body", "cta"]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "headline": {
+      "role": "headline",
+      "budget": {
+        "maxWords": 8,
+        "maxLines": 3,
+        "maxChars": 60
+      }
+    },
+    "subline": {
+      "role": "subline",
+      "budget": {
+        "maxWords": 14,
+        "maxLines": 2,
+        "maxChars": 100
+      }
+    },
+    "body": {
+      "role": "body",
+      "budget": {
+        "maxWords": 30,
+        "maxLines": 4,
+        "maxChars": 200
+      }
+    },
+    "cta": {
+      "role": "cta",
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 1,
+        "maxChars": 30
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "headline-with-bar",
+      "title": {
+        "en": "Headline with bar",
+        "de": "Überschrift mit Balken"
+      },
+      "elementIds": ["accent-bar", "headline"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right", "top-right"],
+  "placeholders": {
+    "en": {
+      "headline": "A clear headline",
+      "subline": "One line that says why it matters",
+      "body": "Add the details here: what, when and where.",
+      "cta": "Find out more"
+    },
+    "de": {
+      "headline": "Eine klare Überschrift",
+      "subline": "Eine Zeile, die sagt, warum es zählt",
+      "body": "Hier stehen die Einzelheiten: was, wann und wo.",
+      "cta": "Mehr erfahren"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-28",
+    "licence": "CC0-1.0"
+  }
+}
