@@ -142,6 +142,7 @@ function fitLogo(obj: Obj, { logoSize, pageSize }: RebindContext): void {
   if (!logoSize || !pageSize) return;
   const { x, y, width, height } = obj;
   if (![x, y, width, height].every((n) => typeof n === 'number' && Number.isFinite(n))) return;
+  if ((width as number) <= 0 || (height as number) <= 0) return;
   Object.assign(
     obj,
     fitLogoBox(

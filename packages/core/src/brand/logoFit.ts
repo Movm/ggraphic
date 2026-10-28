@@ -15,9 +15,11 @@ export function fitLogoBox(
   size: { width: number; height: number },
   page: { width: number; height: number }
 ): Box {
+  const sizes = [box.width, box.height, size.width, size.height];
+  if (!sizes.every((n) => Number.isFinite(n) && n > 0)) return box;
   const scale = Math.min(box.width / size.width, box.height / size.height);
-  const width = Math.round(size.width * scale);
-  const height = Math.round(size.height * scale);
+  const width = Math.floor(size.width * scale);
+  const height = Math.floor(size.height * scale);
   const left = box.x + box.width / 2 < page.width / 2;
   const top = box.y + box.height / 2 < page.height / 2;
   return {

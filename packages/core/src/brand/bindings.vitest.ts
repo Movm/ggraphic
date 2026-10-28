@@ -195,6 +195,44 @@ describe('rebindPageState edge cases', () => {
       expect([img.x, img.y, img.width, img.height]).toEqual([900, 1200, 120, 80]);
     });
 
+    it('a second rebind changes nothing', () => {
+      const first = rebindPageState(stateWith(), {
+        brand: logoBrand,
+        logoSize: { width: 400, height: 100 },
+        pageSize,
+      });
+      const second = rebindPageState(first.state, {
+        brand: logoBrand,
+        logoSize: { width: 400, height: 100 },
+        pageSize,
+      });
+      expect(second.changed).toBe(false);
+      expect(second.state).toBe(first.state);
+    });
+
+    it('an unchanged src leaves a user-moved box alone', () => {
+      const state = {
+        images: [
+          {
+            src: 'new.svg',
+            x: 10,
+            y: 20,
+            width: 300,
+            height: 200,
+            bind: { src: { ref: 'brand.logo', value: 'new.svg' } },
+          },
+        ],
+      };
+      const img = imgOf(
+        rebindPageState(state, {
+          brand: logoBrand,
+          logoSize: { width: 400, height: 100 },
+          pageSize,
+        })
+      );
+      expect([img.x, img.y, img.width, img.height]).toEqual([10, 20, 300, 200]);
+    });
+
     it('a brand without a logo keeps the image and drops the binding', () => {
       const img = imgOf(
         rebindPageState(stateWith(), { brand: { ...brand, logo: null }, logoSize: null, pageSize })
