@@ -4,7 +4,7 @@
  * template and a colour world and writes its texts (`api.pick`), and only then is the
  * project created. Without AI the prompt itself becomes the headline.
  */
-import { offeredSchemes, type SchemeId } from '@ggraphic/core';
+import { offeredSchemes, type BrandPack, type SchemeId } from '@ggraphic/core';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 
 import { api, ApiError, type Draft, type Pick } from '../api/client';
@@ -60,13 +60,20 @@ export function filledDocument(
  * organisation's pack is put in place before a page is built, as the editor does.
  */
 export async function loadOrganisationBrand(organisationId: string): Promise<void> {
-  let pack = null;
+  await applyBrandPack(await fetchOrganisationBrand(organisationId));
+}
+
+/**
+ * The organisation's brand pack, or null when none is reachable. Registers nothing: callers that
+ * only read the brand (the start page's tiles) must not change the editor's active brand.
+ */
+export async function fetchOrganisationBrand(organisationId: string): Promise<BrandPack | null> {
   try {
-    pack = (await api.getBrandPack(organisationId)).pack;
+    return (await api.getBrandPack(organisationId)).pack;
   } catch {
     // No brand reachable: the page is built on the Studio's own pack.
+    return null;
   }
-  await applyBrandPack(pack);
 }
 
 /**

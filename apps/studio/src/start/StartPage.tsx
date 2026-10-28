@@ -11,6 +11,7 @@ import { useId, useMemo, useState, type ReactNode } from 'react';
 import { PiFile, PiQuotes, PiTextT, PiNumberOne } from 'react-icons/pi';
 
 import { ApiError, type StudioConfig } from '../api/client';
+import { studioBrand } from '../brand';
 import { DEFAULT_FORMAT, STUDIO_FORMATS, type StudioFormatId } from '../editor/document';
 import { templatesFor } from '../editor/templates/catalog';
 import { BLANK_TEMPLATE_ID } from '../editor/templates/ids';
@@ -25,7 +26,7 @@ import {
   TemplateUnavailableError,
   createFromPrompt,
   createFromTemplate,
-  loadOrganisationBrand,
+  fetchOrganisationBrand,
 } from './createFromPrompt';
 import { ProjectGrid } from './ProjectGrid';
 
@@ -84,18 +85,16 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
   // The tiles follow the organisation's brand: its worlds decide which templates can be placed.
   const brand = useQuery({
     queryKey: ['start-brand', organisation.id],
-    queryFn: async () => {
-      await loadOrganisationBrand(organisation.id);
-      return true;
-    },
+    // Only reads the pack: registering it here would let a late answer for a previous
+    // organisation change the brand every later `templatesFor` sees.
+    queryFn: () => fetchOrganisationBrand(organisation.id),
     gcTime: 0,
     refetchOnWindowFocus: false,
     retry: false,
   });
   const templates = useMemo(
-    () => templatesFor(formatId),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- the brand query registers the brand `templatesFor` reads
-    [formatId, brand.dataUpdatedAt]
+    () => templatesFor(formatId, brand.data ?? studioBrand),
+    [formatId, brand.data]
   );
 
   const submit = async () => {
