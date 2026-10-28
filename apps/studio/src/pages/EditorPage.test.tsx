@@ -14,7 +14,7 @@ beforeAll(() => registerEditor());
 afterEach(() => vi.unstubAllGlobals());
 
 const config: StudioConfig = {
-  features: { ai: false },
+  features: { ai: false, removeBackground: false },
   limits: { uploadBytes: 1e7, thumbnailBytes: 1e6, documentBytes: 5e6 },
   uploadTypes: ['image/png'],
 };

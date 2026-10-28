@@ -42,6 +42,7 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-}
       AI_TIMEOUT_MS: ${AI_TIMEOUT_MS:-}
+      AI_ENABLED: ${AI_ENABLED:-}
     volumes:
       - studio-data:/data
     # Lets OPENAI_BASE_URL point at a model server on the host (e.g. Ollama), also on Linux.

@@ -26,6 +26,58 @@ describe('loadConfig', () => {
     expect(loadConfig({ ...base, ...ai, OPENAI_MODEL: '' }).ai).toBeNull();
   });
 
+  describe('tool switches', () => {
+    const ai = {
+      OPENAI_BASE_URL: 'https://api.mistral.ai/v1',
+      OPENAI_API_KEY: 'k',
+      OPENAI_MODEL: 'm',
+    };
+
+    it('leaves every tool off when nothing is set', () => {
+      const config = loadConfig(base);
+      expect(config.ai).toBeNull();
+      expect(config.features).toEqual({ removeBackground: null });
+    });
+
+    it('turns a tool on when its URL is present', () => {
+      expect(loadConfig({ ...base, REMBG_URL: 'http://rembg:7000/' }).features).toEqual({
+        removeBackground: { url: 'http://rembg:7000', timeoutMs: 60_000 },
+      });
+      expect(
+        loadConfig({ ...base, REMBG_URL: 'http://rembg:7000', REMBG_TIMEOUT_MS: '5000' }).features
+          .removeBackground?.timeoutMs
+      ).toBe(5000);
+    });
+
+    it('lets <TOOL>_ENABLED=false switch a configured tool off', () => {
+      expect(
+        loadConfig({ ...base, REMBG_URL: 'http://rembg:7000', REMBG_ENABLED: 'false' }).features
+      ).toEqual({ removeBackground: null });
+      expect(loadConfig({ ...base, ...ai, AI_ENABLED: 'false' }).ai).toBeNull();
+    });
+
+    it('accepts <TOOL>_ENABLED=true when the tool is configured', () => {
+      expect(loadConfig({ ...base, ...ai, AI_ENABLED: 'true' }).ai).not.toBeNull();
+      expect(
+        loadConfig({ ...base, REMBG_URL: 'http://rembg:7000', REMBG_ENABLED: 'true' }).features
+          .removeBackground
+      ).not.toBeNull();
+    });
+
+    it('refuses <TOOL>_ENABLED=true without its key or URL', () => {
+      expect(() => loadConfig({ ...base, REMBG_ENABLED: 'true' })).toThrow(/REMBG_ENABLED=true/);
+      expect(() => loadConfig({ ...base, AI_ENABLED: 'true' })).toThrow(/AI_ENABLED=true/);
+      expect(() => loadConfig({ ...base, ...ai, OPENAI_MODEL: '', AI_ENABLED: 'true' })).toThrow(
+        /OPENAI_MODEL/
+      );
+    });
+
+    it('refuses an unknown switch value and a REMBG_URL that is no http(s) URL', () => {
+      expect(() => loadConfig({ ...base, REMBG_ENABLED: 'yes' })).toThrow(/REMBG_ENABLED/);
+      expect(() => loadConfig({ ...base, REMBG_URL: 'file:///etc/passwd' })).toThrow(/REMBG_URL/);
+    });
+  });
+
   it('defaults to secure cookies, closed registration and no proxy trust', () => {
     const config = loadConfig(base);
     expect(config.cookieSecure).toBe(true);

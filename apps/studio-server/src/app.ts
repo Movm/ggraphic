@@ -85,7 +85,10 @@ export function createApp({
 
   api.get('/config', (_req, res) => {
     const body: StudioConfig = {
-      features: { ai: config.ai !== null },
+      features: {
+        ai: config.ai !== null,
+        removeBackground: config.features.removeBackground !== null,
+      },
       limits: {
         uploadBytes: config.uploadMaxBytes,
         thumbnailBytes: config.thumbnailMaxBytes,
