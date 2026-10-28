@@ -112,6 +112,13 @@ describe('template geometry', () => {
       opacity: 1,
     });
     expect(TEMPLATE_GATE_ADAPTER.text('shapeInstances', text)).toBeNull();
+    // A text's own gradient is drawn over its flat fill, so the fill is not what to judge.
+    expect(
+      TEMPLATE_GATE_ADAPTER.text('additionalTexts', { ...text, fillGradient: { stops: [] } })
+    ).toMatchObject({ notCheckable: 'text gradient not checkable' });
+    expect(
+      TEMPLATE_GATE_ADAPTER.text('additionalTexts', { ...text, fillGradient: null })
+    ).not.toHaveProperty('notCheckable');
     expect(
       TEMPLATE_GATE_ADAPTER.text('pillBadgeInstances', {
         textColor: '#fff',

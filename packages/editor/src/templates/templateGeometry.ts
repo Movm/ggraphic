@@ -231,6 +231,7 @@ export const TEMPLATE_GATE_ADAPTER: GateAdapter = {
         fontSize: num(el, 'fontSize'),
         bold: typeof style === 'string' && style.includes('bold'),
         opacity,
+        ...(el['fillGradient'] ? { notCheckable: 'text gradient not checkable' } : {}),
       };
     }
     if (stateKey === 'pillBadgeInstances') {

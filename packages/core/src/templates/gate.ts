@@ -42,7 +42,15 @@ export interface GateAdapter {
   text(
     stateKey: string,
     el: Readonly<Record<string, unknown>>
-  ): { fill: string; fontSize: number; bold: boolean; opacity: number; ground?: string } | null;
+  ): {
+    fill: string;
+    fontSize: number;
+    bold: boolean;
+    opacity: number;
+    ground?: string;
+    /** Set when the text's colour is not the flat `fill` (a gradient): the reason it cannot be checked. */
+    notCheckable?: string;
+  } | null;
   /**
    * What the element paints under later layers: `solid` is an opaque flat fill, `unknown` is
    * anything else (an image, a gradient, a translucent fill, a chart, a badge), null is nothing
@@ -376,6 +384,14 @@ function checkPlaced(
 
     // contrast fails closed: a ground that cannot be proven opaque and flat is a failure.
     const fail = (why: string) => problem('contrast', `${id}: ${why}`, where);
+    if (text.notCheckable) {
+      fail(text.notCheckable);
+      continue;
+    }
+    if (parseColor(text.fill) === null) {
+      fail('text colour not parseable');
+      continue;
+    }
     if (text.opacity < 1 || !opaque(text.fill)) {
       fail(`text opacity or alpha is below 1, contrast not determinable`);
       continue;
@@ -394,6 +410,8 @@ function checkPlaced(
       ground = typeof state['backgroundColor'] === 'string' ? state['backgroundColor'] : '';
       for (const belowId of order.slice(0, at).reverse()) {
         const below = placed.get(belowId);
+        // The logo is owned by logo-overlap; a text on it is reported there.
+        if (below && below.key === 'userImageInstances' && isLogo(below.el)) continue;
         const cover = below && ctx.adapter.cover(below.key, below.el);
         if (!below || !cover) continue;
         const area = ctx.adapter.box(below.key, below.el, 1);

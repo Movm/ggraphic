@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { deriveSchemes } from '@ggraphic/core';
 import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { studioBrand } from '../brand';
 
@@ -10,7 +10,31 @@ import { seedFor } from '../editor/templates/seeds';
 
 import { pickOffers } from './aiOffers';
 
-afterEach(() => registerBrandPacks([studioBrand]));
+// The pack's quote lives in two worlds; for the test of the `brand` argument it lives in one.
+const mocks = vi.hoisted(() => ({ lightOnlyQuote: false }));
+vi.mock('../editor/templates/catalog', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../editor/templates/catalog')>();
+  return {
+    ...real,
+    templatesFor: (formatId: string, brand: Parameters<typeof real.templatesFor>[1]) =>
+      real.templatesIn(
+        real
+          .studioCatalog()
+          .entries.map((e) =>
+            mocks.lightOnlyQuote && e.id === 'studio-quote'
+              ? { ...e, template: { ...e.template, schemes: ['light' as const] } }
+              : e
+          ),
+        formatId,
+        brand ?? activeBrand()
+      ),
+  };
+});
+
+afterEach(() => {
+  mocks.lightOnlyQuote = false;
+  registerBrandPacks([studioBrand]);
+});
 
 describe('pickOffers', () => {
   const { templates, schemes } = pickOffers('post-portrait');
@@ -62,6 +86,19 @@ describe('pickOffers per call', () => {
     expect(pickOffers('post-portrait', studioBrand).templates.map((t) => t.id)).toContain(
       'studio-quote'
     );
+  });
+
+  it('passes its brand on: a template whose only world the brand drops is left out', () => {
+    mocks.lightOnlyQuote = true;
+    const near = {
+      ...studioBrand,
+      id: 'near',
+      colors: { ...studioBrand.colors, secondary: '#FAFAFA' },
+    };
+    const ids = (brand: typeof near) =>
+      pickOffers('post-portrait', brand).templates.map((t) => t.id);
+    expect(ids(studioBrand)).toContain('studio-quote');
+    expect(ids(near)).not.toContain('studio-quote');
   });
 
   it('offers nothing on a format no template covers', () => {
