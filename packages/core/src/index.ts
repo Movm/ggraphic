@@ -29,3 +29,18 @@ export {
   type SchemeId,
   type SurfaceRole,
 } from './brand/schemes.js';
+export {
+  brandFingerprint,
+  isBindingRef,
+  rebindPages,
+  rebindPageState,
+  resolveRef,
+  withBinding,
+  withoutBinding,
+  type Binding,
+  type BindingRef,
+  type Bindings,
+  type BrandColorRole,
+  type BrandFontRole,
+  type RebindContext,
+} from './brand/bindings.js';
