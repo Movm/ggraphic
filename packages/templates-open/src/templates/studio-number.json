@@ -1,0 +1,161 @@
+{
+  "formatVersion": 1,
+  "id": "studio-number",
+  "version": 1,
+  "kind": "template",
+  "family": "number",
+  "title": {
+    "en": "Big number",
+    "de": "Große Zahl"
+  },
+  "description": {
+    "en": "One figure and what it means",
+    "de": "Eine Zahl und was sie bedeutet"
+  },
+  "tags": {
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["1:1", "4:5", "16:9"],
+  "schemes": ["secondary", "primary", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "number",
+            "type": "header",
+            "text": "73%",
+            "x": 0.0,
+            "y": 0.102941,
+            "width": 1.0,
+            "fontSize": 0.277778,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "of what this number stands for",
+            "x": 0.0,
+            "y": 0.5,
+            "width": 1.0,
+            "fontSize": 0.059259,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "subline",
+            "type": "body",
+            "text": "Source or context in one short line",
+            "x": 0.0,
+            "y": 0.780277,
+            "width": 1.0,
+            "fontSize": 0.031481,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": ["brand-logo", "number", "headline", "subline"]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "number": {
+      "role": "number",
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 8
+      }
+    },
+    "headline": {
+      "role": "headline",
+      "budget": {
+        "maxWords": 12,
+        "maxLines": 2,
+        "maxChars": 80
+      }
+    },
+    "subline": {
+      "role": "body",
+      "budget": {
+        "maxWords": 10,
+        "maxLines": 1,
+        "maxChars": 50
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "number-with-explanation",
+      "title": {
+        "en": "Number with explanation",
+        "de": "Zahl mit Erklärung"
+      },
+      "elementIds": ["number", "headline", "subline"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right", "bottom-left"],
+  "placeholders": {
+    "en": {
+      "number": "73%",
+      "headline": "of what this number stands for",
+      "subline": "Source or context in one short line"
+    },
+    "de": {
+      "number": "73 %",
+      "headline": "dessen, wofür diese Zahl steht",
+      "subline": "Quelle oder Zusammenhang in einer kurzen Zeile"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-28",
+    "licence": "CC0-1.0"
+  }
+}

@@ -2,7 +2,15 @@
 import { describe, expect, it } from 'vitest';
 import { brandDefault } from './brandDefault.js';
 import { type BrandPack } from './brandPack.js';
-import { brandFingerprint, rebindPageState, rebindPages } from './bindings.js';
+import {
+  brandFingerprint,
+  firstFontFamily,
+  groundClass,
+  isBindingRef,
+  rebindPageState,
+  rebindPages,
+  resolveRef,
+} from './bindings.js';
 import { deriveSchemes, schemeById } from './schemes.js';
 
 /** A page item as the tests read it back. */
@@ -471,5 +479,120 @@ describe('brandFingerprint', () => {
     const changed: BrandPack = { ...brand, colors: { ...brand.colors, accent: '#123456' } };
     expect(brandFingerprint(changed)).not.toBe(brandFingerprint(brand));
     expect(brandFingerprint(brand)).toMatch(/^[0-9a-f]{8}$/);
+  });
+});
+
+describe('P2 brand additions', () => {
+  it('fingerprint of brandDefault is unchanged by P2', () => {
+    expect(brandFingerprint(brandDefault)).toBe('6f060f15');
+  });
+
+  it('serif falls back to quoteEmphasis and condensed to headline', () => {
+    expect(resolveRef('font.serif', brandDefault, null)).toBe('Fraunces');
+    expect(resolveRef('font.condensed', brandDefault, null)).toBe('Raleway');
+    const lora = { ...brandDefault, fonts: { ...brandDefault.fonts, serif: 'Lora' } };
+    expect(resolveRef('font.serif', lora, null)).toBe('Lora');
+  });
+
+  it('isBindingRef accepts font.serif and font.condensed', () => {
+    expect(isBindingRef('font.serif')).toBe(true);
+    expect(isBindingRef('font.condensed')).toBe(true);
+    expect(isBindingRef('font.nope')).toBe(false);
+  });
+
+  it('new fields change the fingerprint only when present', () => {
+    const withSerif = { ...brandDefault, fonts: { ...brandDefault.fonts, serif: 'Lora' } };
+    const withAlt = {
+      ...brandDefault,
+      logoAlt: { src: '/b.png', label: 'x', ground: 'dark' as const },
+    };
+    expect(brandFingerprint(withSerif)).not.toBe(brandFingerprint(brandDefault));
+    expect(brandFingerprint(withAlt)).not.toBe(brandFingerprint(brandDefault));
+    expect(brandFingerprint({ ...brandDefault, logoAlt: null })).toBe(
+      brandFingerprint(brandDefault)
+    );
+  });
+
+  describe('logoAlt', () => {
+    const base: BrandPack = {
+      ...brandDefault,
+      colors: { ...brandDefault.colors, primary: '#1d3557' },
+      logo: { src: '/a.png', label: 'a' },
+      logoAlt: { src: '/b.png', label: 'x', ground: 'dark' },
+    };
+    const world = (b: BrandPack, id: 'primary' | 'light') => schemeById(b, id);
+
+    it('brand.logo picks logoAlt on a ground of its class', () => {
+      expect(resolveRef('brand.logo', base, world(base, 'primary'))).toBe('/b.png');
+      expect(resolveRef('brand.logo', base, world(base, 'light'))).toBe('/a.png');
+      const noMain = { ...base, logo: null };
+      expect(resolveRef('brand.logo', noMain, world(noMain, 'light'))).toBe('/b.png');
+      expect(resolveRef('brand.logo', base, null)).toBe('/a.png');
+      expect(resolveRef('brand.logo', { ...noMain, logoAlt: null }, null)).toBeNull();
+    });
+
+    it('logoSizeOf sizes the chosen logo', () => {
+      const state = {
+        brandScheme: 'primary',
+        images: [
+          {
+            src: '/a.png',
+            x: 900,
+            y: 1200,
+            width: 120,
+            height: 80,
+            bind: { src: { ref: 'brand.logo', value: '/a.png' } },
+          },
+        ],
+      };
+      const asked: string[] = [];
+      const out = rebindPageState(state, {
+        brand: base,
+        logoSize: { width: 100, height: 100 },
+        logoSizeOf: (src) => {
+          asked.push(src);
+          return { width: 400, height: 100 };
+        },
+        pageSize: { width: 1080, height: 1350 },
+      });
+      const img = (out.state['images'] as Item[])[0]!;
+      expect(img.src).toBe('/b.png');
+      expect(asked).toContain('/b.png');
+      expect([img.width, img.height]).toEqual([120, 30]);
+    });
+  });
+
+  it('a font stack is not a hand edit', () => {
+    const lora: BrandPack = { ...brand, fonts: { ...brand.fonts, headline: 'Lora' } };
+    const state = (family: string) => ({
+      textInstances: [
+        { fontFamily: family, bind: { fontFamily: { ref: 'font.headline', value: 'Raleway' } } },
+      ],
+    });
+    const same = (
+      rebindPageState(state('Raleway, Arial, sans-serif'), { brand: lora }).state[
+        'textInstances'
+      ] as Item[]
+    )[0]!;
+    expect(same.fontFamily).toMatch(/^Lora/);
+    expect(same.bind?.fontFamily).toBeDefined();
+    const other = (
+      rebindPageState(state('Georgia'), { brand: lora }).state['textInstances'] as Item[]
+    )[0]!;
+    expect(other.fontFamily).toBe('Georgia');
+    expect(other.bind).toBeUndefined();
+  });
+
+  it('groundClass', () => {
+    expect(groundClass('#ffffff')).toBe('light');
+    expect(groundClass('#1d3557')).toBe('dark');
+    // The brief listed #777777 as dark, but its contrast is 4.48 vs white and 4.68 vs black.
+    expect(groundClass('#777777')).toBe('light');
+    expect(groundClass('#707070')).toBe('dark');
+  });
+
+  it('firstFontFamily', () => {
+    expect(firstFontFamily('Raleway, Arial')).toBe('raleway');
+    expect(firstFontFamily('"Fraunces"')).toBe('fraunces');
   });
 });

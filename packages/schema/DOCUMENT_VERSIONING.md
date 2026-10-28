@@ -186,6 +186,23 @@ instead. The keys are F0: names and shapes are additive-only from here.
 `colorScheme` / `colorSchemeId` are a different, host-owned pair and not part
 of this; the brand key is `brandScheme` on purpose.
 
+## Version 3
+
+Version 3 admits two page-state keys for templates: `templateRef`
+(`{ id, version }`, the template a page came from; `version` an integer ≥ 1)
+and `groups` (a list of `{ id, blockRef?, elementIds }`, element groups). The
+core step 2 → 3 is the identity: `migrate` returns the document unchanged, and
+the loader only raises `schemaVersion` to 3. A version 2 page never carries
+these keys, so there is nothing to rewrite. Opening a v2 Y.Doc writes the v3
+stamp once, nothing else; a v4 document is refused read-only (`newer`).
+
+Why bump at all: a build that predates the keys would drop them on its next
+write. The keys are F0: names and shapes are additive-only from here. They are
+persisted and emitted like any page key, but deliberately **not** inherited by
+an added or converted page (they describe one page), and the PPTX export
+classifies them as unmapped: `templateRef` has nothing to draw, and group
+members are exported one by one.
+
 ## Deliberately left out
 
 - **Server-side writers and readers** (the reference host's sync-server

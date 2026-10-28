@@ -1,0 +1,180 @@
+{
+  "brands": [
+    {
+      "id": "studio",
+      "roles": {
+        "ground": "#6b1632",
+        "ink": "#ffffff",
+        "ink2": "#f4c6da",
+        "accent": "#ff7ab6",
+        "on-accent": "#3a0a1b",
+        "deep": "#3a0a1b",
+        "shade": "#2a0614",
+        "marker": "#ffffff",
+        "marker-ink": "#6b1632",
+        "duo-low": "#4a0e22",
+        "duo-high": "#ff9cc8"
+      }
+    },
+    {
+      "id": "red",
+      "roles": {
+        "ground": "#d62839",
+        "ink": "#ffffff",
+        "ink2": "#ffd9dd",
+        "accent": "#ffffff",
+        "on-accent": "#c11f30",
+        "deep": "#1c1c1c",
+        "shade": "#28060a",
+        "marker": "#ffffff",
+        "marker-ink": "#d62839",
+        "duo-low": "#6b0f1b",
+        "duo-high": "#ffb8be"
+      }
+    },
+    {
+      "id": "forest",
+      "roles": {
+        "ground": "#11402c",
+        "ink": "#fff8ea",
+        "ink2": "#bfd9c8",
+        "accent": "#cbef4d",
+        "on-accent": "#11402c",
+        "deep": "#0a2a1c",
+        "shade": "#061e14",
+        "marker": "#cbef4d",
+        "marker-ink": "#11402c",
+        "duo-low": "#0a2a1c",
+        "duo-high": "#cbef4d"
+      }
+    },
+    {
+      "id": "neon",
+      "roles": {
+        "ground": "#0b0b0c",
+        "ink": "#ffffff",
+        "ink2": "#bdbdbd",
+        "accent": "#ff3fa4",
+        "on-accent": "#0b0b0c",
+        "deep": "#000000",
+        "shade": "#000000",
+        "marker": "#ffffff",
+        "marker-ink": "#0b0b0c",
+        "duo-low": "#000000",
+        "duo-high": "#ff8fcb"
+      }
+    },
+    {
+      "id": "yellow",
+      "roles": {
+        "ground": "#ffd93b",
+        "ink": "#121212",
+        "ink2": "#3a3218",
+        "accent": "#121212",
+        "on-accent": "#ffd93b",
+        "deep": "#121212",
+        "shade": "#121212",
+        "marker": "#121212",
+        "marker-ink": "#ffd93b",
+        "duo-low": "#121212",
+        "duo-high": "#ffd93b"
+      }
+    },
+    {
+      "id": "blue",
+      "roles": {
+        "ground": "#1b3fae",
+        "ink": "#ffffff",
+        "ink2": "#c9d4f8",
+        "accent": "#ffcb2e",
+        "on-accent": "#10246b",
+        "deep": "#10246b",
+        "shade": "#0c1a50",
+        "marker": "#ffcb2e",
+        "marker-ink": "#10246b",
+        "duo-low": "#10246b",
+        "duo-high": "#a9beff"
+      }
+    },
+    {
+      "id": "pastel",
+      "roles": {
+        "ground": "#f8d3e1",
+        "ink": "#123a2c",
+        "ink2": "#3e6656",
+        "accent": "#17794a",
+        "on-accent": "#ffffff",
+        "deep": "#123a2c",
+        "shade": "#123a2c",
+        "marker": "#123a2c",
+        "marker-ink": "#f8d3e1",
+        "duo-low": "#123a2c",
+        "duo-high": "#f8d3e1"
+      }
+    },
+    {
+      "id": "violet",
+      "roles": {
+        "ground": "#5a2088",
+        "ink": "#ffffff",
+        "ink2": "#e9d3f5",
+        "accent": "#ffd98a",
+        "on-accent": "#4e1c7c",
+        "deep": "#3a1260",
+        "shade": "#321050",
+        "marker": "#ffffff",
+        "marker-ink": "#4e1c7c",
+        "duo-low": "#4e1c7c",
+        "duo-high": "#ffa6c9"
+      }
+    },
+    {
+      "id": "paper",
+      "roles": {
+        "ground": "#f1e9da",
+        "ink": "#1e2b25",
+        "ink2": "#5c6a62",
+        "accent": "#c8175a",
+        "on-accent": "#ffffff",
+        "deep": "#1e2b25",
+        "shade": "#1e2b25",
+        "marker": "#1e2b25",
+        "marker-ink": "#f1e9da",
+        "duo-low": "#1e2b25",
+        "duo-high": "#f1e9da"
+      }
+    },
+    {
+      "id": "photo",
+      "roles": {
+        "ground": "#0d0c11",
+        "ink": "#ffffff",
+        "ink2": "#cfcfd6",
+        "accent": "#ff8fc0",
+        "on-accent": "#0d0c11",
+        "deep": "#0d0c11",
+        "shade": "#0d0c11",
+        "marker": "#ffffff",
+        "marker-ink": "#0d0c11",
+        "duo-low": "#0d0c11",
+        "duo-high": "#ff8fc0"
+      }
+    },
+    {
+      "id": "night",
+      "roles": {
+        "ground": "#0f2352",
+        "ink": "#ffffff",
+        "ink2": "#c2cdeb",
+        "accent": "#f5822a",
+        "on-accent": "#0f2352",
+        "deep": "#091634",
+        "shade": "#091634",
+        "marker": "#f5822a",
+        "marker-ink": "#0f2352",
+        "duo-low": "#0f2352",
+        "duo-high": "#f7b27a"
+      }
+    }
+  ]
+}

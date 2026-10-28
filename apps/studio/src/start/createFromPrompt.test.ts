@@ -1,11 +1,31 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { brandFingerprint, resolveScheme } from '@ggraphic/core';
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api, ApiError } from '../api/client';
+import { studioBrand } from '../brand';
+import { rememberLogoSize } from '../logoSize';
 
-import { AiPromptError, createFromPrompt } from './createFromPrompt';
+import {
+  AiPromptError,
+  createFromPrompt,
+  createFromTemplate,
+  pickedDocument,
+} from './createFromPrompt';
+
+// The real pack has no template that one brand can fully drop, so add one that lives in the light world only.
+vi.mock('@ggraphic/templates-open', async (importOriginal) => {
+  const original = await importOriginal<{ OPEN_TEMPLATES: readonly Record<string, unknown>[] }>();
+  const quote = original.OPEN_TEMPLATES.find((t) => t['id'] === 'studio-quote')!;
+  const lightOnly = {
+    ...quote,
+    id: 'studio-light-only',
+    title: { en: 'Light only' },
+    schemes: ['light'],
+  };
+  return { ...original, OPEN_TEMPLATES: [...original.OPEN_TEMPLATES, lightOnly] };
+});
 
 vi.mock('../api/client', async (importOriginal) => {
   const original = await importOriginal<Record<string, unknown>>();
@@ -52,7 +72,7 @@ describe('createFromPrompt with AI', () => {
   it('creates the project with the template and colour world the AI picked', async () => {
     mocked.pick.mockResolvedValue({
       templateId: 'studio-quote',
-      schemeId: 'dark',
+      schemeId: 'primary',
       fills: { headline: 'Mut zahlt sich aus', subline: 'Ada' },
     });
     const result = await run();
@@ -62,15 +82,30 @@ describe('createFromPrompt with AI', () => {
     expect(mocked.draft).not.toHaveBeenCalled();
 
     const page = pageOf(saved());
-    expect(page.configId).toBe('studio-quote');
+    expect(page.configId).toBe('studio-blank');
+    expect((page.state['templateRef'] as { id: string }).id).toBe('studio-quote');
     // The page is rebound into the picked world and stamped with the brand it was made under.
-    expect(page.state['brandScheme']).toBe('dark');
-    expect(page.state['backgroundColor']).toBe(resolveScheme(activeBrand(), 'dark')!.roles.ground);
+    expect(page.state['brandScheme']).toBe('primary');
+    expect(page.state['backgroundColor']).toBe(
+      resolveScheme(activeBrand(), 'primary')!.roles.ground
+    );
     expect(page.state['brandStamp']).toBe(brandFingerprint(activeBrand()));
     expect(textsOf(page)).toMatchObject({ headline: 'Mut zahlt sich aus', subline: 'Ada' });
     const body = mocked.pick.mock.calls[0]![0];
     expect(body.brief).toBe('Eine Zitatkarte');
     expect(body.templates.map((t) => t.id)).not.toContain('studio-blank');
+  });
+
+  it('falls back to the first world the template offers when the picked one is not offered', async () => {
+    mocked.pick.mockResolvedValue({
+      templateId: 'studio-quote',
+      schemeId: 'dark',
+      fills: { headline: 'Mut zahlt sich aus' },
+    });
+    await run();
+    const page = pageOf(saved());
+    expect(page.state['brandScheme']).toBe('light');
+    expect(page.state['backgroundColor']).toBe(resolveScheme(activeBrand(), 'light')!.roles.ground);
   });
 
   it("keeps the template's own colour world when the AI picked none", async () => {
@@ -124,5 +159,77 @@ describe('createFromPrompt with AI', () => {
     expect(failure).toBeInstanceOf(AiPromptError);
     expect(mocked.createProject).not.toHaveBeenCalled();
     expect(mocked.draft).not.toHaveBeenCalled();
+  });
+});
+
+describe('pickedDocument', () => {
+  it('gives no document for an unknown template id', () => {
+    expect(
+      pickedDocument('post-portrait', { templateId: 'nope', schemeId: null, fills: {} })
+    ).toBeNull();
+  });
+});
+
+describe('pickedDocument with two logos', () => {
+  const MAIN = '/api/brand-assets/' + 'c'.repeat(32) + '.png';
+  const ALT = '/api/brand-assets/' + 'd'.repeat(32) + '.png';
+  afterEach(() => registerBrandPacks([studioBrand]));
+
+  it.each(['primary', 'light'])('fits the logo of the %s world in its own proportions', (world) => {
+    rememberLogoSize(MAIN, 400, 100);
+    rememberLogoSize(ALT, 100, 100);
+    const brand = {
+      ...studioBrand,
+      id: 'two-logos',
+      logo: { src: MAIN, label: 'Main' },
+      logoAlt: { src: ALT, label: 'Alt', ground: 'dark' as const },
+    };
+    registerBrandPacks([brand, studioBrand]);
+    const doc = pickedDocument('post-portrait', {
+      templateId: 'studio-headline',
+      schemeId: world as never,
+      fills: {},
+    })!;
+    const images = doc.pages[0]!.state['userImageInstances'] as {
+      src: string;
+      width: number;
+      height: number;
+    }[];
+    expect(images).toHaveLength(1);
+    const aspect = images[0]!.src === ALT ? 1 : 4;
+    expect(images[0]!.width / images[0]!.height).toBeCloseTo(aspect, 1);
+  });
+});
+
+describe('createFromTemplate', () => {
+  afterEach(() => registerBrandPacks([studioBrand]));
+
+  it('creates no project when the organisation brand cannot place the template', async () => {
+    const near = {
+      ...studioBrand,
+      id: 'near',
+      colors: { ...studioBrand.colors, secondary: '#FAFAFA' },
+    };
+    mocked.getBrandPack.mockResolvedValue({ pack: near } as never);
+    await expect(
+      createFromTemplate({
+        organisationId: 'o1',
+        templateId: 'studio-light-only',
+        name: 'Light only',
+        formatId: 'post-portrait',
+      })
+    ).rejects.toThrow(/cannot be placed/);
+    expect(mocked.createProject).not.toHaveBeenCalled();
+  });
+
+  it('still creates the blank page', async () => {
+    mocked.getBrandPack.mockRejectedValue(new Error('no brand'));
+    await createFromTemplate({
+      organisationId: 'o1',
+      templateId: 'studio-blank',
+      name: 'Blank',
+      formatId: 'post-portrait',
+    });
+    expect(mocked.createProject).toHaveBeenCalledTimes(1);
   });
 });

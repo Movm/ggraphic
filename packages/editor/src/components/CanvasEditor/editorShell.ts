@@ -73,7 +73,10 @@ export interface EditorPagePickerProps {
   activeTemplateId: string | undefined;
   pages: readonly HeterogeneousPage[];
   formatId: string | undefined;
-  onSelectTemplate: (configId: string) => void;
+  /** `replace` may hand the page's new state with the config: a page whose config stays takes it. */
+  onSelectTemplate: (configId: string, state?: Record<string, unknown>) => void;
+  /** `replace` only: the state of the page being converted. */
+  currentState?: Record<string, unknown>;
   /** `add` only: for pages the picker builds itself (variants, layouts). */
   addPage?: EditorAddPage;
   onDuplicateCurrent?: () => void;

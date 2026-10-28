@@ -1015,11 +1015,21 @@ body {
 .studio-brand-preview__page p {
   overflow-wrap: anywhere;
 }
+.studio-brand-preview__outline {
+  box-sizing: border-box;
+  border: 1px dashed color-mix(in srgb, currentColor 50%, transparent);
+  pointer-events: none;
+}
+.studio-brand-preview__envelope {
+  display: flex;
+}
 .studio-brand-preview__logo {
-  position: absolute;
-  max-width: 22%;
-  max-height: 14%;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
+}
+.studio-brand__range {
+  width: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -141,6 +141,11 @@ export const brandPacks = pgTable('brand_packs', {
   backgrounds: jsonb('backgrounds').$type<unknown[]>().notNull(),
   fonts: jsonb('fonts').$type<Record<string, unknown>>().notNull(),
   logoAssetId: uuid('logo_asset_id').references(() => brandAssets.id, { onDelete: 'set null' }),
+  layout: jsonb('layout').$type<Record<string, unknown>>(),
+  logoAltAssetId: uuid('logo_alt_asset_id').references(() => brandAssets.id, {
+    onDelete: 'set null',
+  }),
+  logoAltGround: text('logo_alt_ground', { enum: ['dark', 'light'] }),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

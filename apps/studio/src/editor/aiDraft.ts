@@ -12,7 +12,7 @@ import { fitFontSizeToSlot, PLAIN_STYLE } from '@ggraphic/schema';
 
 import { type Draft } from '../api/client';
 
-import { HEADLINE_TEMPLATE_ID } from './templates/ids';
+import { FREE_PAGE_CONFIG_ID, HEADLINE_TEMPLATE_ID } from './templates/ids';
 import { seedPageState, TEXT_ROLES } from './templates/seeds';
 
 interface DeckPage {
@@ -113,7 +113,7 @@ export function draftDeckOps(
     inserts: [
       {
         afterPageId: active?.id ?? null,
-        configId: HEADLINE_TEMPLATE_ID,
+        configId: FREE_PAGE_CONFIG_ID,
         state: { ...seed, additionalTexts: texts, layerOrder },
       },
     ],

@@ -5,7 +5,7 @@
  * server's source of truth. The server serves this app, so every call is
  * same-origin (`/api/...`). Every non-GET call carries the session's CSRF token.
  */
-import { type BrandPack } from '@ggraphic/core';
+import { LOGO_CORNERS, type BrandPack } from '@ggraphic/core';
 import { z } from 'zod';
 
 const projectSummarySchema = z.object({
@@ -101,6 +101,13 @@ const sessionSchema = z.object({
 const hex = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
 const swatchSchema = z.object({ id: z.string(), label: z.string(), color: hex });
 
+const brandLayoutSchema = z.object({
+  margin: z.number(),
+  logoCorner: z.enum(LOGO_CORNERS),
+  logoMaxWidth: z.number(),
+  logoMaxHeight: z.number(),
+});
+
 /** Mirrors the core's BrandPack; `satisfies` below keeps the two in step. */
 const brandPackSchema = z.object({
   id: z.string(),
@@ -127,6 +134,8 @@ const brandPackSchema = z.object({
     body: z.string(),
     quoteShort: z.string(),
     quoteEmphasis: z.string(),
+    serif: z.string().optional(),
+    condensed: z.string().optional(),
     boldFamilies: z.record(z.string(), z.string()).optional(),
   }),
   fontFaces: z.array(
@@ -141,6 +150,15 @@ const brandPackSchema = z.object({
   logo: z
     .object({ src: z.string().startsWith('/api/brand-assets/'), label: z.string() })
     .nullable(),
+  logoAlt: z
+    .object({
+      src: z.string().startsWith('/api/brand-assets/'),
+      label: z.string(),
+      ground: z.enum(['dark', 'light']),
+    })
+    .nullable()
+    .optional(),
+  layout: brandLayoutSchema.optional(),
   quoteMark: z.object({ src: z.string() }).nullable(),
 }) satisfies z.ZodType<BrandPack>;
 
@@ -148,8 +166,15 @@ const brandSettingsSchema = z.object({
   name: z.string(),
   colors: brandPackSchema.shape.colors,
   backgrounds: z.array(z.object({ label: z.string(), color: hex, ink: hex })),
-  fonts: z.object({ headline: z.string(), body: z.string() }),
+  fonts: z.object({
+    headline: z.string(),
+    body: z.string(),
+    serif: z.string().nullable(),
+    condensed: z.string().nullable(),
+  }),
   logoAssetId: z.string().nullable(),
+  logoAlt: z.object({ assetId: z.string(), ground: z.enum(['dark', 'light']) }).nullable(),
+  layout: brandLayoutSchema.nullable(),
 });
 
 const brandAssetSchema = z.object({
@@ -183,6 +208,8 @@ export interface BrandInput {
   colors: { primary: string; secondary: string; accent: string };
   fonts: BrandSettings['fonts'];
   logoAssetId: string | null;
+  logoAlt: BrandSettings['logoAlt'];
+  layout: BrandSettings['layout'];
 }
 export type BrandAsset = z.infer<typeof brandAssetSchema>;
 export type BrandPackResponse = z.infer<typeof brandPackResponseSchema>;

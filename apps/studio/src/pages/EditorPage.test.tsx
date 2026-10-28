@@ -5,6 +5,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { type StudioConfig } from '../api/client';
 import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
+import { rememberLogoSize } from '../logoSize';
 
 import { studioBrand } from '../brand';
 import { newDocument } from '../editor/document';
@@ -108,6 +109,17 @@ describe('EditorPage', () => {
     expect(calls.filter((c) => c.method !== 'GET')).toEqual([]);
   });
 
+  it('a document naming a missing template opens in the editor', async () => {
+    const stored = newDocument('post-portrait', HEADLINE_TEMPLATE_ID);
+    stored.pages[0]!.configId = 'studio-legacy-gone';
+    const { fetchMock } = fakeServer(stored);
+    vi.stubGlobal('fetch', fetchMock);
+    renderEditor();
+
+    expect(await screen.findByRole('button', { name: /^Text/ })).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
   it('opening a v1 project sends no PUT', async () => {
     const { fetchMock, calls } = fakeServer(newDocument('post-portrait'));
     vi.stubGlobal('fetch', fetchMock);
@@ -118,6 +130,20 @@ describe('EditorPage', () => {
     await new Promise((r) => setTimeout(r, 4000));
     expect(calls.filter((c) => c.method === 'PUT' || c.method === 'PATCH')).toEqual([]);
     expect(screen.queryByText(/Not saved|could not be saved/i)).toBeNull();
+  }, 15_000);
+
+  it('a v2 project opens without a write', async () => {
+    registerBrandPacks([studioBrand]);
+    const { fetchMock, calls } = fakeServer({
+      ...newDocument('post-portrait', HEADLINE_TEMPLATE_ID),
+      schemaVersion: 2,
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderEditor();
+
+    await waitFor(() => expect(document.querySelector('.konvajs-content canvas')).not.toBeNull());
+    await new Promise((r) => setTimeout(r, 4000));
+    expect(calls.filter((c) => c.method === 'PUT' || c.method === 'PATCH')).toEqual([]);
   }, 15_000);
 
   it('opening a project after a brand change saves the rebound document once', async () => {
@@ -151,6 +177,35 @@ describe('EditorPage', () => {
     };
     const state = body.document.pages[0]!.state;
     expect(state.backgroundColor.toLowerCase()).toBe(NEW_PRIMARY);
+  }, 20_000);
+
+  it('opening under a brand with a second logo fits it in its own proportions', async () => {
+    const MAIN = '/api/brand-assets/' + 'c'.repeat(32) + '.png';
+    const ALT = '/api/brand-assets/' + 'd'.repeat(32) + '.png';
+    rememberLogoSize(MAIN, 400, 100);
+    rememberLogoSize(ALT, 100, 100);
+    const withMain = { ...studioBrand, id: 'org-x', logo: { src: MAIN, label: 'Main' } };
+    // Seeded with the main logo only, opened after the organisation added a square second logo.
+    registerBrandPacks([withMain, studioBrand]);
+    const stored = newDocument('post-portrait', HEADLINE_TEMPLATE_ID);
+    const pack = { ...withMain, logoAlt: { src: ALT, label: 'Alt', ground: 'dark' as const } };
+    const { fetchMock, calls } = fakeServer(stored, pack);
+    vi.stubGlobal('fetch', fetchMock);
+    renderEditor();
+
+    await waitFor(() => expect(calls.filter((c) => c.method === 'PATCH')).toHaveLength(1), {
+      timeout: 8000,
+    });
+    const body = calls.find((c) => c.method === 'PATCH')!.body as {
+      document: {
+        pages: {
+          state: { userImageInstances: { src: string; width: number; height: number }[] };
+        }[];
+      };
+    };
+    const logo = body.document.pages[0]!.state.userImageInstances[0]!;
+    expect(logo.src).toBe(ALT);
+    expect(logo.width / logo.height).toBeCloseTo(1, 1);
   }, 20_000);
 
   it('saves the rebound document silently: no "Unsaved changes", no leave warning', async () => {
