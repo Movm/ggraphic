@@ -6,6 +6,7 @@
  * AI the prompt itself becomes the headline.
  */
 import { api, ApiError, type Draft } from '../api/client';
+import { applyBrandPack } from '../brandLoader';
 import { fillTexts } from '../editor/aiDraft';
 import { formatSize, newDocument, type StudioDocument } from '../editor/document';
 import { HEADLINE_TEMPLATE_ID, type StudioTemplateId } from '../editor/templates/ids';
@@ -44,6 +45,20 @@ export function filledDocument(
   };
 }
 
+/**
+ * The seeds read the registered brand (colours, fonts, logo), so the
+ * organisation's pack is put in place before a page is built, as the editor does.
+ */
+async function loadOrganisationBrand(organisationId: string): Promise<void> {
+  let pack = null;
+  try {
+    pack = (await api.getBrandPack(organisationId)).pack;
+  } catch {
+    // No brand reachable: the page is built on the Studio's own pack.
+  }
+  await applyBrandPack(pack);
+}
+
 export interface PromptResult {
   projectId: string;
   /** Set when the AI was asked and could not deliver: the editor opens with the template. */
@@ -71,6 +86,7 @@ export async function createFromPrompt({
   ai: boolean;
 }): Promise<PromptResult> {
   const name = nameFromPrompt(prompt);
+  await loadOrganisationBrand(organisationId);
   if (!ai) {
     const project = await api.createProject(organisationId, {
       name,
@@ -120,6 +136,7 @@ export async function createFromTemplate({
   name: string;
   formatId: string;
 }): Promise<string> {
+  await loadOrganisationBrand(organisationId);
   const project = await api.createProject(organisationId, {
     name,
     document: newDocument(formatId, templateId) as unknown as Record<string, unknown>,
