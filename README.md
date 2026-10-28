@@ -14,6 +14,7 @@ ggraphic is a brand-neutral, template-based, AI-centred open-source design edito
 | AI helpers                          | `@ggraphic/ai`            | `packages/ai`            | MPL-2.0  | later                  |
 | Default brand                       | `@ggraphic/brand-default` | `packages/brand-default` | MPL-2.0  | later                  |
 | ggraphic Studio (hostable app)      | n/a                       | `apps/studio`            | AGPL-3.0 | later                  |
+| ggraphic Studio server              | n/a                       | `apps/studio-server`     | AGPL-3.0 | MVP                    |
 
 ## Licence model
 
@@ -28,7 +29,7 @@ Originally developed as part of netzbegruenung/Gruenerator (AGPL-3.0); relicense
 
 ## Self-hosting
 
-TODO: Docker image and configuration for ggraphic Studio once `apps/studio` lands.
+Run ggraphic Studio on your own machine with Docker Compose: see [docs/self-hosting.md](./docs/self-hosting.md).
 
 ## Development
 
