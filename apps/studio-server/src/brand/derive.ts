@@ -2,7 +2,7 @@
 import { deriveBrandColors, deriveGrounds } from '@ggraphic/core';
 import { type BrandSettings, brandSettingsBody } from '../contract.ts';
 
-type Input = Pick<BrandSettings, 'name' | 'fonts' | 'logoAssetId'> & {
+type Input = Pick<BrandSettings, 'name' | 'fonts' | 'logoAssetId' | 'logoAlt' | 'layout'> & {
   colors: Pick<BrandSettings['colors'], 'primary' | 'secondary' | 'accent'>;
 };
 
@@ -16,6 +16,8 @@ export function settingsFromInput({
   colors,
   fonts,
   logoAssetId,
+  logoAlt,
+  layout,
 }: Input): BrandSettings | null {
   const { primary, secondary, accent } = colors;
   const derived = deriveBrandColors({ primary, secondary, accent });
@@ -28,5 +30,7 @@ export function settingsFromInput({
     backgrounds: grounds.map(({ label, color, ink }) => ({ label, color, ink })),
     fonts,
     logoAssetId,
+    logoAlt,
+    layout,
   });
 }
