@@ -108,6 +108,14 @@ function draftErrorText(err: unknown): string {
   return 'The AI draft failed.';
 }
 
+/** The AI is down, switched off or rate-limited: a second request would fail the same way. */
+function isAiWall(err: unknown): boolean {
+  return (
+    err instanceof ApiError &&
+    (err.code === 'ai_timeout' || err.code === 'ai_disabled' || err.status === 429)
+  );
+}
+
 export async function createFromPrompt({
   organisationId,
   prompt,
@@ -131,15 +139,18 @@ export async function createFromPrompt({
 
   const { width, height } = formatSize(formatId);
   const pick = api.pick({ brief: prompt.trim(), ...pickOffers(), format: { width, height } }).then(
-    (value) => pickedDocument(formatId, value),
-    () => null
+    (value) => ({ document: pickedDocument(formatId, value), stop: null }),
+    // A draft would meet the same wall: report it instead of asking again.
+    (err: unknown) => ({ document: null, stop: isAiWall(err) ? err : null })
   );
   // The template first: if the AI fails, the user still gets a project to work on.
   const project = await api.createProject(organisationId, {
     name,
     document: newDocument(formatId, HEADLINE_TEMPLATE_ID) as unknown as Record<string, unknown>,
   });
-  let document = await pick;
+  const picked = await pick;
+  if (picked.stop) return { projectId: project.id, draftError: draftErrorText(picked.stop) };
+  let document = picked.document;
   if (!document) {
     try {
       const draft = await api.draft({ briefing: prompt.trim(), width, height });
@@ -157,7 +168,7 @@ export async function createFromPrompt({
   } catch (err) {
     return {
       projectId: project.id,
-      draftError: `The draft could not be saved. ${draftErrorText(err)}`,
+      draftError: `The design could not be saved. ${draftErrorText(err)}`,
     };
   }
 }
