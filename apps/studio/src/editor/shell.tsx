@@ -11,6 +11,7 @@ import {
 } from '@ggraphic/editor/components/CanvasEditor/editorShell';
 import { Button } from '@ggraphic/ui';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { PiSparkle } from 'react-icons/pi';
 
 import { ApiError } from '../api/client';
@@ -182,7 +183,8 @@ export function StudioPagePicker({
   const placed = (entry: CatalogEntry | undefined) =>
     entry ? templatePageState(entry, formatId ?? DEFAULT_FORMAT) : null;
   const heldTemplateId = templateRefOf(currentState) ?? currentTemplateId;
-  return (
+  // On the body: a box that opened the picker (the small "Add page" button) must not size or clip it.
+  return createPortal(
     <div className="studio-overlay">
       {/* Clicking beside the dialog closes it; Escape does the same from the keyboard. */}
       <div className="studio-overlay__backdrop" onClick={onClose} role="presentation" />
@@ -232,7 +234,8 @@ export function StudioPagePicker({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
