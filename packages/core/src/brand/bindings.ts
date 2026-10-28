@@ -22,12 +22,15 @@ export type BindingRef =
  * `value` is what the field held when the binding last wrote it; a different value means a hand edit.
  * A logo binding also carries `box`, the envelope every logo is fitted into, and `fit`, the box
  * the last fit gave it. Without them each swap would fit into the previous, already smaller box.
+ * `pendingFit` marks a logo swapped while its size was unknown: its box still has to be fitted,
+ * which happens as soon as the size is known, whatever the page's stamp says.
  */
 export interface Binding {
   ref: BindingRef;
   value: string;
   box?: Box;
   fit?: Box;
+  pendingFit?: boolean;
 }
 
 /** Per field name. */
@@ -106,7 +109,12 @@ function canonicalJson(value: unknown): string {
  */
 export function brandFingerprint(brand: BrandPack): string {
   const { boldFamilies: _bold, ...fonts } = brand.fonts;
-  const text = canonicalJson({ colors: brand.colors, fonts, markers: brand.markers, logo: brand.logo?.src ?? null });
+  const text = canonicalJson({
+    colors: brand.colors,
+    fonts,
+    markers: brand.markers,
+    logo: brand.logo?.src ?? null,
+  });
   let hash = 0x811c9dc5;
   for (let i = 0; i < text.length; i++) {
     hash ^= text.charCodeAt(i);
@@ -165,6 +173,13 @@ function hasBindings(obj: Obj): boolean {
   return isPlainObject(obj['bind']) && Object.keys(obj['bind']).length > 0;
 }
 
+function hasPendingFit(obj: Obj): boolean {
+  return (
+    isPlainObject(obj['bind']) &&
+    Object.values(obj['bind']).some((b) => isPlainObject(b) && b['pendingFit'] === true)
+  );
+}
+
 function boxOf(obj: Obj): Box | null {
   const { x, y, width, height } = obj;
   if (![x, y, width, height].every((n) => typeof n === 'number' && Number.isFinite(n))) return null;
@@ -190,9 +205,7 @@ function fitLogo(
   if (!current) return null;
   const envelope =
     binding.box && binding.fit && sameBox(binding.fit, current) ? binding.box : current;
-  const fit = fitLogoBox(envelope, logoSize, pageSize);
-  Object.assign(obj, fit);
-  return { box: envelope, fit };
+  return { box: envelope, fit: fitLogoBox(envelope, logoSize, pageSize) };
 }
 
 /** Rebinds one object's fields; the same object when nothing changes. */
@@ -225,18 +238,26 @@ function rebindObject(obj: Obj, ctx: RebindContext, scheme: Scheme | null): Obj 
     const value = color ? normalizeColor(resolved) : resolved;
     // `value` is what the binding stores; the field keeps its fallback tail.
     const written = font ? value + splitStack(current as string).tail : value;
-    if (
-      binding.value === value &&
-      (font ? firstFamilyKey(current as string) === familyKey(value) : current === value)
-    )
-      continue;
-    next ??= { ...obj };
-    next[field] =
-      font && firstFamilyKey(current as string) === familyKey(value) ? current : written;
+    const sameField = font
+      ? firstFamilyKey(current as string) === familyKey(value)
+      : current === value;
+    const logo = binding.ref === 'brand.logo';
+    // A swapped logo is fitted now; so is one whose fit was left pending, once its size is known.
     const fitted =
-      binding.ref === 'brand.logo' && current !== value ? fitLogo(next, binding, ctx) : null;
+      logo && (!sameField || binding.pendingFit) ? fitLogo(next ?? obj, binding, ctx) : null;
+    if (sameField && binding.value === value && !fitted) continue;
+    next ??= { ...obj };
+    if (fitted) Object.assign(next, fitted.fit);
+    next[field] = sameField ? current : written;
     nextBind ??= { ...bind };
-    nextBind[field] = { ...binding, ref: binding.ref, value, ...fitted };
+    const { pendingFit: _done, ...kept } = binding;
+    nextBind[field] = {
+      ...kept,
+      ref: binding.ref,
+      value,
+      ...fitted,
+      ...(logo && !fitted ? { pendingFit: true } : {}),
+    };
   }
   if (!next && !nextBind) return obj;
   next ??= { ...obj };
@@ -267,14 +288,17 @@ export function rebindPageState(
 ): { state: Record<string, unknown>; changed: boolean } {
   const { brand } = ctx;
   const stamp = brandFingerprint(brand);
-  const bound =
-    hasBindings(state) ||
+  const someObject = (test: (obj: Obj) => boolean) =>
+    test(state) ||
     Object.values(state).some((v) =>
       Array.isArray(v)
-        ? v.some((x) => isPlainObject(x) && hasBindings(x))
-        : isPlainObject(v) && Object.values(v).some((x) => isPlainObject(x) && hasBindings(x))
+        ? v.some((x) => isPlainObject(x) && test(x))
+        : isPlainObject(v) && Object.values(v).some((x) => isPlainObject(x) && test(x))
     );
-  if (!bound || state['brandStamp'] === stamp) return { state: state as Obj, changed: false };
+  const current = state['brandStamp'] === stamp;
+  // A logo still waiting for its fit keeps the page open even under a current stamp.
+  if (current ? !someObject(hasPendingFit) : !someObject(hasBindings))
+    return { state: state as Obj, changed: false };
 
   const scheme = schemeOf(state, brand);
   let next: Obj = rebindObject(state, ctx, scheme);
@@ -303,6 +327,7 @@ export function rebindPageState(
       next[key] = replaced;
     }
   }
+  if (current && next === state) return { state: state as Obj, changed: false };
   if (next === state) next = { ...state };
   next['brandStamp'] = stamp;
   return { state: next, changed: true };
