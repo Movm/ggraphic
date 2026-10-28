@@ -6,10 +6,14 @@ import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
 /**
- * The Studio speaks English. German belongs in `i18n/de.ts` and in search vocabulary;
- * a German word in a string literal or JSX text anywhere else reaches the English UI.
- * Reads the source (the break is a single literal that no type check sees) and lists
- * every string that holds German, with file and line.
+ * UI text lives in the message catalogue (`i18n/de.ts`, `i18n/en.ts`), read through `useMessages()`
+ * or `messages()`, so every host language gets its own wording. Two checks over the source (the
+ * break is a single literal that no type check sees):
+ *
+ * 1. No German in a string literal or JSX text outside the German catalogue and search vocabulary.
+ * 2. No prose in a UI position (JSX text; `title`, `aria-label`, `placeholder`, `alt`, `label`
+ *    attributes) in any language: a hardcoded English string breaks a German host just as a
+ *    hardcoded German one breaks an English host.
  */
 const SRC = path.resolve(import.meta.dirname, '..');
 const STUDIO_SRC = path.resolve(import.meta.dirname, '../../../../apps/studio/src');
@@ -23,6 +27,9 @@ const ALLOWED_FILES = [
   /^ai\/describeCanvasElements\.ts$/,
   // Developer notes on page keys the export drops.
   /^export\/pptx\/buildPptxModel\.ts$/,
+  // Built-in format data in the original language; `formatLabel()` / `formatDescription()` read
+  // the catalogue.
+  /^formats\/index\.ts$/,
 ];
 /** Stored or shared ids and file names that happen to be German words: frozen, never shown. */
 const FROZEN = new Set([
@@ -107,16 +114,112 @@ function germanStrings(file: string): string[] {
   return found;
 }
 
-describe('English UI', () => {
+const UI_ATTRIBUTES = new Set([
+  'title',
+  'aria-label',
+  'placeholder',
+  'alt',
+  'aria-description',
+  'label',
+  'actionLabel',
+]);
+/** Names and formats that read the same in every language. */
+const LANGUAGE_NEUTRAL = new Set([
+  'unsplash',
+  'png',
+  'jpg',
+  'jpeg',
+  'webp',
+  'pdf',
+  'pptx',
+  'powerpoint (.pptx)',
+  'download',
+  'alt',
+  'text',
+  'icon',
+  'icons',
+  'emoji',
+  'sticker',
+  'sharepic',
+  'sharepics',
+  'presets',
+  'zoom',
+  'name',
+  'canvas',
+  'raleway',
+  'link',
+  'qr',
+  'ok',
+]);
+
+/** Prose: two words, or one capitalised word of four letters or more, that is not a neutral name. */
+function isProse(value: string): boolean {
+  const text = value
+    .replace(/\$\{[^}]*\}/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!/[A-Za-zÄÖÜäöüß]{3}/.test(text)) return false;
+  if (LANGUAGE_NEUTRAL.has(text.toLowerCase())) return false;
+  const words = text.split(' ').filter((w) => /[A-Za-zÄÖÜäöüß]{2}/.test(w));
+  return words.length >= 2 || /^[A-ZÄÖÜ][a-zäöüß]{3,}$/.test(text);
+}
+
+function hardcodedUiText(file: string): string[] {
+  const source = ts.createSourceFile(
+    file,
+    readFileSync(file, 'utf8'),
+    ts.ScriptTarget.Latest,
+    true
+  );
+  const found: string[] = [];
+  const report = (node: ts.Node, value: string) => {
+    const line = source.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+    found.push(
+      `${path.relative(path.dirname(SRC), file)}:${line} ${JSON.stringify(value.trim().slice(0, 70))}`
+    );
+  };
+  const literalText = (e: ts.Node): string | null => {
+    if (ts.isStringLiteral(e) || ts.isNoSubstitutionTemplateLiteral(e)) return e.text;
+    if (ts.isTemplateExpression(e)) {
+      return e.head.text + e.templateSpans.map((s) => '${}' + s.literal.text).join('');
+    }
+    return null;
+  };
+  const visit = (node: ts.Node) => {
+    if (ts.isJsxText(node) && isProse(node.text)) report(node, node.text);
+    if (ts.isJsxAttribute(node) && UI_ATTRIBUTES.has(node.name.getText()) && node.initializer) {
+      const init = node.initializer;
+      const value =
+        ts.isJsxExpression(init) && init.expression
+          ? literalText(init.expression)
+          : literalText(init);
+      if (value !== null && isProse(value)) report(init, value);
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(source);
+  return found;
+}
+
+const isEditorUiFile = (rel: string) => !ALLOWED_FILES.some((re) => re.test(rel));
+const relOf = (file: string) => path.relative(SRC, file).split(path.sep).join('/');
+
+describe('UI text lives in the message catalogue', () => {
   it('has no German in a string literal or JSX text outside the German catalogue', () => {
-    const stray = sourceFiles(SRC).flatMap((file) => {
-      const rel = path.relative(SRC, file).split(path.sep).join('/');
-      return ALLOWED_FILES.some((re) => re.test(rel)) ? [] : germanStrings(file);
-    });
+    const stray = sourceFiles(SRC).flatMap((file) =>
+      isEditorUiFile(relOf(file)) ? germanStrings(file) : []
+    );
     expect(stray).toEqual([]);
   });
 
-  it('has none in the Studio app either', () => {
+  it('has no prose hardcoded in JSX text or UI attributes, in any language', () => {
+    const stray = sourceFiles(SRC).flatMap((file) =>
+      isEditorUiFile(relOf(file)) ? hardcodedUiText(file) : []
+    );
+    expect(stray).toEqual([]);
+  });
+
+  it('has no German in the Studio app either (the Studio is English by design)', () => {
     expect(sourceFiles(STUDIO_SRC).flatMap(germanStrings)).toEqual([]);
   });
 });

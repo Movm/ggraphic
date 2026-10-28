@@ -64,7 +64,7 @@ export function IllustrationSettings({
         <button
           className={ACTION_BTN_DANGER}
           onClick={() => onRemoveIllustration(selectedIllustration.id)}
-          title="Remove"
+          title={t.sidebar.imageAdjust.remove}
         >
           <PiTrash size={12} />
         </button>

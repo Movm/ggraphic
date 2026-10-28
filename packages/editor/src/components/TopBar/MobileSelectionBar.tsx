@@ -69,7 +69,7 @@ export function MobileSelectionBar({ onOpenArea, onDone, ...controls }: MobileSe
           className="flex-none inline-flex flex-col items-center justify-center gap-0.5 min-w-11 h-11 px-1 rounded-lg border-none bg-transparent cursor-pointer text-[var(--editor-text-secondary)] hover:bg-[var(--editor-surface-hover)]"
         >
           <PiSlidersHorizontal size={20} aria-hidden />
-          <span className="text-[11px] font-bold">More</span>
+          <span className="text-[11px] font-bold">{t.shell.more}</span>
         </button>
       )}
       {!cropping && (

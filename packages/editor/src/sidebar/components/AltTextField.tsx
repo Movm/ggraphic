@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useAnnounce } from '@ggraphic/editor/hooks/useAnnounce';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { messages, useMessages } from '@ggraphic/editor/i18n/messages';
 import { useAutoSaveStore, useAutoSaveStoreApi } from '@ggraphic/editor/stores/useAutoSaveStore';
 import { useId } from 'react';
 
@@ -10,7 +10,7 @@ import { MOBILE_INPUT_TEXT } from '../sidebarStyles.js';
 export function composeAltText(canvasText: string): string {
   const text = canvasText.replace(/\s+/g, ' ').trim();
   if (!text) return '';
-  return `Graphic with the text: ${text}${/[.!?]$/.test(text) ? '' : '.'}`;
+  return `${messages().sidebar.altText.suggestion(text)}${/[.!?]$/.test(text) ? '' : '.'}`;
 }
 
 /** Hängt die Bildbeschreibung als eigene Zeile an; ein geleertes Feld hängt nichts an. */

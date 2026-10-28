@@ -28,7 +28,7 @@
  */
 
 import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { messages, useMessages } from '@ggraphic/editor/i18n/messages';
 import { pagePersistedStateKeys } from '@ggraphic/editor/collab/pageElementStateKeys';
 import { serializeDeck } from '@ggraphic/editor/collab/pagesDoc';
 import { createPageSyncedCallbacks } from '@ggraphic/editor/collab/wrapCallbacksWithPageSync';
@@ -631,7 +631,7 @@ function CanvasEditorInner({
       const deck = serializeDeck(pagesDoc);
       const refs = canvasRefsRef.current;
       if (deck.some((_, i) => !refs[i]?.current)) {
-        throw new Error('Not all slides could be exported');
+        throw new Error(messages().errors.exportSlidesPartial);
       }
       return exportPptxDeck({
         pages: deck.map((page) => page.state),
@@ -933,7 +933,7 @@ function CanvasEditorInner({
     if (!printFormat) return;
     const pages = printPages();
     if (pages.some((_, i) => !canvasRefsRef.current[i]?.current)) {
-      throw new Error('Not all pages could be exported');
+      throw new Error(messages().errors.exportPagesPartial);
     }
     const pdf = await exportPrintPdf({ format: printFormat, pages });
     const blob = new Blob([pdf as BlobPart], { type: 'application/pdf' });
@@ -944,10 +944,10 @@ function CanvasEditorInner({
   const handleDownloadPptx = useCallback(
     async (onProgress: (done: number, total: number) => void) => {
       const blob = await buildPptx(onProgress);
-      const filename = printPdfFilename(documentTitle ?? 'Presentation', filenamePrefix).replace(
-        /\.pdf$/,
-        '.pptx'
-      );
+      const filename = printPdfFilename(
+        documentTitle ?? messages().defaults.presentationTitle,
+        filenamePrefix
+      ).replace(/\.pdf$/, '.pptx');
       await fileDelivery.downloadBlob(blob, filename);
     },
     [buildPptx, documentTitle, fileDelivery, filenamePrefix]
@@ -960,7 +960,7 @@ function CanvasEditorInner({
     const blob = new Blob([pdf as BlobPart], { type: 'application/pdf' });
     await fileDelivery.downloadBlob(
       blob,
-      printPdfFilename(documentTitle ?? 'Presentation', filenamePrefix)
+      printPdfFilename(documentTitle ?? messages().defaults.presentationTitle, filenamePrefix)
     );
   }, [exportAllPages, documentTitle, fileDelivery, filenamePrefix]);
 
@@ -1045,7 +1045,8 @@ function CanvasEditorInner({
     ? activeEditorTab.tab.label
     : activeTab === 'layers'
       ? layersTab.label
-      : (activeTab && activeConfig?.tabs.find((tab) => tab.id === activeTab)?.label) || 'Selection';
+      : (activeTab && activeConfig?.tabs.find((tab) => tab.id === activeTab)?.label) ||
+        messages().topBar.selection;
   useMobileSheetFit({
     enabled: isMobileSheetOpen,
     zoom,

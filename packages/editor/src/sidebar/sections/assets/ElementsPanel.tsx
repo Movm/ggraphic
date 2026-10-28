@@ -459,7 +459,9 @@ export function ElementsPanel(props: ExtendedAssetsSectionProps) {
 
       {showNoResults ? (
         <div className="flex flex-col items-center gap-1.5 px-3 py-10 text-center">
-          <strong className="text-[15px] text-[var(--editor-text)]">Nothing found</strong>
+          <strong className="text-[15px] text-[var(--editor-text)]">
+            {t.sidebar.elements.nothingFound}
+          </strong>
           {noResultsHint && (
             <span className="text-sm text-[var(--editor-text-muted)] [text-wrap:pretty]">
               {noResultsHint}

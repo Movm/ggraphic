@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { messages } from '@ggraphic/editor/i18n/messages';
 import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
 import { plainAssetImageUrls, registeredAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
 import { useQuery, type QueryClient } from '@tanstack/react-query';
@@ -32,7 +33,7 @@ export function stockPhotoItem(image: StockImage): ElementItem {
   return {
     key: `photo:${image.filename}`,
     // Named like a live Unsplash hit: the photographer is the credit, a category says nothing.
-    label: credit ? credit.photographer : 'Photo',
+    label: credit ? credit.photographer : messages().credit.photo,
     keywords: [
       'Foto',
       ...(category ? [category] : []),

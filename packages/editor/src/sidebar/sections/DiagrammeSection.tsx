@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { useMessages } from '@ggraphic/editor/i18n/messages';
 import {
   chartColors,
   CHART_GROUP_LABELS,
@@ -123,11 +124,12 @@ function ChartCard({
   name: string;
   onClick: () => void;
 }) {
+  const t = useMessages();
   return (
     <button
       type="button"
       onClick={onClick}
-      title={`Insert ${name}`}
+      title={t.common.insertNamed(name)}
       className="group flex flex-col items-center gap-1.5 cursor-pointer bg-transparent border-none p-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--editor-accent)]"
     >
       <span

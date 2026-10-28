@@ -92,7 +92,7 @@ export function AiCreateTool({ onJumpToUploads }: AiCreateToolProps) {
           </label>
         </>
       }
-      actionLabel="Generate"
+      actionLabel={t.sidebar.tools.generate}
       actionIcon={HiSparkles}
       canSubmit={canSubmit}
       isBusy={isBusy}

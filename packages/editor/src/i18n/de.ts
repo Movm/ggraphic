@@ -10,6 +10,10 @@
  */
 export const de = {
   common: {
+    addShape: (name: string) => `${name} hinzufügen`,
+    insertNamed: (name: string) => `${name} einfügen`,
+    enterField: (label: string) => `${label} eingeben...`,
+    colorHex: (hex: string) => `Farbe ${hex}`,
     close: 'Schließen',
     undo: 'Rückgängig',
     text: 'Text',
@@ -152,6 +156,18 @@ export const de = {
   },
 
   errors: {
+    canvasError: 'Canvas-Fehler',
+    canvasConfigLoad: 'Die Canvas-Konfiguration konnte nicht geladen werden',
+    exportSlidesPartial: 'Nicht alle Folien konnten exportiert werden',
+    exportPagesPartial: 'Nicht alle Seiten konnten exportiert werden',
+    slideExport: (n: number) => `Folie ${n} konnte nicht exportiert werden`,
+    pagesCapture: (pages: string) => `Seite(n) ${pages} konnten nicht erfasst werden`,
+    photoTooSmall: (n: number, dpi: number, recommended: number) =>
+      `Foto ${n} ist für den Druck zu klein (ca. ${dpi} dpi, empfohlen ${recommended}).`,
+    describeImageFirst: 'Bitte gib eine Bildbeschreibung ein.',
+    aiImageUnavailable: 'KI-Bildgenerierung ist in dieser Umgebung nicht verfügbar.',
+    imageGenerationFailed: 'Fehler bei der Bildgenerierung',
+    backgroundByClick: 'Hintergrundbilder bitte per Klick auf den Hintergrund ändern',
     textEditorLoad:
       'Der Texteditor konnte nicht geladen werden. Bitte prüfe deine Verbindung und versuche es erneut.',
     smartCropFailed: 'Automatischer Ausschnitt nicht möglich',
@@ -175,6 +191,29 @@ export const de = {
   },
 
   formats: {
+    names: {
+      'post-portrait': 'Sharepic',
+      'post-portrait-tall': 'Sharepic 3:4',
+      'profile-square': 'Profilbild',
+      'slide-16-9': 'Präsentation',
+      'print-visitenkarte-quer': 'Visitenkarte quer',
+      'print-visitenkarte-hoch': 'Visitenkarte hoch',
+      'print-a3-hoch': 'Plakat A3 hoch',
+      'print-a4-hoch': 'Plakat A4 hoch',
+      'print-a3-quer': 'Plakat A3 quer',
+      'print-a1-hoch': 'Plakat A1 hoch',
+      'print-a1-quer': 'Plakat A1 quer',
+      'print-grossflaeche': 'Großfläche 18/1 (Vorlage A2)',
+      'print-citylight': 'Citylight',
+      'print-flyer-dinlang': 'Flyer DIN lang (A4 quer, Wickelfalz)',
+      'print-a6-hoch': 'Flyer A6 hoch',
+      'print-a6-quer': 'Flyer A6 quer',
+      'print-briefbogen-a4': 'Briefbogen A4',
+      'print-zeitung-a4': 'Zeitung A4',
+    } as Record<string, string>,
+    slidesDescription: (size: string) => `${size} · Folien`,
+    printDescription: (size: string, bleedMm: number, sides: number) =>
+      `${size} · ${bleedMm} mm Beschnitt · ${sides === 1 ? 'einseitig' : sides === 2 ? 'Vorder- und Rückseite' : `${sides} Seiten`}`,
     groups: {
       sharepic: 'Sharepics',
       'sharepic-tall': 'Sharepics 3:4',
@@ -188,7 +227,82 @@ export const de = {
     imageDeleted: 'Bild gelöscht',
   },
 
+  pageBar: {
+    moveUp: 'Nach oben verschieben',
+    movePageUp: 'Seite nach oben verschieben',
+    moveDown: 'Nach unten verschieben',
+    movePageDown: 'Seite nach unten verschieben',
+    changeTemplate: 'Vorlage ändern',
+    chooseTemplate: 'Vorlage auswählen',
+  },
+
+  credit: {
+    photoBy: 'Foto von',
+    on: 'auf',
+    photoLine: (count: number, names: string) =>
+      `${count > 1 ? 'Fotos' : 'Foto'}: ${names} auf Unsplash`,
+    by: (author: string) => ` von ${author}`,
+    heading: 'Bildnachweis für deinen Beitrag',
+    notYours: 'Das Foto gehört nicht dir: Nenne die Fotograf*in und Unsplash im Beitragstext.',
+    photo: 'Foto',
+  },
+
+  unsplash: {
+    moreFrom: 'Mehr von Unsplash',
+    noPhotosEither: (query: string) => `Auch auf Unsplash keine Fotos zu „${query}“ gefunden.`,
+    noPhotos: (query: string) => `Keine Fotos zu „${query}“ gefunden.`,
+    loadMore: (shown: number, total: number) => `Mehr laden (${shown} von ${total})`,
+    photosFrom: 'Fotos von',
+    licence: '– kostenlos nutzbar nach der Unsplash-Lizenz.',
+    inserted: 'Eingefügt',
+  },
+
+  placeholders: {
+    headline: 'Ihre Überschrift hier',
+    subtext: 'Hier steht Ihre Botschaft',
+    quote: 'Hier steht Ihr Zitat.\nEin gutes Zitat inspiriert.',
+    name: 'Maxi Mustermensch',
+    header: 'Wussten Sie schon?',
+    body: 'Hier können Sie Ihren Text einfügen.',
+    line1: 'Erste Zeile',
+    line2: 'Zweite Zeile',
+    line3: 'Dritte Zeile',
+    accent: 'Betonung',
+    eventTitle: 'VERANSTALTUNG',
+    beschreibung: 'Beschreibung hier eingeben',
+    weekday: 'MI',
+    date: '15.01.',
+    time: '19 UHR',
+    locationName: 'Veranstaltungsort',
+    address: 'Musterstraße 1, 12345 Stadt',
+  } as Record<string, string>,
+
+  sharepicText: {
+    labels: {
+      quote: 'Zitat',
+      name: 'Name',
+      header: 'Überschrift',
+      subheader: 'Unterzeile',
+      body: 'Text',
+      eventTitle: 'Veranstaltung',
+      weekday: 'Wochentag',
+      date: 'Datum',
+      time: 'Uhrzeit',
+      locationName: 'Ort',
+      address: 'Adresse',
+      line1: 'Zeile 1',
+      line2: 'Zeile 2',
+      line3: 'Zeile 3',
+      headline: 'Überschrift',
+      title: 'Titel',
+    } as Record<string, string>,
+    type: (canvasType: string) => `Sharepic-Typ: ${canvasType}`,
+    more: (texts: string) => `Weitere Texte: ${texts}`,
+    empty: '(Sharepic ist noch leer)',
+  },
+
   defaults: {
+    presentationTitle: 'Präsentation',
     pillBadgeText: 'Wusstest du?',
     series: (n: number) => `Reihe ${n}`,
     deckTitleMany: (type: string, pages: number) => `Canvas: ${type} (${pages} Seiten)`,
@@ -362,6 +476,9 @@ export const de = {
   sidebar: {
     uploadFailed: 'Upload fehlgeschlagen',
     imageAdjust: {
+      title: 'Anpassen',
+      light: 'Hell',
+      flip: 'Spiegeln',
       reset: 'Zurücksetzen',
       horizontal: 'Horizontal',
       vertical: 'Vertikal',
@@ -432,6 +549,10 @@ export const de = {
       selected: 'Ausgewählter Rahmen',
     },
     chart: {
+      heading: 'Diagramm',
+      labelN: (n: number) => `Bezeichnung ${n}`,
+      addRow: 'Zeile',
+      addSeries: 'Datenreihe',
       deleteChart: 'Diagramm löschen',
       optional: 'Optional…',
       removeRow: 'Zeile entfernen',
@@ -449,6 +570,9 @@ export const de = {
       removeSeries: (name: string) => `${name} entfernen`,
     },
     text: {
+      defaultHeader: 'Überschrift',
+      defaultSubheader: 'Untertitel',
+      defaultBody: 'Text hier eingeben',
       placeholderHeader: 'Überschrift...',
       placeholderSubheader: 'Untertitel...',
       placeholderText: 'Text...',
@@ -478,6 +602,20 @@ export const de = {
       circle: 'Störer',
     },
     tools: {
+      generate: 'Generieren',
+      points: (n: number) => `Punkte: ${n}`,
+      gradientPreview: 'Verlaufstext',
+      sampleText: 'Beispieltext',
+      preview: 'Vorschau…',
+      linkOrText: 'Link oder Text',
+      pathTextTile: 'PFADTEXT',
+      pathNames: {
+        wave: 'Welle',
+        smile: 'Bogen',
+        rainbow: 'Regenbogen',
+        circle: 'Kreis',
+        rising: 'Aufsteigend',
+      } as Record<string, string>,
       previewFailed: 'Vorschau konnte nicht erzeugt werden.',
       pathTextError: 'Fehler beim Erstellen des Pfadtextes',
       pathTextPlace: 'Pfadtext einfügen',
@@ -589,6 +727,9 @@ export const de = {
       remainingToday: (n: number) => `Noch ${n} ${n === 1 ? 'Bild' : 'Bilder'} heute verfügbar`,
     },
     elements: {
+      brand: 'Marke',
+      nothingFound: 'Nichts gefunden',
+      defaultList: 'Standard',
       moreRecent: 'Weitere zuletzt verwendete Elemente',
       clearSearch: 'Suche leeren',
       searchElements: 'Elemente suchen',
@@ -645,6 +786,7 @@ export const de = {
       ],
     },
     altText: {
+      suggestion: (text: string) => `Sharepic mit dem Text: ${text}`,
       copyFailed: 'Kopieren nicht möglich',
       copied: 'Alt-Text kopiert',
       label: 'Bildbeschreibung (Alt-Text)',
@@ -659,6 +801,17 @@ export const de = {
   },
 
   shell: {
+    loadingEditor: 'Editor wird geladen',
+    zoomReset: 'Zoom auf 100 % zurücksetzen',
+    moreOptions: 'Mehr Optionen',
+    more: 'Mehr',
+    speakerNotes: 'Sprechernotizen',
+    notes: 'Notizen',
+    notesWithOne: 'Notizen (1)',
+    notesPlaceholder: 'Notizen für den Vortrag …',
+    templateBy: 'Vorlage von',
+    imagePreview: 'Bildvorschau',
+    enlargedImage: 'Vergrößertes Bild',
     addPage: 'Seite hinzufügen',
     addNewPage: 'Neue Seite hinzufügen',
     editPage: (n: number) => `Seite ${n} bearbeiten`,
@@ -722,6 +875,13 @@ export const de = {
   },
 
   topBar: {
+    cropAction: 'Zuschneiden',
+    aiTemplate: 'Vorlage',
+    aiSuggestionNoun: 'Vorschlag',
+    aiDiscard: (noun: string) => `${noun} verwerfen`,
+    aiDiscardUndo: (noun: string) => `${noun} verwerfen (Rückgängig)`,
+    aiKeep: (noun: string) => `${noun} behalten`,
+    backgroundImageNamed: (label: string) => `Hintergrundbild: ${label}`,
     editSelection: 'Auswahl bearbeiten',
     nothingDeletable: 'Nichts davon lässt sich löschen',
     clearSelection: 'Auswahl aufheben (Esc)',

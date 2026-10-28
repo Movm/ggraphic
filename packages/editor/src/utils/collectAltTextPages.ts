@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { messages } from '@ggraphic/editor/i18n/messages';
 import { type AltTextPage } from '@ggraphic/editor/CanvasEditorProvider';
 import { type GenericCanvasRef } from '@ggraphic/editor/components/GenericCanvas';
 
@@ -21,7 +22,7 @@ export async function collectAltTextPages(
     pages.push({ pageNumber: index + 1, image, texts: ref.getVisibleTexts() });
   }
   if (failedPages.length > 0) {
-    throw new Error(`Page(s) ${failedPages.join(', ')} could not be captured`);
+    throw new Error(messages().errors.pagesCapture(failedPages.join(', ')));
   }
   return pages;
 }

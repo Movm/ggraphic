@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { messages } from '@ggraphic/editor/i18n/messages';
 /**
  * Applies a canvas-AI operation to the active template's actions.
  *
@@ -340,7 +341,7 @@ function applyCore<TState>(
         // applier has no resolver — users change images by clicking the background.
         return {
           ok: false,
-          reason: 'To change a background image, click the background',
+          reason: messages().errors.backgroundByClick,
         };
 
       default: {

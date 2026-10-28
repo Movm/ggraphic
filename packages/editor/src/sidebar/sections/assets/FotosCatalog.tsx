@@ -78,7 +78,7 @@ export function FotosCatalog({
       {children}
 
       <section aria-label={t.sidebar.elements.unsplashPhotos} className="flex flex-col gap-2.5">
-        <h4 className="m-0 text-sm font-bold text-[var(--editor-text)]">More from Unsplash</h4>
+        <h4 className="m-0 text-sm font-bold text-[var(--editor-text)]">{t.unsplash.moreFrom}</h4>
 
         {limit && <UnsplashLimitNotice retryAt={limit.retryAt} />}
 
@@ -92,7 +92,7 @@ export function FotosCatalog({
 
         {isCurrent && !isLoadingSearch && !searchError && !limit && items.length === 0 && (
           <p role="status" className="m-0 text-xs text-[var(--editor-text-muted)]">
-            No photos for “{query}” on Unsplash either.
+            {t.unsplash.noPhotosEither(query)}
           </p>
         )}
 
@@ -108,7 +108,7 @@ export function FotosCatalog({
             onClick={() => void loadMoreResults()}
             className="h-9 rounded-md border border-[var(--editor-border-strong)] bg-transparent text-sm text-[var(--editor-text)] cursor-pointer hover:bg-[var(--editor-surface-hover)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--editor-accent)]"
           >
-            Load more ({searchResults.length} of {totalResults})
+            {t.unsplash.loadMore(searchResults.length, totalResults)}
           </button>
         )}
 
@@ -116,7 +116,7 @@ export function FotosCatalog({
           <>
             {!limit && <UnsplashRemaining remaining={remaining} />}
             <p className="m-0 text-[11px] text-[var(--editor-text-muted)]">
-              Photos from{' '}
+              {t.unsplash.photosFrom}{' '}
               <a
                 href={unsplashHome}
                 target="_blank"
@@ -125,7 +125,7 @@ export function FotosCatalog({
               >
                 Unsplash
               </a>{' '}
-              – free to use under the Unsplash licence.
+              {t.unsplash.licence}
             </p>
           </>
         )}

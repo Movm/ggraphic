@@ -149,7 +149,7 @@ export function GradientTextTool({ onJumpToUploads, onPlaceImageUrl }: GradientT
   }, [t, trimmed, color1, color2, angle, finish]);
 
   const disabled = isBusy || isUploading;
-  const previewText = trimmed || 'Gradient text';
+  const previewText = trimmed || t.sidebar.tools.gradientPreview;
 
   return (
     <ToolPanel
@@ -196,7 +196,9 @@ export function GradientTextTool({ onJumpToUploads, onPlaceImageUrl }: GradientT
           />
 
           <label className="flex flex-col gap-1.5 text-xs">
-            <span className="text-foreground-muted">Angle: {angle}°</span>
+            <span className="text-foreground-muted">
+              {t.topBar.angle}: {angle}°
+            </span>
             <input
               type="range"
               min={0}
