@@ -18,7 +18,13 @@ vi.mock('@ggraphic/editor/utils/canvasIcons', () => ({
 }));
 vi.mock('@ggraphic/editor/utils/illustrations/registry', () => ({
   findIllustrationById: vi.fn(() =>
-    Promise.resolve({ id: 'ill', name: 'ill', filename: 'ill.svg', source: 'undraw', tags: [] })
+    Promise.resolve({
+      id: 'ill',
+      name: 'ill',
+      filename: 'ill.svg',
+      source: 'opendoodles',
+      tags: [],
+    })
   ),
   getIllustrationPath: vi.fn(() => 'https://example.org/ill.svg'),
 }));
@@ -132,7 +138,7 @@ describe('illustration flip', () => {
       illustration={{
         id: 'il',
         illustrationId: 'ill',
-        source: 'undraw',
+        source: 'opendoodles',
         x: 50,
         y: 50,
         scale: 2,
@@ -348,7 +354,7 @@ describe('rotating a flipped element by its handle', () => {
               illustration={{
                 id: 'il',
                 illustrationId: 'ill',
-                source: 'undraw',
+                source: 'opendoodles',
                 x: 300,
                 y: 300,
                 scale: 2,
