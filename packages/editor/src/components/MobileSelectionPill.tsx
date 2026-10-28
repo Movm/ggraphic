@@ -186,7 +186,7 @@ export function MobileSelectionPill({
         </>
       )}
       {onMore && (
-        <button type="button" className={BTN} onClick={onMore} aria-label="More options">
+        <button type="button" className={BTN} onClick={onMore} aria-label={t.shell.moreOptions}>
           <PiDotsThreeBold size={20} aria-hidden />
         </button>
       )}

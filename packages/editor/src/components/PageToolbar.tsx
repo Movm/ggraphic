@@ -51,8 +51,8 @@ export const PageToolbar = memo(function PageToolbar({
         className={iconBtn}
         onClick={onMoveUp}
         disabled={!canMoveUp}
-        title="Move up"
-        aria-label="Move page up"
+        title={t.pageBar.moveUp}
+        aria-label={t.pageBar.movePageUp}
         type="button"
       >
         <PiArrowUp size={14} />
@@ -62,8 +62,8 @@ export const PageToolbar = memo(function PageToolbar({
         className={iconBtn}
         onClick={onMoveDown}
         disabled={!canMoveDown}
-        title="Move down"
-        aria-label="Move page down"
+        title={t.pageBar.moveDown}
+        aria-label={t.pageBar.movePageDown}
         type="button"
       >
         <PiArrowDown size={14} />
@@ -85,8 +85,8 @@ export const PageToolbar = memo(function PageToolbar({
         <button
           className={iconBtn}
           onClick={onChangeTemplate}
-          title="Change template"
-          aria-label="Change template"
+          title={t.pageBar.changeTemplate}
+          aria-label={t.pageBar.changeTemplate}
           type="button"
         >
           <PiSwap size={14} />

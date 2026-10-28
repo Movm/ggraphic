@@ -27,7 +27,7 @@ describe('creditLines', () => {
       iconStates: { 'iconify:lets:tree': { source: lets } },
     };
     expect(creditLines([page])).toBe(
-      'Photo: Ann on Unsplash\nIcon: Lets Icons by Leonid Tsvetkov (CC-BY-4.0, https://spdx.org/licenses/CC-BY-4.0.html)'
+      'Foto: Ann auf Unsplash\nIcon: Lets Icons von Leonid Tsvetkov (CC-BY-4.0, https://spdx.org/licenses/CC-BY-4.0.html)'
     );
   });
 
@@ -37,7 +37,7 @@ describe('creditLines', () => {
       iconStates: { 'iconify:lets:tree': { source: lets } },
     };
     expect(creditLines([page, page])).toBe(
-      'Icon: Lets Icons by Leonid Tsvetkov (CC-BY-4.0, https://spdx.org/licenses/CC-BY-4.0.html)'
+      'Icon: Lets Icons von Leonid Tsvetkov (CC-BY-4.0, https://spdx.org/licenses/CC-BY-4.0.html)'
     );
   });
 });

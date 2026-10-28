@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { messages } from '@ggraphic/editor/i18n/messages';
 /**
  * Icons from a host's icon search (Iconify, say), as opposed to the sets the
  * editor bundles. A placed one is stored in the design as a COPY of its SVG
@@ -197,9 +198,9 @@ export function externalIconDataUrl(svg: string, size: number, color: string): s
   return `data:image/svg+xml;base64,${toBase64(sized.replace(/currentColor/g, () => ink))}`;
 }
 
-/** "Icon: <Set> by <Author>, <Licence>" for the picker. */
+/** "Icon: <Set> von <Autor>, <Lizenz>" for the picker; the "von" follows the catalogue. */
 export function attributionLine(source: IconSource): string {
-  const by = source.author ? ` by ${source.author}` : '';
+  const by = source.author ? messages().credit.by(source.author) : '';
   return `Icon: ${source.setTitle}${by}, ${source.licence}`;
 }
 
@@ -228,7 +229,7 @@ export function iconCreditLine(sources: readonly IconSource[]): string {
     const key = `${source.prefix}\0${source.licence}`;
     if (NEEDS_NO_CREDIT.test(source.licence) || seen.has(key)) continue;
     seen.add(key);
-    const by = source.author ? ` by ${source.author}` : '';
+    const by = source.author ? messages().credit.by(source.author) : '';
     entries.push(
       `${source.setTitle}${by} (${source.licence}, https://spdx.org/licenses/${encodeURIComponent(source.licence)}.html)`
     );

@@ -126,7 +126,7 @@ export function FloatingShadowControl({
             onClick={toggle}
             type="button"
           >
-            {enabled ? 'Remove' : 'Enable'}
+            {enabled ? t.sidebar.imageAdjust.remove : t.sidebar.imageAdjust.enable}
           </button>
         </div>
 

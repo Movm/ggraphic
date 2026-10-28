@@ -1,27 +1,29 @@
 // SPDX-License-Identifier: MPL-2.0
+import { messages } from '@ggraphic/editor/i18n/messages';
+
 interface AdditionalTextLike {
   text?: unknown;
   type?: unknown;
 }
 
-const FIELD_LABELS: Array<[key: string, label: string]> = [
-  ['quote', 'Quote'],
-  ['name', 'Name'],
-  ['header', 'Headline'],
-  ['subheader', 'Subline'],
-  ['body', 'Text'],
-  ['eventTitle', 'Event'],
-  ['weekday', 'Weekday'],
-  ['date', 'Date'],
-  ['time', 'Time'],
-  ['locationName', 'Place'],
-  ['address', 'Address'],
-  ['line1', 'Line 1'],
-  ['line2', 'Line 2'],
-  ['line3', 'Line 3'],
-  ['headline', 'Headline'],
-  ['title', 'Title'],
-];
+const FIELD_KEYS = [
+  'quote',
+  'name',
+  'header',
+  'subheader',
+  'body',
+  'eventTitle',
+  'weekday',
+  'date',
+  'time',
+  'locationName',
+  'address',
+  'line1',
+  'line2',
+  'line3',
+  'headline',
+  'title',
+] as const;
 
 function asString(value: unknown): string | null {
   if (typeof value !== 'string') return null;
@@ -30,18 +32,20 @@ function asString(value: unknown): string | null {
 }
 
 /**
- * Builds a structured text description of the current canvas content.
+ * Builds a structured text description in the active language of the current canvas content.
  * Used by ChatSection to inject the sharepic content into the chat composer.
  */
 export function buildSharepicText(state: Record<string, unknown>): string {
   const lines: string[] = [];
+  const t = messages().sharepicText;
 
   const canvasType = asString(state.canvasType);
   if (canvasType) {
-    lines.push(`Graphic type: ${canvasType}`);
+    lines.push(t.type(canvasType));
   }
 
-  for (const [key, label] of FIELD_LABELS) {
+  for (const key of FIELD_KEYS) {
+    const label = t.labels[key];
     const value = asString(state[key]);
     if (value) {
       lines.push(`${label}: ${value}`);
@@ -54,12 +58,12 @@ export function buildSharepicText(state: Record<string, unknown>): string {
       .map((entry) => asString(entry.text))
       .filter((value): value is string => value !== null);
     if (additionalStrings.length > 0) {
-      lines.push(`More texts: ${additionalStrings.join(' / ')}`);
+      lines.push(t.more(additionalStrings.join(' / ')));
     }
   }
 
   if (lines.length === 0) {
-    return '(The graphic is still empty)';
+    return t.empty;
   }
 
   return lines.join('\n');

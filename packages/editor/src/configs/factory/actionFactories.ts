@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { messages } from '@ggraphic/editor/i18n/messages';
 /**
  * Common Action Creators for Canvas Factory
  *
@@ -399,7 +400,7 @@ export function createAdditionalTextActions<TState extends { additionalTexts: Ad
     addHeader: () => {
       const newText: AdditionalText = {
         id: uuid(),
-        text: 'Headline',
+        text: messages().sidebar.text.defaultHeader,
         type: 'header',
         y: canvasHeight / 3,
         ...textPreset('header', canvasWidth, insertScale),
@@ -414,7 +415,7 @@ export function createAdditionalTextActions<TState extends { additionalTexts: Ad
     addSubheader: () => {
       const newText: AdditionalText = {
         id: uuid(),
-        text: 'Subtitle',
+        text: messages().sidebar.text.defaultSubheader,
         type: 'subheader',
         y: canvasHeight * 0.4,
         ...textPreset('subheader', canvasWidth, insertScale),
@@ -429,7 +430,7 @@ export function createAdditionalTextActions<TState extends { additionalTexts: Ad
     addText: () => {
       const newText: AdditionalText = {
         id: uuid(),
-        text: 'Enter text here',
+        text: messages().sidebar.text.defaultBody,
         type: 'body',
         y: canvasHeight / 2,
         ...textPreset('body', canvasWidth, insertScale),

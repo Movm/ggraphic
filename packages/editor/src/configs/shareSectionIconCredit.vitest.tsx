@@ -25,7 +25,7 @@ describe('share text', () => {
       {} as never
     );
     expect(props.canvasText).toBe(
-      'Bäume pflanzen\n\nIcon: Tabler Icons by Paweł Kuna (MIT, https://spdx.org/licenses/MIT.html)'
+      'Bäume pflanzen\n\nIcon: Tabler Icons von Paweł Kuna (MIT, https://spdx.org/licenses/MIT.html)'
     );
     expect(props.imageText).toBe('Bäume pflanzen');
   });

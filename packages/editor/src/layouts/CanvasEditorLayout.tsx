@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { cn } from '@ggraphic/editor/utils/cn';
 import { useMeasuredCornerReservation } from '@ggraphic/editor/utils/cornerReservation';
 import { returnFocusToPage } from '@ggraphic/editor/utils/editorFocus';
@@ -60,6 +61,7 @@ export function CanvasEditorLayout({
   mobilePageStrip,
   mobileZoomControl,
 }: CanvasEditorLayoutProps) {
+  const t = useMessages();
   const hasSidebar = Boolean(tabBar);
   const hasPanel = Boolean(sidebar);
   const bottomBarRef = React.useRef<HTMLDivElement>(null);
@@ -137,7 +139,7 @@ export function CanvasEditorLayout({
           <div className="flex items-center gap-xs py-xs px-sm bg-primary-50 border-b border-primary-100 text-foreground-muted text-[length:var(--font-size-small)] w-full max-canvas-mobile:text-[length:var(--font-size-xsmall)] max-canvas-mobile:py-xxs max-canvas-mobile:px-xs">
             <HiLink className="text-[var(--editor-accent)] text-base shrink-0" />
             <span>
-              Template by <strong className="text-foreground">{templateCreator}</strong>
+              {t.shell.templateBy} <strong className="text-foreground">{templateCreator}</strong>
             </span>
           </div>
         )}

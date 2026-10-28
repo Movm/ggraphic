@@ -90,7 +90,7 @@ function printFormat(
   return {
     id,
     label: `${name} · ${trimMm.w} × ${trimMm.h} mm`,
-    description: `${trimMm.w} × ${trimMm.h} mm · ${PRINT_BLEED_MM} mm bleed · ${seiten === 1 ? 'single-sided' : seiten === 2 ? 'front and back' : `${seiten} pages`}`,
+    description: `${trimMm.w} × ${trimMm.h} mm · ${PRINT_BLEED_MM} mm Beschnitt · ${seiten === 1 ? 'einseitig' : seiten === 2 ? 'Vorder- und Rückseite' : `${seiten} Seiten`}`,
     group: 'print',
     category: 'print',
     width: Math.round((trimMm.w + 2 * PRINT_BLEED_MM) * pxPerMm),
@@ -136,7 +136,7 @@ export const CANVAS_FORMATS: ReadonlyArray<CanvasFormat> = [
   // ── Profilbild ───────────────────────────────────────────────────────────
   {
     id: 'profile-square',
-    label: 'Profile picture',
+    label: 'Profilbild',
     description: '1080 × 1080 · 1:1',
     group: 'profilbild',
     category: 'digital',
@@ -151,8 +151,8 @@ export const CANVAS_FORMATS: ReadonlyArray<CanvasFormat> = [
   // ── Präsentation ─────────────────────────────────────────────────────────
   {
     id: 'slide-16-9',
-    label: 'Presentation',
-    description: '1920 × 1080 · 16:9 · Slides',
+    label: 'Präsentation',
+    description: '1920 × 1080 · 16:9 · Folien',
     group: 'praesentation',
     category: 'digital',
     width: 1920,
@@ -164,31 +164,17 @@ export const CANVAS_FORMATS: ReadonlyArray<CanvasFormat> = [
     print: null,
   },
   // ── Print ────────────────────────────────────────────────────────────────
-  printFormat('print-visitenkarte-quer', 'Business card, landscape', { w: 85, h: 55 }, 3, 2),
-  printFormat('print-visitenkarte-hoch', 'Business card, portrait', { w: 55, h: 85 }, 3, 2),
-  printFormat('print-a3-hoch', 'Poster A3, portrait', { w: 297, h: 420 }, 4, 1),
-  printFormat('print-a4-hoch', 'Poster A4, portrait', { w: 210, h: 297 }, 4, 1),
-  printFormat('print-a3-quer', 'Poster A3, landscape', { w: 420, h: 297 }, 4, 1),
-  printFormat(
-    'print-a1-hoch',
-    'Poster A1, portrait',
-    { w: 594, h: 841 },
-    10,
-    1,
-    PRINT_LARGE_EXPORT_DPI
-  ),
-  printFormat(
-    'print-a1-quer',
-    'Poster A1, landscape',
-    { w: 841, h: 594 },
-    10,
-    1,
-    PRINT_LARGE_EXPORT_DPI
-  ),
+  printFormat('print-visitenkarte-quer', 'Visitenkarte quer', { w: 85, h: 55 }, 3, 2),
+  printFormat('print-visitenkarte-hoch', 'Visitenkarte hoch', { w: 55, h: 85 }, 3, 2),
+  printFormat('print-a3-hoch', 'Plakat A3 hoch', { w: 297, h: 420 }, 4, 1),
+  printFormat('print-a4-hoch', 'Plakat A4 hoch', { w: 210, h: 297 }, 4, 1),
+  printFormat('print-a3-quer', 'Plakat A3 quer', { w: 420, h: 297 }, 4, 1),
+  printFormat('print-a1-hoch', 'Plakat A1 hoch', { w: 594, h: 841 }, 10, 1, PRINT_LARGE_EXPORT_DPI),
+  printFormat('print-a1-quer', 'Plakat A1 quer', { w: 841, h: 594 }, 10, 1, PRINT_LARGE_EXPORT_DPI),
   // 18/1 billboard: the artwork is supplied at A2 and enlarged (print spec).
   printFormat(
     'print-grossflaeche',
-    'Billboard 18/1 (A2 template)',
+    'Großfläche 18/1 (Vorlage A2)',
     { w: 594, h: 420 },
     10,
     1,
@@ -199,7 +185,7 @@ export const CANVAS_FORMATS: ReadonlyArray<CanvasFormat> = [
   // Roll fold to DIN lang: panels 100 / 100 / 97 mm, outside and inside (print spec).
   printFormat(
     'print-flyer-dinlang',
-    'Flyer DL (A4 landscape, wrap fold)',
+    'Flyer DIN lang (A4 quer, Wickelfalz)',
     { w: 297, h: 210 },
     4,
     2,
@@ -208,7 +194,7 @@ export const CANVAS_FORMATS: ReadonlyArray<CanvasFormat> = [
   ),
   printFormat(
     'print-a6-hoch',
-    'Flyer A6, portrait',
+    'Flyer A6 hoch',
     { w: 105, h: 148 },
     3,
     2,
@@ -217,17 +203,17 @@ export const CANVAS_FORMATS: ReadonlyArray<CanvasFormat> = [
   ),
   printFormat(
     'print-a6-quer',
-    'Flyer A6, landscape',
+    'Flyer A6 quer',
     { w: 148, h: 105 },
     3,
     2,
     PRINT_EXPORT_DPI,
     'letzte-seite'
   ),
-  printFormat('print-briefbogen-a4', 'Letterhead A4', { w: 210, h: 297 }, 5, 2),
+  printFormat('print-briefbogen-a4', 'Briefbogen A4', { w: 210, h: 297 }, 5, 2),
   printFormat(
     'print-zeitung-a4',
-    'Newspaper A4',
+    'Zeitung A4',
     { w: 210, h: 297 },
     5,
     4,
@@ -423,4 +409,22 @@ export function printGeometry(format: PrintCanvasFormat): {
     trim: inset(bleedMm),
     safe: inset(bleedMm + safeMm),
   };
+}
+
+/** The format's name in the active language; the built-in names come from the message catalogue. */
+export function formatLabel(format: CanvasFormat): string {
+  const name = messages().formats.names[format.id];
+  if (!name) return format.label;
+  return format.print ? `${name} · ${format.print.trimMm.w} × ${format.print.trimMm.h} mm` : name;
+}
+
+/** The format's size line in the active language. */
+export function formatDescription(format: CanvasFormat): string {
+  const m = messages().formats;
+  if (format.print) {
+    const { trimMm, bleedMm, seiten } = format.print;
+    return m.printDescription(`${trimMm.w} × ${trimMm.h} mm`, bleedMm, seiten);
+  }
+  if (format.id === 'slide-16-9') return m.slidesDescription('1920 × 1080 · 16:9');
+  return format.description;
 }

@@ -508,7 +508,7 @@ export function ContextControls({
         type="button"
       >
         <CropIcon />
-        {isCropping ? 'Done' : 'Crop'}
+        {isCropping ? t.topBar.done : t.topBar.cropAction}
       </button>
     );
   }
@@ -525,7 +525,7 @@ export function ContextControls({
         key="credit"
         className="inline-flex items-center gap-1 h-8 shrink-0 px-1 text-[12px] text-[var(--editor-text-muted)] whitespace-nowrap"
       >
-        Photo by
+        {t.credit.photoBy}
         <a
           href={credit.profileUrl}
           target="_blank"
@@ -534,7 +534,7 @@ export function ContextControls({
         >
           {credit.photographer}
         </a>
-        on
+        {t.credit.on}
         <a
           href={unsplashHome}
           target="_blank"

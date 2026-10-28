@@ -4,6 +4,10 @@ import type { Messages } from './de.js';
 /** English catalogue. Typed against the German one: a missing key is a compile error. */
 export const en: Messages = {
   common: {
+    addShape: (name) => `Add ${name.toLowerCase()}`,
+    insertNamed: (name) => `Insert ${name}`,
+    enterField: (label) => `Enter ${label.toLowerCase()}...`,
+    colorHex: (hex) => `Color ${hex}`,
     close: 'Close',
     undo: 'Undo',
     text: 'Text',
@@ -143,6 +147,18 @@ export const en: Messages = {
   },
 
   errors: {
+    canvasError: 'Canvas error',
+    canvasConfigLoad: 'Failed to load canvas config',
+    exportSlidesPartial: 'Not all slides could be exported',
+    exportPagesPartial: 'Not all pages could be exported',
+    slideExport: (n) => `Slide ${n} could not be exported`,
+    pagesCapture: (pages) => `Page(s) ${pages} could not be captured`,
+    photoTooSmall: (n, dpi, recommended) =>
+      `Photo ${n} is too small for print (about ${dpi} dpi, ${recommended} recommended).`,
+    describeImageFirst: 'Please describe the image.',
+    aiImageUnavailable: 'AI image generation is not available here.',
+    imageGenerationFailed: 'Image generation failed',
+    backgroundByClick: 'To change a background image, click the background',
     textEditorLoad:
       'The text editor could not be loaded. Please check your connection and try again.',
     smartCropFailed: 'Automatic crop not possible',
@@ -166,6 +182,29 @@ export const en: Messages = {
   },
 
   formats: {
+    names: {
+      'post-portrait': 'Sharepic',
+      'post-portrait-tall': 'Sharepic 3:4',
+      'profile-square': 'Profile picture',
+      'slide-16-9': 'Presentation',
+      'print-visitenkarte-quer': 'Business card, landscape',
+      'print-visitenkarte-hoch': 'Business card, portrait',
+      'print-a3-hoch': 'Poster A3, portrait',
+      'print-a4-hoch': 'Poster A4, portrait',
+      'print-a3-quer': 'Poster A3, landscape',
+      'print-a1-hoch': 'Poster A1, portrait',
+      'print-a1-quer': 'Poster A1, landscape',
+      'print-grossflaeche': 'Billboard 18/1 (A2 template)',
+      'print-citylight': 'Citylight',
+      'print-flyer-dinlang': 'Flyer DL (A4 landscape, wrap fold)',
+      'print-a6-hoch': 'Flyer A6, portrait',
+      'print-a6-quer': 'Flyer A6, landscape',
+      'print-briefbogen-a4': 'Letterhead A4',
+      'print-zeitung-a4': 'Newspaper A4',
+    } as Record<string, string>,
+    slidesDescription: (size) => `${size} · Slides`,
+    printDescription: (size, bleedMm, sides) =>
+      `${size} · ${bleedMm} mm bleed · ${sides === 1 ? 'single-sided' : sides === 2 ? 'front and back' : `${sides} pages`}`,
     groups: {
       sharepic: 'Sharepics',
       'sharepic-tall': 'Sharepics 3:4',
@@ -179,7 +218,81 @@ export const en: Messages = {
     imageDeleted: 'Image deleted',
   },
 
+  pageBar: {
+    moveUp: 'Move up',
+    movePageUp: 'Move page up',
+    moveDown: 'Move down',
+    movePageDown: 'Move page down',
+    changeTemplate: 'Change template',
+    chooseTemplate: 'Choose template',
+  },
+
+  credit: {
+    photoBy: 'Photo by',
+    on: 'on',
+    photoLine: (count, names) => `${count > 1 ? 'Photos' : 'Photo'}: ${names} on Unsplash`,
+    by: (author) => ` by ${author}`,
+    heading: 'Photo credit for your post',
+    notYours: 'The photo is not yours: name the photographer and Unsplash in the post text.',
+    photo: 'Photo',
+  },
+
+  unsplash: {
+    moreFrom: 'More from Unsplash',
+    noPhotosEither: (query) => `No photos for “${query}” on Unsplash either.`,
+    noPhotos: (query) => `No photos for “${query}” found.`,
+    loadMore: (shown, total) => `Load more (${shown} of ${total})`,
+    photosFrom: 'Photos from',
+    licence: '– free to use under the Unsplash license.',
+    inserted: 'Inserted',
+  },
+
+  placeholders: {
+    headline: 'Your headline here',
+    subtext: 'Your message goes here',
+    quote: 'Your quote goes here.\nA good quote inspires.',
+    name: 'Alex Example',
+    header: 'Did you know?',
+    body: 'Add your text here.',
+    line1: 'First line',
+    line2: 'Second line',
+    line3: 'Third line',
+    accent: 'Emphasis',
+    eventTitle: 'EVENT',
+    beschreibung: 'Enter a description here',
+    weekday: 'WED',
+    date: '15 JAN',
+    time: '7 PM',
+    locationName: 'Venue',
+    address: '1 Sample Street, 12345 Town',
+  },
+
+  sharepicText: {
+    labels: {
+      quote: 'Quote',
+      name: 'Name',
+      header: 'Headline',
+      subheader: 'Subline',
+      body: 'Text',
+      eventTitle: 'Event',
+      weekday: 'Weekday',
+      date: 'Date',
+      time: 'Time',
+      locationName: 'Place',
+      address: 'Address',
+      line1: 'Line 1',
+      line2: 'Line 2',
+      line3: 'Line 3',
+      headline: 'Headline',
+      title: 'Title',
+    },
+    type: (canvasType) => `Graphic type: ${canvasType}`,
+    more: (texts) => `More texts: ${texts}`,
+    empty: '(The graphic is still empty)',
+  },
+
   defaults: {
+    presentationTitle: 'Presentation',
     pillBadgeText: 'Did you know?',
     series: (n) => `Series ${n}`,
     deckTitleMany: (type, pages) => `Canvas: ${type} (${pages} pages)`,
@@ -353,6 +466,9 @@ export const en: Messages = {
   sidebar: {
     uploadFailed: 'Upload failed',
     imageAdjust: {
+      title: 'Adjust',
+      light: 'Light',
+      flip: 'Flip',
       reset: 'Reset',
       horizontal: 'Horizontal',
       vertical: 'Vertical',
@@ -423,6 +539,10 @@ export const en: Messages = {
       selected: 'Selected frame',
     },
     chart: {
+      heading: 'Chart',
+      labelN: (n) => `Label ${n}`,
+      addRow: 'Row',
+      addSeries: 'Series',
       deleteChart: 'Delete chart',
       optional: 'Optional…',
       removeRow: 'Remove row',
@@ -440,6 +560,9 @@ export const en: Messages = {
       removeSeries: (name: string) => `Remove ${name}`,
     },
     text: {
+      defaultHeader: 'Headline',
+      defaultSubheader: 'Subtitle',
+      defaultBody: 'Enter text here',
       placeholderHeader: 'Heading...',
       placeholderSubheader: 'Subtitle...',
       placeholderText: 'Text...',
@@ -469,6 +592,20 @@ export const en: Messages = {
       circle: 'Burst badge',
     },
     tools: {
+      generate: 'Generate',
+      points: (n) => `Points: ${n}`,
+      gradientPreview: 'Gradient text',
+      sampleText: 'Sample text',
+      preview: 'Preview…',
+      linkOrText: 'Link or text',
+      pathTextTile: 'TEXT PATH',
+      pathNames: {
+        wave: 'Wave',
+        smile: 'Arc',
+        rainbow: 'Rainbow',
+        circle: 'Circle',
+        rising: 'Rising',
+      },
       previewFailed: 'The preview could not be created.',
       pathTextError: 'Could not create the path text',
       pathTextPlace: 'Insert path text',
@@ -579,6 +716,9 @@ export const en: Messages = {
       remainingToday: (n: number) => `${n} ${n === 1 ? 'image' : 'images'} left today`,
     },
     elements: {
+      brand: 'Brand',
+      nothingFound: 'Nothing found',
+      defaultList: 'Default',
       moreRecent: 'More recently used elements',
       clearSearch: 'Clear search',
       searchElements: 'Search elements',
@@ -633,6 +773,7 @@ export const en: Messages = {
       ],
     },
     altText: {
+      suggestion: (text) => `Graphic with the text: ${text}`,
       copyFailed: 'Copying is not possible',
       copied: 'Alt text copied',
       label: 'Image description (alt text)',
@@ -647,6 +788,17 @@ export const en: Messages = {
   },
 
   shell: {
+    loadingEditor: 'Loading the editor',
+    zoomReset: 'Reset zoom to 100%',
+    moreOptions: 'More options',
+    more: 'More',
+    speakerNotes: 'Speaker notes',
+    notes: 'Notes',
+    notesWithOne: 'Notes (1)',
+    notesPlaceholder: 'Notes for the talk …',
+    templateBy: 'Template by',
+    imagePreview: 'Image preview',
+    enlargedImage: 'Enlarged image',
     addPage: 'Add page',
     addNewPage: 'Add new page',
     editPage: (n) => `Edit page ${n}`,
@@ -709,6 +861,13 @@ export const en: Messages = {
   },
 
   topBar: {
+    cropAction: 'Crop',
+    aiTemplate: 'Template',
+    aiSuggestionNoun: 'Suggestion',
+    aiDiscard: (noun) => `Discard ${noun.toLowerCase()}`,
+    aiDiscardUndo: (noun) => `Discard ${noun.toLowerCase()} (undo)`,
+    aiKeep: (noun) => `Keep ${noun.toLowerCase()}`,
+    backgroundImageNamed: (label) => `Background image: ${label}`,
     editSelection: 'Edit selection',
     nothingDeletable: 'None of this can be deleted',
     clearSelection: 'Clear selection (Esc)',
