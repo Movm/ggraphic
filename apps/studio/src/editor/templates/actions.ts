@@ -7,6 +7,7 @@
  *
  * Every action is one user intent and records one history entry.
  */
+import { withBinding, withoutBinding, type BindingRef } from '@ggraphic/core';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { type IconState } from '@ggraphic/editor/configs/factory/baseTypes';
 import { type AdditionalText } from '@ggraphic/editor/configs/types';
@@ -212,8 +213,15 @@ export function createStudioActions(
       })),
 
     // ── Background ───────────────────────────────────────────────────────────
-    setBackgroundColor: (color: string) =>
-      commit((prev) => ({ ...prev, backgroundColor: color }), true),
+    // A swatch pick carries its role: the ground then follows the brand. A free colour unbinds it.
+    setBackgroundColor: (color: string, ref?: BindingRef) =>
+      commit((prev) => {
+        const { bind: _previous, ...rest } = prev;
+        const bind = ref
+          ? withBinding(prev.bind, 'backgroundColor', { ref, value: color })
+          : withoutBinding(prev.bind, 'backgroundColor');
+        return { ...rest, backgroundColor: color, ...(bind ? { bind } : {}) };
+      }, true),
   };
 }
 

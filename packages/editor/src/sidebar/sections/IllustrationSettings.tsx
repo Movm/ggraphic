@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { bindPatch } from '../../brand/bindPick.js';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { CustomColorSwatch } from '@ggraphic/editor/components/CustomColorSwatch';
 import { useMessages } from '@ggraphic/editor/i18n/messages';
@@ -111,7 +112,10 @@ export function IllustrationSettings({
                 )}
                 style={{ backgroundColor: color.color }}
                 onClick={() =>
-                  onUpdateIllustration(selectedIllustration.id, { color: color.color })
+                  onUpdateIllustration(selectedIllustration.id, {
+                    color: color.color,
+                    ...bindPatch(selectedIllustration.bind, 'color', color.color, color.ref),
+                  })
                 }
                 title={color.label}
               />
@@ -119,7 +123,12 @@ export function IllustrationSettings({
             <CustomColorSwatch
               value={selectedIllustration.color}
               presets={activeBrand().palette.map((color) => color.color)}
-              onPick={(color) => onUpdateIllustration(selectedIllustration.id, { color })}
+              onPick={(color) =>
+                onUpdateIllustration(selectedIllustration.id, {
+                  color,
+                  ...bindPatch(selectedIllustration.bind, 'color', color),
+                })
+              }
               className="size-7"
               outlineOffset={3}
             />

@@ -18,7 +18,7 @@ const corpus = (): unknown[] =>
   JSON.parse(JSON.stringify([everyCoreKind, flatSinglePage, hostEnvelope, multiPageDeck]));
 
 describe('verifyMigrationRegistry', () => {
-  it('passes the core registry over the v1 corpus', () => {
+  it('passes the core registry over the corpus with the v2 step', () => {
     expect(verifyMigrationRegistry(documentMigrations, corpus())).toEqual([]);
   });
 

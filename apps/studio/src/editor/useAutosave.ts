@@ -14,7 +14,7 @@ import { api, ApiError } from '../api/client';
 
 import { serializeDocument, type StudioDocument } from './document';
 
-export type SaveStatus = 'saved' | 'pending' | 'saving' | 'error' | 'conflict';
+export type SaveStatus = 'saved' | 'pending' | 'saving' | 'error' | 'conflict' | 'refused';
 
 const POLL_MS = 1000;
 const SETTLE_MS = 1500;
@@ -25,6 +25,12 @@ interface Options {
   projectId: string;
   /** The document as opened: its format and any keys the Studio does not own. */
   base: StudioDocument;
+  /**
+   * The document as parsed, before the brand was applied to it. Given when the brand changed
+   * the document on opening: that change is then an unsaved edit and is saved once. Without it
+   * the baseline is what the editor opens with.
+   */
+  baseline?: StudioDocument;
   initialVersion: number;
   exportApi: RefObject<CanvasEditorExportApi | null>;
   /** Longest thumbnail the server takes, in bytes. */
@@ -36,6 +42,7 @@ interface Options {
 export function useAutosave({
   projectId,
   base,
+  baseline,
   initialVersion,
   exportApi,
   thumbnailMaxBytes,
@@ -43,7 +50,10 @@ export function useAutosave({
 }: Options) {
   const [status, setStatus] = useState<SaveStatus>('saved');
   const versionRef = useRef(initialVersion);
-  const savedJsonRef = useRef<string | null>(null);
+  const savedJsonRef = useRef<string | null>(
+    baseline ? JSON.stringify(serializeDocument(baseline)) : null
+  );
+  const firstReadRef = useRef(true);
   const changedAtRef = useRef(0);
   const busyRef = useRef(false);
   const blockedRef = useRef(false);
@@ -75,6 +85,7 @@ export function useAutosave({
         const saved = await api.updateProject(projectId, {
           version: versionRef.current,
           document: doc as unknown as Record<string, unknown>,
+          schemaVersion: doc.schemaVersion,
         });
         versionRef.current = saved.version;
         savedJsonRef.current = json;
@@ -89,6 +100,10 @@ export function useAutosave({
         if (err instanceof ApiError && err.isVersionConflict) {
           blockedRef.current = true;
           setStatus('conflict');
+        } else if (err instanceof ApiError && err.isSchemaRefusal) {
+          // The server holds a newer format: this build must not write over it.
+          blockedRef.current = true;
+          setStatus('refused');
         } else {
           setStatus('error');
         }
@@ -105,15 +120,16 @@ export function useAutosave({
       const doc = currentDocument();
       if (!doc) return;
       const json = JSON.stringify(doc);
-      // The first read is what the editor opened with: nothing to save yet.
-      if (savedJsonRef.current === null) {
-        savedJsonRef.current = json;
+      // The first read is what the editor opened with: nothing to save yet, unless the
+      // baseline says the document was changed on opening.
+      if (firstReadRef.current) {
+        firstReadRef.current = false;
+        savedJsonRef.current ??= json;
         if (!hasThumbnail) {
           thumbnailAtRef.current = Date.now();
           // A moment for images and fonts to land on the stage.
           setTimeout(() => void uploadThumbnail().catch(() => undefined), SETTLE_MS);
         }
-        return;
       }
       if (json === savedJsonRef.current) return;
       const now = Date.now();

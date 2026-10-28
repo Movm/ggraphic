@@ -32,14 +32,33 @@ const v2Registry = () => {
   return registry;
 };
 
-describe('the core at version 1', () => {
-  it('ships version 1 with no steps', () => {
-    expect(CANVAS_DOCUMENT_VERSION).toBe(1);
-    expect(documentMigrations.coreVersion).toBe(1);
+describe('the core at version 2', () => {
+  it('ships version 2 with the identity step', () => {
+    expect(CANVAS_DOCUMENT_VERSION).toBe(2);
+    expect(documentMigrations.coreVersion).toBe(2);
+    expect(documentMigrations.coreSteps()).toHaveLength(1);
   });
 
-  it('hands an unversioned document back as the same object', () => {
+  it('lifts a v1 document to v2 without touching its pages', () => {
     const raw = v1();
+    const result = migrateDocument(raw);
+    expect(result.status).toBe('migrated');
+    if (result.status !== 'migrated') return;
+    expect(result.document.schemaVersion).toBe(2);
+    expect(result.document.pages).toEqual(v1().pages);
+    expect(result.document['coverKey']).toBe('kept');
+  });
+
+  it('refuses a v3 document', () => {
+    expect(migrateDocument({ ...v1(), schemaVersion: 3 }).status).toBe('newer');
+  });
+
+  it('reads an explicit version 2 as current', () => {
+    expect(migrateDocument({ ...v1(), schemaVersion: 2 }).status).toBe('current');
+  });
+
+  it('hands a version 2 document back as the same object', () => {
+    const raw = { ...v1(), schemaVersion: 2 };
     const before = JSON.stringify(raw);
     const result = migrateDocument(raw);
     expect(result.status).toBe('current');
@@ -48,13 +67,13 @@ describe('the core at version 1', () => {
     expect(JSON.stringify(result.document)).toBe(before);
   });
 
-  it('reads an explicit version 1 as current', () => {
-    expect(migrateDocument({ ...v1(), schemaVersion: 1 }).status).toBe('current');
+  it('lifts an explicit version 1 too', () => {
+    expect(migrateDocument({ ...v1(), schemaVersion: 1 }).status).toBe('migrated');
   });
 
   it('stamps the version on write, additively', () => {
     const stamped = stampDocument(v1());
-    expect(stamped).toEqual({ ...v1(), schemaVersion: 1 });
+    expect(stamped).toEqual({ ...v1(), schemaVersion: 2 });
   });
 });
 
@@ -71,9 +90,9 @@ describe('the envelope', () => {
   });
 
   it.each([
-    ['pages that are no list', { pages: {} }],
-    ['null pages', { pages: null }],
-    ['no pages', { headline: 'flat' }],
+    ['pages that are no list', { schemaVersion: 2, pages: {} }],
+    ['null pages', { schemaVersion: 2, pages: null }],
+    ['no pages', { schemaVersion: 2, headline: 'flat' }],
   ])('accepts a stored document with %s, unchanged', (_name, raw) => {
     const result = migrateDocument(raw);
     expect(result.status).toBe('current');
@@ -181,13 +200,13 @@ describe('the test-only v1 → v2 chain', () => {
 
 describe('a document from a newer version', () => {
   it('is refused, untouched, for the core', () => {
-    const raw = { ...v1(), schemaVersion: 2 };
+    const raw = { ...v1(), schemaVersion: 3 };
     const result = migrateDocument(raw);
     expect(result).toEqual({
       status: 'newer',
       scope: null,
-      version: 2,
-      known: 1,
+      version: 3,
+      known: 2,
       document: raw,
     });
   });
@@ -200,13 +219,13 @@ describe('a document from a newer version', () => {
   });
 
   it('is accepted for a host kind this build does not know (opaque data)', () => {
-    const raw = { ...v1(), kindVersions: { otherInstances: 7 } };
+    const raw = { ...v1(), schemaVersion: 2, kindVersions: { otherInstances: 7 } };
     expect(migrateDocument(raw).status).toBe('current');
   });
 
   it('is refused for v2 by a v1 build after a v2 build wrote it', () => {
     const lifted = migrateDocument(v1(), v2Registry());
     if (lifted.status !== 'migrated') throw new Error(lifted.status);
-    expect(migrateDocument(lifted.document).status).toBe('newer');
+    expect(migrateDocument(lifted.document, createMigrationRegistry([])).status).toBe('newer');
   });
 });
