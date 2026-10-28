@@ -595,6 +595,15 @@ importers:
 
   packages/templates-open:
     devDependencies:
+      '@ggraphic/core':
+        specifier: workspace:*
+        version: link:../core
+      '@ggraphic/editor':
+        specifier: workspace:*
+        version: link:../editor
+      '@ggraphic/schema':
+        specifier: workspace:*
+        version: link:../schema
       typescript:
         specifier: ^6.0.3
         version: 6.0.3

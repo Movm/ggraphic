@@ -106,7 +106,7 @@
     "number": {
       "role": "number",
       "budget": {
-        "maxWords": 1,
+        "maxWords": 2,
         "maxLines": 1,
         "maxChars": 8
       }

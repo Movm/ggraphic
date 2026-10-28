@@ -100,7 +100,10 @@ const PAGE_KEYS = new Set([
 ]);
 
 /** Every element of the page: array items and record entries, with the state key they sit under. */
-function forEachElement(state: Obj, visit: (el: Obj, key: string, id: string) => void): void {
+export function forEachElement(
+  state: Obj,
+  visit: (el: Obj, key: string, id: string) => void
+): void {
   for (const [key, value] of Object.entries(state)) {
     if (PAGE_KEYS.has(key)) continue;
     if (Array.isArray(value)) {
