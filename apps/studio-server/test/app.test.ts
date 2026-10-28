@@ -94,8 +94,6 @@ describe('anonymous requests', () => {
     ['get', `/api/uploads/${'a'.repeat(32)}.png`],
     ['post', '/api/ai/draft'],
     ['post', '/api/ai/pick'],
-    ['post', '/api/orgs'],
-    ['get', '/api/orgs/00000000-0000-4000-8000-000000000001/members'],
     ['get', '/api/orgs/00000000-0000-4000-8000-000000000001/brand-pack'],
     ['put', '/api/orgs/00000000-0000-4000-8000-000000000001/brand-pack'],
     ['post', '/api/auth/logout'],

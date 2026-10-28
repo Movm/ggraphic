@@ -14,6 +14,7 @@ export * from './components/FeatureGrid.js';
 export * from './components/Footer.js';
 export * from './components/Hero.js';
 export * from './components/IconButton.js';
+export * from './components/Menu.js';
 export * from './components/PasswordField.js';
 export * from './components/ProgressSteps.js';
 export * from './components/PromptComposer.js';

@@ -30,6 +30,7 @@ export {
   type SchemeId,
   type SurfaceRole,
 } from './brand/schemes.js';
+export { deriveBrandColors, deriveGrounds, type BrandColorInputs } from './brand/derive.js';
 export { fitLogoBox } from './brand/logoFit.js';
 export {
   brandFingerprint,

@@ -156,6 +156,15 @@ describe('loadConfig', () => {
     expect(config.fontMaxBytes).toBe(5 * 1024 * 1024);
   });
 
+  it('purges the trash unless TRASH_PURGE_ENABLED is false', () => {
+    expect(loadConfig(base).trashPurgeEnabled).toBe(true);
+    expect(loadConfig({ ...base, TRASH_PURGE_ENABLED: '' }).trashPurgeEnabled).toBe(true);
+    expect(loadConfig({ ...base, TRASH_PURGE_ENABLED: 'false' }).trashPurgeEnabled).toBe(false);
+    expect(() => loadConfig({ ...base, TRASH_PURGE_ENABLED: 'off' })).toThrow(
+      /TRASH_PURGE_ENABLED/
+    );
+  });
+
   it('reads the account switches', () => {
     const config = loadConfig({
       ...base,

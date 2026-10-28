@@ -85,6 +85,8 @@ const envSchema = z.object({
     .default(5 * 1024 * 1024),
   COOKIE_SECURE: flag(true),
   ALLOW_REGISTRATION: flag(false),
+  // The 30-day purge of the trash runs in the server process; `false` switches it off.
+  TRASH_PURGE_ENABLED: flag(true),
   // Exactly "1": the operator knowingly serves sessions over plain HTTP beyond loopback.
   ALLOW_INSECURE_COOKIE: z.literal('1').optional(),
   TRUST_PROXY: trustProxy,
@@ -159,8 +161,10 @@ export interface Config {
   dataDir: string;
   /** false only for plain-HTTP setups whose browser drops Secure cookies (Safari on localhost). */
   cookieSecure: boolean;
-  /** Self-registration after the first account. Off by default; invitations always work. */
+  /** Self-registration after the first account. Off by default. */
   allowRegistration: boolean;
+  /** Purge projects 30 days after they were deleted. On by default. */
+  trashPurgeEnabled: boolean;
   /** COOKIE_SECURE=false on a non-loopback HOST, acknowledged with ALLOW_INSECURE_COOKIE=1. */
   allowInsecureCookie: boolean;
   trustProxy: false | number | string[];
@@ -263,6 +267,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     fontMaxBytes: e.FONT_MAX_BYTES,
     cookieSecure: e.COOKIE_SECURE,
     allowRegistration: e.ALLOW_REGISTRATION,
+    trashPurgeEnabled: e.TRASH_PURGE_ENABLED,
     allowInsecureCookie: !e.COOKIE_SECURE && !loopback,
     trustProxy: e.TRUST_PROXY,
     setupToken: e.SETUP_TOKEN ?? null,

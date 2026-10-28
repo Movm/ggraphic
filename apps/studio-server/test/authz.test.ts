@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Organisation isolation: every route, called by the owner of organisation B against
- * organisation A's projects, uploads, members, invitations and brand pack, must answer
+ * organisation A's projects, uploads and brand pack, must answer
  * 404 and change nothing. Needs a real Postgres (DATABASE_URL).
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
@@ -35,7 +35,6 @@ describe.skipIf(!hasDb)('organisation isolation (Postgres)', () => {
     upload: '',
     logo: { id: '', url: '' },
     font: { id: '', url: '' },
-    invitation: '',
   };
 
   beforeAll(async () => {
@@ -45,7 +44,7 @@ describe.skipIf(!hasDb)('organisation isolation (Postgres)', () => {
     await resetDb(pool);
     app = createApp({ config, db });
     alice = await setupAdmin(app, 'alice@example.org');
-    bob = await otherOrganisation(app, alice, 'bob@example.org');
+    bob = await otherOrganisation(app, pool, 'bob@example.org');
     const project = await alice.post(`/api/orgs/${a.org}/projects`).send({ name: 'A' }).expect(201);
     a.project = project.body.id;
     await alice
@@ -73,9 +72,6 @@ describe.skipIf(!hasDb)('organisation isolation (Postgres)', () => {
         .expect(201)
     ).body;
     await alice.put(`/api/orgs/${a.org}/brand-pack`).send(BRAND_SETTINGS).expect(200);
-    a.invitation = (
-      await alice.post(`/api/orgs/${a.org}/invitations`).send({}).expect(201)
-    ).body.id;
   });
   afterAll(async () => {
     await pool.end();
@@ -101,19 +97,6 @@ describe.skipIf(!hasDb)('organisation isolation (Postgres)', () => {
     ],
     ['upload', (c) => c.post(`/api/orgs/${a.org}/uploads`).attach('file', PNG_1X1, 'x.png')],
     ['read an upload', (c) => c.get(a.upload)],
-    ['list members', (c) => c.get(`/api/orgs/${a.org}/members`)],
-    [
-      'change a role',
-      (c) => c.patch(`/api/orgs/${a.org}/members/${alice.accountId}`).send({ role: 'editor' }),
-    ],
-    ['remove a member', (c) => c.delete(`/api/orgs/${a.org}/members/${alice.accountId}`)],
-    [
-      'join by adding oneself',
-      (c) => c.patch(`/api/orgs/${a.org}/members/${c.accountId}`).send({ role: 'owner' }),
-    ],
-    ['list invitations', (c) => c.get(`/api/orgs/${a.org}/invitations`)],
-    ['create an invitation', (c) => c.post(`/api/orgs/${a.org}/invitations`).send({})],
-    ['revoke an invitation', (c) => c.delete(`/api/orgs/${a.org}/invitations/${a.invitation}`)],
     ['read the brand pack', (c) => c.get(`/api/orgs/${a.org}/brand-pack`)],
     ['write the brand pack', (c) => c.put(`/api/orgs/${a.org}/brand-pack`).send(BRAND_SETTINGS)],
     [
@@ -166,7 +149,7 @@ describe.skipIf(!hasDb)('organisation isolation (Postgres)', () => {
     expect(bobList.body.projects.map((p: { name: string }) => p.name)).toEqual(['B']);
     const aliceList = await alice.get(`/api/orgs/${a.org}/projects`).expect(200);
     expect(aliceList.body.projects.map((p: { name: string }) => p.name)).toEqual(['A']);
-    // Alice left Bob's organisation in otherOrganisation(): she sees nothing of it.
+    // Alice is no member of Bob's organisation: she sees nothing of it.
     await alice.get(`/api/projects/${created.body.id}`).expect(404);
     const session = await bob.get('/api/auth/session').expect(200);
     expect(session.body.organisations.map((o: { id: string }) => o.id)).toEqual([bob.orgId]);
