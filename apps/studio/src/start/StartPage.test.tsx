@@ -155,7 +155,7 @@ describe('StartPage', () => {
     expect(calls.filter((c) => c.method === 'POST' && c.url === TEST_PROJECTS_URL)).toHaveLength(1);
     expect(calls.some((c) => c.method === 'PATCH')).toBe(false);
     const page = headlineOf(post.body?.['document']);
-    expect(page.configId).toBe('studio-headline');
+    expect(page.configId).toBe('studio-blank');
     expect(page.texts).toMatchObject({
       headline: DRAFT.headline,
       subline: DRAFT.subline,
@@ -301,7 +301,11 @@ describe('StartPage sections', () => {
     expect(post.body?.['name']).toBe('Quote');
     const document = post.body?.['document'] as { formatId: string };
     expect(document.formatId).toBe('slide-16-9');
-    expect(headlineOf(document).configId).toBe('studio-quote');
+    expect(headlineOf(document).configId).toBe('studio-blank');
+    expect(
+      (document as unknown as { pages: { state: { templateRef: { id: string } } }[] }).pages[0]!
+        .state.templateRef.id
+    ).toBe('studio-quote');
     expect(calls.some((c) => c.url === '/api/ai/pick')).toBe(false);
   });
 

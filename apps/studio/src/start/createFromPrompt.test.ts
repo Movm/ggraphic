@@ -62,7 +62,8 @@ describe('createFromPrompt with AI', () => {
     expect(mocked.draft).not.toHaveBeenCalled();
 
     const page = pageOf(saved());
-    expect(page.configId).toBe('studio-quote');
+    expect(page.configId).toBe('studio-blank');
+    expect((page.state['templateRef'] as { id: string }).id).toBe('studio-quote');
     // The page is rebound into the picked world and stamped with the brand it was made under.
     expect(page.state['brandScheme']).toBe('dark');
     expect(page.state['backgroundColor']).toBe(resolveScheme(activeBrand(), 'dark')!.roles.ground);

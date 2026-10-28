@@ -15,7 +15,6 @@ import {
   HEADLINE_TEMPLATE_ID,
   NUMBER_TEMPLATE_ID,
   QUOTE_TEMPLATE_ID,
-  type StudioTemplateId,
 } from '../editor/templates/ids';
 import { seedFor } from '../editor/templates/seeds';
 
@@ -25,7 +24,7 @@ type Slot = PickBody['templates'][number]['slots'][number];
  * The texts of each template the AI writes, by seed text id. A seed text not listed
  * here (the quotation mark) is decoration and stays as it is.
  */
-const SLOTS: Partial<Record<StudioTemplateId, Record<string, Slot>>> = {
+const SLOTS: Partial<Record<string, Record<string, Slot>>> = {
   [HEADLINE_TEMPLATE_ID]: {
     headline: { id: 'headline', label: 'Headline', maxChars: 60 },
     subline: { id: 'subline', label: 'Subline', maxChars: 100 },

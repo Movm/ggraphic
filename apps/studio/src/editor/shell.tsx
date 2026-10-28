@@ -17,8 +17,10 @@ import { ApiError } from '../api/client';
 import { toast } from '../ui/toast';
 
 import { draftDeckOps } from './aiDraft';
-import { formatSize } from './document';
-import { TEMPLATE_CATALOG } from './templates/catalog';
+import { DEFAULT_FORMAT, formatSize } from './document';
+import { templatesFor } from './templates/catalog';
+import { BLANK_TEMPLATE_ID, FREE_PAGE_CONFIG_ID, isStudioTemplateId } from './templates/ids';
+import { templatePageState } from './templates/instantiate';
 
 export const AI_DRAFT_TAB_ID = 'ai-draft';
 
@@ -110,7 +112,9 @@ export function StudioPagePicker({
   onClose,
   mode,
   currentTemplateId,
+  formatId,
   onSelectTemplate,
+  addPage,
   onDuplicateCurrent,
 }: EditorPagePickerProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -127,6 +131,24 @@ export function StudioPagePicker({
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+  const options = [
+    { id: BLANK_TEMPLATE_ID, label: 'Blank', description: 'An empty page on a solid ground' },
+    ...templatesFor(formatId ?? DEFAULT_FORMAT).map((e) => ({
+      id: e.id,
+      label: e.title,
+      description: e.description,
+    })),
+  ];
+  const select = (id: string) => {
+    const entry = templatesFor(formatId ?? DEFAULT_FORMAT).find((e) => e.id === id);
+    if (mode === 'add' && addPage) {
+      const state = entry ? templatePageState(entry, formatId ?? DEFAULT_FORMAT) : null;
+      void addPage(FREE_PAGE_CONFIG_ID, false, state ?? undefined);
+    } else if (isStudioTemplateId(id)) {
+      // Replace mode converts through the three legacy configs until pages carry their template.
+      onSelectTemplate(id);
+    }
+  };
   return (
     <div className="studio-overlay">
       {/* Clicking beside the dialog closes it; Escape does the same from the keyboard. */}
@@ -142,14 +164,14 @@ export function StudioPagePicker({
           {mode === 'add' ? 'Add a page' : 'Change template'}
         </h2>
         <ul className="studio-template-list">
-          {TEMPLATE_CATALOG.map((template) => (
+          {options.map((template) => (
             <li key={template.id}>
               <button
                 type="button"
                 className="studio-template-option"
                 aria-current={template.id === currentTemplateId ? 'true' : undefined}
                 onClick={() => {
-                  onSelectTemplate(template.id);
+                  select(template.id);
                   onClose();
                 }}
               >
