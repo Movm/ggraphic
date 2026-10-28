@@ -28,7 +28,7 @@
  */
 
 import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { messages, useMessages } from '@ggraphic/editor/i18n/messages';
 import { pagePersistedStateKeys } from '@ggraphic/editor/collab/pageElementStateKeys';
 import { serializeDeck } from '@ggraphic/editor/collab/pagesDoc';
 import { createPageSyncedCallbacks } from '@ggraphic/editor/collab/wrapCallbacksWithPageSync';
@@ -631,7 +631,7 @@ function CanvasEditorInner({
       const deck = serializeDeck(pagesDoc);
       const refs = canvasRefsRef.current;
       if (deck.some((_, i) => !refs[i]?.current)) {
-        throw new Error('Nicht alle Folien konnten exportiert werden');
+        throw new Error(messages().errors.exportSlidesPartial);
       }
       return exportPptxDeck({
         pages: deck.map((page) => page.state),
@@ -891,7 +891,7 @@ function CanvasEditorInner({
         const ext = format === 'jpeg' ? 'jpg' : format;
         await fileDelivery.downloadDataUrl(
           dataUrl,
-          `${filenamePrefix}-seite-${currentPageIndex + 1}.${ext}`
+          `${filenamePrefix}-page-${currentPageIndex + 1}.${ext}`
         );
         onDownload?.(dataUrl);
       }
@@ -933,7 +933,7 @@ function CanvasEditorInner({
     if (!printFormat) return;
     const pages = printPages();
     if (pages.some((_, i) => !canvasRefsRef.current[i]?.current)) {
-      throw new Error('Nicht alle Seiten konnten exportiert werden');
+      throw new Error(messages().errors.exportPagesPartial);
     }
     const pdf = await exportPrintPdf({ format: printFormat, pages });
     const blob = new Blob([pdf as BlobPart], { type: 'application/pdf' });
@@ -944,10 +944,10 @@ function CanvasEditorInner({
   const handleDownloadPptx = useCallback(
     async (onProgress: (done: number, total: number) => void) => {
       const blob = await buildPptx(onProgress);
-      const filename = printPdfFilename(documentTitle ?? 'Präsentation', filenamePrefix).replace(
-        /\.pdf$/,
-        '.pptx'
-      );
+      const filename = printPdfFilename(
+        documentTitle ?? messages().defaults.presentationTitle,
+        filenamePrefix
+      ).replace(/\.pdf$/, '.pptx');
       await fileDelivery.downloadBlob(blob, filename);
     },
     [buildPptx, documentTitle, fileDelivery, filenamePrefix]
@@ -960,7 +960,7 @@ function CanvasEditorInner({
     const blob = new Blob([pdf as BlobPart], { type: 'application/pdf' });
     await fileDelivery.downloadBlob(
       blob,
-      printPdfFilename(documentTitle ?? 'Präsentation', filenamePrefix)
+      printPdfFilename(documentTitle ?? messages().defaults.presentationTitle, filenamePrefix)
     );
   }, [exportAllPages, documentTitle, fileDelivery, filenamePrefix]);
 
@@ -1045,7 +1045,8 @@ function CanvasEditorInner({
     ? activeEditorTab.tab.label
     : activeTab === 'layers'
       ? layersTab.label
-      : (activeTab && activeConfig?.tabs.find((tab) => tab.id === activeTab)?.label) || 'Auswahl';
+      : (activeTab && activeConfig?.tabs.find((tab) => tab.id === activeTab)?.label) ||
+        messages().topBar.selection;
   useMobileSheetFit({
     enabled: isMobileSheetOpen,
     zoom,
@@ -1068,7 +1069,7 @@ function CanvasEditorInner({
 
     if (route === 'native-host') {
       dataUrls.forEach((dataUrl, i) =>
-        fileDelivery.shareDataUrlViaNativeHost(dataUrl, `${filenamePrefix}-seite-${i + 1}.png`, {
+        fileDelivery.shareDataUrlViaNativeHost(dataUrl, `${filenamePrefix}-page-${i + 1}.png`, {
           title: shareTitle,
         })
       );
@@ -1078,7 +1079,7 @@ function CanvasEditorInner({
     const files = await Promise.all(
       dataUrls.map(async (dataUrl, i) => {
         const blob = await (await fetch(dataUrl)).blob();
-        return new File([blob], `${filenamePrefix}-seite-${i + 1}.png`, { type: 'image/png' });
+        return new File([blob], `${filenamePrefix}-page-${i + 1}.png`, { type: 'image/png' });
       })
     );
 
@@ -1109,7 +1110,7 @@ function CanvasEditorInner({
           if (dataUrl) {
             await fileDelivery.downloadDataUrl(
               dataUrl,
-              `${filenamePrefix}-slider-seite-${currentPageIndex + 1}.png`
+              `${filenamePrefix}-slider-page-${currentPageIndex + 1}.png`
             );
           }
         }

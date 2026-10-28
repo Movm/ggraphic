@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { memo } from 'react';
 import { PiArrowUp, PiArrowDown, PiCopy, PiSwap, PiTrash } from 'react-icons/pi';
 
@@ -26,6 +27,7 @@ export const PageToolbar = memo(function PageToolbar({
   onChangeTemplate,
   onDelete,
 }: PageToolbarProps) {
+  const t = useMessages();
   if (pageCount <= 1) return null;
 
   const canMoveUp = pageIndex > 0;
@@ -42,15 +44,15 @@ export const PageToolbar = memo(function PageToolbar({
       onClick={(e) => e.stopPropagation()}
     >
       <span className="text-xs font-medium text-[var(--editor-text-muted)] mr-1 select-none">
-        Seite {pageIndex + 1}
+        {t.common.page(pageIndex + 1)}
       </span>
 
       <button
         className={iconBtn}
         onClick={onMoveUp}
         disabled={!canMoveUp}
-        title="Nach oben verschieben"
-        aria-label="Seite nach oben verschieben"
+        title={t.pageBar.moveUp}
+        aria-label={t.pageBar.movePageUp}
         type="button"
       >
         <PiArrowUp size={14} />
@@ -60,8 +62,8 @@ export const PageToolbar = memo(function PageToolbar({
         className={iconBtn}
         onClick={onMoveDown}
         disabled={!canMoveDown}
-        title="Nach unten verschieben"
-        aria-label="Seite nach unten verschieben"
+        title={t.pageBar.moveDown}
+        aria-label={t.pageBar.movePageDown}
         type="button"
       >
         <PiArrowDown size={14} />
@@ -72,8 +74,8 @@ export const PageToolbar = memo(function PageToolbar({
       <button
         className={iconBtn}
         onClick={onDuplicate}
-        title="Seite duplizieren"
-        aria-label="Seite duplizieren"
+        title={t.commands.duplicatePage}
+        aria-label={t.commands.duplicatePage}
         type="button"
       >
         <PiCopy size={14} />
@@ -83,8 +85,8 @@ export const PageToolbar = memo(function PageToolbar({
         <button
           className={iconBtn}
           onClick={onChangeTemplate}
-          title="Vorlage ändern"
-          aria-label="Vorlage ändern"
+          title={t.pageBar.changeTemplate}
+          aria-label={t.pageBar.changeTemplate}
           type="button"
         >
           <PiSwap size={14} />
@@ -95,8 +97,8 @@ export const PageToolbar = memo(function PageToolbar({
         <button
           className="size-[30px] rounded-lg border-none bg-transparent cursor-pointer flex items-center justify-center text-[var(--editor-text-muted)] transition-[background-color,color] duration-150 hover:bg-red-500/10 hover:text-red-600"
           onClick={onDelete}
-          title="Seite löschen"
-          aria-label="Seite löschen"
+          title={t.commands.deletePage}
+          aria-label={t.commands.deletePage}
           type="button"
         >
           <PiTrash size={14} />

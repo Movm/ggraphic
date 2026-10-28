@@ -26,7 +26,7 @@ import { useLoggedIn } from '../session/SessionContext';
 import { PageShell } from '../ui/PageShell';
 import { toast } from '../ui/toast';
 
-import { createFromPrompt, createFromTemplate } from './createFromPrompt';
+import { AiPromptError, createFromPrompt, createFromTemplate } from './createFromPrompt';
 import { ProjectGrid } from './ProjectGrid';
 
 /** Invented, neutral examples. */
@@ -51,7 +51,9 @@ const FORMAT_OPTIONS = STUDIO_FORMATS.map((f) => ({
 }));
 
 const errorText = (err: unknown) =>
-  err instanceof ApiError ? err.message : 'The project could not be created.';
+  err instanceof AiPromptError || err instanceof ApiError
+    ? err.message
+    : 'The project could not be created.';
 
 export function StartPage({ config }: { config: StudioConfig | undefined }) {
   const queryClient = useQueryClient();
@@ -67,16 +69,16 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
     if (!text || busy || !config) return;
     setBusy(true);
     try {
-      const { projectId, draftError } = await createFromPrompt({
+      const { projectId } = await createFromPrompt({
         organisationId: organisation.id,
         prompt: text,
         formatId,
         ai,
       });
       void queryClient.invalidateQueries({ queryKey: PROJECTS_QUERY_KEY });
-      if (draftError) toast.error(`${draftError} The template is ready for your own text.`);
       navigate(editorPath(projectId));
     } catch (err) {
+      // The prompt stays in the field: the user can try again or edit it.
       toast.error(errorText(err));
       setBusy(false);
     }

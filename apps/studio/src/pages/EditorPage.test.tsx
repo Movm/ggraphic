@@ -167,6 +167,33 @@ describe('EditorPage', () => {
     expect(state.backgroundColor.toLowerCase()).toBe(NEW_PRIMARY);
   }, 20_000);
 
+  it('saves the rebound document silently: no "Unsaved changes", no leave warning', async () => {
+    const pack = {
+      ...studioBrand,
+      id: 'org-x',
+      colors: { ...studioBrand.colors, primary: '#336699' },
+    };
+    registerBrandPacks([studioBrand]);
+    const { fetchMock, calls } = fakeServer(
+      newDocument('post-portrait', HEADLINE_TEMPLATE_ID),
+      pack
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    renderEditor();
+
+    const seen = { unsaved: 0, warned: 0 };
+    const deadline = Date.now() + 8000;
+    while (calls.filter((c) => c.method === 'PATCH').length === 0 && Date.now() < deadline) {
+      if (screen.queryByText('Unsaved changes')) seen.unsaved++;
+      const leave = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(leave);
+      if (leave.defaultPrevented) seen.warned++;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    expect(calls.filter((c) => c.method === 'PATCH')).toHaveLength(1);
+    expect(seen).toEqual({ unsaved: 0, warned: 0 });
+  }, 20_000);
+
   it('goes read-only with a reload action when the server refuses the version', async () => {
     registerBrandPacks([studioBrand]);
     const pack = {

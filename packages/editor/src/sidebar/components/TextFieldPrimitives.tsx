@@ -143,6 +143,7 @@ interface TextFieldProps {
 }
 
 export function TextField({ config, value, onChange, fontSize, onFontSizeChange }: TextFieldProps) {
+  const t = useMessages();
   const { key, label, placeholder, multiline = true, maxLength, minRows } = config;
   const fieldId = `unified-text-field-${key}`;
 
@@ -162,7 +163,7 @@ export function TextField({ config, value, onChange, fontSize, onFontSizeChange 
           id={fieldId}
           value={value}
           onChange={onChange}
-          placeholder={placeholder || `${label} eingeben...`}
+          placeholder={placeholder || t.common.enterField(label)}
           maxLength={maxLength}
           minRows={minRows}
         />
@@ -177,7 +178,7 @@ export function TextField({ config, value, onChange, fontSize, onFontSizeChange 
             if (maxLength && newValue.length > maxLength) return;
             onChange(newValue);
           }}
-          placeholder={placeholder || `${label} eingeben...`}
+          placeholder={placeholder || t.common.enterField(label)}
           maxLength={maxLength}
         />
       )}

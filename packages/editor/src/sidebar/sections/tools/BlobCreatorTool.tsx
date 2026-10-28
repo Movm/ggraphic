@@ -58,9 +58,10 @@ function ColorRow({
   onSelect: (color: string) => void;
   disabled: boolean;
 }) {
+  const t = useMessages();
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-xs text-foreground-muted">Farbe</span>
+      <span className="text-xs text-foreground-muted">{t.sidebar.chart.color}</span>
       <div className="flex flex-wrap items-center gap-1.5">
         {brandColors().map((c) => (
           <button
@@ -190,7 +191,7 @@ export function BlobCreatorTool({ onJumpToUploads, onPlaceImageUrl }: BlobCreato
 
           <ColorRow selected={color} onSelect={setColor} disabled={disabled} />
           <LabeledRange
-            label={`Punkte: ${numPoints}`}
+            label={t.sidebar.tools.points(numPoints)}
             value={numPoints}
             min={4}
             max={MAX_POINTS}

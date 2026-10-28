@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
+import { messages } from '@ggraphic/editor/i18n/messages';
+
 /**
  * Placeholder Text Constants
  *
@@ -6,40 +8,60 @@
  * These provide example content so users see meaningful text when adding new pages.
  */
 
-export const PLACEHOLDER_TEXT = {
-  // Simple template
-  headline: 'Ihre Überschrift hier',
-  subtext: 'Hier steht Ihre Botschaft',
+export type PlaceholderKey =
+  | 'headline'
+  | 'subtext'
+  | 'quote'
+  | 'name'
+  | 'header'
+  | 'body'
+  | 'line1'
+  | 'line2'
+  | 'line3'
+  | 'accent'
+  | 'eventTitle'
+  | 'beschreibung'
+  | 'weekday'
+  | 'date'
+  | 'time'
+  | 'locationName'
+  | 'address';
 
-  // Zitat templates
-  quote: 'Hier steht Ihr Zitat.\nEin gutes Zitat inspiriert.',
-  name: 'Maxi Mustermensch',
+const PLACEHOLDER_KEYS: ReadonlyArray<PlaceholderKey> = [
+  'headline',
+  'subtext',
+  'quote',
+  'name',
+  'header',
+  'body',
+  'line1',
+  'line2',
+  'line3',
+  'accent',
+  'eventTitle',
+  'beschreibung',
+  'weekday',
+  'date',
+  'time',
+  'locationName',
+  'address',
+];
 
-  // Info template
-  header: 'Wussten Sie schon?',
-  body: 'Hier können Sie Ihren Text einfügen.',
-
-  // Dreizeilen template
-  line1: 'Erste Zeile',
-  line2: 'Zweite Zeile',
-  line3: 'Dritte Zeile',
-  // AT: die gelbe kursive Betonungszeile liegt unter `accent`, nicht `line2`
-  accent: 'Betonung',
-
-  // Veranstaltung template
-  eventTitle: 'VERANSTALTUNG',
-  beschreibung: 'Beschreibung hier eingeben',
-  weekday: 'MI',
-  date: '15.01.',
-  time: '19 UHR',
-  locationName: 'Veranstaltungsort',
-  address: 'Musterstraße 1, 12345 Stadt',
-} as const;
+/** The texts come from the message catalogue, so they follow the active language. */
+export const PLACEHOLDER_TEXT: Readonly<Record<PlaceholderKey, string>> = Object.defineProperties(
+  {} as Record<PlaceholderKey, string>,
+  Object.fromEntries(
+    PLACEHOLDER_KEYS.map((key) => [
+      key,
+      { enumerable: true, get: () => messages().placeholders[key] },
+    ])
+  )
+);
 
 /**
  * Get a placeholder value by key with type-safe lookup.
  * Returns empty string if key doesn't exist.
  */
 export function getPlaceholder(key: string): string {
-  return PLACEHOLDER_TEXT[key as keyof typeof PLACEHOLDER_TEXT] ?? '';
+  return PLACEHOLDER_TEXT[key as PlaceholderKey] ?? '';
 }

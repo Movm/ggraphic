@@ -2,7 +2,7 @@
 import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
 import { useAllIconsCatalog, useIconCatalog } from '@ggraphic/editor/hooks/useIconCatalog';
 import { useNoStudioAssets } from '@ggraphic/editor/hostServices';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { messages, useMessages } from '@ggraphic/editor/i18n/messages';
 import {
   assetMatchesLocale,
   hasDarkPreview,
@@ -334,7 +334,7 @@ export function useElementCatalog(
     if (markeItems.length > 0)
       push({
         id: 'marke',
-        label: 'Marke',
+        label: messages().sidebar.elements.brand,
         count: markeItems.length,
         items: markeItems,
         isLoading: false,

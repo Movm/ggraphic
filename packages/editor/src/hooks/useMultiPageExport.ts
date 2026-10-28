@@ -128,7 +128,7 @@ export function useMultiPageExport({
               setNotice(messages().export.sending(i + 1, images.length));
               await fileDelivery.downloadDataUrl(
                 images[i],
-                `${prefix}-${canvasType}-seite-${i + 1}.${format === 'jpeg' ? 'jpg' : format}`
+                `${prefix}-${canvasType}-page-${i + 1}.${format === 'jpeg' ? 'jpg' : format}`
               );
               sent = i + 1;
             }

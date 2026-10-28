@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { messages } from '@ggraphic/editor/i18n/messages';
 /**
  * PDF eines digitalen Folien-Decks: eine PDF-Seite je Folie, 16:9, das
  * gerasterte PNG füllt die Seite. Kein Beschnitt, keine Schnittmarken.
@@ -10,7 +11,7 @@ import { parseDataUrl } from '@ggraphic/schema';
 function dataUrlToBytes(dataUrl: string, index: number): Uint8Array {
   const parsed = parseDataUrl(dataUrl);
   if (!parsed || parsed.mediaType !== 'image/png') {
-    throw new Error(`Folie ${index + 1} konnte nicht exportiert werden`);
+    throw new Error(messages().errors.slideExport(index + 1));
   }
   return Uint8Array.from(atob(parsed.base64), (c) => c.charCodeAt(0));
 }

@@ -81,6 +81,33 @@ describe('api client', () => {
     });
   });
 
+  it('refreshes an icon search and reads the wait the server names', async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ icons: [], total: 0 }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'Retry-After': '6' },
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await api.refreshIcons('tree', 20)).toEqual({ retryAfterSeconds: 6 });
+    expect(fetchMock.mock.calls[0]![0]).toBe('/api/assets/icons/search?q=tree&limit=20&refresh=1');
+  });
+
+  it('reads the wait from a 429 on refresh, and none when the icons are ready', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>().mockResolvedValue(
+        new Response(JSON.stringify({ error: 'iconify_rate_limited' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json', 'Retry-After': '11' },
+        })
+      )
+    );
+    expect(await api.refreshIcons('tree', 20)).toEqual({ retryAfterSeconds: 11 });
+    vi.stubGlobal('fetch', reply(200, { icons: [], total: 0 }));
+    expect(await api.refreshIcons('tree', 20)).toEqual({ retryAfterSeconds: null });
+  });
+
   it('fetches an icon as svg text', async () => {
     const fetchMock = vi
       .fn<typeof fetch>()
