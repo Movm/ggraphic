@@ -19,7 +19,11 @@ import { errorHandler, HttpError, parseOr400 } from './http.ts';
 import { type AuthLimiters, authRouter, createAuthLimiters, tooMany } from './routes/auth.ts';
 import { brandAssetsRouter, organisationBrandRouter } from './routes/brand.ts';
 import { imagesRouter } from './routes/images.ts';
-import { organisationProjectsRouter, projectsRouter } from './routes/projects.ts';
+import {
+  organisationProjectsRouter,
+  organisationTrashRouter,
+  projectsRouter,
+} from './routes/projects.ts';
 import { organisationUploadsRouter, uploadsRouter } from './routes/uploads.ts';
 import { IMAGE_TYPES } from './uploads.ts';
 
@@ -104,6 +108,7 @@ export function createApp({
   // Everything below needs a session.
   api.use(requireAuth);
   api.use('/orgs/:orgId/projects', organisationProjectsRouter(db));
+  api.use('/orgs/:orgId/trash', organisationTrashRouter(db));
   api.use('/orgs/:orgId/uploads', organisationUploadsRouter(db, config));
   api.use('/orgs/:orgId/brand-pack', organisationBrandRouter(db, config));
   api.use('/brand-assets', brandAssetsRouter(db, config));
