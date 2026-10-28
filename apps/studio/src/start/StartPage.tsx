@@ -56,10 +56,22 @@ const FORMAT_OPTIONS = STUDIO_FORMATS.map((f) => ({
   detail: f.size,
 }));
 
-const errorText = (err: unknown) =>
-  err instanceof AiPromptError || err instanceof ApiError || err instanceof TemplateUnavailableError
-    ? err.message
-    : 'The project could not be created.';
+/**
+ * What to tell a person when creating a project failed. The server's own text is for logs, so an
+ * `ApiError` is told by kind (as `createFromPrompt` does for the AI), never by its message.
+ */
+const errorText = (err: unknown) => {
+  if (err instanceof AiPromptError || err instanceof TemplateUnavailableError) return err.message;
+  if (err instanceof ApiError) {
+    if (err.status === 0)
+      return 'The server is not reachable. Check your connection and try again.';
+    if (err.status === 401) return 'Your session has ended. Please sign in again.';
+    if (err.status === 403) return 'You are not allowed to create projects here.';
+    if (err.status === 413) return 'The project is too large to save.';
+    if (err.status === 429) return 'Too many requests right now. Please try again in a moment.';
+  }
+  return 'The project could not be created. Please try again.';
+};
 
 export function StartPage({ config }: { config: StudioConfig | undefined }) {
   const queryClient = useQueryClient();
