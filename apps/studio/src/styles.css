@@ -966,6 +966,9 @@ body {
   padding-top: var(--ui-space-2);
   border-top: 1px solid var(--ui-color-border);
 }
+.studio-brand__add {
+  align-self: flex-start;
+}
 .studio-brand__row {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
