@@ -250,9 +250,10 @@ export function createIconifyClient(
     }
     // Read in chunks and give up at the limit, whatever Content-Length says.
     const reader = response.body?.getReader();
-    if (!reader || Number(response.headers.get('content-length') ?? 0) > maxBytes) {
+    const declared = Number(response.headers.get('content-length') ?? 0) > maxBytes;
+    if (!reader || declared) {
       await reader?.cancel().catch(() => undefined);
-      throw upstreamError();
+      throw declared ? Object.assign(upstreamError(), { oversized: true }) : upstreamError();
     }
     const chunks: Uint8Array[] = [];
     let size = 0;
@@ -409,8 +410,9 @@ export function createIconifyClient(
         { result: IconSearchResult; unbatchable: Set<string> } | undefined;
       if (hit) {
         // Icons a first attempt could not batch (rate limit) are fetched again, still in batches.
-        if (options?.refresh) await warm(hit.result.icons, hit.unbatchable);
-        else void warmOnce(key, () => warm(hit.result.icons, hit.unbatchable), true);
+        const run = warmOnce(key, () => warm(hit.result.icons, hit.unbatchable), true);
+        // A refresh waits for the retry; both share the per-search dedupe and the cap.
+        if (options?.refresh) await run;
         return hit.result;
       }
       const allowed = await allowedSets();
