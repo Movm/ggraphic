@@ -54,10 +54,13 @@ function fakeServer({
   ai,
   listed = [],
   pack = null,
+  createFails = null,
 }: {
   ai: 'ok' | 'timeout';
   listed?: unknown[];
   pack?: unknown;
+  /** The project POST answers with this error instead of creating. */
+  createFails?: { status: number; error: string; message: string } | null;
 }) {
   const calls: Call[] = [];
   const project = (document: unknown, version: number) => ({
@@ -83,6 +86,9 @@ function fakeServer({
       typeof init?.body === 'string' ? (JSON.parse(init.body) as Record<string, unknown>) : null;
     calls.push({ method, url, body });
     if (url === TEST_PROJECTS_URL && method === 'GET') return json(200, { projects: listed });
+    if (url === TEST_PROJECTS_URL && method === 'POST' && createFails) {
+      return json(createFails.status, { error: createFails.error, message: createFails.message });
+    }
     if (url === TEST_PROJECTS_URL && method === 'POST')
       return json(201, project(body?.document, 1));
     if (url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET')
@@ -212,6 +218,54 @@ describe('StartPage', () => {
     expect(calls.some((c) => c.method === 'POST' && c.url === TEST_PROJECTS_URL)).toBe(false);
     expect(screen.getByLabelText('Describe your graphic')).toHaveValue('Library opens on Sundays');
     expect(screen.getByRole('button', { name: /Create/ })).toBeEnabled();
+  });
+
+  it.each([
+    [
+      500,
+      'internal',
+      'duplicate key value violates unique constraint "projects_pkey"',
+      /project could not be created/i,
+    ],
+    [403, 'forbidden', 'role viewer may not insert into projects', /not allowed/i],
+    [413, 'too_large', 'body exceeds 5242880 bytes', /too large/i],
+    [429, 'rate_limited', 'rate limit exceeded: 30/min', /too many/i],
+  ])(
+    'tells %s from createProject in plain words, not the server text',
+    async (status, error, message, friendly) => {
+      const { fetchMock } = fakeServer({ ai: 'ok', createFails: { status, error, message } });
+      vi.stubGlobal('fetch', fetchMock);
+      const user = userEvent.setup();
+      renderStart(false);
+
+      await user.type(screen.getByLabelText('Describe your graphic'), 'Library opens on Sundays');
+      await user.keyboard('{Enter}');
+
+      expect(await screen.findByText(friendly)).toBeInTheDocument();
+      expect(screen.queryByText(message)).not.toBeInTheDocument();
+      expect(screen.getByLabelText('Describe your graphic')).toHaveValue(
+        'Library opens on Sundays'
+      );
+    }
+  );
+
+  it('says the server is unreachable when createProject cannot connect', async () => {
+    const { fetchMock } = fakeServer({ ai: 'ok' });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+        String(input) === TEST_PROJECTS_URL && init?.method === 'POST'
+          ? Promise.reject(new TypeError('Failed to fetch'))
+          : fetchMock(input, init)
+      )
+    );
+    const user = userEvent.setup();
+    renderStart(false);
+
+    await user.type(screen.getByLabelText('Describe your graphic'), 'Library opens on Sundays');
+    await user.keyboard('{Enter}');
+
+    expect(await screen.findByText(/check your connection/i)).toBeInTheDocument();
   });
 
   it('shows a loading state while the draft runs', async () => {
