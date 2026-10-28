@@ -13,3 +13,4 @@ export * from './text/hyphenation.js';
 export * from './text/fitText.js';
 export * from './document/migrations.js';
 export * from './document/verifyMigrations.js';
+export * from './template/templateFile.js';
