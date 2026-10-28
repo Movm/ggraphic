@@ -132,7 +132,7 @@ export interface Config {
   dataDir: string;
   /** false only for plain-HTTP setups whose browser drops Secure cookies (Safari on localhost). */
   cookieSecure: boolean;
-  /** Self-registration after the first account. Off by default; invitations always work. */
+  /** Self-registration after the first account. Off by default. */
   allowRegistration: boolean;
   /** COOKIE_SECURE=false on a non-loopback HOST, acknowledged with ALLOW_INSECURE_COOKIE=1. */
   allowInsecureCookie: boolean;

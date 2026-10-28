@@ -129,7 +129,6 @@ const emailSchema = z.string().trim().toLowerCase().pipe(z.email().max(254));
 const displayNameSchema = z.string().trim().min(1).max(100);
 // Length bounds mirror src/auth/passwords.ts.
 const passwordSchema = z.string().min(10).max(256);
-const orgNameSchema = z.string().trim().min(1).max(100);
 
 export const signupBody = z.object({
   email: emailSchema,
@@ -167,38 +166,8 @@ export const sessionStateSchema = z.object({
   /** Send as X-CSRF-Token on every non-GET request. */
   csrfToken: z.string().nullable(),
   organisations: z.array(organisationSchema),
-  /** Whether this account may create organisations. */
+  /** Always false: one organisation per person. Deprecated, kept for older web clients. */
   canCreateOrganisations: z.boolean(),
-});
-
-export const createOrganisationBody = z.object({ name: orgNameSchema });
-
-export const memberSchema = z.object({
-  accountId: z.uuid(),
-  email: z.string(),
-  displayName: z.string(),
-  role: roleSchema,
-});
-
-export const updateMemberBody = z.object({ role: roleSchema });
-
-export const createInvitationBody = z.object({ role: roleSchema.default('editor') });
-
-export const invitationSchema = z.object({
-  id: z.uuid(),
-  role: roleSchema,
-  createdAt: z.iso.datetime(),
-  expiresAt: z.iso.datetime(),
-  allowsSignup: z.boolean(),
-  /** Only in the answer to the create call: the token is not stored. */
-  url: z.string().optional(),
-});
-
-export const invitationInfoSchema = z.object({
-  organisationName: z.string(),
-  role: roleSchema,
-  /** Whether a new account can be created with this link. */
-  allowsSignup: z.boolean(),
 });
 
 // --- Brand packs ------------------------------------------------------------------------
@@ -240,9 +209,6 @@ export type BrandAsset = z.infer<typeof brandAssetSchema>;
 export type Role = z.infer<typeof roleSchema>;
 export type SessionState = z.infer<typeof sessionStateSchema>;
 export type Organisation = z.infer<typeof organisationSchema>;
-export type Member = z.infer<typeof memberSchema>;
-export type Invitation = z.infer<typeof invitationSchema>;
-export type InvitationInfo = z.infer<typeof invitationInfoSchema>;
 
 export type CreateProjectBody = z.infer<typeof createProjectBody>;
 export type UpdateProjectBody = z.infer<typeof updateProjectBody>;

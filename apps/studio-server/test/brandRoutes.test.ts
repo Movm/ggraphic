@@ -10,7 +10,7 @@ import {
   BRAND_SETTINGS,
   type Client,
   DEFAULT_ORG,
-  invite,
+  memberOf,
   PNG_1X1,
   resetDb,
   setupAdmin,
@@ -36,7 +36,7 @@ describe.skipIf(!hasDb)('brand packs (Postgres)', () => {
     await resetDb(pool);
     app = createApp({ config, db });
     owner = await setupAdmin(app);
-    editor = await invite(app, owner, DEFAULT_ORG, 'ed@example.org');
+    editor = await memberOf(app, pool, DEFAULT_ORG, 'ed@example.org');
   });
   afterAll(async () => {
     await pool.end();
