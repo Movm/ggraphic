@@ -79,7 +79,7 @@ function everyKindState(): Record<string, unknown> {
       },
     ],
     illustrationInstances: [
-      { id: 'ill-1', illustrationId: 'undraw-x', x: 10, y: 20, scale: 1, rotation: 5, flipX: true },
+      { id: 'ill-1', illustrationId: 'opendoodles-x', x: 10, y: 20, scale: 1, rotation: 5, flipX: true },
     ],
     assetInstances: [
       { id: 'asset-1', assetId: 'sunflower', x: 10, y: 20, scale: 1, rotation: 0, opacity: 0.7 },
