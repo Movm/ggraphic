@@ -41,6 +41,17 @@ describe('brand logo on templates', () => {
     }
   );
 
+  it('binds the logo src to brand.logo', () => {
+    rememberLogoSize(LOGO, 400, 100);
+    registerBrandPacks([withLogo, studioBrand]);
+    const logo = (
+      seedPageState(HEADLINE_TEMPLATE_ID, 1080, 1350)['userImageInstances'] as {
+        bind?: Record<string, { ref: string; value: string }>;
+      }[]
+    )[0]!;
+    expect(logo.bind?.['src']).toEqual({ ref: 'brand.logo', value: LOGO });
+  });
+
   it('adds nothing for a brand without a logo or an unmeasured logo', () => {
     expect(seedFor(HEADLINE_TEMPLATE_ID, 1080, 1350).userImageInstances ?? []).toEqual([]);
     rememberLogoSize(LOGO, 0, 0);

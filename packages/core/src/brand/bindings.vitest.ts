@@ -158,6 +158,52 @@ describe('rebindPageState edge cases', () => {
     expect(img.bind.src.value).toBe('new.svg');
   });
 
+  describe('logo box', () => {
+    const logoBrand: BrandPack = { ...brand, logo: { src: 'new.svg', label: 'Logo' } };
+    const pageSize = { width: 1080, height: 1350 };
+    const stateWith = () => ({
+      images: [
+        {
+          src: 'old.svg',
+          x: 900,
+          y: 1200,
+          width: 120,
+          height: 80,
+          bind: { src: { ref: 'brand.logo', value: 'old.svg' } },
+        },
+      ],
+    });
+    const imgOf = (r: { state: Record<string, unknown> }) => (r.state['images'] as any[])[0];
+
+    it('rebind swaps src and fits the box when the logo size is known', () => {
+      const img = imgOf(
+        rebindPageState(stateWith(), {
+          brand: logoBrand,
+          logoSize: { width: 400, height: 100 },
+          pageSize,
+        })
+      );
+      expect(img.src).toBe('new.svg');
+      expect([img.x, img.y, img.width, img.height]).toEqual([900, 1250, 120, 30]);
+    });
+
+    it('rebind swaps src but keeps the box when the size is unknown', () => {
+      const img = imgOf(
+        rebindPageState(stateWith(), { brand: logoBrand, logoSize: null, pageSize })
+      );
+      expect(img.src).toBe('new.svg');
+      expect([img.x, img.y, img.width, img.height]).toEqual([900, 1200, 120, 80]);
+    });
+
+    it('a brand without a logo keeps the image and drops the binding', () => {
+      const img = imgOf(
+        rebindPageState(stateWith(), { brand: { ...brand, logo: null }, logoSize: null, pageSize })
+      );
+      expect(img.src).toBe('old.svg');
+      expect(img.bind).toBeUndefined();
+    });
+  });
+
   it('an invalid binding is dropped and the field kept', () => {
     const state = {
       textInstances: [

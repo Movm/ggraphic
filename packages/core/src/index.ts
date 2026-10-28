@@ -29,6 +29,7 @@ export {
   type SchemeId,
   type SurfaceRole,
 } from './brand/schemes.js';
+export { fitLogoBox } from './brand/logoFit.js';
 export {
   brandFingerprint,
   isBindingRef,
