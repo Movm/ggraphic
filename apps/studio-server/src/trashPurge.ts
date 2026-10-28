@@ -122,17 +122,22 @@ export function startTrashPurge({
       log(`Trash purge: failed (${err instanceof Error ? err.message : 'unknown error'})`);
     }
   };
-  let interval: NodeJS.Timeout | undefined;
-  const first = setTimeout(() => {
-    void tick();
-    interval = setInterval(() => void tick(), intervalMs);
-    interval.unref();
-  }, firstRunMs);
-  first.unref();
+  // Each run is scheduled after the previous one finished, so a slow run never overlaps the next.
+  let stopped = false;
+  let timer: NodeJS.Timeout;
+  const schedule = (delayMs: number) => {
+    timer = setTimeout(() => {
+      void tick().then(() => {
+        if (!stopped) schedule(intervalMs);
+      });
+    }, delayMs);
+    timer.unref();
+  };
+  schedule(firstRunMs);
   return {
     stop() {
-      clearTimeout(first);
-      clearInterval(interval);
+      stopped = true;
+      clearTimeout(timer);
     },
   };
 }

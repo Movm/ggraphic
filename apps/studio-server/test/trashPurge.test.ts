@@ -256,5 +256,34 @@ describe.skipIf(!hasDb)('trash purge (Postgres)', () => {
       }
       expect(log.mock.calls[0]![0]).toMatch(/failed.*db down/);
     });
+
+    it('never starts a run while the previous one is still going', async () => {
+      let running = 0;
+      let overlapped = false;
+      const slow = {
+        connect: async () => {
+          running++;
+          if (running > 1) overlapped = true;
+          await new Promise((resolve) => setTimeout(resolve, 80));
+          running--;
+          throw new Error('slow db');
+        },
+      } as unknown as typeof pool;
+      const log = vi.fn();
+      const timer = startTrashPurge({
+        pool: slow,
+        db,
+        config: { ...config, trashPurgeEnabled: true },
+        firstRunMs: 5,
+        intervalMs: 10,
+        log,
+      });
+      try {
+        await vi.waitFor(() => expect(log.mock.calls.length).toBeGreaterThanOrEqual(3));
+      } finally {
+        timer?.stop();
+      }
+      expect(overlapped).toBe(false);
+    });
   });
 });
