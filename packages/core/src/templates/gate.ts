@@ -1,6 +1,12 @@
 // SPDX-License-Identifier: MPL-2.0
 import { type BrandPack } from '../brand/brandPack.js';
-import { brandLayout, logoEnvelope, safeArea, type BrandLayout } from '../brand/layout.js';
+import {
+  BRAND_LAYOUT_BOUNDS,
+  brandLayout,
+  logoEnvelope,
+  safeArea,
+  type BrandLayout,
+} from '../brand/layout.js';
 import type { Box } from '../brand/logoFit.js';
 import type { SchemeId } from '../brand/schemes.js';
 import { contrastRatio, parseColor } from '../color/color.js';
@@ -292,13 +298,15 @@ export function checkTemplate(t: TemplateInput, ctx: GateContext): GateProblem[]
   return out;
 }
 
-/** Layouts a brand may set: the margin and logo box at their limits (`brandLayout` clamps to these). */
-const LAYOUT_EXTREMES = [
-  { margin: 0.04, logoMaxWidth: 0.4, logoMaxHeight: 0.2 },
-  { margin: 0.04, logoMaxWidth: 0.05, logoMaxHeight: 0.03 },
-  { margin: 0.12, logoMaxWidth: 0.4, logoMaxHeight: 0.2 },
-  { margin: 0.12, logoMaxWidth: 0.05, logoMaxHeight: 0.03 },
-] as const;
+/** Layouts a brand may set: the margin and logo box at their limits (`BRAND_LAYOUT_BOUNDS`). */
+const LAYOUT_EXTREMES = [BRAND_LAYOUT_BOUNDS.margin.min, BRAND_LAYOUT_BOUNDS.margin.max].flatMap(
+  (margin) =>
+    (['max', 'min'] as const).map((end) => ({
+      margin,
+      logoMaxWidth: BRAND_LAYOUT_BOUNDS.logoMaxWidth[end],
+      logoMaxHeight: BRAND_LAYOUT_BOUNDS.logoMaxHeight[end],
+    }))
+);
 
 /**
  * The brand's own layout and the extremes, each with every corner the template declares

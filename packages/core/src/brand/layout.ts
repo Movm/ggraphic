@@ -10,7 +10,7 @@ export interface BrandLayout {
   /** Margin on every side as a fraction of the canvas short side, 0.04–0.12. */
   margin: number;
   logoCorner: LogoCorner;
-  /** Logo envelope as fractions of canvas width (0.05–0.4) and height (0.03–0.2). */
+  /** Logo envelope as fractions of canvas width (0.05–0.3) and height (0.03–0.12). */
   logoMaxWidth: number;
   logoMaxHeight: number;
 }
@@ -23,6 +23,13 @@ export const DEFAULT_BRAND_LAYOUT: BrandLayout = {
   logoMaxHeight: 0.08,
 };
 
+/** The range of each number of a layout. One source: the gate, the server schema and the Studio read these. */
+export const BRAND_LAYOUT_BOUNDS = {
+  margin: { min: 0.04, max: 0.12 },
+  logoMaxWidth: { min: 0.05, max: 0.3 },
+  logoMaxHeight: { min: 0.03, max: 0.12 },
+} as const;
+
 type Canvas = { width: number; height: number };
 
 const clamp = (value: unknown, min: number, max: number, fallback: number): number =>
@@ -34,12 +41,23 @@ const clamp = (value: unknown, min: number, max: number, fallback: number): numb
 export function brandLayout(brand: BrandPack): BrandLayout {
   const l: Partial<Record<keyof BrandLayout, unknown>> = brand.layout ?? {};
   const d = DEFAULT_BRAND_LAYOUT;
+  const b = BRAND_LAYOUT_BOUNDS;
   return {
-    margin: clamp(l.margin, 0.04, 0.12, d.margin),
+    margin: clamp(l.margin, b.margin.min, b.margin.max, d.margin),
     logoCorner: LOGO_CORNERS.find((c) => c === l.logoCorner) ?? d.logoCorner,
-    logoMaxWidth: clamp(l.logoMaxWidth, 0.05, 0.4, d.logoMaxWidth),
-    logoMaxHeight: clamp(l.logoMaxHeight, 0.03, 0.2, d.logoMaxHeight),
+    logoMaxWidth: clamp(l.logoMaxWidth, b.logoMaxWidth.min, b.logoMaxWidth.max, d.logoMaxWidth),
+    logoMaxHeight: clamp(
+      l.logoMaxHeight,
+      b.logoMaxHeight.min,
+      b.logoMaxHeight.max,
+      d.logoMaxHeight
+    ),
   };
+}
+
+/** A stored layout pulled into the bounds (for data written under wider ones); never throws. */
+export function clampBrandLayout(layout: BrandLayout): BrandLayout {
+  return brandLayout({ layout } as BrandPack);
 }
 
 /** The canvas inside the margins. */
