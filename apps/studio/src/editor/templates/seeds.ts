@@ -198,7 +198,8 @@ function headlineSeed(f: Frame): PageSeed {
       text(f, TEXT_ROLES.subline, 'subheader', 'One line that says why it matters', 0.5, {
         size: 48,
         font: 'headline',
-        fill: 'accent',
+        // Not the accent: it only has to reach 3:1 on the ground, and this is small text.
+        fill: 'ink2',
       }),
       text(f, TEXT_ROLES.body, 'body', 'Add the details here: what, when and where.', 0.62, {
         size: 34,
@@ -210,7 +211,7 @@ function headlineSeed(f: Frame): PageSeed {
         size: 34,
         font: 'body',
         fontStyle: 'bold',
-        fill: 'accent',
+        fill: 'ink2',
       }),
     ],
   };
