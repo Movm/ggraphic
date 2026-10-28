@@ -6,9 +6,8 @@ import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import { api, onUnauthenticated, type StudioConfig } from './api/client';
 import { AuthPage } from './pages/AuthPage';
 import { BrandPage } from './pages/BrandPage';
-import { ProjectListPage } from './pages/ProjectListPage';
 import { StartPage } from './start/StartPage';
-import { parseRoute, usePathname, type Route } from './router';
+import { parseRoute, redirect, usePathname, type Route } from './router';
 import { SESSION_QUERY_KEY, SessionProvider, type LoggedIn } from './session/SessionContext';
 import { Toaster } from './ui/toast';
 
@@ -36,9 +35,15 @@ function unreachable(retry: () => void) {
   );
 }
 
+/** `/projects` was the project list; the projects now live on the start page. */
+function RedirectToStart() {
+  useEffect(() => redirect('/'), []);
+  return null;
+}
+
 function LoggedInRoutes({ route, config }: { route: Route; config: StudioConfig | undefined }) {
   if (route.name === 'start') return <StartPage config={config} />;
-  if (route.name === 'projects') return <ProjectListPage />;
+  if (route.name === 'projects') return <RedirectToStart />;
   if (route.name === 'brand') return <BrandPage />;
   if (route.name !== 'editor') return null;
   if (!config) return loading('Connecting…');
