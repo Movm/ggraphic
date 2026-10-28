@@ -17,8 +17,9 @@ const flag = (fallback: boolean) =>
     .transform((v) => v === 'true');
 
 /** Unset keeps the default (follow the keys), `false` switches a configured tool off. */
+const TOGGLE_HINT = 'must be "true" or "false"';
 const toggle = z
-  .enum(['true', 'false'])
+  .enum(['true', 'false'], { error: TOGGLE_HINT })
   .optional()
   .transform((v) => (v === undefined ? null : v === 'true'));
 
@@ -171,7 +172,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   );
   const parsed = envSchema.safeParse(set);
   if (!parsed.success) {
-    const fields = parsed.error.issues.map((issue) => issue.path.join('.')).join(', ');
+    // Names only, never values; a switch also says which values it takes.
+    const fields = parsed.error.issues
+      .map(
+        (issue) => issue.path.join('.') + (issue.message === TOGGLE_HINT ? ` ${TOGGLE_HINT}` : '')
+      )
+      .join(', ');
     throw new Error(`Invalid configuration: ${fields}`);
   }
   const e = parsed.data;

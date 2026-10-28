@@ -73,7 +73,9 @@ describe('loadConfig', () => {
     });
 
     it('refuses an unknown switch value and a REMBG_URL that is no http(s) URL', () => {
-      expect(() => loadConfig({ ...base, REMBG_ENABLED: 'yes' })).toThrow(/REMBG_ENABLED/);
+      expect(() => loadConfig({ ...base, REMBG_ENABLED: 'yes' })).toThrow(
+        /REMBG_ENABLED must be "true" or "false"/
+      );
       expect(() => loadConfig({ ...base, REMBG_URL: 'file:///etc/passwd' })).toThrow(/REMBG_URL/);
     });
   });

@@ -22,32 +22,64 @@ export async function removeBackground(
 ): Promise<Buffer> {
   const form = new FormData();
   form.append('file', new Blob([new Uint8Array(image)]), 'image');
+  const timeout = (error: unknown) =>
+    error instanceof DOMException && error.name === 'TimeoutError';
+  const failed = (error: unknown) => {
+    // Log the cause class only: URLs and bodies stay out of the log.
+    console.warn(`rembg request failed: ${timeout(error) ? 'timeout' : (error as Error).name}`);
+    if (timeout(error)) {
+      return new HttpError(504, {
+        error: 'rembg_timeout',
+        message: 'The background removal service did not answer in time.',
+      });
+    }
+    return upstreamError();
+  };
+
   let response: Response;
   try {
     response = await fetchImpl(`${rembg.url}/api/remove`, {
       method: 'POST',
       body: form,
+      // A redirect would send the image somewhere the operator did not configure.
+      redirect: 'error',
       signal: AbortSignal.timeout(rembg.timeoutMs),
     });
   } catch (error) {
-    const timedOut = error instanceof DOMException && error.name === 'TimeoutError';
-    console.warn(`rembg request failed: ${timedOut ? 'timeout' : (error as Error).name}`);
-    if (timedOut) {
-      throw new HttpError(504, {
-        error: 'rembg_timeout',
-        message: 'The background removal service did not answer in time.',
-      });
-    }
-    throw upstreamError();
+    throw failed(error);
   }
   if (!response.ok) {
     console.warn(`rembg answered HTTP ${response.status}`);
+    await response.body?.cancel().catch(() => undefined);
     throw upstreamError();
   }
-  const declared = Number(response.headers.get('content-length') ?? 0);
-  if (declared > maxResponseBytes) throw upstreamError();
-  const body = Buffer.from(await response.arrayBuffer().catch(() => new ArrayBuffer(0)));
-  if (body.length > maxResponseBytes || !isPng(body)) {
+
+  // Read the body in chunks and give up at the limit, whatever Content-Length says.
+  const reader = response.body?.getReader();
+  if (!reader || Number(response.headers.get('content-length') ?? 0) > maxResponseBytes) {
+    await reader?.cancel().catch(() => undefined);
+    throw upstreamError();
+  }
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.length;
+      if (size > maxResponseBytes) {
+        await reader.cancel().catch(() => undefined);
+        console.warn('rembg answered more than the allowed size');
+        throw upstreamError();
+      }
+      chunks.push(value);
+    }
+  } catch (error) {
+    if (error instanceof HttpError) throw error;
+    throw failed(error);
+  }
+  const body = Buffer.concat(chunks);
+  if (!isPng(body)) {
     console.warn('rembg answered no usable PNG');
     throw upstreamError();
   }
