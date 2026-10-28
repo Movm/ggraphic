@@ -290,7 +290,7 @@ export function useCanvasKeyboardHandlers<TState extends Partial<BaseCanvasState
           }
         }
 
-        // Config-Elemente der Vorlage (Pfeil, Sonnenblume, Zitatzeichen …).
+        // Config-Elemente der Vorlage (Pfeil, Blume, Zitatzeichen …).
         // Sie sind keine Instanz in einer Liste, ihre Position steht im
         // `positionStateKey`; die aktuelle Lage kommt aus der gemeldeten
         // Geometrie, damit auch das erste Antippen von der Layout-Position
