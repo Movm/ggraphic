@@ -153,6 +153,87 @@ describe.skipIf(!hasDb)('POST /api/images/remove-background (Postgres)', () => {
     expect(JSON.stringify(res.body)).not.toMatch(/ECONNREFUSED|trace|html/);
   });
 
+  /** A 200 whose body streams `chunks` of `size` bytes, with or without a declared length. */
+  const stream = (chunks: number, size: number, declare: boolean) => {
+    const cancelled = vi.fn();
+    let sent = 0;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        if (sent++ >= chunks) return controller.close();
+        controller.enqueue(new Uint8Array(size).fill(1));
+      },
+      cancel: cancelled,
+    });
+    const headers: Record<string, string> = declare
+      ? { 'content-length': String(chunks * size) }
+      : {};
+    return { response: new Response(body, { status: 200, headers }), cancelled };
+  };
+
+  it.each([
+    ['a declared length', true],
+    ['a chunked body', false],
+  ])('answers 502 and stops reading an oversize rembg answer with %s', async (_n, declare) => {
+    const { response, cancelled } = stream(50, 1024, declare);
+    const res = await (
+      await loggedIn(
+        { ...on, uploadMaxBytes: 1024 },
+        vi.fn<typeof fetch>().mockResolvedValue(response)
+      )
+    )
+      .post()
+      .attach('file', PNG_1X1, 'a.png')
+      .expect(502);
+    expect(res.body.error).toBe('rembg_upstream_error');
+    // maxResponseBytes is 4 KiB: the reader must give up long before 50 KiB.
+    expect(cancelled).toHaveBeenCalled();
+  });
+
+  it('answers 504 when the timeout hits during the body read', async () => {
+    const body = new ReadableStream<Uint8Array>({
+      pull() {
+        return Promise.reject(new DOMException('aborted', 'TimeoutError'));
+      },
+    });
+    const res = await (
+      await loggedIn(
+        on,
+        vi.fn<typeof fetch>().mockResolvedValue(new Response(body, { status: 200 }))
+      )
+    )
+      .post()
+      .attach('file', PNG_1X1, 'a.png')
+      .expect(504);
+    expect(res.body.error).toBe('rembg_timeout');
+  });
+
+  it('does not follow a redirect from rembg', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockRejectedValue(
+        new TypeError('fetch failed', { cause: new Error('unexpected redirect') })
+      );
+    const res = await (
+      await loggedIn(on, fetchMock)
+    )
+      .post()
+      .attach('file', PNG_1X1, 'a.png')
+      .expect(502);
+    expect(res.body.error).toBe('rembg_upstream_error');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0]![1]?.redirect).toBe('error');
+  });
+
+  it('answers 502 for a 3xx answer', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        new Response(null, { status: 302, headers: { location: 'http://evil/' } })
+      );
+    await (await loggedIn(on, fetchMock)).post().attach('file', PNG_1X1, 'a.png').expect(502);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('limits background removals per account', async () => {
     const fetchMock = vi.fn<typeof fetch>().mockImplementation(() => Promise.resolve(cutOut()));
     const admin = await loggedIn(on, fetchMock, 2);
