@@ -230,7 +230,13 @@ function crossReferences(file: TemplateFile): string | null {
   if (known.has('page')) return 'pages.0.state: "page" is reserved and cannot be an element id';
   const missing = (key: string, id: string) => `${key}: no element "${id}" in pages[0].state`;
   for (const id of Object.keys(file.frames)) if (!known.has(id)) return missing(`frames.${id}`, id);
-  for (const id of Object.keys(file.slots)) if (!known.has(id)) return missing(`slots.${id}`, id);
+  for (const id of Object.keys(file.slots)) {
+    if (!known.has(id)) return missing(`slots.${id}`, id);
+    // Slots are what the AI is offered by id; a record key is not held to the pattern above.
+    if (!OFFER_ID_PATTERN.test(id)) {
+      return `slots.${id}: slot key must be 1-64 of a-z, 0-9 and "-"`;
+    }
+  }
   const bound = new Map<string, Set<string>>();
   for (const [id, item] of elements) {
     const bind = isRecord(item) ? item['bind'] : null;
