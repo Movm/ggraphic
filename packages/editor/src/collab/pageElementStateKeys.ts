@@ -43,6 +43,9 @@ const PAGE_STYLE_STATE_KEYS = [
   'bind',
   'brandScheme',
   'brandStamp',
+  // Template origin and element groups (F0: names and shapes only grow).
+  'templateRef',
+  'groups',
   'fontSize',
   'customPrimaryFontSize',
   'customSecondaryFontSize',

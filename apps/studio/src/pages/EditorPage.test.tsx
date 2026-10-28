@@ -111,6 +111,20 @@ describe('EditorPage', () => {
     expect(screen.queryByText(/Not saved|could not be saved/i)).toBeNull();
   }, 15_000);
 
+  it('a v2 project opens without a write', async () => {
+    registerBrandPacks([studioBrand]);
+    const { fetchMock, calls } = fakeServer({
+      ...newDocument('post-portrait', HEADLINE_TEMPLATE_ID),
+      schemaVersion: 2,
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderEditor();
+
+    await waitFor(() => expect(document.querySelector('.konvajs-content canvas')).not.toBeNull());
+    await new Promise((r) => setTimeout(r, 4000));
+    expect(calls.filter((c) => c.method === 'PUT' || c.method === 'PATCH')).toEqual([]);
+  }, 15_000);
+
   it('opening a project after a brand change saves the rebound document once', async () => {
     const NEW_PRIMARY = '#336699';
     const pack = {
