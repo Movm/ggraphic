@@ -10,7 +10,8 @@ import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
 import { type StudioConfig } from '../api/client';
 import { studioBrand } from '../brand';
 import { rememberLogoSize } from '../logoSize';
-import { TEST_ORG, TEST_PROJECTS_URL, WithSession } from '../testing/session';
+import { LoggedInContext } from '../session/SessionContext';
+import { TEST_ORG, TEST_PROJECTS_URL, WithSession, testSession } from '../testing/session';
 import { Toaster } from '../ui/toast';
 
 import { nameFromPrompt } from './createFromPrompt';
@@ -375,6 +376,57 @@ describe('StartPage sections', () => {
     expect(within(templates).getByRole('button', { name: /^Quote/ })).toBeInTheDocument();
     expect(within(templates).getByRole('button', { name: /^Headline/ })).toBeInTheDocument();
     expect(within(templates).getByRole('button', { name: /^Blank/ })).toBeInTheDocument();
+  });
+
+  it('does not let a late brand answer for the previous organisation change the tiles', async () => {
+    const near = {
+      ...studioBrand,
+      id: 'near',
+      colors: { ...studioBrand.colors, secondary: '#FAFAFA' },
+    };
+    let releaseA: () => void = () => {};
+    const answered = (pack: unknown) =>
+      new Response(JSON.stringify({ settings: null, assets: [], pack, bundledFonts: [] }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === '/api/orgs/org-a/brand-pack') {
+          await new Promise<void>((resolve) => (releaseA = resolve));
+          return answered(near);
+        }
+        if (url === '/api/orgs/org-b/brand-pack') return answered(null);
+        return new Response(JSON.stringify({ projects: [] }), {
+          headers: { 'Content-Type': 'application/json' },
+        });
+      })
+    );
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const as = (id: string) => (
+      <QueryClientProvider client={client}>
+        <LoggedInContext.Provider
+          value={{ ...testSession(), organisation: { id, name: id, role: 'owner' } }}
+        >
+          <StartPage config={config(false)} />
+        </LoggedInContext.Provider>
+      </QueryClientProvider>
+    );
+    const user = userEvent.setup();
+    const view = render(as('org-a'));
+    view.rerender(as('org-b'));
+
+    const templates = screen.getByRole('list', { name: 'Templates' });
+    // B answered: its studio brand keeps the light-only template.
+    expect(
+      await within(templates).findByRole('button', { name: /^Light only/ })
+    ).toBeInTheDocument();
+    // A answers late with a brand that cannot place it; a new format redraws the tiles.
+    releaseA();
+    await user.click(screen.getByRole('radio', { name: /1080 × 1080/ }));
+    await waitFor(() => expect(window.location.pathname).toBe('/'));
+    expect(within(templates).getByRole('button', { name: /^Light only/ })).toBeInTheDocument();
   });
 
   it('creates a project from a template in the chosen format', async () => {
