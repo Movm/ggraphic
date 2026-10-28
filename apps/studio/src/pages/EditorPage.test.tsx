@@ -26,7 +26,11 @@ const config: StudioConfig = {
 type Call = { method: string; url: string; body?: unknown };
 
 /** `fetch` with a Studio server that holds one project with `document`. */
-function fakeServer(document: unknown, pack: unknown = null) {
+function fakeServer(
+  document: unknown,
+  pack: unknown = null,
+  brandFailure: 'none' | 'http500' | 'network' = 'none'
+) {
   const calls: Call[] = [];
   const json = (status: number, body: unknown) =>
     new Response(JSON.stringify(body), {
@@ -54,6 +58,8 @@ function fakeServer(document: unknown, pack: unknown = null) {
       return json(200, project(2, (sent as { document: unknown }).document));
     }
     if (url === `/api/orgs/${TEST_ORG}/brand-pack`) {
+      if (brandFailure === 'network') throw new TypeError('Failed to fetch');
+      if (brandFailure === 'http500') return json(500, { error: 'internal' });
       return json(200, { settings: null, assets: [], pack, bundledFonts: [] });
     }
     return json(404, { error: 'not_found' });
@@ -146,4 +152,31 @@ describe('EditorPage', () => {
     await new Promise((r) => setTimeout(r, 4000));
     expect(calls.filter((c) => c.method === 'PUT' || c.method === 'PATCH')).toEqual([]);
   }, 15_000);
+
+  it.each(['http500', 'network'] as const)(
+    'opens as stored and saves nothing when the brand fetch fails (%s)',
+    async (failure) => {
+      registerBrandPacks([studioBrand]);
+      const stored = newDocument('post-portrait', HEADLINE_TEMPLATE_ID);
+      // Saved under an organisation brand the Studio cannot load now.
+      const state = stored.pages[0]!.state as {
+        backgroundColor: string;
+        brandStamp: string;
+        bind: Record<string, { ref: string; value: string }>;
+      };
+      state.backgroundColor = '#112233';
+      state.bind['backgroundColor'] = { ref: 'ground', value: '#112233' };
+      state.brandStamp = 'orgbrand';
+      const { fetchMock, calls } = fakeServer(stored, null, failure);
+      vi.stubGlobal('fetch', fetchMock);
+      renderEditor();
+
+      await waitFor(() =>
+        expect(document.querySelector('.konvajs-content canvas')).not.toBeNull()
+      );
+      await new Promise((r) => setTimeout(r, 4000));
+      expect(calls.filter((c) => c.method === 'PUT' || c.method === 'PATCH')).toEqual([]);
+    },
+    15_000
+  );
 });
