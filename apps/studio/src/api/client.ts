@@ -23,6 +23,15 @@ const projectSchema = projectSummarySchema.extend({
   document: z.record(z.string(), z.unknown()),
 });
 
+const trashItemSchema = z.object({
+  id: z.string(),
+  organisationId: z.string(),
+  name: z.string(),
+  deletedAt: z.string(),
+  purgeAt: z.string(),
+  daysLeft: z.number().int(),
+});
+
 const projectListSchema = z.object({ projects: z.array(projectSummarySchema) });
 
 const configSchema = z.object({
@@ -77,29 +86,6 @@ const sessionSchema = z.object({
     .nullable(),
   csrfToken: z.string().nullable(),
   organisations: z.array(organisationSchema),
-  canCreateOrganisations: z.boolean(),
-});
-
-const memberSchema = z.object({
-  accountId: z.string(),
-  email: z.string(),
-  displayName: z.string(),
-  role: roleSchema,
-});
-
-const invitationSchema = z.object({
-  id: z.string(),
-  role: roleSchema,
-  createdAt: z.string(),
-  expiresAt: z.string(),
-  allowsSignup: z.boolean(),
-  url: z.string().optional(),
-});
-
-const invitationInfoSchema = z.object({
-  organisationName: z.string(),
-  role: roleSchema,
-  allowsSignup: z.boolean(),
 });
 
 const hex = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
@@ -175,14 +161,19 @@ const brandPackResponseSchema = z.object({
   bundledFonts: z.array(z.string()),
 });
 
+export type TrashItem = z.infer<typeof trashItemSchema>;
 export type ProjectSummary = z.infer<typeof projectSummarySchema>;
 export type Role = z.infer<typeof roleSchema>;
 export type Organisation = z.infer<typeof organisationSchema>;
 export type Session = z.infer<typeof sessionSchema>;
-export type Member = z.infer<typeof memberSchema>;
-export type Invitation = z.infer<typeof invitationSchema>;
-export type InvitationInfo = z.infer<typeof invitationInfoSchema>;
 export type BrandSettings = z.infer<typeof brandSettingsSchema>;
+/** What the brand form sends: three colours; the server derives the rest. */
+export interface BrandInput {
+  name: string;
+  colors: { primary: string; secondary: string; accent: string };
+  fonts: BrandSettings['fonts'];
+  logoAssetId: string | null;
+}
 export type BrandAsset = z.infer<typeof brandAssetSchema>;
 export type BrandPackResponse = z.infer<typeof brandPackResponseSchema>;
 export type Project = z.infer<typeof projectSchema>;
@@ -318,48 +309,11 @@ export const api = {
     await request('/auth/logout', null, { method: 'POST' });
     csrfToken = null;
   },
-  getInvitation: (token: string) =>
-    request(`/auth/invitations/${encodeURIComponent(token)}`, invitationInfoSchema),
-  acceptInvitation: (token: string, signup: Signup | null) =>
-    withSession(
-      request(
-        `/auth/invitations/${encodeURIComponent(token)}/accept`,
-        sessionSchema,
-        json('POST', signup ?? {})
-      )
-    ),
-
-  // ── Organisations ────────────────────────────────────────────────────────
-  createOrganisation: (name: string) =>
-    request('/orgs', organisationSchema, json('POST', { name })),
-  listMembers: async (orgId: string) =>
-    (await request(`${org(orgId)}/members`, z.object({ members: z.array(memberSchema) }))).members,
-  updateMember: (orgId: string, accountId: string, role: Role) =>
-    request(
-      `${org(orgId)}/members/${encodeURIComponent(accountId)}`,
-      null,
-      json('PATCH', { role })
-    ),
-  removeMember: (orgId: string, accountId: string) =>
-    request(`${org(orgId)}/members/${encodeURIComponent(accountId)}`, null, {
-      method: 'DELETE',
-    }),
-  listInvitations: async (orgId: string) =>
-    (
-      await request(
-        `${org(orgId)}/invitations`,
-        z.object({ invitations: z.array(invitationSchema) })
-      )
-    ).invitations,
-  createInvitation: (orgId: string, role: Role) =>
-    request(`${org(orgId)}/invitations`, invitationSchema, json('POST', { role })),
-  revokeInvitation: (orgId: string, id: string) =>
-    request(`${org(orgId)}/invitations/${encodeURIComponent(id)}`, null, { method: 'DELETE' }),
 
   // ── Brand pack ───────────────────────────────────────────────────────────
   getBrandPack: (orgId: string) => request(`${org(orgId)}/brand-pack`, brandPackResponseSchema),
-  saveBrandPack: (orgId: string, settings: BrandSettings) =>
-    request(`${org(orgId)}/brand-pack`, brandPackResponseSchema, json('PUT', settings)),
+  saveBrandPack: (orgId: string, input: BrandInput) =>
+    request(`${org(orgId)}/brand-pack`, brandPackResponseSchema, json('PUT', input)),
   uploadLogo: (orgId: string, file: Blob, filename: string) => {
     const form = new FormData();
     form.append('file', file, filename);
@@ -412,6 +366,20 @@ export const api = {
 
   deleteProject: (id: string) =>
     request(`/projects/${encodeURIComponent(id)}`, null, { method: 'DELETE' }),
+
+  listTrash: async (orgId: string) =>
+    (await request(`${org(orgId)}/trash`, z.object({ projects: z.array(trashItemSchema) })))
+      .projects,
+
+  /** Idempotent: a project that is not in the trash comes back unchanged. */
+  restoreProject: (id: string) =>
+    request(`/projects/${encodeURIComponent(id)}/restore`, projectSummarySchema, {
+      method: 'POST',
+    }),
+
+  /** "Delete now": only works on a trashed project, and cannot be undone. */
+  purgeProject: (id: string) =>
+    request(`/projects/${encodeURIComponent(id)}/purge`, null, { method: 'DELETE' }),
 
   putThumbnail: (id: string, png: Blob) =>
     request(`/projects/${encodeURIComponent(id)}/thumbnail`, projectSummarySchema, {
