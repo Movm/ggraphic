@@ -8,9 +8,13 @@
  * be allowed in their info.json: the package.json can say MIT while the icon
  * data carries a different licence (Remix Icon changed its licence at 4.9.0).
  *
+ * It also fails when a tracked source file under apps/ or packages/ lacks an
+ * SPDX-License-Identifier line in its first lines.
+ *
  * Needs node_modules (runs on the typecheck job). No dependencies.
  * `--self-test` builds fixture trees and runs the red probes; needs no install.
  */
+import { execFileSync } from 'node:child_process';
 import {
   existsSync,
   mkdirSync,
@@ -175,6 +179,28 @@ export function checkLicenses(rootDirs) {
   return { problems, count: seen.size };
 }
 
+const SOURCE_FILE = /\.(?:[cm]?[jt]sx?|css)$/;
+const HEADER_LINES = 5;
+
+/** Source files (relative paths) that carry no SPDX-License-Identifier in their first lines. */
+export function missingSpdxHeaders(root, files) {
+  return files
+    .filter((file) => SOURCE_FILE.test(file))
+    .filter((file) => {
+      const head = readFileSync(join(root, file), 'utf8').split('\n', HEADER_LINES).join('\n');
+      return !head.includes('SPDX-License-Identifier:');
+    });
+}
+
+function trackedSources(root) {
+  return execFileSync('git', ['ls-files', '-z', 'apps', 'packages'], {
+    cwd: root,
+    encoding: 'utf8',
+  })
+    .split('\0')
+    .filter(Boolean);
+}
+
 function selfTest() {
   const base = mkdtempSync(join(tmpdir(), 'ggraphic-licenses-'));
   const failures = [];
@@ -240,6 +266,14 @@ function selfTest() {
       license: { spdx: 'Apache-2.0' },
     });
     expect('iconify-info-good', good, false);
+    const sources = join(base, 'sources');
+    mkdirSync(sources, { recursive: true });
+    writeFileSync(join(sources, 'ok.ts'), '// SPDX-License-Identifier: MPL-2.0\nexport {};\n');
+    writeFileSync(join(sources, 'bare.ts'), 'export {};\n');
+    writeFileSync(join(sources, 'notes.md'), 'no header needed\n');
+    const bare = missingSpdxHeaders(sources, ['ok.ts', 'bare.ts', 'notes.md']);
+    if (bare.length !== 1 || bare[0] !== 'bare.ts')
+      failures.push(`spdx: expected only bare.ts, got ${JSON.stringify(bare)}`);
   } finally {
     rmSync(base, { recursive: true, force: true });
   }
@@ -254,7 +288,7 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
       for (const f of failures) console.error(`  · ${f}`);
       process.exit(1);
     }
-    console.log('✓ ggraphic licence self-test: 9 probes ok');
+    console.log('✓ ggraphic licence self-test: 10 probes ok');
   } else {
     const root = fileURLToPath(new URL('..', import.meta.url));
     const dirs = ROOT_PACKAGES.map((p) => join(root, 'packages', p));
@@ -274,5 +308,14 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
       process.exit(1);
     }
     console.log(`✓ ${count} package(s) in the @ggraphic dependency tree have allowed licences`);
+    const bare = missingSpdxHeaders(root, trackedSources(root));
+    if (bare.length > 0) {
+      console.error(
+        `\n✖ ${bare.length} source file(s) without an SPDX-License-Identifier header:\n`
+      );
+      for (const file of bare) console.error(`  ${file}`);
+      process.exit(1);
+    }
+    console.log('✓ every source file under apps/ and packages/ carries an SPDX header');
   }
 }
