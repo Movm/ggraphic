@@ -308,7 +308,7 @@ function TextPathTile() {
         letterSpacing="1.2"
       >
         <textPath href={`#${id}`} startOffset="50%" textAnchor="middle">
-          PFADTEXT
+          TEXT PATH
         </textPath>
       </text>
       <circle cx="10" cy="52" r="3.2" fill="#fff" className="tt-k500" strokeWidth="1.8" />

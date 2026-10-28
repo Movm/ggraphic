@@ -32,7 +32,7 @@ export function stockPhotoItem(image: StockImage): ElementItem {
   return {
     key: `photo:${image.filename}`,
     // Named like a live Unsplash hit: the photographer is the credit, a category says nothing.
-    label: credit ? credit.photographer : 'Foto',
+    label: credit ? credit.photographer : 'Photo',
     keywords: [
       'Foto',
       ...(category ? [category] : []),

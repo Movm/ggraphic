@@ -32,15 +32,15 @@ interface PathVariant {
 // Path presets in a ~360-wide coordinate space. The exact coords don't affect
 // framing — the export measures getClientRect() and crops to the drawn glyphs.
 const VARIANTS: PathVariant[] = [
-  { id: 'wave', label: 'Welle', data: 'M0,60 Q90,0 180,60 T360,60' },
-  { id: 'smile', label: 'Bogen', data: 'M0,20 Q180,140 360,20' },
-  { id: 'rainbow', label: 'Regenbogen', data: 'M20,160 A160,160 0 0,1 340,160' },
+  { id: 'wave', label: 'Wave', data: 'M0,60 Q90,0 180,60 T360,60' },
+  { id: 'smile', label: 'Arc', data: 'M0,20 Q180,140 360,20' },
+  { id: 'rainbow', label: 'Rainbow', data: 'M20,160 A160,160 0 0,1 340,160' },
   {
     id: 'circle',
-    label: 'Kreis',
+    label: 'Circle',
     data: 'M180,180 m-130,0 a130,130 0 1,1 260,0 a130,130 0 1,1 -260,0',
   },
-  { id: 'rising', label: 'Aufsteigend', data: 'M0,150 L360,30' },
+  { id: 'rising', label: 'Rising', data: 'M0,150 L360,30' },
 ];
 
 /**
@@ -111,7 +111,7 @@ export function TextPathCreatorTool({
   const [success, setSuccess] = useState<ToolPanelSuccess | null>(null);
 
   const trimmed = value.trim();
-  const previewText = trimmed || 'Beispieltext';
+  const previewText = trimmed || 'Sample text';
 
   // Preview mirrors the exact export pipeline (lower resolution).
   useEffect(() => {
@@ -167,12 +167,12 @@ export function TextPathCreatorTool({
             {previewUrl ? (
               <img src={previewUrl} alt={t.ui.preview} className="max-h-[140px] max-w-full" />
             ) : (
-              <span className="text-xs text-foreground-muted">Vorschau…</span>
+              <span className="text-xs text-foreground-muted">Preview…</span>
             )}
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-xs text-foreground-muted">Form</span>
+            <span className="text-xs text-foreground-muted">Shape</span>
             <div className="grid grid-cols-3 gap-1.5">
               {VARIANTS.map((v) => (
                 <button
@@ -193,7 +193,7 @@ export function TextPathCreatorTool({
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-xs text-foreground-muted">Farbe</span>
+            <span className="text-xs text-foreground-muted">Colour</span>
             <div className="flex flex-wrap items-center gap-1.5">
               {brandColors().map((c) => (
                 <button

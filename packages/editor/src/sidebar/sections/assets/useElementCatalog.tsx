@@ -334,7 +334,7 @@ export function useElementCatalog(
     if (markeItems.length > 0)
       push({
         id: 'marke',
-        label: 'Marke',
+        label: 'Brand',
         count: markeItems.length,
         items: markeItems,
         isLoading: false,

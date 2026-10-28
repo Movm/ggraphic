@@ -82,7 +82,7 @@ export function CanvasEditorSkeleton({
       role="status"
       aria-live="polite"
       aria-busy="true"
-      aria-label="Editor wird geladen"
+      aria-label="Loading the editor"
       className="flex flex-col h-dvh min-h-[500px] bg-[var(--editor-bg)]"
     >
       {topBar && (

@@ -94,7 +94,7 @@ export function ChartSettingsSection({
   return (
     <div className="flex flex-col gap-4 p-md w-full min-w-0">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-foreground">Diagramm</span>
+        <span className="text-sm font-semibold text-foreground">Chart</span>
         <button
           type="button"
           onClick={() => onRemoveChart(chart.id)}
@@ -182,7 +182,7 @@ export function ChartSettingsSection({
               <input
                 type="text"
                 value={point.name}
-                aria-label={`Bezeichnung ${i + 1}`}
+                aria-label={`Label ${i + 1}`}
                 onChange={(e) => setName(i, e.target.value)}
                 className={`min-w-0 flex-1 ${CELL}`}
               />
@@ -233,7 +233,7 @@ export function ChartSettingsSection({
             onClick={addRow}
             className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-dashed border-editor-border-strong px-2 py-1.5 text-xs text-foreground-muted hover:border-primary-500 hover:text-foreground"
           >
-            <PiPlus size={10} /> Zeile
+            <PiPlus size={10} /> Row
           </button>
           {round ? null : (
             <button
@@ -242,7 +242,7 @@ export function ChartSettingsSection({
               disabled={columns.length >= MAX_SERIES}
               className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-dashed border-editor-border-strong px-2 py-1.5 text-xs text-foreground-muted hover:border-primary-500 hover:text-foreground disabled:opacity-40"
             >
-              <PiPlus size={10} /> Datenreihe
+              <PiPlus size={10} /> Series
             </button>
           )}
         </div>

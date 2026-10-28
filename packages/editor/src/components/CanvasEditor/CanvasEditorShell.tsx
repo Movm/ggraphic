@@ -631,7 +631,7 @@ function CanvasEditorInner({
       const deck = serializeDeck(pagesDoc);
       const refs = canvasRefsRef.current;
       if (deck.some((_, i) => !refs[i]?.current)) {
-        throw new Error('Nicht alle Folien konnten exportiert werden');
+        throw new Error('Not all slides could be exported');
       }
       return exportPptxDeck({
         pages: deck.map((page) => page.state),
@@ -933,7 +933,7 @@ function CanvasEditorInner({
     if (!printFormat) return;
     const pages = printPages();
     if (pages.some((_, i) => !canvasRefsRef.current[i]?.current)) {
-      throw new Error('Nicht alle Seiten konnten exportiert werden');
+      throw new Error('Not all pages could be exported');
     }
     const pdf = await exportPrintPdf({ format: printFormat, pages });
     const blob = new Blob([pdf as BlobPart], { type: 'application/pdf' });
@@ -944,7 +944,7 @@ function CanvasEditorInner({
   const handleDownloadPptx = useCallback(
     async (onProgress: (done: number, total: number) => void) => {
       const blob = await buildPptx(onProgress);
-      const filename = printPdfFilename(documentTitle ?? 'Präsentation', filenamePrefix).replace(
+      const filename = printPdfFilename(documentTitle ?? 'Presentation', filenamePrefix).replace(
         /\.pdf$/,
         '.pptx'
       );
@@ -960,7 +960,7 @@ function CanvasEditorInner({
     const blob = new Blob([pdf as BlobPart], { type: 'application/pdf' });
     await fileDelivery.downloadBlob(
       blob,
-      printPdfFilename(documentTitle ?? 'Präsentation', filenamePrefix)
+      printPdfFilename(documentTitle ?? 'Presentation', filenamePrefix)
     );
   }, [exportAllPages, documentTitle, fileDelivery, filenamePrefix]);
 
@@ -1045,7 +1045,7 @@ function CanvasEditorInner({
     ? activeEditorTab.tab.label
     : activeTab === 'layers'
       ? layersTab.label
-      : (activeTab && activeConfig?.tabs.find((tab) => tab.id === activeTab)?.label) || 'Auswahl';
+      : (activeTab && activeConfig?.tabs.find((tab) => tab.id === activeTab)?.label) || 'Selection';
   useMobileSheetFit({
     enabled: isMobileSheetOpen,
     zoom,

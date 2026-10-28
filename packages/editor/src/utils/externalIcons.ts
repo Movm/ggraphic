@@ -197,9 +197,9 @@ export function externalIconDataUrl(svg: string, size: number, color: string): s
   return `data:image/svg+xml;base64,${toBase64(sized.replace(/currentColor/g, () => ink))}`;
 }
 
-/** "Icon: <Set> von <Autor>, <Lizenz>" for the picker. German, like the photo credit line. */
+/** "Icon: <Set> by <Author>, <Licence>" for the picker. */
 export function attributionLine(source: IconSource): string {
-  const by = source.author ? ` von ${source.author}` : '';
+  const by = source.author ? ` by ${source.author}` : '';
   return `Icon: ${source.setTitle}${by}, ${source.licence}`;
 }
 
@@ -228,7 +228,7 @@ export function iconCreditLine(sources: readonly IconSource[]): string {
     const key = `${source.prefix}\0${source.licence}`;
     if (NEEDS_NO_CREDIT.test(source.licence) || seen.has(key)) continue;
     seen.add(key);
-    const by = source.author ? ` von ${source.author}` : '';
+    const by = source.author ? ` by ${source.author}` : '';
     entries.push(
       `${source.setTitle}${by} (${source.licence}, https://spdx.org/licenses/${encodeURIComponent(source.licence)}.html)`
     );

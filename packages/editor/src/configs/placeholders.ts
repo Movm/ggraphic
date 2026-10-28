@@ -8,32 +8,32 @@
 
 export const PLACEHOLDER_TEXT = {
   // Simple template
-  headline: 'Ihre Überschrift hier',
-  subtext: 'Hier steht Ihre Botschaft',
+  headline: 'Your headline here',
+  subtext: 'Your message goes here',
 
   // Zitat templates
-  quote: 'Hier steht Ihr Zitat.\nEin gutes Zitat inspiriert.',
-  name: 'Maxi Mustermensch',
+  quote: 'Your quote goes here.\nA good quote inspires.',
+  name: 'Alex Example',
 
   // Info template
-  header: 'Wussten Sie schon?',
-  body: 'Hier können Sie Ihren Text einfügen.',
+  header: 'Did you know?',
+  body: 'Add your text here.',
 
   // Dreizeilen template
-  line1: 'Erste Zeile',
-  line2: 'Zweite Zeile',
-  line3: 'Dritte Zeile',
+  line1: 'First line',
+  line2: 'Second line',
+  line3: 'Third line',
   // AT: die gelbe kursive Betonungszeile liegt unter `accent`, nicht `line2`
-  accent: 'Betonung',
+  accent: 'Emphasis',
 
   // Veranstaltung template
-  eventTitle: 'VERANSTALTUNG',
-  beschreibung: 'Beschreibung hier eingeben',
-  weekday: 'MI',
-  date: '15.01.',
-  time: '19 UHR',
-  locationName: 'Veranstaltungsort',
-  address: 'Musterstraße 1, 12345 Stadt',
+  eventTitle: 'EVENT',
+  beschreibung: 'Enter a description here',
+  weekday: 'WED',
+  date: '15 JAN',
+  time: '7 PM',
+  locationName: 'Venue',
+  address: '1 Sample Street, 12345 Town',
 } as const;
 
 /**

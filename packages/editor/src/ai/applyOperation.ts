@@ -340,7 +340,7 @@ function applyCore<TState>(
         // applier has no resolver — users change images by clicking the background.
         return {
           ok: false,
-          reason: 'Hintergrundbilder bitte per Klick auf den Hintergrund ändern',
+          reason: 'To change a background image, click the background',
         };
 
       default: {

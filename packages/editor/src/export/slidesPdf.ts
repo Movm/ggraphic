@@ -10,7 +10,7 @@ import { parseDataUrl } from '@ggraphic/schema';
 function dataUrlToBytes(dataUrl: string, index: number): Uint8Array {
   const parsed = parseDataUrl(dataUrl);
   if (!parsed || parsed.mediaType !== 'image/png') {
-    throw new Error(`Folie ${index + 1} konnte nicht exportiert werden`);
+    throw new Error(`Slide ${index + 1} could not be exported`);
   }
   return Uint8Array.from(atob(parsed.base64), (c) => c.charCodeAt(0));
 }

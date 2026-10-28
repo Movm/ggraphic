@@ -194,7 +194,7 @@ describe('externalIconDataUrl', () => {
 
 describe('attributionLine', () => {
   it('names set, author and licence', () => {
-    expect(attributionLine(source)).toBe('Icon: Lets Icons von Leonid Tsvetkov, CC-BY-4.0');
+    expect(attributionLine(source)).toBe('Icon: Lets Icons by Leonid Tsvetkov, CC-BY-4.0');
   });
 
   it('leaves the author out when the set names none', () => {
@@ -220,10 +220,10 @@ describe('icon credits', () => {
 
   it('credits every licence but CC0, with a licence link', () => {
     expect(iconCreditLine([ccBy])).toBe(
-      'Icon: Lets Icons von Leonid Tsvetkov (CC-BY-4.0, https://spdx.org/licenses/CC-BY-4.0.html)'
+      'Icon: Lets Icons by Leonid Tsvetkov (CC-BY-4.0, https://spdx.org/licenses/CC-BY-4.0.html)'
     );
     expect(iconCreditLine([mit])).toBe(
-      'Icon: Tabler Icons von Leonid Tsvetkov (MIT, https://spdx.org/licenses/MIT.html)'
+      'Icon: Tabler Icons by Leonid Tsvetkov (MIT, https://spdx.org/licenses/MIT.html)'
     );
     expect(iconCreditLine([{ ...mit, licence: 'CC0-1.0' }])).toBe('');
     expect(iconCreditLine([])).toBe('');
@@ -231,8 +231,8 @@ describe('icon credits', () => {
 
   it('names each set once', () => {
     expect(iconCreditLine([ccBy, ccBy, mit])).toBe(
-      'Icons: Lets Icons von Leonid Tsvetkov (CC-BY-4.0, https://spdx.org/licenses/CC-BY-4.0.html), ' +
-        'Tabler Icons von Leonid Tsvetkov (MIT, https://spdx.org/licenses/MIT.html)'
+      'Icons: Lets Icons by Leonid Tsvetkov (CC-BY-4.0, https://spdx.org/licenses/CC-BY-4.0.html), ' +
+        'Tabler Icons by Leonid Tsvetkov (MIT, https://spdx.org/licenses/MIT.html)'
     );
   });
 

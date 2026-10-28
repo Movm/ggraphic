@@ -40,11 +40,11 @@ export function useAiImageGeneration(): UseAiImageGenerationReturn {
     async (prompt: string, variant: AiVariant): Promise<GeneratedAiImage | null> => {
       const trimmed = prompt.trim();
       if (!trimmed) {
-        setGenerationError('Bitte gib eine Bildbeschreibung ein.');
+        setGenerationError('Please describe the image.');
         return null;
       }
       if (!generateAiImage) {
-        setGenerationError('KI-Bildgenerierung ist in dieser Umgebung nicht verfügbar.');
+        setGenerationError('AI image generation is not available here.');
         return null;
       }
 
@@ -65,7 +65,7 @@ export function useAiImageGeneration(): UseAiImageGenerationReturn {
         setRemaining(nextRemaining);
         return next;
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Fehler bei der Bildgenerierung';
+        const message = error instanceof Error ? error.message : 'Image generation failed';
         setGenerationError(message);
         return null;
       } finally {

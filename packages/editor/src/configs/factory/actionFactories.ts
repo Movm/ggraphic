@@ -399,7 +399,7 @@ export function createAdditionalTextActions<TState extends { additionalTexts: Ad
     addHeader: () => {
       const newText: AdditionalText = {
         id: uuid(),
-        text: 'Überschrift',
+        text: 'Headline',
         type: 'header',
         y: canvasHeight / 3,
         ...textPreset('header', canvasWidth, insertScale),
@@ -414,7 +414,7 @@ export function createAdditionalTextActions<TState extends { additionalTexts: Ad
     addSubheader: () => {
       const newText: AdditionalText = {
         id: uuid(),
-        text: 'Untertitel',
+        text: 'Subtitle',
         type: 'subheader',
         y: canvasHeight * 0.4,
         ...textPreset('subheader', canvasWidth, insertScale),
@@ -429,7 +429,7 @@ export function createAdditionalTextActions<TState extends { additionalTexts: Ad
     addText: () => {
       const newText: AdditionalText = {
         id: uuid(),
-        text: 'Text hier eingeben',
+        text: 'Enter text here',
         type: 'body',
         y: canvasHeight / 2,
         ...textPreset('body', canvasWidth, insertScale),

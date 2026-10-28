@@ -78,7 +78,7 @@ export function QRCodeTool({ onJumpToUploads, onPlaceImageUrl }: QRCodeToolProps
       body={
         <div className="flex flex-col gap-3">
           <label className="flex flex-col gap-1.5 text-xs">
-            <span className="text-foreground-muted">Link oder Text</span>
+            <span className="text-foreground-muted">Link or text</span>
             <input
               type="text"
               value={value}

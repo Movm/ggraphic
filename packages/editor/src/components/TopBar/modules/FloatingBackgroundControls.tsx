@@ -112,7 +112,7 @@ export function BackgroundImagePicker({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button type="button" className={TEXT_BTN} aria-label={`Hintergrundbild: ${label}`}>
+        <button type="button" className={TEXT_BTN} aria-label={`Background image: ${label}`}>
           <HiOutlinePhoto size={17} aria-hidden="true" />
           {label}
         </button>
