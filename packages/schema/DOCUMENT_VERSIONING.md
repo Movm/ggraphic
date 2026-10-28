@@ -162,9 +162,11 @@ shape into a newer document. `newer` and `invalid` both become a refusal:
 ### (f) F0
 
 Documents stored by the reference host today carry no version, so they **are** version 1,
-unchanged. This change rewrites nothing at rest: opening a v1 Y.Doc runs the
-identity chain and writes no key (not even a stamp); `initial_state` is read
-as before. No stored field is renamed. The only new bytes are additive: a
+unchanged. Versioning itself rewrote nothing at rest. Since v2, opening an
+unstamped or v1 Y.Doc runs the identity step and writes the `schemaVersion`
+stamp once, nothing else; a newer doc is never written. Read-only enforcement
+for viewers belongs to the collab host (server-side), as it already did for the
+legacy lift and kind migrations. `initial_state` is read as before. No stored field is renamed. The only new bytes are additive: a
 `schemaVersion` key in the `meta` of newly seeded Y.Docs and in newly written
 gallery deck drafts.
 
