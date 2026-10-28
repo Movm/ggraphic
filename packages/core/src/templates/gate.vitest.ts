@@ -61,6 +61,7 @@ const adapter: GateAdapter = {
           fontSize: num(el, 'fontSize'),
           bold: String(el['fontStyle'] ?? '').includes('bold'),
           opacity: num(el, 'opacity', 1),
+          ...(el['fillGradient'] ? { notCheckable: 'text gradient not checkable' } : {}),
         }
       : key === 'pillBadgeInstances'
         ? {
@@ -161,9 +162,9 @@ describe('render gate stage 1', () => {
         slots: { headline: { role: 'headline', budget: { maxLines: 20, maxChars: 60 } } },
       }),
     ],
-    // The text's centre stays clear of the logo, or its ground would be undeterminable too.
+    // Centred on the logo: logo-overlap owns that case, the ground search skips the logo.
     'logo-overlap': () => [
-      template({}, { additionalTexts: [{ ...headline, x: 0.3, y: 0, width: 0.7 }] }),
+      template({}, { additionalTexts: [{ ...headline, y: 0, width: 0.2, fontSize: 0.03 }] }),
       context(),
     ],
     contrast: () => [
@@ -353,6 +354,29 @@ describe('render gate stage 1', () => {
       expect(found.map((p) => p.rule)).toEqual(['contrast']);
       expect(found[0]?.detail).toContain(NOT);
     });
+
+    it('a text gradient is not judged by its flat fill', () => {
+      const t = template(
+        { fixed: { headline: ['fillGradient'] } },
+        { additionalTexts: [{ ...headline, fillGradient: { stops: [] } }] }
+      );
+      const found = checkTemplate(t, context());
+      expect(found.map((p) => p.rule)).toEqual(['contrast']);
+      expect(found[0]?.detail).toContain('text gradient not checkable');
+    });
+
+    it.each(['white', 'hsl(0, 0%, 100%)'])(
+      'an unparsable text colour (%s) has its own message',
+      (fill) => {
+        const t = template(
+          { fixed: { headline: ['fill'] } },
+          { additionalTexts: [{ ...headline, fill, bind: undefined }] }
+        );
+        const found = checkTemplate(t, context());
+        expect(found.map((p) => p.rule)).toEqual(['contrast']);
+        expect(found[0]?.detail).toContain('text colour not parseable');
+      }
+    );
 
     it('still decides on an opaque solid shape', () => {
       expect(rules(withShape(fixedFill({ fill: '#ffffff' })))).toEqual(['contrast']);
