@@ -7,6 +7,7 @@ import { api, onUnauthenticated, type StudioConfig } from './api/client';
 import { AuthPage } from './pages/AuthPage';
 import { BrandPage } from './pages/BrandPage';
 import { InvitePage } from './pages/InvitePage';
+import { LicensesPage } from './pages/LicensesPage';
 import { MembersPage } from './pages/MembersPage';
 import { ProjectListPage } from './pages/ProjectListPage';
 import { StartPage } from './start/StartPage';
@@ -66,7 +67,10 @@ export function App() {
   );
 
   let content: ReactNode;
-  if (session.isPending) {
+  if (route.name === 'licenses') {
+    // Open to everyone: the notices are not behind the login.
+    content = <LicensesPage />;
+  } else if (session.isPending) {
     content = loading('Connecting…');
   } else if (session.isError) {
     content = unreachable(() => void session.refetch());

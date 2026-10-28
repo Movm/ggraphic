@@ -2,7 +2,7 @@
 /**
  * Routes on the History API: `/` (the start page with the prompt), `/projects`
  * (all projects), `/p/:id` (the editor), `/members` and `/brand` (the current
- * organisation) and `/invite/:token`. The server answers every other path with index.html.
+ * organisation), `/licenses` (open to everyone) and `/invite/:token`. The server answers every other path with index.html.
  */
 import { useSyncExternalStore } from 'react';
 
@@ -11,6 +11,7 @@ export type Route =
   | { name: 'projects' }
   | { name: 'members' }
   | { name: 'brand' }
+  | { name: 'licenses' }
   | { name: 'editor'; projectId: string }
   | { name: 'invite'; token: string };
 
@@ -30,12 +31,14 @@ export function parseRoute(pathname: string): Route {
   if (/^\/projects\/?$/.test(pathname)) return { name: 'projects' };
   if (/^\/members\/?$/.test(pathname)) return { name: 'members' };
   if (/^\/brand\/?$/.test(pathname)) return { name: 'brand' };
+  if (/^\/licenses\/?$/.test(pathname)) return { name: 'licenses' };
   return { name: 'start' };
 }
 
 export const PROJECTS_PATH = '/projects';
 export const MEMBERS_PATH = '/members';
 export const BRAND_PATH = '/brand';
+export const LICENSES_PATH = '/licenses';
 
 export const editorPath = (projectId: string) => `/p/${encodeURIComponent(projectId)}`;
 

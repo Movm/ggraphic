@@ -9,6 +9,7 @@ import { CanvasEditorShell } from '@ggraphic/editor/components/CanvasEditor/Canv
 import { type CanvasEditorExportApi } from '@ggraphic/editor/components/CanvasEditor/types';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { beforeAll, describe, expect, it } from 'vitest';
 
@@ -56,6 +57,13 @@ describe('the editor with a Studio template', () => {
         { id: string; text: string }[] | undefined;
       expect(texts?.map((t) => t.id)).toEqual(['headline', 'subline', 'body', 'cta']);
     });
+  });
+
+  it('offers illustrations and emoji in the Elements tab', async () => {
+    mount({ ai: false });
+    await userEvent.click(await screen.findByRole('button', { name: /^Elements/ }));
+    expect(await screen.findByText('Illustrations')).toBeInTheDocument();
+    expect(await screen.findByText('Emoji')).toBeInTheDocument();
   });
 
   it('hides the AI draft tab when the server has no AI', async () => {

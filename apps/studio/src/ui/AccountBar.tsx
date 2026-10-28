@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useId, type MouseEvent } from 'react';
 
 import { api } from '../api/client';
-import { BRAND_PATH, MEMBERS_PATH, navigate, PROJECTS_PATH } from '../router';
+import { BRAND_PATH, LICENSES_PATH, MEMBERS_PATH, navigate, PROJECTS_PATH } from '../router';
 import { useLoggedIn } from '../session/SessionContext';
 import { toast } from './toast';
 
@@ -51,6 +51,7 @@ export function AccountBar() {
         link('Projects', PROJECTS_PATH),
         link('Members', MEMBERS_PATH),
         ...(organisation.role === 'owner' ? [link('Brand', BRAND_PATH)] : []),
+        link('Licences', LICENSES_PATH),
       ]}
       onClick={followInApp}
       actions={
