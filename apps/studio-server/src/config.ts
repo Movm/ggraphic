@@ -78,6 +78,8 @@ const envSchema = z.object({
     .default(5 * 1024 * 1024),
   COOKIE_SECURE: flag(true),
   ALLOW_REGISTRATION: flag(false),
+  // Exactly "1": the operator knowingly serves sessions over plain HTTP beyond loopback.
+  ALLOW_INSECURE_COOKIE: z.literal('1').optional(),
   TRUST_PROXY: trustProxy,
   // Required by the first-run setup. Without it the server generates one at start.
   SETUP_TOKEN: z.string().trim().min(16).max(200).optional(),
@@ -110,6 +112,8 @@ export interface Config {
   cookieSecure: boolean;
   /** Self-registration after the first account. Off by default; invitations always work. */
   allowRegistration: boolean;
+  /** COOKIE_SECURE=false on a non-loopback HOST, acknowledged with ALLOW_INSECURE_COOKIE=1. */
+  allowInsecureCookie: boolean;
   trustProxy: false | number | string[];
   /**
    * The token the first-run setup must present; null once accounts exist. `SETUP_TOKEN`
@@ -131,6 +135,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     throw new Error(`Invalid configuration: ${fields}`);
   }
   const e = parsed.data;
+  const loopback = e.HOST === 'localhost' || e.HOST === '::1' || /^127\./.test(e.HOST);
+  if (!e.COOKIE_SECURE && !loopback && !e.ALLOW_INSECURE_COOKIE) {
+    throw new Error(
+      'Invalid configuration: COOKIE_SECURE=false sends session cookies over plain HTTP; on a non-loopback HOST it needs ALLOW_INSECURE_COOKIE=1'
+    );
+  }
   const ai =
     e.OPENAI_BASE_URL && e.OPENAI_API_KEY && e.OPENAI_MODEL
       ? {
@@ -153,6 +163,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     fontMaxBytes: e.FONT_MAX_BYTES,
     cookieSecure: e.COOKIE_SECURE,
     allowRegistration: e.ALLOW_REGISTRATION,
+    allowInsecureCookie: !e.COOKIE_SECURE && !loopback,
     trustProxy: e.TRUST_PROXY,
     setupToken: e.SETUP_TOKEN ?? null,
     ai,

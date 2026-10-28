@@ -62,6 +62,25 @@ describe('loadConfig', () => {
     }
   );
 
+  it('refuses insecure cookies on a non-loopback host unless explicitly allowed', () => {
+    expect(loadConfig({ ...base, COOKIE_SECURE: 'false' }).cookieSecure).toBe(false);
+    expect(loadConfig({ ...base, COOKIE_SECURE: 'false', HOST: '::1' }).cookieSecure).toBe(false);
+    expect(() => loadConfig({ ...base, COOKIE_SECURE: 'false', HOST: '0.0.0.0' })).toThrow(
+      /COOKIE_SECURE/
+    );
+    expect(() => loadConfig({ ...base, COOKIE_SECURE: 'false', HOST: '192.168.1.2' })).toThrow(
+      /ALLOW_INSECURE_COOKIE/
+    );
+    const allowed = loadConfig({
+      ...base,
+      COOKIE_SECURE: 'false',
+      HOST: '0.0.0.0',
+      ALLOW_INSECURE_COOKIE: '1',
+    });
+    expect(allowed).toMatchObject({ cookieSecure: false, allowInsecureCookie: true });
+    expect(loadConfig({ ...base, HOST: '0.0.0.0' }).cookieSecure).toBe(true);
+  });
+
   it('reads a setup token of at least 16 characters', () => {
     expect(loadConfig(base).setupToken).toBeNull();
     expect(loadConfig({ ...base, SETUP_TOKEN: 'a'.repeat(16) }).setupToken).toBe('a'.repeat(16));

@@ -9,6 +9,11 @@ import { runMigrations } from './db/migrate.ts';
 import { adoptLegacyUploads } from './legacyUploads.ts';
 
 const config = loadConfig();
+if (config.allowInsecureCookie) {
+  console.warn(
+    '\n  WARNING: COOKIE_SECURE=false on a non-loopback HOST (ALLOW_INSECURE_COOKIE=1).\n  Session cookies travel over plain HTTP and can be stolen on the network.\n  Use HTTPS and COOKIE_SECURE=true for anything but a closed test setup.\n'
+  );
+}
 const { pool, db } = createDb(config.databaseUrl);
 
 const applied = await runMigrations(pool);

@@ -55,7 +55,9 @@ WHERE account_id = $1` when the password changes — sessions are rows, not sign
 Server-side sessions in Postgres. The cookie is `__Host-studio_session` (or
 `studio_session` when `COOKIE_SECURE=false`), `HttpOnly`, `SameSite=Lax`, `Path=/`,
 `Secure` unless `COOKIE_SECURE=false`. Chrome and Firefox accept `Secure` cookies on
-`http://localhost`; Safari does not, which is what the switch is for. Sessions last 30 days
+`http://localhost`; Safari does not, which is what the switch is for. The server refuses to start with
+`COOKIE_SECURE=false` on a non-loopback `HOST` unless `ALLOW_INSECURE_COOKIE=1` is set, and
+warns loudly when it is. Sessions last 30 days
 and slide forward when used after half their lifetime; logout deletes the row; expired rows
 are deleted on login.
 
