@@ -98,6 +98,11 @@ const envSchema = z.object({
   REMBG_URL: optionalString,
   REMBG_ENABLED: toggle,
   REMBG_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
+  // Iconify needs no key, so it is opt-in: search terms leave the instance when it is on.
+  ICONIFY_ENABLED: toggle,
+  ICONIFY_API_URL: optionalString,
+  ICONIFY_LICENCES: optionalString,
+  ICONIFY_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
 });
 
 export interface AiConfig {
@@ -113,10 +118,32 @@ export interface RembgConfig {
   timeoutMs: number;
 }
 
+export interface IconifyConfig {
+  /** The Iconify API the proxy talks to, without a trailing slash. Never taken from a user. */
+  url: string;
+  /** SPDX ids of the icon-set licences Studio offers. */
+  licences: string[];
+  timeoutMs: number;
+}
+
 /** Tools that need an external service. Each is null when switched off. */
 export interface Features {
   removeBackground: RembgConfig | null;
+  iconify: IconifyConfig | null;
 }
+
+export const ICONIFY_DEFAULT_URL = 'https://api.iconify.design';
+export const ICONIFY_DEFAULT_LICENCES = [
+  'MIT',
+  'Apache-2.0',
+  'ISC',
+  'CC0-1.0',
+  'OFL-1.1',
+  'CC-BY-4.0',
+  'CC-BY-3.0',
+];
+/** NC, ND and SA variants and the GPL family do not belong in designs people export and sell. */
+const FORBIDDEN_LICENCE = /(^|-)(NC|ND|SA)(-|$)|GPL/i;
 
 export interface Config {
   databaseUrl: string;
@@ -209,6 +236,20 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     'REMBG_URL',
     e.REMBG_URL ? { url: e.REMBG_URL.replace(/\/+$/, ''), timeoutMs: e.REMBG_TIMEOUT_MS } : null
   );
+  const iconifyUrl = e.ICONIFY_API_URL ?? ICONIFY_DEFAULT_URL;
+  if (!/^https?:\/\/[^\s/]/i.test(iconifyUrl)) {
+    throw new Error('Invalid configuration: ICONIFY_API_URL');
+  }
+  const licences = e.ICONIFY_LICENCES
+    ? e.ICONIFY_LICENCES.split(',').map((l) => l.trim())
+    : ICONIFY_DEFAULT_LICENCES;
+  if (licences.some((l) => !/^[A-Za-z0-9.+-]+$/.test(l) || FORBIDDEN_LICENCE.test(l))) {
+    throw new Error('Invalid configuration: ICONIFY_LICENCES');
+  }
+  const iconify: IconifyConfig | null =
+    e.ICONIFY_ENABLED === true
+      ? { url: iconifyUrl.replace(/\/+$/, ''), licences, timeoutMs: e.ICONIFY_TIMEOUT_MS }
+      : null;
   return {
     databaseUrl: e.DATABASE_URL,
     host: e.HOST,
@@ -226,6 +267,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     trustProxy: e.TRUST_PROXY,
     setupToken: e.SETUP_TOKEN ?? null,
     ai,
-    features: { removeBackground },
+    features: { removeBackground, iconify },
   };
 }

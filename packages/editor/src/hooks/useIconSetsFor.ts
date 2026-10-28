@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 
 import { iconSetsLoaded, loadIconSetsFor } from '@ggraphic/editor/utils/canvasIcons';
 
+import { registerStoredExternalIcons, type StoredIcon } from '../utils/externalIcons.js';
 import { selectedCatalogIconIds, type IconIdCarrier } from '../utils/iconInstances.js';
 
 /**
@@ -12,8 +13,10 @@ import { selectedCatalogIconIds, type IconIdCarrier } from '../utils/iconInstanc
  */
 export function useIconSetsFor(
   selectedIcons: string[] | undefined,
-  iconStates: Record<string, IconIdCarrier> | undefined
+  iconStates: Record<string, IconIdCarrier & StoredIcon> | undefined
 ): void {
+  // Icons from the host's search carry their SVG in the document; register it before drawing.
+  registerStoredExternalIcons(selectedIcons, iconStates);
   const ids = selectedCatalogIconIds(selectedIcons, iconStates);
   const key = ids.join('|');
   const [, setLoaded] = useState(0);

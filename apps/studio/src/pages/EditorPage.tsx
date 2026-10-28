@@ -156,6 +156,7 @@ function OpenProject({
       createStudioServices({
         ai: config.features.ai,
         removeBackground: config.features.removeBackground,
+        iconify: config.features.iconify,
         organisationId: project.organisationId,
         logo,
       }),
