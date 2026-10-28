@@ -290,6 +290,9 @@ importers:
 
   apps/studio-server:
     dependencies:
+      '@ggraphic/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       argon2:
         specifier: ^0.45.1
         version: 0.45.1
@@ -309,9 +312,6 @@ importers:
         specifier: ^4.6.7
         version: 4.6.7
     devDependencies:
-      '@ggraphic/core':
-        specifier: workspace:*
-        version: link:../../packages/core
       '@types/express':
         specifier: ^5.0.6
         version: 5.0.6
