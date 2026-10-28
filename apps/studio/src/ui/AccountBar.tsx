@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /** The organisation switcher, the organisation's pages and logout, in every page header. */
-import { Button, TopNav, Wordmark } from '@ggraphic/ui';
+import { Avatar, Button, TopNav, Wordmark } from '@ggraphic/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import { useId, type MouseEvent } from 'react';
 
@@ -86,6 +86,7 @@ export function AccountBar() {
           >
             Log out
           </Button>
+          <Avatar name={session.account.displayName || session.account.email} label="Account" />
         </>
       }
     />
