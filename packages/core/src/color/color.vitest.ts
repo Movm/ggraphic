@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
-import { contrastRatio, mixColors, normalizeColor, parseColor, relativeLuminance, toHex } from './color';
+import {
+  contrastRatio,
+  mixColors,
+  normalizeColor,
+  parseColor,
+  relativeLuminance,
+  toHex,
+} from './color';
 
 describe('colour math', () => {
   it('computes WCAG contrast ratios', () => {
@@ -61,7 +68,10 @@ describe('colour math', () => {
     expect(toHex({ r: 300, g: -5, b: 12.4, a: 1 })).toBe('#ff000c');
     expect(toHex({ r: 0, g: 0, b: 0, a: 0.999 })).toBe('#000000');
     expect(normalizeColor('#AABBCCFF')).toBe('#aabbcc');
-    for (const value of [{ r: 17, g: 34, b: 51, a: 0.5 }, { r: 1, g: 2, b: 3, a: 1 }]) {
+    for (const value of [
+      { r: 17, g: 34, b: 51, a: 0.5 },
+      { r: 1, g: 2, b: 3, a: 1 },
+    ]) {
       expect(normalizeColor(toHex(value))).toBe(toHex(value));
     }
   });

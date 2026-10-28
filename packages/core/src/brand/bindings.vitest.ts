@@ -5,6 +5,20 @@ import { type BrandPack } from './brandPack.js';
 import { brandFingerprint, rebindPageState, rebindPages } from './bindings.js';
 import { deriveSchemes, schemeById } from './schemes.js';
 
+/** A page item as the tests read it back. */
+interface Item {
+  fill?: string;
+  color?: string;
+  fontFamily?: string;
+  src?: string;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  bind?: { fill?: Binding; src?: Binding; fontFamily?: Binding };
+}
+type Binding = { ref: string; value: string };
+
 const brand: BrandPack = {
   ...brandDefault,
   colors: { ...brandDefault.colors, primary: '#0F3A52' },
@@ -40,10 +54,10 @@ describe('rebindPageState', () => {
       ],
     };
     const r = rebindPageState(state, ctx);
-    const text = (r.state['textInstances'] as any[])[0]!;
+    const text = (r.state['textInstances'] as Item[])[0]!;
     expect(r.changed).toBe(true);
     expect(text.fill).toBe('#0f3a52');
-    expect(text.bind.fill.value).toBe('#0f3a52');
+    expect(text.bind?.fill?.value).toBe('#0f3a52');
     expect(r.state['brandStamp']).toBe(brandFingerprint(brand));
   });
 
@@ -53,7 +67,7 @@ describe('rebindPageState', () => {
         { fill: '#ff0000', bind: { fill: { ref: 'brand.primary', value: '#1d3557' } } },
       ],
     };
-    const text = (rebindPageState(state, ctx).state['textInstances'] as any[])[0]!;
+    const text = (rebindPageState(state, ctx).state['textInstances'] as Item[])[0]!;
     expect(text.fill).toBe('#ff0000');
     expect(text.bind?.fill).toBeUndefined();
   });
@@ -64,7 +78,7 @@ describe('rebindPageState', () => {
         { fill: '#1D3557', bind: { fill: { ref: 'brand.primary', value: '#1d3557' } } },
       ],
     };
-    const text = (rebindPageState(state, ctx).state['textInstances'] as any[])[0]!;
+    const text = (rebindPageState(state, ctx).state['textInstances'] as Item[])[0]!;
     expect(text.fill).toBe('#0f3a52');
   });
 
@@ -74,7 +88,7 @@ describe('rebindPageState', () => {
       brandScheme: 'light',
       textInstances: [{ fill: '#123456', bind: { fill: { ref: 'ink', value: '#123456' } } }],
     };
-    const text = (rebindPageState(state, ctx).state['textInstances'] as any[])[0]!;
+    const text = (rebindPageState(state, ctx).state['textInstances'] as Item[])[0]!;
     expect(text.fill).toBe(light.roles.ink);
   });
 
@@ -82,7 +96,7 @@ describe('rebindPageState', () => {
     const state = {
       textInstances: [{ fill: '#123456', bind: { fill: { ref: 'ink', value: '#123456' } } }],
     };
-    const text = (rebindPageState(state, ctx).state['textInstances'] as any[])[0]!;
+    const text = (rebindPageState(state, ctx).state['textInstances'] as Item[])[0]!;
     expect(text.fill).toBe('#123456');
     expect(text.bind?.fill).toBeUndefined();
   });
@@ -104,7 +118,7 @@ describe('rebindPageState', () => {
       },
     };
     const r = rebindPageState(state, ctx);
-    const icons = r.state['iconStates'] as any;
+    const icons = r.state['iconStates'] as { a: Item; b: Item };
     expect(icons.a.color).toBe('#0f3a52');
     expect(icons.b).toBe(state['iconStates'].b);
   });
@@ -127,7 +141,7 @@ describe('rebindPageState', () => {
       ],
     };
     const other: BrandPack = { ...brand, fonts: { ...brand.fonts, headline: 'Lora' } };
-    const text = (rebindPageState(state, { brand: other }).state['textInstances'] as any[])[0]!;
+    const text = (rebindPageState(state, { brand: other }).state['textInstances'] as Item[])[0]!;
     expect(text.fontFamily).toBe('Lora');
   });
 });
@@ -144,7 +158,7 @@ describe('rebindPageState edge cases', () => {
       brandScheme: 'secondary',
       textInstances: [{ fill: '#123456', bind: { fill: { ref: 'ink', value: '#123456' } } }],
     };
-    const text = (rebindPageState(state, { brand: same }).state['textInstances'] as any[])[0];
+    const text = (rebindPageState(state, { brand: same }).state['textInstances'] as Item[])[0]!;
     expect(text.fill).toBe(first.roles.ink);
   });
 
@@ -153,9 +167,9 @@ describe('rebindPageState edge cases', () => {
     const state = {
       images: [{ src: 'old.svg', bind: { src: { ref: 'brand.logo', value: 'old.svg' } } }],
     };
-    const img = (rebindPageState(state, { brand: logoBrand }).state['images'] as any[])[0];
+    const img = (rebindPageState(state, { brand: logoBrand }).state['images'] as Item[])[0]!;
     expect(img.src).toBe('new.svg');
-    expect(img.bind.src.value).toBe('new.svg');
+    expect(img.bind?.src?.value).toBe('new.svg');
   });
 
   describe('logo box', () => {
@@ -173,7 +187,7 @@ describe('rebindPageState edge cases', () => {
         },
       ],
     });
-    const imgOf = (r: { state: Record<string, unknown> }) => (r.state['images'] as any[])[0];
+    const imgOf = (r: { state: Record<string, unknown> }) => (r.state['images'] as Item[])[0]!;
 
     it('rebind swaps src and fits the box when the logo size is known', () => {
       const img = imgOf(
@@ -255,7 +269,7 @@ describe('rebindPageState edge cases', () => {
         },
       ],
     };
-    const text = (rebindPageState(state, ctx).state['textInstances'] as any[])[0];
+    const text = (rebindPageState(state, ctx).state['textInstances'] as Item[])[0]!;
     expect(text.fill).toBe('#123456');
     expect(text.fontFamily).toBe('X');
     expect(text.bind).toBeUndefined();
