@@ -185,7 +185,7 @@ export function projectsRouter(db: Db, opts: { thumbnailMaxBytes: number }): Rou
       // trashedProbe: `owned` limits this to the caller's organisations, so a project of another
       // organisation stays a plain not_found. The client says "in the Trash" instead of "missing".
       const [inTrash] = await db
-        .select({ id: projects.id })
+        .select({ trashedProbe: projects.id })
         .from(projects)
         .where(and(owned(res, id), isNotNull(projects.deletedAt)));
       if (inTrash) throw new HttpError(404, { error: 'trashed' });
