@@ -6,6 +6,18 @@
  *
  * Texts carry role ids (`TEXT_ROLES`) so the AI draft knows which one to fill.
  */
+import {
+  brandFingerprint,
+  deriveSchemes,
+  normalizeColor,
+  resolveRef,
+  schemeById,
+  withBinding,
+  type BindingRef,
+  type Bindings,
+  type BrandFontRole,
+  type SchemeId,
+} from '@ggraphic/core';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { type AdditionalText } from '@ggraphic/editor/configs/types';
 import { createShape } from '@ggraphic/editor/utils/shapes';
@@ -21,7 +33,7 @@ import {
   type StudioTemplateId,
 } from './ids';
 import { type PageSeed } from './pageState';
-import { bodyFont, headlineFont, quoteFont, scaleFor } from './typography';
+import { scaleFor } from './typography';
 
 /** The ids of the texts an AI draft fills, by draft field. */
 export const TEXT_ROLES = {
@@ -40,12 +52,43 @@ interface Frame {
   s: number;
   /** Text box width inside the margins. */
   inner: number;
+  /** The value a ref stands for in this page's colour world, colours in canonical form. */
+  paint: (ref: BindingRef) => string;
 }
 
-const frameOf = (width: number, height: number): Frame => {
+/** What `ref` resolves to under the brand's `schemeId` world; fonts as the plain family name. */
+function painterFor(schemeId: SchemeId): Frame['paint'] {
+  const brand = activeBrand();
+  const scheme = schemeById(brand, schemeId) ?? deriveSchemes(brand)[0] ?? null;
+  return (ref) => {
+    const value = resolveRef(ref, brand, scheme) ?? brand.defaultBackground;
+    return ref.startsWith('font.') ? value : normalizeColor(value);
+  };
+}
+
+const frameOf = (width: number, height: number, schemeId: SchemeId): Frame => {
   const m = Math.round(Math.min(width, height) * 0.09);
-  return { width, height, m, s: scaleFor(width, height), inner: width - 2 * m };
+  return {
+    width,
+    height,
+    m,
+    s: scaleFor(width, height),
+    inner: width - 2 * m,
+    paint: painterFor(schemeId),
+  };
 };
+
+/** `element` with each field in `refs` set to its resolved value and bound to its ref. */
+function bound<T extends object>(f: Frame, element: T, refs: Record<string, BindingRef>): T {
+  const out: Record<string, unknown> = { ...(element as Record<string, unknown>) };
+  let bind: Bindings | undefined;
+  for (const [field, ref] of Object.entries(refs)) {
+    const value = f.paint(ref);
+    out[field] = value;
+    bind = withBinding(bind, field, { ref, value });
+  }
+  return { ...out, bind } as T;
+}
 
 function text(
   f: Frame,
@@ -53,21 +96,44 @@ function text(
   type: AdditionalText['type'],
   content: string,
   yFraction: number,
-  style: Pick<AdditionalText, 'fontFamily' | 'fill'> &
-    Partial<Pick<AdditionalText, 'fontStyle' | 'align' | 'lineHeight'>> & { size: number }
+  style: Partial<Pick<AdditionalText, 'fontStyle' | 'align' | 'lineHeight'>> & {
+    size: number;
+    fill: BindingRef;
+    font: BrandFontRole;
+  }
 ): AdditionalText {
-  const { size, ...rest } = style;
+  const { size, fill, font, ...rest } = style;
+  return bound(
+    f,
+    {
+      id,
+      type,
+      text: content,
+      x: f.m,
+      y: Math.round(f.height * yFraction),
+      width: f.inner,
+      fontSize: Math.round(size * f.s),
+      align: 'left' as const,
+      lineHeight: activeBrand().lineHeightFactor,
+      fontFamily: '',
+      fill: '',
+      ...rest,
+    },
+    { fill, fontFamily: `font.${font}` }
+  );
+}
+
+/** The page-level keys of a seed whose ground follows the brand. */
+function pageBinding(
+  f: Frame,
+  schemeId: SchemeId
+): Pick<PageSeed, 'backgroundColor' | 'bind' | 'brandScheme' | 'brandStamp'> {
+  const value = f.paint('ground');
   return {
-    id,
-    type,
-    text: content,
-    x: f.m,
-    y: Math.round(f.height * yFraction),
-    width: f.inner,
-    fontSize: Math.round(size * f.s),
-    align: 'left',
-    lineHeight: activeBrand().lineHeightFactor,
-    ...rest,
+    backgroundColor: value,
+    bind: withBinding(undefined, 'backgroundColor', { ref: 'ground', value }),
+    brandScheme: schemeId,
+    brandStamp: brandFingerprint(activeBrand()),
   };
 }
 
@@ -100,44 +166,43 @@ function logoImages(f: Frame): UserImageInstance[] {
 }
 
 function headlineSeed(f: Frame): PageSeed {
-  const bar = {
-    ...createShape(
-      'rect',
-      f.m + 60 * f.s,
-      Math.round(f.height * 0.24),
-      activeBrand().colors.accent
-    ),
-    id: 'accent-bar',
-    width: Math.round(120 * f.s),
-    height: Math.round(14 * f.s),
-  };
+  const bar = bound(
+    f,
+    {
+      ...createShape('rect', f.m + 60 * f.s, Math.round(f.height * 0.24), f.paint('accent')),
+      id: 'accent-bar',
+      width: Math.round(120 * f.s),
+      height: Math.round(14 * f.s),
+    },
+    { fill: 'accent' }
+  );
   return {
-    backgroundColor: activeBrand().colors.primary,
+    ...pageBinding(f, 'primary'),
     shapeInstances: [bar],
     userImageInstances: logoImages(f),
     additionalTexts: [
       text(f, TEXT_ROLES.headline, 'header', 'A clear headline', 0.28, {
         size: 104,
-        fontFamily: headlineFont(),
+        font: 'headline',
         fontStyle: 'bold',
-        fill: activeBrand().colors.textOnDark,
+        fill: 'ink',
       }),
       text(f, TEXT_ROLES.subline, 'subheader', 'One line that says why it matters', 0.5, {
         size: 48,
-        fontFamily: headlineFont(),
-        fill: activeBrand().colors.accent,
+        font: 'headline',
+        fill: 'accent',
       }),
       text(f, TEXT_ROLES.body, 'body', 'Add the details here: what, when and where.', 0.62, {
         size: 34,
-        fontFamily: bodyFont(),
-        fill: activeBrand().colors.textOnDark,
+        font: 'body',
+        fill: 'ink',
         lineHeight: 1.35,
       }),
       text(f, TEXT_ROLES.callToAction, 'body', 'Find out more', 0.84, {
         size: 34,
-        fontFamily: bodyFont(),
+        font: 'body',
         fontStyle: 'bold',
-        fill: activeBrand().colors.accent,
+        fill: 'accent',
       }),
     ],
   };
@@ -145,27 +210,27 @@ function headlineSeed(f: Frame): PageSeed {
 
 function quoteSeed(f: Frame): PageSeed {
   return {
-    backgroundColor: activeBrand().colors.surface,
+    ...pageBinding(f, 'light'),
     userImageInstances: logoImages(f),
     additionalTexts: [
       text(f, 'quote-mark', 'header', '“', 0.08, {
         size: 280,
-        fontFamily: quoteFont(),
-        fill: activeBrand().colors.accentOnLight,
+        font: 'quoteEmphasis',
+        fill: 'accent',
         lineHeight: 1,
       }),
       text(f, TEXT_ROLES.headline, 'header', 'Good design is as little design as possible.', 0.3, {
         size: 72,
-        fontFamily: quoteFont(),
+        font: 'quoteEmphasis',
         fontStyle: 'italic',
-        fill: activeBrand().colors.textOnLight,
+        fill: 'ink',
         lineHeight: 1.2,
       }),
       text(f, TEXT_ROLES.subline, 'subheader', '— Name of the speaker', 0.74, {
         size: 38,
-        fontFamily: bodyFont(),
+        font: 'body',
         fontStyle: 'bold',
-        fill: activeBrand().colors.secondary,
+        fill: 'brand.secondary',
       }),
     ],
   };
@@ -173,42 +238,44 @@ function quoteSeed(f: Frame): PageSeed {
 
 function numberSeed(f: Frame): PageSeed {
   return {
-    backgroundColor: activeBrand().colors.secondary,
+    ...pageBinding(f, 'secondary'),
     userImageInstances: logoImages(f),
     additionalTexts: [
       text(f, 'number', 'header', '73%', 0.16, {
         size: 300,
-        fontFamily: headlineFont(),
+        font: 'headline',
         fontStyle: 'bold',
-        fill: activeBrand().colors.accent,
+        fill: 'brand.accent',
         lineHeight: 1,
       }),
       text(f, TEXT_ROLES.headline, 'header', 'of what this number stands for', 0.5, {
         size: 64,
-        fontFamily: headlineFont(),
+        font: 'headline',
         fontStyle: 'bold',
-        fill: activeBrand().colors.textOnDark,
+        fill: 'ink',
       }),
       text(f, TEXT_ROLES.subline, 'body', 'Source or context in one short line', 0.74, {
         size: 34,
-        fontFamily: bodyFont(),
-        fill: activeBrand().colors.textOnDark,
+        font: 'body',
+        fill: 'ink',
       }),
     ],
   };
 }
 
-const SEEDS: Record<StudioTemplateId, (f: Frame) => PageSeed> = {
+/** Each template with the colour world its page is bound to. */
+const SEEDS: Record<StudioTemplateId, { scheme: SchemeId; build: (f: Frame) => PageSeed }> = {
   // No ground of its own: a blank page added to a design takes the ground of the page before.
-  [BLANK_TEMPLATE_ID]: () => ({}),
-  [HEADLINE_TEMPLATE_ID]: headlineSeed,
-  [QUOTE_TEMPLATE_ID]: quoteSeed,
-  [NUMBER_TEMPLATE_ID]: numberSeed,
+  [BLANK_TEMPLATE_ID]: { scheme: 'primary', build: () => ({}) },
+  [HEADLINE_TEMPLATE_ID]: { scheme: 'primary', build: headlineSeed },
+  [QUOTE_TEMPLATE_ID]: { scheme: 'light', build: quoteSeed },
+  [NUMBER_TEMPLATE_ID]: { scheme: 'secondary', build: numberSeed },
 };
 
 /** The fresh page of `templateId` on a `width` × `height` sheet. */
 export function seedFor(templateId: StudioTemplateId, width: number, height: number): PageSeed {
-  return SEEDS[templateId](frameOf(width, height));
+  const { scheme, build } = SEEDS[templateId];
+  return build(frameOf(width, height, scheme));
 }
 
 /**
@@ -228,6 +295,9 @@ export function seedPageState(
   const images = seed.userImageInstances ?? [];
   return {
     ...(seed.backgroundColor ? { backgroundColor: seed.backgroundColor } : {}),
+    ...(seed.bind ? { bind: seed.bind } : {}),
+    ...(seed.brandScheme ? { brandScheme: seed.brandScheme } : {}),
+    ...(seed.brandStamp ? { brandStamp: seed.brandStamp } : {}),
     shapeInstances: shapes,
     ...(images.length ? { userImageInstances: images } : {}),
     additionalTexts: texts,

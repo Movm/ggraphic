@@ -145,6 +145,26 @@ describe('buildBrandPack', () => {
     expect(Object.keys(pack).sort()).toEqual(Object.keys(brandDefault).sort());
   });
 
+  it('gives the org brand pack swatches their role refs', () => {
+    const pack = buildBrandPack(orgId, brandSettingsBody.parse(SETTINGS), [], null);
+    const ref = (swatches: { id: string; ref?: string }[], id: string) =>
+      swatches.find((s) => s.id === id)?.ref;
+    expect(ref(pack.palette, 'primary')).toBe('brand.primary');
+    expect(ref(pack.palette, 'accentOnLight')).toBe('brand.accentOnLight');
+    expect(ref(pack.palette, 'surface')).toBe('brand.surface');
+    expect(ref(pack.palette, 'white')).toBeUndefined();
+    expect(ref(pack.textPalette, 'textOnDark')).toBe('brand.textOnDark');
+    expect(ref(pack.markers.swatches, 'accent')).toBe('brand.accent');
+    expect(ref(pack.markers.swatches, 'surface')).toBe('brand.surface');
+    expect(brandPackSchema.safeParse(pack).success).toBe(true);
+  });
+
+  it('refuses a swatch ref that is not a binding ref', () => {
+    const pack = buildBrandPack(orgId, brandSettingsBody.parse(SETTINGS), [], null);
+    const bad = { ...pack, palette: [{ ...pack.palette[0]!, ref: 'brand.nope' }] };
+    expect(brandPackSchema.safeParse(bad).success).toBe(false);
+  });
+
   it('makes the primary colour the default ground, not the first ground', () => {
     const settings = brandSettingsBody.parse({
       ...SETTINGS,

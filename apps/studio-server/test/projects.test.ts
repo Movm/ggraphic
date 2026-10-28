@@ -81,6 +81,44 @@ describe.skipIf(!hasDb)('projects (Postgres)', () => {
     });
   });
 
+  it('a write with a lower schemaVersion than stored is refused with 409 schema-version', async () => {
+    const created = await admin
+      .post(list)
+      .send({ name: 'Plakat', document: { a: 1 }, schemaVersion: 2 })
+      .expect(201);
+    const id = created.body.id as string;
+    const refused = await admin
+      .patch(`/api/projects/${id}`)
+      .send({ version: 1, document: { a: 2 }, schemaVersion: 1 })
+      .expect(409);
+    expect(refused.body).toMatchObject({ error: 'schema-version' });
+    const after = await admin.get(`/api/projects/${id}`).expect(200);
+    expect(after.body).toMatchObject({ version: 1, schemaVersion: 2, document: { a: 1 } });
+  });
+
+  it('an accepted write stores the incoming schemaVersion', async () => {
+    const created = await admin
+      .post(list)
+      .send({ name: 'Plakat', document: {}, schemaVersion: 1 })
+      .expect(201);
+    const id = created.body.id as string;
+    const raised = await admin
+      .patch(`/api/projects/${id}`)
+      .send({ version: 1, document: { a: 1 }, schemaVersion: 2 })
+      .expect(200);
+    expect(raised.body).toMatchObject({ version: 2, schemaVersion: 2 });
+    // Equal is accepted too; a write without a schemaVersion leaves it alone.
+    await admin
+      .patch(`/api/projects/${id}`)
+      .send({ version: 2, document: { a: 2 }, schemaVersion: 2 })
+      .expect(200);
+    const renamed = await admin
+      .patch(`/api/projects/${id}`)
+      .send({ version: 3, name: 'Neu' })
+      .expect(200);
+    expect(renamed.body).toMatchObject({ version: 4, schemaVersion: 2 });
+  });
+
   it('rejects a stale version with 409', async () => {
     const { body } = await admin.post(list).send({ name: 'A' }).expect(201);
     await admin

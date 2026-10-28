@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { and, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, desc, eq, inArray, lte, sql } from 'drizzle-orm';
 import express, { type Response, Router } from 'express';
 import { requireMembership, requireSession } from '../auth/middleware.ts';
 import {
@@ -135,17 +135,29 @@ export function projectsRouter(db: Db, opts: { thumbnailMaxBytes: number }): Rou
   router.patch('/:id', async (req, res) => {
     const id = idParam(req.params.id);
     const { version, ...changes } = parseOr400(updateProjectBody, req.body);
+    // An old client must not downgrade a newer document: the stored format version only rises.
+    const notLower =
+      changes.schemaVersion === undefined
+        ? undefined
+        : lte(projects.schemaVersion, changes.schemaVersion);
     const updated = await db
       .update(projects)
       .set({ ...changes, version: sql`${projects.version} + 1`, updatedAt: sql`now()` })
-      .where(and(visible(res, id), eq(projects.version, version)))
+      .where(and(visible(res, id), eq(projects.version, version), notLower))
       .returning({ id: projects.id });
     if (updated.length === 0) {
       const [current] = await db
-        .select({ version: projects.version })
+        .select({ version: projects.version, schemaVersion: projects.schemaVersion })
         .from(projects)
         .where(visible(res, id));
       if (!current) throw notFound();
+      if (changes.schemaVersion !== undefined && current.schemaVersion > changes.schemaVersion) {
+        throw new HttpError(409, {
+          error: 'schema-version',
+          message:
+            'The project was saved with a newer version and cannot be overwritten by this one.',
+        });
+      }
       throw new HttpError(409, {
         error: 'version_conflict',
         message: 'The project was changed in the meantime. Reload it and apply your change again.',

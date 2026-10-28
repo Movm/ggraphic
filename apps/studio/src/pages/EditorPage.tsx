@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { type BrandPack } from '@ggraphic/core';
+import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { CanvasEditorProvider } from '@ggraphic/editor/CanvasEditorProvider';
 import { messages } from '@ggraphic/editor/i18n/messages';
 import { CanvasEditorShell } from '@ggraphic/editor/components/CanvasEditor/CanvasEditorShell';
@@ -12,6 +13,7 @@ import { PiArrowLeft } from 'react-icons/pi';
 import { api, ApiError, type Project, type StudioConfig } from '../api/client';
 import { applyBrandPack } from '../brandLoader';
 import { parseDocument, type StudioDocument } from '../editor/document';
+import { rebindStudioDocument } from '../editor/rebind';
 import { createStudioServices } from '../editor/services';
 import { useAutosave, type SaveStatus } from '../editor/useAutosave';
 import { navigate } from '../router';
@@ -22,6 +24,7 @@ const STATUS_TEXT: Record<SaveStatus, string> = {
   saving: 'Saving…',
   error: 'Not saved',
   conflict: 'Changed elsewhere',
+  refused: 'Not saved',
 };
 
 const NOOP = () => {};
@@ -111,7 +114,7 @@ function ProjectEditor(props: {
       </main>
     );
   }
-  return <OpenProject {...props} doc={parsed.doc} />;
+  return <OpenProject {...props} parsed={parsed.doc} />;
 }
 
 function OpenProject({
@@ -119,14 +122,20 @@ function OpenProject({
   config,
   logo,
   onReload,
-  doc,
+  parsed,
 }: {
   project: Project;
   config: StudioConfig;
   logo: BrandPack['logo'];
   onReload: () => void;
-  doc: StudioDocument;
+  parsed: StudioDocument;
 }) {
+  // The brand query has settled, so the organisation's pack is the active one: bound page
+  // fields follow it before the editor opens. What is saved is judged against `parsed`.
+  const { doc, changed } = useMemo(
+    () => rebindStudioDocument(parsed, { brand: activeBrand(), logoSize: null }),
+    [parsed]
+  );
   const exportApi = useRef<CanvasEditorExportApi>(null);
   const services = useMemo(
     () =>
@@ -140,6 +149,7 @@ function OpenProject({
   const autosave = useAutosave({
     projectId: project.id,
     base: doc,
+    baseline: changed ? parsed : undefined,
     initialVersion: project.version,
     exportApi,
     thumbnailMaxBytes: config.limits.thumbnailBytes,
@@ -168,6 +178,11 @@ function OpenProject({
                 Overwrite with mine
               </Button>
             </span>
+          </Alert>
+        ) : null}
+        {autosave.status === 'refused' ? (
+          <Alert tone="danger" role="alert" className="studio-banner">
+            <span>{messages().shell.schemaRefusal.newer}</span>
           </Alert>
         ) : null}
         {autosave.status === 'error' ? (

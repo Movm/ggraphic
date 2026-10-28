@@ -3,7 +3,7 @@
  * The core's BrandPack as a zod schema. The two assertions at the bottom fail to
  * compile when the schema and `@ggraphic/core`'s type drift apart in either direction.
  */
-import type { BrandPack } from '@ggraphic/core';
+import { isBindingRef, type BindingRef, type BrandPack } from '@ggraphic/core';
 import { z } from 'zod';
 
 export const hexColor = z
@@ -11,7 +11,14 @@ export const hexColor = z
   .regex(/^#[0-9A-Fa-f]{6}$/, 'expected a colour as #RRGGBB')
   .transform((v) => v.toUpperCase());
 
-const swatch = z.object({ id: z.string().min(1), label: z.string(), color: hexColor });
+const bindingRef = z.custom<BindingRef>(isBindingRef, 'expected a binding ref');
+
+const swatch = z.object({
+  id: z.string().min(1),
+  label: z.string(),
+  color: hexColor,
+  ref: bindingRef.optional(),
+});
 
 export const brandColorRoles = [
   'primary',
