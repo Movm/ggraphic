@@ -18,6 +18,7 @@ const MAX_SVG_BYTES = 64 * 1024;
 const BATCH_CHUNK = 16;
 const MAX_CHUNK_BYTES = BATCH_CHUNK * MAX_SVG_BYTES;
 const MAX_BATCH_TOTAL_BYTES = 4 * 1024 * 1024;
+const BATCH_CONCURRENCY = 4;
 
 /** How long we stay off a rate-limiting upstream when it names no Retry-After. */
 const DEFAULT_RETRY_AFTER_S = 10;
@@ -163,7 +164,16 @@ function batchIconSvg(set: BatchAnswer, icon: BatchIcon | undefined): string | n
 }
 
 export interface IconifyClient {
-  search(query: string, limit: number, prefix: string | null): Promise<IconSearchResult>;
+  /**
+   * `refresh` waits for the batch retry on a cached search (the Retry-After the route reports
+   * needs its outcome); otherwise a cached answer returns at once and warms in the background.
+   */
+  search(
+    query: string,
+    limit: number,
+    prefix: string | null,
+    options?: { refresh?: boolean }
+  ): Promise<IconSearchResult>;
   svg(prefix: string, name: string): Promise<string>;
   /** Seconds the upstream asked us to stay away for; 0 when we may call it. */
   cooldownSeconds(): number;
@@ -311,53 +321,74 @@ export function createIconifyClient(
    * The icons of a search in one request per set (`/{prefix}.json?icons=a,b`) instead of one per
    * tile, into the same cache the single route reads. Best effort: whatever this misses is
    * fetched singly when the tile asks. Everything passes `sanitizeSvg` like a single icon.
+   *
+   * Memory: a chunk reserves its byte cap from the total budget before it starts and gives back
+   * what it did not read, and only `BATCH_CONCURRENCY` chunks run at once, so the bytes held
+   * never exceed `MAX_BATCH_TOTAL_BYTES`. `unbatchable` collects names an upstream answer
+   * covered but could not render (missing, flipped, rejected), so a repeat does not ask again;
+   * names from a failed request are not added, those are worth another try.
    */
-  async function warm(hits: IconHit[]): Promise<void> {
+  async function warm(hits: IconHit[], unbatchable: Set<string>): Promise<void> {
     const byPrefix = new Map<string, string[]>();
     for (const { prefix, name } of hits) {
-      if (cache.get(`svg\0${prefix}\0${name}`) !== undefined) continue;
+      const id = `${prefix}:${name}`;
+      if (unbatchable.has(id) || cache.get(`svg\0${prefix}\0${name}`) !== undefined) continue;
       byPrefix.set(prefix, [...(byPrefix.get(prefix) ?? []), name]);
     }
-    let budget = MAX_BATCH_TOTAL_BYTES;
-    const requests = [...byPrefix].flatMap(([prefix, names]) => {
+    const queue = [...byPrefix].flatMap(([prefix, names]) => {
       const chunks: [string, string[]][] = [];
       for (let i = 0; i < names.length; i += BATCH_CHUNK) {
         chunks.push([prefix, names.slice(i, i + BATCH_CHUNK)]);
       }
       return chunks;
     });
-    await Promise.all(
-      requests.map(async ([prefix, names]) => {
-        try {
-          const params = new URLSearchParams({ icons: names.join(',') });
-          const body = await get(
-            `/${prefix}.json?${params.toString()}`,
-            Math.min(MAX_CHUNK_BYTES, budget)
-          );
-          if (body) budget -= body.body.length;
-          const set = body ? (json(body.body) as BatchAnswer) : null;
-          if (!set || typeof set.icons !== 'object' || set.icons === null) return;
-          for (const name of names) {
-            const svg = batchIconSvg(set, set.icons[name]);
-            if (svg !== null) cache.set(`svg\0${prefix}\0${name}`, svg, SVG_TTL_MS);
-          }
-        } catch {
-          // The tiles fall back to single requests.
+    let budget = MAX_BATCH_TOTAL_BYTES;
+    const runChunk = async (prefix: string, names: string[]): Promise<void> => {
+      const reserved = Math.min(names.length * MAX_SVG_BYTES, budget);
+      if (reserved < MAX_SVG_BYTES) return;
+      budget -= reserved;
+      let used = 0;
+      try {
+        const params = new URLSearchParams({ icons: names.join(',') });
+        const body = await get(`/${prefix}.json?${params.toString()}`, reserved);
+        if (body) used = body.body.length;
+        const set = body ? (json(body.body) as BatchAnswer) : null;
+        if (!set || typeof set.icons !== 'object' || set.icons === null) return;
+        for (const name of names) {
+          const svg = batchIconSvg(set, set.icons[name]);
+          if (svg !== null) cache.set(`svg\0${prefix}\0${name}`, svg, SVG_TTL_MS);
+          else unbatchable.add(`${prefix}:${name}`);
         }
-      })
-    );
+      } catch {
+        // The tiles fall back to single requests.
+      } finally {
+        budget += reserved - used;
+      }
+    };
+    const worker = async (): Promise<void> => {
+      for (let next = queue.shift(); next; next = queue.shift()) await runChunk(...next);
+    };
+    await Promise.all(Array.from({ length: Math.min(BATCH_CONCURRENCY, queue.length) }, worker));
   }
 
+  /** Repeats of a cached search that are still warming, so they do not stack up. */
+  const warming = new Set<string>();
+
   return {
-    async search(rawQuery, limit, prefix) {
+    async search(rawQuery, limit, prefix, options) {
       // "Tree", " tree " and "tree" are one search.
       const query = rawQuery.trim().toLowerCase().replace(/\s+/g, ' ');
       const key = `search\0${query}\0${limit}\0${prefix ?? ''}`;
-      const hit = cache.get(key) as IconSearchResult | undefined;
+      const hit = cache.get(key) as
+        { result: IconSearchResult; unbatchable: Set<string> } | undefined;
       if (hit) {
-        // Icons a first attempt could not batch (rate limit) are fetched now, still in batches.
-        await warm(hit.icons);
-        return hit;
+        // Icons a first attempt could not batch (rate limit) are fetched again, still in batches.
+        if (options?.refresh) await warm(hit.result.icons, hit.unbatchable);
+        else if (!warming.has(key)) {
+          warming.add(key);
+          void warm(hit.result.icons, hit.unbatchable).finally(() => warming.delete(key));
+        }
+        return hit.result;
       }
       const allowed = await allowedSets();
       let prefixes = [...allowed.keys()];
@@ -386,8 +417,9 @@ export function createIconifyClient(
         icons,
         total: typeof answer.total === 'number' ? answer.total : icons.length,
       };
-      cache.set(key, result, SEARCH_TTL_MS);
-      await warm(icons);
+      const unbatchable = new Set<string>();
+      cache.set(key, { result, unbatchable }, SEARCH_TTL_MS);
+      await warm(icons, unbatchable);
       return result;
     },
 
