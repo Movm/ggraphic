@@ -5,10 +5,14 @@ import { type ReactNode } from 'react';
 
 import { AccountBar } from './AccountBar';
 
-export function PageShell({ children }: { children: ReactNode }) {
+/** `flush` drops the page gutter and canvas so a page can run full-width bands (the start page). */
+export function PageShell({ children, flush }: { children: ReactNode; flush?: boolean }) {
   return (
-    <AppShell className="ui-root studio-shell" top={<AccountBar />}>
-      <div className="studio-page">{children}</div>
+    <AppShell
+      className={flush ? 'ui-root studio-shell studio-shell--flush' : 'ui-root studio-shell'}
+      top={<AccountBar />}
+    >
+      {flush ? children : <div className="studio-page">{children}</div>}
     </AppShell>
   );
 }

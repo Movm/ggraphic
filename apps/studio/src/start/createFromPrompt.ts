@@ -8,7 +8,7 @@
 import { api, ApiError, type Draft } from '../api/client';
 import { fillTexts } from '../editor/aiDraft';
 import { formatSize, newDocument, type StudioDocument } from '../editor/document';
-import { HEADLINE_TEMPLATE_ID } from '../editor/templates/ids';
+import { HEADLINE_TEMPLATE_ID, type StudioTemplateId } from '../editor/templates/ids';
 
 import { type AdditionalText } from '@ggraphic/editor/configs/types';
 
@@ -106,4 +106,23 @@ export async function createFromPrompt({
       draftError: `The draft could not be saved. ${draftErrorText(err)}`,
     };
   }
+}
+
+/** A project from a template as it comes, in `formatId`; the user fills it in the editor. */
+export async function createFromTemplate({
+  organisationId,
+  templateId,
+  name,
+  formatId,
+}: {
+  organisationId: string;
+  templateId: StudioTemplateId;
+  name: string;
+  formatId: string;
+}): Promise<string> {
+  const project = await api.createProject(organisationId, {
+    name,
+    document: newDocument(formatId, templateId) as unknown as Record<string, unknown>,
+  });
+  return project.id;
 }
