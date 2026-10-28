@@ -157,6 +157,13 @@ export type Role = z.infer<typeof roleSchema>;
 export type Organisation = z.infer<typeof organisationSchema>;
 export type Session = z.infer<typeof sessionSchema>;
 export type BrandSettings = z.infer<typeof brandSettingsSchema>;
+/** What the brand form sends: three colours; the server derives the rest. */
+export interface BrandInput {
+  name: string;
+  colors: { primary: string; secondary: string; accent: string };
+  fonts: BrandSettings['fonts'];
+  logoAssetId: string | null;
+}
 export type BrandAsset = z.infer<typeof brandAssetSchema>;
 export type BrandPackResponse = z.infer<typeof brandPackResponseSchema>;
 export type Project = z.infer<typeof projectSchema>;
@@ -295,8 +302,8 @@ export const api = {
 
   // ── Brand pack ───────────────────────────────────────────────────────────
   getBrandPack: (orgId: string) => request(`${org(orgId)}/brand-pack`, brandPackResponseSchema),
-  saveBrandPack: (orgId: string, settings: BrandSettings) =>
-    request(`${org(orgId)}/brand-pack`, brandPackResponseSchema, json('PUT', settings)),
+  saveBrandPack: (orgId: string, input: BrandInput) =>
+    request(`${org(orgId)}/brand-pack`, brandPackResponseSchema, json('PUT', input)),
   uploadLogo: (orgId: string, file: Blob, filename: string) => {
     const form = new FormData();
     form.append('file', file, filename);
