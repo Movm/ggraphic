@@ -243,14 +243,12 @@ interface TextProps {
   width: number;
   letterSpacing: number;
   accent: TextAccent | null;
-  wrap: 'word' | 'char' | 'none';
-  padding: number;
-  richText: boolean;
 }
 
+// No `wrap`, `padding` or `richText`: the renderer passes none of them to the text node, so a
+// template that sets them is drawn with word wrap, no padding and routing by content.
 const textPropsOf = (el: Readonly<Record<string, unknown>>): TextProps => {
   const accent = el['accent'];
-  const wrap = el['wrap'];
   return {
     text: str(el, 'text'),
     fontSize: num(el, 'fontSize'),
@@ -260,9 +258,6 @@ const textPropsOf = (el: Readonly<Record<string, unknown>>): TextProps => {
     // The plain path renders no letter spacing today; a positive value is counted anyway.
     letterSpacing: Math.max(0, num(el, 'letterSpacing')),
     accent: isRecord(accent) ? (accent as unknown as TextAccent) : null,
-    wrap: wrap === 'char' || wrap === 'none' ? wrap : 'word',
-    padding: num(el, 'padding'),
-    richText: el['richText'] === true,
   };
 };
 
@@ -289,25 +284,14 @@ interface TextLayout {
 function layoutText(p: TextProps): TextLayout {
   const note: Note = { reason: null };
   const run = tableRunMeasure(p, note);
-  const inner = p.width > 0 ? Math.max(p.width - 2 * p.padding, 1) : Number.POSITIVE_INFINITY;
-  let lines: number;
-  if (
-    usesRichText(
-      { text: p.text, richText: p.richText, width: p.width, wrap: p.wrap, padding: p.padding },
-      run
-    )
-  ) {
-    lines = layoutRichTextBlock(p.text, inner, run).length;
-  } else if (p.wrap === 'none') {
-    lines = p.text.split('\n').length;
-  } else {
-    lines = plainTextLines(
-      p.text,
-      inner,
-      (text, graphemes) => run(text, PLAIN_STYLE) + p.letterSpacing * graphemes,
-      p.wrap
-    ).length;
-  }
+  const inner = p.width > 0 ? p.width : Number.POSITIVE_INFINITY;
+  const lines = usesRichText({ text: p.text, width: p.width }, run)
+    ? layoutRichTextBlock(p.text, inner, run).length
+    : plainTextLines(
+        p.text,
+        inner,
+        (text, graphemes) => run(text, PLAIN_STYLE) + p.letterSpacing * graphemes
+      ).length;
   return { lines: Math.max(1, lines), unmeasurable: note.reason };
 }
 
@@ -476,10 +460,16 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
           const scale = num(el, 'scale', 1) || 1;
           return { x, y, width: num(el, 'width') * scale, height: num(el, 'height') * scale };
         }
-        case 'userImageInstances':
-          return { x, y, width: num(el, 'width'), height: num(el, 'height') };
+        case 'userImageInstances': {
+          // Scaled about its top-left, as the image group draws it.
+          const scale = num(el, 'scale', 1) || 1;
+          return { x, y, width: num(el, 'width') * scale, height: num(el, 'height') * scale };
+        }
         case 'iconStates': {
-          const size = ICON_SIZE * num(el, 'scale', 1);
+          // An icon turns about its centre: its extent is the box of the turned square.
+          const angle = (num(el, 'rotation') * Math.PI) / 180;
+          const turn = Math.abs(Math.cos(angle)) + Math.abs(Math.sin(angle));
+          const size = ICON_SIZE * num(el, 'scale', 1) * turn;
           return { x: x - size / 2, y: y - size / 2, width: size, height: size };
         }
         case 'pillBadgeInstances': {
