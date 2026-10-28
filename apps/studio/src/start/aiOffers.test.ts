@@ -3,6 +3,7 @@ import { deriveSchemes, type BrandPack } from '@ggraphic/core';
 import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { OFFER_ID_PATTERN } from '@ggraphic/schema';
 import { studioBrand } from '../brand';
 
 import { BLANK_TEMPLATE_ID } from '../editor/templates/ids';
@@ -166,4 +167,29 @@ describe('pickOffers per call', () => {
   it('offers nothing on a format no template covers', () => {
     expect(pickOffers('story').templates).toEqual([]);
   });
+});
+
+describe('the offers fit the server contract', () => {
+  // `pickBody` (apps/studio-server) takes ids by OFFER_ID_PATTERN and caps text lengths and counts;
+  // the Studio cannot import the server, so the same limits are checked here.
+  it.each(['profile-square', 'post-portrait', 'slide-16-9'])(
+    'every id, label and budget offered for %s is one pickBody takes',
+    (formatId) => {
+      const { templates } = pickOffers(formatId);
+      expect(templates.length).toBeGreaterThan(0);
+      expect(templates.length).toBeLessThanOrEqual(12);
+      for (const t of templates) {
+        expect(t.id).toMatch(OFFER_ID_PATTERN);
+        expect(t.label.length).toBeLessThanOrEqual(200);
+        expect(t.description.length).toBeLessThanOrEqual(200);
+        expect(t.slots.length).toBeGreaterThanOrEqual(1);
+        expect(t.slots.length).toBeLessThanOrEqual(8);
+        for (const slot of t.slots) {
+          expect(slot.id).toMatch(OFFER_ID_PATTERN);
+          expect(slot.maxChars).toBeGreaterThanOrEqual(1);
+          expect(slot.maxChars).toBeLessThanOrEqual(2000);
+        }
+      }
+    }
+  );
 });
