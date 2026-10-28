@@ -20,6 +20,16 @@ describe('parseDocument', () => {
     });
   });
 
+  it('accepts v1 (migrated) and v2, and refuses v3', () => {
+    const base = v1Fixture();
+    expect(parseDocument({ ...base, schemaVersion: 1 }).kind).toBe('ok');
+    expect(parseDocument({ ...base, schemaVersion: 2 }).kind).toBe('ok');
+    expect(parseDocument({ ...base, schemaVersion: 3 })).toEqual({
+      kind: 'refused',
+      reason: 'newer',
+    });
+  });
+
   it('refuses a newer document', () => {
     expect(parseDocument({ schemaVersion: 99, formatId: 'post-portrait', pages: [] })).toEqual({
       kind: 'refused',

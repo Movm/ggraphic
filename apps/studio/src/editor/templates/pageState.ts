@@ -6,11 +6,15 @@ import { carryInstanceState } from '@ggraphic/editor/configs/factory/carryInstan
 /**
  * A Studio page: the editor's element collections plus a colour ground. Only
  * keys the editor writes back into the pages document persist
- * (`PAGE_PERSISTED_STATE_KEYS`): the collections and `backgroundColor`.
+ * (`PAGE_PERSISTED_STATE_KEYS`): the collections, `backgroundColor` and the
+ * brand binding keys.
  */
 export interface StudioPageState extends BaseCanvasState {
   backgroundColor: string;
   layerOrder: string[];
+  bind?: Record<string, { ref: string; value: string }>;
+  brandScheme?: string;
+  brandStamp?: string;
 }
 
 /** What a template puts on a fresh page. */
@@ -20,6 +24,18 @@ export type PageSeed = Partial<
     'backgroundColor' | 'additionalTexts' | 'shapeInstances' | 'userImageInstances'
   >
 >;
+
+/** The brand binding keys a page keeps across a re-seed (read back, never invented). */
+function brandKeysFrom(props: Record<string, unknown>): Partial<StudioPageState> {
+  const out: Partial<StudioPageState> = {};
+  const bind = props['bind'];
+  if (typeof bind === 'object' && bind !== null && !Array.isArray(bind)) {
+    out.bind = bind as NonNullable<StudioPageState['bind']>;
+  }
+  if (typeof props['brandScheme'] === 'string') out.brandScheme = props['brandScheme'];
+  if (typeof props['brandStamp'] === 'string') out.brandStamp = props['brandStamp'];
+  return out;
+}
 
 /**
  * The page state from what is stored (`props`). A page that has never been
@@ -37,6 +53,7 @@ export function pageStateFrom(props: Record<string, unknown>, seed: PageSeed): S
       typeof background === 'string'
         ? background
         : (seed.backgroundColor ?? activeBrand().defaultBackground),
+    ...brandKeysFrom(props),
   };
 }
 

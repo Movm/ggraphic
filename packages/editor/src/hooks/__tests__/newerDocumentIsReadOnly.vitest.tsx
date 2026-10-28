@@ -20,6 +20,13 @@ function v1Doc(): Y.Doc {
   return ydoc;
 }
 
+/** A doc this build wrote: version 2, nothing left to lift. */
+function currentDoc(): Y.Doc {
+  const ydoc = v1Doc();
+  getMetaMap(ydoc).set(YDOC_KEYS.schemaVersion, 2);
+  return ydoc;
+}
+
 function open(ydoc: Y.Doc, isSynced = true) {
   return renderHook(
     (props: { isSynced: boolean }) =>
@@ -40,7 +47,7 @@ const recordUpdates = (ydoc: Y.Doc) => {
 
 describe('a doc of today’s version', () => {
   it('opens editable and is not written on open', () => {
-    const ydoc = v1Doc();
+    const ydoc = currentDoc();
     const updates = recordUpdates(ydoc);
     const { result } = open(ydoc);
     expect(result.current.isPreview).toBe(false);
@@ -51,19 +58,27 @@ describe('a doc of today’s version', () => {
   it('gets stamped when this build seeds it', () => {
     const ydoc = new Y.Doc();
     open(ydoc);
-    expect(getMetaMap(ydoc).get(YDOC_KEYS.schemaVersion)).toBe(1);
+    expect(getMetaMap(ydoc).get(YDOC_KEYS.schemaVersion)).toBe(2);
+  });
+
+  it('lifts a version 1 doc on open, writing the stamp', () => {
+    const ydoc = v1Doc();
+    const { result } = open(ydoc);
+    expect(result.current.isPreview).toBe(false);
+    expect(getMetaMap(ydoc).get(YDOC_KEYS.schemaVersion)).toBe(2);
+    expect(result.current.pages.map((p) => p.state.headline)).toEqual(['Eins']);
   });
 });
 
 describe('a doc from a newer version', () => {
   it('shows its pages read-only and writes nothing', () => {
     const ydoc = v1Doc();
-    getMetaMap(ydoc).set(YDOC_KEYS.schemaVersion, 2);
+    getMetaMap(ydoc).set(YDOC_KEYS.schemaVersion, 3);
     const updates = recordUpdates(ydoc);
     const { result } = open(ydoc);
 
     expect(result.current.isPreview).toBe(true);
-    expect(result.current.schemaRefusal).toMatchObject({ status: 'newer', version: 2, known: 1 });
+    expect(result.current.schemaRefusal).toMatchObject({ status: 'newer', version: 3, known: 2 });
     expect(result.current.pages.map((p) => p.state.headline)).toEqual(['Eins']);
     expect(result.current.replaceDeck).toBeNull();
 
@@ -76,7 +91,7 @@ describe('a doc from a newer version', () => {
 
   it('is not seeded when empty', () => {
     const ydoc = new Y.Doc();
-    getMetaMap(ydoc).set(YDOC_KEYS.schemaVersion, 2);
+    getMetaMap(ydoc).set(YDOC_KEYS.schemaVersion, 3);
     const updates = recordUpdates(ydoc);
     open(ydoc);
     expect(ydoc.getMap(YDOC_KEYS.pagesById).size).toBe(0);

@@ -77,8 +77,8 @@ and stay as they are.
 ### (b) Migration registry
 
 `createMigrationRegistry(coreMigrations)` builds a registry; the core's
-default registry (`documentMigrations`) ships with **no** steps, so
-`CANVAS_DOCUMENT_VERSION` is 1 and loading is the identity.
+default registry (`documentMigrations`) ships with one step (1 → 2, the
+identity on pages; see "Version 2"), so `CANVAS_DOCUMENT_VERSION` is 2.
 
 - A core step is `{ from: n, migrate(doc) }` and lifts the whole document from
   n to n + 1. Steps must be contiguous from 1.
@@ -167,6 +167,22 @@ identity chain and writes no key (not even a stamp); `initial_state` is read
 as before. No stored field is renamed. The only new bytes are additive: a
 `schemaVersion` key in the `meta` of newly seeded Y.Docs and in newly written
 gallery deck drafts.
+
+## Version 2
+
+Version 2 admits three page-state keys for brand bindings: `bind`
+(field → `{ ref, value }`), `brandScheme` (a scheme id) and `brandStamp` (an
+8-hex string). The core step 1 → 2 is the identity: `migrate` returns the
+document unchanged, and the loader only raises `schemaVersion` to 2. A version
+1 page never carries these keys, so there is nothing to rewrite.
+
+Why bump at all: a build that predates the keys does not know them and would
+drop them on its next write (no `on<Key>Change` writer, not inherited by added
+pages). Version 2 makes such a build refuse the document read-only (`newer`)
+instead. The keys are F0: names and shapes are additive-only from here.
+
+`colorScheme` / `colorSchemeId` are a different, host-owned pair and not part
+of this; the brand key is `brandScheme` on purpose.
 
 ## Deliberately left out
 
