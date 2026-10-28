@@ -188,6 +188,17 @@ describe.skipIf(!hasDb)('routes as a member (Postgres)', () => {
       expect(fetchMock).toHaveBeenCalledTimes(2);
     });
 
+    it('limits picks per account', async () => {
+      const fetchMock = vi
+        .fn<typeof fetch>()
+        .mockImplementation(() => Promise.resolve(answer(good)));
+      const admin = await loggedIn({ ai }, fetchMock, { aiPerWindow: 1 });
+      await admin.post('/api/ai/pick').send(offer).expect(200);
+      const limited = await admin.post('/api/ai/pick').send(offer).expect(429);
+      expect(Number(limited.headers['retry-after'])).toBeGreaterThan(0);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
     it('answers like /ai/draft when AI is off', async () => {
       const admin = await loggedIn({ ai: null });
       const pick = await admin.post('/api/ai/pick').send(offer).expect(503);

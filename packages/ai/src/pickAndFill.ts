@@ -64,15 +64,20 @@ const SYSTEM = [
   'Answer only with a JSON object with the keys "templateId", "schemeId" (null when no colour world fits or none is offered) and "fills" (slot id to text).',
 ].join(' ');
 
+/** Text from outside the prompt template, with any `<brief>` tag made inert (zero-width break). */
+const defang = (text: string): string => text.replace(/<(\/?)(brief)>/gi, '<\u200b$1$2>');
+
 function offerLines(input: PickAndFillInput): string[] {
   const lines = ['Templates:'];
   for (const t of input.templates) {
-    const slots = t.slots.map((s) => `${s.id} (${s.label}, max ${s.maxChars} characters)`);
-    lines.push(`- ${t.id}: ${t.label}. ${t.description}. Slots: ${slots.join('; ')}`);
+    const slots = t.slots.map((s) => `${s.id} (${defang(s.label)}, max ${s.maxChars} characters)`);
+    lines.push(
+      `- ${t.id}: ${defang(t.label)}. ${defang(t.description)}. Slots: ${slots.join('; ')}`
+    );
   }
   lines.push(
     input.schemes.length > 0
-      ? `Colour worlds: ${input.schemes.map((s) => `${s.id} (${s.label})`).join(', ')}`
+      ? `Colour worlds: ${input.schemes.map((s) => `${s.id} (${defang(s.label)})`).join(', ')}`
       : 'Colour worlds: none offered, answer "schemeId": null'
   );
   return lines;
@@ -82,7 +87,7 @@ function offerLines(input: PickAndFillInput): string[] {
 export function buildPickPrompt(input: PickAndFillInput): { system: string; prompt: string } {
   const lines = [...offerLines(input)];
   if (input.format) lines.push(`Size: ${input.format.width}x${input.format.height} px`);
-  lines.push('', '<brief>', input.brief, '</brief>');
+  lines.push('', '<brief>', defang(input.brief), '</brief>');
   return { system: SYSTEM, prompt: lines.join('\n') };
 }
 

@@ -211,4 +211,20 @@ describe('createCallObject', () => {
     expect(JSON.stringify((err as HttpError).body)).not.toContain('sk-secret');
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
+
+  it('does not retry after a timeout', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockRejectedValue(new DOMException('timed out', 'TimeoutError'));
+    const err = await createCallObject(
+      ai,
+      fetchMock
+    )(call).then(
+      () => null,
+      (e: unknown) => e
+    );
+    expect(err).toBeInstanceOf(HttpError);
+    expect((err as HttpError).body.error).toBe('ai_timeout');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
 });

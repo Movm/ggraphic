@@ -97,4 +97,31 @@ describe('createFromPrompt with AI', () => {
     expect(result).toEqual({ projectId: 'p1', draftError: 'The AI took too long to answer.' });
     expect(mocked.updateProject).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ['a timeout', new ApiError(502, 'ai_timeout', 'slow'), 'The AI took too long to answer.'],
+    [
+      'a disabled AI',
+      new ApiError(503, 'ai_disabled', 'off'),
+      'AI is not available on this server.',
+    ],
+    ['a rate limit', new ApiError(429, 'too_many_requests', 'Slow down.'), 'Slow down.'],
+  ])('does not ask for a draft after %s', async (_name, error, text) => {
+    mocked.pick.mockRejectedValue(error);
+    const result = await run();
+    expect(result).toEqual({ projectId: 'p1', draftError: text });
+    expect(mocked.draft).not.toHaveBeenCalled();
+    expect(mocked.updateProject).not.toHaveBeenCalled();
+  });
+
+  it('says "design" when saving fails', async () => {
+    mocked.pick.mockResolvedValue({
+      templateId: 'studio-number',
+      schemeId: null,
+      fills: { number: '1' },
+    });
+    mocked.updateProject.mockRejectedValue(new ApiError(500, 'x', 'Boom'));
+    const result = await run();
+    expect(result.draftError).toBe('The design could not be saved. Boom');
+  });
 });
