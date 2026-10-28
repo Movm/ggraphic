@@ -531,6 +531,33 @@ describe('P2 brand additions', () => {
       expect(resolveRef('brand.logo', { ...noMain, logoAlt: null }, null)).toBeNull();
     });
 
+    it('the main logo size does not fit the second logo when its own size is unknown', () => {
+      const state = {
+        brandScheme: 'primary',
+        images: [
+          {
+            src: '/a.png',
+            x: 900,
+            y: 1200,
+            width: 120,
+            height: 80,
+            bind: { src: { ref: 'brand.logo', value: '/a.png' } },
+          },
+        ],
+      };
+      const out = rebindPageState(state, {
+        brand: base,
+        logoSize: { width: 100, height: 100 },
+        // The main logo measured, the second one failed to load.
+        logoSizeOf: (src) => (src === '/a.png' ? { width: 100, height: 100 } : null),
+        pageSize: { width: 1080, height: 1350 },
+      });
+      const img = (out.state['images'] as Item[])[0]!;
+      expect(img.src).toBe('/b.png');
+      expect([img.x, img.y, img.width, img.height]).toEqual([900, 1200, 120, 80]);
+      expect(img.bind?.src).toMatchObject({ value: '/b.png', pendingFit: true });
+    });
+
     it('logoSizeOf sizes the chosen logo', () => {
       const state = {
         brandScheme: 'primary',

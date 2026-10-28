@@ -227,10 +227,11 @@ const sameBox = (a: Box, b: Box) =>
 function fitLogo(
   obj: Obj,
   binding: Binding,
-  { logoSize, logoSizeOf, pageSize }: RebindContext,
+  { brand, logoSize, logoSizeOf, pageSize }: RebindContext,
   src: string
 ): { box: Box; fit: Box } | null {
-  const size = logoSizeOf?.(src) ?? logoSize;
+  // `logoSize` is the main logo's; any other logo with no size of its own stays pending.
+  const size = logoSizeOf?.(src) ?? (src === brand.logo?.src ? logoSize : null);
   if (!size || !pageSize) return null;
   const current = boxOf(obj);
   if (!current) return null;
