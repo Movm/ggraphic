@@ -16,6 +16,7 @@ import {
   registerExternalIcon,
   registerStoredExternalIcons,
   resetExternalIcons,
+  setIconHashForTest,
   type IconSource,
 } from './externalIcons.js';
 
@@ -117,6 +118,26 @@ describe('registry', () => {
   });
 });
 
+describe('hash collisions', () => {
+  it('keys by the full markup when two different icons share a hash', () => {
+    setIconHashForTest(() => 'same');
+    try {
+      const other = SVG.replace('M0 0h24', 'M5 5h5');
+      const a = registerExternalIcon('iconify:lets:tree', SVG, source)!;
+      const b = registerExternalIcon('iconify:lets:tree', other, source)!;
+      expect(a).toBe('iconify:lets:tree@same');
+      expect(b).not.toBe(a);
+      expect(getExternalIcon(a)?.svg).toContain('M0 0h24');
+      expect(getExternalIcon(b)?.svg).toContain('M5 5h5');
+      // Looking an icon up finds the same key again, for either markup.
+      expect(externalIconKey('iconify:lets:tree', SVG)).toBe(a);
+      expect(externalIconKey('iconify:lets:tree', other)).toBe(b);
+    } finally {
+      setIconHashForTest(null);
+    }
+  });
+});
+
 describe('externalIconDataUrl', () => {
   const decode = (url: string) => Buffer.from(url.split(',')[1]!, 'base64').toString();
 
@@ -128,6 +149,17 @@ describe('externalIconDataUrl', () => {
     expect(svg).not.toContain('currentColor');
     expect(svg).toContain('width="128"');
     expect(svg).toContain('height="128"');
+  });
+
+  it('sizes a self-closing root without breaking the tag', () => {
+    const url = externalIconDataUrl(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"/>',
+      64,
+      '#000'
+    );
+    expect(decode(url)).toBe(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64"/>'
+    );
   });
 
   it('refuses a colour that could break out of the markup', () => {

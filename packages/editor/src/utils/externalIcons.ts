@@ -50,8 +50,19 @@ export const isExternalIconId = (id: string): boolean => id.startsWith(NAMESPACE
 /** Bumps whenever the registry changes; lets a cache of derived views know. */
 export const externalIconsVersion = (): number => version;
 
+let hashOverride: ((text: string) => string) | null = null;
+
+/** Test seam: force a hash function, to provoke collisions. `null` restores the real one. */
+export function setIconHashForTest(fn: ((text: string) => string) | null): void {
+  hashOverride = fn;
+}
+
 /** A short non-cryptographic hash (cyrb53): enough to tell two markups apart. */
 function shortHash(text: string): string {
+  return hashOverride ? hashOverride(text) : cyrb53(text);
+}
+
+function cyrb53(text: string): string {
   let h1 = 0xdeadbeef;
   let h2 = 0x41c6ce57;
   for (let i = 0; i < text.length; i++) {
@@ -86,7 +97,17 @@ export function cleanIconSvg(svg: unknown): string | null {
  */
 export function externalIconKey(id: string, svg: unknown): string | null {
   const clean = cleanIconSvg(svg);
-  return clean === null ? null : `${id}@${shortHash(clean)}`;
+  return clean === null ? null : keyFor(id, clean);
+}
+
+/**
+ * `id@hash`, unless that key already belongs to different markup: a collision. Then the
+ * full markup is the key, so neither icon can stand in for the other.
+ */
+function keyFor(id: string, clean: string): string {
+  const key = `${id}@${shortHash(clean)}`;
+  const taken = registry.get(key);
+  return taken && taken.svg !== clean ? `${id}@${clean}` : key;
 }
 
 const formatName = (name: string) =>
@@ -103,7 +124,7 @@ export function registerExternalIcon(
 ): string | null {
   const clean = cleanIconSvg(svg);
   if (!isExternalIconId(id) || clean === null) return null;
-  const key = `${id}@${shortHash(clean)}`;
+  const key = keyFor(id, clean);
   if (registry.has(key)) return key;
   const name = source?.name ?? id.slice(id.lastIndexOf(':') + 1);
   registry.set(key, {
@@ -169,9 +190,9 @@ const isSafeColor = (color: string) => SAFE_COLOR.test(color);
 /** The SVG as a data URL of `size` px, `currentColor` replaced by `color`, for the canvas. */
 export function externalIconDataUrl(svg: string, size: number, color: string): string {
   const ink = isSafeColor(color) ? color : '#000000';
-  const sized = svg.replace(/<svg\b([^>]*)>/i, (_match, attrs: string) => {
+  const sized = svg.replace(/<svg\b([^>]*?)(\/?)>/i, (_match, attrs: string, close: string) => {
     const rest = attrs.replace(/\s(?:width|height)="[^"]*"/gi, '');
-    return `<svg${rest} width="${size}" height="${size}">`;
+    return `<svg${rest} width="${size}" height="${size}"${close}>`;
   });
   return `data:image/svg+xml;base64,${toBase64(sized.replace(/currentColor/g, () => ink))}`;
 }
