@@ -46,4 +46,32 @@ describe('colour math', () => {
     expect(mixColors('#1d3557', '#000000', 1)).toBe('#000000');
     expect(mixColors('red', '#fff', 0.5)).toBeNull();
   });
+
+  it('rejects a non-finite mix ratio', () => {
+    expect(mixColors('#000000', '#ffffff', NaN)).toBeNull();
+    expect(mixColors('#000000', '#ffffff', Infinity)).toBeNull();
+  });
+
+  it('clamps the mix ratio to 0–1', () => {
+    expect(mixColors('#000000', '#ffffff', -1)).toBe('#000000');
+    expect(mixColors('#000000', '#ffffff', 2)).toBe('#ffffff');
+  });
+
+  it('emits the canonical form that normalizeColor produces', () => {
+    expect(toHex({ r: 300, g: -5, b: 12.4, a: 1 })).toBe('#ff000c');
+    expect(toHex({ r: 0, g: 0, b: 0, a: 0.999 })).toBe('#000000');
+    expect(normalizeColor('#AABBCCFF')).toBe('#aabbcc');
+    for (const value of [{ r: 17, g: 34, b: 51, a: 0.5 }, { r: 1, g: 2, b: 3, a: 1 }]) {
+      expect(normalizeColor(toHex(value))).toBe(toHex(value));
+    }
+  });
+
+  it('accepts uppercase functional notation and a slash-separated alpha', () => {
+    expect(normalizeColor('RGB(0 0 0)')).toBe('#000000');
+    expect(normalizeColor('rgb(0 0 0 / 0.5)')).toBe('#00000080');
+  });
+
+  it('round-trips an 8-digit hex colour', () => {
+    expect(normalizeColor('#11223380')).toBe('#11223380');
+  });
 });
