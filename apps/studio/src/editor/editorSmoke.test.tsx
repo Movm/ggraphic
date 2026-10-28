@@ -46,7 +46,7 @@ describe('the editor with a Studio template', () => {
   it('shows the Studio tabs and a stage, and holds the template texts', async () => {
     const exportApi = mount({ ai: true });
 
-    for (const name of [/^Text/, /^Elements/, /^Uploads/, /^AI draft/]) {
+    for (const name of [/^Text/, /^Elements/, /^Uploads/, /^Tools/, /^AI draft/]) {
       expect(await screen.findByRole('button', { name })).toBeInTheDocument();
     }
     await waitFor(() => expect(document.querySelector('.konvajs-content canvas')).not.toBeNull());
