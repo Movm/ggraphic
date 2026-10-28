@@ -200,5 +200,6 @@ describe('gate line count against the renderer layout (real fonts)', () => {
       if (gate < real) under.push(`${gate} < ${real}: ${JSON.stringify(s).slice(0, 160)}`);
     }
     expect(under.slice(0, 5)).toEqual([]);
-  });
+    // 3000 real Konva layouts take about 5 s on a CI runner: past the 5 s default, so its own budget.
+  }, 60_000);
 });
