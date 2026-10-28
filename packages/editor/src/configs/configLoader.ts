@@ -33,7 +33,7 @@ export async function loadCanvasConfig(
   formatId?: string
 ): Promise<AnyCanvasConfig> {
   const template = getTemplate(type);
-  if (!template) throw new Error(`Unknown canvas type: ${type}`);
+  if (!template) throw new Error(`loadCanvasConfig: unknown canvas type ${type}`);
   // Boundary cast: the registry holds every template's config untyped.
   return (await template.load(formatId)) as AnyCanvasConfig;
 }
