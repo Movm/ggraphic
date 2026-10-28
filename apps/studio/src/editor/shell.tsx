@@ -143,6 +143,11 @@ export function StudioPagePicker({
     const entry = templatesFor(formatId ?? DEFAULT_FORMAT).find((e) => e.id === id);
     if (mode === 'add' && addPage) {
       const state = entry ? templatePageState(entry, formatId ?? DEFAULT_FORMAT) : null;
+      if (entry && !state) {
+        // Say so instead of adding a blank page the user did not ask for.
+        toast.error('This template cannot be placed on the current format and brand.');
+        return;
+      }
       void addPage(FREE_PAGE_CONFIG_ID, false, state ?? undefined);
     } else if (isStudioTemplateId(id)) {
       // Replace mode converts through the three legacy configs until pages carry their template.

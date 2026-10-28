@@ -145,7 +145,7 @@ export async function createFromPrompt({
     try {
       picked = pickedDocument(
         formatId,
-        await api.pick({ brief: prompt.trim(), ...pickOffers(), format: { width, height } })
+        await api.pick({ brief: prompt.trim(), ...pickOffers(formatId), format: { width, height } })
       );
     } catch (err) {
       throw new AiPromptError(failureKind(err));

@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { catalogTemplate } from './catalog';
+import { seedFor } from './seeds';
 import { templatePageState } from './instantiate';
 
 describe('templatePageState', () => {
@@ -11,8 +12,11 @@ describe('templatePageState', () => {
     expect(state?.['brandScheme']).toBe('light');
   });
 
-  it('an unknown template id gives null', () => {
-    expect(catalogTemplate('studio-gone')).toBeNull();
+  it('an unknown template id gives no page', () => {
+    const entry = catalogTemplate('studio-gone');
+    expect(entry).toBeNull();
+    expect(seedFor('studio-gone', 1080, 1350)).toEqual({});
+    expect(entry && templatePageState(entry, 'post-portrait')).toBeNull();
   });
 
   it('a format no template covers gives null', () => {

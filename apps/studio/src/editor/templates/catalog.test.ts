@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { OPEN_TEMPLATES } from '@ggraphic/templates-open';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { studioBrand } from '../../brand';
 
@@ -10,6 +10,7 @@ import {
   formatAspect,
   studioCatalog,
   templatesFor,
+  templatesIn,
 } from './catalog';
 
 const valid = OPEN_TEMPLATES[0];
@@ -32,7 +33,9 @@ describe('the catalogue', () => {
     expect(problems).toHaveLength(2);
     expect(problems[0]).toMatchObject({ source: 'pack', id: 'future' });
     expect(problems[1]).toMatchObject({ source: 'pack', id: 'x' });
-    expect(problems.every((p) => p.reason.length > 0)).toBe(true);
+    expect(problems[0]!.reason).toMatch(/formatVersion|newer|format/i);
+    expect(problems[1]!.reason).toMatch(/\S/);
+    expect(problems[1]!.reason).not.toBe(problems[0]!.reason);
   });
 
   it('a duplicate id keeps the first', () => {
@@ -61,10 +64,12 @@ describe('the catalogue', () => {
       formats: ['4:5'],
     };
     const { entries } = buildCatalog([{ source: 'pack', files: [valid, portraitOnly] }]);
-    expect(entries.map((e) => e.id)).toContain('portrait-only');
-    // The same filter templatesFor applies, on the studio catalogue plus the extra entry.
-    expect(templatesFor('slide-16-9').map((e) => e.id)).not.toContain('portrait-only');
-    expect(entries.find((e) => e.id === 'portrait-only')!.formats).not.toContain('16:9');
+    expect(templatesIn(entries, 'post-portrait', studioBrand).map((e) => e.id)).toContain(
+      'portrait-only'
+    );
+    const wide = templatesIn(entries, 'slide-16-9', studioBrand).map((e) => e.id);
+    expect(wide).not.toContain('portrait-only');
+    expect(wide).toContain('studio-headline');
     expect(templatesFor('story')).toEqual([]);
   });
 
@@ -73,5 +78,24 @@ describe('the catalogue', () => {
     const near = { ...studioBrand, colors: { ...studioBrand.colors, secondary: '#FAFAFA' } };
     expect(templatesFor('post-portrait', studioBrand).map((e) => e.id)).toContain('studio-quote');
     expect(templatesFor('post-portrait', near).map((e) => e.id)).not.toContain('studio-quote');
+  });
+});
+
+describe('problems are warned once', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('studioCatalog is built once, so a problem is warned at most once', async () => {
+    vi.resetModules();
+    vi.doMock('@ggraphic/templates-open', () => ({
+      OPEN_TEMPLATES: [{ id: 'broken' }],
+    }));
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const fresh = await import('./catalog');
+    fresh.studioCatalog();
+    fresh.studioCatalog();
+    fresh.templatesFor('post-portrait');
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0]![0])).toContain('broken');
+    vi.doUnmock('@ggraphic/templates-open');
   });
 });

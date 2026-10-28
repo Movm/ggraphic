@@ -5,13 +5,12 @@
  * colour worlds of the active brand. Built from the template registry, so an
  * offered id is always one the seeds carry.
  */
-import { deriveSchemes } from '@ggraphic/core';
+import { deriveSchemes, type BrandPack } from '@ggraphic/core';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 
 import { type PickBody } from '../api/client';
-import { TEMPLATE_CATALOG } from '../editor/templates/catalog';
+import { templatesFor } from '../editor/templates/catalog';
 import {
-  BLANK_TEMPLATE_ID,
   HEADLINE_TEMPLATE_ID,
   NUMBER_TEMPLATE_ID,
   QUOTE_TEMPLATE_ID,
@@ -44,15 +43,18 @@ const SLOTS: Partial<Record<string, Record<string, Slot>>> = {
 
 const capitalised = (id: string) => id.charAt(0).toUpperCase() + id.slice(1);
 
-export function pickOffers(): Pick<PickBody, 'templates' | 'schemes'> {
-  const templates = TEMPLATE_CATALOG.flatMap((entry) => {
-    if (entry.id === BLANK_TEMPLATE_ID) return [];
+/** Offered per call: what `formatId` and the organisation's brand can actually place. */
+export function pickOffers(
+  formatId: string,
+  brand: BrandPack = activeBrand()
+): Pick<PickBody, 'templates' | 'schemes'> {
+  const templates = templatesFor(formatId, brand).flatMap((entry) => {
     const slots = (seedFor(entry.id, 1080, 1080).additionalTexts ?? []).flatMap((text) => {
       const slot = SLOTS[entry.id]?.[text.id];
       return slot ? [slot] : [];
     });
-    return [{ id: entry.id, label: entry.label, description: entry.description, slots }];
+    return [{ id: entry.id, label: entry.title, description: entry.description, slots }];
   });
-  const schemes = deriveSchemes(activeBrand()).map((s) => ({ id: s.id, label: capitalised(s.id) }));
+  const schemes = deriveSchemes(brand).map((s) => ({ id: s.id, label: capitalised(s.id) }));
   return { templates, schemes };
 }
