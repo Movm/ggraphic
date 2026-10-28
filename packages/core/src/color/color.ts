@@ -52,11 +52,15 @@ export function parseColor(input: string): Rgba | null {
   return null;
 }
 
-/** Lower-case `#rrggbb`, or `#rrggbbaa` when the colour is not opaque. */
+/** Lower-case `#rrggbb`, or `#rrggbbaa` when alpha is below 1 after rounding to a byte. */
 export function toHex(c: Rgba): string {
-  const channel = (value: number) => Math.round(value).toString(16).padStart(2, '0');
+  const channel = (value: number) =>
+    Math.round(clamp(value, 0, 255))
+      .toString(16)
+      .padStart(2, '0');
+  const alpha = Math.round(clamp(c.a, 0, 1) * 255);
   const base = `#${channel(c.r)}${channel(c.g)}${channel(c.b)}`;
-  return c.a < 1 ? base + channel(c.a * 255) : base;
+  return alpha < 255 ? base + channel(alpha) : base;
 }
 
 /** The hex form of a parseable colour; the trimmed input otherwise (e.g. a named colour). */
@@ -89,7 +93,7 @@ export function contrastRatio(a: string, b: string): number | null {
 export function mixColors(a: string, b: string, t: number): string | null {
   const from = parseColor(a);
   const to = parseColor(b);
-  if (!from || !to) return null;
+  if (!from || !to || !Number.isFinite(t)) return null;
   const ratio = clamp(t, 0, 1);
   const mix = (x: number, y: number) => Math.round(x + (y - x) * ratio);
   return toHex({
