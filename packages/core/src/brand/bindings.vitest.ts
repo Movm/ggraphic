@@ -28,6 +28,16 @@ const ctx = { brand };
 
 const v1State = { textInstances: [{ id: 't', fill: '#ff0000' }], backgroundColor: '#ffffff' };
 
+describe('brandFingerprint', () => {
+  it('changes when only the markers change', () => {
+    const swatches = [{ id: 'x', label: 'X', color: '#123456' }];
+    const a = { ...brand, markers: { ...brand.markers, swatches } };
+    expect(brandFingerprint(a)).not.toBe(brandFingerprint(brand));
+    const b = { ...brand, markers: { ...brand.markers, ink: '#010203' } };
+    expect(brandFingerprint(b)).not.toBe(brandFingerprint(brand));
+  });
+});
+
 describe('rebindPageState', () => {
   it('a page without bindings comes back as the same object', () => {
     const r = rebindPageState(v1State, ctx);
@@ -144,6 +154,39 @@ describe('rebindPageState', () => {
     const text = (rebindPageState(state, { brand: other }).state['textInstances'] as Item[])[0]!;
     expect(text.fontFamily).toBe('Lora');
   });
+
+  describe('font stacks', () => {
+    const stacked = (family: string) => ({
+      textInstances: [
+        {
+          fontFamily: family,
+          bind: { fontFamily: { ref: 'font.headline', value: 'Raleway' } },
+        },
+      ],
+    });
+    const lora: BrandPack = { ...brand, fonts: { ...brand.fonts, headline: 'Lora' } };
+    const textOf = (r: { state: Record<string, unknown> }) =>
+      (r.state['textInstances'] as Item[])[0]!;
+
+    it('a stacked field counts as bound', () => {
+      const text = textOf(rebindPageState(stacked('Raleway, Arial, sans-serif'), { brand: lora }));
+      expect(text.bind?.fontFamily).toBeDefined();
+    });
+
+    it('a rebind replaces the first family and keeps the tail', () => {
+      const text = textOf(
+        rebindPageState(stacked('"raleway", Arial, sans-serif'), { brand: lora })
+      );
+      expect(text.fontFamily).toBe('Lora, Arial, sans-serif');
+      expect(text.bind?.fontFamily?.value).toBe('Lora');
+    });
+
+    it('a different first family is an override', () => {
+      const text = textOf(rebindPageState(stacked('Georgia, serif'), { brand: lora }));
+      expect(text.fontFamily).toBe('Georgia, serif');
+      expect(text.bind?.fontFamily).toBeUndefined();
+    });
+  });
 });
 
 describe('rebindPageState edge cases', () => {
@@ -207,6 +250,45 @@ describe('rebindPageState edge cases', () => {
       );
       expect(img.src).toBe('new.svg');
       expect([img.x, img.y, img.width, img.height]).toEqual([900, 1200, 120, 80]);
+    });
+
+    describe('size unknown at rebind time', () => {
+      const known = { width: 400, height: 100 };
+      const unknown = (state: Record<string, unknown>) =>
+        rebindPageState(state, { brand: logoBrand, logoSize: null, pageSize });
+
+      it('an unknown size marks the binding pendingFit', () => {
+        const img = imgOf(unknown(stateWith()));
+        expect(img.bind?.src).toMatchObject({ value: 'new.svg', pendingFit: true });
+      });
+
+      it('a later known size fits under the same stamp and saves once', () => {
+        const first = unknown(stateWith());
+        const fitted = rebindPageState(first.state, {
+          brand: logoBrand,
+          logoSize: known,
+          pageSize,
+        });
+        expect(fitted.changed).toBe(true);
+        expect(fitted.state['brandStamp']).toBe(first.state['brandStamp']);
+        const img = imgOf(fitted);
+        expect([img.x, img.y, img.width, img.height]).toEqual([900, 1250, 120, 30]);
+        expect(img.bind?.src).not.toHaveProperty('pendingFit');
+        const again = rebindPageState(fitted.state, {
+          brand: logoBrand,
+          logoSize: known,
+          pageSize,
+        });
+        expect(again.changed).toBe(false);
+        expect(again.state).toBe(fitted.state);
+      });
+
+      it('writes nothing while the size stays unknown', () => {
+        const first = unknown(stateWith());
+        const again = unknown(first.state);
+        expect(again.changed).toBe(false);
+        expect(again.state).toBe(first.state);
+      });
     });
 
     it('a second rebind changes nothing', () => {

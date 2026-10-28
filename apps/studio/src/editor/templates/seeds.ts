@@ -33,7 +33,7 @@ import {
   type StudioTemplateId,
 } from './ids';
 import { type PageSeed } from './pageState';
-import { scaleFor } from './typography';
+import { fontStackFor, scaleFor } from './typography';
 
 /** The ids of the texts an AI draft fills, by draft field. */
 export const TEXT_ROLES = {
@@ -84,7 +84,10 @@ function bound<T extends object>(f: Frame, element: T, refs: Record<string, Bind
   let bind: Bindings | undefined;
   for (const [field, ref] of Object.entries(refs)) {
     const value = f.paint(ref);
-    out[field] = value;
+    // A font field carries the stack, its binding the bare family.
+    out[field] = ref.startsWith('font.')
+      ? fontStackFor(ref.slice(5) as BrandFontRole, value)
+      : value;
     bind = withBinding(bind, field, { ref, value });
   }
   return { ...out, bind } as T;
@@ -250,7 +253,7 @@ function numberSeed(f: Frame): PageSeed {
         size: 300,
         font: 'headline',
         fontStyle: 'bold',
-        fill: 'brand.accent',
+        fill: 'accent',
         lineHeight: 1,
       }),
       text(f, TEXT_ROLES.headline, 'header', 'of what this number stands for', 0.5, {

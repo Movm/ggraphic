@@ -29,7 +29,8 @@ type Call = { method: string; url: string; body?: unknown };
 function fakeServer(
   document: unknown,
   pack: unknown = null,
-  brandFailure: 'none' | 'http500' | 'network' = 'none'
+  brandFailure: 'none' | 'http500' | 'network' = 'none',
+  patch: 'ok' | 'schema-version' = 'ok'
 ) {
   const calls: Call[] = [];
   const json = (status: number, body: unknown) =>
@@ -55,6 +56,7 @@ function fakeServer(
     });
     if (url === '/api/projects/p1' && method === 'GET') return json(200, project(1, document));
     if (url === '/api/projects/p1' && method === 'PATCH') {
+      if (patch === 'schema-version') return json(409, { error: 'schema-version' });
       return json(200, project(2, (sent as { document: unknown }).document));
     }
     if (url === `/api/orgs/${TEST_ORG}/brand-pack`) {
@@ -140,6 +142,30 @@ describe('EditorPage', () => {
     };
     const state = body.document.pages[0]!.state;
     expect(state.backgroundColor.toLowerCase()).toBe(NEW_PRIMARY);
+  }, 20_000);
+
+  it('goes read-only with a reload action when the server refuses the version', async () => {
+    registerBrandPacks([studioBrand]);
+    const pack = {
+      ...studioBrand,
+      id: 'org-x',
+      colors: { ...studioBrand.colors, primary: '#336699' },
+    };
+    // The brand change makes the first save happen; the server answers 409 schema-version.
+    const { fetchMock } = fakeServer(
+      newDocument('post-portrait', HEADLINE_TEMPLATE_ID),
+      pack,
+      'none',
+      'schema-version'
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    renderEditor();
+
+    await waitFor(() => expect(screen.queryByRole('button', { name: /^Text/ })).not.toBeNull());
+    const banner = await screen.findByRole('alert', {}, { timeout: 8000 });
+    expect(banner).toHaveTextContent('saved by a newer version of ggraphic');
+    expect(screen.getByRole('button', { name: 'Reload' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Text/ })).toBeNull();
   }, 20_000);
 
   it('opening a seeded project under an unchanged brand sends no PUT', async () => {
