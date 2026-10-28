@@ -359,6 +359,7 @@ export function useYjsPages(
       if (
         cached &&
         cached.yMap === view.yMap &&
+        cached.stateEpoch === view.stateEpoch &&
         cached.configId === view.configId &&
         cached.pos === view.pos &&
         shallowEqualState(cached.state, view.state)

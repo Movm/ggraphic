@@ -28,7 +28,23 @@ export const PageToolbar = memo(function PageToolbar({
   onDelete,
 }: PageToolbarProps) {
   const t = useMessages();
-  if (pageCount <= 1) return null;
+  // One page has nothing to move, copy or delete; only its template can still change.
+  if (pageCount <= 1) {
+    if (!onChangeTemplate) return null;
+    return (
+      <div className="flex items-center justify-end gap-1 px-1 py-0.5">
+        <button
+          className={iconBtn}
+          onClick={onChangeTemplate}
+          title={t.pageBar.changeTemplate}
+          aria-label={t.pageBar.changeTemplate}
+          type="button"
+        >
+          <PiSwap size={14} />
+        </button>
+      </div>
+    );
+  }
 
   const canMoveUp = pageIndex > 0;
   const canMoveDown = pageIndex < pageCount - 1;
