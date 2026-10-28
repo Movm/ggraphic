@@ -93,6 +93,8 @@ export function useAutosave({
         });
         versionRef.current = saved.version;
         savedJsonRef.current = json;
+        // What was stored is the baseline now; an undo back to the opened state is an edit.
+        openedJsonRef.current = null;
         blockedRef.current = false;
         setStatus(JSON.stringify(currentDocument()) === json ? 'saved' : 'pending');
         if (Date.now() - thumbnailAtRef.current > THUMBNAIL_EVERY_MS) {
@@ -113,11 +115,12 @@ export function useAutosave({
           // the version, so a later "Try again" succeeds.
           blockedRef.current = true;
           setStatus('gone');
-        } else if (!silent) {
+        } else {
           setStatus('error');
         }
-        // Saving is stopped: what the editor opened with stays unstored, so it counts as unsaved.
-        if (blockedRef.current) openedJsonRef.current = null;
+        // The opening change did not get stored: from here it is an ordinary unsaved change,
+        // shown and retried like one.
+        openedJsonRef.current = null;
       } finally {
         busyRef.current = false;
       }
@@ -135,7 +138,10 @@ export function useAutosave({
       // baseline says the document was changed on opening.
       if (firstReadRef.current) {
         firstReadRef.current = false;
-        openedJsonRef.current = json;
+        // Only a rebind leaves the opened state different from the stored one.
+        if (savedJsonRef.current !== null && savedJsonRef.current !== json) {
+          openedJsonRef.current = json;
+        }
         savedJsonRef.current ??= json;
         if (!hasThumbnail) {
           thumbnailAtRef.current = Date.now();
@@ -143,6 +149,8 @@ export function useAutosave({
           setTimeout(() => void uploadThumbnail().catch(() => undefined), SETTLE_MS);
         }
       }
+      // The user moved away from the opened state: it is an edit target like any other.
+      if (json !== openedJsonRef.current) openedJsonRef.current = null;
       if (json === savedJsonRef.current) return;
       if (json === openedJsonRef.current) {
         // The brand changed the document on opening: store it, and say nothing about it.
