@@ -19,13 +19,34 @@ const loggedIn: Session = {
   account: { id: 'a1', email: 'admin@example.org', displayName: 'Admin', isInstanceAdmin: true },
   csrfToken: 'csrf',
   organisations: [{ id: 'org-1', name: 'Example org', role: 'owner' }],
-  canCreateOrganisations: true,
 };
 const loggedOut: Session = { ...loggedIn, account: null, csrfToken: null, organisations: [] };
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe('App', () => {
+  it('sends the old project list path to the start page', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === '/api/auth/session') return json(200, loggedIn);
+        if (url.endsWith('/projects')) return json(200, { projects: [] });
+        return json(404, { error: 'not_found' });
+      })
+    );
+    window.history.replaceState(null, '', '/projects');
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <App />
+      </QueryClientProvider>
+    );
+    expect(await screen.findByText('What do you want to tell?')).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/');
+  });
+
   it('shows the login right after logging out', async () => {
     let session = loggedIn;
     vi.stubGlobal(
@@ -57,9 +78,10 @@ describe('App', () => {
       </QueryClientProvider>
     );
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Log out' }));
+    await userEvent.click(await screen.findByRole('button', { name: /^Account/ }));
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'Log out' }));
 
     expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Log out' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('menuitem', { name: 'Log out' })).not.toBeInTheDocument();
   });
 });

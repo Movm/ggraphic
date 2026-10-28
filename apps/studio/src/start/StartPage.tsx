@@ -2,15 +2,15 @@
 /**
  * The start page: a dark band with one prompt ("What do you want to tell?"),
  * the format as chips inside the prompt card and a few example prompts; below
- * it the recent projects and a gallery of the Studio's templates.
+ * it a compact row of the Studio's templates and all projects with a search.
  * Submitting the prompt creates a project, lets the AI write its texts and opens it.
  */
 import { Button, ChipGroup, PromptComposer, PromptHero, Tile, TileList } from '@ggraphic/ui';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { useId, useState, type ReactNode } from 'react';
 import { PiFile, PiQuotes, PiTextT, PiNumberOne } from 'react-icons/pi';
 
-import { api, ApiError, type StudioConfig } from '../api/client';
+import { ApiError, type StudioConfig } from '../api/client';
 import { DEFAULT_FORMAT, STUDIO_FORMATS, type StudioFormatId } from '../editor/document';
 import { TEMPLATE_CATALOG } from '../editor/templates/catalog';
 import {
@@ -20,14 +20,14 @@ import {
   QUOTE_TEMPLATE_ID,
   type StudioTemplateId,
 } from '../editor/templates/ids';
-import { PROJECTS_QUERY_KEY, projectsKey } from '../pages/ProjectListPage';
-import { editorPath, navigate, PROJECTS_PATH } from '../router';
+import { PROJECTS_QUERY_KEY } from '../projects/projectsKey';
+import { editorPath, navigate } from '../router';
 import { useLoggedIn } from '../session/SessionContext';
 import { PageShell } from '../ui/PageShell';
 import { toast } from '../ui/toast';
 
 import { createFromPrompt, createFromTemplate } from './createFromPrompt';
-import { relativeTime } from './relativeTime';
+import { ProjectGrid } from './ProjectGrid';
 
 /** Invented, neutral examples. */
 export const EXAMPLE_PROMPTS = [
@@ -36,8 +36,6 @@ export const EXAMPLE_PROMPTS = [
   'A quote about why small steps matter',
   'Share that 120 volunteers planted 800 trees this spring',
 ] as const;
-
-const RECENT_COUNT = 6;
 
 const TEMPLATE_ICONS: Record<StudioTemplateId, ReactNode> = {
   [BLANK_TEMPLATE_ID]: <PiFile aria-hidden />,
@@ -54,13 +52,6 @@ const FORMAT_OPTIONS = STUDIO_FORMATS.map((f) => ({
 
 const errorText = (err: unknown) =>
   err instanceof ApiError ? err.message : 'The project could not be created.';
-
-/** Plain clicks route in-app; modified clicks keep the browser's behaviour. */
-const followInApp = (path: string) => (e: React.MouseEvent) => {
-  if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-  e.preventDefault();
-  navigate(path);
-};
 
 export function StartPage({ config }: { config: StudioConfig | undefined }) {
   const queryClient = useQueryClient();
@@ -170,15 +161,17 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
       </PromptHero>
 
       <div className="studio-start__body">
-        <RecentProjects />
-        <section className="studio-start__section" aria-labelledby="templates-heading">
+        <section
+          className="studio-start__section studio-start__section--compact"
+          aria-labelledby="templates-heading"
+        >
           <div className="studio-start__head">
             <h2 id="templates-heading" className="studio-start__heading">
               Start from a template
             </h2>
             <p className="studio-muted">Opens in the format chosen above.</p>
           </div>
-          <TileList aria-label="Templates">
+          <TileList layout="row" aria-label="Templates">
             {TEMPLATE_CATALOG.map((template) => (
               <li key={template.id}>
                 <Tile
@@ -197,48 +190,8 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
             ))}
           </TileList>
         </section>
+        <ProjectGrid />
       </div>
     </PageShell>
-  );
-}
-
-function RecentProjects() {
-  const { organisation } = useLoggedIn();
-  const projects = useQuery({
-    queryKey: projectsKey(organisation.id),
-    queryFn: () => api.listProjects(organisation.id),
-  });
-  const recent = [...(projects.data ?? [])]
-    .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
-    .slice(0, RECENT_COUNT);
-  if (recent.length === 0) return null;
-  return (
-    <section className="studio-start__section" aria-labelledby="recent-heading">
-      <div className="studio-start__head">
-        <h2 id="recent-heading" className="studio-start__heading">
-          Recent projects
-        </h2>
-        <a
-          className="ui-link studio-link"
-          href={PROJECTS_PATH}
-          onClick={followInApp(PROJECTS_PATH)}
-        >
-          Show all
-        </a>
-      </div>
-      <TileList layout="row" aria-label="Recent projects">
-        {recent.map((project) => (
-          <li key={project.id}>
-            <Tile
-              href={editorPath(project.id)}
-              onClick={followInApp(editorPath(project.id))}
-              media={project.thumbnailUrl ? <img src={project.thumbnailUrl} alt="" /> : null}
-              title={project.name}
-              meta={relativeTime(project.updatedAt)}
-            />
-          </li>
-        ))}
-      </TileList>
-    </section>
   );
 }

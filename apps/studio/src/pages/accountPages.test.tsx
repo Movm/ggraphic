@@ -11,7 +11,6 @@ import { studioBrand } from '../brand';
 import { TEST_ORG, WithSession } from '../testing/session';
 import { AuthPage } from './AuthPage';
 import { BrandPage, defaultSettings } from './BrandPage';
-import { MembersPage } from './MembersPage';
 
 const json = (status: number, body: unknown) =>
   new Response(status === 204 ? null : JSON.stringify(body), {
@@ -50,7 +49,6 @@ const anonymous = (over: Partial<Session> = {}): Session => ({
   account: null,
   csrfToken: null,
   organisations: [],
-  canCreateOrganisations: false,
   ...over,
 });
 
@@ -99,6 +97,11 @@ describe('AuthPage', () => {
     });
   });
 
+  it('does not point to invitation links, which no longer exist', () => {
+    renderWith(<AuthPage session={anonymous()} />);
+    expect(screen.queryByText(/invitation/i)).toBeNull();
+  });
+
   it('shows the server message when login fails and hides registration when closed', async () => {
     stubServer(() =>
       json(401, { error: 'invalid_credentials', message: 'Email or password is wrong.' })
@@ -110,65 +113,6 @@ describe('AuthPage', () => {
     await user.type(screen.getByLabelText('Password'), 'x');
     await user.click(screen.getByRole('button', { name: 'Log in' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Email or password is wrong.');
-  });
-});
-
-describe('MembersPage', () => {
-  const members = [
-    { accountId: 'acc-1', email: 'me@example.org', displayName: 'Me', role: 'owner' },
-    { accountId: 'acc-2', email: 'ed@example.org', displayName: 'Ed', role: 'editor' },
-  ];
-
-  it('lets an owner create an invitation link and change a role', async () => {
-    const calls = stubServer((method, url) => {
-      if (url === `/api/orgs/${TEST_ORG}/members`) return json(200, { members });
-      if (url === `/api/orgs/${TEST_ORG}/invitations` && method === 'GET') {
-        return json(200, { invitations: [] });
-      }
-      if (url === `/api/orgs/${TEST_ORG}/invitations` && method === 'POST') {
-        return json(201, {
-          id: 'inv-1',
-          role: 'editor',
-          createdAt: '2026-10-28T10:00:00.000Z',
-          expiresAt: '2026-11-04T10:00:00.000Z',
-          allowsSignup: true,
-          url: '/invite/secret-token',
-        });
-      }
-      if (method === 'PATCH') return json(204, null);
-      return undefined;
-    });
-    const user = userEvent.setup();
-    renderWith(<MembersPage />);
-    await screen.findByText('Ed');
-    const list = within(screen.getByRole('main')).getAllByRole('listitem');
-    expect(within(list[1]!).getByText('Ed')).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Create invitation link' }));
-    expect(
-      await screen.findByDisplayValue(`${window.location.origin}/invite/secret-token`)
-    ).toBeInTheDocument();
-    expect(screen.getByText(/Anyone who has this link can join/)).toBeInTheDocument();
-
-    await user.selectOptions(screen.getByLabelText('Role of Ed'), 'owner');
-    await waitFor(() =>
-      expect(calls.find((c) => c.method === 'PATCH')).toMatchObject({
-        url: `/api/orgs/${TEST_ORG}/members/acc-2`,
-        body: { role: 'owner' },
-      })
-    );
-  });
-
-  it('shows editors the list without management controls', async () => {
-    const calls = stubServer((_m, url) =>
-      url === `/api/orgs/${TEST_ORG}/members` ? json(200, { members }) : undefined
-    );
-    renderWith(<MembersPage />, 'editor');
-    expect(await screen.findByText('Ed')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Create invitation link' })).toBeNull();
-    expect(screen.queryByLabelText('Role of Ed')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Leave' })).toBeInTheDocument();
-    expect(calls.some((c) => c.url.endsWith('/invitations'))).toBe(false);
   });
 });
 
@@ -200,14 +144,63 @@ describe('BrandPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Save brand' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
-    const saved = calls.find((c) => c.method === 'PUT')!.body as {
-      colors: Record<string, string>;
-      backgrounds: unknown[];
-      fonts: Record<string, string>;
-    };
-    expect(saved.colors['primary']).toBe('#112233');
-    expect(saved.backgrounds).toHaveLength(studioBrand.backgrounds.length);
-    expect(saved.fonts).toEqual({ headline: 'Raleway', body: 'Instrument Sans' });
+    // Only the three chosen colours go out; the server derives the rest.
+    expect(calls.find((c) => c.method === 'PUT')!.body).toEqual({
+      name: 'Example org',
+      colors: {
+        primary: '#112233',
+        secondary: studioBrand.colors.secondary,
+        accent: studioBrand.colors.accent,
+      },
+      fonts: { headline: 'Raleway', body: 'Instrument Sans' },
+      logoAssetId: null,
+    });
+  });
+
+  it('shows the derived colours and updates them live; attention cannot be edited', async () => {
+    stubServer((method, url) =>
+      url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET' ? json(200, empty) : undefined
+    );
+    const user = userEvent.setup();
+    renderWith(<BrandPage />);
+    const list = await screen.findByLabelText('Derived colours');
+    const surface = () => within(list).getByText('Surface').parentElement!.textContent;
+    const before = surface();
+    expect(within(list).getByText('Attention')).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Attention/)).toBeNull();
+    expect(screen.queryByLabelText(/^Surface/)).toBeNull();
+
+    const primary = screen.getByLabelText(/^Primary Main colour/);
+    await user.clear(primary);
+    await user.type(primary, '#0b3d2e');
+    expect(surface()).not.toBe(before);
+  });
+
+  it('tells the owner that saving re-derives hand-set colours of an existing pack', async () => {
+    const settings = defaultSettings('Org');
+    settings.colors = { ...settings.colors, surface: '#FF00FF' };
+    stubServer((method, url) =>
+      url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET'
+        ? json(200, { ...empty, settings })
+        : undefined
+    );
+    renderWith(<BrandPage />);
+    expect(await screen.findByText(/hand-set colours/)).toBeInTheDocument();
+  });
+
+  it('shows no notice for a new pack or one that already matches the derivation', async () => {
+    const { deriveBrandColors } = await import('@ggraphic/core');
+    const base = defaultSettings('Org');
+    const { primary, secondary, accent } = base.colors;
+    const matching = { ...base, colors: deriveBrandColors({ primary, secondary, accent })! };
+    stubServer((method, url) =>
+      url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET'
+        ? json(200, { ...empty, settings: matching })
+        : undefined
+    );
+    renderWith(<BrandPage />);
+    await screen.findByLabelText(/^Primary Main colour/);
+    expect(screen.queryByText(/hand-set colours/)).toBeNull();
   });
 
   it('shows and saves the successors of replaced font families', async () => {
