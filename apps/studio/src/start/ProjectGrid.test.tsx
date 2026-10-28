@@ -2,11 +2,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { axe } from 'vitest-axe';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { TEST_ORG, TEST_PROJECTS_URL, WithSession } from '../testing/session';
-
-import { ProjectListPage } from './ProjectListPage';
+import { ProjectGrid } from './ProjectGrid';
 
 interface Summary {
   id: string;
@@ -47,11 +47,6 @@ function fakeServer(initial: Summary[]) {
     calls.push({ method, url, body });
     const id = /^\/api\/projects\/([^/]+)$/.exec(url)?.[1];
     if (url === TEST_PROJECTS_URL && method === 'GET') return json(200, { projects });
-    if (url === TEST_PROJECTS_URL && method === 'POST') {
-      const created = { ...summary('new-id', (body as { name: string }).name), document: {} };
-      projects = [created, ...projects];
-      return json(201, created);
-    }
     if (id && method === 'PATCH') {
       const patch = body as { version: number; name?: string };
       const current = projects.find((p) => p.id === id)!;
@@ -71,35 +66,36 @@ function fakeServer(initial: Summary[]) {
   return { fetchMock, calls };
 }
 
-function renderPage() {
+function renderGrid() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
       <WithSession>
-        <ProjectListPage />
+        <main>
+          <ProjectGrid />
+        </main>
       </WithSession>
     </QueryClientProvider>
   );
 }
 
-describe('ProjectListPage', () => {
+describe('ProjectGrid', () => {
   beforeEach(() => window.history.replaceState(null, '', '/'));
   afterEach(() => {
     vi.unstubAllGlobals();
     vi.restoreAllMocks();
   });
 
-  it('lists the projects with name, thumbnail and update time', async () => {
+  it('lists the projects, newest first, with name, thumbnail and update time', async () => {
     const { fetchMock } = fakeServer([
+      summary('b', 'Event invite', { updatedAt: '2026-10-20T09:30:00.000Z' }),
       summary('a', 'Summer poster', { thumbnailUrl: '/api/projects/a/thumbnail?v=1' }),
-      summary('b', 'Event invite'),
     ]);
     vi.stubGlobal('fetch', fetchMock);
-    renderPage();
+    renderGrid();
 
-    // The top bar's links are list items too; the cards live in the main area.
     await screen.findByRole('heading', { name: 'Summer poster' });
-    const cards = within(screen.getByRole('main')).getAllByRole('listitem');
+    const cards = within(screen.getByRole('list', { name: 'Projects' })).getAllByRole('listitem');
     expect(cards).toHaveLength(2);
     expect(within(cards[0]!).getByRole('heading', { name: 'Summer poster' })).toBeInTheDocument();
     expect(within(cards[0]!).getByRole('link', { name: 'Open Summer poster' })).toHaveAttribute(
@@ -108,45 +104,57 @@ describe('ProjectListPage', () => {
     );
     expect(cards[0]!.querySelector('img')).toHaveAttribute('src', '/api/projects/a/thumbnail?v=1');
     expect(within(cards[1]!).getByText('No preview yet')).toBeInTheDocument();
+    expect(within(cards[1]!).getByRole('link')).toHaveAccessibleName(
+      'Open Event invite: No preview yet'
+    );
     expect(within(cards[0]!).getByText(/^Updated /)).toBeInTheDocument();
   });
 
-  it('shows an empty state', async () => {
-    vi.stubGlobal('fetch', fakeServer([]).fetchMock);
-    renderPage();
-    expect(await screen.findByText(/No projects yet/)).toBeInTheDocument();
+  it('shows all projects, not only the latest few', async () => {
+    const many = Array.from({ length: 9 }, (_, i) => summary(`p${i}`, `Poster ${i}`));
+    vi.stubGlobal('fetch', fakeServer(many).fetchMock);
+    renderGrid();
+    await screen.findByRole('heading', { name: 'Poster 0' });
+    expect(
+      within(screen.getByRole('list', { name: 'Projects' })).getAllByRole('listitem')
+    ).toHaveLength(9);
   });
 
-  it('creates a project in the picked format and opens it', async () => {
-    const { fetchMock, calls } = fakeServer([]);
-    vi.stubGlobal('fetch', fetchMock);
+  it('shows an empty state without a search field', async () => {
+    vi.stubGlobal('fetch', fakeServer([]).fetchMock);
+    renderGrid();
+    expect(await screen.findByText(/No projects yet/)).toBeInTheDocument();
+    expect(screen.queryByRole('searchbox')).toBeNull();
+  });
+
+  it('filters by name as you type and says how many match', async () => {
+    vi.stubGlobal(
+      'fetch',
+      fakeServer([
+        summary('a', 'Summer poster'),
+        summary('b', 'Event invite'),
+        summary('c', 'Summer picnic'),
+      ]).fetchMock
+    );
     const user = userEvent.setup();
-    renderPage();
+    renderGrid();
+    await screen.findByRole('heading', { name: 'Event invite' });
 
-    await user.type(screen.getByLabelText('Name'), 'Launch');
-    await user.click(screen.getByRole('radio', { name: /Square/ }));
-    await user.click(screen.getByRole('radio', { name: /Quote/ }));
-    await user.click(screen.getByRole('button', { name: 'Create project' }));
+    await user.type(screen.getByRole('searchbox', { name: 'Search projects' }), 'SUMMER');
+    expect(screen.queryByRole('heading', { name: 'Event invite' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Summer poster' })).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('2 of 3 projects');
 
-    await waitFor(() => expect(window.location.pathname).toBe('/p/new-id'));
-    const post = calls.find((c) => c.method === 'POST')?.body as {
-      name: string;
-      document: { formatId: string; pages: { configId: string; state: Record<string, unknown> }[] };
-    };
-    expect(post.name).toBe('Launch');
-    expect(post.document.formatId).toBe('profile-square');
-    expect(post.document.pages).toHaveLength(1);
-    expect(post.document.pages[0]!.configId).toBe('studio-quote');
-    // The page starts with the template's texts spelled out (see `seedPageState`).
-    const texts = post.document.pages[0]!.state['additionalTexts'] as { id: string }[];
-    expect(texts.map((t) => t.id)).toEqual(['quote-mark', 'headline', 'subline']);
+    await user.type(screen.getByRole('searchbox', { name: 'Search projects' }), ' nothing');
+    expect(screen.getByText(/No project matches/)).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Projects' })).toBeNull();
   });
 
   it('renames a project with the version it listed', async () => {
     const { fetchMock, calls } = fakeServer([summary('a', 'Old name', { version: 3 })]);
     vi.stubGlobal('fetch', fetchMock);
     const user = userEvent.setup();
-    renderPage();
+    renderGrid();
 
     await user.click(await screen.findByRole('button', { name: 'Rename Old name' }));
     const input = screen.getByLabelText('New name');
@@ -162,7 +170,7 @@ describe('ProjectListPage', () => {
     vi.stubGlobal('fetch', fetchMock);
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     const user = userEvent.setup();
-    renderPage();
+    renderGrid();
 
     await user.click(await screen.findByRole('button', { name: 'Delete Doomed' }));
 
@@ -176,9 +184,17 @@ describe('ProjectListPage', () => {
     vi.stubGlobal('fetch', fetchMock);
     vi.spyOn(window, 'confirm').mockReturnValue(false);
     const user = userEvent.setup();
-    renderPage();
+    renderGrid();
 
     await user.click(await screen.findByRole('button', { name: 'Delete Precious' }));
     expect(calls.some((c) => c.method === 'DELETE')).toBe(false);
+  });
+
+  it('has no axe violations', async () => {
+    vi.stubGlobal('fetch', fakeServer([summary('a', 'A poster')]).fetchMock);
+    const { container } = renderGrid();
+    await screen.findByRole('heading', { name: 'A poster' });
+    const results = await axe(container, { rules: { 'color-contrast': { enabled: false } } });
+    expect(results).toHaveNoViolations();
   });
 });

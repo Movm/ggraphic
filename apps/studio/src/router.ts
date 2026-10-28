@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Routes on the History API: `/` (the start page with the prompt), `/projects`
- * (all projects), `/p/:id` (the editor) and `/brand` (the current
+ * (redirects to `/`, where the projects are), `/p/:id` (the editor) and `/brand` (the current
  * organisation). The server answers every other path with index.html.
  */
 import { useSyncExternalStore } from 'react';
@@ -35,6 +35,13 @@ export const editorPath = (projectId: string) => `/p/${encodeURIComponent(projec
 
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((listener) => listener());
+
+/** Like `navigate`, but the current entry is replaced, so Back does not return to the old path. */
+export function redirect(path: string): void {
+  if (path === window.location.pathname) return;
+  window.history.replaceState(null, '', path);
+  notify();
+}
 
 export function navigate(path: string): void {
   if (path === window.location.pathname) return;

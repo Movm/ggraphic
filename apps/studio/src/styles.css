@@ -439,15 +439,6 @@ body {
   line-height: 1.05;
   letter-spacing: var(--ui-tracking-title);
 }
-.studio-section {
-  margin-bottom: var(--ui-space-8);
-}
-.studio-section__title {
-  margin: 0 0 var(--ui-space-3);
-  font-size: 1.375rem;
-  font-weight: var(--ui-weight-bold);
-  letter-spacing: -0.02em;
-}
 .studio-subtitle {
   margin: var(--ui-space-4) 0 var(--ui-space-2);
   font-size: var(--ui-text-base);
@@ -489,55 +480,6 @@ body {
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
-}
-
-/* New project, radio choices */
-.studio-new {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--ui-space-4);
-  padding: var(--ui-space-5);
-}
-.studio-new__name {
-  width: 100%;
-  max-width: 420px;
-}
-.studio-choices {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ui-space-2);
-  margin: 0;
-  padding: 0;
-  border: none;
-}
-.studio-choices legend {
-  margin-bottom: var(--ui-space-2);
-  font-weight: var(--ui-weight-bold);
-}
-.studio-choice {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
-  padding: var(--ui-space-2) var(--ui-space-3);
-  border: 1.5px solid var(--ui-color-border-control);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-surface);
-  cursor: pointer;
-}
-.studio-choice:has(input:checked) {
-  border-color: var(--ui-color-accent);
-  background: var(--ui-color-selection);
-}
-.studio-choice:has(input:focus-visible) {
-  outline: var(--ui-focus-ring);
-  outline-offset: var(--ui-focus-offset);
-}
-.studio-choice span {
-  color: var(--ui-color-text-secondary);
-}
-.studio-choice strong {
-  color: var(--ui-color-text);
 }
 
 /* Project cards */
@@ -1070,4 +1012,16 @@ body {
   .heterogeneous-multipage__pages-container {
     transition: none;
   }
+}
+
+/* Start page: compact template row and the project search */
+.studio-start__section--compact {
+  gap: var(--ui-space-4);
+}
+.studio-start__section--compact .studio-start__heading {
+  font-size: var(--ui-text-lg);
+}
+.studio-search {
+  width: 100%;
+  max-width: 320px;
 }

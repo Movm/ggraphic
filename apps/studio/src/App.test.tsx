@@ -25,6 +25,28 @@ const loggedOut: Session = { ...loggedIn, account: null, csrfToken: null, organi
 afterEach(() => vi.unstubAllGlobals());
 
 describe('App', () => {
+  it('sends the old project list path to the start page', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === '/api/auth/session') return json(200, loggedIn);
+        if (url.endsWith('/projects')) return json(200, { projects: [] });
+        return json(404, { error: 'not_found' });
+      })
+    );
+    window.history.replaceState(null, '', '/projects');
+    render(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <App />
+      </QueryClientProvider>
+    );
+    expect(await screen.findByText('What do you want to tell?')).toBeInTheDocument();
+    expect(window.location.pathname).toBe('/');
+  });
+
   it('shows the login right after logging out', async () => {
     let session = loggedIn;
     vi.stubGlobal(
