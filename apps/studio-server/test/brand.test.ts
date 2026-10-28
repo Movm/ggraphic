@@ -7,9 +7,9 @@ import {
   parseAssetName,
   randomAssetName,
 } from '../src/brand/assets.ts';
-import { brandPackSchema } from '../src/brand/brandPackSchema.ts';
+import { brandLayoutSchema, brandPackSchema } from '../src/brand/brandPackSchema.ts';
 import { buildBrandPack } from '../src/brand/build.ts';
-import { brandSettingsBody, fontUploadFields } from '../src/contract.ts';
+import { type BrandSettings, brandSettingsBody, fontUploadFields } from '../src/contract.ts';
 import { BRAND_SETTINGS as SETTINGS, PNG_1X1 } from './helpers.ts';
 
 const ascii = (s: string) => Buffer.from(s, 'latin1');
@@ -178,6 +178,32 @@ describe('buildBrandPack', () => {
       label: 'Example logo (alternative)',
       ground: 'dark',
     });
+  });
+
+  it('clamps a stored layout of 0.4 × 0.2 to 0.30 × 0.12 when it builds the pack', () => {
+    const settings = {
+      ...brandSettingsBody.parse(SETTINGS),
+      layout: { margin: 0.06, logoCorner: 'top-left', logoMaxWidth: 0.4, logoMaxHeight: 0.2 },
+    } as BrandSettings;
+    const pack = buildBrandPack(orgId, settings, [], null, null);
+    expect(pack.layout).toEqual({
+      margin: 0.06,
+      logoCorner: 'top-left',
+      logoMaxWidth: 0.3,
+      logoMaxHeight: 0.12,
+    });
+    expect(brandPackSchema.safeParse(pack).success).toBe(true);
+  });
+
+  it('takes the layout bounds from core', () => {
+    const over = { margin: 0.06, logoCorner: 'top-left', logoMaxWidth: 0.35, logoMaxHeight: 0.1 };
+    expect(brandLayoutSchema.safeParse(over).success).toBe(false);
+    expect(
+      brandLayoutSchema.safeParse({ ...over, logoMaxWidth: 0.3, logoMaxHeight: 0.13 }).success
+    ).toBe(false);
+    expect(
+      brandLayoutSchema.safeParse({ ...over, logoMaxWidth: 0.3, logoMaxHeight: 0.12 }).success
+    ).toBe(true);
   });
 
   it('gives the org brand pack swatches their role refs', () => {

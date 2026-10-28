@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import type { BrandPack, BrandSwatch } from '@ggraphic/core';
+import { type BrandPack, type BrandSwatch, clampBrandLayout } from '@ggraphic/core';
 import type { BrandSettings } from '../contract.ts';
 import { brandPackSchema } from './brandPackSchema.ts';
 
@@ -138,7 +138,8 @@ export function buildBrandPack(
           },
         }
       : {}),
-    ...(settings.layout ? { layout: settings.layout } : {}),
+    // Stored under wider bounds (before 30 × 12 percent): clamp, never reject.
+    ...(settings.layout ? { layout: clampBrandLayout(settings.layout) } : {}),
     quoteMark: null,
   };
   return brandPackSchema.parse(pack);
