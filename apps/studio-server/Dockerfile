@@ -7,7 +7,9 @@ RUN corepack enable
 WORKDIR /repo
 COPY . .
 RUN pnpm install --frozen-lockfile
-RUN pnpm --filter @ggraphic/studio-server build \
+# Build the server together with the workspace packages it imports at runtime
+# (@ggraphic/core); deploy then ships their dist/ via publishConfig.
+RUN pnpm --filter "@ggraphic/studio-server..." -r run build \
  && pnpm --filter @ggraphic/studio-server deploy --prod --legacy /out
 # The web app is optional until apps/studio lands; build it with its workspace dependencies.
 RUN mkdir -p /web \
