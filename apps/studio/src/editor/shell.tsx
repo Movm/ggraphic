@@ -18,9 +18,26 @@ import { toast } from '../ui/toast';
 
 import { draftDeckOps } from './aiDraft';
 import { DEFAULT_FORMAT, formatSize } from './document';
-import { templatesFor } from './templates/catalog';
+import { templatesFor, type CatalogEntry } from './templates/catalog';
 import { BLANK_TEMPLATE_ID, FREE_PAGE_CONFIG_ID, isStudioTemplateId } from './templates/ids';
 import { templatePageState } from './templates/instantiate';
+
+/** The id of the template a page was placed from, if its state says so. */
+function templateRefOf(state: Record<string, unknown> | undefined): string | null {
+  const ref = state?.['templateRef'];
+  return typeof ref === 'object' && ref !== null && typeof (ref as { id?: unknown }).id === 'string'
+    ? (ref as { id: string }).id
+    : null;
+}
+
+/** An emptied page: no elements and no template, the ground and its binding stay. */
+function blankPageState(current: Record<string, unknown> | undefined): Record<string, unknown> {
+  const kept: Record<string, unknown> = {};
+  for (const key of ['backgroundColor', 'bind', 'brandScheme', 'brandStamp']) {
+    if (current && key in current) kept[key] = current[key];
+  }
+  return { ...kept, shapeInstances: [], additionalTexts: [], layerOrder: [] };
+}
 
 export const AI_DRAFT_TAB_ID = 'ai-draft';
 
@@ -115,6 +132,7 @@ export function StudioPagePicker({
   formatId,
   onSelectTemplate,
   addPage,
+  currentState,
   onDuplicateCurrent,
 }: EditorPagePickerProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -149,11 +167,21 @@ export function StudioPagePicker({
         return;
       }
       void addPage(FREE_PAGE_CONFIG_ID, false, state ?? undefined);
+    } else if (mode === 'replace') {
+      // Every page is a free page whose config stays, so the new state travels with the choice.
+      const state = id === BLANK_TEMPLATE_ID ? blankPageState(currentState) : placed(entry);
+      if (!state) {
+        toast.error('This template cannot be placed on the current format and brand.');
+        return;
+      }
+      onSelectTemplate(FREE_PAGE_CONFIG_ID, state);
     } else if (isStudioTemplateId(id)) {
-      // Replace mode converts through the three legacy configs until pages carry their template.
       onSelectTemplate(id);
     }
   };
+  const placed = (entry: CatalogEntry | undefined) =>
+    entry ? templatePageState(entry, formatId ?? DEFAULT_FORMAT) : null;
+  const heldTemplateId = templateRefOf(currentState) ?? currentTemplateId;
   return (
     <div className="studio-overlay">
       {/* Clicking beside the dialog closes it; Escape does the same from the keyboard. */}
@@ -174,7 +202,7 @@ export function StudioPagePicker({
               <button
                 type="button"
                 className="studio-template-option"
-                aria-current={template.id === currentTemplateId ? 'true' : undefined}
+                aria-current={template.id === heldTemplateId ? 'true' : undefined}
                 onClick={() => {
                   select(template.id);
                   onClose();
