@@ -7,6 +7,7 @@
  * for labels like "Wusstest du?" in slider templates.
  */
 
+import { type Bindings } from '@ggraphic/core';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { messages } from '@ggraphic/editor/i18n/messages';
 
@@ -20,6 +21,8 @@ export type PillBadgeFontStyle = 'normal' | 'italic' | 'bold' | 'bold italic';
 
 export interface PillBadgeInstance {
   id: string;
+  /** Fields that follow a brand role; see `@ggraphic/core` bindings. */
+  bind?: Bindings;
   text: string;
   x: number;
   y: number;

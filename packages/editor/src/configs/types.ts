@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { type BindingRef, type Bindings } from '@ggraphic/core';
 import type { CanvasStageRef } from '../primitives/CanvasStage.js';
 import type { HostCanvasAiCapabilities } from '@ggraphic/editor/ai/types';
 import type { StockImageAttribution } from '@ggraphic/editor/common/imageSourceTypes';
@@ -55,6 +56,8 @@ export interface BaseElementConfig<TState = Record<string, unknown>> {
 /** Dynamic additional text element */
 export interface AdditionalText {
   id: string;
+  /** Fields that follow a brand role; see `@ggraphic/core` bindings. */
+  bind?: Bindings;
   text: string;
   type: 'header' | 'subheader' | 'body';
   x: number;
@@ -394,7 +397,8 @@ export interface BackgroundControls {
   paletteOnly?: boolean;
   /** The colour now shown; empty while a photo replaces it (freeform). */
   currentColor?: string;
-  onColorChange?: (color: string) => void;
+  /** `ref` is set when the pick is a brand swatch: the page colour then follows that role. */
+  onColorChange?: (color: string, ref?: BindingRef) => void;
   /** True when a colour pick itself hides the photo (freeform keeps it to restore).
    *  Otherwise the colour lies under the photo, and a pick from the photo removes it. */
   colorReplacesImage?: boolean;

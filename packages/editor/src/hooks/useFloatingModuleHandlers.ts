@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MPL-2.0
+import { type BindingRef, type Bindings } from '@ggraphic/core';
 import { useCallback } from 'react';
 
 import { withTemplateTextAlign, type TextAlign } from '@ggraphic/editor/utils/textAlign';
 
+import { bindPatch, withPageColor } from '../brand/bindPick.js';
 import { hostElementKind, updateHostInstance } from '../utils/elementKinds.js';
 
 import type { OptionalCanvasActions } from './useCanvasElementHandlers.js';
@@ -45,13 +47,30 @@ export interface UseFloatingModuleHandlersOptions<
 }
 
 export interface UseFloatingModuleHandlersResult {
-  handleColorSelect: (color: string) => void;
+  handleColorSelect: (color: string, ref?: BindingRef) => void;
   handleOpacityChange: (id: string, opacity: number, type: string) => void;
   handleShadowChange: (id: string, patch: ShadowPatch, type: string) => void;
   handleOutlineChange: (id: string, patch: { stroke?: string; strokeWidth?: number }) => void;
   handleBlurChange: (id: string, blur: number) => void;
   handleGradientSelect: (gradient: GradientFill | null) => void;
   handleTextAlignChange: (id: string, align: TextAlign) => void;
+}
+
+/** The bindings of the instance `id` in `state`, from whichever collection holds it. */
+function bindOf(state: Partial<BaseCanvasState>, id: string): Bindings | undefined {
+  const lists = [
+    state.shapeInstances,
+    state.additionalTexts,
+    state.illustrationInstances,
+    state.pillBadgeInstances,
+    state.circleBadgeInstances,
+    state.userImageInstances,
+  ];
+  for (const list of lists) {
+    const found = (list as { id: string; bind?: Bindings }[] | undefined)?.find((e) => e.id === id);
+    if (found) return found.bind;
+  }
+  return state.iconStates?.[id]?.bind;
 }
 
 /**
@@ -65,21 +84,28 @@ export function useFloatingModuleHandlers<
     options;
 
   const handleColorSelect = useCallback(
-    (color: string) => {
+    (color: string, ref?: BindingRef) => {
       if (!activeFloatingModule) return;
+      // The pick binds the field to the swatch's role, or takes the field off the brand.
+      const bindOfModule = () => bindOf(state, activeFloatingModule.data.id);
+      const pick = (field: string) => bindPatch(bindOfModule(), field, color, ref);
 
       if (activeFloatingModule.type === 'shape') {
         if (actions.updateShape) {
           // Picking a solid color clears any gradient fill.
-          actions.updateShape(activeFloatingModule.data.id, { fill: color, fillGradient: null });
+          actions.updateShape(activeFloatingModule.data.id, {
+            fill: color,
+            fillGradient: null,
+            ...pick('fill'),
+          });
         }
       } else if (activeFloatingModule.type === 'icon') {
         if (actions.updateIcon) {
-          actions.updateIcon(activeFloatingModule.data.id, { color });
+          actions.updateIcon(activeFloatingModule.data.id, { color, ...pick('color') });
         }
       } else if (activeFloatingModule.type === 'illustration') {
         if (actions.updateIllustration) {
-          actions.updateIllustration(activeFloatingModule.data.id, { color });
+          actions.updateIllustration(activeFloatingModule.data.id, { color, ...pick('color') });
         }
       } else if (activeFloatingModule.type === 'text') {
         const id = activeFloatingModule.data.id;
@@ -87,7 +113,11 @@ export function useFloatingModuleHandlers<
         const additionalTexts = state.additionalTexts ?? [];
         if (additionalTexts.find((t) => t.id === id)) {
           if (actions.updateAdditionalText) {
-            actions.updateAdditionalText(id, { fill: color, fillGradient: null });
+            actions.updateAdditionalText(id, {
+              fill: color,
+              fillGradient: null,
+              ...pick('fill'),
+            });
           }
           return;
         }
@@ -96,7 +126,7 @@ export function useFloatingModuleHandlers<
         if (elementConfig && elementConfig.type === 'text') {
           const fillStateKey = elementConfig.fillStateKey as string | undefined;
           if (fillStateKey) {
-            const next = { ...state, [fillStateKey]: color };
+            const next = withPageColor(state, fillStateKey, color, ref);
             setState(() => next);
             debouncedSaveToHistory(next);
           }
@@ -107,7 +137,7 @@ export function useFloatingModuleHandlers<
         if (elementConfig && elementConfig.type === 'image') {
           const fillStateKey = elementConfig.fillStateKey as string | undefined;
           if (fillStateKey) {
-            const next = { ...state, [fillStateKey]: color };
+            const next = withPageColor(state, fillStateKey, color, ref);
             setState(() => next);
             debouncedSaveToHistory(next);
           }
@@ -120,15 +150,21 @@ export function useFloatingModuleHandlers<
           const colorKey = (elementConfig as { colorKey?: string }).colorKey;
           const stateKey = fillStateKey || colorKey;
           if (stateKey) {
-            const next = { ...state, [stateKey]: color };
+            const next = withPageColor(state, stateKey, color, ref);
             setState(() => next);
             debouncedSaveToHistory(next);
           }
         }
       } else if (activeFloatingModule.type === 'pill-badge') {
-        actions.updatePillBadge?.(activeFloatingModule.data.id, { backgroundColor: color });
+        actions.updatePillBadge?.(activeFloatingModule.data.id, {
+          backgroundColor: color,
+          ...pick('backgroundColor'),
+        });
       } else if (activeFloatingModule.type === 'circle-badge') {
-        actions.updateCircleBadge?.(activeFloatingModule.data.id, { backgroundColor: color });
+        actions.updateCircleBadge?.(activeFloatingModule.data.id, {
+          backgroundColor: color,
+          ...pick('backgroundColor'),
+        });
       }
     },
     [activeFloatingModule, actions, config.elements, state, setState, debouncedSaveToHistory]
@@ -211,14 +247,20 @@ export function useFloatingModuleHandlers<
 
   const handleShadowChange = useCallback(
     (id: string, patch: ShadowPatch, type: string) => {
+      // The shadow swatches carry no role: a picked colour takes the field off the brand.
+      const unbound = {
+        ...patch,
+        ...(patch.shadowColor !== undefined &&
+          bindPatch(bindOf(state, id), 'shadowColor', patch.shadowColor)),
+      };
       if (type === 'shape') {
-        actions.updateShape?.(id, patch);
+        actions.updateShape?.(id, unbound);
       } else if (type === 'user-image') {
-        actions.updateUserImage?.(id, patch);
+        actions.updateUserImage?.(id, unbound);
       } else if (type === 'text') {
         const additionalTexts = state.additionalTexts ?? [];
         if (additionalTexts.find((t) => t.id === id)) {
-          actions.updateAdditionalText?.(id, patch);
+          actions.updateAdditionalText?.(id, unbound);
         }
       }
     },
@@ -229,7 +271,11 @@ export function useFloatingModuleHandlers<
     (id: string, patch: { stroke?: string; strokeWidth?: number }) => {
       const additionalTexts = state.additionalTexts ?? [];
       if (additionalTexts.find((t) => t.id === id)) {
-        actions.updateAdditionalText?.(id, patch);
+        // The outline swatches carry no role: a picked colour takes the field off the brand.
+        actions.updateAdditionalText?.(id, {
+          ...patch,
+          ...(patch.stroke !== undefined && bindPatch(bindOf(state, id), 'stroke', patch.stroke)),
+        });
       }
     },
     [actions, state]
