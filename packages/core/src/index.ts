@@ -11,3 +11,12 @@ export {
   type BrandPack,
   type BrandSwatch,
 } from './brand/brandPack.js';
+export {
+  contrastRatio,
+  mixColors,
+  normalizeColor,
+  parseColor,
+  relativeLuminance,
+  toHex,
+  type Rgba,
+} from './color/color.js';
