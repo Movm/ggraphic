@@ -120,15 +120,34 @@ export function organisationBrandRouter(db: Db, config: Config): Router {
     const orgId = orgParam(req.params);
     await requireMembership(db, me(res), orgId, 'owner');
     const parsed = parseOr400(brandWriteBody, req.body);
+    // A key the client did not send keeps its stored value; an explicit null clears it.
+    const [stored] = await db.select().from(brandPacks).where(eq(brandPacks.organisationId, orgId));
+    const keep = <T>(sent: T | null | undefined, kept: T | null): T | null =>
+      sent === undefined ? kept : sent;
+    const storedFonts = (stored?.fonts ?? {}) as {
+      serif?: string | null;
+      condensed?: string | null;
+    };
+    const serif = keep(parsed.fonts.serif, storedFonts.serif ?? null);
+    const condensed = keep(parsed.fonts.condensed, storedFonts.condensed ?? null);
+    const storedAlt =
+      stored?.logoAltAssetId && stored.logoAltGround
+        ? { assetId: stored.logoAltAssetId, ground: stored.logoAltGround }
+        : null;
     // Old clients may still send a replaced family ("PT Sans"); store its successor.
     const body = settingsFromInput({
       ...parsed,
       fonts: {
         headline: aliasFontFamily(parsed.fonts.headline),
         body: aliasFontFamily(parsed.fonts.body),
-        serif: parsed.fonts.serif && aliasFontFamily(parsed.fonts.serif),
-        condensed: parsed.fonts.condensed && aliasFontFamily(parsed.fonts.condensed),
+        serif: serif && aliasFontFamily(serif),
+        condensed: condensed && aliasFontFamily(condensed),
       },
+      logoAlt: keep(parsed.logoAlt, storedAlt),
+      layout: keep(
+        parsed.layout,
+        stored?.layout ? clampBrandLayout(stored.layout as unknown as BrandLayout) : null
+      ),
     });
     if (!body) {
       throw new HttpError(400, {

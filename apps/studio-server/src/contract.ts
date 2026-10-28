@@ -215,16 +215,39 @@ export const brandSettingsBody = z.object({
 });
 
 /**
+ * The PUT's own shapes. A key an older client does not know is MISSING (keep what is stored),
+ * an explicit `null` clears it; the stored shape above always has them as `null`.
+ */
+const brandFontsWrite = z.object({
+  headline: fontFamily,
+  body: fontFamily,
+  serif: fontFamily.nullable().optional(),
+  condensed: fontFamily.nullable().optional(),
+});
+const brandLogoAltWrite = z
+  .object({ assetId: z.uuid(), ground: z.enum(['dark', 'light']) })
+  .nullable()
+  .optional();
+const brandLayoutWrite = brandLayoutSchema.nullable().optional();
+
+/**
  * What the brand form sends: three colours; the other five roles and the grounds are derived
  * by the server (`deriveBrandColors` / `deriveGrounds` in @ggraphic/core).
  */
 export const brandInputBody = z.object({
   name: z.string().trim().min(1).max(100),
   colors: z.strictObject({ primary: hexColor, secondary: hexColor, accent: hexColor }),
-  fonts: brandFontsBody,
+  fonts: brandFontsWrite,
   logoAssetId: z.uuid().nullable().default(null),
-  logoAlt: brandLogoAltBody,
-  layout: brandLayoutSchema.nullable().default(null),
+  logoAlt: brandLogoAltWrite,
+  layout: brandLayoutWrite,
+});
+
+/** The full body older clients still send; the same missing-keeps / null-clears rule. */
+const brandFullWriteBody = brandSettingsBody.extend({
+  fonts: brandFontsWrite,
+  logoAlt: brandLogoAltWrite,
+  layout: brandLayoutWrite,
 });
 
 /**
@@ -232,7 +255,7 @@ export const brandInputBody = z.object({
  * full body only the three inputs count; the rest is derived again, so what is stored never
  * depends on which shape arrived.
  */
-export const brandWriteBody = z.union([brandInputBody, brandSettingsBody]);
+export const brandWriteBody = z.union([brandInputBody, brandFullWriteBody]);
 
 export const fontUploadFields = z.object({
   family: fontFamily,
