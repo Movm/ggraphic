@@ -557,6 +557,7 @@ export const en: Messages = {
       legendRight: 'Right',
       legendBottom: 'Bottom',
       seriesName: (n: number) => `Name of series ${n}`,
+      valueOf: (name: string) => `Value ${name}`,
       removeSeries: (name: string) => `Remove ${name}`,
     },
     text: {
