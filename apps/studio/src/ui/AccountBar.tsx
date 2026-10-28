@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-/** The organisation switcher, the organisation's pages and logout, in every page header. */
-import { Avatar, Button, TopNav, Wordmark } from '@ggraphic/ui';
+/** The top bar of every page: the wordmark (to the start page) and the profile menu. */
+import { Button, Menu, TopNav, Wordmark, type MenuItem } from '@ggraphic/ui';
 import { useQueryClient } from '@tanstack/react-query';
 import { type MouseEvent } from 'react';
 
 import { api } from '../api/client';
-import { BRAND_PATH, navigate, PROJECTS_PATH } from '../router';
+import { BRAND_PATH, navigate } from '../router';
 import { useLoggedIn } from '../session/SessionContext';
 import { toast } from './toast';
 
@@ -21,8 +21,7 @@ function followInApp(e: MouseEvent<HTMLElement>) {
 export function AccountBar() {
   const { session, organisation } = useLoggedIn();
   const queryClient = useQueryClient();
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-  const link = (label: string, href: string) => ({ label, href, current: pathname === href });
+  const name = session.account.displayName || session.account.email;
 
   const logout = async () => {
     try {
@@ -37,32 +36,37 @@ export function AccountBar() {
     navigate('/');
   };
 
+  const items: MenuItem[] = [
+    ...(organisation.role === 'owner'
+      ? [{ label: 'Brand', onSelect: () => navigate(BRAND_PATH) }]
+      : []),
+    { label: 'Log out', onSelect: () => void logout() },
+  ];
+
   return (
     <TopNav
       className="studio-topnav"
-      label="Organisation and account"
+      label="Account"
       brand={
         <Wordmark href="/" size="sm">
           ggraphic Studio
         </Wordmark>
       }
-      links={[
-        link('Projects', PROJECTS_PATH),
-        ...(organisation.role === 'owner' ? [link('Brand', BRAND_PATH)] : []),
-      ]}
       onClick={followInApp}
       actions={
-        <>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void logout()}
-            title={session.account.email}
-          >
-            Log out
-          </Button>
-          <Avatar name={session.account.displayName || session.account.email} label="Account" />
-        </>
+        <Menu
+          trigger={
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label={`Account: ${name}`}
+              title={session.account.email}
+            >
+              {name}
+            </Button>
+          }
+          items={items}
+        />
       }
     />
   );
