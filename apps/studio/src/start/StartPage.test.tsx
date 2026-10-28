@@ -5,7 +5,11 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
+import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
+
 import { type StudioConfig } from '../api/client';
+import { studioBrand } from '../brand';
+import { rememberLogoSize } from '../logoSize';
 import { TEST_ORG, TEST_PROJECTS_URL, WithSession } from '../testing/session';
 import { Toaster } from '../ui/toast';
 
@@ -27,7 +31,15 @@ const DRAFT = {
 type Call = { method: string; url: string; body: Record<string, unknown> | null };
 
 /** `fetch` with a Studio server that knows one project after the first POST. */
-function fakeServer({ draft, listed = [] }: { draft: 'ok' | 'timeout'; listed?: unknown[] }) {
+function fakeServer({
+  draft,
+  listed = [],
+  pack = null,
+}: {
+  draft: 'ok' | 'timeout';
+  listed?: unknown[];
+  pack?: unknown;
+}) {
   const calls: Call[] = [];
   const project = (document: unknown, version: number) => ({
     id: 'p1',
@@ -54,6 +66,8 @@ function fakeServer({ draft, listed = [] }: { draft: 'ok' | 'timeout'; listed?: 
     if (url === TEST_PROJECTS_URL && method === 'GET') return json(200, { projects: listed });
     if (url === TEST_PROJECTS_URL && method === 'POST')
       return json(201, project(body?.document, 1));
+    if (url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET')
+      return json(200, { settings: null, assets: [], pack, bundledFonts: [] });
     if (url === '/api/ai/draft') {
       return draft === 'ok'
         ? json(200, DRAFT)
@@ -74,6 +88,20 @@ const headlineOf = (document: unknown) => {
   return { configId: page.configId, texts: Object.fromEntries(texts.map((t) => [t.id, t.text])) };
 };
 
+const BRAND_LOGO = '/api/brand-assets/' + 'b'.repeat(32) + '.png';
+const orgPack = {
+  ...studioBrand,
+  id: 'org-brand',
+  colors: { ...studioBrand.colors, primary: '#0F3A52' },
+  logo: { src: BRAND_LOGO, label: 'Org logo' },
+};
+
+const firstPageState = (calls: Call[]) => {
+  const post = calls.find((c) => c.method === 'POST' && c.url === TEST_PROJECTS_URL)!;
+  return (post.body?.['document'] as { pages: { state: Record<string, unknown> }[] }).pages[0]!
+    .state;
+};
+
 function renderStart(ai: boolean) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
@@ -88,7 +116,10 @@ function renderStart(ai: boolean) {
 
 describe('StartPage', () => {
   beforeEach(() => window.history.replaceState(null, '', '/'));
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    registerBrandPacks([studioBrand]);
+  });
 
   it('creates a project, fills it with the AI draft and opens it', async () => {
     const { fetchMock, calls } = fakeServer({ draft: 'ok' });
@@ -192,7 +223,10 @@ describe('StartPage', () => {
 
 describe('StartPage sections', () => {
   beforeEach(() => window.history.replaceState(null, '', '/'));
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    registerBrandPacks([studioBrand]);
+  });
 
   const listed = (id: string, name: string, updatedAt: string) => ({
     id,
@@ -248,6 +282,40 @@ describe('StartPage sections', () => {
     expect(document.formatId).toBe('slide-16-9');
     expect(headlineOf(document).configId).toBe('studio-quote');
     expect(calls.some((c) => c.url === '/api/ai/draft')).toBe(false);
+  });
+
+  it('builds a template project in the organisation brand, logo included', async () => {
+    rememberLogoSize(BRAND_LOGO, 400, 100);
+    const { fetchMock, calls } = fakeServer({ draft: 'ok', pack: orgPack });
+    vi.stubGlobal('fetch', fetchMock);
+    const user = userEvent.setup();
+    renderStart(false);
+
+    const templates = screen.getByRole('list', { name: 'Templates' });
+    await user.click(within(templates).getByRole('button', { name: /^Headline/ }));
+    await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
+
+    const state = firstPageState(calls);
+    expect(state['backgroundColor']).toBe('#0F3A52');
+    const images = state['userImageInstances'] as { id: string; src: string }[];
+    expect(images.map((i) => [i.id, i.src])).toEqual([['brand-logo', BRAND_LOGO]]);
+  });
+
+  it('builds a prompt project in the organisation brand', async () => {
+    rememberLogoSize(BRAND_LOGO, 400, 100);
+    const { fetchMock, calls } = fakeServer({ draft: 'ok', pack: orgPack });
+    vi.stubGlobal('fetch', fetchMock);
+    const user = userEvent.setup();
+    renderStart(false);
+
+    await user.type(screen.getByRole('textbox', { name: 'Describe your graphic' }), 'Pflanztag');
+    await user.click(screen.getByRole('button', { name: 'Create' }));
+    await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
+
+    const state = firstPageState(calls);
+    expect(state['backgroundColor']).toBe('#0F3A52');
+    const images = state['userImageInstances'] as { id: string }[];
+    expect(images.map((i) => i.id)).toEqual(['brand-logo']);
   });
 
   it('has no axe violations', async () => {
