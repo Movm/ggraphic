@@ -93,6 +93,21 @@ describe('readTemplateFile', () => {
     expect(result.status).toBe('ok');
   });
 
+  it('a slot key outside the offer-id pattern is invalid, even on a record entry', () => {
+    // `iconStates` keys are element ids too, but not held to the pattern as elements.
+    const state = { iconStates: { Icon_1: { x: 0.5, y: 0.5 } }, texts: [] };
+    const result = readTemplateFile(
+      with_({
+        pages: [{ state }],
+        slots: { Icon_1: { role: 'headline', budget: { maxWords: 5 } } },
+      })
+    );
+    expect(result.status).toBe('invalid');
+    if (result.status === 'invalid') expect(result.reason).toContain('slots.Icon_1');
+    // Without the slot the same file reads.
+    expect(readTemplateFile(with_({ pages: [{ state }] })).status).toBe('ok');
+  });
+
   it('a block naming a missing element is invalid', () => {
     const result = readTemplateFile(
       with_({ blocks: [{ id: 'b', title: { en: 'B' }, elementIds: ['nope'] }] })
