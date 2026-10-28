@@ -42,6 +42,10 @@ export async function loadBrandFonts(faces: readonly BrandFontFace[]): Promise<v
 
 export async function applyBrandPack(pack: BrandPack | null): Promise<void> {
   if (pack)
-    await Promise.all([loadBrandFonts(pack.fontFaces), pack.logo && measureLogo(pack.logo.src)]);
+    await Promise.all([
+      loadBrandFonts(pack.fontFaces),
+      pack.logo && measureLogo(pack.logo.src),
+      pack.logoAlt && measureLogo(pack.logoAlt.src),
+    ]);
   registerBrandPacks(pack ? [pack, studioBrand] : [studioBrand]);
 }

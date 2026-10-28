@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
+import { DEFAULT_BRAND_LAYOUT } from '@ggraphic/core';
 
 import { type Role, type Session } from '../api/client';
 import { studioBrand } from '../brand';
@@ -152,8 +153,10 @@ describe('BrandPage', () => {
         secondary: studioBrand.colors.secondary,
         accent: studioBrand.colors.accent,
       },
-      fonts: { headline: 'Raleway', body: 'Instrument Sans' },
+      fonts: { headline: 'Raleway', body: 'Instrument Sans', serif: null, condensed: null },
       logoAssetId: null,
+      logoAlt: null,
+      layout: DEFAULT_BRAND_LAYOUT,
     });
   });
 
@@ -238,7 +241,7 @@ describe('BrandPage', () => {
   it('shows and saves the successors of replaced font families', async () => {
     const settings = {
       ...defaultSettings('Org'),
-      fonts: { headline: 'Raleway', body: 'PT Sans' },
+      fonts: { headline: 'Raleway', body: 'PT Sans', serif: null, condensed: null },
     };
     const calls = stubServer((method, url, body) => {
       if (url !== `/api/orgs/${TEST_ORG}/brand-pack`) return undefined;
@@ -251,7 +254,12 @@ describe('BrandPage', () => {
     await user.click(screen.getByRole('button', { name: 'Save brand' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
     const saved = calls.find((c) => c.method === 'PUT')!.body as { fonts: Record<string, string> };
-    expect(saved.fonts).toEqual({ headline: 'Raleway', body: 'Instrument Sans' });
+    expect(saved.fonts).toEqual({
+      headline: 'Raleway',
+      body: 'Instrument Sans',
+      serif: null,
+      condensed: null,
+    });
   });
 
   it('blocks saving an invalid colour', async () => {
@@ -265,6 +273,86 @@ describe('BrandPage', () => {
     await user.type(accent, 'pink');
     expect(screen.getByRole('alert')).toHaveTextContent('#RRGGBB');
     expect(screen.getByRole('button', { name: 'Save brand' })).toBeDisabled();
+  });
+
+  it('saves margin, logo corner and logo size', async () => {
+    const calls = stubServer((method, url, body) => {
+      if (url !== `/api/orgs/${TEST_ORG}/brand-pack`) return undefined;
+      if (method === 'GET') return json(200, empty);
+      return json(200, { ...empty, settings: body });
+    });
+    const user = userEvent.setup();
+    renderWith(<BrandPage />);
+    const margin = await screen.findByLabelText(/^Margin/);
+    fireEvent.change(margin, { target: { value: '10' } });
+    await user.click(screen.getByRole('radio', { name: 'Top left' }));
+    await user.click(screen.getByRole('button', { name: 'Save brand' }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
+    expect((calls.find((c) => c.method === 'PUT')!.body as { layout: unknown }).layout).toEqual({
+      margin: 0.1,
+      logoCorner: 'top-left',
+      logoMaxWidth: 0.22,
+      logoMaxHeight: 0.08,
+    });
+  });
+
+  it('serif and condensed default to the fallback and save null', async () => {
+    const calls = stubServer((method, url, body) => {
+      if (url !== `/api/orgs/${TEST_ORG}/brand-pack`) return undefined;
+      if (method === 'GET') return json(200, empty);
+      return json(200, { ...empty, settings: body });
+    });
+    const user = userEvent.setup();
+    renderWith(<BrandPage />);
+    expect(await screen.findByLabelText('Serif')).toHaveTextContent('Same as quotes');
+    expect(screen.getByLabelText('Condensed')).toHaveTextContent('Same as headlines');
+    await user.click(screen.getByRole('button', { name: 'Save brand' }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
+    const fonts = (
+      calls.find((c) => c.method === 'PUT')!.body as { fonts: Record<string, unknown> }
+    ).fonts;
+    expect(fonts.serif).toBeNull();
+    expect(fonts.condensed).toBeNull();
+  });
+
+  it('a second logo needs a ground', async () => {
+    const logo = (id: string) => ({
+      id,
+      kind: 'logo',
+      url: `/api/brand-assets/${id}.png`,
+      contentType: 'image/png',
+      size: 10,
+      family: null,
+      weight: null,
+      style: null,
+      licence: null,
+    });
+    const withLogos = {
+      ...empty,
+      assets: [
+        logo('11111111-1111-4111-8111-111111111111'),
+        logo('22222222-2222-4222-8222-222222222222'),
+      ],
+    };
+    stubServer((method, url) =>
+      url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET'
+        ? json(200, withLogos)
+        : undefined
+    );
+    // jsdom lacks the pointer-capture and scroll APIs Radix Select calls.
+    Object.assign(Element.prototype, {
+      hasPointerCapture: () => false,
+      releasePointerCapture: () => undefined,
+      setPointerCapture: () => undefined,
+      scrollIntoView: () => undefined,
+    });
+    const user = userEvent.setup();
+    renderWith(<BrandPage />);
+    await user.click(await screen.findByLabelText('Second logo'));
+    await user.click(await screen.findByRole('option', { name: 'Logo 2 (PNG)' }));
+    expect(screen.getByRole('button', { name: 'Save brand' })).toBeDisabled();
+    await user.click(screen.getByRole('radio', { name: 'For dark grounds' }));
+    expect(screen.getByRole('button', { name: 'Save brand' })).toBeEnabled();
   });
 
   it('has no axe violations on the brand page', async () => {
