@@ -197,7 +197,15 @@ function OpenProject({
         ) : null}
         {autosave.status === 'refused' ? (
           <Alert tone="danger" role="alert" className="studio-banner">
-            <span>{messages().shell.schemaRefusal.newer}</span>
+            <span>
+              This project was saved by a newer version of ggraphic. It can no longer be edited
+              here: reload to continue.
+            </span>
+            <span className="studio-banner__actions">
+              <Button variant="outline" size="sm" onClick={onReload}>
+                Reload
+              </Button>
+            </span>
           </Alert>
         ) : null}
         {autosave.status === 'error' ? (
@@ -219,6 +227,7 @@ function OpenProject({
           onExport={NOOP}
           onCancel={() => void leave()}
           galleryAutoSave={false}
+          readOnly={autosave.status === 'refused'}
           exportApiRef={exportApi}
           chromeLeft={
             <button
