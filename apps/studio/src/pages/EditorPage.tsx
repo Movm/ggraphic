@@ -6,7 +6,7 @@ import { messages } from '@ggraphic/editor/i18n/messages';
 import { CanvasEditorShell } from '@ggraphic/editor/components/CanvasEditor/CanvasEditorShell';
 import { type CanvasEditorExportApi } from '@ggraphic/editor/components/CanvasEditor/types';
 import { Alert, Button } from '@ggraphic/ui';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useMemo, useRef } from 'react';
 import { PiArrowLeft } from 'react-icons/pi';
 
@@ -17,7 +17,7 @@ import { rebindStudioDocument } from '../editor/rebind';
 import { createStudioServices } from '../editor/services';
 import { useAutosave, type SaveStatus } from '../editor/useAutosave';
 import { logoSizeOf } from '../logoSize';
-import { navigate } from '../router';
+import { navigate, TRASH_PATH } from '../router';
 
 const STATUS_TEXT: Record<SaveStatus, string> = {
   saved: 'All changes saved',
@@ -26,6 +26,7 @@ const STATUS_TEXT: Record<SaveStatus, string> = {
   error: 'Not saved',
   conflict: 'Changed elsewhere',
   refused: 'Not saved',
+  gone: 'Not saved',
 };
 
 const NOOP = () => {};
@@ -40,6 +41,11 @@ export function EditorPage({ projectId, config }: { projectId: string; config: S
     refetchOnWindowFocus: false,
     retry: false,
   });
+  const restore = useMutation({
+    mutationFn: () => api.restoreProject(projectId),
+    onSuccess: () => void project.refetch(),
+  });
+  // The project's own organisation, not the session's: legacy multi-organisation accounts.
   const organisationId = project.data?.organisationId ?? null;
   // The project's organisation brand, registered before the editor mounts.
   const brand = useQuery({
@@ -72,12 +78,40 @@ export function EditorPage({ projectId, config }: { projectId: string; config: S
     );
   }
   if (project.isError) {
-    const missing = project.error instanceof ApiError && project.error.status === 404;
+    const failure = project.error instanceof ApiError ? project.error : null;
+    if (failure?.code === 'trashed') {
+      return (
+        <main className="ui-root studio-standalone">
+          <Alert tone="warning" role="alert">
+            <p className="studio-alert-text">This project is in the Trash.</p>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={restore.isPending}
+              onClick={() => restore.mutate()}
+            >
+              Restore
+            </Button>{' '}
+            <a
+              href={TRASH_PATH}
+              onClick={(e) => {
+                e.preventDefault();
+                navigate(TRASH_PATH);
+              }}
+            >
+              Open the Trash
+            </a>
+          </Alert>
+        </main>
+      );
+    }
     return (
       <main className="ui-root studio-standalone">
         <Alert tone="danger">
           <p className="studio-alert-text">
-            {missing ? 'This project does not exist.' : 'The project could not be opened.'}
+            {failure?.status === 404
+              ? 'This project does not exist.'
+              : 'The project could not be opened.'}
           </p>
           <Button variant="outline" size="sm" onClick={() => navigate('/')}>
             Back to projects
@@ -174,6 +208,13 @@ function OpenProject({
 
   const leave = async () => {
     await autosave.flush();
+    // Whatever blocked the save (trashed, newer format, conflict, network): the edits would be lost.
+    if (
+      autosave.hasUnsaved() &&
+      !window.confirm('Your latest changes are not saved. Leave without saving them?')
+    ) {
+      return;
+    }
     navigate('/');
   };
 
@@ -205,6 +246,23 @@ function OpenProject({
             <span className="studio-banner__actions">
               <Button variant="outline" size="sm" onClick={onReload}>
                 Reload
+              </Button>
+            </span>
+          </Alert>
+        ) : null}
+        {autosave.status === 'gone' ? (
+          <Alert tone="danger" role="alert" className="studio-banner">
+            <span>
+              This project was moved to the trash or deleted. Restore it from the{' '}
+              {/* A new tab: leaving this one would drop the unsaved edits. */}
+              <a href={TRASH_PATH} target="_blank" rel="noreferrer">
+                Trash
+              </a>{' '}
+              to keep your changes.
+            </span>
+            <span className="studio-banner__actions">
+              <Button variant="outline" size="sm" onClick={autosave.retry}>
+                Try again
               </Button>
             </span>
           </Alert>

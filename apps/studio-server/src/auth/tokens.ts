@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 
-/** 256 random bits, base64url. Used for session cookies, CSRF and invitation tokens. */
+/** 256 random bits, base64url. Used for session cookies, CSRF tokens and the setup token. */
 export function randomToken(): string {
   return randomBytes(32).toString('base64url');
 }

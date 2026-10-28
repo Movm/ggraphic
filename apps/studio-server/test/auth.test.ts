@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-// Accounts, sessions, CSRF, rate limits, invitations and members. Needs a real Postgres.
+// Accounts, sessions, CSRF, rate limits and registration. Needs a real Postgres.
 import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../src/app.ts';
@@ -8,8 +8,7 @@ import { createDb } from '../src/db/client.ts';
 import { runMigrations } from '../src/db/migrate.ts';
 import {
   DEFAULT_ORG,
-  invite,
-  otherOrganisation,
+  memberOf,
   PASSWORD,
   resetDb,
   setupAdmin,
@@ -59,7 +58,7 @@ describe.skipIf(!hasDb)('accounts and sessions (Postgres)', () => {
       expect(res.body.organisations).toEqual([
         { id: DEFAULT_ORG, name: 'My organisation', role: 'owner' },
       ]);
-      expect(res.body.canCreateOrganisations).toBe(true);
+      expect(res.body.canCreateOrganisations).toBe(false);
       expect((await request(app).get('/api/auth/session')).body.setupRequired).toBe(false);
     });
 
@@ -325,157 +324,37 @@ describe.skipIf(!hasDb)('accounts and sessions (Postgres)', () => {
     });
   });
 
-  describe('invitations', () => {
-    it('creates an account from an admin invitation, once', async () => {
+  describe('one organisation per person', () => {
+    it('has no routes for organisations, members or invitations', async () => {
       const admin = await setupAdmin(app);
-      const inv = await admin
-        .post(`/api/orgs/${DEFAULT_ORG}/invitations`)
-        .send({ role: 'editor' })
+      const ed = await memberOf(app, pool, DEFAULT_ORG, 'ed@example.org');
+      for (const who of [admin, ed]) {
+        await who.post('/api/orgs').send({ name: 'Mine' }).expect(404);
+        await who.get(`/api/orgs/${DEFAULT_ORG}/members`).expect(404);
+        await who
+          .patch(`/api/orgs/${DEFAULT_ORG}/members/${admin.accountId}`)
+          .send({ role: 'editor' })
+          .expect(404);
+        await who.delete(`/api/orgs/${DEFAULT_ORG}/members/${admin.accountId}`).expect(404);
+        await who.get(`/api/orgs/${DEFAULT_ORG}/invitations`).expect(404);
+        await who.post(`/api/orgs/${DEFAULT_ORG}/invitations`).send({}).expect(404);
+        await who.get('/api/auth/invitations/token').expect(404);
+        await who.post('/api/auth/invitations/token/accept').send({}).expect(404);
+      }
+      const { rows } = await pool.query('SELECT count(*)::int AS n FROM memberships');
+      // The admin's, the editor's in the default organisation and the editor's own.
+      expect(rows[0].n).toBe(3);
+    });
+
+    it('never offers to create organisations, not even to the admin or with registration open', async () => {
+      const open = createApp({ config: { ...config, allowRegistration: true }, db });
+      const admin = await setupAdmin(open);
+      expect((await admin.get('/api/auth/session')).body.canCreateOrganisations).toBe(false);
+      const res = await request(open)
+        .post('/api/auth/register')
+        .send(signup('b@example.org'))
         .expect(201);
-      expect(inv.body).toMatchObject({ role: 'editor', allowsSignup: true });
-      const token = String(inv.body.url).replace('/invite/', '');
-      const { rows } = await pool.query('SELECT token_hash FROM invitations');
-      expect(rows[0].token_hash).not.toBe(token);
-
-      const info = await request(app).get(`/api/auth/invitations/${token}`).expect(200);
-      expect(info.body).toEqual({
-        organisationName: 'My organisation',
-        role: 'editor',
-        allowsSignup: true,
-      });
-
-      const accepted = await request(app)
-        .post(`/api/auth/invitations/${token}/accept`)
-        .send(signup('ed@example.org'))
-        .expect(201);
-      expect(accepted.body.organisations).toEqual([
-        { id: DEFAULT_ORG, name: 'My organisation', role: 'editor' },
-      ]);
-      await request(app).get(`/api/auth/invitations/${token}`).expect(404);
-      await request(app)
-        .post(`/api/auth/invitations/${token}/accept`)
-        .send(signup('again@example.org'))
-        .expect(404);
-      const listed = await admin.get(`/api/orgs/${DEFAULT_ORG}/invitations`).expect(200);
-      expect(listed.body.invitations).toEqual([]);
-    });
-
-    it('rejects expired and unknown links', async () => {
-      const admin = await setupAdmin(app);
-      const inv = await admin.post(`/api/orgs/${DEFAULT_ORG}/invitations`).send({}).expect(201);
-      const token = String(inv.body.url).replace('/invite/', '');
-      await pool.query("UPDATE invitations SET expires_at = now() - interval '1 second'");
-      await request(app).get(`/api/auth/invitations/${token}`).expect(404);
-      await request(app)
-        .post(`/api/auth/invitations/${token}/accept`)
-        .send(signup('x@example.org'))
-        .expect(404);
-      await request(app).get('/api/auth/invitations/nonsense').expect(404);
-    });
-
-    it('lets a non-admin owner invite existing accounts only while registration is closed', async () => {
-      const admin = await setupAdmin(app);
-      const bob = await otherOrganisation(app, admin, 'bob@example.org');
-      const inv = await bob.post(`/api/orgs/${bob.orgId}/invitations`).send({}).expect(201);
-      expect(inv.body.allowsSignup).toBe(false);
-      const token = String(inv.body.url).replace('/invite/', '');
-      const refused = await request(app)
-        .post(`/api/auth/invitations/${token}/accept`)
-        .send(signup('new@example.org'))
-        .expect(403);
-      expect(refused.body.error).toBe('signup_not_allowed');
-      // The refusal did not use the link up: an existing account can still accept it.
-      const joined = await admin.post(`/api/auth/invitations/${token}/accept`).send({}).expect(200);
-      expect(joined.body.organisations.map((o: { id: string }) => o.id)).toContain(bob.orgId);
-      const { rows } = await pool.query(
-        "SELECT count(*)::int AS n FROM accounts WHERE email = 'new@example.org'"
-      );
-      expect(rows[0].n).toBe(0);
-    });
-
-    it('tells a new account that the email is taken', async () => {
-      const admin = await setupAdmin(app);
-      const inv = await admin.post(`/api/orgs/${DEFAULT_ORG}/invitations`).send({}).expect(201);
-      const token = String(inv.body.url).replace('/invite/', '');
-      const res = await request(app)
-        .post(`/api/auth/invitations/${token}/accept`)
-        .send(signup('admin@example.org'))
-        .expect(409);
-      expect(res.body.error).toBe('email_taken');
-      await request(app).get(`/api/auth/invitations/${token}`).expect(200);
-    });
-
-    it('lets owners revoke an open invitation', async () => {
-      const admin = await setupAdmin(app);
-      const inv = await admin.post(`/api/orgs/${DEFAULT_ORG}/invitations`).send({}).expect(201);
-      await admin.delete(`/api/orgs/${DEFAULT_ORG}/invitations/${inv.body.id}`).expect(204);
-      await admin.delete(`/api/orgs/${DEFAULT_ORG}/invitations/${inv.body.id}`).expect(404);
-      const token = String(inv.body.url).replace('/invite/', '');
-      await request(app).get(`/api/auth/invitations/${token}`).expect(404);
-    });
-  });
-
-  describe('members', () => {
-    it('lists, changes roles and removes, keeping one owner', async () => {
-      const admin = await setupAdmin(app);
-      const ed = await invite(app, admin, DEFAULT_ORG, 'ed@example.org');
-      const members = await ed.get(`/api/orgs/${DEFAULT_ORG}/members`).expect(200);
-      expect(members.body.members.map((m: { role: string }) => m.role).sort()).toEqual([
-        'editor',
-        'owner',
-      ]);
-      expect(JSON.stringify(members.body)).not.toContain('password');
-
-      // Editors cannot manage members.
-      await ed
-        .patch(`/api/orgs/${DEFAULT_ORG}/members/${admin.accountId}`)
-        .send({ role: 'editor' })
-        .expect(403);
-      await ed.delete(`/api/orgs/${DEFAULT_ORG}/members/${admin.accountId}`).expect(403);
-      await ed.post(`/api/orgs/${DEFAULT_ORG}/invitations`).send({}).expect(403);
-      await ed.get(`/api/orgs/${DEFAULT_ORG}/invitations`).expect(403);
-
-      // The only owner cannot step down or leave.
-      const last = await admin
-        .patch(`/api/orgs/${DEFAULT_ORG}/members/${admin.accountId}`)
-        .send({ role: 'editor' })
-        .expect(409);
-      expect(last.body.error).toBe('last_owner');
-      await admin.delete(`/api/orgs/${DEFAULT_ORG}/members/${admin.accountId}`).expect(409);
-
-      await admin
-        .patch(`/api/orgs/${DEFAULT_ORG}/members/${ed.accountId}`)
-        .send({ role: 'owner' })
-        .expect(204);
-      await admin
-        .patch(`/api/orgs/${DEFAULT_ORG}/members/${admin.accountId}`)
-        .send({ role: 'editor' })
-        .expect(204);
-      await ed.delete(`/api/orgs/${DEFAULT_ORG}/members/${admin.accountId}`).expect(204);
-      await admin.get(`/api/orgs/${DEFAULT_ORG}/members`).expect(404);
-      await ed
-        .patch(`/api/orgs/${DEFAULT_ORG}/members/${ed.accountId}`)
-        .send({ role: 'nope' })
-        .expect(400);
-      await ed
-        .delete(`/api/orgs/${DEFAULT_ORG}/members/00000000-0000-4000-8000-00000000abcd`)
-        .expect(404);
-    });
-
-    it('lets an editor leave', async () => {
-      const admin = await setupAdmin(app);
-      const ed = await invite(app, admin, DEFAULT_ORG, 'ed@example.org');
-      await ed.delete(`/api/orgs/${DEFAULT_ORG}/members/${ed.accountId}`).expect(204);
-      await ed.get(`/api/orgs/${DEFAULT_ORG}/projects`).expect(404);
-    });
-
-    it('lets only the instance admin create organisations while registration is closed', async () => {
-      const admin = await setupAdmin(app);
-      const ed = await invite(app, admin, DEFAULT_ORG, 'ed@example.org');
-      await ed.post('/api/orgs').send({ name: 'Mine' }).expect(403);
-      const created = await admin.post('/api/orgs').send({ name: 'Second' }).expect(201);
-      expect(created.body).toMatchObject({ name: 'Second', role: 'owner' });
-      await admin.post('/api/orgs').send({ name: '' }).expect(400);
+      expect(res.body.canCreateOrganisations).toBe(false);
     });
   });
 });

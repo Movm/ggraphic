@@ -239,7 +239,7 @@ describe('StartPage sections', () => {
     thumbnailUrl: null,
   });
 
-  it('lists recent projects newest first as links to the editor', async () => {
+  it('lists the projects newest first as links to the editor', async () => {
     const { fetchMock } = fakeServer({
       draft: 'ok',
       listed: [
@@ -250,19 +250,34 @@ describe('StartPage sections', () => {
     vi.stubGlobal('fetch', fetchMock);
     renderStart(true);
 
-    const recent = await screen.findByRole('list', { name: 'Recent projects' });
+    const recent = await screen.findByRole('list', { name: 'Projects' });
     const links = within(recent).getAllByRole('link');
     expect(links.map((l) => l.getAttribute('href'))).toEqual(['/p/new', '/p/old']);
-    expect(links[0]).toHaveTextContent('New poster');
-    expect(screen.getByRole('link', { name: 'Show all' })).toHaveAttribute('href', '/projects');
+    expect(links[0]).toHaveAccessibleName(/^Open New poster/);
   });
 
-  it('shows no recent section without projects', async () => {
+  it('shows an empty state instead of the grid without projects', async () => {
     const { fetchMock, calls } = fakeServer({ draft: 'ok' });
     vi.stubGlobal('fetch', fetchMock);
     renderStart(true);
     await waitFor(() => expect(calls.some((c) => c.url === TEST_PROJECTS_URL)).toBe(true));
-    expect(screen.queryByRole('heading', { name: 'Recent projects' })).not.toBeInTheDocument();
+    expect(await screen.findByText(/No projects yet/)).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Projects' })).not.toBeInTheDocument();
+  });
+
+  it('puts the templates between the prompt and the project grid', async () => {
+    const { fetchMock } = fakeServer({
+      draft: 'ok',
+      listed: [listed('a', 'A poster', '2026-10-01T10:00:00.000Z')],
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderStart(true);
+    const grid = await screen.findByRole('list', { name: 'Projects' });
+    const prompt = screen.getByRole('textbox', { name: 'Describe your graphic' });
+    const templates = screen.getByRole('list', { name: 'Templates' });
+    const before = Node.DOCUMENT_POSITION_FOLLOWING;
+    expect(prompt.compareDocumentPosition(templates) & before).toBeTruthy();
+    expect(templates.compareDocumentPosition(grid) & before).toBeTruthy();
   });
 
   it('creates a project from a template in the chosen format', async () => {
@@ -327,7 +342,7 @@ describe('StartPage sections', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
     const { container } = renderStart(true);
-    await screen.findByRole('list', { name: 'Recent projects' });
+    await screen.findByRole('list', { name: 'Projects' });
     expect(calls.length).toBeGreaterThan(0);
     // Contrast needs real layout and stylesheets; it is measured in the browser.
     const results = await axe(container, {
