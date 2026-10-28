@@ -28,7 +28,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const PACKAGES = ['schema', 'core', 'editor'];
+export const PACKAGES = ['schema', 'core', 'editor', 'collab'];
 
 const SPEC =
   /(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s+|\brequire\s*\(\s*)(['"])(\.{1,2}(?:\/[^'"]*)?)\1/g;

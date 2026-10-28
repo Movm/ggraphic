@@ -5,8 +5,7 @@
     "declaration": true,
     "declarationMap": false,
     "outDir": "./dist",
-    "rootDir": "./src",
-    "types": []
+    "rootDir": "./src"
   },
   "include": ["src/**/*"],
   "exclude": [

@@ -15,6 +15,7 @@
 // (cannot name WritableNonArrayDraft without a .pnpm path).
 import type {} from 'immer';
 import { immer } from 'zustand/middleware/immer';
+
 import { createStore } from 'zustand/vanilla';
 
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
