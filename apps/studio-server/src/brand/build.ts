@@ -72,7 +72,8 @@ export function buildBrandPack(
     name: settings.name,
     colors: { ...c },
     backgrounds,
-    defaultBackground: backgrounds[0]!.color,
+    // The brand form promises the primary colour as the default ground.
+    defaultBackground: c.primary,
     palette: unique([
       role(settings, 'primary'),
       role(settings, 'secondary'),
