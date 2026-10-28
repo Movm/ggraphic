@@ -532,6 +532,46 @@ describe('render gate stage 1', () => {
     });
   });
 
+  describe('what the renderer draws', () => {
+    it('a text with no font size fails bounds closed', () => {
+      const found = checkTemplate(
+        template({}, { additionalTexts: [{ ...headline, fontSize: undefined }] }),
+        context()
+      );
+      expect(found.map((p) => p.rule)).toContain('bounds');
+      expect(found.find((p) => p.rule === 'bounds')?.detail).toContain('font size unknown');
+    });
+
+    it('a slotted text is measured by its placeholder too, not by maxLines alone', () => {
+      const many = { ...headline, text: 'a\nb\nc\nd\ne\nf\ng', y: 0.7 };
+      const t = template(
+        { placeholders: { en: { headline: many.text } } },
+        { additionalTexts: [many] }
+      );
+      // maxLines 1 would fit above the bottom edge; seven lines do not.
+      const slots = { headline: { role: 'headline', budget: { maxLines: 1, maxChars: 60 } } };
+      expect(rules(t, context({ slots }))).toContain('bounds');
+    });
+
+    it('an icon listed in selectedIcons needs an iconStates entry to be placed', () => {
+      const t = template(
+        {},
+        { selectedIcons: ['tabler:tree'], iconStates: {}, layerOrder: ['logo', 'headline'] }
+      );
+      const found = checkTemplate(t, context());
+      expect(found.map((p) => p.rule)).toEqual(['bounds']);
+      expect(found[0]?.detail).toContain('tabler:tree');
+      const ok = template(
+        {},
+        {
+          selectedIcons: ['tabler:tree'],
+          iconStates: { 'tabler:tree': { iconId: 'tabler:tree', x: 0.2, y: 0.5, scale: 1 } },
+        }
+      );
+      expect(rules(ok)).toEqual([]);
+    });
+  });
+
   describe('every colour string is a colour', () => {
     const chip = (over: Obj) => ({ id: 'chip', x: 0.9, y: 0, width: 0.1, height: 0.05, ...over });
     it.each(['red', 'hsl(10, 50%, 50%)'])('%s on a shape is unbound', (fill) => {

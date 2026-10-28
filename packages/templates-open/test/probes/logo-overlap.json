@@ -65,11 +65,11 @@
           {
             "id": "headline",
             "type": "header",
-            "text": "A clear headline",
+            "text": "Hello",
             "x": 0.75,
             "y": 0.85,
             "width": 0.25,
-            "fontSize": 0.096296,
+            "fontSize": 0.05,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -184,13 +184,13 @@
   "logoCorners": ["bottom-right", "top-right"],
   "placeholders": {
     "en": {
-      "headline": "A clear headline",
+      "headline": "Hello",
       "subline": "One line that says why it matters",
       "body": "Add the details here: what, when and where.",
       "cta": "Find out more"
     },
     "de": {
-      "headline": "Eine klare Überschrift",
+      "headline": "Hello",
       "subline": "Eine Zeile, die sagt, warum es zählt",
       "body": "Hier stehen die Einzelheiten: was, wann und wo.",
       "cta": "Mehr erfahren"
