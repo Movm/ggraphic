@@ -20,6 +20,8 @@ const MAX_BATCH_TOTAL_BYTES = 4 * 1024 * 1024;
 const BATCH_CONCURRENCY = 4;
 /** Background warms of cached searches running at once, across all searches. */
 const MAX_BACKGROUND_WARMS = 4;
+/** How long a caller that needs the outcome waits for a free warm slot before warming anyway. */
+const MAX_SLOT_WAIT_MS = 3000;
 
 /** How long we stay off a rate-limiting upstream when it names no Retry-After. */
 const DEFAULT_RETRY_AFTER_S = 10;
@@ -395,20 +397,34 @@ export function createIconifyClient(
   /**
    * Runs a warm once per search key. A background caller that finds one running, or the cap of
    * `MAX_BACKGROUND_WARMS` reached, returns at once. A caller that needs the outcome (a refresh,
-   * the first search) joins the running warm and waits for it, or waits for a free slot first;
-   * the upstream's own timeout bounds every wait.
+   * the first search) joins the running warm and waits for it, or waits for a free slot for at
+   * most `MAX_SLOT_WAIT_MS` and then warms anyway, one over the cap: the cap limits background
+   * warming, a person waiting on a result is never refused.
    */
   async function warmOnce(
     key: string,
     run: () => Promise<void>,
     background: boolean
   ): Promise<void> {
-    for (;;) {
-      const running = warming.get(key);
-      if (running) return background ? undefined : running;
-      if (warming.size < MAX_BACKGROUND_WARMS) break;
-      if (background) return;
-      await Promise.race(warming.values());
+    let expired = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<void>((resolve) => {
+      timer = setTimeout(() => {
+        expired = true;
+        resolve();
+      }, MAX_SLOT_WAIT_MS);
+    });
+    try {
+      for (;;) {
+        const running = warming.get(key);
+        if (running) return background ? undefined : running;
+        if (warming.size < MAX_BACKGROUND_WARMS) break;
+        if (background) return;
+        if (expired) break;
+        await Promise.race([...warming.values(), timeout]);
+      }
+    } finally {
+      clearTimeout(timer);
     }
     const done = run().finally(() => warming.delete(key));
     warming.set(key, done);
