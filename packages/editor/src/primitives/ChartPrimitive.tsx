@@ -150,7 +150,7 @@ export function buildChartElement(recharts: any, chart: ChartInstance) {
   } = recharts;
   const { width, height, data, colors, chartType, showGrid, showLegend, showValues } = chart;
   const color = (i: number) => colors[i % colors.length];
-  // Auf dunklem Grund (Folie in Tanne) stehen Achsen, Legende und Werte weiß.
+  // Auf dunklem Grund (dunkle Folie) stehen Achsen, Legende und Werte weiß.
   const ink = chartInk(chart);
   const tick = { ...AXIS_TICK, fill: ink };
   const valueLabel = { ...VALUE_LABEL, fill: ink };
