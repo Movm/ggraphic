@@ -68,8 +68,40 @@ export const draftSchema = z.object({
     .transform((v) => v || undefined),
 });
 
+const offerId = z.string().regex(/^[a-z0-9-]{1,64}$/);
+const offerText = z.string().trim().min(1).max(200);
+
+/** The templates and colour worlds the model may choose from, and the brief to choose for. */
+export const pickBody = z.object({
+  brief: z.string().trim().min(1).max(4000),
+  templates: z
+    .array(
+      z.object({
+        id: offerId,
+        label: offerText,
+        description: offerText,
+        slots: z
+          .array(z.object({ id: offerId, label: offerText, maxChars: z.int().min(1).max(2000) }))
+          .min(1)
+          .max(8),
+      })
+    )
+    .min(1)
+    .max(12),
+  schemes: z.array(z.object({ id: offerId, label: offerText })).max(8),
+  format: z
+    .object({ width: z.int().min(1).max(20_000), height: z.int().min(1).max(20_000) })
+    .nullish(),
+});
+
+export const pickSchema = z.object({
+  templateId: z.string(),
+  schemeId: z.string().nullable(),
+  fills: z.record(z.string(), z.string()),
+});
+
 export const configSchema = z.object({
-  features: z.object({ ai: z.boolean() }),
+  features: z.object({ ai: z.boolean(), removeBackground: z.boolean() }),
   limits: z.object({
     uploadBytes: z.int(),
     thumbnailBytes: z.int(),
@@ -217,6 +249,8 @@ export type UpdateProjectBody = z.infer<typeof updateProjectBody>;
 export type ProjectSummary = z.infer<typeof projectSummarySchema>;
 export type Project = z.infer<typeof projectSchema>;
 export type DraftBody = z.infer<typeof draftBody>;
+export type PickBody = z.infer<typeof pickBody>;
+export type Pick = z.infer<typeof pickSchema>;
 export type Draft = z.output<typeof draftSchema>;
 export type StudioConfig = z.infer<typeof configSchema>;
 export type Upload = z.infer<typeof uploadSchema>;

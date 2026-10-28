@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { describe, expect, it, vi } from 'vitest';
-import { createDraft, parseDraft } from '../src/ai.ts';
+import { createCallObject, createDraft, parseDraft } from '../src/ai.ts';
 import type { AiConfig } from '../src/config.ts';
 import { HttpError } from '../src/http.ts';
 
@@ -124,5 +124,107 @@ describe('createDraft', () => {
       502,
       'ai_timeout'
     );
+  });
+});
+
+describe('createCallObject', () => {
+  const validate = (input: unknown) =>
+    typeof input === 'object' && input !== null && 'n' in input && input.n === 1
+      ? { ok: true as const, value: 1 }
+      : { ok: false as const, error: 'n must be 1' };
+  const call = { system: 'SYS', prompt: 'ASK', schema: { type: 'object' }, validate };
+  const bodyOf = (fetchMock: ReturnType<typeof vi.fn<typeof fetch>>, n: number) =>
+    JSON.parse(fetchMock.mock.calls[n]![1]?.body as string) as {
+      messages: { role: string; content: string }[];
+      response_format: unknown;
+    };
+
+  it('asks in JSON mode with the schema in the system prompt and returns the validated value', async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(completion('{"n":1}'));
+    expect(await createCallObject(ai, fetchMock)(call)).toEqual({ ok: true, data: 1 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const body = bodyOf(fetchMock, 0);
+    expect(body.response_format).toEqual({ type: 'json_object' });
+    expect(body.messages[0]).toMatchObject({ role: 'system' });
+    expect(body.messages[0]!.content).toContain('SYS');
+    expect(body.messages[0]!.content).toContain('"type":"object"');
+    expect(body.messages[1]).toEqual({ role: 'user', content: 'ASK' });
+  });
+
+  it('tolerates code fences', async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(completion('```json\n{"n":1}\n```'));
+    expect(await createCallObject(ai, fetchMock)(call)).toEqual({ ok: true, data: 1 });
+  });
+
+  it('repairs an invalid answer, quoting the validator error', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(completion('{"n":2}'))
+      .mockResolvedValueOnce(completion('{"n":1}'));
+    expect(await createCallObject(ai, fetchMock)(call)).toEqual({ ok: true, data: 1 });
+    const messages = bodyOf(fetchMock, 1).messages;
+    expect(messages.slice(2)).toEqual([
+      { role: 'assistant', content: '{"n":2}' },
+      {
+        role: 'user',
+        content:
+          'Your answer was invalid: n must be 1. Answer again with the corrected JSON object only.',
+      },
+    ]);
+  });
+
+  it('repairs an answer that is not JSON', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(completion('Sure!'))
+      .mockResolvedValueOnce(completion('{"n":1}'));
+    expect((await createCallObject(ai, fetchMock)(call)).ok).toBe(true);
+    expect(bodyOf(fetchMock, 1).messages[3]!.content).toContain('not valid JSON');
+  });
+
+  it('gives up after the last attempt', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockImplementation(() => Promise.resolve(completion('{"n":2}')));
+    expect(await createCallObject(ai, fetchMock)(call)).toEqual({
+      ok: false,
+      error: 'n must be 1',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    await createCallObject(ai, fetchMock)({ ...call, attempts: 3 });
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+  });
+
+  it('maps transport failures like a draft and never leaks the key', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response('{"error":"bad key sk-secret"}', { status: 401 }));
+    const err = await createCallObject(
+      ai,
+      fetchMock
+    )(call).then(
+      () => null,
+      (e: unknown) => e
+    );
+    expect(err).toBeInstanceOf(HttpError);
+    expect((err as HttpError).status).toBe(502);
+    expect(JSON.stringify((err as HttpError).body)).not.toContain('sk-secret');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not retry after a timeout', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockRejectedValue(new DOMException('timed out', 'TimeoutError'));
+    const err = await createCallObject(
+      ai,
+      fetchMock
+    )(call).then(
+      () => null,
+      (e: unknown) => e
+    );
+    expect(err).toBeInstanceOf(HttpError);
+    expect((err as HttpError).body.error).toBe('ai_timeout');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

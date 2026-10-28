@@ -115,6 +115,121 @@ describe.skipIf(!hasDb)('routes as a member (Postgres)', () => {
     });
   });
 
+  describe('POST /api/ai/pick', () => {
+    const offer = {
+      brief: 'Street festival on Saturday',
+      templates: [
+        {
+          id: 'headline',
+          label: 'Headline',
+          description: 'Headline and subline',
+          slots: [
+            { id: 'headline', label: 'Headline', maxChars: 60 },
+            { id: 'subline', label: 'Subline', maxChars: 100 },
+          ],
+        },
+        {
+          id: 'number',
+          label: 'Big number',
+          description: 'One figure',
+          slots: [{ id: 'headline', label: 'Meaning', maxChars: 80 }],
+        },
+      ],
+      schemes: [{ id: 'dark', label: 'Dark' }],
+    };
+    const answer = (content: unknown) =>
+      Response.json({ choices: [{ message: { content: JSON.stringify(content) } }] });
+    const good = { templateId: 'number', schemeId: 'dark', fills: { headline: ' Fest ' } };
+
+    it('returns the picked template, scheme and texts', async () => {
+      const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(answer(good));
+      const res = await (
+        await loggedIn({ ai }, fetchMock)
+      )
+        .post('/api/ai/pick')
+        .send(offer)
+        .expect(200);
+      expect(res.body).toEqual({
+        templateId: 'number',
+        schemeId: 'dark',
+        fills: { headline: 'Fest' },
+      });
+    });
+
+    it('repairs a first answer with an unknown template id', async () => {
+      const fetchMock = vi
+        .fn<typeof fetch>()
+        .mockResolvedValueOnce(answer({ ...good, templateId: 'poster' }))
+        .mockResolvedValueOnce(answer(good));
+      const res = await (
+        await loggedIn({ ai }, fetchMock)
+      )
+        .post('/api/ai/pick')
+        .send(offer)
+        .expect(200);
+      expect(res.body.templateId).toBe('number');
+      const repair = JSON.parse(fetchMock.mock.calls[1]![1]?.body as string) as {
+        messages: { content: string }[];
+      };
+      expect(repair.messages.at(-1)!.content).toContain('templateId "poster" is not offered');
+    });
+
+    it('answers 502 after two invalid answers', async () => {
+      const fetchMock = vi
+        .fn<typeof fetch>()
+        .mockImplementation(() => Promise.resolve(answer({ ...good, templateId: 'poster' })));
+      const res = await (
+        await loggedIn({ ai }, fetchMock)
+      )
+        .post('/api/ai/pick')
+        .send(offer)
+        .expect(502);
+      expect(res.body.error).toBe('ai_upstream_error');
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    it('limits picks per account', async () => {
+      const fetchMock = vi
+        .fn<typeof fetch>()
+        .mockImplementation(() => Promise.resolve(answer(good)));
+      const admin = await loggedIn({ ai }, fetchMock, { aiPerWindow: 1 });
+      await admin.post('/api/ai/pick').send(offer).expect(200);
+      const limited = await admin.post('/api/ai/pick').send(offer).expect(429);
+      expect(Number(limited.headers['retry-after'])).toBeGreaterThan(0);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('answers like /ai/draft when AI is off', async () => {
+      const admin = await loggedIn({ ai: null });
+      const pick = await admin.post('/api/ai/pick').send(offer).expect(503);
+      const draft = await admin.post('/api/ai/draft').send({ briefing: 'x' }).expect(503);
+      expect(pick.body).toEqual(draft.body);
+    });
+
+    it.each([
+      ['an empty brief', { ...offer, brief: '' }],
+      ['a brief over 4000 characters', { ...offer, brief: 'x'.repeat(4001) }],
+      ['no templates', { ...offer, templates: [] }],
+      [
+        '13 templates',
+        { ...offer, templates: Array.from({ length: 13 }, () => offer.templates[0]) },
+      ],
+      ['9 schemes', { ...offer, schemes: Array.from({ length: 9 }, () => offer.schemes[0]) }],
+      ['an id outside [a-z0-9-]', { ...offer, schemes: [{ id: 'Dark Mode', label: 'x' }] }],
+      [
+        'maxChars over 2000',
+        {
+          ...offer,
+          templates: [
+            { ...offer.templates[0], slots: [{ id: 'headline', label: 'H', maxChars: 2001 }] },
+          ],
+        },
+      ],
+    ])('validates the body: %s', async (_name, body) => {
+      await (await loggedIn({ ai })).post('/api/ai/pick').send(body).expect(400);
+    });
+  });
+
   describe('uploads', () => {
     it('stores an image under a random name and serves it back', async () => {
       const admin = await loggedIn();

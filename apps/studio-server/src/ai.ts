@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Text drafts through any OpenAI-compatible chat completions endpoint (Mistral, LiteLLM, Ollama ...).
+import type { CallObject, ObjectCall } from '@ggraphic/ai';
 import { z } from 'zod';
 import type { AiConfig } from './config.ts';
 import { type Draft, type DraftBody, draftSchema } from './contract.ts';
@@ -26,18 +27,23 @@ function userPrompt(input: DraftBody): string {
   return lines.join('\n');
 }
 
-/** Extracts the draft from a model answer. Tolerates code fences that some models add anyway. */
-export function parseDraft(content: string): Draft | null {
+/** The JSON in a model answer, or undefined. Tolerates code fences that some models add anyway. */
+function parseJsonAnswer(content: string): unknown {
   const unfenced = content
     .trim()
     .replace(/^```(?:json)?\s*/i, '')
     .replace(/\s*```$/, '');
-  let json: unknown;
   try {
-    json = JSON.parse(unfenced);
+    return JSON.parse(unfenced);
   } catch {
-    return null;
+    return undefined;
   }
+}
+
+/** Extracts the draft from a model answer. */
+export function parseDraft(content: string): Draft | null {
+  const json = parseJsonAnswer(content);
+  if (json === undefined) return null;
   const result = draftSchema.safeParse(json);
   return result.success ? result.data : null;
 }
@@ -45,11 +51,17 @@ export function parseDraft(content: string): Draft | null {
 const upstreamError = (message: string) =>
   new HttpError(502, { error: 'ai_upstream_error', message });
 
-export async function createDraft(
+interface ChatMessage {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
+/** One chat completion in JSON mode; the answer's text, or null when it has none. */
+async function complete(
   ai: AiConfig,
-  input: DraftBody,
-  fetchImpl: typeof fetch = fetch
-): Promise<Draft> {
+  messages: readonly ChatMessage[],
+  fetchImpl: typeof fetch
+): Promise<string | null> {
   let response: Response;
   try {
     response = await fetchImpl(`${ai.baseUrl}/chat/completions`, {
@@ -57,10 +69,7 @@ export async function createDraft(
       headers: { 'content-type': 'application/json', authorization: `Bearer ${ai.apiKey}` },
       body: JSON.stringify({
         model: ai.model,
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: userPrompt(input) },
-        ],
+        messages,
         response_format: { type: 'json_object' },
         temperature: 0.7,
       }),
@@ -84,8 +93,63 @@ export async function createDraft(
   }
 
   const completion = completionSchema.safeParse(await response.json().catch(() => null));
-  const content = completion.success ? completion.data.choices[0]?.message.content : null;
+  return completion.success ? (completion.data.choices[0]?.message.content ?? null) : null;
+}
+
+export async function createDraft(
+  ai: AiConfig,
+  input: DraftBody,
+  fetchImpl: typeof fetch = fetch
+): Promise<Draft> {
+  const content = await complete(
+    ai,
+    [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: userPrompt(input) },
+    ],
+    fetchImpl
+  );
   const draft = content ? parseDraft(content) : null;
   if (!draft) throw upstreamError('The AI provider returned an unusable answer.');
   return draft;
+}
+
+const DEFAULT_ATTEMPTS = 2;
+
+/**
+ * The `CallObject` @ggraphic/ai asks for, over the same endpoint. A first answer that is
+ * no JSON or fails the call's validator is quoted back for another try. A transport
+ * failure throws like `createDraft`; only a model that never gets it right is `ok: false`.
+ */
+export function createCallObject(ai: AiConfig, fetchImpl: typeof fetch = fetch): CallObject {
+  return async <T>(call: ObjectCall<T>) => {
+    const messages: ChatMessage[] = [
+      {
+        role: 'system',
+        content: `${call.system}\n\nJSON schema of the answer:\n${JSON.stringify(call.schema)}`,
+      },
+      { role: 'user', content: call.prompt },
+    ];
+    const attempts = Math.max(1, call.attempts ?? DEFAULT_ATTEMPTS);
+    let error = 'The AI provider returned an unusable answer.';
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      const content = await complete(ai, messages, fetchImpl);
+      const json = content ? parseJsonAnswer(content) : undefined;
+      if (json !== undefined) {
+        const result = call.validate(json);
+        if (result.ok) return { ok: true, data: result.value };
+        error = result.error;
+      } else {
+        error = 'The answer is not valid JSON.';
+      }
+      messages.push(
+        { role: 'assistant', content: content ?? '' },
+        {
+          role: 'user',
+          content: `Your answer was invalid: ${error.replace(/\.+$/, '')}. Answer again with the corrected JSON object only.`,
+        }
+      );
+    }
+    return { ok: false, error };
+  };
 }
