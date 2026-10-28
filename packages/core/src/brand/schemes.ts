@@ -155,11 +155,6 @@ function buildScheme(brand: BrandPack, id: SchemeId, ground: string): Scheme {
   };
 }
 
-/**
- * The colour worlds of a brand, in `SCHEME_IDS` order. A world whose ground
- * cannot be parsed, or sits within 1.2:1 of an earlier ground, is left out;
- * `photo` always stays, its ground stands for a shaded photo. Never throws.
- */
 function groundsOf(brand: BrandPack): Record<SchemeId, string | null> {
   return {
     primary: norm(brand.colors.primary),
@@ -170,6 +165,11 @@ function groundsOf(brand: BrandPack): Record<SchemeId, string | null> {
   };
 }
 
+/**
+ * The colour worlds of a brand, in `SCHEME_IDS` order. A world whose ground
+ * cannot be parsed, or sits within 1.2:1 of an earlier ground, is left out;
+ * `photo` always stays, its ground stands for a shaded photo. Never throws.
+ */
 export function deriveSchemes(brand: BrandPack): Scheme[] {
   const grounds = groundsOf(brand);
   const schemes: Scheme[] = [];
@@ -202,7 +202,10 @@ export function resolveScheme(brand: BrandPack, id: SchemeId): Scheme | null {
   if (dropped === null) return schemes[0] ?? null;
   let nearest: Scheme | null = null;
   let lowest = Infinity;
+  // Only earlier worlds can have absorbed it, exactly as `deriveSchemes` dedupes.
+  const earlier = SCHEME_IDS.slice(0, SCHEME_IDS.indexOf(id));
   for (const s of schemes) {
+    if (!earlier.includes(s.id)) continue;
     const c = contrast(s.roles.ground, dropped);
     if (c < DISTINCT_GROUND && c < lowest) {
       lowest = c;

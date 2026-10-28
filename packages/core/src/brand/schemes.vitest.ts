@@ -97,6 +97,14 @@ describe('resolveScheme', () => {
     );
   });
 
+  it('a dark primary that drops dark resolves to primary, not photo', () => {
+    const darkPrimary = withColors({ primary: '#101010' });
+    const ids = deriveSchemes(darkPrimary).map((x) => x.id);
+    expect(ids).not.toContain('dark');
+    expect(ids).toContain('photo');
+    expect(resolveScheme(darkPrimary, 'dark')?.id).toBe('primary');
+  });
+
   it('returns the kept world that absorbed a deduplicated one', () => {
     expect(resolveScheme(near, 'light')?.id).toBe('secondary');
   });
