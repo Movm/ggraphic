@@ -59,3 +59,26 @@ describe('the page picker in replace mode', () => {
     expect((state['templateRef'] as { id: string }).id).toBe('studio-quote');
   });
 });
+
+describe('where the picker renders', () => {
+  it('is mounted on the document body, whatever small box opened it', () => {
+    const { container } = render(
+      <div style={{ width: 110, transform: 'translateZ(0)' }}>
+        <StudioPagePicker
+          isOpen
+          onClose={() => {}}
+          mode="add"
+          currentTemplateId="studio-blank"
+          activeTemplateId="studio-blank"
+          pages={[]}
+          formatId="post-portrait"
+          onSelectTemplate={() => {}}
+        />
+      </div>
+    );
+    const dialog = screen.getByRole('dialog');
+    expect(container.contains(dialog)).toBe(false);
+    expect(dialog.closest('.studio-overlay')?.parentElement).toBe(document.body);
+    expect(dialog).toHaveClass('studio-dialog');
+  });
+});
