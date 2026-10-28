@@ -73,11 +73,17 @@ describe('the catalogue', () => {
     expect(templatesFor('story')).toEqual([]);
   });
 
-  it('templatesFor leaves out a template whose worlds the brand drops', () => {
-    // The quote lives only in the light world; a brand whose light ground equals its secondary has no such world.
+  it('leaves out a template whose worlds the brand drops, keeps one with a world left', () => {
+    // A brand whose light ground equals its secondary has no light world.
     const near = { ...studioBrand, colors: { ...studioBrand.colors, secondary: '#FAFAFA' } };
-    expect(templatesFor('post-portrait', studioBrand).map((e) => e.id)).toContain('studio-quote');
-    expect(templatesFor('post-portrait', near).map((e) => e.id)).not.toContain('studio-quote');
+    const lightOnly = { ...(valid as object), id: 'light-only', schemes: ['light'] };
+    const { entries } = buildCatalog([{ source: 'pack', files: [valid, lightOnly] }]);
+    const ids = (brand: typeof near) =>
+      templatesIn(entries, 'post-portrait', brand).map((e) => e.id);
+    expect(ids(studioBrand)).toContain('light-only');
+    expect(ids(near)).not.toContain('light-only');
+    // The quote also offers the primary world, so it stays.
+    expect(templatesFor('post-portrait', near).map((e) => e.id)).toContain('studio-quote');
   });
 });
 

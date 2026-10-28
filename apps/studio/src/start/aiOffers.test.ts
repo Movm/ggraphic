@@ -50,16 +50,15 @@ describe('pickOffers', () => {
 });
 
 describe('pickOffers per call', () => {
-  it('leaves out a template whose worlds the active brand drops', () => {
+  it('keeps a template whose other world the active brand still has', () => {
     const near = {
       ...studioBrand,
       id: 'near',
       colors: { ...studioBrand.colors, secondary: '#FAFAFA' },
     };
     registerBrandPacks([near, studioBrand]);
-    expect(pickOffers('post-portrait', near).templates.map((t) => t.id)).not.toContain(
-      'studio-quote'
-    );
+    // The quote offers the light and the primary world; this brand drops only the light one.
+    expect(pickOffers('post-portrait', near).templates.map((t) => t.id)).toContain('studio-quote');
     expect(pickOffers('post-portrait', studioBrand).templates.map((t) => t.id)).toContain(
       'studio-quote'
     );
