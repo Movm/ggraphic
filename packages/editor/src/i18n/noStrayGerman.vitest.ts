@@ -31,7 +31,6 @@ const FROZEN = new Set([
   'bild',
   'fotos',
   'kreis',
-  'seite-',
   'application/x-ggraphic-vorlage',
 ]);
 /** Object keys whose array of strings is search vocabulary, not text on screen. */
@@ -80,7 +79,7 @@ function germanStrings(file: string): string[] {
   const found: string[] = [];
   const check = (node: ts.Node, value: string) => {
     const trimmed = value.trim();
-    // Ids and file name parts (`hand-pfeil-bogen`, `-seite-`) are stored or shared: frozen.
+    // Ids and file name parts (`hand-pfeil-bogen`) are stored or shared: frozen.
     if (
       !trimmed ||
       FROZEN.has(trimmed) ||
