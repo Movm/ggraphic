@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { axe } from 'vitest-axe';
 
 import { type StudioConfig } from '../api/client';
 import { TEST_ORG, TEST_PROJECTS_URL, WithSession } from '../testing/session';
@@ -26,7 +27,7 @@ const DRAFT = {
 type Call = { method: string; url: string; body: Record<string, unknown> | null };
 
 /** `fetch` with a Studio server that knows one project after the first POST. */
-function fakeServer({ draft }: { draft: 'ok' | 'timeout' }) {
+function fakeServer({ draft, listed = [] }: { draft: 'ok' | 'timeout'; listed?: unknown[] }) {
   const calls: Call[] = [];
   const project = (document: unknown, version: number) => ({
     id: 'p1',
@@ -50,7 +51,7 @@ function fakeServer({ draft }: { draft: 'ok' | 'timeout' }) {
     const body =
       typeof init?.body === 'string' ? (JSON.parse(init.body) as Record<string, unknown>) : null;
     calls.push({ method, url, body });
-    if (url === TEST_PROJECTS_URL && method === 'GET') return json(200, { projects: [] });
+    if (url === TEST_PROJECTS_URL && method === 'GET') return json(200, { projects: listed });
     if (url === TEST_PROJECTS_URL && method === 'POST')
       return json(201, project(body?.document, 1));
     if (url === '/api/ai/draft') {
@@ -186,6 +187,83 @@ describe('StartPage', () => {
       new Response(JSON.stringify(DRAFT), { headers: { 'Content-Type': 'application/json' } })
     );
     await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
+  });
+});
+
+describe('StartPage sections', () => {
+  beforeEach(() => window.history.replaceState(null, '', '/'));
+  afterEach(() => vi.unstubAllGlobals());
+
+  const listed = (id: string, name: string, updatedAt: string) => ({
+    id,
+    organisationId: TEST_ORG,
+    name,
+    schemaVersion: 1,
+    version: 1,
+    createdAt: updatedAt,
+    updatedAt,
+    thumbnailUrl: null,
+  });
+
+  it('lists recent projects newest first as links to the editor', async () => {
+    const { fetchMock } = fakeServer({
+      draft: 'ok',
+      listed: [
+        listed('old', 'Old poster', '2026-01-01T10:00:00.000Z'),
+        listed('new', 'New poster', '2026-10-01T10:00:00.000Z'),
+      ],
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderStart(true);
+
+    const recent = await screen.findByRole('list', { name: 'Recent projects' });
+    const links = within(recent).getAllByRole('link');
+    expect(links.map((l) => l.getAttribute('href'))).toEqual(['/p/new', '/p/old']);
+    expect(links[0]).toHaveTextContent('New poster');
+    expect(screen.getByRole('link', { name: 'Show all' })).toHaveAttribute('href', '/projects');
+  });
+
+  it('shows no recent section without projects', async () => {
+    const { fetchMock, calls } = fakeServer({ draft: 'ok' });
+    vi.stubGlobal('fetch', fetchMock);
+    renderStart(true);
+    await waitFor(() => expect(calls.some((c) => c.url === TEST_PROJECTS_URL)).toBe(true));
+    expect(screen.queryByRole('heading', { name: 'Recent projects' })).not.toBeInTheDocument();
+  });
+
+  it('creates a project from a template in the chosen format', async () => {
+    const { fetchMock, calls } = fakeServer({ draft: 'ok' });
+    vi.stubGlobal('fetch', fetchMock);
+    const user = userEvent.setup();
+    renderStart(true);
+
+    await user.click(screen.getByRole('radio', { name: /Landscape/ }));
+    const templates = screen.getByRole('list', { name: 'Templates' });
+    await user.click(within(templates).getByRole('button', { name: /^Quote/ }));
+
+    await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
+    const post = calls.find((c) => c.method === 'POST' && c.url === TEST_PROJECTS_URL)!;
+    expect(post.body?.['name']).toBe('Quote');
+    const document = post.body?.['document'] as { formatId: string };
+    expect(document.formatId).toBe('slide-16-9');
+    expect(headlineOf(document).configId).toBe('studio-quote');
+    expect(calls.some((c) => c.url === '/api/ai/draft')).toBe(false);
+  });
+
+  it('has no axe violations', async () => {
+    const { fetchMock, calls } = fakeServer({
+      draft: 'ok',
+      listed: [listed('a', 'A poster', '2026-10-01T10:00:00.000Z')],
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { container } = renderStart(true);
+    await screen.findByRole('list', { name: 'Recent projects' });
+    expect(calls.length).toBeGreaterThan(0);
+    // Contrast needs real layout and stylesheets; it is measured in the browser.
+    const results = await axe(container, {
+      rules: { 'color-contrast': { enabled: false }, region: { enabled: false } },
+    });
+    expect(results).toHaveNoViolations();
   });
 });
 

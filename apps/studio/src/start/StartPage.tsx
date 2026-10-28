@@ -1,23 +1,33 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
- * The start page: one prompt in the middle ("What do you want to create?"),
- * the format under it, a few example prompts, and the recent projects below.
- * Submitting creates a project, lets the AI write its texts and opens it.
+ * The start page: a dark band with one prompt ("What do you want to tell?"),
+ * the format as chips inside the prompt card and a few example prompts; below
+ * it the recent projects and a gallery of the Studio's templates.
+ * Submitting the prompt creates a project, lets the AI write its texts and opens it.
  */
-import { Button } from '@ggraphic/ui';
+import { Button, ChipGroup, PromptComposer, PromptHero, Tile, TileList } from '@ggraphic/ui';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useId, useState, type FormEvent, type KeyboardEvent } from 'react';
-import { PiArrowRight } from 'react-icons/pi';
+import { useId, useState, type ReactNode } from 'react';
+import { PiFile, PiQuotes, PiTextT, PiNumberOne } from 'react-icons/pi';
 
 import { api, ApiError, type StudioConfig } from '../api/client';
 import { DEFAULT_FORMAT, STUDIO_FORMATS, type StudioFormatId } from '../editor/document';
+import { TEMPLATE_CATALOG } from '../editor/templates/catalog';
+import {
+  BLANK_TEMPLATE_ID,
+  HEADLINE_TEMPLATE_ID,
+  NUMBER_TEMPLATE_ID,
+  QUOTE_TEMPLATE_ID,
+  type StudioTemplateId,
+} from '../editor/templates/ids';
 import { PROJECTS_QUERY_KEY, projectsKey } from '../pages/ProjectListPage';
 import { editorPath, navigate, PROJECTS_PATH } from '../router';
 import { useLoggedIn } from '../session/SessionContext';
 import { PageShell } from '../ui/PageShell';
 import { toast } from '../ui/toast';
 
-import { createFromPrompt } from './createFromPrompt';
+import { createFromPrompt, createFromTemplate } from './createFromPrompt';
+import { relativeTime } from './relativeTime';
 
 /** Invented, neutral examples. */
 export const EXAMPLE_PROMPTS = [
@@ -29,8 +39,28 @@ export const EXAMPLE_PROMPTS = [
 
 const RECENT_COUNT = 6;
 
+const TEMPLATE_ICONS: Record<StudioTemplateId, ReactNode> = {
+  [BLANK_TEMPLATE_ID]: <PiFile aria-hidden />,
+  [HEADLINE_TEMPLATE_ID]: <PiTextT aria-hidden />,
+  [QUOTE_TEMPLATE_ID]: <PiQuotes aria-hidden />,
+  [NUMBER_TEMPLATE_ID]: <PiNumberOne aria-hidden />,
+};
+
+const FORMAT_OPTIONS = STUDIO_FORMATS.map((f) => ({
+  value: f.id,
+  label: f.label,
+  detail: f.size,
+}));
+
 const errorText = (err: unknown) =>
   err instanceof ApiError ? err.message : 'The project could not be created.';
+
+/** Plain clicks route in-app; modified clicks keep the browser's behaviour. */
+const followInApp = (path: string) => (e: React.MouseEvent) => {
+  if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+  e.preventDefault();
+  navigate(path);
+};
 
 export function StartPage({ config }: { config: StudioConfig | undefined }) {
   const queryClient = useQueryClient();
@@ -38,12 +68,10 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
   const [prompt, setPrompt] = useState('');
   const [formatId, setFormatId] = useState<StudioFormatId>(DEFAULT_FORMAT);
   const [busy, setBusy] = useState(false);
-  const promptId = useId();
   const hintId = useId();
   const ai = config?.features.ai ?? false;
 
-  const submit = async (event?: FormEvent) => {
-    event?.preventDefault();
+  const submit = async () => {
     const text = prompt.trim();
     if (!text || busy || !config) return;
     setBusy(true);
@@ -63,85 +91,113 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
     }
   };
 
-  // Enter sends, Shift+Enter makes a new line, as in a chat composer.
-  const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
-      event.preventDefault();
-      void submit();
+  const startFromTemplate = async (templateId: StudioTemplateId, name: string) => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const projectId = await createFromTemplate({
+        organisationId: organisation.id,
+        templateId,
+        name,
+        formatId,
+      });
+      void queryClient.invalidateQueries({ queryKey: PROJECTS_QUERY_KEY });
+      navigate(editorPath(projectId));
+    } catch (err) {
+      toast.error(errorText(err));
+      setBusy(false);
     }
   };
 
-  return (
-    <PageShell>
-      <section className="studio-start__hero" aria-labelledby={promptId + '-title'}>
-        <h1 id={promptId + '-title'} className="studio-start__title">
-          What do you want to create?
-        </h1>
-        <form className="studio-composer" onSubmit={(e) => void submit(e)} aria-busy={busy}>
-          <label htmlFor={promptId} className="studio-visually-hidden">
-            Describe your graphic
-          </label>
-          <textarea
-            id={promptId}
-            className="studio-composer__input"
-            rows={3}
-            maxLength={4000}
-            value={prompt}
-            placeholder="Describe your graphic: what it is about, for whom, and when"
-            aria-describedby={hintId}
-            disabled={busy}
-            onChange={(e) => setPrompt(e.target.value)}
-            onKeyDown={onKeyDown}
-          />
-          <div className="studio-composer__row">
-            <fieldset className="studio-chips" disabled={busy}>
-              <legend className="studio-visually-hidden">Format</legend>
-              {STUDIO_FORMATS.map((format) => (
-                <label key={format.id} className="studio-chip">
-                  <input
-                    type="radio"
-                    name="start-format"
-                    value={format.id}
-                    checked={formatId === format.id}
-                    onChange={() => setFormatId(format.id)}
-                  />
-                  <span>
-                    {format.label} <small>{format.size}</small>
-                  </span>
-                </label>
-              ))}
-            </fieldset>
-            <Button type="submit" disabled={busy || !prompt.trim() || !config}>
-              {busy ? (ai ? 'Writing your draft…' : 'Creating…') : 'Create'}
-              {busy ? null : <PiArrowRight aria-hidden />}
-            </Button>
-          </div>
-        </form>
-        <p id={hintId} className="studio-start__hint" role={busy ? 'status' : undefined}>
-          {busy && ai
-            ? 'The AI is writing the texts. This can take up to a minute.'
-            : ai
-              ? 'The AI writes headline and texts; you edit everything in the editor.'
-              : 'AI drafts are off: your text becomes the headline. To turn them on, set OPENAI_BASE_URL, OPENAI_API_KEY and OPENAI_MODEL in .env.'}
-        </p>
-        <ul className="studio-examples" aria-label="Example prompts">
-          {EXAMPLE_PROMPTS.map((example) => (
-            <li key={example}>
-              <Button
-                variant="outline"
-                size="sm"
-                className="studio-example"
-                disabled={busy}
-                onClick={() => setPrompt(example)}
-              >
-                {example}
-              </Button>
-            </li>
-          ))}
-        </ul>
-      </section>
+  const submitLabel = busy ? (ai ? 'Writing your draft…' : 'Creating…') : 'Create';
 
-      <RecentProjects />
+  return (
+    <PageShell flush>
+      <PromptHero
+        className="studio-start__hero"
+        title="What do you want to tell?"
+        footer={
+          <>
+            <p id={hintId} className="studio-start__hint" role={busy ? 'status' : undefined}>
+              {busy && ai
+                ? 'The AI is writing the texts. This can take up to a minute.'
+                : ai
+                  ? 'The AI writes headline and texts; you edit everything in the editor.'
+                  : 'AI drafts are off: your text becomes the headline. To turn them on, set OPENAI_BASE_URL, OPENAI_API_KEY and OPENAI_MODEL in .env.'}
+            </p>
+            <ul className="studio-examples" aria-label="Example prompts">
+              {EXAMPLE_PROMPTS.map((example) => (
+                <li key={example}>
+                  <Button
+                    variant="inverse"
+                    size="sm"
+                    className="studio-example"
+                    disabled={busy}
+                    onClick={() => setPrompt(example)}
+                  >
+                    {example}
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </>
+        }
+      >
+        <PromptComposer
+          label="Describe your graphic"
+          submitLabel={submitLabel}
+          submitDisabled={busy || !prompt.trim() || !config}
+          busy={busy}
+          maxLength={4000}
+          value={prompt}
+          placeholder="Describe your graphic: what it is about, for whom, and when"
+          aria-describedby={hintId}
+          disabled={busy}
+          onChange={(e) => setPrompt(e.target.value)}
+          onSubmit={() => void submit()}
+          options={
+            <ChipGroup
+              legend="Format"
+              name="start-format"
+              options={FORMAT_OPTIONS}
+              value={formatId}
+              onChange={setFormatId}
+              disabled={busy}
+              size="sm"
+            />
+          }
+        />
+      </PromptHero>
+
+      <div className="studio-start__body">
+        <RecentProjects />
+        <section className="studio-start__section" aria-labelledby="templates-heading">
+          <div className="studio-start__head">
+            <h2 id="templates-heading" className="studio-start__heading">
+              Start from a template
+            </h2>
+            <p className="studio-muted">Opens in the format chosen above.</p>
+          </div>
+          <TileList aria-label="Templates">
+            {TEMPLATE_CATALOG.map((template) => (
+              <li key={template.id}>
+                <Tile
+                  disabled={busy}
+                  ratio="4 / 5"
+                  media={
+                    <span className="studio-template-icon" data-template={template.id}>
+                      {TEMPLATE_ICONS[template.id]}
+                    </span>
+                  }
+                  title={template.label}
+                  meta={template.description}
+                  onClick={() => void startFromTemplate(template.id, template.label)}
+                />
+              </li>
+            ))}
+          </TileList>
+        </section>
+      </div>
     </PageShell>
   );
 }
@@ -152,45 +208,37 @@ function RecentProjects() {
     queryKey: projectsKey(organisation.id),
     queryFn: () => api.listProjects(organisation.id),
   });
-  const recent = projects.data?.slice(0, RECENT_COUNT) ?? [];
+  const recent = [...(projects.data ?? [])]
+    .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
+    .slice(0, RECENT_COUNT);
   if (recent.length === 0) return null;
   return (
-    <section className="studio-recent" aria-labelledby="recent-heading">
-      <div className="studio-recent__head">
-        <h2 id="recent-heading" className="studio-section__title">
+    <section className="studio-start__section" aria-labelledby="recent-heading">
+      <div className="studio-start__head">
+        <h2 id="recent-heading" className="studio-start__heading">
           Recent projects
         </h2>
         <a
           className="ui-link studio-link"
           href={PROJECTS_PATH}
-          onClick={(e) => {
-            e.preventDefault();
-            navigate(PROJECTS_PATH);
-          }}
+          onClick={followInApp(PROJECTS_PATH)}
         >
           Show all
         </a>
       </div>
-      <ul className="studio-recent__list">
+      <TileList layout="row" aria-label="Recent projects">
         {recent.map((project) => (
           <li key={project.id}>
-            <a
-              className="studio-recent__item"
+            <Tile
               href={editorPath(project.id)}
-              onClick={(e) => {
-                if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-                e.preventDefault();
-                navigate(editorPath(project.id));
-              }}
-            >
-              <span className="studio-recent__thumb">
-                {project.thumbnailUrl ? <img src={project.thumbnailUrl} alt="" /> : null}
-              </span>
-              <span className="studio-recent__name">{project.name}</span>
-            </a>
+              onClick={followInApp(editorPath(project.id))}
+              media={project.thumbnailUrl ? <img src={project.thumbnailUrl} alt="" /> : null}
+              title={project.name}
+              meta={relativeTime(project.updatedAt)}
+            />
           </li>
         ))}
-      </ul>
+      </TileList>
     </section>
   );
 }
