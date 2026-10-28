@@ -6,7 +6,7 @@ import { type IconDef } from '@ggraphic/editor/utils/canvasIcons';
 import { cn } from '@ggraphic/editor/utils/cn';
 import { Icon } from '@iconify/react';
 import { useCallback, useMemo, useRef, useEffect } from 'react';
-import { FaCheck } from 'react-icons/fa';
+import { PiCheck } from 'react-icons/pi';
 
 import {
   CARD_GRID,
@@ -125,7 +125,7 @@ export function IconsSection({
                   <Icon icon={icon.id} width={30} height={30} />
                   {isSelected && (
                     <span className={CARD_CHECK_SMALL}>
-                      <FaCheck size={8} />
+                      <PiCheck size={8} />
                     </span>
                   )}
                 </div>

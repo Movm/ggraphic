@@ -2,8 +2,7 @@
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { messages, useMessages } from '@ggraphic/editor/i18n/messages';
 import { cn } from '@ggraphic/editor/utils/cn';
-import { FaTrash } from 'react-icons/fa';
-import { PiPlusBold, PiTextAa, PiTextHBold } from 'react-icons/pi';
+import { PiPlusBold, PiTextAa, PiTextHBold, PiTrash } from 'react-icons/pi';
 
 import { useIsCanvasMobile } from '@ggraphic/editor/hooks/useIsCanvasMobile';
 import { SidebarHint } from '@ggraphic/editor/sidebar/components/SidebarHint';
@@ -210,7 +209,7 @@ export function CombinedTextSection({
                 className="touch-target shrink-0 size-7 flex items-center justify-center bg-transparent border-none rounded-md cursor-pointer text-foreground-muted transition-colors duration-150 hover:bg-red-50 hover:text-red-600"
                 aria-label={t.sidebar.text.removeText}
               >
-                <FaTrash size={11} />
+                <PiTrash size={11} />
               </button>
             </div>
           ))}

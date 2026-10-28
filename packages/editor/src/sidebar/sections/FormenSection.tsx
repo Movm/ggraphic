@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 import { cn } from '@ggraphic/editor/utils/cn';
+import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { brandColors } from '@ggraphic/editor/utils/colorOptions';
 import { handDrawnPath, type HandShapeType } from '@ggraphic/editor/utils/handDrawn';
 import { defaultMarkerFill } from '@ggraphic/editor/utils/markerColors';
@@ -633,16 +634,21 @@ export const ALL_PALETTE_SHAPES: ReadonlyArray<ShapeDefinition> = Object.values(
 
 export interface ShapeVariant {
   color: string;
-  /** Tanne is illegible on the dark editor surface; the preview uses a token that flips
-      to the standard dark tint (must out-specify the inline style color, hence the
+  /** The primary colour can be illegible on the dark editor surface; the preview uses a token
+      that flips to the standard dark tint (must out-specify the inline style color, hence the
       important modifier) while the inserted fill stays the true brand color. */
   darkPreviewClass: string;
 }
 
-const SHAPE_VARIANT_COLOR_IDS = ['tanne', 'klee', 'grashalm', 'himmel', 'hellgruen'];
-const DARK_PREVIEW_OVERRIDES: Partial<Record<string, string>> = {
-  tanne: '!text-editor-tanne-preview',
-};
+/** The colour roles the variants cycle through, in order; any brand names them. */
+const SHAPE_VARIANT_ROLES = [
+  'primary',
+  'secondary',
+  'accent',
+  'accentOnLight',
+  'attention',
+] as const;
+const PRIMARY_PREVIEW_CLASS = '!text-editor-primary-preview';
 /** Textmarker come in the marker colour, not the brand cycle. */
 const MARKER_SHAPES: ReadonlySet<ShapeType> = new Set(['hand-marker', 'hand-marker-box']);
 
@@ -650,18 +656,17 @@ const MARKER_SHAPES: ReadonlySet<ShapeType> = new Set(['hand-marker', 'hand-mark
  * Brand color variants cycled across shape tiles (Canva-style); clicking inserts the
  * shown color. Keyed by the shape's global palette index so the same shape shows the
  * same color in the strip, the drill-down groups, and search results.
- * A brand that names none of these colours cycles its first five. Lazy for the
+ * The cycle is the brand's colour roles, so any brand fills it. Lazy for the
  * same chunk-init reason as getShapesByCategory below, and because the host
  * registers its brand at startup.
  */
 let shapeVariantByType: Map<ShapeType, ShapeVariant> | null = null;
 export function getShapeVariant(type: ShapeType): ShapeVariant {
   if (!shapeVariantByType) {
-    const palette = brandColors();
-    const named = SHAPE_VARIANT_COLOR_IDS.flatMap((id) => palette.filter((c) => c.id === id));
-    const variants = (named.length > 0 ? named : palette.slice(0, 5)).map((c) => ({
-      color: c.value,
-      darkPreviewClass: DARK_PREVIEW_OVERRIDES[c.id] ?? '',
+    const { colors } = activeBrand();
+    const variants = SHAPE_VARIANT_ROLES.map((role) => ({
+      color: colors[role],
+      darkPreviewClass: role === 'primary' ? PRIMARY_PREVIEW_CLASS : '',
     }));
     shapeVariantByType = new Map(
       ALL_PALETTE_SHAPES.map((shape, index) => [shape.id, variants[index % variants.length]])

@@ -5,6 +5,7 @@
  * knows none of them by name.
  */
 
+import { type Bindings } from '@ggraphic/core';
 import type { CanvasAiNamedOption } from '@ggraphic/editor/ai/types';
 import type { ElementPanelHost } from '@ggraphic/editor/sidebar/sections/assets/elementPanelHost';
 import type { KawaiiDef, SvgDef } from '@ggraphic/editor/utils/illustrations/types';
@@ -39,6 +40,8 @@ export const ASSET_TARGET_SIZE = 150;
  */
 export interface AssetInstance {
   id: string;
+  /** Fields that follow a brand role; see `@ggraphic/core` bindings. */
+  bind?: Bindings;
   assetId: string; // Reference to UniversalAsset.id, or `asset:<uuid>` for a shop sticker
   /** Own image of a shop sticker: a share path the host's `isInstanceSrc` accepts. */
   src?: string;

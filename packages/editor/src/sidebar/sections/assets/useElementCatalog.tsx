@@ -117,7 +117,7 @@ export function illustrationItem(def: IllustrationDef): ElementItem {
   return {
     key: `illustration:${def.id}`,
     label: def.name,
-    // The German category ("Menschen", "Natur") is often the only German word on an undraw entry.
+    // The German category ("Menschen", "Natur") is often the only German word on an illustration entry.
     keywords: def.source !== 'kawaii' && def.category ? [...def.tags, def.category] : def.tags,
     action: { kind: 'illustration', id: def.id },
     thumb: def.source === 'kawaii' ? { t: 'kawaii', id: def.id } : { t: 'svg', def },

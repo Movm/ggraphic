@@ -6,6 +6,7 @@
  * These provide the foundation for the factory pattern.
  */
 
+import { type Bindings } from '@ggraphic/core';
 import type { AssetInstance } from '../../utils/canvasAssets.js';
 import type { HostElementState } from '../../utils/canvasItem.js';
 import type { AdditionalText, LayoutResult } from '../types.js';
@@ -55,6 +56,8 @@ export interface IconState {
   scale: number;
   rotation: number;
   color?: string;
+  /** Fields that follow a brand role; see `@ggraphic/core` bindings. */
+  bind?: Bindings;
   opacity?: number;
   /**
    * Katalog-ID des gezeigten Icons. Fehlt sie, IST der Schlüssel in

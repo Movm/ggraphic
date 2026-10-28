@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { type BrandPack } from '@ggraphic/core';
+import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { CanvasEditorProvider } from '@ggraphic/editor/CanvasEditorProvider';
 import { messages } from '@ggraphic/editor/i18n/messages';
 import { CanvasEditorShell } from '@ggraphic/editor/components/CanvasEditor/CanvasEditorShell';
@@ -12,8 +13,10 @@ import { PiArrowLeft } from 'react-icons/pi';
 import { api, ApiError, type Project, type StudioConfig } from '../api/client';
 import { applyBrandPack } from '../brandLoader';
 import { parseDocument, type StudioDocument } from '../editor/document';
+import { rebindStudioDocument } from '../editor/rebind';
 import { createStudioServices } from '../editor/services';
 import { useAutosave, type SaveStatus } from '../editor/useAutosave';
+import { logoSizeOf } from '../logoSize';
 import { navigate } from '../router';
 
 const STATUS_TEXT: Record<SaveStatus, string> = {
@@ -22,6 +25,7 @@ const STATUS_TEXT: Record<SaveStatus, string> = {
   saving: 'Saving…',
   error: 'Not saved',
   conflict: 'Changed elsewhere',
+  refused: 'Not saved',
 };
 
 const NOOP = () => {};
@@ -40,15 +44,18 @@ export function EditorPage({ projectId, config }: { projectId: string; config: S
   // The project's organisation brand, registered before the editor mounts.
   const brand = useQuery({
     queryKey: ['editor-brand', organisationId],
-    queryFn: async (): Promise<BrandPack | null> => {
+    queryFn: async (): Promise<{ pack: BrandPack | null; reachable: boolean }> => {
       let pack: BrandPack | null = null;
+      let reachable = true;
       try {
         pack = (await api.getBrandPack(organisationId!)).pack;
       } catch {
-        // No brand reachable: the editor opens with the Studio's own pack.
+        // Not "no pack saved": the brand is unknown. The editor shows the Studio's own pack,
+        // but the document is opened as stored, never rebound against it.
+        reachable = false;
       }
       await applyBrandPack(pack);
-      return pack;
+      return { pack, reachable };
     },
     enabled: organisationId !== null,
     staleTime: 0,
@@ -85,7 +92,8 @@ export function EditorPage({ projectId, config }: { projectId: string; config: S
       key={`${project.data.id}:${project.dataUpdatedAt}`}
       project={project.data}
       config={config}
-      logo={brand.data?.logo ?? null}
+      logo={brand.data?.pack?.logo ?? null}
+      rebind={brand.data?.reachable ?? true}
       onReload={() => void project.refetch()}
     />
   );
@@ -95,6 +103,8 @@ function ProjectEditor(props: {
   project: Project;
   config: StudioConfig;
   logo: BrandPack['logo'];
+  /** False when the brand could not be loaded: the document stays as stored. */
+  rebind: boolean;
   onReload: () => void;
 }) {
   const parsed = useMemo(() => parseDocument(props.project.document), [props.project.document]);
@@ -111,22 +121,35 @@ function ProjectEditor(props: {
       </main>
     );
   }
-  return <OpenProject {...props} doc={parsed.doc} />;
+  return <OpenProject {...props} parsed={parsed.doc} />;
 }
 
 function OpenProject({
   project,
   config,
   logo,
+  rebind,
   onReload,
-  doc,
+  parsed,
 }: {
   project: Project;
   config: StudioConfig;
   logo: BrandPack['logo'];
+  rebind: boolean;
   onReload: () => void;
-  doc: StudioDocument;
+  parsed: StudioDocument;
 }) {
+  // The brand query has settled, so the organisation's pack is the active one: bound page
+  // fields follow it before the editor opens. What is saved is judged against `parsed`.
+  const { doc, changed } = useMemo(() => {
+    if (!rebind) return { doc: parsed, changed: false };
+    // The brand loader measured the logo before the query settled; a failed measurement is null.
+    const brand = activeBrand();
+    return rebindStudioDocument(parsed, {
+      brand,
+      logoSize: brand.logo ? logoSizeOf(brand.logo.src) : null,
+    });
+  }, [parsed, rebind]);
   const exportApi = useRef<CanvasEditorExportApi>(null);
   const services = useMemo(
     () =>
@@ -141,6 +164,7 @@ function OpenProject({
   const autosave = useAutosave({
     projectId: project.id,
     base: doc,
+    baseline: changed ? parsed : undefined,
     initialVersion: project.version,
     exportApi,
     thumbnailMaxBytes: config.limits.thumbnailBytes,
@@ -169,6 +193,11 @@ function OpenProject({
                 Overwrite with mine
               </Button>
             </span>
+          </Alert>
+        ) : null}
+        {autosave.status === 'refused' ? (
+          <Alert tone="danger" role="alert" className="studio-banner">
+            <span>{messages().shell.schemaRefusal.newer}</span>
           </Alert>
         ) : null}
         {autosave.status === 'error' ? (

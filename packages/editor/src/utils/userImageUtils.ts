@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: MPL-2.0
+import { type Bindings } from '@ggraphic/core';
 import { messages } from '@ggraphic/editor/i18n/messages';
 
 import { type StockImageAttribution } from '../common/imageSourceTypes.js';
 
 export interface UserImageInstance {
   id: string;
+  /** Fields that follow a brand role; see `@ggraphic/core` bindings. */
+  bind?: Bindings;
   src: string;
   fileName: string;
   x: number;

@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: MPL-2.0
+import { bindPatch } from '../../brand/bindPick.js';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { CustomColorSwatch } from '@ggraphic/editor/components/CustomColorSwatch';
 import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { cn } from '@ggraphic/editor/utils/cn';
-import { FaTrash, FaCopy } from 'react-icons/fa';
+import { PiTrash, PiCopy } from 'react-icons/pi';
 
 import { SidebarSlider } from '../components/SidebarSlider.js';
 import {
@@ -57,7 +58,7 @@ export function IllustrationSettings({
             onClick={() => onDuplicateIllustration(selectedIllustration.id)}
             title={t.commands.duplicate}
           >
-            <FaCopy size={12} />
+            <PiCopy size={12} />
           </button>
         )}
         <button
@@ -65,7 +66,7 @@ export function IllustrationSettings({
           onClick={() => onRemoveIllustration(selectedIllustration.id)}
           title="Entfernen"
         >
-          <FaTrash size={12} />
+          <PiTrash size={12} />
         </button>
       </div>
 
@@ -111,7 +112,10 @@ export function IllustrationSettings({
                 )}
                 style={{ backgroundColor: color.color }}
                 onClick={() =>
-                  onUpdateIllustration(selectedIllustration.id, { color: color.color })
+                  onUpdateIllustration(selectedIllustration.id, {
+                    color: color.color,
+                    ...bindPatch(selectedIllustration.bind, 'color', color.color, color.ref),
+                  })
                 }
                 title={color.label}
               />
@@ -119,7 +123,12 @@ export function IllustrationSettings({
             <CustomColorSwatch
               value={selectedIllustration.color}
               presets={activeBrand().palette.map((color) => color.color)}
-              onPick={(color) => onUpdateIllustration(selectedIllustration.id, { color })}
+              onPick={(color) =>
+                onUpdateIllustration(selectedIllustration.id, {
+                  color,
+                  ...bindPatch(selectedIllustration.bind, 'color', color),
+                })
+              }
               className="size-7"
               outlineOffset={3}
             />

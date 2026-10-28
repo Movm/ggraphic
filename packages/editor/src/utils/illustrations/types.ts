@@ -3,6 +3,7 @@
  * Shared types and constants for illustration registry
  */
 
+import { type Bindings } from '@ggraphic/core';
 import { messages } from '@ggraphic/editor/i18n/messages';
 
 // =============================================================================
@@ -34,6 +35,8 @@ export interface KawaiiDef {
 
 export interface KawaiiInstance {
   id: string;
+  /** Fields that follow a brand role; see `@ggraphic/core` bindings. */
+  bind?: Bindings;
   illustrationId: KawaiiIllustrationType;
   source: 'kawaii';
   x: number;
@@ -49,13 +52,7 @@ export interface KawaiiInstance {
 
 // SVG Illustration types
 export type SvgSource =
-  | 'undraw'
-  | 'opendoodles'
-  | 'illlustrations'
-  | 'gophers'
-  | 'transhumans'
-  | 'humaaans'
-  | 'openpeeps';
+  'opendoodles' | 'illlustrations' | 'gophers' | 'transhumans' | 'humaaans' | 'openpeeps';
 
 export interface SvgDef {
   id: string;
@@ -68,6 +65,8 @@ export interface SvgDef {
 
 export interface SvgInstance {
   id: string;
+  /** Fields that follow a brand role; see `@ggraphic/core` bindings. */
+  bind?: Bindings;
   illustrationId: string;
   source: SvgSource;
   x: number;

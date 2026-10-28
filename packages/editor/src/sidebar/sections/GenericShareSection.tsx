@@ -7,7 +7,14 @@ import { Skeleton } from '@ggraphic/editor/ui/skeleton';
 import { downloadErrorMessage } from '@ggraphic/editor/utils/downloadError';
 import { useCallback, useState, useMemo, useRef, useEffect, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
-import { FaDownload, FaImages, FaSave, FaCheck, FaFileArchive, FaFileImage } from 'react-icons/fa';
+import {
+  PiDownloadSimple,
+  PiImages,
+  PiFloppyDisk,
+  PiCheck,
+  PiFileZip,
+  PiFileImage,
+} from 'react-icons/pi';
 import { IoCheckmarkOutline, IoShareOutline } from 'react-icons/io5';
 
 import { DownloadNotice } from '@ggraphic/editor/components/DownloadNotice';
@@ -288,9 +295,9 @@ function DownloadShareSubsection({
             {downloadState === 'capturing' ? (
               <Skeleton className="size-4 rounded-full" />
             ) : downloadState === 'success' ? (
-              <FaCheck />
+              <PiCheck />
             ) : (
-              <FaDownload />
+              <PiDownloadSimple />
             )}
           </button>
 
@@ -309,7 +316,7 @@ function DownloadShareSubsection({
                   role="menuitem"
                   type="button"
                 >
-                  <FaFileImage />
+                  <PiFileImage />
                   <span>{t.shell.thisPagePng}</span>
                 </button>
                 <button
@@ -326,7 +333,7 @@ function DownloadShareSubsection({
                     </>
                   ) : (
                     <>
-                      <FaFileArchive />
+                      <PiFileZip />
                       <span>{t.shell.allPagesZip(pageCount)}</span>
                     </>
                   )}
@@ -352,7 +359,7 @@ function DownloadShareSubsection({
               {isSharing ? (
                 <Skeleton className="size-4 rounded-full" />
               ) : shareSuccess ? (
-                <FaCheck />
+                <PiCheck />
               ) : (
                 <IoShareOutline />
               )}
@@ -384,7 +391,7 @@ function DownloadShareSubsection({
                     role="menuitem"
                     type="button"
                   >
-                    <FaImages />
+                    <PiImages />
                     <span>{t.shell.shareAllPages}</span>
                   </button>
                 </div>,
@@ -441,7 +448,7 @@ function DownloadShareSubsection({
             <span>{t.shell.savedToGallery}</span>
           </div>
           <button className={secondaryBtn} onClick={onNavigateToGallery} type="button">
-            <FaImages />
+            <PiImages />
             {t.shell.toGallery}
           </button>
         </>
@@ -477,7 +484,7 @@ function TemplateSubsection({ onSaveAsTemplate }: { onSaveAsTemplate: () => void
       <p className="m-0 text-xs text-foreground-muted">{t.shell.templateHint}</p>
 
       <button className={primaryBtn} onClick={onSaveAsTemplate} type="button">
-        <FaSave /> {t.shell.saveAsTemplate}
+        <PiFloppyDisk /> {t.shell.saveAsTemplate}
       </button>
     </div>
   );
@@ -506,7 +513,7 @@ export function GenericShareSection({
     () => [
       {
         id: 'download',
-        icon: FaDownload,
+        icon: PiDownloadSimple,
         label: t.shell.downloadTab,
         content: (
           <DownloadShareSubsection
@@ -532,7 +539,7 @@ export function GenericShareSection({
         ? [
             {
               id: 'template',
-              icon: FaSave,
+              icon: PiFloppyDisk,
               label: t.shell.template,
               content: <TemplateSubsection onSaveAsTemplate={onSaveAsTemplate} />,
             },

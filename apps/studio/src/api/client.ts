@@ -217,7 +217,12 @@ export class ApiError extends Error {
   }
 
   get isVersionConflict(): boolean {
-    return this.status === 409;
+    return this.status === 409 && !this.isSchemaRefusal;
+  }
+
+  /** The server holds a newer document format than this build writes. */
+  get isSchemaRefusal(): boolean {
+    return this.status === 409 && this.code === 'schema-version';
   }
 }
 
@@ -397,7 +402,12 @@ export const api = {
 
   updateProject: (
     id: string,
-    body: { version: number; name?: string; document?: Record<string, unknown> }
+    body: {
+      version: number;
+      name?: string;
+      document?: Record<string, unknown>;
+      schemaVersion?: number;
+    }
   ) => request(`/projects/${encodeURIComponent(id)}`, projectSchema, json('PATCH', body)),
 
   deleteProject: (id: string) =>
