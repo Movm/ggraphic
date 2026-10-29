@@ -15,8 +15,21 @@ const mounted = vi.hoisted(() => ({
   /** Held renders: when set, onRendered waits for `release()`. */
   hold: false,
   configFails: false,
+  /** Entry ids whose state building throws. */
+  throwFor: [] as string[],
   pending: [] as (() => void)[],
 }));
+
+vi.mock('./instantiate', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./instantiate')>();
+  return {
+    ...actual,
+    templatePageState: ((entry, ...rest) => {
+      if (mounted.throwFor.includes(entry.id)) throw new Error('broken template');
+      return actual.templatePageState(entry, ...rest);
+    }) as typeof actual.templatePageState,
+  };
+});
 
 vi.mock('@ggraphic/editor/components/PagePreview', () => ({
   PagePreview: ({ onRendered }: { onRendered: (dataUrl: string) => void }) => {
@@ -81,6 +94,7 @@ beforeEach(() => {
     maxLive: 0,
     hold: false,
     configFails: false,
+    throwFor: [],
     pending: [],
   });
   observed.clear();
@@ -134,6 +148,24 @@ describe('previews in an explicit brand', () => {
 });
 
 describe('template previews', () => {
+  it('a template whose state building throws finishes with null and the next job renders', async () => {
+    mounted.throwFor = ['studio-quote'];
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    render(
+      <>
+        <PreviewHost />
+        <Tile id="bad" entryId="studio-quote" />
+        <Tile id="good" entryId="studio-headline" />
+      </>
+    );
+    show('bad');
+    show('good');
+    expect(await screen.findByAltText('good')).toBeInTheDocument();
+    expect(screen.queryByAltText('bad')).toBeNull();
+    expect(screen.getByTestId('bad')).toBeInTheDocument();
+    error.mockRestore();
+  });
+
   it('a tile renders only once visible', async () => {
     render(
       <>

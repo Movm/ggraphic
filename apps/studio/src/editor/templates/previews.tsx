@@ -15,7 +15,14 @@ import { PagePreview } from '@ggraphic/editor/components/PagePreview';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { loadCanvasConfig } from '@ggraphic/editor/configs/configLoader';
 import { type FullCanvasConfig } from '@ggraphic/editor/configs/types';
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import {
+  Component,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 
 import { prepareBrandPack } from '../../brandLoader';
 
@@ -164,17 +171,7 @@ export function PreviewHost() {
     };
   }, [hasJob, config]);
 
-  const state = job
-    ? templatePageState(job.entry, job.formatId, {
-        schemeId: job.schemeId,
-        brand: job.brand,
-      })
-    : null;
   const jobKey = job?.key ?? null;
-  const unplaceable = job !== null && state === null;
-  useEffect(() => {
-    if (unplaceable && jobKey) finish(jobKey, null);
-  }, [unplaceable, jobKey]);
 
   // A job that never reports must not hold the queue.
   useEffect(() => {
@@ -183,7 +180,7 @@ export function PreviewHost() {
     return () => clearTimeout(timer);
   }, [jobKey]);
 
-  if (!job || !state || !config) return null;
+  if (!job || !config) return null;
   return (
     // Offscreen and out of every tree a person or a screen reader walks.
     <div
@@ -197,16 +194,48 @@ export function PreviewHost() {
         pointerEvents: 'none',
       }}
     >
-      <PagePreview
-        key={job.key}
-        config={config}
-        state={state}
-        formatId={job.formatId}
-        width={PREVIEW_WIDTH}
-        onRendered={(dataUrl) => finish(job.key, dataUrl)}
-        onFailed={() => finish(job.key, null)}
-      />
+      <PreviewBoundary key={job.key} onError={() => finish(job.key, null)}>
+        <PreviewJobView job={job} config={config} />
+      </PreviewBoundary>
     </div>
+  );
+}
+
+/** A broken template must not unmount the screen: its job ends empty and the queue moves on. */
+class PreviewBoundary extends Component<{ onError: () => void; children: ReactNode }> {
+  override state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  override componentDidCatch() {
+    this.props.onError();
+  }
+  override render() {
+    return this.state.failed ? null : this.props.children;
+  }
+}
+
+/** Builds the page state during render, so a throw reaches the boundary. */
+function PreviewJobView({ job, config }: { job: PreviewJob; config: FullCanvasConfig }) {
+  const state = templatePageState(job.entry, job.formatId, {
+    schemeId: job.schemeId,
+    brand: job.brand,
+  });
+  const key = job.key;
+  const unplaceable = state === null;
+  useEffect(() => {
+    if (unplaceable) finish(key, null);
+  }, [unplaceable, key]);
+  if (!state) return null;
+  return (
+    <PagePreview
+      config={config}
+      state={state}
+      formatId={job.formatId}
+      width={PREVIEW_WIDTH}
+      onRendered={(dataUrl) => finish(key, dataUrl)}
+      onFailed={() => finish(key, null)}
+    />
   );
 }
 
