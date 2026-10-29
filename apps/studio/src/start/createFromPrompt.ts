@@ -186,11 +186,14 @@ export async function createFromTemplate({
   templateId,
   name,
   formatId,
+  schemeId = null,
 }: {
   organisationId: string;
   templateId: string;
   name: string;
   formatId: string;
+  /** The colour world to start in; null: the template's first. */
+  schemeId?: SchemeId | null;
 }): Promise<string> {
   await loadOrganisationBrand(organisationId);
   // The tiles may have been drawn before the brand was known: say so, never start a blank project.
@@ -202,7 +205,7 @@ export async function createFromTemplate({
   }
   const project = await api.createProject(organisationId, {
     name,
-    document: newDocument(formatId, templateId) as unknown as Record<string, unknown>,
+    document: newDocument(formatId, templateId, schemeId) as unknown as Record<string, unknown>,
   });
   return project.id;
 }

@@ -456,6 +456,21 @@ describe('StartPage sections', () => {
     expect(calls.some((c) => c.url === '/api/ai/pick')).toBe(false);
   });
 
+  it('picking a world on a tile starts the project in that world', async () => {
+    const { fetchMock, calls } = fakeServer({ ai: 'ok' });
+    vi.stubGlobal('fetch', fetchMock);
+    const user = userEvent.setup();
+    renderStart(false);
+
+    const worlds = screen.getByRole('group', { name: 'Headline + text colour world' });
+    await user.click(within(worlds).getByRole('radio', { name: 'Dark' }));
+    const templates = screen.getByRole('list', { name: 'Templates' });
+    await user.click(within(templates).getByRole('button', { name: /^Headline/ }));
+
+    await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
+    expect(firstPageState(calls)['brandScheme']).toBe('dark');
+  });
+
   it('builds a template project in the organisation brand, logo included', async () => {
     rememberLogoSize(BRAND_LOGO, 400, 100);
     const { fetchMock, calls } = fakeServer({ ai: 'ok', pack: orgPack });

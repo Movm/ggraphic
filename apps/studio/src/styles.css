@@ -747,39 +747,6 @@ body {
   margin: 0 0 var(--ui-space-3);
   font-size: 1.125rem;
 }
-.studio-template-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-space-2);
-  margin: 0 0 var(--ui-space-4);
-  padding: 0;
-  list-style: none;
-}
-.studio-template-option {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  width: 100%;
-  padding: 10px var(--ui-space-3);
-  border: 1.5px solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-surface);
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.studio-template-option:hover {
-  background: var(--ui-color-surface-hover);
-}
-.studio-template-option[aria-current='true'] {
-  border-color: var(--ui-color-accent);
-}
-.studio-template-option span {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-text-sm);
-}
 .studio-dialog__actions {
   display: flex;
   justify-content: flex-end;
@@ -1048,4 +1015,78 @@ body {
 .studio-search {
   width: 100%;
   max-width: 320px;
+}
+
+/* Template gallery */
+.studio-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-4);
+}
+.studio-gallery__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--ui-space-3) var(--ui-space-5);
+}
+.studio-gallery__photo {
+  min-width: 10rem;
+}
+.studio-gallery .ui-tiles--grid {
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+}
+.studio-gallery__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+  min-width: 0;
+}
+.studio-gallery__item[data-hidden='true'] .ui-tile {
+  opacity: 0.55;
+}
+.studio-gallery__media {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.studio-gallery__media > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.studio-gallery__skeleton {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--ui-color-bg-subtle);
+  animation: studio-gallery-pulse 1.4s ease-in-out infinite;
+}
+@keyframes studio-gallery-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .studio-gallery__skeleton {
+    animation: none;
+  }
+}
+.studio-gallery__hide {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ui-color-text-muted);
+  font: inherit;
+  font-size: var(--ui-text-sm);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.studio-dialog--wide {
+  width: min(960px, 100%);
+  max-height: 90dvh;
+  overflow-y: auto;
+}
+.studio-dialog--wide .studio-gallery {
+  margin-bottom: var(--ui-space-4);
 }
