@@ -188,7 +188,7 @@ export function useAutosave({
       void save();
     }, POLL_MS);
     return () => clearInterval(timer);
-  }, [currentDocument, save, hasThumbnail, uploadThumbnail]);
+  }, [currentDocument, save, hasThumbnail, uploadThumbnail, hasBaseline]);
 
   /**
    * True while the user's edits are not stored: what is on screen differs from what was last
