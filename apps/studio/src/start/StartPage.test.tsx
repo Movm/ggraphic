@@ -80,12 +80,15 @@ function fakeServer({
   listed = [],
   pack = null,
   createFails = null,
+  hidden = [],
 }: {
   ai: 'ok' | 'timeout';
   listed?: unknown[];
   pack?: unknown;
   /** The project POST answers with this error instead of creating. */
   createFails?: { status: number; error: string; message: string } | null;
+  /** Template ids the organisation hid. */
+  hidden?: string[];
 }) {
   const calls: Call[] = [];
   const project = (document: unknown, version: number) => ({
@@ -118,6 +121,10 @@ function fakeServer({
       return json(201, project(body?.document, 1));
     if (url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET')
       return json(200, { settings: null, assets: [], pack, bundledFonts: [] });
+    if (url === `/api/orgs/${TEST_ORG}/hidden-templates` && method === 'GET')
+      return json(200, { templateIds: hidden });
+    if (url.startsWith(`/api/orgs/${TEST_ORG}/hidden-templates/`) && method === 'PUT')
+      return new Response(null, { status: 204 });
     if (url === '/api/ai/pick') {
       return ai === 'ok'
         ? json(200, PICK)
@@ -152,11 +159,11 @@ const firstPageState = (calls: Call[]) => {
     .state;
 };
 
-function renderStart(ai: boolean) {
+function renderStart(ai: boolean, role: 'owner' | 'editor' = 'owner') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <WithSession>
+      <WithSession role={role}>
         <StartPage config={config(ai)} />
       </WithSession>
       <Toaster />
@@ -361,6 +368,50 @@ describe('StartPage sections', () => {
     await waitFor(() => expect(calls.some((c) => c.url === TEST_PROJECTS_URL)).toBe(true));
     expect(await screen.findByText(/No projects yet/)).toBeInTheDocument();
     expect(screen.queryByRole('list', { name: 'Projects' })).not.toBeInTheDocument();
+  });
+
+  it('a hidden template is not in the gallery or the AI offers', async () => {
+    const { fetchMock, calls } = fakeServer({ ai: 'ok', hidden: ['studio-quote'] });
+    vi.stubGlobal('fetch', fetchMock);
+    const user = userEvent.setup();
+    renderStart(true, 'editor');
+    const templates = screen.getByRole('list', { name: 'Templates' });
+    await waitFor(() =>
+      expect(within(templates).queryByRole('button', { name: /^Quote/ })).not.toBeInTheDocument()
+    );
+    expect(within(templates).getByRole('button', { name: /^Headline/ })).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Describe your graphic'), 'A quote about small steps');
+    await user.click(screen.getByRole('button', { name: /Create/ }));
+    await waitFor(() => expect(calls.some((c) => c.url === '/api/ai/pick')).toBe(true));
+    const offered = (
+      calls.find((c) => c.url === '/api/ai/pick')!.body as { templates: { id: string }[] }
+    ).templates.map((t) => t.id);
+    expect(offered).toContain('studio-headline');
+    expect(offered).not.toContain('studio-quote');
+  });
+
+  it('owners see the hide toggle and use it, editors do not see it', async () => {
+    const { fetchMock, calls } = fakeServer({ ai: 'ok', hidden: ['studio-quote'] });
+    vi.stubGlobal('fetch', fetchMock);
+    const user = userEvent.setup();
+    const view = renderStart(true, 'owner');
+    // The owner still sees the hidden tile, to show it again.
+    const show = await screen.findByRole('button', { name: 'Show Quote in the gallery' });
+    await user.click(show);
+    await waitFor(() =>
+      expect(
+        calls.find((c) => c.method === 'PUT' && c.url.endsWith('/hidden-templates/studio-quote'))
+          ?.body
+      ).toEqual({ hidden: false })
+    );
+    view.unmount();
+
+    renderStart(true, 'editor');
+    await screen.findByRole('list', { name: 'Templates' });
+    expect(
+      screen.queryByRole('button', { name: /^(Hide|Show) .* gallery$/ })
+    ).not.toBeInTheDocument();
   });
 
   it('puts the templates between the prompt and the project grid', async () => {

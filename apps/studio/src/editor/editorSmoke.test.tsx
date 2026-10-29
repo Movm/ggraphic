@@ -12,6 +12,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { createRef } from 'react';
 import { beforeAll, describe, expect, it } from 'vitest';
 
+import { WithSession } from '../testing/session';
+
 import { registerEditor } from '../registerEditor';
 
 import { newDocument } from './document';
@@ -24,19 +26,21 @@ function mount({ ai }: { ai: boolean }) {
   const exportApi = createRef<CanvasEditorExportApi>();
   render(
     <QueryClientProvider client={new QueryClient()}>
-      <CanvasEditorProvider services={createStudioServices({ ai, organisationId: 'org-1' })}>
-        <CanvasEditorShell
-          initialConfigId="studio-blank"
-          initialPages={newDocument('post-portrait', HEADLINE_TEMPLATE_ID).pages}
-          initialProps={{}}
-          formatId="post-portrait"
-          documentTitle="Smoke"
-          onExport={() => {}}
-          onCancel={() => {}}
-          galleryAutoSave={false}
-          exportApiRef={exportApi}
-        />
-      </CanvasEditorProvider>
+      <WithSession>
+        <CanvasEditorProvider services={createStudioServices({ ai, organisationId: 'org-1' })}>
+          <CanvasEditorShell
+            initialConfigId="studio-blank"
+            initialPages={newDocument('post-portrait', HEADLINE_TEMPLATE_ID).pages}
+            initialProps={{}}
+            formatId="post-portrait"
+            documentTitle="Smoke"
+            onExport={() => {}}
+            onCancel={() => {}}
+            galleryAutoSave={false}
+            exportApiRef={exportApi}
+          />
+        </CanvasEditorProvider>
+      </WithSession>
     </QueryClientProvider>
   );
   return exportApi;

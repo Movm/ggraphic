@@ -20,6 +20,7 @@ import {
 import { templatePageState } from '../editor/templates/instantiate';
 
 import { pickOffers } from './aiOffers';
+import { fetchHiddenIds } from './hiddenTemplates';
 
 import { type AdditionalText } from '@ggraphic/editor/configs/types';
 
@@ -154,10 +155,15 @@ export async function createFromPrompt({
   } else {
     const { width, height } = formatSize(formatId);
     let picked: StudioDocument | null;
+    const hidden = await fetchHiddenIds(organisationId);
     try {
       picked = pickedDocument(
         formatId,
-        await api.pick({ brief: prompt.trim(), ...pickOffers(formatId), format: { width, height } })
+        await api.pick({
+          brief: prompt.trim(),
+          ...pickOffers(formatId, activeBrand(), hidden),
+          format: { width, height },
+        })
       );
     } catch (err) {
       throw new AiPromptError(failureKind(err));

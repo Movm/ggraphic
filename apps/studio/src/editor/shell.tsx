@@ -15,6 +15,7 @@ import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { PiSparkle } from 'react-icons/pi';
 
+import { useHiddenTemplates } from '../start/hiddenTemplates';
 import { TemplateGallery } from '../start/TemplateGallery';
 import { apiErrorText } from '../ui/errorText';
 import { toast } from '../ui/toast';
@@ -142,6 +143,8 @@ export function StudioPagePicker({
 }: EditorPagePickerProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  // Hidden for everyone here: owners show them again on the start page.
+  const { hiddenIds } = useHiddenTemplates();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -194,6 +197,7 @@ export function StudioPagePicker({
         </h2>
         <TemplateGallery
           formatId={targetFormat}
+          hiddenIds={hiddenIds}
           showBlank
           defaultSchemeId={pageScheme}
           currentTemplateId={heldTemplateId}

@@ -153,3 +153,16 @@ export type ProjectRow = InferSelectModel<typeof projects>;
 export type AccountRow = InferSelectModel<typeof accounts>;
 export type BrandAssetRow = InferSelectModel<typeof brandAssets>;
 export type BrandPackRow = InferSelectModel<typeof brandPacks>;
+
+export const hiddenTemplates = pgTable(
+  'hidden_templates',
+  {
+    organisationId: uuid('organisation_id')
+      .notNull()
+      .references(() => organisations.id, { onDelete: 'cascade' }),
+    templateId: text('template_id').notNull(),
+    hiddenBy: uuid('hidden_by').references(() => accounts.id, { onDelete: 'set null' }),
+    hiddenAt: timestamp('hidden_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.organisationId, t.templateId] })]
+);
