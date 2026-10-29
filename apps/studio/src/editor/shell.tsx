@@ -3,7 +3,7 @@
  * The Studio's part of the editor shell (`registerEditorShell`): the "AI draft"
  * document tab and the page picker behind "Add page" and "Change template".
  */
-import { SCHEME_IDS } from '@ggraphic/core';
+import { SCHEME_IDS, type SchemeId } from '@ggraphic/core';
 import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
 import {
   registerEditorShell,
@@ -15,14 +15,16 @@ import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { PiSparkle } from 'react-icons/pi';
 
+import { TemplateGallery } from '../start/TemplateGallery';
 import { apiErrorText } from '../ui/errorText';
 import { toast } from '../ui/toast';
 
 import { draftDeckOps } from './aiDraft';
 import { DEFAULT_FORMAT, formatSize } from './document';
-import { templatesFor, type CatalogEntry } from './templates/catalog';
-import { BLANK_TEMPLATE_ID, FREE_PAGE_CONFIG_ID, isStudioTemplateId } from './templates/ids';
+import { type CatalogEntry } from './templates/catalog';
+import { FREE_PAGE_CONFIG_ID } from './templates/ids';
 import { templatePageState } from './templates/instantiate';
+import { PreviewHost } from './templates/previews';
 
 /** The id of the template a page was placed from, if its state says so. */
 function templateRefOf(state: Record<string, unknown> | undefined): string | null {
@@ -152,43 +154,28 @@ export function StudioPagePicker({
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
-  const options = [
-    { id: BLANK_TEMPLATE_ID, label: 'Blank', description: 'An empty page on a solid ground' },
-    ...templatesFor(formatId ?? DEFAULT_FORMAT).map((e) => ({
-      id: e.id,
-      label: e.title,
-      description: e.description,
-    })),
-  ];
-  const select = (id: string) => {
-    const entry = templatesFor(formatId ?? DEFAULT_FORMAT).find((e) => e.id === id);
-    if (mode === 'add' && addPage) {
-      const state = entry ? templatePageState(entry, formatId ?? DEFAULT_FORMAT) : null;
-      if (entry && !state) {
-        // Say so instead of adding a blank page the user did not ask for.
-        toast.error('This template cannot be placed on the current format and brand.');
-        return;
-      }
-      void addPage(FREE_PAGE_CONFIG_ID, false, state ?? undefined);
-    } else if (mode === 'replace') {
-      // Every page is a free page whose config stays, so the new state travels with the choice.
-      const state = id === BLANK_TEMPLATE_ID ? blankPageState(currentState) : placed(entry);
-      if (!state) {
-        toast.error('This template cannot be placed on the current format and brand.');
-        return;
-      }
-      onSelectTemplate(FREE_PAGE_CONFIG_ID, state);
-    } else if (isStudioTemplateId(id)) {
-      onSelectTemplate(id);
+  const targetFormat = formatId ?? DEFAULT_FORMAT;
+  // Every page is a free page whose config stays, so a template's page travels with the choice.
+  const pickTemplate = (entry: CatalogEntry, schemeId: SchemeId) => {
+    const state = templatePageState(entry, targetFormat, { schemeId });
+    if (!state) {
+      // Say so instead of adding a blank page the user did not ask for.
+      toast.error('This template cannot be placed on the current format and brand.');
+      return;
     }
+    if (mode === 'add') void addPage?.(FREE_PAGE_CONFIG_ID, false, state);
+    else onSelectTemplate(FREE_PAGE_CONFIG_ID, state);
+    onClose();
   };
-  // The page keeps its colour world on the new template when that offers it; otherwise placing
-  // falls back to the template's first world.
-  const placed = (entry: CatalogEntry | undefined) => {
-    const scheme = currentState?.['brandScheme'];
-    const schemeId = SCHEME_IDS.find((id) => id === scheme) ?? null;
-    return entry ? templatePageState(entry, formatId ?? DEFAULT_FORMAT, { schemeId }) : null;
+  const pickBlank = () => {
+    if (mode === 'add') void addPage?.(FREE_PAGE_CONFIG_ID, false, undefined);
+    else onSelectTemplate(FREE_PAGE_CONFIG_ID, blankPageState(currentState));
+    onClose();
   };
+  // The page keeps its colour world on the new template when that offers it; otherwise the tile
+  // starts in the template's first world.
+  const scheme = currentState?.['brandScheme'];
+  const pageScheme = SCHEME_IDS.find((id) => id === scheme) ?? null;
   const heldTemplateId = templateRefOf(currentState) ?? currentTemplateId;
   // On the body: a box that opened the picker (the small "Add page" button) must not size or clip it.
   return createPortal(
@@ -200,29 +187,20 @@ export function StudioPagePicker({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="studio-dialog"
+        className="studio-dialog studio-dialog--wide"
       >
         <h2 id={titleId} className="studio-dialog__title">
           {mode === 'add' ? 'Add a page' : 'Change template'}
         </h2>
-        <ul className="studio-template-list">
-          {options.map((template) => (
-            <li key={template.id}>
-              <button
-                type="button"
-                className="studio-template-option"
-                aria-current={template.id === heldTemplateId ? 'true' : undefined}
-                onClick={() => {
-                  select(template.id);
-                  onClose();
-                }}
-              >
-                <strong>{template.label}</strong>
-                <span>{template.description}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        <TemplateGallery
+          formatId={targetFormat}
+          showBlank
+          defaultSchemeId={pageScheme}
+          currentTemplateId={heldTemplateId}
+          onPick={pickTemplate}
+          onPickBlank={pickBlank}
+        />
+        <PreviewHost />
         <div className="studio-dialog__actions">
           {mode === 'add' && onDuplicateCurrent ? (
             <Button

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { type EditorPagePickerProps } from '@ggraphic/editor/components/CanvasEditor/editorShell';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -57,6 +57,36 @@ describe('the page picker in replace mode', () => {
     const [configId, state] = onSelect.mock.calls[0] as [string, Record<string, unknown>];
     expect(configId).toBe('studio-blank');
     expect((state['templateRef'] as { id: string }).id).toBe('studio-quote');
+  });
+});
+
+describe('the picker shows the gallery', () => {
+  it('replace mode puts the picked template and world on the page in place', async () => {
+    const onSelect = open({ currentState: headlinePage() });
+    const worlds = screen.getByRole('group', { name: 'Quote colour world' });
+    await userEvent.click(within(worlds).getByRole('radio', { name: 'Primary' }));
+    await userEvent.click(screen.getByRole('button', { name: /^Quote/ }));
+    // The page keeps its id and config; only its state changes, in one call.
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    const [configId, state] = onSelect.mock.calls[0] as [string, Record<string, unknown>];
+    expect(configId).toBe('studio-blank');
+    expect((state['templateRef'] as { id: string }).id).toBe('studio-quote');
+    expect(state['brandScheme']).toBe('primary');
+  });
+
+  it('add mode adds a free page with the picked template and world', async () => {
+    const addPage = vi.fn(async () => {});
+    open({ mode: 'add', addPage });
+    const worlds = screen.getByRole('group', { name: 'Headline + text colour world' });
+    await userEvent.click(within(worlds).getByRole('radio', { name: 'Dark' }));
+    await userEvent.click(screen.getByRole('button', { name: /^Headline/ }));
+    expect(addPage).toHaveBeenCalledTimes(1);
+    const [configId, inherit, state] = addPage.mock.calls[0] as unknown as [
+      string,
+      boolean,
+      Record<string, unknown>,
+    ];
+    expect([configId, inherit, state['brandScheme']]).toEqual(['studio-blank', false, 'dark']);
   });
 });
 
