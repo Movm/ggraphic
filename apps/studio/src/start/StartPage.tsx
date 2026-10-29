@@ -5,15 +5,15 @@
  * it a compact row of the Studio's templates and all projects with a search.
  * Submitting the prompt creates a project, lets the AI write its texts and opens it.
  */
-import { Button, ChipGroup, PromptComposer, PromptHero, Tile, TileList } from '@ggraphic/ui';
+import { type SchemeId } from '@ggraphic/core';
+import { Button, ChipGroup, PromptComposer, PromptHero } from '@ggraphic/ui';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useId, useMemo, useState, type ReactNode } from 'react';
-import { PiFile, PiQuotes, PiTextT, PiNumberOne } from 'react-icons/pi';
+import { useId, useState } from 'react';
 
 import { type StudioConfig } from '../api/client';
 import { studioBrand } from '../brand';
 import { DEFAULT_FORMAT, STUDIO_FORMATS, type StudioFormatId } from '../editor/document';
-import { templatesFor } from '../editor/templates/catalog';
+import { PreviewHost } from '../editor/templates/previews';
 import { BLANK_TEMPLATE_ID } from '../editor/templates/ids';
 import { PROJECTS_QUERY_KEY } from '../projects/projectsKey';
 import { editorPath, navigate } from '../router';
@@ -29,7 +29,9 @@ import {
   createFromTemplate,
   fetchOrganisationBrand,
 } from './createFromPrompt';
+import { useHiddenTemplates } from './hiddenTemplates';
 import { ProjectGrid } from './ProjectGrid';
+import { TemplateGallery } from './TemplateGallery';
 
 /** Invented, neutral examples. */
 export const EXAMPLE_PROMPTS = [
@@ -38,19 +40,6 @@ export const EXAMPLE_PROMPTS = [
   'A quote about why small steps matter',
   'Share that 120 volunteers planted 800 trees this spring',
 ] as const;
-
-/** The tile icon by template family; a family without one gets the generic page. */
-const FAMILY_ICONS: Record<string, ReactNode> = {
-  headline: <PiTextT aria-hidden />,
-  quote: <PiQuotes aria-hidden />,
-  number: <PiNumberOne aria-hidden />,
-};
-const BLANK_TILE = {
-  id: BLANK_TEMPLATE_ID,
-  family: 'blank',
-  title: 'Blank',
-  description: 'An empty page on a solid ground',
-};
 
 const FORMAT_OPTIONS = STUDIO_FORMATS.map((f) => ({
   value: f.id,
@@ -73,6 +62,7 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
   const [prompt, setPrompt] = useState('');
   const [formatId, setFormatId] = useState<StudioFormatId>(DEFAULT_FORMAT);
   const [busy, setBusy] = useState(false);
+  const { hiddenIds, canHide, setHidden } = useHiddenTemplates();
   const hintId = useId();
   const ai = config?.features.ai ?? false;
   // The tiles follow the organisation's brand: its worlds decide which templates can be placed.
@@ -85,11 +75,6 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
     refetchOnWindowFocus: false,
     retry: false,
   });
-  const templates = useMemo(
-    () => templatesFor(formatId, brand.data ?? studioBrand),
-    [formatId, brand.data]
-  );
-
   const submit = async () => {
     const text = prompt.trim();
     if (!text || busy || !config) return;
@@ -110,7 +95,11 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
     }
   };
 
-  const startFromTemplate = async (templateId: string, name: string) => {
+  const startFromTemplate = async (
+    templateId: string,
+    name: string,
+    schemeId: SchemeId | null = null
+  ) => {
     if (busy) return;
     setBusy(true);
     try {
@@ -119,6 +108,7 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
         templateId,
         name,
         formatId,
+        schemeId,
       });
       void queryClient.invalidateQueries({ queryKey: PROJECTS_QUERY_KEY });
       navigate(editorPath(projectId));
@@ -199,27 +189,21 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
             </h2>
             <p className="studio-muted">Opens in the format chosen above.</p>
           </div>
-          <TileList layout="row" aria-label="Templates">
-            {[BLANK_TILE, ...templates].map((template) => (
-              <li key={template.id}>
-                <Tile
-                  disabled={busy}
-                  ratio="4 / 5"
-                  media={
-                    <span className="studio-template-icon" data-template={template.id}>
-                      {FAMILY_ICONS[template.family] ?? <PiFile aria-hidden />}
-                    </span>
-                  }
-                  title={template.title}
-                  meta={template.description}
-                  onClick={() => void startFromTemplate(template.id, template.title)}
-                />
-              </li>
-            ))}
-          </TileList>
+          <TemplateGallery
+            formatId={formatId}
+            brand={brand.data ?? studioBrand}
+            disabled={busy}
+            hiddenIds={hiddenIds}
+            canHide={canHide}
+            onToggleHidden={setHidden}
+            showBlank
+            onPickBlank={() => void startFromTemplate(BLANK_TEMPLATE_ID, 'Blank')}
+            onPick={(entry, schemeId) => void startFromTemplate(entry.id, entry.title, schemeId)}
+          />
         </section>
         <ProjectGrid />
       </div>
+      <PreviewHost />
     </PageShell>
   );
 }

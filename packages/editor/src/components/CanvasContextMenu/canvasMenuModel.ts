@@ -108,6 +108,7 @@ export function buildCanvasMenu(snapshot: CanvasMenuSnapshot, env: CanvasMenuEnv
           }),
         ]
       : [];
+  const ungroup = (): CanvasMenuEntry[] => (caps.canUngroup ? [item('ungroup')] : []);
   const selectAll = () => item('selectAll', { disabled: !snapshot.canSelectAll });
   /** Einzeln an der Seite, mehrere an der Auswahl; Verteilen braucht drei. */
   const align = (multi: boolean): CanvasMenuEntry[] =>
@@ -171,6 +172,7 @@ export function buildCanvasMenu(snapshot: CanvasMenuSnapshot, env: CanvasMenuEnv
         ...orient(),
         ...align(true),
         ...lock(),
+        ...ungroup(),
         separator,
         ...paste(),
         selectAll(),
@@ -243,6 +245,7 @@ export function buildCanvasMenu(snapshot: CanvasMenuSnapshot, env: CanvasMenuEnv
       ...orient(),
       ...align(false),
       ...lock(),
+      ...ungroup(),
       separator,
       selectAll(),
     ]),

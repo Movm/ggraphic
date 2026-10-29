@@ -84,3 +84,13 @@ if (!('fonts' in document)) {
     },
   });
 }
+
+// jsdom has no IntersectionObserver; by default nothing is ever on screen, so no preview is drawn.
+globalThis.IntersectionObserver ??= class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+  takeRecords() {
+    return [];
+  }
+} as unknown as typeof IntersectionObserver;

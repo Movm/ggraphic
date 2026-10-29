@@ -19,6 +19,7 @@ import { errorHandler, HttpError, parseOr400 } from './http.ts';
 import { type AuthLimiters, authRouter, createAuthLimiters, tooMany } from './routes/auth.ts';
 import { assetsRouter } from './routes/assets.ts';
 import { brandAssetsRouter, organisationBrandRouter } from './routes/brand.ts';
+import { organisationHiddenTemplatesRouter } from './routes/hiddenTemplates.ts';
 import { imagesRouter } from './routes/images.ts';
 import {
   organisationProjectsRouter,
@@ -113,6 +114,7 @@ export function createApp({
   api.use('/orgs/:orgId/trash', organisationTrashRouter(db));
   api.use('/orgs/:orgId/uploads', organisationUploadsRouter(db, config));
   api.use('/orgs/:orgId/brand-pack', organisationBrandRouter(db, config));
+  api.use('/orgs/:orgId/hidden-templates', organisationHiddenTemplatesRouter(db));
   api.use('/brand-assets', brandAssetsRouter(db, config));
   api.use('/projects', projectsRouter(db, config));
   api.use('/uploads', uploadsRouter(db, config));

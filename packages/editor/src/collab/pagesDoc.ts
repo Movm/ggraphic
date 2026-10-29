@@ -140,7 +140,11 @@ export function buildPage(def: PageDef, pos: string): Y.Map<unknown> {
 
 const cloneYMapShallow = (source: Y.Map<unknown>): Y.Map<unknown> => {
   const copy = new Y.Map<unknown>();
-  for (const [k, v] of source.entries()) copy.set(k, v);
+  // Plain values are copied, not shared: a duplicated page's arrays (`groups`,
+  // element lists) must not alias the source page's.
+  for (const [k, v] of source.entries()) {
+    copy.set(k, v instanceof Y.AbstractType ? v.clone() : structuredClone(v));
+  }
   return copy;
 };
 

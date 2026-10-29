@@ -31,6 +31,7 @@ import {
 } from '@ggraphic/editor/utils/orientation';
 import { openTextEditor } from '@ggraphic/editor/utils/textEditorOpeners';
 
+import { pruneGroups, readGroups, wholeGroupsIn, withoutGroup } from '../groups/pageGroups.js';
 import { CanvasClipboard } from './canvasClipboard.js';
 import { moveLayerTo, type CanvasItem, type LayerStep } from './canvasLayerManager.js';
 import {
@@ -152,6 +153,8 @@ export interface CanvasCommands {
   moveLayer: (step: LayerStep) => void;
   /** Sperrt die Auswahl, oder entsperrt sie, wenn schon alles gesperrt ist. */
   toggleLock: () => void;
+  /** Löst die Gruppen auf, die die Auswahl ganz enthält; die Elemente bleiben. */
+  ungroup: () => void;
   /** Öffnet die Dateiauswahl für den ausgewählten Rahmen; false ohne Rahmen. */
   insertFrameImage: () => boolean;
   editText: () => void;
@@ -249,8 +252,19 @@ export function createCanvasCommands<TState extends Partial<BaseCanvasState>>(
     // danach fehlt der Eintrag in der Render-Liste.
     const removedIds = removable.map((entry) => entry.id);
     const label = describe(removedIds);
-    if (removable.length === 1) removable[0]!.remove();
-    else ctx.runHistoryBatch(() => removable.forEach((entry) => entry.remove()));
+    // Always one history step: the removal and the groups it leaves behind.
+    const live = new Set(ctx.getRenderList().map((item) => item.id));
+    removedIds.forEach((id) => live.delete(id));
+    ctx.runHistoryBatch(() => {
+      removable.forEach((entry) => entry.remove());
+      if (readGroups(state as Record<string, unknown>).length === 0) return;
+      ctx.setState((prev) => {
+        const groups = readGroups(prev as Record<string, unknown>);
+        const pruned = pruneGroups(groups, live);
+        return pruned === groups ? prev : { ...prev, groups: pruned };
+      });
+      ctx.saveToHistory(ctx.getState());
+    });
     ctx.store.getState().setSelectedElement(null);
     if (label) {
       const m = messages().announce;
@@ -360,6 +374,20 @@ export function createCanvasCommands<TState extends Partial<BaseCanvasState>>(
       const m = messages().announce;
       ctx.announce?.(m.whatVerb(label, nowLocked ? m.lockedMany : m.unlockedMany));
     }
+  };
+
+  const ungroup = () => {
+    const state = ctx.getState();
+    const whole = wholeGroupsIn(readGroups(state as Record<string, unknown>), selection());
+    if (whole.length === 0) return;
+    const groups = whole.reduce(
+      (rest, group) => withoutGroup(rest, group.id),
+      readGroups(state as Record<string, unknown>)
+    );
+    const next = { ...state, groups };
+    ctx.setState(next);
+    ctx.saveToHistory(next);
+    ctx.announce?.(messages().announce.ungrouped);
   };
 
   const insertFrameImage = () => {
@@ -596,6 +624,7 @@ export function createCanvasCommands<TState extends Partial<BaseCanvasState>>(
     selectAll,
     moveLayer,
     toggleLock,
+    ungroup,
     insertFrameImage,
     editText,
     rotateElement: (id, deg) => rotateTo([id], deg) > 0,
@@ -633,6 +662,8 @@ export function createCanvasCommands<TState extends Partial<BaseCanvasState>>(
         return moveLayer('back');
       case 'toggleLock':
         return toggleLock();
+      case 'ungroup':
+        return ungroup();
       case 'editText':
         return editText();
       case 'insertFrameImage':
