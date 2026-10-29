@@ -26,6 +26,9 @@ docker run --rm --init \
   -w /work \
   "mcr.microsoft.com/playwright:v${version}-noble" \
   bash -euo pipefail -c '
+    # Files deleted on the host must not linger: clear the copy, keeping only installed dependencies.
+    find /work -name node_modules -prune -o ! -type d -exec rm -f {} +
+    find /work -mindepth 1 -type d -empty ! -path "*/node_modules/*" ! -name node_modules -delete
     tar -C /repo --exclude=node_modules --exclude=.git --exclude=dist -cf - . | tar -C /work -xf -
     npm install --global --silent "pnpm@${PNPM_VERSION}"
     pnpm config set store-dir /pnpm-store
