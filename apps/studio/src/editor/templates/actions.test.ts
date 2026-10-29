@@ -86,6 +86,8 @@ describe('insertBlock', () => {
     expect(history).toHaveLength(1);
     expect(history[0]!.additionalTexts).toHaveLength(3);
     expect(history[0]!.groups).toHaveLength(1);
+    // State and history hold the same group, not two ids for one insert.
+    expect(history[0]!.groups).toEqual(state.groups);
     expect(state.layerOrder).toEqual(block.layerOrder);
   });
 });
