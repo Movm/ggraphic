@@ -31,14 +31,25 @@ export interface PagePreviewProps {
   width: number;
   /** Called once, with a PNG data URL. */
   onRendered: (dataUrl: string) => void;
+  /** Called once instead, when the page could not be drawn or produced no image. */
+  onFailed?: () => void;
   /** The page's format; absent: the default format. */
   formatId?: string;
 }
 
-export function PagePreview({ config, state, width, onRendered, formatId }: PagePreviewProps) {
+export function PagePreview({
+  config,
+  state,
+  width,
+  onRendered,
+  onFailed,
+  formatId,
+}: PagePreviewProps) {
   const canvasRef = useRef<GenericCanvasRef>(null);
   const onRenderedRef = useRef(onRendered);
   onRenderedRef.current = onRendered;
+  const onFailedRef = useRef(onFailed);
+  onFailedRef.current = onFailed;
   const stageWidth = getCanvasFormatOrDefault(formatId).width;
 
   useEffect(() => {
@@ -48,12 +59,19 @@ export function PagePreview({ config, state, width, onRendered, formatId }: Page
     const poll = async () => {
       while (!cancelled) {
         const ref = canvasRef.current;
-        const settled = ref?.imagesSettled() ?? false;
-        if (ref && (settled || Date.now() - startedAt > SETTLE_TIMEOUT_MS)) {
+        const late = Date.now() - startedAt > SETTLE_TIMEOUT_MS;
+        if (!ref && late) return onFailedRef.current?.();
+        if (ref && (ref.imagesSettled() || late)) {
           await ensureFontsReady();
           if (cancelled) return;
-          const dataUrl = ref.toDataURL({ format: 'png', pixelRatio: width / stageWidth });
+          let dataUrl: string | undefined;
+          try {
+            dataUrl = ref.toDataURL({ format: 'png', pixelRatio: width / stageWidth });
+          } catch {
+            dataUrl = undefined;
+          }
           if (dataUrl) onRenderedRef.current(dataUrl);
+          else onFailedRef.current?.();
           return;
         }
         await new Promise((resolve) => setTimeout(resolve, POLL_MS));
