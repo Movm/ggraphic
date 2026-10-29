@@ -3,6 +3,7 @@
  * The project document as the Studio stores it on the server: the format and
  * the pages (template id plus state each). The server treats it as opaque JSON.
  */
+import { type SchemeId } from '@ggraphic/core';
 import { getCanvasFormat } from '@ggraphic/editor/formats/index';
 import { readInitialDocument, type InitialPageDef } from '@ggraphic/editor/hooks/usePageManager';
 import { migrateDocument, stampDocument } from '@ggraphic/schema';
@@ -52,11 +53,12 @@ export function formatSize(formatId: string): { width: number; height: number } 
  */
 export function newDocument(
   formatId: string,
-  templateId: string = BLANK_TEMPLATE_ID
+  templateId: string = BLANK_TEMPLATE_ID,
+  schemeId: SchemeId | null = null
 ): StudioDocument {
   const entry = catalogTemplate(templateId);
   const offered = entry && templatesFor(formatId).some((e) => e.id === entry.id);
-  const state = (offered && templatePageState(entry, formatId)) || {
+  const state = (offered && templatePageState(entry, formatId, { schemeId })) || {
     shapeInstances: [],
     additionalTexts: [],
     layerOrder: [],

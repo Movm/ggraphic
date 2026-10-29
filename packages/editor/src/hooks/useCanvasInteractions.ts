@@ -12,6 +12,8 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { useCanvasStore } from '@ggraphic/editor/stores/CanvasStoreProvider';
 
+import { groupClickSelection, type PageGroup } from '../groups/pageGroups.js';
+
 import { useMarqueeSelection } from './useMarqueeSelection.js';
 
 import type { CanvasStageRef } from '../primitives/CanvasStage.js';
@@ -22,6 +24,8 @@ export interface UseCanvasInteractionsOptions {
   stageRef: React.RefObject<CanvasStageRef | null>;
   /** Auswahlrahmen per Maus (aus in der Vorschau). */
   marqueeEnabled: boolean;
+  /** The page's groups, read at click time: a click on a member selects its whole group. */
+  getGroups?: () => readonly PageGroup[];
 }
 
 export interface UseCanvasInteractionsResult {
@@ -39,6 +43,7 @@ export interface UseCanvasInteractionsResult {
 export function useCanvasInteractions({
   stageRef,
   marqueeEnabled,
+  getGroups,
 }: UseCanvasInteractionsOptions): UseCanvasInteractionsResult {
   const store = useCanvasStore();
   const { setSelectedElement, selectLayer, setSnapGuides, updateElementPosition } =
@@ -84,8 +89,13 @@ export function useCanvasInteractions({
     (id: string) => {
       if (consumeMarqueeClick()) return;
       const additive = additiveRef.current;
-      const apply = () => (additive ? selectLayer(id, true) : setSelectedElement(id));
       const { selectedLayerIds } = store.getState();
+      const groups = getGroups?.() ?? [];
+      const apply = () => {
+        if (additive) selectLayer(id, true);
+        else if (groups.length === 0) setSelectedElement(id);
+        else store.getState().setSelectedLayers(groupClickSelection(groups, selectedLayerIds, id));
+      };
       const stage = stageRef.current?.getStage();
       // Druck auf ein Element der Mehrfachauswahl: es könnte der Beginn eines
       // Gruppenzugs sein. Erst ein Loslassen ohne Ziehen klappt die Auswahl
@@ -112,7 +122,7 @@ export function useCanvasInteractions({
       }
       apply();
     },
-    [consumeMarqueeClick, selectLayer, setSelectedElement, stageRef, store]
+    [consumeMarqueeClick, getGroups, selectLayer, setSelectedElement, stageRef, store]
   );
 
   const handleSnapChange = useCallback(

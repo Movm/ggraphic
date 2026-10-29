@@ -53,3 +53,24 @@ jobs:
       - name: ESM specifier check (src and built dist)
         run: node scripts/check-esm-specifiers.mjs --dist
       # Brand-neutral boundary checks live in the Gruenerator repository by design.
+
+  # Stage 2 of the template render gate: every template drawn in Chromium with the bundled fonts,
+  # no slot text overflowing, goldens on the default brand. The goldens are rasteriser-bound, so
+  # the job runs in the official Playwright image; its tag must match @playwright/test in
+  # apps/studio/package.json (scripts/gate-render-docker.sh reads the version from there).
+  render-gate:
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.64.1-noble
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - run: pnpm install --frozen-lockfile --filter "@ggraphic/studio..."
+      - run: pnpm --filter @ggraphic/studio gate:render
+      - name: Upload the diff images of a failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: render-gate-results
+          path: apps/studio/test-results
+          if-no-files-found: ignore

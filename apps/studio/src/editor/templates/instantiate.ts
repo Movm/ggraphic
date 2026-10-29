@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /** Places a catalogue template on a page of the Studio: the one door from template data to page state. */
-import { instantiateTemplatePage, type SchemeId, type TemplateInput } from '@ggraphic/core';
+import {
+  instantiateTemplatePage,
+  type BrandPack,
+  type SchemeId,
+  type TemplateInput,
+} from '@ggraphic/core';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { TEMPLATE_GEOMETRY } from '@ggraphic/editor/templates/templateGeometry';
 import { type TemplateFile, type TemplateFormat } from '@ggraphic/schema';
@@ -20,11 +25,12 @@ export function placeTemplate(
   entry: CatalogEntry,
   canvas: { width: number; height: number },
   format: TemplateFormat | null,
-  schemeId: SchemeId | null = null
+  schemeId: SchemeId | null = null,
+  brand: BrandPack = activeBrand()
 ): Record<string, unknown> | null {
   if (!format) return null;
   const result = instantiateTemplatePage(entry.template, {
-    brand: activeBrand(),
+    brand,
     canvas,
     format,
     geometry: TEMPLATE_GEOMETRY,
@@ -36,11 +42,17 @@ export function placeTemplate(
   return result.ok ? result.state : null;
 }
 
-/** The fresh page of `entry` on `formatId`, in the active brand; null when the format or the brand does not fit. */
+/** The fresh page of `entry` on `formatId`, in `opts.brand` (default: the active one); null when the format or the brand does not fit. */
 export function templatePageState(
   entry: CatalogEntry,
   formatId: string,
-  opts: { schemeId?: SchemeId | null } = {}
+  opts: { schemeId?: SchemeId | null; brand?: BrandPack } = {}
 ): Record<string, unknown> | null {
-  return placeTemplate(entry, formatSize(formatId), formatAspect(formatId), opts.schemeId ?? null);
+  return placeTemplate(
+    entry,
+    formatSize(formatId),
+    formatAspect(formatId),
+    opts.schemeId ?? null,
+    opts.brand
+  );
 }

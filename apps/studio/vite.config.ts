@@ -11,6 +11,12 @@ const templatesOpenSrc = path.resolve(
   import.meta.dirname,
   '../../packages/templates-open/src/index.ts'
 );
+// The test brands the render gate draws with; reachable only through this alias, which the
+// production build never imports (nothing in `src/` outside `src/gate/` names it).
+const testBrandsSrc = path.resolve(
+  import.meta.dirname,
+  '../../packages/templates-open/test/testBrands.ts'
+);
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -23,6 +29,7 @@ export default defineConfig({
       { find: /^@ggraphic\/schema(\/.*)?$/, replacement: `${schemaSrc}$1` },
       { find: /^@ggraphic\/ui$/, replacement: uiSrc },
       { find: /^@ggraphic\/templates-open$/, replacement: templatesOpenSrc },
+      { find: /^@ggraphic\/templates-open\/test\/testBrands$/, replacement: testBrandsSrc },
     ],
     // One React: @tanstack/react-query and the editor must not bring their own copy.
     dedupe: ['react', 'react-dom'],
@@ -34,6 +41,9 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    // One page. `gate.html` (the render gate) is a dev and test entry served by the dev server;
+    // naming the input keeps it out of the build, and `e2e/renderGate.spec.ts` builds to prove it.
+    rollupOptions: { input: path.resolve(import.meta.dirname, 'index.html') },
     // The editor is one large chunk by design; it loads only on the editor route.
     chunkSizeWarningLimit: 6000,
   },

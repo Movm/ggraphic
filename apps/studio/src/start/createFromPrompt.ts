@@ -20,6 +20,7 @@ import {
 import { templatePageState } from '../editor/templates/instantiate';
 
 import { pickOffers } from './aiOffers';
+import { fetchHiddenIds } from './hiddenTemplates';
 
 import { type AdditionalText } from '@ggraphic/editor/configs/types';
 
@@ -154,10 +155,15 @@ export async function createFromPrompt({
   } else {
     const { width, height } = formatSize(formatId);
     let picked: StudioDocument | null;
+    const hidden = await fetchHiddenIds(organisationId);
     try {
       picked = pickedDocument(
         formatId,
-        await api.pick({ brief: prompt.trim(), ...pickOffers(formatId), format: { width, height } })
+        await api.pick({
+          brief: prompt.trim(),
+          ...pickOffers(formatId, activeBrand(), hidden),
+          format: { width, height },
+        })
       );
     } catch (err) {
       throw new AiPromptError(failureKind(err));
@@ -186,11 +192,14 @@ export async function createFromTemplate({
   templateId,
   name,
   formatId,
+  schemeId = null,
 }: {
   organisationId: string;
   templateId: string;
   name: string;
   formatId: string;
+  /** The colour world to start in; null: the template's first. */
+  schemeId?: SchemeId | null;
 }): Promise<string> {
   await loadOrganisationBrand(organisationId);
   // The tiles may have been drawn before the brand was known: say so, never start a blank project.
@@ -202,7 +211,7 @@ export async function createFromTemplate({
   }
   const project = await api.createProject(organisationId, {
     name,
-    document: newDocument(formatId, templateId) as unknown as Record<string, unknown>,
+    document: newDocument(formatId, templateId, schemeId) as unknown as Record<string, unknown>,
   });
   return project.id;
 }

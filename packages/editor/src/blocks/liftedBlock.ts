@@ -51,6 +51,10 @@ export type LiftedBlock = Pick<BlockSlide, BlockCollection | 'selectedIcons' | '
   layerOrder: string[];
   /** Canvas px the block covers. */
   bounds: { x: number; y: number; width: number; height: number };
+  /** Which library block this is, so its group can say where it came from. */
+  blockRef?: { id: string; version: number };
+  /** The colour world the block's bindings were resolved in (`@ggraphic/core` scheme id). */
+  brandScheme?: string;
 };
 
 interface Box {

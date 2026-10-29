@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
-import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
+import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
 
 import { type StudioConfig } from '../api/client';
 import { studioBrand } from '../brand';
@@ -29,6 +29,30 @@ vi.mock('@ggraphic/templates-open', async (importOriginal) => {
   };
   return { ...original, OPEN_TEMPLATES: [...original.OPEN_TEMPLATES, lightOnly] };
 });
+
+// The preview canvas is not drawn here: the test reads the page it is asked to draw.
+const drawn = vi.hoisted(() => ({ states: [] as Record<string, unknown>[] }));
+vi.mock('@ggraphic/editor/components/PagePreview', async () => {
+  const { useEffect } = await import('react');
+  return {
+    PagePreview: ({
+      state,
+      onRendered,
+    }: {
+      state: Record<string, unknown>;
+      onRendered: (dataUrl: string) => void;
+    }) => {
+      useEffect(() => {
+        drawn.states.push(state);
+        onRendered('data:image/png;base64,x');
+      }, [state, onRendered]);
+      return null;
+    },
+  };
+});
+vi.mock('@ggraphic/editor/configs/configLoader', () => ({
+  loadCanvasConfig: async () => ({ id: 'studio-blank', canvas: { width: 1080, height: 1350 } }),
+}));
 
 const config = (ai: boolean): StudioConfig => ({
   features: { ai, removeBackground: false, iconify: false },
@@ -56,12 +80,15 @@ function fakeServer({
   listed = [],
   pack = null,
   createFails = null,
+  hidden = [],
 }: {
   ai: 'ok' | 'timeout';
   listed?: unknown[];
   pack?: unknown;
   /** The project POST answers with this error instead of creating. */
   createFails?: { status: number; error: string; message: string } | null;
+  /** Template ids the organisation hid. */
+  hidden?: string[];
 }) {
   const calls: Call[] = [];
   const project = (document: unknown, version: number) => ({
@@ -94,6 +121,10 @@ function fakeServer({
       return json(201, project(body?.document, 1));
     if (url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET')
       return json(200, { settings: null, assets: [], pack, bundledFonts: [] });
+    if (url === `/api/orgs/${TEST_ORG}/hidden-templates` && method === 'GET')
+      return json(200, { templateIds: hidden });
+    if (url.startsWith(`/api/orgs/${TEST_ORG}/hidden-templates/`) && method === 'PUT')
+      return new Response(null, { status: 204 });
     if (url === '/api/ai/pick') {
       return ai === 'ok'
         ? json(200, PICK)
@@ -128,11 +159,11 @@ const firstPageState = (calls: Call[]) => {
     .state;
 };
 
-function renderStart(ai: boolean) {
+function renderStart(ai: boolean, role: 'owner' | 'editor' = 'owner') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <WithSession>
+      <WithSession role={role}>
         <StartPage config={config(ai)} />
       </WithSession>
       <Toaster />
@@ -339,6 +370,50 @@ describe('StartPage sections', () => {
     expect(screen.queryByRole('list', { name: 'Projects' })).not.toBeInTheDocument();
   });
 
+  it('a hidden template is not in the gallery or the AI offers', async () => {
+    const { fetchMock, calls } = fakeServer({ ai: 'ok', hidden: ['studio-quote'] });
+    vi.stubGlobal('fetch', fetchMock);
+    const user = userEvent.setup();
+    renderStart(true, 'editor');
+    const templates = screen.getByRole('list', { name: 'Templates' });
+    await waitFor(() =>
+      expect(within(templates).queryByRole('button', { name: /^Quote/ })).not.toBeInTheDocument()
+    );
+    expect(within(templates).getByRole('button', { name: /^Headline/ })).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Describe your graphic'), 'A quote about small steps');
+    await user.click(screen.getByRole('button', { name: /Create/ }));
+    await waitFor(() => expect(calls.some((c) => c.url === '/api/ai/pick')).toBe(true));
+    const offered = (
+      calls.find((c) => c.url === '/api/ai/pick')!.body as { templates: { id: string }[] }
+    ).templates.map((t) => t.id);
+    expect(offered).toContain('studio-headline');
+    expect(offered).not.toContain('studio-quote');
+  });
+
+  it('owners see the hide toggle and use it, editors do not see it', async () => {
+    const { fetchMock, calls } = fakeServer({ ai: 'ok', hidden: ['studio-quote'] });
+    vi.stubGlobal('fetch', fetchMock);
+    const user = userEvent.setup();
+    const view = renderStart(true, 'owner');
+    // The owner still sees the hidden tile, to show it again.
+    const show = await screen.findByRole('button', { name: 'Show Quote in the gallery' });
+    await user.click(show);
+    await waitFor(() =>
+      expect(
+        calls.find((c) => c.method === 'PUT' && c.url.endsWith('/hidden-templates/studio-quote'))
+          ?.body
+      ).toEqual({ hidden: false })
+    );
+    view.unmount();
+
+    renderStart(true, 'editor');
+    await screen.findByRole('list', { name: 'Templates' });
+    expect(
+      screen.queryByRole('button', { name: /^(Hide|Show) .* gallery$/ })
+    ).not.toBeInTheDocument();
+  });
+
   it('puts the templates between the prompt and the project grid', async () => {
     const { fetchMock } = fakeServer({
       ai: 'ok',
@@ -454,6 +529,53 @@ describe('StartPage sections', () => {
         .state.templateRef.id
     ).toBe('studio-quote');
     expect(calls.some((c) => c.url === '/api/ai/pick')).toBe(false);
+  });
+
+  it('picking a world on a tile starts the project in that world', async () => {
+    const { fetchMock, calls } = fakeServer({ ai: 'ok' });
+    vi.stubGlobal('fetch', fetchMock);
+    const user = userEvent.setup();
+    renderStart(false);
+
+    const worlds = screen.getByRole('group', { name: 'Headline + text colour world' });
+    await user.click(within(worlds).getByRole('radio', { name: 'Dark' }));
+    const templates = screen.getByRole('list', { name: 'Templates' });
+    await user.click(within(templates).getByRole('button', { name: /^Headline/ }));
+
+    await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
+    expect(firstPageState(calls)['brandScheme']).toBe('dark');
+  });
+
+  it("draws the tile previews in the organisation's brand, which stays unregistered", async () => {
+    rememberLogoSize(BRAND_LOGO, 400, 100);
+    drawn.states.length = 0;
+    const visible: ((v: boolean) => void)[] = [];
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        constructor(private cb: IntersectionObserverCallback) {}
+        observe(target: Element) {
+          visible.push((isIntersecting) =>
+            this.cb([{ isIntersecting, target } as IntersectionObserverEntry], this as never)
+          );
+        }
+        unobserve() {}
+        disconnect() {}
+      }
+    );
+    const { fetchMock, calls } = fakeServer({ ai: 'ok', pack: orgPack });
+    vi.stubGlobal('fetch', fetchMock);
+    renderStart(false);
+    await waitFor(() =>
+      expect(calls.some((c) => c.url === `/api/orgs/${TEST_ORG}/brand-pack`)).toBe(true)
+    );
+    // Wait for the answer: only then do the tiles hold the organisation's brand.
+    await waitFor(() => expect(activeBrand().id).not.toBe(orgPack.id));
+    await new Promise((r) => setTimeout(r, 50));
+    act(() => visible.forEach((show) => show(true)));
+    await waitFor(() => expect(drawn.states.length).toBeGreaterThan(0));
+    expect(drawn.states.some((s) => s['backgroundColor'] === '#0f3a52')).toBe(true);
+    expect(activeBrand().id).not.toBe(orgPack.id);
   });
 
   it('builds a template project in the organisation brand, logo included', async () => {

@@ -296,3 +296,10 @@ export type Draft = z.output<typeof draftSchema>;
 export type StudioConfig = z.infer<typeof configSchema>;
 export type Upload = z.infer<typeof uploadSchema>;
 export type ApiError = z.infer<typeof errorSchema>;
+
+export const hiddenTemplatesSchema = z.object({ templateIds: z.array(z.string()) });
+export const hideTemplateBody = z.object({ hidden: z.boolean() });
+/** A catalogue template id: lowercase words joined by single hyphens. */
+export const TEMPLATE_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+export const templateIdParam = z.string().max(64).regex(TEMPLATE_ID_PATTERN);
+export type HiddenTemplates = z.infer<typeof hiddenTemplatesSchema>;
