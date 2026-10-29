@@ -21,13 +21,13 @@ const mounted = vi.hoisted(() => ({
 }));
 
 vi.mock('./instantiate', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('./instantiate')>();
+  const actual = await importOriginal<{ templatePageState: typeof templatePageState }>();
   return {
     ...actual,
     templatePageState: ((entry, ...rest) => {
       if (mounted.throwFor.includes(entry.id)) throw new Error('broken template');
       return actual.templatePageState(entry, ...rest);
-    }) as typeof actual.templatePageState,
+    }) as typeof templatePageState,
   };
 });
 
