@@ -26,6 +26,7 @@ import { type CatalogEntry } from './templates/catalog';
 import { FREE_PAGE_CONFIG_ID } from './templates/ids';
 import { templatePageState } from './templates/instantiate';
 import { PreviewHost } from './templates/previews';
+import { BlockInsertProvider } from './blocks/BlockInsertProvider';
 
 /** The id of the template a page was placed from, if its state says so. */
 function templateRefOf(state: Record<string, unknown> | undefined): string | null {
@@ -245,5 +246,6 @@ export function registerStudioEditorShell(): void {
       },
     ],
     pagePicker: { Picker: StudioPagePicker },
+    Provider: BlockInsertProvider,
   });
 }

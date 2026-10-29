@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { describe, expect, it } from 'vitest';
 
+import { blockLibrary, liftLibraryBlock } from '../blocks/blockLibrary';
+
 import { createStudioActions } from './actions';
+import { studioCatalog } from './catalog';
 import { type StudioPageState } from './pageState';
 
 function setup(initial: Partial<StudioPageState>) {
@@ -50,5 +53,39 @@ describe('setBackgroundColor', () => {
     });
     actions.setBackgroundColor('#ABCDEF');
     expect(state().bind).toEqual({ other });
+  });
+});
+
+describe('insertBlock', () => {
+  it('is one history entry', () => {
+    let state = {
+      backgroundColor: '#ffffff',
+      additionalTexts: [],
+      shapeInstances: [],
+      userImageInstances: [],
+      selectedIcons: [],
+      iconStates: {},
+      layerOrder: [],
+    } as unknown as StudioPageState;
+    const history: StudioPageState[] = [];
+    // The editor's actions read the committed state, not the one `setState` just wrote.
+    const committed = state;
+    const actions = createStudioActions(
+      () => committed,
+      (change) => {
+        state = typeof change === 'function' ? change(state) : { ...state, ...change };
+      },
+      (saved) => history.push(saved!),
+      () => undefined,
+      1080,
+      1350
+    );
+    const library = blockLibrary(studioCatalog().entries);
+    const block = liftLibraryBlock(library[1]!, { formatId: 'post-portrait' }, 'tok123')!;
+    actions.insertBlock(block);
+    expect(history).toHaveLength(1);
+    expect(history[0]!.additionalTexts).toHaveLength(3);
+    expect(history[0]!.groups).toHaveLength(1);
+    expect(state.layerOrder).toEqual(block.layerOrder);
   });
 });

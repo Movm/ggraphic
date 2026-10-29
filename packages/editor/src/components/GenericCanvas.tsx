@@ -268,6 +268,8 @@ const BLOCK_CASCADE = 40;
 export interface BlockPageSurface {
   backgroundMode?: unknown;
   backgroundColor?: unknown;
+  /** The page's colour world, if it has one. */
+  brandScheme?: unknown;
 }
 
 export interface GenericCanvasRef {
@@ -955,8 +957,9 @@ function GenericCanvasWithRef<
         // The drop point before the await: the pointer is only known now.
         const stage = stageRef.current?.getStage();
         const drop = at && stage ? locateDrop(stage, at, stageWidth / referenceWidth) : null;
-        const { backgroundMode, backgroundColor } = liveStateRef.current.state as BlockPageSurface;
-        const block = await make({ backgroundMode, backgroundColor });
+        const { backgroundMode, backgroundColor, brandScheme } = liveStateRef.current
+          .state as BlockPageSurface;
+        const block = await make({ backgroundMode, backgroundColor, brandScheme });
         if (!block) return false;
         const canvas = { width: referenceWidth, height: referenceHeight };
         // Clicked in again and again, each lands a step down-right, not on the last.
