@@ -29,6 +29,7 @@ import {
   createFromTemplate,
   fetchOrganisationBrand,
 } from './createFromPrompt';
+import { useHiddenTemplates } from './hiddenTemplates';
 import { ProjectGrid } from './ProjectGrid';
 import { TemplateGallery } from './TemplateGallery';
 
@@ -61,6 +62,7 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
   const [prompt, setPrompt] = useState('');
   const [formatId, setFormatId] = useState<StudioFormatId>(DEFAULT_FORMAT);
   const [busy, setBusy] = useState(false);
+  const { hiddenIds, canHide, setHidden } = useHiddenTemplates();
   const hintId = useId();
   const ai = config?.features.ai ?? false;
   // The tiles follow the organisation's brand: its worlds decide which templates can be placed.
@@ -191,6 +193,9 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
             formatId={formatId}
             brand={brand.data ?? studioBrand}
             disabled={busy}
+            hiddenIds={hiddenIds}
+            canHide={canHide}
+            onToggleHidden={setHidden}
             showBlank
             onPickBlank={() => void startFromTemplate(BLANK_TEMPLATE_ID, 'Blank')}
             onPick={(entry, schemeId) => void startFromTemplate(entry.id, entry.title, schemeId)}

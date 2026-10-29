@@ -79,6 +79,8 @@ const errorSchema = z.object({
   currentVersion: z.number().int().optional(),
 });
 
+const hiddenTemplatesSchema = z.object({ templateIds: z.array(z.string()) });
+
 const roleSchema = z.enum(['owner', 'editor']);
 
 const organisationSchema = z.object({ id: z.string(), name: z.string(), role: roleSchema });
@@ -389,6 +391,16 @@ export const api = {
     request(`${org(orgId)}/brand-pack/assets/${encodeURIComponent(assetId)}`, null, {
       method: 'DELETE',
     }),
+
+  // ── Hidden templates ─────────────────────────────────────────────────────
+  listHiddenTemplates: async (orgId: string) =>
+    (await request(`${org(orgId)}/hidden-templates`, hiddenTemplatesSchema)).templateIds,
+  setTemplateHidden: (orgId: string, templateId: string, hidden: boolean) =>
+    request(
+      `${org(orgId)}/hidden-templates/${encodeURIComponent(templateId)}`,
+      null,
+      json('PUT', { hidden })
+    ),
 
   // ── Projects ─────────────────────────────────────────────────────────────
   listProjects: async (orgId: string) =>

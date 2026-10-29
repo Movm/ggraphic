@@ -42,6 +42,7 @@ describe.skipIf(!url)('upgrade from 0001 (Postgres)', () => {
       '0002_accounts.sql',
       '0003_trash.sql',
       '0004_brand_layout_fonts_logo.sql',
+      '0005_hidden_templates.sql',
     ]);
     // The trash column is additive: projects from before it are live.
     expect((await pool.query('SELECT 1 FROM projects WHERE deleted_at IS NOT NULL')).rowCount).toBe(
@@ -84,7 +85,10 @@ describe.skipIf(!url)('upgrade from 0001 (Postgres)', () => {
        VALUES ($1, 'Old', '{}', '[]', '{"headline":"Raleway","body":"Instrument Sans"}')`,
       [DEFAULT_ORG]
     );
-    expect(await runMigrations(pool)).toEqual(['0004_brand_layout_fonts_logo.sql']);
+    expect(await runMigrations(pool)).toEqual([
+      '0004_brand_layout_fonts_logo.sql',
+      '0005_hidden_templates.sql',
+    ]);
     const { rows } = await pool.query(
       'SELECT name, fonts, layout, logo_alt_asset_id, logo_alt_ground FROM brand_packs'
     );

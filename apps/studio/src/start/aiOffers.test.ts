@@ -45,6 +45,15 @@ afterEach(() => {
   registerBrandPacks([studioBrand]);
 });
 
+describe('pickOffers with hidden templates', () => {
+  it('leaves out the templates the organisation hid', () => {
+    const all = pickOffers('post-portrait').templates.map((t) => t.id);
+    expect(all).toContain('studio-quote');
+    const rest = pickOffers('post-portrait', activeBrand(), new Set(['studio-quote'])).templates;
+    expect(rest.map((t) => t.id)).toEqual(all.filter((id) => id !== 'studio-quote'));
+  });
+});
+
 describe('pickOffers', () => {
   const { templates, schemes } = pickOffers('post-portrait');
 

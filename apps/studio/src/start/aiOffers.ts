@@ -31,12 +31,17 @@ const ROLE_LABELS: Record<Exclude<TemplateSlotRole, 'photo'>, string> = {
 
 const capitalised = (id: string) => id.charAt(0).toUpperCase() + id.slice(1);
 
-/** Offered per call: what `formatId` and the organisation's brand can actually place. */
+/**
+ * Offered per call: what `formatId` and the organisation's brand can actually place, minus the
+ * templates the organisation hid.
+ */
 export function pickOffers(
   formatId: string,
-  brand: BrandPack = activeBrand()
+  brand: BrandPack = activeBrand(),
+  hiddenIds: ReadonlySet<string> = new Set()
 ): Pick<PickBody, 'templates' | 'schemes'> {
   const templates = templatesFor(formatId, brand)
+    .filter((entry) => !hiddenIds.has(entry.id))
     .flatMap((entry) => {
       const ids = entry.template.pages[0] ? templateElementIds(entry.template.pages[0].state) : [];
       const slots = ids
