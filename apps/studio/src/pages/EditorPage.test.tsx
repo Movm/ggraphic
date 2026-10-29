@@ -323,8 +323,6 @@ describe('EditorPage', () => {
     const view = renderEditor();
 
     await waitFor(() => expect(document.querySelector('.konvajs-content canvas')).not.toBeNull());
-    // The autosave's first read (1 s poll) is the state the editor opened with; edit after it.
-    await new Promise((r) => setTimeout(r, 1500));
     await user.click(await screen.findByRole('button', { name: /^Elements/ }));
     await user.click(await screen.findByRole('button', { name: /^Blocks/ }));
     await user.click(await screen.findByRole('button', { name: /Quote with name/ }));
