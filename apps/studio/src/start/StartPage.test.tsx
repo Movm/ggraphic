@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
-import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
+import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
 
 import { type StudioConfig } from '../api/client';
 import { studioBrand } from '../brand';
@@ -29,6 +29,30 @@ vi.mock('@ggraphic/templates-open', async (importOriginal) => {
   };
   return { ...original, OPEN_TEMPLATES: [...original.OPEN_TEMPLATES, lightOnly] };
 });
+
+// The preview canvas is not drawn here: the test reads the page it is asked to draw.
+const drawn = vi.hoisted(() => ({ states: [] as Record<string, unknown>[] }));
+vi.mock('@ggraphic/editor/components/PagePreview', async () => {
+  const { useEffect } = await import('react');
+  return {
+    PagePreview: ({
+      state,
+      onRendered,
+    }: {
+      state: Record<string, unknown>;
+      onRendered: (dataUrl: string) => void;
+    }) => {
+      useEffect(() => {
+        drawn.states.push(state);
+        onRendered('data:image/png;base64,x');
+      }, [state, onRendered]);
+      return null;
+    },
+  };
+});
+vi.mock('@ggraphic/editor/configs/configLoader', () => ({
+  loadCanvasConfig: async () => ({ id: 'studio-blank', canvas: { width: 1080, height: 1350 } }),
+}));
 
 const config = (ai: boolean): StudioConfig => ({
   features: { ai, removeBackground: false, iconify: false },
@@ -469,6 +493,38 @@ describe('StartPage sections', () => {
 
     await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
     expect(firstPageState(calls)['brandScheme']).toBe('dark');
+  });
+
+  it("draws the tile previews in the organisation's brand, which stays unregistered", async () => {
+    rememberLogoSize(BRAND_LOGO, 400, 100);
+    drawn.states.length = 0;
+    const visible: ((v: boolean) => void)[] = [];
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        constructor(private cb: IntersectionObserverCallback) {}
+        observe(target: Element) {
+          visible.push((isIntersecting) =>
+            this.cb([{ isIntersecting, target } as IntersectionObserverEntry], this as never)
+          );
+        }
+        unobserve() {}
+        disconnect() {}
+      }
+    );
+    const { fetchMock, calls } = fakeServer({ ai: 'ok', pack: orgPack });
+    vi.stubGlobal('fetch', fetchMock);
+    renderStart(false);
+    await waitFor(() =>
+      expect(calls.some((c) => c.url === `/api/orgs/${TEST_ORG}/brand-pack`)).toBe(true)
+    );
+    // Wait for the answer: only then do the tiles hold the organisation's brand.
+    await waitFor(() => expect(activeBrand().id).not.toBe(orgPack.id));
+    await new Promise((r) => setTimeout(r, 50));
+    act(() => visible.forEach((show) => show(true)));
+    await waitFor(() => expect(drawn.states.length).toBeGreaterThan(0));
+    expect(drawn.states.some((s) => s['backgroundColor'] === '#0f3a52')).toBe(true);
+    expect(activeBrand().id).not.toBe(orgPack.id);
   });
 
   it('builds a template project in the organisation brand, logo included', async () => {

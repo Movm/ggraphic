@@ -17,6 +17,8 @@ import { loadCanvasConfig } from '@ggraphic/editor/configs/configLoader';
 import { type FullCanvasConfig } from '@ggraphic/editor/configs/types';
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 
+import { prepareBrandPack } from '../../brandLoader';
+
 import { FREE_PAGE_CONFIG_ID } from './ids';
 import { type CatalogEntry } from './catalog';
 import { templatePageState } from './instantiate';
@@ -41,6 +43,7 @@ export interface PreviewJob {
   entry: CatalogEntry;
   schemeId: SchemeId;
   formatId: string;
+  brand: BrandPack;
 }
 
 // Least recently used: a Map keeps insertion order, a read re-inserts.
@@ -161,7 +164,12 @@ export function PreviewHost() {
     };
   }, [hasJob, config]);
 
-  const state = job ? templatePageState(job.entry, job.formatId, { schemeId: job.schemeId }) : null;
+  const state = job
+    ? templatePageState(job.entry, job.formatId, {
+        schemeId: job.schemeId,
+        brand: job.brand,
+      })
+    : null;
   const jobKey = job?.key ?? null;
   const unplaceable = job !== null && state === null;
   useEffect(() => {
@@ -206,12 +214,13 @@ export function PreviewHost() {
 export function useTemplatePreview(
   entry: CatalogEntry,
   schemeId: SchemeId,
-  formatId: string
+  formatId: string,
+  brand: BrandPack = activeBrand()
 ): { ref: React.RefCallback<HTMLElement>; src: string | null } {
   const [element, setElement] = useState<HTMLElement | null>(null);
   const [visible, setVisible] = useState(false);
   const [rendered, setRendered] = useState<{ key: string; src: string } | null>(null);
-  const key = previewKey(entry, schemeId, formatId, activeBrand());
+  const key = previewKey(entry, schemeId, formatId, brand);
   const ref = useCallback((node: HTMLElement | null) => setElement(node), []);
 
   useEffect(() => {
@@ -225,10 +234,20 @@ export function useTemplatePreview(
 
   useEffect(() => {
     if (!visible) return;
-    return requestPreview({ key, entry, schemeId, formatId }, (src) => {
-      if (src) setRendered({ key, src });
+    // Fonts and logo sizes of this brand are ready before its page is drawn.
+    let cancel = () => {};
+    let live = true;
+    void prepareBrandPack(brand).then(() => {
+      if (!live) return;
+      cancel = requestPreview({ key, entry, schemeId, formatId, brand }, (src) => {
+        if (src) setRendered({ key, src });
+      });
     });
-  }, [visible, key, entry, schemeId, formatId]);
+    return () => {
+      live = false;
+      cancel();
+    };
+  }, [visible, key, entry, schemeId, formatId, brand]);
 
   // A preview of another brand is never shown for this one.
   return { ref, src: rendered?.key === key ? rendered.src : cachedPreview(key) };

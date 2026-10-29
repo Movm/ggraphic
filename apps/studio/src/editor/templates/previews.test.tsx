@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { catalogTemplate } from './catalog';
+import { templatePageState } from './instantiate';
 import { PreviewHost, previewKey, resetPreviews, useTemplatePreview } from './previews';
 
 const mounted = vi.hoisted(() => ({
@@ -88,6 +89,48 @@ beforeEach(() => {
 afterEach(() => {
   registerBrandPacks([original]);
   vi.unstubAllGlobals();
+});
+
+describe('previews in an explicit brand', () => {
+  const pack = (primary: string) => ({
+    ...activeBrand(),
+    id: `org-${primary}`,
+    colors: { ...activeBrand().colors, primary },
+  });
+
+  it('keys by the brand given, and draws the page in it without registering it', async () => {
+    const entry = catalogTemplate('studio-headline')!;
+    const [a, b] = [pack('#112233'), pack('#aa5500')];
+    expect(previewKey(entry, 'primary', 'post-portrait', a)).not.toBe(
+      previewKey(entry, 'primary', 'post-portrait', b)
+    );
+    const stateOf = (brand: ReturnType<typeof pack>) =>
+      templatePageState(entry, 'post-portrait', { schemeId: 'primary', brand })!['backgroundColor'];
+    expect(stateOf(a)).not.toBe(stateOf(b));
+    expect(activeBrand().id).toBe(original.id);
+  });
+
+  it('a tile asks for its preview in the brand it is given', async () => {
+    const brand = pack('#112233');
+    function Org() {
+      const entry = catalogTemplate('studio-headline')!;
+      const { ref, src } = useTemplatePreview(entry, 'primary', 'post-portrait', brand);
+      return (
+        <div ref={ref} data-testid="org">
+          {src ? <img alt="org" src={src} /> : null}
+        </div>
+      );
+    }
+    render(
+      <>
+        <PreviewHost />
+        <Org />
+      </>
+    );
+    show('org');
+    expect(await screen.findByAltText('org')).toBeInTheDocument();
+    expect(activeBrand().id).toBe(original.id);
+  });
 });
 
 describe('template previews', () => {
@@ -181,7 +224,13 @@ describe('template previews', () => {
     for (let n = 0; n < 201; n += 1) {
       await act(async () => {
         requestPreview(
-          { key: key(n), entry, schemeId: 'light', formatId: 'post-portrait' },
+          {
+            key: key(n),
+            entry,
+            schemeId: 'light',
+            formatId: 'post-portrait',
+            brand: activeBrand(),
+          },
           () => {}
         );
       });
@@ -250,7 +299,10 @@ describe('template previews', () => {
       const { requestPreview, cachedPreview } = await import('./previews');
       const done = vi.fn();
       act(() => {
-        requestPreview({ key, entry, schemeId: 'light', formatId: 'post-portrait' }, done);
+        requestPreview(
+          { key, entry, schemeId: 'light', formatId: 'post-portrait', brand: activeBrand() },
+          done
+        );
       });
       await act(async () => {
         await vi.advanceTimersByTimeAsync(16_000);

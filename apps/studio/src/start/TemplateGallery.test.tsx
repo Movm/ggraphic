@@ -184,6 +184,36 @@ describe('the template gallery', () => {
     expect(onToggleHidden).toHaveBeenCalledWith('studio-headline', true);
   });
 
+  it('a filter that is no longer offered is All again', async () => {
+    const { rerender } = gallery();
+    await userEvent.click(screen.getByRole('radio', { name: 'Number' }));
+    expect(tiles().queryByRole('button', { name: /^Quote/ })).not.toBeInTheDocument();
+    // Hiding the only number template takes the family chip away.
+    rerender(
+      <>
+        <PreviewHost />
+        <TemplateGallery
+          formatId="post-portrait"
+          onPick={() => {}}
+          hiddenIds={new Set(['studio-number', 'test-portrait-only'])}
+        />
+      </>
+    );
+    expect(screen.queryByRole('radio', { name: 'Number' })).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'All' })).toBeChecked();
+    expect(tiles().getByRole('button', { name: /^Quote/ })).toBeInTheDocument();
+  });
+
+  it('keeps the world picked on a tile across filter changes', async () => {
+    const { onPick } = gallery();
+    const worlds = screen.getByRole('group', { name: 'Headline + text colour world' });
+    await userEvent.click(within(worlds).getByRole('radio', { name: 'Dark' }));
+    await userEvent.click(screen.getByRole('radio', { name: 'Quote' }));
+    await userEvent.click(screen.getByRole('radio', { name: 'All' }));
+    await userEvent.click(tiles().getByRole('button', { name: /^Headline/ }));
+    expect(onPick.mock.calls[0]![1]).toBe('dark');
+  });
+
   it('offers a blank page when asked to', async () => {
     const onPickBlank = vi.fn();
     gallery({ showBlank: true, onPickBlank });
