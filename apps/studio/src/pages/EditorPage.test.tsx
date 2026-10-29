@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { type StudioConfig } from '../api/client';
@@ -294,6 +295,76 @@ describe('EditorPage', () => {
     },
     15_000
   );
+
+  it('a block on a blank page stays grouped after reload and follows the brand', async () => {
+    type Saved = {
+      document: {
+        pages: {
+          state: {
+            brandScheme?: string;
+            groups?: {
+              id: string;
+              blockRef?: { id: string; version: number };
+              elementIds: string[];
+            }[];
+            additionalTexts: { id: string; fill: string; bind?: { fill?: { ref: string } } }[];
+          };
+        }[];
+      };
+    };
+    registerBrandPacks([studioBrand]);
+    // A blank page on the light ground, as a person who picked "Blush" would have.
+    const blank = newDocument('post-portrait');
+    (blank.pages[0]!.state as Record<string, unknown>)['backgroundColor'] =
+      studioBrand.colors.surface;
+    const first = fakeServer(blank);
+    vi.stubGlobal('fetch', first.fetchMock);
+    const user = userEvent.setup();
+    const view = renderEditor();
+
+    await waitFor(() => expect(document.querySelector('.konvajs-content canvas')).not.toBeNull());
+    // The autosave's first read (1 s poll) is the state the editor opened with; edit after it.
+    await new Promise((r) => setTimeout(r, 1500));
+    await user.click(await screen.findByRole('button', { name: /^Elements/ }));
+    await user.click(await screen.findByRole('button', { name: /^Blocks/ }));
+    await user.click(await screen.findByRole('button', { name: /Quote with name/ }));
+    await waitFor(() => expect(first.calls.some((c) => c.method === 'PATCH')).toBe(true), {
+      timeout: 8000,
+    });
+    const saved = first.calls.filter((c) => c.method === 'PATCH').at(-1)!.body as Saved;
+    const stored = saved.document.pages[0]!.state;
+    expect(stored.brandScheme).toBe('light');
+    expect(stored.groups).toHaveLength(1);
+    expect(stored.groups![0]!.blockRef).toEqual({ id: 'studio-quote/quote-with-name', version: 1 });
+    expect(stored.groups![0]!.elementIds.slice().sort()).toEqual(
+      stored.additionalTexts.map((t) => t.id).sort()
+    );
+    view.unmount();
+
+    // Reopened after the organisation changed its colours; one member was hand-coloured.
+    const HAND = '#123456';
+    const markId = stored.additionalTexts.find((t) => t.id.startsWith('quote-mark-'))!.id;
+    stored.additionalTexts.find((t) => t.id === markId)!.fill = HAND;
+    const pack = {
+      ...studioBrand,
+      id: 'org-x',
+      colors: { ...studioBrand.colors, primary: '#336699', textOnLight: '#336699' },
+    };
+    const second = fakeServer(saved.document, pack);
+    vi.stubGlobal('fetch', second.fetchMock);
+    renderEditor();
+    await waitFor(() => expect(second.calls.some((c) => c.method === 'PATCH')).toBe(true), {
+      timeout: 8000,
+    });
+    const after = (second.calls.filter((c) => c.method === 'PATCH').at(-1)!.body as Saved).document
+      .pages[0]!.state;
+    expect(after.groups).toEqual(stored.groups);
+    const byPrefix = (prefix: string) =>
+      after.additionalTexts.find((t) => t.id.startsWith(prefix))!;
+    expect(byPrefix('headline-').bind?.fill?.ref).toBe('ink');
+    expect(byPrefix('headline-').fill.toLowerCase()).toBe('#336699');
+    expect(byPrefix('quote-mark-').fill).toBe(HAND);
+  }, 40_000);
 
   describe('when the project was moved to the trash in another tab', () => {
     const brandChanged = () => {
