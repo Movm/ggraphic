@@ -49,6 +49,7 @@ export function useAutosave({
   thumbnailMaxBytes,
   hasThumbnail,
 }: Options) {
+  const hasBaseline = baseline !== undefined;
   const [status, setStatus] = useState<SaveStatus>('saved');
   const versionRef = useRef(initialVersion);
   const savedJsonRef = useRef<string | null>(
@@ -128,6 +129,25 @@ export function useAutosave({
     [currentDocument, projectId, uploadThumbnail]
   );
 
+  // Without a rebind baseline, what the editor opens with is its first read of the pages. Taken
+  // as soon as the export API answers, not at the first poll: an edit made in between would
+  // otherwise be adopted as "saved" and never stored.
+  useEffect(() => {
+    if (hasBaseline) return;
+    const tryRead = () => {
+      if (savedJsonRef.current !== null) return true;
+      const doc = currentDocument();
+      if (!doc) return false;
+      savedJsonRef.current = JSON.stringify(doc);
+      return true;
+    };
+    if (tryRead()) return;
+    const timer = setInterval(() => {
+      if (tryRead()) clearInterval(timer);
+    }, 100);
+    return () => clearInterval(timer);
+  }, [hasBaseline, currentDocument]);
+
   useEffect(() => {
     const timer = setInterval(() => {
       if (blockedRef.current || busyRef.current) return;
@@ -139,7 +159,7 @@ export function useAutosave({
       if (firstReadRef.current) {
         firstReadRef.current = false;
         // Only a rebind leaves the opened state different from the stored one.
-        if (savedJsonRef.current !== null && savedJsonRef.current !== json) {
+        if (hasBaseline && savedJsonRef.current !== json) {
           openedJsonRef.current = json;
         }
         savedJsonRef.current ??= json;
@@ -177,10 +197,11 @@ export function useAutosave({
   const hasUnsaved = useCallback(() => {
     const doc = currentDocument();
     // Before the first read nothing was on screen to edit.
-    if (doc === null || savedJsonRef.current === null || firstReadRef.current) return false;
+    if (doc === null || savedJsonRef.current === null) return false;
+    if (hasBaseline && firstReadRef.current) return false;
     const json = JSON.stringify(doc);
     return json !== savedJsonRef.current && json !== openedJsonRef.current;
-  }, [currentDocument]);
+  }, [currentDocument, hasBaseline]);
 
   // Leaving the page with unsaved changes: the browser asks first.
   useEffect(() => {

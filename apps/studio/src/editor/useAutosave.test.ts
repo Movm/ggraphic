@@ -57,6 +57,19 @@ afterEach(() => {
   vi.resetAllMocks();
 });
 
+describe('an edit made before the first poll', () => {
+  it('is stored, and counts as unsaved until then', async () => {
+    const { hook, set } = setup('opened');
+    // The editor is ready at once; the person edits within the first second.
+    await act(() => vi.advanceTimersByTimeAsync(300));
+    set('edit');
+    expect(hook.result.current.hasUnsaved()).toBe(true);
+    await settle();
+    expect(mocked.updateProject.mock.calls.map((c) => markOf(c[1]))).toEqual(['edit']);
+    expect(hook.result.current.hasUnsaved()).toBe(false);
+  });
+});
+
 describe.each([
   ['without a rebind baseline', undefined],
   ['with a rebind baseline', 'stored'],
