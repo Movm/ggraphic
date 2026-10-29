@@ -13,6 +13,7 @@ import { type EditorShellProviderProps } from '@ggraphic/editor/components/Canva
 import { offeredSchemes } from '@ggraphic/core';
 import { useCallback, useMemo } from 'react';
 
+import { useHiddenTemplates } from '../../start/hiddenTemplates';
 import { formatAspect, studioCatalog } from '../templates/catalog';
 
 import { blockLibrary, liftLibraryBlock, type LibraryBlock } from './blockLibrary';
@@ -27,14 +28,19 @@ export function BlockInsertProvider({
   children,
 }: EditorShellProviderProps) {
   const brand = activeBrand();
+  // Hidden for everyone: a page that already holds a block keeps it.
+  const { hiddenIds } = useHiddenTemplates();
   const bloecke = useMemo<LibraryBlock[]>(() => {
     const aspect = formatId ? formatAspect(formatId) : null;
     if (!aspect) return [];
     const entries = studioCatalog().entries.filter(
-      (e) => e.formats.includes(aspect) && offeredSchemes(e.template, brand).length > 0
+      (e) =>
+        !hiddenIds.has(e.id) &&
+        e.formats.includes(aspect) &&
+        offeredSchemes(e.template, brand).length > 0
     );
     return blockLibrary(entries);
-  }, [formatId, brand]);
+  }, [formatId, brand, hiddenIds]);
 
   const insert = useCallback(
     async (blockId: string, target: BlockTarget = {}): Promise<boolean> => {
