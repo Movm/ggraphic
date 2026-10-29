@@ -216,14 +216,15 @@ export function createStudioActions(
     // ── Blocks ───────────────────────────────────────────────────────────────
     // A placed block is one history step; its parts form a group, and the page takes the block's
     // colour world when it has none, so a brand change later rebinds the block as it does the page.
-    insertBlock: (block: LiftedBlock) =>
+    insertBlock: (block: LiftedBlock) => {
+      // Once, outside `commit`: it runs the change for the state and again for the history entry.
+      const ids = blockElementIds(block);
+      const group: PageGroup = {
+        id: newId('group'),
+        ...(block.blockRef && { blockRef: block.blockRef }),
+        elementIds: ids,
+      };
       commit((prev) => {
-        const ids = blockElementIds(block);
-        const group: PageGroup = {
-          id: newId('group'),
-          ...(block.blockRef && { blockRef: block.blockRef }),
-          elementIds: ids,
-        };
         return {
           ...prev,
           additionalTexts: [...prev.additionalTexts, ...block.additionalTexts],
@@ -243,7 +244,8 @@ export function createStudioActions(
           ...(ids.length > 1 && { groups: [...(prev.groups ?? []), group] }),
           ...(!prev.brandScheme && block.brandScheme && { brandScheme: block.brandScheme }),
         };
-      }),
+      });
+    },
 
     // ── Background ───────────────────────────────────────────────────────────
     // A swatch pick carries its role: the ground then follows the brand. A free colour unbinds it.
