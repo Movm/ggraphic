@@ -49,6 +49,10 @@ interface TemplateTileProps {
   ratio: string;
   worlds: readonly SchemeId[];
   defaultSchemeId: SchemeId | null;
+  brand: BrandPack;
+  /** The world picked on this tile (kept by the gallery across filter changes). */
+  chosen: SchemeId | null;
+  onChoose: (id: string, schemeId: SchemeId) => void;
   current: boolean;
   hidden: boolean;
   disabled: boolean;
@@ -63,6 +67,9 @@ function TemplateTile({
   ratio,
   worlds,
   defaultSchemeId,
+  brand,
+  chosen,
+  onChoose,
   current,
   hidden,
   disabled,
@@ -70,10 +77,9 @@ function TemplateTile({
   onPick,
   onToggleHidden,
 }: TemplateTileProps) {
-  const [chosen, setChosen] = useState<SchemeId | null>(null);
   const fallback = worlds.find((w) => w === defaultSchemeId) ?? worlds[0] ?? entry.schemes[0]!;
   const schemeId = chosen && worlds.includes(chosen) ? chosen : fallback;
-  const { ref, src } = useTemplatePreview(entry, schemeId, formatId);
+  const { ref, src } = useTemplatePreview(entry, schemeId, formatId, brand);
   return (
     <li className="studio-gallery__item" data-hidden={hidden ? 'true' : undefined}>
       <Tile
@@ -99,7 +105,7 @@ function TemplateTile({
           size="sm"
           options={worlds.map((w) => ({ value: w, label: capitalised(w) }))}
           value={schemeId}
-          onChange={setChosen}
+          onChange={(w) => onChoose(entry.id, w)}
           disabled={disabled}
         />
       ) : null}
@@ -135,6 +141,9 @@ export function TemplateGallery({
   const [family, setFamily] = useState(ALL);
   const [occasion, setOccasion] = useState(ALL);
   const [photo, setPhoto] = useState('any');
+  const [chosenWorlds, setChosenWorlds] = useState<ReadonlyMap<string, SchemeId>>(new Map());
+  const chooseWorld = (id: string, schemeId: SchemeId) =>
+    setChosenWorlds((prev) => new Map(prev).set(id, schemeId));
   // Read at render: the brand is applied before a screen with a gallery renders, and a gallery
   // that can outlive a brand change is re-rendered by its owner (previews re-key on the brand).
   const worldsBrand = brand ?? activeBrand();
@@ -145,10 +154,13 @@ export function TemplateGallery({
   );
   const families = [...new Set(listed.map((e) => e.family))];
   const occasions = [...new Set(listed.flatMap((e) => e.occasions))];
+  // A filter whose value is no longer offered (another format, a template hidden) is All again.
+  const familyNow = families.includes(family) ? family : ALL;
+  const occasionNow = occasions.includes(occasion) ? occasion : ALL;
   const shown = listed.filter(
     (e) =>
-      (family === ALL || e.family === family) &&
-      (occasion === ALL || e.occasions.includes(occasion)) &&
+      (familyNow === ALL || e.family === familyNow) &&
+      (occasionNow === ALL || e.occasions.includes(occasionNow)) &&
       (photo === 'any' || e.needsPhoto === (photo === 'with'))
   );
   const { width, height } = formatSize(formatId);
@@ -164,7 +176,7 @@ export function TemplateGallery({
             { value: ALL, label: 'All' },
             ...families.map((f) => ({ value: f, label: familyLabel(f) })),
           ]}
-          value={family}
+          value={familyNow}
           onChange={setFamily}
         />
         {occasions.length > 0 ? (
@@ -175,7 +187,7 @@ export function TemplateGallery({
               { value: ALL, label: 'Any occasion' },
               ...occasions.map((o) => ({ value: o, label: capitalised(o) })),
             ]}
-            value={occasion}
+            value={occasionNow}
             onChange={setOccasion}
           />
         ) : null}
@@ -212,6 +224,9 @@ export function TemplateGallery({
             ratio={ratio}
             worlds={offeredSchemes(entry.template, worldsBrand)}
             defaultSchemeId={defaultSchemeId}
+            brand={worldsBrand}
+            chosen={chosenWorlds.get(entry.id) ?? null}
+            onChoose={chooseWorld}
             current={entry.id === currentTemplateId}
             hidden={hiddenIds?.has(entry.id) ?? false}
             disabled={disabled}
