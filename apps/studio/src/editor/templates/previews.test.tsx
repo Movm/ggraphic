@@ -13,6 +13,7 @@ const mounted = vi.hoisted(() => ({
   maxLive: 0,
   /** Held renders: when set, onRendered waits for `release()`. */
   hold: false,
+  configFails: false,
   pending: [] as (() => void)[],
 }));
 
@@ -35,7 +36,10 @@ vi.mock('@ggraphic/editor/components/PagePreview', () => ({
 }));
 
 vi.mock('@ggraphic/editor/configs/configLoader', () => ({
-  loadCanvasConfig: async () => ({ id: 'studio-blank', canvas: { width: 1080, height: 1350 } }),
+  loadCanvasConfig: async () => {
+    if (mounted.configFails) throw new Error('no config');
+    return { id: 'studio-blank', canvas: { width: 1080, height: 1350 } };
+  },
 }));
 
 // jsdom has no IntersectionObserver: the test decides who is visible.
@@ -70,7 +74,14 @@ const original = activeBrand();
 
 beforeEach(() => {
   resetPreviews();
-  Object.assign(mounted, { count: 0, live: 0, maxLive: 0, hold: false, pending: [] });
+  Object.assign(mounted, {
+    count: 0,
+    live: 0,
+    maxLive: 0,
+    hold: false,
+    configFails: false,
+    pending: [],
+  });
   observed.clear();
   vi.stubGlobal('IntersectionObserver', FakeIntersectionObserver);
 });
@@ -97,6 +108,7 @@ describe('template previews', () => {
   });
 
   it('two tiles with the same key render once', async () => {
+    mounted.hold = true;
     render(
       <>
         <PreviewHost />
@@ -106,9 +118,12 @@ describe('template previews', () => {
     );
     show('a');
     show('b');
+    await waitFor(() => expect(mounted.pending).toHaveLength(1));
+    await act(async () => mounted.pending.shift()!());
     expect(await screen.findByAltText('a')).toBeInTheDocument();
     expect(await screen.findByAltText('b')).toBeInTheDocument();
     expect(mounted.count).toBe(1);
+    expect(mounted.pending).toHaveLength(0);
   });
 
   it('a brand change renders again', async () => {
@@ -175,5 +190,94 @@ describe('template previews', () => {
     expect(cachedPreview(key(0))).toBeNull();
     expect(cachedPreview(key(200))).not.toBeNull();
     expect(cachedPreview(key(1))).not.toBeNull();
+  });
+
+  it('hides the host from people and screen readers', async () => {
+    mounted.hold = true;
+    render(
+      <>
+        <PreviewHost />
+        <Tile id="a" />
+      </>
+    );
+    show('a');
+    const canvas = await screen.findByTestId('preview-canvas');
+    const host = canvas.parentElement!;
+    expect(host).toHaveAttribute('aria-hidden', 'true');
+    expect(host).toHaveAttribute('inert');
+    expect(host.style.visibility).toBe('hidden');
+  });
+
+  describe('a stuck job', () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it('does not block the next tile', async () => {
+      vi.useFakeTimers();
+      mounted.hold = true;
+      render(
+        <>
+          <PreviewHost />
+          <Tile id="a" entryId="studio-quote" />
+          <Tile id="b" entryId="studio-headline" />
+        </>
+      );
+      show('a');
+      show('b');
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(100);
+      });
+      expect(mounted.count).toBe(1);
+
+      // The first render never reports.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(16_000);
+      });
+      expect(mounted.count).toBe(2);
+      expect(screen.queryByAltText('a')).toBeNull();
+
+      await act(async () => mounted.pending.pop()!());
+      expect(screen.getByAltText('b')).toBeInTheDocument();
+    });
+
+    it('does not cache a failed render as an image', async () => {
+      vi.useFakeTimers();
+      mounted.hold = true;
+      const entry = catalogTemplate('studio-quote')!;
+      render(<PreviewHost />);
+      const key = previewKey(entry, 'light', 'post-portrait', activeBrand());
+      const { requestPreview, cachedPreview } = await import('./previews');
+      const done = vi.fn();
+      act(() => {
+        requestPreview({ key, entry, schemeId: 'light', formatId: 'post-portrait' }, done);
+      });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(16_000);
+      });
+      expect(done).toHaveBeenCalledWith(null);
+      expect(cachedPreview(key)).toBeNull();
+    });
+  });
+
+  it('a rejected config load does not block the queue', async () => {
+    mounted.configFails = true;
+    render(
+      <>
+        <PreviewHost />
+        <Tile id="a" entryId="studio-quote" />
+        <Tile id="b" entryId="studio-headline" />
+      </>
+    );
+    show('a');
+    show('b');
+    await act(async () => {});
+    expect(mounted.count).toBe(0);
+
+    mounted.configFails = false;
+    const { rerender } = render(<Tile id="c" entryId="studio-number" />);
+    void rerender;
+    show('c');
+    expect(await screen.findByAltText('c')).toBeInTheDocument();
   });
 });

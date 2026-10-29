@@ -24,6 +24,8 @@ import { templatePageState } from './instantiate';
 /** Width of a rendered preview in px; a gallery tile shows it at most this wide. */
 const PREVIEW_WIDTH = 480;
 const CACHE_LIMIT = 200;
+/** A job that has not reported by then is given up on, so the next one runs. */
+const JOB_TIMEOUT_MS = 15_000;
 
 export function previewKey(
   entry: CatalogEntry,
@@ -115,7 +117,13 @@ export function resetPreviews(): void {
   queue.length = 0;
   waiting.clear();
   current = null;
+  pageConfig = null;
   emit();
+}
+
+/** Gives up on the running job and every queued one; none of them is cached. */
+function failAll(): void {
+  while (current || queue.length > 0) finish(current ? current.key : queue.shift()!.key, null);
 }
 
 function subscribeHost(listener: () => void): () => void {
@@ -135,18 +143,23 @@ function loadPageConfig(): Promise<FullCanvasConfig> {
 export function PreviewHost() {
   const job = useSyncExternalStore(subscribeHost, currentJob, currentJob);
   const [config, setConfig] = useState<FullCanvasConfig | null>(null);
+  const hasJob = job !== null;
+  // Loaded when the first job needs it; a failed load gives up on the waiting jobs
+  // (a later request tries again) instead of leaving the queue stuck behind them.
   useEffect(() => {
+    if (!hasJob || config) return;
     let live = true;
     loadPageConfig().then(
       (loaded) => live && setConfig(loaded),
       () => {
         pageConfig = null;
+        if (live) failAll();
       }
     );
     return () => {
       live = false;
     };
-  }, []);
+  }, [hasJob, config]);
 
   const state = job ? templatePageState(job.entry, job.formatId, { schemeId: job.schemeId }) : null;
   const jobKey = job?.key ?? null;
@@ -154,6 +167,13 @@ export function PreviewHost() {
   useEffect(() => {
     if (unplaceable && jobKey) finish(jobKey, null);
   }, [unplaceable, jobKey]);
+
+  // A job that never reports must not hold the queue.
+  useEffect(() => {
+    if (!jobKey) return;
+    const timer = setTimeout(() => finish(jobKey, null), JOB_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [jobKey]);
 
   if (!job || !state || !config) return null;
   return (
@@ -176,6 +196,7 @@ export function PreviewHost() {
         formatId={job.formatId}
         width={PREVIEW_WIDTH}
         onRendered={(dataUrl) => finish(job.key, dataUrl)}
+        onFailed={() => finish(job.key, null)}
       />
     </div>
   );

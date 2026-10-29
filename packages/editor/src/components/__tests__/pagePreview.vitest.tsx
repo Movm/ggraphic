@@ -59,4 +59,21 @@ describe('PagePreview', () => {
     const options = toDataURL.mock.calls[0]![0] as { width: number; pixelRatio: number };
     expect(Math.floor(options.width * options.pixelRatio)).toBe(200);
   });
+
+  it('calls onFailed, not onRendered, when the stage gives no image', async () => {
+    toDataURL.mockReturnValueOnce(undefined as never);
+    const onRendered = vi.fn();
+    const onFailed = vi.fn();
+    render(
+      <PagePreview
+        config={config as never}
+        state={{ line1: 'a', line2: 'b', line3: 'c' }}
+        width={200}
+        onRendered={onRendered}
+        onFailed={onFailed}
+      />
+    );
+    await waitFor(() => expect(onFailed).toHaveBeenCalledTimes(1), { timeout: 3000 });
+    expect(onRendered).not.toHaveBeenCalled();
+  });
 });
