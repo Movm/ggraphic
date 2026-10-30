@@ -98,7 +98,7 @@
           {
             "id": "series",
             "type": "body",
-            "text": "Autumn series on the square",
+            "text": "Autumn series",
             "x": 0,
             "y": 0,
             "width": 0.597826,
@@ -301,9 +301,9 @@
         "de": "Titel der Reihe"
       },
       "budget": {
-        "maxWords": 5,
-        "maxLines": 2,
-        "maxChars": 34
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 18
       }
     },
     "day-1": {
@@ -421,7 +421,7 @@
   "logoCorners": ["top-right"],
   "placeholders": {
     "en": {
-      "series": "Autumn series on the square",
+      "series": "Autumn series",
       "day-1": "06",
       "month-1": "OCT",
       "name-1": "Garden breakfast",
@@ -433,7 +433,7 @@
       "name-3": "Planning round"
     },
     "de": {
-      "series": "Herbstreihe auf dem Platz",
+      "series": "Herbstreihe",
       "day-1": "06",
       "month-1": "OKT",
       "name-1": "Gartenfrühstück",

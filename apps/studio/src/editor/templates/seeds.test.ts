@@ -90,7 +90,7 @@ describe('text contrast', () => {
 
   describe.each(brands)('on the $id brand', (brand) => {
     it.each(FORMATS)(
-      'every text of every template reads on the page background of every world it offers ($id; the background only, not text over shapes or photos)',
+      'every text of every template reads on its ground in every world it offers ($id; the page background, or the shape that holds the text; not text over photos)',
       ({ id: formatId, width, height }) => {
         registerBrandPacks([brand, studioBrand]);
         const failures: string[] = [];
@@ -103,18 +103,41 @@ describe('text contrast', () => {
               continue;
             }
             const ground = page['backgroundColor'] as string;
+            const shapes = (page['shapeInstances'] ?? []) as {
+              id: string;
+              x: number;
+              y: number;
+              width: number;
+              height: number;
+              fill: string;
+            }[];
+            const order = page['layerOrder'] as string[];
             for (const t of page['additionalTexts'] as {
               id: string;
+              x: number;
+              y: number;
+              width: number;
               fill: string;
               fontSize: number;
             }[]) {
               checked += 1;
-              const ratio = contrastRatio(t.fill, ground) ?? 0;
+              // A shape below the text that holds its whole first line is the text's ground.
+              const holder = shapes
+                .filter((sh) => order.indexOf(sh.id) < order.indexOf(t.id))
+                .reverse()
+                .find(
+                  (sh) =>
+                    t.x >= sh.x - sh.width / 2 &&
+                    t.x + t.width <= sh.x + sh.width / 2 &&
+                    t.y >= sh.y - sh.height / 2 &&
+                    t.y + t.fontSize <= sh.y + sh.height / 2
+                );
+              const ratio = contrastRatio(t.fill, holder?.fill ?? ground) ?? 0;
               const large = t.fontSize >= LARGE_TEXT_SHARE_OF_SHORT_SIDE * Math.min(width, height);
               const need = large ? 3 : 4.5;
               if (ratio < need) {
                 failures.push(
-                  `${entry.id}/${world}/${t.id}: ${ratio.toFixed(2)} < ${need} (${t.fill} on ${ground})`
+                  `${entry.id}/${world}/${t.id}: ${ratio.toFixed(2)} < ${need} (${t.fill} on ${holder?.fill ?? ground})`
                 );
               }
             }

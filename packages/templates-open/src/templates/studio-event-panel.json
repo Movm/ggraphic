@@ -114,7 +114,7 @@
             "lineHeight": 1.1,
             "fontStyle": "bold",
             "bind": {
-              "fill": "accent",
+              "fill": "ink2",
               "fontFamily": "font.body"
             }
           },
