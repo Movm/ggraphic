@@ -17,6 +17,7 @@ import { brandColors, fontColors } from '@ggraphic/editor/utils/colorOptions';
 import { type CropAspectId } from '@ggraphic/editor/utils/cropAspect';
 import { focusPage, isKeyboardModality } from '@ggraphic/editor/utils/editorFocus';
 import { type GradientFill } from '@ggraphic/editor/utils/gradientFill';
+import { type ImageLookId, type LookFields } from '@ggraphic/editor/utils/imageLook';
 import { type LockState } from '@ggraphic/editor/utils/layerLock';
 import { STROKE_ONLY_SHAPES } from '@ggraphic/editor/utils/shapes';
 import { useUnsplashHome } from '@ggraphic/editor/utils/unsplashLinks';
@@ -42,6 +43,7 @@ import {
   FloatingPositionControl,
   type PositionCommandId,
 } from '@ggraphic/editor/components/TopBar/modules/FloatingPositionControl';
+import { FloatingImageLookControl } from './modules/FloatingImageLookControl.js';
 import { FloatingShadowControl } from './modules/FloatingShadowControl.js';
 import { FloatingTextAlignControl } from '@ggraphic/editor/components/TopBar/modules/FloatingTextAlignControl';
 
@@ -82,6 +84,8 @@ export interface ContextControlsProps {
     handleShadowChange?: (id: string, patch: ShadowPatch, type: string) => void;
     handleOutlineChange?: (id: string, patch: { stroke?: string; strokeWidth?: number }) => void;
     handleBlurChange?: (id: string, blur: number) => void;
+    /** Look of the selected image: one choice, one history entry. */
+    handleImageLookChange?: (id: string, look: ImageLookId) => void;
     /** Ausschnitt mode for a framed photo: the photo moves inside its frame. */
     handleCropImage?: () => void;
     /** Im Zuschneide-Modus: zurück zum Stand beim Betreten bzw. übernehmen. */
@@ -487,6 +491,17 @@ export function ContextControls({
 
   if (type === 'user-image' && handlers.onEditImage) {
     groups.push(<EditImageButton key="edit-image" onClick={handlers.onEditImage} />);
+  }
+
+  if (type === 'user-image' && activeFloatingModule && handlers.handleImageLookChange) {
+    groups.push(
+      <FloatingImageLookControl
+        key="image-look"
+        // Boundary: the module data is the whole instance, an index-signature record.
+        image={activeFloatingModule.data as LookFields}
+        onChange={(look) => handlers.handleImageLookChange!(activeFloatingModule.data.id, look)}
+      />
+    );
   }
 
   if (type === 'user-image' && handlers.handleCropImage) {

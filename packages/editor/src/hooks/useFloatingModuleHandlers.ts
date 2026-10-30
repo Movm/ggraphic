@@ -2,6 +2,7 @@
 import { type BindingRef, type Bindings } from '@ggraphic/core';
 import { useCallback } from 'react';
 
+import { imageLookPatch, type ImageLookId } from '@ggraphic/editor/utils/imageLook';
 import { withTemplateTextAlign, type TextAlign } from '@ggraphic/editor/utils/textAlign';
 
 import { bindPatch, withPageColor } from '../brand/bindPick.js';
@@ -52,6 +53,7 @@ export interface UseFloatingModuleHandlersResult {
   handleShadowChange: (id: string, patch: ShadowPatch, type: string) => void;
   handleOutlineChange: (id: string, patch: { stroke?: string; strokeWidth?: number }) => void;
   handleBlurChange: (id: string, blur: number) => void;
+  handleImageLookChange: (id: string, look: ImageLookId) => void;
   handleGradientSelect: (gradient: GradientFill | null) => void;
   handleTextAlignChange: (id: string, align: TextAlign) => void;
 }
@@ -288,6 +290,19 @@ export function useFloatingModuleHandlers<
     [actions]
   );
 
+  // One updateUserImage call: one history entry per choice.
+  const handleImageLookChange = useCallback(
+    (id: string, look: ImageLookId) => {
+      const img = state.userImageInstances?.find((u) => u.id === id);
+      if (!img) return;
+      actions.updateUserImage?.(
+        id,
+        imageLookPatch(look, img, typeof state.brandScheme === 'string' ? state.brandScheme : null)
+      );
+    },
+    [actions, state]
+  );
+
   const handleGradientSelect = useCallback(
     (gradient: GradientFill | null) => {
       if (!activeFloatingModule) return;
@@ -339,6 +354,7 @@ export function useFloatingModuleHandlers<
     handleShadowChange,
     handleOutlineChange,
     handleBlurChange,
+    handleImageLookChange,
     handleGradientSelect,
     handleTextAlignChange,
   };
