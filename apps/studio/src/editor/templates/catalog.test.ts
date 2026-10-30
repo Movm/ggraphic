@@ -23,11 +23,20 @@ describe('the catalogue', () => {
       'studio-headline',
       'studio-quote',
       'studio-number',
+      'studio-event-giant-date',
+      'studio-event-photo-date',
+      'studio-event-programme',
+      'studio-event-date-bands',
+      'studio-event-countdown',
+      'studio-event-panel',
       'studio-photo-quote',
       'studio-photo-number',
     ]);
     expect(entries.every((e) => e.source === 'pack')).toBe(true);
     expect(entries.filter((e) => e.needsPhoto).map((e) => e.id)).toEqual([
+      'studio-event-photo-date',
+      'studio-event-countdown',
+      'studio-event-panel',
       'studio-photo-quote',
       'studio-photo-number',
     ]);

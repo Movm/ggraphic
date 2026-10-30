@@ -22,6 +22,9 @@ describe('blockLibrary', () => {
       'studio-headline/headline-with-bar',
       'studio-quote/quote-with-name',
       'studio-number/number-with-explanation',
+      'studio-event-giant-date/date-with-place',
+      'studio-event-photo-date/date-with-place',
+      'studio-event-programme/date-with-place',
       'studio-photo-quote/quote-with-person',
       'studio-photo-number/number-with-line',
     ]);

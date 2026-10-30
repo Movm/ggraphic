@@ -1,0 +1,209 @@
+{
+  "formatVersion": 1,
+  "id": "studio-event-countdown",
+  "version": 1,
+  "kind": "template",
+  "family": "event",
+  "title": {
+    "en": "Countdown digit",
+    "de": "Countdown-Ziffer"
+  },
+  "description": {
+    "en": "One huge digit with a caption, a date bar and a photo strip below",
+    "de": "Eine riesige Ziffer mit Beschriftung, ein Datumsbalken und darunter ein Fotostreifen"
+  },
+  "tags": {
+    "tone": "urgent",
+    "occasions": ["event"],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "bar",
+            "type": "rect",
+            "x": 0.347826,
+            "y": 0.634454,
+            "width": 0.695652,
+            "height": 0.092437,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0.688889,
+            "width": 1,
+            "height": 0.311111,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "count",
+            "type": "header",
+            "text": "4",
+            "x": 0,
+            "y": 0,
+            "width": 0.597826,
+            "fontSize": 0.925926,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.8,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "label",
+            "type": "body",
+            "text": "days to the town meeting",
+            "x": 0.576087,
+            "y": 0.067227,
+            "width": 0.423913,
+            "fontSize": 0.05,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.05,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "date",
+            "type": "body",
+            "text": "Sat, 14 June, 3 pm",
+            "x": 0.032609,
+            "y": 0.610084,
+            "width": 0.630435,
+            "fontSize": 0.048148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": ["count", "label", "bar", "date", "photo", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas"
+  },
+  "slots": {
+    "count": {
+      "role": "number",
+      "label": {
+        "en": "Days left (one digit)",
+        "de": "Verbleibende Tage (eine Ziffer)"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 1
+      }
+    },
+    "label": {
+      "role": "subline",
+      "label": {
+        "en": "Caption",
+        "de": "Beschriftung"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 5,
+        "maxChars": 40
+      }
+    },
+    "date": {
+      "role": "date",
+      "label": {
+        "en": "Date and time",
+        "de": "Datum und Uhrzeit"
+      },
+      "budget": {
+        "maxWords": 7,
+        "maxLines": 1,
+        "maxChars": 24
+      }
+    },
+    "photo": {
+      "role": "photo",
+      "label": {
+        "en": "Photo strip",
+        "de": "Fotostreifen"
+      },
+      "budget": {
+        "maxChars": 1
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right", "bottom-left"],
+  "placeholders": {
+    "en": {
+      "count": "4",
+      "label": "days to the town meeting",
+      "date": "Sat, 14 June, 3 pm"
+    },
+    "de": {
+      "count": "4",
+      "label": "Tage bis zum Hoffest",
+      "date": "Sa, 14. Juni, 15 Uhr"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
