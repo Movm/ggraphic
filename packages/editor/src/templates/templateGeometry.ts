@@ -652,6 +652,8 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
       }
       // A cut corner leaves part of the box bare.
       if (num(el, 'notch') !== 0) return UNKNOWN;
+      // A glow fades to nothing: no ground at all at the edge.
+      if (el['glow'] === true) return UNKNOWN;
       const gradient = el['fillGradient'];
       const fill = parseColor(str(el, 'fill'));
       if (!untransformed || !fill) return UNKNOWN;

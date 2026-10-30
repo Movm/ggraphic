@@ -104,3 +104,12 @@ describe('buildPptxModel notch', () => {
     expect(out[0]).toMatchObject({ kind: 'raster' });
   });
 });
+
+describe('buildPptxModel glow', () => {
+  it('rasterises a glow shape: pptx has no radial fade to alpha', () => {
+    expect(items(shape({ type: 'ellipse', glow: true }))[0]).toMatchObject({
+      kind: 'raster',
+      reason: 'shape-styled',
+    });
+  });
+});

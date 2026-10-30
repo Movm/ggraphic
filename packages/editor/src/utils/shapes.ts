@@ -839,6 +839,11 @@ export interface ShapeInstance {
    * canvas width (0.0519 = 56 px on 1080). Stored, so never renamed.
    */
   notch?: number;
+  /**
+   * `ellipse` and `rect`: the fill fades from full strength in the middle to nothing at the
+   * edge (a soft colour field). Wins over `fillGradient`, loses to `shade`. Stored, so never renamed.
+   */
+  glow?: boolean;
 }
 
 /**
