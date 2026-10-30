@@ -1,0 +1,200 @@
+{
+  "formatVersion": 1,
+  "id": "studio-person-name-top",
+  "version": 1,
+  "kind": "template",
+  "family": "person",
+  "title": {
+    "en": "Name over photo",
+    "de": "Name über dem Foto"
+  },
+  "description": {
+    "en": "A full photo with a big name on a fade at the top and a role on a colour plate at the bottom",
+    "de": "Ein Vollfoto mit großem Namen auf einem Verlauf oben und einer Rolle auf einer Farbfläche unten"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["photo", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "shade",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.324815,
+            "width": 1,
+            "height": 0.64963,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "shade": "top",
+            "bind": {
+              "fill": "shade"
+            }
+          },
+          {
+            "id": "plate",
+            "type": "rect",
+            "x": 0.413043,
+            "y": 0.903361,
+            "width": 0.826087,
+            "height": 0.109244,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "name",
+            "type": "header",
+            "text": "Sam Example",
+            "x": 0,
+            "y": 0.016807,
+            "width": 0.586957,
+            "fontSize": 0.092593,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.88,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "role",
+            "type": "body",
+            "text": "Council, district 4",
+            "x": 0.032609,
+            "y": 0.870588,
+            "width": 0.76087,
+            "fontSize": 0.042593,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": ["photo", "shade", "name", "plate", "role", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas",
+    "shade": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "name": {
+      "role": "name",
+      "label": {
+        "en": "Name",
+        "de": "Name"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 2,
+        "maxChars": 24
+      }
+    },
+    "role": {
+      "role": "body",
+      "label": {
+        "en": "Role",
+        "de": "Rolle"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 1,
+        "maxChars": 22
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "person-with-role",
+      "title": {
+        "en": "Person with role",
+        "de": "Person mit Rolle"
+      },
+      "elementIds": ["name", "plate", "role"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "name": "Sam Example",
+      "role": "Council, district 4"
+    },
+    "de": {
+      "name": "Sam Beispiel",
+      "role": "Rat, Wahlkreis 4"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

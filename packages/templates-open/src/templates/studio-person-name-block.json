@@ -1,0 +1,165 @@
+{
+  "formatVersion": 1,
+  "id": "studio-person-name-block",
+  "version": 1,
+  "kind": "template",
+  "family": "person",
+  "title": {
+    "en": "Name block above photo",
+    "de": "Namensblock über dem Foto"
+  },
+  "description": {
+    "en": "A name and a two-line role at the top, a photo that fills the lower two thirds",
+    "de": "Oben Name und zweizeilige Rolle, darunter ein Foto, das das untere Zweidrittel füllt"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "light", "dark", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0.348148,
+            "width": 1,
+            "height": 0.651852,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "name",
+            "type": "header",
+            "text": "Jo Example",
+            "x": 0,
+            "y": 0.008403,
+            "width": 1,
+            "fontSize": 0.088889,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "role",
+            "type": "body",
+            "text": "Councillor for schools and social care",
+            "x": 0,
+            "y": 0.142857,
+            "width": 1,
+            "fontSize": 0.046296,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.08,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": ["name", "role", "photo", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas"
+  },
+  "slots": {
+    "name": {
+      "role": "name",
+      "label": {
+        "en": "Name",
+        "de": "Name"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 24
+      }
+    },
+    "role": {
+      "role": "body",
+      "label": {
+        "en": "Role",
+        "de": "Rolle"
+      },
+      "budget": {
+        "maxWords": 8,
+        "maxLines": 2,
+        "maxChars": 50
+      }
+    },
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "person-with-role",
+      "title": {
+        "en": "Person with role",
+        "de": "Person mit Rolle"
+      },
+      "elementIds": ["name", "role"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right"],
+  "placeholders": {
+    "en": {
+      "name": "Jo Example",
+      "role": "Councillor for schools and social care"
+    },
+    "de": {
+      "name": "Jo Beispiel",
+      "role": "Stadträtin für Schulen und Soziales"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

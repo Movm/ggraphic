@@ -1,0 +1,184 @@
+{
+  "formatVersion": 1,
+  "id": "studio-person-pair",
+  "version": 1,
+  "kind": "template",
+  "family": "person",
+  "title": {
+    "en": "Two portraits, one line",
+    "de": "Zwei Köpfe, eine Zeile"
+  },
+  "description": {
+    "en": "Two portraits side by side with a short headline and both names below",
+    "de": "Zwei Porträts nebeneinander mit kurzer Überschrift und beiden Namen darunter"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "light", "dark", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [],
+        "userImageInstances": [
+          {
+            "id": "photo-left",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 0.5,
+            "height": 0.585185,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "photo-right",
+            "src": "",
+            "fileName": "",
+            "x": 0.5,
+            "y": 0,
+            "width": 0.5,
+            "height": 0.585185,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "Two for the council.",
+            "x": 0,
+            "y": 0.630252,
+            "width": 1,
+            "fontSize": 0.103704,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.94,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "names",
+            "type": "body",
+            "text": "Kim Sample and Jan Example",
+            "x": 0,
+            "y": 0.907563,
+            "width": 1,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": ["photo-left", "photo-right", "headline", "names", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo-left": "canvas",
+    "photo-right": "canvas"
+  },
+  "slots": {
+    "photo-left": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "photo-right": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "headline": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 2,
+        "maxChars": 30
+      }
+    },
+    "names": {
+      "role": "name",
+      "label": {
+        "en": "Names",
+        "de": "Namen"
+      },
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 1,
+        "maxChars": 40
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "pair-names",
+      "title": {
+        "en": "Pair with names",
+        "de": "Paar mit Namen"
+      },
+      "elementIds": ["headline", "names"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "headline": "Two for the council.",
+      "names": "Kim Sample and Jan Example"
+    },
+    "de": {
+      "headline": "Zwei für den Rat.",
+      "names": "Kim Muster und Jan Beispiel"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

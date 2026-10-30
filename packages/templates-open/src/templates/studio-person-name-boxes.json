@@ -1,0 +1,269 @@
+{
+  "formatVersion": 1,
+  "id": "studio-person-name-boxes",
+  "version": 1,
+  "kind": "template",
+  "family": "person",
+  "title": {
+    "en": "Name boxes beside photo",
+    "de": "Namensboxen neben dem Foto"
+  },
+  "description": {
+    "en": "An intro line, first and last name on two colour plates and a photo on the right",
+    "de": "Eine Einleitungszeile, Vor- und Nachname auf zwei Farbflächen und ein Foto rechts"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "light", "dark", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "plate-first",
+            "type": "rect",
+            "x": 0.201087,
+            "y": 0.262605,
+            "width": 0.402174,
+            "height": 0.105042,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          },
+          {
+            "id": "plate-last",
+            "type": "rect",
+            "x": 0.201087,
+            "y": 0.384454,
+            "width": 0.402174,
+            "height": 0.105042,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0.434783,
+            "y": 0.10084,
+            "width": 0.565217,
+            "height": 0.722689,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "intro",
+            "type": "body",
+            "text": "WE BACK",
+            "x": 0,
+            "y": 0.042017,
+            "width": 1,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "first-name",
+            "type": "header",
+            "text": "Alex",
+            "x": 0.026087,
+            "y": 0.226891,
+            "width": 0.358696,
+            "fontSize": 0.07037,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.9,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "last-name",
+            "type": "header",
+            "text": "Muster",
+            "x": 0.026087,
+            "y": 0.348739,
+            "width": 0.358696,
+            "fontSize": 0.07037,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.9,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "role",
+            "type": "body",
+            "text": "Works council, metal industry",
+            "x": 0,
+            "y": 0.478992,
+            "width": 0.402174,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": [
+          "intro",
+          "photo",
+          "plate-first",
+          "first-name",
+          "plate-last",
+          "last-name",
+          "role",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "intro": {
+      "role": "subline",
+      "label": {
+        "en": "Intro line",
+        "de": "Einleitung"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 24
+      }
+    },
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "first-name": {
+      "role": "name",
+      "label": {
+        "en": "First name",
+        "de": "Vorname"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 10
+      }
+    },
+    "last-name": {
+      "role": "name",
+      "label": {
+        "en": "Last name",
+        "de": "Nachname"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 10
+      }
+    },
+    "role": {
+      "role": "body",
+      "label": {
+        "en": "Role",
+        "de": "Rolle"
+      },
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 4,
+        "maxChars": 40
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "name-plates",
+      "title": {
+        "en": "Name plates",
+        "de": "Namensflächen"
+      },
+      "elementIds": ["plate-first", "first-name", "plate-last", "last-name"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-left"],
+  "placeholders": {
+    "en": {
+      "intro": "WE BACK",
+      "first-name": "Alex",
+      "last-name": "Muster",
+      "role": "Works council, metal industry"
+    },
+    "de": {
+      "intro": "WIR UNTERSTÜTZEN",
+      "first-name": "Alex",
+      "last-name": "Muster",
+      "role": "Betriebsrat, Metallbau"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
