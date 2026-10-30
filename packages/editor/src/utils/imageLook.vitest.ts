@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 
-import { duotoneLook } from './imageFilters.js';
+import { duotoneLook, IMAGE_PRESETS } from './imageFilters.js';
 import { currentImageLook, imageLookPatch } from './imageLook.js';
 
 describe('imageLookPatch', () => {
@@ -29,8 +29,25 @@ describe('imageLookPatch', () => {
     expect(imageLookPatch('duotone', {}, 'dark')).toEqual(duotoneLook(undefined, 'dark'));
   });
 
-  it('Darken: only brightness -0.3', () => {
-    expect(imageLookPatch('darken', { grayscale: true }, 'dark')).toEqual({ brightness: -0.3 });
+  it('Darken after B/W or Duotone ends them, so the derived look is Darken', () => {
+    const duo = duotoneLook(undefined, 'dark')!;
+    for (const before of [{ grayscale: true, contrast: 6 }, duo]) {
+      const img = { ...before, ...imageLookPatch('darken', before, 'dark') } as Record<
+        string,
+        unknown
+      >;
+      expect(currentImageLook(img)).toBe('darken');
+      expect(img['contrast'] === 6).toBe(false);
+      expect(img['bind']).toBeUndefined();
+    }
+  });
+
+  it('sidebar B/W then None leaves no contrast', () => {
+    const bw = IMAGE_PRESETS.find((p) => p.id === 'bw')!.values;
+    expect({ ...bw, ...imageLookPatch('none', bw, null) }).toMatchObject({
+      grayscale: false,
+      contrast: 0,
+    });
   });
 
   it('None clears what a look set and keeps a hand-set contrast or brightness', () => {
