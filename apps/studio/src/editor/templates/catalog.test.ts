@@ -16,11 +16,21 @@ import {
 const valid = OPEN_TEMPLATES[0];
 
 describe('the catalogue', () => {
-  it('the pack yields the three templates and no problems', () => {
+  it('the pack yields its templates and no problems', () => {
     const { entries, problems } = studioCatalog();
     expect(problems).toEqual([]);
-    expect(entries.map((e) => e.id)).toEqual(['studio-headline', 'studio-quote', 'studio-number']);
-    expect(entries.every((e) => e.source === 'pack' && !e.needsPhoto)).toBe(true);
+    expect(entries.map((e) => e.id)).toEqual([
+      'studio-headline',
+      'studio-quote',
+      'studio-number',
+      'studio-photo-quote',
+      'studio-photo-number',
+    ]);
+    expect(entries.every((e) => e.source === 'pack')).toBe(true);
+    expect(entries.filter((e) => e.needsPhoto).map((e) => e.id)).toEqual([
+      'studio-photo-quote',
+      'studio-photo-number',
+    ]);
     expect(catalogTemplate('studio-quote')?.family).toBe('quote');
     expect(catalogTemplate('nope')).toBeNull();
   });
