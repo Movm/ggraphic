@@ -374,6 +374,7 @@
     "./utils/scrollBehavior": "./src/utils/scrollBehavior.ts",
     "./utils/searchTranslations": "./src/utils/searchTranslations.ts",
     "./utils/selectionCapabilities": "./src/utils/selectionCapabilities.ts",
+    "./utils/shade": "./src/utils/shade.ts",
     "./utils/shapes": "./src/utils/shapes.ts",
     "./utils/shapeTransform": "./src/utils/shapeTransform.ts",
     "./utils/smartCrop": "./src/utils/smartCrop.ts",
