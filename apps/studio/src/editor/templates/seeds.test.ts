@@ -110,6 +110,10 @@ describe('text contrast', () => {
               width: number;
               height: number;
               fill: string;
+              opacity?: number;
+              glow?: boolean;
+              shade?: string;
+              pattern?: string;
             }[];
             const order = page['layerOrder'] as string[];
             for (const t of page['additionalTexts'] as {
@@ -123,6 +127,8 @@ describe('text contrast', () => {
               checked += 1;
               // A shape below the text that holds its whole first line is the text's ground.
               const holder = shapes
+                // Only a flat, opaque shape is a ground: a glow, a fade, a veil or a pattern is not.
+                .filter((sh) => !sh.glow && !sh.shade && !sh.pattern && (sh.opacity ?? 1) === 1)
                 .filter((sh) => order.indexOf(sh.id) < order.indexOf(t.id))
                 .reverse()
                 .find(

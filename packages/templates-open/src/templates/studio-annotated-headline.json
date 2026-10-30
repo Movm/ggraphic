@@ -1,0 +1,288 @@
+{
+  "formatVersion": 1,
+  "id": "studio-annotated-headline",
+  "version": 1,
+  "kind": "template",
+  "family": "annotation",
+  "title": {
+    "en": "Annotated news photo",
+    "de": "Schlagzeile kommentiert"
+  },
+  "description": {
+    "en": "A full photo with a comment bar on top, a white headline card in the middle and a closing band",
+    "de": "Ein Vollfoto mit Kommentarleiste oben, weißer Schlagzeilenkarte in der Mitte und Schlussband"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["light", "primary", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "top-bar",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.08,
+            "width": 1,
+            "height": 0.16,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ground"
+            }
+          },
+          {
+            "id": "card",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.546639,
+            "width": 0.93913,
+            "height": 0.219328,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "notch": 0.051852,
+            "bind": {
+              "fill": "ground"
+            }
+          },
+          {
+            "id": "bottom-band",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.92,
+            "width": 1,
+            "height": 0.16,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "comment",
+            "type": "header",
+            "text": "Two years, 3,100 signatures, and then this:",
+            "x": 0.059259,
+            "y": 0.041481,
+            "width": 0.881481,
+            "fontSize": 0.048148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.08,
+            "fontWeight": 700,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "source",
+            "type": "body",
+            "text": "Example newspaper · 14 October 2026",
+            "x": 0.082609,
+            "y": 0.47395,
+            "width": 0.75,
+            "fontSize": 0.02037,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 600,
+            "letterSpacing": 0.04,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "City puts up 40 new benches in the park",
+            "x": 0.082609,
+            "y": 0.510924,
+            "width": 0.834783,
+            "fontSize": 0.051852,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.08,
+            "fontWeight": 700,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "closing",
+            "type": "header",
+            "text": "KEEP GOING.",
+            "x": 0.059259,
+            "y": 0.893333,
+            "width": 0.462963,
+            "fontSize": 0.048148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 800,
+            "letterSpacing": 0.01,
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.headline"
+            }
+          }
+        ],
+        "layerOrder": [
+          "photo",
+          "top-bar",
+          "comment",
+          "card",
+          "source",
+          "headline",
+          "bottom-band",
+          "closing",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas",
+    "top-bar": "canvas",
+    "comment": "canvas",
+    "bottom-band": "canvas",
+    "closing": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "comment": {
+      "role": "headline",
+      "label": {
+        "en": "Comment",
+        "de": "Kommentar"
+      },
+      "budget": {
+        "maxWords": 8,
+        "maxLines": 2,
+        "maxChars": 56
+      }
+    },
+    "source": {
+      "role": "body",
+      "label": {
+        "en": "Newspaper",
+        "de": "Zeitung"
+      },
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 1,
+        "maxChars": 40
+      }
+    },
+    "headline": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Schlagzeile"
+      },
+      "budget": {
+        "maxWords": 9,
+        "maxLines": 2,
+        "maxChars": 56
+      }
+    },
+    "closing": {
+      "role": "cta",
+      "label": {
+        "en": "Closing line",
+        "de": "Schlusszeile"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 1,
+        "maxChars": 24
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right"],
+  "placeholders": {
+    "en": {
+      "comment": "Two years, 3,100 signatures, and then this:",
+      "source": "Example newspaper · 14 October 2026",
+      "headline": "City puts up 40 new benches in the park",
+      "closing": "KEEP GOING."
+    },
+    "de": {
+      "comment": "Zwei Jahre, 3.100 Unterschriften, und dann das:",
+      "source": "Beispielzeitung · 14. Oktober 2026",
+      "headline": "Stadt stellt 40 neue Sitzbänke im Park auf",
+      "closing": "DRAN BLEIBEN."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

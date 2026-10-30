@@ -1,0 +1,262 @@
+{
+  "formatVersion": 1,
+  "id": "studio-quote-card",
+  "version": 1,
+  "kind": "template",
+  "family": "quote",
+  "title": {
+    "en": "Pull-quote card",
+    "de": "Zitatkarte"
+  },
+  "description": {
+    "en": "A large serif quotation on a soft ground with a rule and the speaker",
+    "de": "Ein großes Serifen-Zitat auf einem weichen Grund mit Linie und Sprecher*in"
+  },
+  "tags": {
+    "tone": "warm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["light", "primary", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "grain",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.5,
+            "width": 1,
+            "height": 1,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "grain": 0.35,
+            "grainTone": "dark",
+            "bind": {
+              "fill": "ground"
+            }
+          },
+          {
+            "id": "square",
+            "type": "rect",
+            "x": 0.974074,
+            "y": 0.020741,
+            "width": 0.051852,
+            "height": 0.041481,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          },
+          {
+            "id": "rule",
+            "type": "rect",
+            "x": 0.069565,
+            "y": 0.62605,
+            "width": 0.078261,
+            "height": 0.005042,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "quote-mark",
+            "type": "header",
+            "text": "“",
+            "x": 0.030435,
+            "y": 0.07395,
+            "width": 0.434783,
+            "fontSize": 0.259259,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.55,
+            "fontWeight": 500,
+            "fontStyle": "italic",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.serif"
+            }
+          },
+          {
+            "id": "quote",
+            "type": "header",
+            "text": "Change does not start at the town hall but at every kitchen table where someone says: let us do this together.”",
+            "x": 0.030435,
+            "y": 0.240336,
+            "width": 0.913043,
+            "fontSize": 0.057407,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.2,
+            "fontWeight": 500,
+            "fontStyle": "italic",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.serif"
+            }
+          },
+          {
+            "id": "name",
+            "type": "body",
+            "text": "Jonas Example",
+            "x": 0.030435,
+            "y": 0.645378,
+            "width": 0.76087,
+            "fontSize": 0.027778,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.35,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "role",
+            "type": "body",
+            "text": "Member since 2019",
+            "x": 0.030435,
+            "y": 0.677311,
+            "width": 0.76087,
+            "fontSize": 0.027778,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.35,
+            "fontWeight": 400,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": [
+          "grain",
+          "square",
+          "quote-mark",
+          "quote",
+          "rule",
+          "name",
+          "role",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {
+    "grain": "canvas",
+    "square": "canvas"
+  },
+  "slots": {
+    "quote": {
+      "role": "quote",
+      "label": {
+        "en": "Quotation",
+        "de": "Zitat"
+      },
+      "budget": {
+        "maxWords": 22,
+        "maxLines": 8,
+        "maxChars": 140
+      }
+    },
+    "name": {
+      "role": "name",
+      "label": {
+        "en": "Name",
+        "de": "Name"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 1,
+        "maxChars": 28
+      }
+    },
+    "role": {
+      "role": "body",
+      "label": {
+        "en": "Role",
+        "de": "Rolle"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 1,
+        "maxChars": 36
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "quote-with-name",
+      "title": {
+        "en": "Quote with name",
+        "de": "Zitat mit Name"
+      },
+      "elementIds": ["quote", "rule", "name", "role"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right"],
+  "placeholders": {
+    "en": {
+      "quote-mark": "“",
+      "quote": "Change does not start at the town hall but at every kitchen table where someone says: let us do this together.”",
+      "name": "Jonas Example",
+      "role": "Member since 2019"
+    },
+    "de": {
+      "quote-mark": "„",
+      "quote": "Veränderung beginnt nicht im Rathaus, sondern an jedem Küchentisch, an dem jemand sagt: Das machen wir jetzt gemeinsam.“",
+      "name": "Jonas Beispiel",
+      "role": "Mitglied seit 2019"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

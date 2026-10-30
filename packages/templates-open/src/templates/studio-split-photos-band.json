@@ -1,0 +1,189 @@
+{
+  "formatVersion": 1,
+  "id": "studio-split-photos-band",
+  "version": 1,
+  "kind": "template",
+  "family": "split",
+  "title": {
+    "en": "Two photos, one sentence",
+    "de": "Zwei Bilder, ein Satz"
+  },
+  "description": {
+    "en": "A photo above and below a colour band that carries one sentence",
+    "de": "Ein Foto oben und eines unten, dazwischen ein Farbband mit einem Satz"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["secondary", "primary", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "band",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.5,
+            "width": 1,
+            "height": 0.22963,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ground"
+            }
+          },
+          {
+            "id": "band-glow-1",
+            "type": "ellipse",
+            "x": 0.5,
+            "y": 0.5,
+            "width": 1,
+            "height": 0.22963,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.15,
+            "glow": true,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo-top",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 0.385185,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "notch": 0.051852
+          },
+          {
+            "id": "photo-bottom",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0.614815,
+            "width": 1,
+            "height": 0.385185,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "Share instead of buying: the box is here",
+            "x": 0,
+            "y": 0.421849,
+            "width": 0.978261,
+            "fontSize": 0.061111,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 800,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          }
+        ],
+        "layerOrder": ["photo-top", "band", "band-glow-1", "headline", "photo-bottom", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo-top": "canvas",
+    "band": "canvas",
+    "band-glow-1": "canvas",
+    "photo-bottom": "canvas"
+  },
+  "slots": {
+    "photo-top": {
+      "role": "photo",
+      "label": {
+        "en": "Photo top",
+        "de": "Foto oben"
+      },
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "headline": {
+      "role": "headline",
+      "label": {
+        "en": "Sentence",
+        "de": "Satz"
+      },
+      "budget": {
+        "maxWords": 8,
+        "maxLines": 2,
+        "maxChars": 56
+      }
+    },
+    "photo-bottom": {
+      "role": "photo",
+      "label": {
+        "en": "Photo bottom",
+        "de": "Foto unten"
+      },
+      "budget": {
+        "maxChars": 1
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right"],
+  "placeholders": {
+    "en": {
+      "headline": "Share instead of buying: the box is here"
+    },
+    "de": {
+      "headline": "Teilen statt kaufen: die Leihbox ist da"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
