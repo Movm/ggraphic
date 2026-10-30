@@ -12,6 +12,12 @@ import studioPhotoNumber from './templates/studio-photo-number.json' with { type
 import studioPhotoQuote from './templates/studio-photo-quote.json' with { type: 'json' };
 import studioQuote from './templates/studio-quote.json' with { type: 'json' };
 
+import studioNumberOneDigit from './templates/studio-number-one-digit.json' with { type: 'json' };
+import studioNumberPercent from './templates/studio-number-percent.json' with { type: 'json' };
+import studioNumberPhotoStrip from './templates/studio-number-photo-strip.json' with { type: 'json' };
+import studioNumberTwoColumns from './templates/studio-number-two-columns.json' with { type: 'json' };
+import studioNumberWordStack from './templates/studio-number-word-stack.json' with { type: 'json' };
+
 import studioQuoteGiantMark from './templates/studio-quote-giant-mark.json' with { type: 'json' };
 import studioQuotePortrait from './templates/studio-quote-portrait.json' with { type: 'json' };
 import studioQuoteSidePortrait from './templates/studio-quote-side-portrait.json' with { type: 'json' };
@@ -31,6 +37,12 @@ export const OPEN_TEMPLATES: readonly unknown[] = [
   studioEventPanel,
   studioPhotoQuote,
   studioPhotoNumber,
+
+  studioNumberOneDigit,
+  studioNumberPercent,
+  studioNumberPhotoStrip,
+  studioNumberTwoColumns,
+  studioNumberWordStack,
 
   studioQuoteGiantMark,
   studioQuotePortrait,
