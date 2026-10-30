@@ -597,6 +597,11 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
       const untransformed = (blend === undefined || blend === 'normal') && !isRotated(el);
       if (stateKey === 'userImageInstances') return untransformed ? photoCover(el) : UNKNOWN;
       if (stateKey !== 'shapeInstances') return UNKNOWN;
+      // Only a plain rectangle fills its box; any other shape (or rounded corners) leaves
+      // parts of the box bare, and a text there sits on whatever lies below.
+      if ((el['type'] !== undefined && el['type'] !== 'rect') || num(el, 'cornerRadius') !== 0) {
+        return UNKNOWN;
+      }
       const gradient = el['fillGradient'];
       const fill = parseColor(str(el, 'fill'));
       if (!untransformed || !fill) return UNKNOWN;

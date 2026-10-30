@@ -214,6 +214,16 @@ describe('template geometry', () => {
     expect(cover('shapeInstances', { fill: '#101820', shade: 'top', rotation: 5 })).toEqual(
       unknown
     );
+    // Only a plain rectangle fills its box.
+    expect(cover('shapeInstances', { type: 'rect', fill: '#000', opacity: 1 })).toEqual({
+      kind: 'solid',
+      fill: '#000',
+    });
+    for (const shape of [{ type: 'circle' }, { type: 'star' }, { type: 'rect', cornerRadius: 8 }]) {
+      expect(cover('shapeInstances', { fill: '#000', ...shape })).toEqual(unknown);
+      expect(cover('shapeInstances', { fill: '#000', opacity: 0.5, ...shape })).toEqual(unknown);
+      expect(cover('shapeInstances', { fill: '#000', shade: 'top', ...shape })).toEqual(unknown);
+    }
     expect(cover('shapeInstances', { fill: '#000000', opacity: 0.35 })).toEqual({
       kind: 'veil',
       fill: '#000000',
