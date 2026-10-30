@@ -17,6 +17,7 @@ import {
   type GeometryTable,
   type TemplateInput,
 } from './instantiate.js';
+import { countWords } from './slotBudget.js';
 
 /**
  * What the render gate needs to know of an editor's element kinds. The editor fills it
@@ -149,9 +150,6 @@ const GATE_LOGO_SIZE = { width: 400, height: 100 };
 const refOf = (entry: unknown): unknown => (isObj(entry) ? entry['ref'] : entry);
 const bindOf = (el: Obj): Obj => (isObj(el['bind']) ? el['bind'] : {});
 const isLogo = (el: Obj): boolean => refOf(bindOf(el)['src']) === 'brand.logo';
-/** Breaking whitespace only: a no-break or narrow no-break space (\u00a0, \u202f) joins "73 %" into one word. */
-const BREAKING_SPACE = /[ \t\n\r\f\v\u1680\u2000-\u2006\u2008-\u200a\u2028\u2029\u205f\u3000]+/;
-const words = (text: string): number => text.split(BREAKING_SPACE).filter(Boolean).length;
 const fmt = (n: number): string => String(Math.round(n * 100) / 100);
 
 function intersects(a: Box, b: Box): boolean {
@@ -274,10 +272,10 @@ export function checkTemplate(t: TemplateInput, ctx: GateContext): GateProblem[]
           `placeholder of ${id} has ${[...text].length} characters, over maxChars ${maxChars}`
         );
       }
-      if (maxWords !== undefined && words(text) > maxWords) {
+      if (maxWords !== undefined && countWords(text) > maxWords) {
         problem(
           'budget',
-          `placeholder of ${id} has ${words(text)} words, over maxWords ${maxWords}`
+          `placeholder of ${id} has ${countWords(text)} words, over maxWords ${maxWords}`
         );
       }
     }
