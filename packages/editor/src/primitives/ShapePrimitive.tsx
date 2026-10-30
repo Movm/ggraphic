@@ -17,7 +17,6 @@ import { LOCKED_TRANSFORMER, useIsItemLocked } from '@ggraphic/editor/components
 import { useBoxSnap, type SnapProps } from '@ggraphic/editor/hooks/useBoxSnap';
 import { gradientFillProps } from '@ggraphic/editor/utils/gradientFill';
 import { translucentHitFunc } from '@ggraphic/editor/utils/gradientHitArea';
-import { shapeGradient } from '@ggraphic/editor/utils/shade';
 import { handDrawnPath } from '@ggraphic/editor/utils/handDrawn';
 import {
   ELEMENT_TRANSFORMER,
@@ -25,6 +24,7 @@ import {
   nodeRotation,
   signedScale,
 } from '@ggraphic/editor/utils/orientation';
+import { shapeGradient } from '@ggraphic/editor/utils/shade';
 import {
   assertNever,
   isComposerPlane,

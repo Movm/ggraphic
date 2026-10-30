@@ -572,7 +572,7 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
       const blend = el['blendMode'];
       if (
         (gradient !== undefined && gradient !== null) ||
-        el['shade'] !== undefined ||
+        Boolean(el['shade']) ||
         num(el, 'opacity', 1) < 1 ||
         (blend !== undefined && blend !== 'normal') ||
         isRotated(el)

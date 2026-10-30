@@ -39,7 +39,7 @@ export function shadeGradient(color: string, direction: ShadeDirection): Gradien
 /** The gradient a shape paints: its shade wins over `fillGradient`; `null` for a flat fill. */
 export function shapeGradient(shape: {
   fill: string;
-  shade?: ShadeDirection;
+  shade?: ShadeDirection | null;
   fillGradient?: GradientFill | null;
 }): GradientFill | null {
   if (shape.shade) return shadeGradient(shape.fill, shape.shade);
