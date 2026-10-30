@@ -113,6 +113,7 @@ import type { LockState } from '../utils/layerLock.js';
 import type { CanvasEditorStoreApi } from '@ggraphic/editor/stores/createCanvasEditorStore';
 import type { ExportOptions } from '@ggraphic/editor/types/editorTypes';
 import type { PageCommandId } from '@ggraphic/editor/utils/canvasCommandRegistry';
+import type { ImageLookId } from '@ggraphic/editor/utils/imageLook';
 import type { GradientFill } from '@ggraphic/editor/utils/gradientFill';
 import type { TextAlign } from '@ggraphic/editor/utils/textAlign';
 import type { HocuspocusProvider } from '@hocuspocus/provider';
@@ -349,6 +350,7 @@ export interface GenericCanvasRef {
   handleShadowChange?: (id: string, patch: ShadowPatch, type: string) => void;
   handleOutlineChange?: (id: string, patch: { stroke?: string; strokeWidth?: number }) => void;
   handleBlurChange?: (id: string, blur: number) => void;
+  handleImageLookChange?: (id: string, look: ImageLookId) => void;
   handleCropImage?: () => void;
   /** Zuschneide-Modus: zurück zum Stand beim Betreten bzw. mit dem aktuellen Stand beenden. */
   handleCancelCrop?: () => void;
@@ -1125,6 +1127,7 @@ function GenericCanvasWithRef<
         bridgeRef.current?.handleShadowChange(id, patch, type),
       handleOutlineChange: (id, patch) => bridgeRef.current?.handleOutlineChange(id, patch),
       handleBlurChange: (id, blur) => bridgeRef.current?.handleBlurChange(id, blur),
+      handleImageLookChange: (id, look) => bridgeRef.current?.handleImageLookChange(id, look),
       handleCropImage: () => bridgeRef.current?.handleCropImage(),
       handleCancelCrop: cropSession.cancel,
       handleFinishCrop: cropSession.finish,

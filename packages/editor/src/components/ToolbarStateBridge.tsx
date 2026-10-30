@@ -56,6 +56,7 @@ import type { FloatingModuleState } from '../hooks/useFloatingModuleState.js';
 import type { CanvasItem } from '../utils/canvasLayerManager.js';
 import type { Rect } from '@ggraphic/editor/utils/coverFit';
 import type { CropAspectId } from '@ggraphic/editor/utils/cropAspect';
+import type { ImageLookId } from '@ggraphic/editor/utils/imageLook';
 import type { GradientFill } from '@ggraphic/editor/utils/gradientFill';
 import type { TextAlign } from '@ggraphic/editor/utils/textAlign';
 import type Konva from 'konva';
@@ -67,6 +68,7 @@ export interface ToolbarBridgeState {
   handleShadowChange: (id: string, patch: ShadowPatch, type: string) => void;
   handleOutlineChange: (id: string, patch: { stroke?: string; strokeWidth?: number }) => void;
   handleBlurChange: (id: string, blur: number) => void;
+  handleImageLookChange: (id: string, look: ImageLookId) => void;
   handleGradientSelect: (gradient: GradientFill | null) => void;
   handleTextAlignChange: (id: string, align: TextAlign) => void;
   /** Ausschnitt mode for the selected framed photo. */
@@ -234,6 +236,7 @@ export function ToolbarStateBridge<
       handleShadowChange: floatingHandlers.handleShadowChange,
       handleOutlineChange: floatingHandlers.handleOutlineChange,
       handleBlurChange: floatingHandlers.handleBlurChange,
+      handleImageLookChange: floatingHandlers.handleImageLookChange,
       handleGradientSelect: floatingHandlers.handleGradientSelect,
       handleTextAlignChange: floatingHandlers.handleTextAlignChange,
       handleCropImage: () => {
