@@ -40,9 +40,16 @@ export interface UserImageInstance {
   sepia?: boolean;
   invert?: boolean;
   /** Duotone: shadows to a dark shade of this colour, highlights to a pale one. */
-  tint?: string;
+  tint?: string | null;
   /** How far the tint replaces the photo's own colours: 0..1. */
   tintStrength?: number;
+  /**
+   * Two-colour duotone: shadows to `duotoneLow`, highlights to `duotoneHigh`. Active
+   * only when both are set; the Duotone look binds them to the page world's
+   * `duo-low` / `duo-high`. Stored, so the names are fixed.
+   */
+  duotoneLow?: string | null;
+  duotoneHigh?: string | null;
   /** Darkened edges: 0..1. */
   vignette?: number;
   /** Mirrored left–right / top–bottom; flips the pixels, not the node. */
@@ -81,6 +88,8 @@ export type ImageAdjustments = Pick<
   | 'invert'
   | 'tint'
   | 'tintStrength'
+  | 'duotoneLow'
+  | 'duotoneHigh'
   | 'vignette'
   | 'flipX'
   | 'flipY'

@@ -21,6 +21,7 @@ export {
   toHex,
   type Rgba,
 } from './color/color.js';
+export { duotoneRamp } from './color/duotone.js';
 export {
   SCHEME_IDS,
   SURFACE_ROLES,

@@ -435,6 +435,7 @@ function isAdjusted(image: ImageAdjustments): boolean {
     !!image.sepia ||
     !!image.invert ||
     !!image.tint ||
+    (!!image.duotoneLow && !!image.duotoneHigh) ||
     !!image.vignette ||
     !!image.flipX ||
     !!image.flipY
