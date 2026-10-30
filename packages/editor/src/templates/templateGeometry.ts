@@ -118,6 +118,8 @@ export const UNSCALED_FIELDS: Readonly<Record<string, Readonly<Record<string, st
     opacity: OPACITY,
     shadowOpacity: SHADOW_OPACITY,
     notch: CANVAS_SHARE,
+    grain: OPACITY,
+    patternSpacing: CANVAS_SHARE,
   },
   frameInstances: {
     rotation: ANGLE,
@@ -654,6 +656,8 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
       if (num(el, 'notch') !== 0) return UNKNOWN;
       // A glow fades to nothing: no ground at all at the edge.
       if (el['glow'] === true) return UNKNOWN;
+      // Specks and dots change the colour under a text.
+      if (num(el, 'grain') !== 0 || el['pattern'] !== undefined) return UNKNOWN;
       const gradient = el['fillGradient'];
       const fill = parseColor(str(el, 'fill'));
       if (!untransformed || !fill) return UNKNOWN;

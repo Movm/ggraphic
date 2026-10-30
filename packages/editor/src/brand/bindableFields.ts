@@ -22,7 +22,7 @@ type FieldsOf<T> = readonly (T extends unknown ? keyof T & string : never)[];
 
 const BINDABLE = {
   iconStates: ['color'] satisfies FieldsOf<IconState>,
-  shapeInstances: ['fill', 'shadowColor'] satisfies FieldsOf<ShapeInstance>,
+  shapeInstances: ['fill', 'shadowColor', 'patternColor'] satisfies FieldsOf<ShapeInstance>,
   frameInstances: ['borderColor', 'shadowColor'] satisfies FieldsOf<FrameInstance>,
   additionalTexts: [
     'fontFamily',

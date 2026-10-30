@@ -113,3 +113,16 @@ describe('buildPptxModel glow', () => {
     });
   });
 });
+
+describe('buildPptxModel texture', () => {
+  it.each([
+    ['grain', { grain: 0.3 }],
+    ['dots', { pattern: 'dots' as const }],
+  ])('rasterises a rect with %s', (_name, extra) => {
+    expect(items(shape(extra))[0]).toMatchObject({ kind: 'raster', reason: 'shape-styled' });
+  });
+
+  it('leaves a rect with grain 0 native', () => {
+    expect(items(shape({ grain: 0 }))[0]).toMatchObject({ kind: 'shape' });
+  });
+});
