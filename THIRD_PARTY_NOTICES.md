@@ -10,14 +10,15 @@ that is not on its allow-list.
 
 ## Bundled graphics
 
-Served from `apps/studio/public`. Each row names the directory, so adding a
+Served from `apps/studio/public` (the sample photos: `packages/templates-open/src/samples`). Each row names the directory, so adding a
 set without an entry fails the check.
 
-| Directory                                      | Work                                                                                                      | Licence                      | Source                                    |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------- | ----------------------------------------- |
-| `apps/studio/public/emoji`                     | Noto Emoji, a subset: the emoji without flags and without skin-tone variants. Copyright 2013 Google, Inc. | Apache-2.0 (full text below) | https://github.com/googlefonts/noto-emoji |
-| `apps/studio/public/illustrations/openpeeps`   | Open Peeps, by Pablo Stanley                                                                              | CC0-1.0                      | https://www.openpeeps.com/                |
-| `apps/studio/public/illustrations/opendoodles` | Open Doodles, by Pablo Stanley                                                                            | CC0-1.0                      | https://www.opendoodles.com/              |
+| Directory                                      | Work                                                                                                                                                                                                                                                            | Licence                      | Source                                             |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | -------------------------------------------------- |
+| `apps/studio/public/emoji`                     | Noto Emoji, a subset: the emoji without flags and without skin-tone variants. Copyright 2013 Google, Inc.                                                                                                                                                       | Apache-2.0 (full text below) | https://github.com/googlefonts/noto-emoji          |
+| `apps/studio/public/illustrations/openpeeps`   | Open Peeps, by Pablo Stanley                                                                                                                                                                                                                                    | CC0-1.0                      | https://www.openpeeps.com/                         |
+| `apps/studio/public/illustrations/opendoodles` | Open Doodles, by Pablo Stanley                                                                                                                                                                                                                                  | CC0-1.0                      | https://www.opendoodles.com/                       |
+| `packages/templates-open/src/samples`          | Sample photos for previews and render-gate goldens, made for ggraphic with FLUX.2 [klein] 4B (weights Apache-2.0) via Melious; no real person is depicted. Dedicated to the public domain by the author, Moritz Wächter. Never part of a document or an export. | CC0-1.0                      | `packages/templates-open/src/samples/samples.json` |
 
 `apps/studio/public/illustrations/thumbs/<set>` holds the PNG thumbnails of
 the set of the same name and is covered by that set's row.
