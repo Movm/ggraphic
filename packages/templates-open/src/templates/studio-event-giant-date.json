@@ -1,0 +1,224 @@
+{
+  "formatVersion": 1,
+  "id": "studio-event-giant-date",
+  "version": 1,
+  "kind": "template",
+  "family": "event",
+  "title": {
+    "en": "Giant date",
+    "de": "Riesendatum"
+  },
+  "description": {
+    "en": "A huge date over a rule, with title, time and place below",
+    "de": "Ein riesiges Datum über einer Linie, darunter Titel, Zeit und Ort"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": ["event"],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "rule",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.331933,
+            "width": 1,
+            "height": 0.008403,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "date",
+            "type": "header",
+            "text": "07.06.",
+            "x": 0,
+            "y": 0.058824,
+            "width": 1,
+            "fontSize": 0.237037,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.88,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.condensed"
+            }
+          },
+          {
+            "id": "title",
+            "type": "header",
+            "text": "Street party at the old harbour",
+            "x": 0,
+            "y": 0.361345,
+            "width": 1,
+            "fontSize": 0.088889,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "time",
+            "type": "body",
+            "text": "Sunday, 11 am to 6 pm",
+            "x": 0,
+            "y": 0.655462,
+            "width": 1,
+            "fontSize": 0.051852,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "place",
+            "type": "body",
+            "text": "Harbour Road 12, Kiel",
+            "x": 0,
+            "y": 0.722689,
+            "width": 1,
+            "fontSize": 0.051852,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": ["date", "rule", "title", "time", "place", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "date": {
+      "role": "date",
+      "label": {
+        "en": "The date",
+        "de": "Das Datum"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 6
+      }
+    },
+    "title": {
+      "role": "headline",
+      "label": {
+        "en": "Event title",
+        "de": "Titel der Veranstaltung"
+      },
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 3,
+        "maxChars": 48
+      }
+    },
+    "time": {
+      "role": "subline",
+      "label": {
+        "en": "Day and time",
+        "de": "Tag und Uhrzeit"
+      },
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 1,
+        "maxChars": 28
+      }
+    },
+    "place": {
+      "role": "place",
+      "label": {
+        "en": "Place",
+        "de": "Ort"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 1,
+        "maxChars": 28
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "date-with-place",
+      "title": {
+        "en": "Date with place",
+        "de": "Datum mit Ort"
+      },
+      "elementIds": ["date", "time", "place"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-left", "bottom-right"],
+  "placeholders": {
+    "en": {
+      "date": "07.06.",
+      "title": "Street party at the old harbour",
+      "time": "Sunday, 11 am to 6 pm",
+      "place": "Harbour Road 12, Kiel"
+    },
+    "de": {
+      "date": "07.06.",
+      "title": "Straßenfest am alten Hafen",
+      "time": "Sonntag, 11 bis 18 Uhr",
+      "place": "Hafenstraße 12, Kiel"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

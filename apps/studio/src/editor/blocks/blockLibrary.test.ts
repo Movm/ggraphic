@@ -17,11 +17,14 @@ const FORMAT = 'post-portrait';
 const lightGround = () => deriveSchemes(activeBrand()).find((s) => s.id === 'light')!.roles.ground;
 
 describe('blockLibrary', () => {
-  it('lists the three template blocks with library ids', () => {
+  it('lists the template blocks with library ids', () => {
     expect(library().map((b) => b.id)).toEqual([
       'studio-headline/headline-with-bar',
       'studio-quote/quote-with-name',
       'studio-number/number-with-explanation',
+      'studio-event-giant-date/date-with-place',
+      'studio-event-photo-date/date-with-place',
+      'studio-event-programme/date-with-place',
     ]);
     expect(find(QUOTE)).toMatchObject({
       version: 1,
