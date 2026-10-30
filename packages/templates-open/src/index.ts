@@ -12,6 +12,13 @@ import studioPhotoNumber from './templates/studio-photo-number.json' with { type
 import studioPhotoQuote from './templates/studio-photo-quote.json' with { type: 'json' };
 import studioQuote from './templates/studio-quote.json' with { type: 'json' };
 
+import studioQuestionBubble from './templates/studio-question-bubble.json' with { type: 'json' };
+import studioQuestionChoice from './templates/studio-question-choice.json' with { type: 'json' };
+import studioQuestionEstimate from './templates/studio-question-estimate.json' with { type: 'json' };
+import studioQuestionGiantMark from './templates/studio-question-giant-mark.json' with { type: 'json' };
+import studioQuestionPhotoDuel from './templates/studio-question-photo-duel.json' with { type: 'json' };
+import studioQuestionYesNo from './templates/studio-question-yes-no.json' with { type: 'json' };
+
 import studioDayJubilee from './templates/studio-day-jubilee.json' with { type: 'json' };
 import studioDayPhotoGrid from './templates/studio-day-photo-grid.json' with { type: 'json' };
 import studioDayPhoto from './templates/studio-day-photo.json' with { type: 'json' };
@@ -73,6 +80,13 @@ export const OPEN_TEMPLATES: readonly unknown[] = [
   studioEventPanel,
   studioPhotoQuote,
   studioPhotoNumber,
+
+  studioQuestionBubble,
+  studioQuestionChoice,
+  studioQuestionEstimate,
+  studioQuestionGiantMark,
+  studioQuestionPhotoDuel,
+  studioQuestionYesNo,
 
   studioDayJubilee,
   studioDayPhotoGrid,

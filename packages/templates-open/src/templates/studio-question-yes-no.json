@@ -1,0 +1,204 @@
+{
+  "formatVersion": 1,
+  "id": "studio-question-yes-no",
+  "version": 1,
+  "kind": "template",
+  "family": "question",
+  "title": {
+    "en": "Yes and no halves",
+    "de": "Ja und Nein als Hälften"
+  },
+  "description": {
+    "en": "A question over two coloured halves, one for yes and one for no",
+    "de": "Eine Frage über zwei farbigen Hälften, eine für Ja und eine für Nein"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "half-yes",
+            "type": "rect",
+            "x": 0.25,
+            "y": 0.655556,
+            "width": 0.5,
+            "height": 0.688889,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          },
+          {
+            "id": "half-no",
+            "type": "rect",
+            "x": 0.75,
+            "y": 0.655556,
+            "width": 0.5,
+            "height": 0.688889,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "question",
+            "type": "header",
+            "text": "Speed limit 30 everywhere?",
+            "x": 0,
+            "y": 0.02521,
+            "width": 0.543478,
+            "fontSize": 0.051852,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "yes",
+            "type": "header",
+            "text": "YES",
+            "x": 0,
+            "y": 0.336134,
+            "width": 0.5,
+            "fontSize": 0.12037,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.9,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.condensed"
+            }
+          },
+          {
+            "id": "no",
+            "type": "header",
+            "text": "NO",
+            "x": 0.532609,
+            "y": 0.336134,
+            "width": 0.467391,
+            "fontSize": 0.12037,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.9,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.condensed"
+            }
+          }
+        ],
+        "layerOrder": ["question", "half-yes", "half-no", "yes", "no", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "half-yes": "canvas",
+    "half-no": "canvas"
+  },
+  "slots": {
+    "question": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 3,
+        "maxChars": 32
+      }
+    },
+    "yes": {
+      "role": "headline",
+      "label": {
+        "en": "Yes",
+        "de": "Ja"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 6
+      }
+    },
+    "no": {
+      "role": "headline",
+      "label": {
+        "en": "No",
+        "de": "Nein"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 8
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "question": "Speed limit 30 everywhere?",
+      "yes": "YES",
+      "no": "NO"
+    },
+    "de": {
+      "question": "Tempo 30 überall?",
+      "yes": "JA",
+      "no": "NEIN"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
