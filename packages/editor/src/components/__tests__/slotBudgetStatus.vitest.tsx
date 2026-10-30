@@ -2,12 +2,12 @@
 import { CanvasEditorProvider } from '@ggraphic/editor/CanvasEditorProvider';
 import { SlotBudgetStatus } from '@ggraphic/editor/components/SlotBudgetStatus';
 import { registerMessages } from '@ggraphic/editor/i18n/messages';
-import { useCanvasStore } from '@ggraphic/editor/stores/CanvasStoreProvider';
-import { CanvasStoreProvider } from '@ggraphic/editor/stores/CanvasStoreProvider';
-import { cleanup, render, screen } from '@testing-library/react';
+import { AnnouncerContext } from '@ggraphic/editor/hooks/useAnnounce';
+import { CanvasStoreProvider, useCanvasStore } from '@ggraphic/editor/stores/CanvasStoreProvider';
+import { act, cleanup, render } from '@testing-library/react';
 import Konva from 'konva';
-import { useEffect } from 'react';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { useEffect, useState } from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { axe } from '../../test-utils';
 
@@ -38,6 +38,8 @@ function Select({ id }: { id: string | null }) {
   return null;
 }
 
+const announce = vi.fn();
+
 function Harness({
   additionalTexts,
   selected = 'headline',
@@ -48,20 +50,35 @@ function Harness({
   svc?: CanvasEditorServices;
 }) {
   return (
-    <CanvasEditorProvider services={svc}>
-      <CanvasStoreProvider>
-        <Select id={selected} />
-        <SlotBudgetStatus
-          state={{ additionalTexts, templateRef: { id: 't', version: 1 } }}
-          canvasWidth={1000}
-          canvasHeight={1000}
-        />
-      </CanvasStoreProvider>
-    </CanvasEditorProvider>
+    <AnnouncerContext.Provider value={{ announce, lastAnnouncedAt: { current: 0 } }}>
+      <CanvasEditorProvider services={svc}>
+        <CanvasStoreProvider>
+          <Select id={selected} />
+          <SlotBudgetStatus
+            state={{ additionalTexts, templateRef: { id: 't', version: 1 } }}
+            canvasWidth={1000}
+            canvasHeight={1000}
+          />
+        </CanvasStoreProvider>
+      </CanvasEditorProvider>
+    </AnnouncerContext.Provider>
   );
 }
 
-beforeEach(() => registerMessages('en'));
+/** Page state held in React state, like the canvas does: edits go through `edit`. */
+let edit: (patch: Record<string, unknown>) => void = () => {};
+let stored: () => Record<string, unknown> = () => ({});
+function Editable() {
+  const [item, setItem] = useState(text());
+  edit = (patch) => setItem((prev) => ({ ...prev, ...patch }));
+  stored = () => item;
+  return <Harness additionalTexts={[item]} />;
+}
+
+beforeEach(() => {
+  registerMessages('en');
+  announce.mockClear();
+});
 afterEach(() => {
   cleanup();
   registerMessages('de');
@@ -72,36 +89,57 @@ describe('SlotBudgetStatus', () => {
     const { container } = render(
       <Harness additionalTexts={[text({ text: 'three short words' })]} />
     );
-    expect(container.querySelector('[role="status"]')).toBeNull();
+    expect(container.textContent).toBe('');
   });
 
   it('renders nothing without the host service or without a selection', () => {
     const a = render(<Harness additionalTexts={[text()]} svc={{}} />);
-    expect(a.container.querySelector('[role="status"]')).toBeNull();
+    expect(a.container.textContent).toBe('');
     a.unmount();
     const b = render(<Harness additionalTexts={[text()]} selected={null} />);
-    expect(b.container.querySelector('[role="status"]')).toBeNull();
+    expect(b.container.textContent).toBe('');
   });
 
-  it('shows "11 of 8 words" for an over-budget text, as role="status"', () => {
-    render(<Harness additionalTexts={[text()]} />);
-    expect(screen.getByRole('status').textContent).toContain('11 of 8 words');
+  it('shows "11 of 8 words" for an over-budget text, without being a second live region', () => {
+    const { container } = render(<Harness additionalTexts={[text()]} />);
+    expect(container.textContent).toContain('11 of 8 words');
+    expect(container.querySelector('[role], [aria-live]')).toBeNull();
+  });
+
+  it('announces through the editor live region only when the set of violated kinds changes', () => {
+    render(<Editable />);
+    expect(announce).toHaveBeenCalledTimes(1);
+    expect(announce).toHaveBeenLastCalledWith('11 of 8 words');
+    // One more word while already over budget: a new count, the same kind.
+    act(() => edit({ text: `${ELEVEN_WORDS} twelve` }));
+    expect(announce).toHaveBeenCalledTimes(1);
+    // A new kind (too small) crosses in.
+    act(() => edit({ fontSize: 20 }));
+    expect(announce).toHaveBeenCalledTimes(2);
+    expect(announce.mock.lastCall![0]).toContain('words');
+    expect(announce.mock.lastCall![0]).toContain('px');
+    // Back within budget announces nothing.
+    act(() => edit({ text: 'short', fontSize: 60 }));
+    expect(announce).toHaveBeenCalledTimes(2);
   });
 
   it('shows the font-size message below 0.035 of canvas height and recomputes after a format change', () => {
-    const { rerender } = render(<Harness additionalTexts={[text({ text: 'ok', fontSize: 20 })]} />);
-    expect(screen.getByRole('status').textContent).toMatch(/35 px/);
+    const { container, rerender } = render(
+      <Harness additionalTexts={[text({ text: 'ok', fontSize: 20 })]} />
+    );
+    expect(container.textContent).toMatch(/35 px/);
     rerender(<Harness additionalTexts={[text({ text: 'ok', fontSize: 40 })]} />);
-    expect(screen.queryByRole('status')).toBeNull();
+    expect(container.textContent).toBe('');
   });
 
-  it('does not block editing: the text stays editable and the value is kept', () => {
-    const texts = [text()];
-    const { container } = render(<Harness additionalTexts={texts} />);
-    expect(texts[0]!.text).toBe(ELEVEN_WORDS);
-    const status = container.querySelector('[role="status"]')!;
-    expect(status.querySelector('button, input, textarea, a, [tabindex]')).toBeNull();
-    expect(getComputedStyle(status as HTMLElement).pointerEvents).toBe('none');
+  it('does not block editing: an edit goes through and the value is kept', () => {
+    const { container } = render(<Editable />);
+    act(() => edit({ text: `${ELEVEN_WORDS} twelve` }));
+    expect(stored()['text']).toBe(`${ELEVEN_WORDS} twelve`);
+    expect(container.textContent).toContain('12 of 8 words');
+    const chip = container.firstElementChild as HTMLElement;
+    expect(chip.querySelector('button, input, textarea, a, [tabindex]')).toBeNull();
+    expect(chip.style.pointerEvents).toBe('none');
   });
 
   it('is not part of the stage capture', () => {
@@ -112,7 +150,7 @@ describe('SlotBudgetStatus', () => {
     stage.add(new Konva.Layer());
     const nodesBefore = stage.find('*').length;
     const { container } = render(<Harness additionalTexts={[text()]} />);
-    const status = container.querySelector('[role="status"]')!;
+    const status = container.firstElementChild!;
     expect(status).not.toBeNull();
     expect(status.closest('.konvajs-content')).toBeNull();
     expect(host.querySelector('.konvajs-content')?.contains(status)).toBe(false);

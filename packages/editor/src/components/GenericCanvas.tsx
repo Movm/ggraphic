@@ -24,8 +24,8 @@ import { useEmitHostStateChanges } from '@ggraphic/editor/collab/useEmitHostStat
 import { useYjsCanvasBinding } from '@ggraphic/editor/collab/useYjsCanvasBinding';
 import { stateKeyOfCallback } from '@ggraphic/editor/collab/wrapCallbacksWithPageSync';
 import { CropGhostOverlay } from '@ggraphic/editor/components/CropGhostOverlay';
-import { SlotBudgetStatus } from '@ggraphic/editor/components/SlotBudgetStatus';
 import { PrintGuides } from '@ggraphic/editor/components/PrintGuides';
+import { SlotBudgetStatus } from '@ggraphic/editor/components/SlotBudgetStatus';
 import { getCanvasFormatOrDefault } from '@ggraphic/editor/formats/index';
 import { useAnnounce } from '@ggraphic/editor/hooks/useAnnounce';
 import { useSelectionAnnouncement } from '@ggraphic/editor/hooks/useSelectionAnnouncement';
