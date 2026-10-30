@@ -132,6 +132,7 @@ const POPULATED: Record<string, Fields> = {
     shadowOffsetX: 4,
     shadowOffsetY: 5,
     shadowOpacity: 0.5,
+    notch: 0.05,
   },
   frameInstances: {
     borderDash: [4, 2],
@@ -158,6 +159,7 @@ const POPULATED: Record<string, Fields> = {
     panX: 0.1,
     panY: 0.1,
     cropRotation: 3,
+    notch: 0.05,
   },
   iconStates: { opacity: 1 },
   circleBadgeInstances: { opacity: 1 },

@@ -834,6 +834,11 @@ export interface ShapeInstance {
   /** Mirrored about the centre (negative node scale); omit for upright. */
   flipX?: boolean;
   flipY?: boolean;
+  /**
+   * `rect` only: side of the square cut from the top-right corner, as a share of the
+   * canvas width (0.0519 = 56 px on 1080). Stored, so never renamed.
+   */
+  notch?: number;
 }
 
 /**

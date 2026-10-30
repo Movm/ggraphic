@@ -77,3 +77,30 @@ describe('buildPptxModel duotone images', () => {
     });
   });
 });
+
+describe('buildPptxModel notch', () => {
+  it('rasterises a notched shape instead of exporting it un-notched', () => {
+    expect(items(shape({ notch: 0.05 }))[0]).toMatchObject({
+      kind: 'raster',
+      reason: 'shape-styled',
+    });
+  });
+
+  it('rasterises a notched image', () => {
+    const image = {
+      id: 'i1',
+      src: 'https://assets.test/p.jpg',
+      fileName: '',
+      x: 0,
+      y: 0,
+      width: 600,
+      height: 400,
+      scale: 1,
+      rotation: 0,
+      opacity: 1,
+      notch: 0.05,
+    } as UserImageInstance;
+    const out = buildPptxModel([{ userImageInstances: [image] }], format).slides[0]!.items;
+    expect(out[0]).toMatchObject({ kind: 'raster' });
+  });
+});

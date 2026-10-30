@@ -10,6 +10,7 @@ import {
   Ring,
   Line,
   Arrow,
+  Shape,
   Transformer,
 } from 'react-konva';
 
@@ -18,6 +19,7 @@ import { useBoxSnap, type SnapProps } from '@ggraphic/editor/hooks/useBoxSnap';
 import { gradientFillProps } from '@ggraphic/editor/utils/gradientFill';
 import { translucentHitFunc } from '@ggraphic/editor/utils/gradientHitArea';
 import { handDrawnPath } from '@ggraphic/editor/utils/handDrawn';
+import { notchPx, traceNotch } from '../utils/notch.js';
 import {
   ELEMENT_TRANSFORMER,
   MIRROR_X_ATTR,
@@ -142,10 +144,28 @@ interface CommonShapeProps {
 function renderShape(
   shape: ShapeInstance,
   commonProps: CommonShapeProps,
-  shapeRef: React.RefObject<Konva.Shape | null>
+  shapeRef: React.RefObject<Konva.Shape | null>,
+  notchSize: number
 ): React.ReactElement {
   switch (shape.type) {
     case 'rect':
+      if (notchSize > 0) {
+        // Same box and origin as the Rect; only the outline differs.
+        return (
+          <Shape
+            ref={shapeRef}
+            {...commonProps}
+            width={shape.width}
+            height={shape.height}
+            offsetX={shape.width / 2}
+            offsetY={shape.height / 2}
+            sceneFunc={(ctx, node) => {
+              traceNotch(ctx, shape.width, shape.height, notchSize);
+              ctx.fillStrokeShape(node);
+            }}
+          />
+        );
+      }
       return (
         <Rect
           ref={shapeRef as React.RefObject<Konva.Rect>}
@@ -530,6 +550,7 @@ const ShapePrimitiveInner: React.FC<ShapePrimitiveProps> = ({
   // slide: as with the background photo, the first touch selects it and only a
   // touch on the selected plane drags it.
   const touchDragNeedsSelection = isComposerPlane(shape.id) && !isSelected && draggable;
+  const notchSize = shape.type === 'rect' ? notchPx(shape.notch, snapProps.stageWidth) : 0;
   const fillsArea = !STROKE_ONLY_SHAPES.has(shape.type) && !shape.type.startsWith('hand-');
 
   const commonProps: CommonShapeProps = {
@@ -579,7 +600,7 @@ const ShapePrimitiveInner: React.FC<ShapePrimitiveProps> = ({
 
   return (
     <>
-      {renderShape(shape, commonProps, shapeRef)}
+      {renderShape(shape, commonProps, shapeRef, notchSize)}
 
       {isSelected && (
         <Transformer
@@ -625,6 +646,7 @@ export const ShapePrimitive = memo(ShapePrimitiveInner, (prevProps, nextProps) =
   if (prevShape.fillGradient !== nextShape.fillGradient) return false;
   if (prevShape.shade !== nextShape.shade) return false;
   if (prevShape.blendMode !== nextShape.blendMode) return false;
+  if (prevShape.notch !== nextShape.notch) return false;
   if (prevShape.flipX !== nextShape.flipX) return false;
   if (prevShape.flipY !== nextShape.flipY) return false;
 
