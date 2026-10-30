@@ -16,13 +16,8 @@
     "occasions": [],
     "topics": []
   },
-  "formats": [
-    "4:5"
-  ],
-  "schemes": [
-    "photo",
-    "dark"
-  ],
+  "formats": ["4:5"],
+  "schemes": ["photo", "dark"],
   "schemaVersion": 3,
   "pages": [
     {
@@ -125,13 +120,7 @@
             }
           }
         ],
-        "layerOrder": [
-          "photo",
-          "overlay",
-          "brand-logo",
-          "number",
-          "headline"
-        ]
+        "layerOrder": ["photo", "overlay", "brand-logo", "number", "headline"]
       }
     }
   ],
@@ -172,18 +161,12 @@
         "en": "Number with line",
         "de": "Zahl mit Zeile"
       },
-      "elementIds": [
-        "number",
-        "headline"
-      ]
+      "elementIds": ["number", "headline"]
     }
   ],
   "locks": [],
   "fixed": {},
-  "logoCorners": [
-    "bottom-right",
-    "bottom-left"
-  ],
+  "logoCorners": ["bottom-right", "bottom-left"],
   "placeholders": {
     "en": {
       "number": "25",

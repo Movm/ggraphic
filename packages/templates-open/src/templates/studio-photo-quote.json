@@ -16,13 +16,8 @@
     "occasions": [],
     "topics": []
   },
-  "formats": [
-    "4:5"
-  ],
-  "schemes": [
-    "photo",
-    "dark"
-  ],
+  "formats": ["4:5"],
+  "schemes": ["photo", "dark"],
   "schemaVersion": 3,
   "pages": [
     {
@@ -228,20 +223,12 @@
         "en": "Quote with person",
         "de": "Zitat mit Person"
       },
-      "elementIds": [
-        "quote-mark",
-        "headline",
-        "name",
-        "role"
-      ]
+      "elementIds": ["quote-mark", "headline", "name", "role"]
     }
   ],
   "locks": [],
   "fixed": {},
-  "logoCorners": [
-    "top-right",
-    "top-left"
-  ],
+  "logoCorners": ["top-right", "top-left"],
   "placeholders": {
     "en": {
       "quote-mark": "“",
