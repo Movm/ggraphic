@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MPL-2.0
+import { useEffect, useRef } from 'react';
+
 import { checkSlotBudget, type BudgetViolation } from '@ggraphic/core';
 
 import { useCanvasEditorServices } from '../CanvasEditorProvider.js';
+import { useAnnounce } from '../hooks/useAnnounce.js';
 import { useMessages } from '../i18n/messages.js';
 import { useCanvasStoreSelector } from '../stores/CanvasStoreProvider.js';
 import { wrapTextAccurate } from '../utils/textUtils.js';
@@ -9,7 +12,7 @@ import { wrapTextAccurate } from '../utils/textUtils.js';
 import type { AdditionalText } from '../configs/types.js';
 
 /**
- * Says so when the selected text is over its template slot's budget (words,
+ * Shows a chip (not a live region; changes in the violated kinds are announced through the editor's own) when the selected text is over its template slot's budget (words,
  * characters, lines, legible size). Warns only: nothing is clamped or cut while
  * typing. Plain DOM beside the Konva stage, so no export captures it; it takes
  * no focus and no pointer events. Renders nothing without the host's
@@ -26,34 +29,51 @@ export function SlotBudgetStatus({
 }) {
   const { slotBudgets } = useCanvasEditorServices();
   const selected = useCanvasStoreSelector((s) => s.selectedElement);
+  const announce = useAnnounce();
   const t = useMessages();
-  if (!slotBudgets || !selected) return null;
 
   const texts = state['additionalTexts'];
-  const text = Array.isArray(texts)
-    ? (texts as AdditionalText[]).find((item) => item.id === selected)
-    : undefined;
-  const found = text ? slotBudgets.budgetFor(state, selected) : null;
-  if (!text || !found) return null;
+  const text =
+    slotBudgets && selected && Array.isArray(texts)
+      ? (texts as AdditionalText[]).find((item) => item.id === selected)
+      : undefined;
+  const found = text && selected ? slotBudgets?.budgetFor(state, selected) : null;
 
-  const lineCount = wrapTextAccurate(
-    text.text,
-    text.width,
-    text.fontSize,
-    text.fontFamily,
-    text.fontStyle ?? 'normal'
-  ).length;
-  const violations = checkSlotBudget(
-    { text: text.text, fontSize: text.fontSize, canvasHeight, lineCount },
-    found.budget
-  );
-  if (violations.length === 0) return null;
+  let lineCount = 0;
+  let violations: BudgetViolation[] = [];
+  if (text && found) {
+    lineCount = wrapTextAccurate(
+      text.text,
+      text.width,
+      text.fontSize,
+      text.fontFamily,
+      text.fontStyle ?? 'normal'
+    ).length;
+    violations = checkSlotBudget(
+      { text: text.text, fontSize: text.fontSize, canvasHeight, lineCount },
+      found.budget
+    );
+  }
 
-  const message = (v: BudgetViolation): string => t.budget[v.kind](v.actual, v.limit);
+  const message = violations.map((v) => t.budget[v.kind](v.actual, v.limit)).join(' · ');
+  // The editor's one live region speaks when the set of violated kinds changes
+  // (none -> words, words -> words + size), not when a count changes while typing.
+  const kinds = `${selected ?? ''}:${violations.map((v) => v.kind).join(',')}`;
+  const lastKinds = useRef(kinds);
+  const lastMessage = useRef(message);
+  lastMessage.current = message;
+  useEffect(() => {
+    if (lastKinds.current === kinds) return;
+    lastKinds.current = kinds;
+    if (lastMessage.current) announce(lastMessage.current);
+  }, [kinds, announce]);
+
+  if (!text || violations.length === 0) return null;
+
+  // 1.2 is the default line height of the text renderer (CanvasRichText).
   const bottom = text.y + lineCount * text.fontSize * (text.lineHeight ?? 1.2);
   return (
     <div
-      role="status"
       style={{
         position: 'absolute',
         left: `${(text.x / canvasWidth) * 100}%`,
@@ -62,13 +82,13 @@ export function SlotBudgetStatus({
         font: '500 12px/1.3 system-ui, sans-serif',
         padding: '4px 8px',
         borderRadius: 6,
-        background: '#fff3cd',
-        color: '#4d3a00',
-        border: '1px solid #d9b44a',
+        background: 'var(--editor-danger-bg)',
+        color: 'var(--editor-danger-fg)',
+        border: '1px solid var(--editor-danger-fg)',
         maxWidth: '90%',
       }}
     >
-      {violations.map(message).join(' · ')}
+      {message}
     </div>
   );
 }
