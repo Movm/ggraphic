@@ -47,7 +47,7 @@ import {
   frameBounds,
   snapByBounds,
 } from '@ggraphic/editor/utils/snapping';
-import { runFont, runMeasurer } from '@ggraphic/editor/utils/textUtils';
+import { konvaFontStyle, runFont, runMeasurer } from '@ggraphic/editor/utils/textUtils';
 
 import { type CanvasTextProps, isWidthOnlyScale } from './CanvasText.js';
 
@@ -68,6 +68,7 @@ export function CanvasRichText({
   fontSize = 24,
   fontFamily = 'Arial',
   fontStyle = 'normal',
+  fontWeight,
   fill = '#000000',
   rotation,
   opacity = 1,
@@ -112,8 +113,8 @@ export function CanvasRichText({
   // `useFontGeneration`, auch dazu, warum der Wert ins Argument muss.
   const fontGeneration = useFontGeneration();
   const measure = useMemo(
-    () => runMeasurer(fontSize, fontFamily, fontStyle, fontGeneration, accent),
-    [fontSize, fontFamily, fontStyle, fontGeneration, accent]
+    () => runMeasurer(fontSize, fontFamily, fontStyle, fontGeneration, accent, fontWeight ?? null),
+    [fontSize, fontFamily, fontStyle, fontWeight, fontGeneration, accent]
   );
 
   // Ohne gesetzte Breite gibt es nichts zu umbrechen; der Einzug gilt trotzdem,
@@ -325,7 +326,7 @@ export function CanvasRichText({
       text,
       fontFamily,
       fontSize,
-      fontStyle,
+      fontStyle: konvaFontStyle(fontStyle, fontWeight),
       fill,
       align,
       lineHeight,
@@ -344,6 +345,7 @@ export function CanvasRichText({
     fontFamily,
     fontSize,
     fontStyle,
+    fontWeight,
     fill,
     align,
     lineHeight,
@@ -433,7 +435,7 @@ export function CanvasRichText({
                   y={top}
                   fontSize={fontSize}
                   fontFamily={resolveFontFamily(fontFamily)}
-                  fontStyle={fontStyle}
+                  fontStyle={konvaFontStyle(fontStyle, fontWeight)}
                   fill={fill}
                   {...gradientAt(padding + offset, top)}
                   lineHeight={lineHeight}
@@ -448,7 +450,7 @@ export function CanvasRichText({
                   x={padding + offset + line.indent + run.x}
                   y={top}
                   fontSize={fontSize}
-                  {...runFont(fontFamily, fontStyle, run, accent)}
+                  {...runFont(fontFamily, fontStyle, run, accent, fontWeight)}
                   textDecoration={run.underline ? 'underline' : ''}
                   {...(run.marker
                     ? // Ink chosen for the box: no halo or outline of the photo text.

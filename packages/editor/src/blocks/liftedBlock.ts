@@ -65,7 +65,14 @@ interface Box {
 }
 
 const textHeight = (t: AdditionalText) => {
-  const measure = runMeasurer(t.fontSize, t.fontFamily, t.fontStyle ?? 'normal', 0, t.accent);
+  const measure = runMeasurer(
+    t.fontSize,
+    t.fontFamily,
+    t.fontStyle ?? 'normal',
+    0,
+    t.accent,
+    t.fontWeight ?? null
+  );
   return layoutRichTextBlock(t.text, t.width, measure).length * t.fontSize * (t.lineHeight ?? 1.2);
 };
 

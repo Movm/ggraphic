@@ -38,6 +38,7 @@ export interface FontMarkSupport {
 const FACES: Record<string, FontMarkSupport> = {
   'Instrument Sans': { bold: true, italic: true },
   Fraunces: { bold: true, italic: true },
+  'Bricolage Grotesque': { bold: true, italic: false },
 };
 
 const NONE: FontMarkSupport = { bold: false, italic: false };

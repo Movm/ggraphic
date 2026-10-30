@@ -87,7 +87,8 @@ function emptyRun(text: AdditionalText): PptxTextRun {
 /** Markdown-lite des Textfelds → Absätze mit Läufen und Aufzählung. */
 export function textParagraphs(text: AdditionalText): PptxParagraph[] {
   const style = text.fontStyle ?? 'normal';
-  const baseBold = style.includes('bold');
+  // A numeric weight replaces the bold part of the style; PowerPoint knows only bold or not.
+  const baseBold = text.fontWeight !== undefined ? text.fontWeight >= 600 : style.includes('bold');
   const baseItalic = style.includes('italic');
   const doc = markdownLiteToRichText(text.text);
   const paragraphs: PptxParagraph[] = [];
