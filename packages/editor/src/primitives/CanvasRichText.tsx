@@ -69,6 +69,7 @@ export function CanvasRichText({
   fontFamily = 'Arial',
   fontStyle = 'normal',
   fontWeight,
+  letterSpacing,
   fill = '#000000',
   rotation,
   opacity = 1,
@@ -113,8 +114,17 @@ export function CanvasRichText({
   // `useFontGeneration`, auch dazu, warum der Wert ins Argument muss.
   const fontGeneration = useFontGeneration();
   const measure = useMemo(
-    () => runMeasurer(fontSize, fontFamily, fontStyle, fontGeneration, accent, fontWeight ?? null),
-    [fontSize, fontFamily, fontStyle, fontWeight, fontGeneration, accent]
+    () =>
+      runMeasurer(
+        fontSize,
+        fontFamily,
+        fontStyle,
+        fontGeneration,
+        accent,
+        fontWeight ?? null,
+        letterSpacing ?? null
+      ),
+    [fontSize, fontFamily, fontStyle, fontWeight, letterSpacing, fontGeneration, accent]
   );
 
   // Ohne gesetzte Breite gibt es nichts zu umbrechen; der Einzug gilt trotzdem,
@@ -436,6 +446,7 @@ export function CanvasRichText({
                   fontSize={fontSize}
                   fontFamily={resolveFontFamily(fontFamily)}
                   fontStyle={konvaFontStyle(fontStyle, fontWeight)}
+                  letterSpacing={(letterSpacing ?? 0) * fontSize}
                   fill={fill}
                   {...gradientAt(padding + offset, top)}
                   lineHeight={lineHeight}
@@ -451,6 +462,7 @@ export function CanvasRichText({
                   y={top}
                   fontSize={fontSize}
                   {...runFont(fontFamily, fontStyle, run, accent, fontWeight)}
+                  letterSpacing={(letterSpacing ?? 0) * fontSize}
                   textDecoration={run.underline ? 'underline' : ''}
                   {...(run.marker
                     ? // Ink chosen for the box: no halo or outline of the photo text.

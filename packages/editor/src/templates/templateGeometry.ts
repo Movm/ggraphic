@@ -32,7 +32,6 @@ export const TEMPLATE_GEOMETRY: GeometryTable = {
     y: 'y',
     width: 'w',
     fontSize: 's',
-    letterSpacing: 's',
     strokeWidth: 's',
     shadowBlur: 's',
     shadowOffsetX: 's',
@@ -98,6 +97,7 @@ const RATIO = 'ratio; independent of the page size';
 const ANGLE = 'angle; independent of the page size';
 const OPACITY = 'opacity; independent of the page size';
 const SHADOW_OPACITY = 'opacity; independent of the page size';
+const EM = 'em, relative to the font size; independent of the page size';
 const ADJUSTMENT = 'image adjustment (a filter strength or a share); independent of the page size';
 
 export const UNSCALED_FIELDS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
@@ -107,6 +107,7 @@ export const UNSCALED_FIELDS: Readonly<Record<string, Readonly<Record<string, st
     scale: RATIO,
     opacity: OPACITY,
     lineHeight: RATIO,
+    letterSpacing: EM,
     shadowOpacity: SHADOW_OPACITY,
   },
   shapeInstances: {
@@ -315,8 +316,8 @@ const textPropsOf = (el: Readonly<Record<string, unknown>>): TextProps => {
     fontStyle: normalFontStyle(str(el, 'fontStyle')),
     fontWeight: typeof el['fontWeight'] === 'number' ? el['fontWeight'] : null,
     width: num(el, 'width'),
-    // The plain path renders no letter spacing today; a positive value is counted anyway.
-    letterSpacing: Math.max(0, num(el, 'letterSpacing')),
+    // em, applied after every glyph by the run measure, as the renderer's Konva nodes do.
+    letterSpacing: num(el, 'letterSpacing'),
     accent: isRecord(accent) ? (accent as unknown as TextAccent) : null,
   };
 };
@@ -336,7 +337,15 @@ function tableRunMeasure(p: TextProps, note: Note): MeasureRun {
     );
     return tableWidth(text, size, family, weight, note);
   };
-  return createRunMeasurer(measured, p.fontSize, p.fontFamily, p.fontStyle, p.accent, p.fontWeight);
+  return createRunMeasurer(
+    measured,
+    p.fontSize,
+    p.fontFamily,
+    p.fontStyle,
+    p.accent,
+    p.fontWeight,
+    p.letterSpacing
+  );
 }
 
 interface TextLayout {
@@ -351,11 +360,7 @@ function layoutText(p: TextProps): TextLayout {
   const inner = p.width > 0 ? p.width : Number.POSITIVE_INFINITY;
   const lines = usesRichText({ text: p.text, width: p.width }, run)
     ? layoutRichTextBlock(p.text, inner, run).length
-    : plainTextLines(
-        p.text,
-        inner,
-        (text, graphemes) => run(text, PLAIN_STYLE) + p.letterSpacing * graphemes
-      ).length;
+    : plainTextLines(p.text, inner, (text) => run(text, PLAIN_STYLE)).length;
   return { lines: Math.max(1, lines), unmeasurable: note.reason };
 }
 

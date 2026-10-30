@@ -251,7 +251,8 @@ export function runMeasurer(
   fontStyle: string = 'normal',
   fontGeneration = 0,
   accent: TextAccent | null = null,
-  fontWeight: number | null = null
+  fontWeight: number | null = null,
+  letterSpacing: number | null = null
 ): MeasureRun {
   const cache = new Map<string, number>();
   const measured: MeasureWidth = (text, size, family, style) => {
@@ -263,7 +264,15 @@ export function runMeasurer(
     }
     return width;
   };
-  return createRunMeasurer(measured, fontSize, fontFamily, fontStyle, accent, fontWeight);
+  return createRunMeasurer(
+    measured,
+    fontSize,
+    fontFamily,
+    fontStyle,
+    accent,
+    fontWeight,
+    letterSpacing
+  );
 }
 
 /** Measures `text` in px under one concrete family and style (canvas in the browser). */
@@ -285,11 +294,15 @@ export function createRunMeasurer(
   fontFamily: string,
   fontStyle: string = 'normal',
   accent: TextAccent | null = null,
-  fontWeight: number | null = null
+  fontWeight: number | null = null,
+  letterSpacing: number | null = null
 ): MeasureRun {
+  // Konva adds `letterSpacing` px after every code point, the last one included.
+  const spacing = (letterSpacing ?? 0) * fontSize;
   return (text, style) => {
     const run = runFont(fontFamily, fontStyle, style, accent, fontWeight);
-    return measureWidth(text, fontSize, run.fontFamily, run.fontStyle);
+    const width = measureWidth(text, fontSize, run.fontFamily, run.fontStyle);
+    return spacing === 0 ? width : width + spacing * [...text].length;
   };
 }
 
@@ -309,9 +322,10 @@ export function wrapTextAccurate(
   fontSize: number,
   fontFamily: string,
   fontStyle: string = 'normal',
-  fontWeight: number | null = null
+  fontWeight: number | null = null,
+  letterSpacing: number | null = null
 ): string[] {
-  const measure = runMeasurer(fontSize, fontFamily, fontStyle, 0, null, fontWeight);
+  const measure = runMeasurer(fontSize, fontFamily, fontStyle, 0, null, fontWeight, letterSpacing);
   return layoutRichTextBlock(text, maxWidth, measure).map((line) => {
     const body = line.runs.map((run) => run.text).join('');
     return line.marker ? `${line.marker} ${body}` : body;

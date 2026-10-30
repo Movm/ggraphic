@@ -71,6 +71,8 @@ export interface AdditionalText {
   fontStyle?: 'normal' | 'italic' | 'bold' | 'bold italic';
   /** Numeric weight; wins over the bold part of `fontStyle`. Absent = `fontStyle` alone. */
   fontWeight?: FontWeight;
+  /** Spacing after every glyph, in em (-0.1 to 0.3); the pixel value is `letterSpacing * fontSize`. */
+  letterSpacing?: number;
   fill: string;
   rotation?: number;
   scale?: number;

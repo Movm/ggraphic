@@ -57,6 +57,8 @@ export interface CanvasTextProps {
   fontStyle?: 'normal' | 'italic' | 'bold' | 'bold italic';
   /** Numeric weight; wins over the bold part of `fontStyle`. */
   fontWeight?: FontWeight;
+  /** em; the px value is `letterSpacing * fontSize`. */
+  letterSpacing?: number;
   fill?: string;
   rotation?: number;
   scaleX?: number;
@@ -127,6 +129,7 @@ function CanvasTextInner({
   fontFamily = 'Arial',
   fontStyle = 'normal',
   fontWeight,
+  letterSpacing,
   fill = '#000000',
   rotation,
   scaleX,
@@ -179,7 +182,17 @@ function CanvasTextInner({
       const rect = textRef.current.getSelfRect();
       setMeasuredRect({ width: rect.width, height: rect.height });
     }
-  }, [fillGradient, text, fontSize, fontFamily, fontStyle, fontWeight, width, lineHeight]);
+  }, [
+    fillGradient,
+    text,
+    fontSize,
+    fontFamily,
+    fontStyle,
+    fontWeight,
+    letterSpacing,
+    width,
+    lineHeight,
+  ]);
 
   const gradientProps =
     fillGradient && measuredRect && measuredRect.height > 0
@@ -235,6 +248,7 @@ function CanvasTextInner({
     fontFamily,
     fontStyle,
     fontWeight,
+    letterSpacing,
     lineHeight,
     padding,
     scaleX,
@@ -408,6 +422,7 @@ function CanvasTextInner({
         fontSize={fontSize}
         fontFamily={resolveFontFamily(fontFamily)}
         fontStyle={konvaFontStyle(fontStyle, fontWeight)}
+        letterSpacing={(letterSpacing ?? 0) * fontSize}
         fill={fill}
         {...(gradientProps ?? { fillPriority: 'color' as const })}
         rotation={rotation}
@@ -471,11 +486,25 @@ function CanvasTextInner({
  */
 function CanvasTextSwitch(props: CanvasTextProps) {
   const fontGeneration = useFontGeneration();
-  const { fontSize = 24, fontFamily = 'Arial', fontStyle = 'normal', fontWeight } = props;
+  const {
+    fontSize = 24,
+    fontFamily = 'Arial',
+    fontStyle = 'normal',
+    fontWeight,
+    letterSpacing,
+  } = props;
   // The routing is shared with the render gate (`textRouting.ts`); only the measure differs.
   return usesRichText(
     props,
-    runMeasurer(fontSize, fontFamily, fontStyle, fontGeneration, null, fontWeight ?? null)
+    runMeasurer(
+      fontSize,
+      fontFamily,
+      fontStyle,
+      fontGeneration,
+      null,
+      fontWeight ?? null,
+      letterSpacing ?? null
+    )
   ) ? (
     <CanvasRichText {...props} />
   ) : (
@@ -497,6 +526,7 @@ export const CanvasText = memo(CanvasTextSwitch, (prevProps, nextProps) => {
     'fontFamily',
     'fontStyle',
     'fontWeight',
+    'letterSpacing',
     'fill',
     'stroke',
     'strokeWidth',

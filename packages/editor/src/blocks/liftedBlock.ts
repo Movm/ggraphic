@@ -71,7 +71,8 @@ const textHeight = (t: AdditionalText) => {
     t.fontStyle ?? 'normal',
     0,
     t.accent,
-    t.fontWeight ?? null
+    t.fontWeight ?? null,
+    t.letterSpacing ?? null
   );
   return layoutRichTextBlock(t.text, t.width, measure).length * t.fontSize * (t.lineHeight ?? 1.2);
 };

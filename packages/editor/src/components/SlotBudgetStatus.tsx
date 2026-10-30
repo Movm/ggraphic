@@ -48,7 +48,8 @@ export function SlotBudgetStatus({
       text.fontSize,
       text.fontFamily,
       text.fontStyle ?? 'normal',
-      text.fontWeight ?? null
+      text.fontWeight ?? null,
+      text.letterSpacing ?? null
     ).length;
     violations = checkSlotBudget(
       { text: text.text, fontSize: text.fontSize, canvasHeight, lineCount },
