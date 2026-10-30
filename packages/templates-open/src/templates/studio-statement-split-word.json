@@ -1,0 +1,196 @@
+{
+  "formatVersion": 1,
+  "id": "studio-statement-split-word",
+  "version": 1,
+  "kind": "template",
+  "family": "statement",
+  "title": {
+    "en": "Split word",
+    "de": "Gespaltenes Wort"
+  },
+  "description": {
+    "en": "One word split across a colour seam, with a short line in the upper half",
+    "de": "Ein Wort, das über eine Farbnaht gespalten ist, mit einer kurzen Zeile in der oberen Hälfte"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "half",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.75,
+            "width": 1,
+            "height": 0.5,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "word-top",
+            "type": "header",
+            "text": "HOU",
+            "x": 0,
+            "y": 0,
+            "width": 0.597826,
+            "fontSize": 0.157407,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.9,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.condensed"
+            }
+          },
+          {
+            "id": "word-bottom",
+            "type": "header",
+            "text": "SING",
+            "x": 0,
+            "y": 0.521008,
+            "width": 0.967391,
+            "fontSize": 0.157407,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.9,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.condensed"
+            }
+          },
+          {
+            "id": "subline",
+            "type": "body",
+            "text": "is a right.",
+            "x": 0.586957,
+            "y": 0.285714,
+            "width": 0.413043,
+            "fontSize": 0.059259,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.05,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": ["half", "word-top", "word-bottom", "subline", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "half": "canvas"
+  },
+  "slots": {
+    "word-top": {
+      "role": "headline",
+      "label": {
+        "en": "First part of the word",
+        "de": "Erster Wortteil"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 6
+      }
+    },
+    "word-bottom": {
+      "role": "headline",
+      "label": {
+        "en": "Second part of the word",
+        "de": "Zweiter Wortteil"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 6
+      }
+    },
+    "subline": {
+      "role": "subline",
+      "label": {
+        "en": "Subline",
+        "de": "Unterzeile"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 2,
+        "maxChars": 16
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "split-word",
+      "title": {
+        "en": "Split word",
+        "de": "Gespaltenes Wort"
+      },
+      "elementIds": ["half", "word-top", "word-bottom"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "word-top": "HOU",
+      "word-bottom": "SING",
+      "subline": "is a right."
+    },
+    "de": {
+      "word-top": "WOH",
+      "word-bottom": "NEN",
+      "subline": "ist ein Recht."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

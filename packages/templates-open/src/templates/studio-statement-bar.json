@@ -1,0 +1,226 @@
+{
+  "formatVersion": 1,
+  "id": "studio-statement-bar",
+  "version": 1,
+  "kind": "template",
+  "family": "statement",
+  "title": {
+    "en": "Statement with bar",
+    "de": "Aussage mit Balken"
+  },
+  "description": {
+    "en": "Three lines of heavy italic capitals, the middle word on a colour bar, with a closing line",
+    "de": "Drei Zeilen schwere kursive Versalien, das Mittelwort auf einem Farbbalken, dazu eine Schlusszeile"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "bar",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.357143,
+            "width": 1,
+            "height": 0.142857,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "line-1",
+            "type": "header",
+            "text": "GOOD WORK",
+            "x": 0,
+            "y": 0.142857,
+            "width": 1,
+            "fontSize": 0.096296,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold italic",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "line-2",
+            "type": "header",
+            "text": "NEEDS",
+            "x": 0,
+            "y": 0.289916,
+            "width": 1,
+            "fontSize": 0.096296,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold italic",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "line-3",
+            "type": "header",
+            "text": "GOOD PAY.",
+            "x": 0,
+            "y": 0.436975,
+            "width": 1,
+            "fontSize": 0.096296,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold italic",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "subline",
+            "type": "body",
+            "text": "Fair pay now.",
+            "x": 0,
+            "y": 0.672269,
+            "width": 1,
+            "fontSize": 0.051852,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": ["bar", "line-1", "line-2", "line-3", "subline", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "line-1": {
+      "role": "headline",
+      "label": {
+        "en": "First line",
+        "de": "Erste Zeile"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 14
+      }
+    },
+    "line-2": {
+      "role": "headline",
+      "label": {
+        "en": "Middle word",
+        "de": "Mittelwort"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 10
+      }
+    },
+    "line-3": {
+      "role": "headline",
+      "label": {
+        "en": "Last line",
+        "de": "Letzte Zeile"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 14
+      }
+    },
+    "subline": {
+      "role": "subline",
+      "label": {
+        "en": "Subline",
+        "de": "Unterzeile"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 30
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "statement-lines",
+      "title": {
+        "en": "Statement lines",
+        "de": "Aussagezeilen"
+      },
+      "elementIds": ["bar", "line-1", "line-2", "line-3"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-left"],
+  "placeholders": {
+    "en": {
+      "line-1": "GOOD WORK",
+      "line-2": "NEEDS",
+      "line-3": "GOOD PAY.",
+      "subline": "Fair pay now."
+    },
+    "de": {
+      "line-1": "GUTE ARBEIT",
+      "line-2": "BRAUCHT",
+      "line-3": "GUTE LÖHNE.",
+      "subline": "Tarifbindung jetzt."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
