@@ -30,6 +30,95 @@ describe('api client', () => {
     await expect(api.listProjects('org-1')).rejects.toMatchObject({ code: 'invalid_response' });
   });
 
+  it('posts an image to remove-background and returns the PNG', async () => {
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47]);
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        new Response(png, { status: 200, headers: { 'Content-Type': 'image/png' } })
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    const blob = await api.removeBackground(new Blob(['x'], { type: 'image/jpeg' }), 'a.jpg');
+    expect(blob.type).toBe('image/png');
+    expect(blob.size).toBe(4);
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe('/api/images/remove-background');
+    expect(init?.method).toBe('POST');
+    expect((init?.body as FormData).get('file')).toBeInstanceOf(Blob);
+  });
+
+  it('turns a failed remove-background call into an ApiError', async () => {
+    vi.stubGlobal('fetch', reply(504, { error: 'rembg_timeout', message: 'Too slow.' }));
+    await expect(api.removeBackground(new Blob(['x']), 'a.png')).rejects.toMatchObject({
+      status: 504,
+      code: 'rembg_timeout',
+      message: 'Too slow.',
+    });
+  });
+
+  it('searches icons and parses the hits', async () => {
+    const hit = {
+      prefix: 'tabler',
+      name: 'tree',
+      setTitle: 'Tabler Icons',
+      licence: 'MIT',
+      author: 'Paweł Kuna',
+    };
+    const fetchMock = reply(200, { icons: [hit], total: 1 });
+    vi.stubGlobal('fetch', fetchMock);
+    const icons = await api.searchIcons('bäume & co', 20);
+    expect(icons).toEqual([hit]);
+    expect(fetchMock.mock.calls[0]![0]).toBe(
+      '/api/assets/icons/search?q=b%C3%A4ume+%26+co&limit=20'
+    );
+  });
+
+  it('turns a failed icon search into an ApiError', async () => {
+    vi.stubGlobal('fetch', reply(503, { error: 'feature_disabled' }));
+    await expect(api.searchIcons('tree', 20)).rejects.toMatchObject({
+      status: 503,
+      code: 'feature_disabled',
+    });
+  });
+
+  it('refreshes an icon search and reads the wait the server names', async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ icons: [], total: 0 }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'Retry-After': '6' },
+      })
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await api.refreshIcons('tree', 20)).toEqual({ retryAfterSeconds: 6 });
+    expect(fetchMock.mock.calls[0]![0]).toBe('/api/assets/icons/search?q=tree&limit=20&refresh=1');
+  });
+
+  it('reads the wait from a 429 on refresh, and none when the icons are ready', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>().mockResolvedValue(
+        new Response(JSON.stringify({ error: 'iconify_rate_limited' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json', 'Retry-After': '11' },
+        })
+      )
+    );
+    expect(await api.refreshIcons('tree', 20)).toEqual({ retryAfterSeconds: 11 });
+    vi.stubGlobal('fetch', reply(200, { icons: [], total: 0 }));
+    expect(await api.refreshIcons('tree', 20)).toEqual({ retryAfterSeconds: null });
+  });
+
+  it('fetches an icon as svg text', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        new Response('<svg></svg>', { headers: { 'Content-Type': 'image/svg+xml' } })
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    expect(await api.iconSvg('tabler', 'tree')).toBe('<svg></svg>');
+    expect(fetchMock.mock.calls[0]![0]).toBe('/api/assets/icons/tabler/tree.svg');
+  });
+
   it('sends the patch with the version it read', async () => {
     const fetchMock = reply(200, {
       id: 'p1',
@@ -63,7 +152,6 @@ describe('api client', () => {
       account: { id: 'a', email: 'a@example.org', displayName: 'A', isInstanceAdmin: false },
       csrfToken: 'tok-123',
       organisations: [],
-      canCreateOrganisations: false,
     };
     vi.stubGlobal('fetch', reply(200, session));
     await api.getSession();

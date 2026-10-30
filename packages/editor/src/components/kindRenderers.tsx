@@ -43,6 +43,7 @@ export interface OptionalCanvasStateProperties {
       color?: string;
       opacity?: number;
       iconId?: string;
+      svg?: string;
       flipX?: boolean;
       flipY?: boolean;
     }

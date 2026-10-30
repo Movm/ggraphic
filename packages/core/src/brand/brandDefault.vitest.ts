@@ -19,6 +19,32 @@ const contrast = (a: string, b: string) => {
 };
 
 describe('brandDefault', () => {
+  it('binds the swatches that mean a role', () => {
+    const refs = (swatches: readonly { id: string; ref?: string }[]) =>
+      Object.fromEntries(swatches.map((s) => [s.id, s.ref ?? null]));
+    expect(refs(brandDefault.palette)).toEqual({
+      night: 'brand.primary',
+      ocean: 'brand.secondary',
+      sun: 'brand.accent',
+      rust: 'brand.accentOnLight',
+      signal: 'brand.attention',
+      paper: 'brand.surface',
+      white: null,
+      black: null,
+    });
+    expect(refs(brandDefault.textPalette)).toEqual({
+      black: null,
+      white: 'brand.textOnDark',
+      night: 'brand.textOnLight',
+      paper: null,
+    });
+    expect(refs(brandDefault.markers.swatches)).toEqual({
+      sun: 'brand.accent',
+      sky: null,
+      white: null,
+    });
+  });
+
   it('starts a design on one of its own grounds', () => {
     expect(brandDefault.backgrounds.map((ground) => ground.color)).toContain(
       brandDefault.defaultBackground

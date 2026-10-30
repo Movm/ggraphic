@@ -2,32 +2,36 @@
 /**
  * The start page: a dark band with one prompt ("What do you want to tell?"),
  * the format as chips inside the prompt card and a few example prompts; below
- * it the recent projects and a gallery of the Studio's templates.
+ * it a compact row of the Studio's templates and all projects with a search.
  * Submitting the prompt creates a project, lets the AI write its texts and opens it.
  */
-import { Button, ChipGroup, PromptComposer, PromptHero, Tile, TileList } from '@ggraphic/ui';
+import { type SchemeId } from '@ggraphic/core';
+import { Button, ChipGroup, PromptComposer, PromptHero } from '@ggraphic/ui';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useId, useState, type ReactNode } from 'react';
-import { PiFile, PiQuotes, PiTextT, PiNumberOne } from 'react-icons/pi';
+import { useId, useState } from 'react';
 
-import { api, ApiError, type StudioConfig } from '../api/client';
+import { type StudioConfig } from '../api/client';
+import { studioBrand } from '../brand';
 import { DEFAULT_FORMAT, STUDIO_FORMATS, type StudioFormatId } from '../editor/document';
-import { TEMPLATE_CATALOG } from '../editor/templates/catalog';
-import {
-  BLANK_TEMPLATE_ID,
-  HEADLINE_TEMPLATE_ID,
-  NUMBER_TEMPLATE_ID,
-  QUOTE_TEMPLATE_ID,
-  type StudioTemplateId,
-} from '../editor/templates/ids';
-import { PROJECTS_QUERY_KEY, projectsKey } from '../pages/ProjectListPage';
-import { editorPath, navigate, PROJECTS_PATH } from '../router';
+import { PreviewHost } from '../editor/templates/previews';
+import { BLANK_TEMPLATE_ID } from '../editor/templates/ids';
+import { PROJECTS_QUERY_KEY } from '../projects/projectsKey';
+import { editorPath, navigate } from '../router';
 import { useLoggedIn } from '../session/SessionContext';
 import { PageShell } from '../ui/PageShell';
+import { apiErrorText } from '../ui/errorText';
 import { toast } from '../ui/toast';
 
-import { createFromPrompt, createFromTemplate } from './createFromPrompt';
-import { relativeTime } from './relativeTime';
+import {
+  AiPromptError,
+  TemplateUnavailableError,
+  createFromPrompt,
+  createFromTemplate,
+  fetchOrganisationBrand,
+} from './createFromPrompt';
+import { useHiddenTemplates } from './hiddenTemplates';
+import { ProjectGrid } from './ProjectGrid';
+import { TemplateGallery } from './TemplateGallery';
 
 /** Invented, neutral examples. */
 export const EXAMPLE_PROMPTS = [
@@ -37,30 +41,20 @@ export const EXAMPLE_PROMPTS = [
   'Share that 120 volunteers planted 800 trees this spring',
 ] as const;
 
-const RECENT_COUNT = 6;
-
-const TEMPLATE_ICONS: Record<StudioTemplateId, ReactNode> = {
-  [BLANK_TEMPLATE_ID]: <PiFile aria-hidden />,
-  [HEADLINE_TEMPLATE_ID]: <PiTextT aria-hidden />,
-  [QUOTE_TEMPLATE_ID]: <PiQuotes aria-hidden />,
-  [NUMBER_TEMPLATE_ID]: <PiNumberOne aria-hidden />,
-};
-
 const FORMAT_OPTIONS = STUDIO_FORMATS.map((f) => ({
   value: f.id,
   label: f.label,
   detail: f.size,
 }));
 
+/**
+ * What to tell a person when creating a project failed. The server's own text is for logs, so an
+ * `ApiError` is told by code and status (`apiErrorText`), never by its message.
+ */
 const errorText = (err: unknown) =>
-  err instanceof ApiError ? err.message : 'The project could not be created.';
-
-/** Plain clicks route in-app; modified clicks keep the browser's behaviour. */
-const followInApp = (path: string) => (e: React.MouseEvent) => {
-  if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-  e.preventDefault();
-  navigate(path);
-};
+  err instanceof AiPromptError || err instanceof TemplateUnavailableError
+    ? err.message
+    : apiErrorText(err, 'The project could not be created. Please try again.');
 
 export function StartPage({ config }: { config: StudioConfig | undefined }) {
   const queryClient = useQueryClient();
@@ -68,30 +62,44 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
   const [prompt, setPrompt] = useState('');
   const [formatId, setFormatId] = useState<StudioFormatId>(DEFAULT_FORMAT);
   const [busy, setBusy] = useState(false);
+  const { hiddenIds, canHide, setHidden } = useHiddenTemplates();
   const hintId = useId();
   const ai = config?.features.ai ?? false;
-
+  // The tiles follow the organisation's brand: its worlds decide which templates can be placed.
+  const brand = useQuery({
+    queryKey: ['start-brand', organisation.id],
+    // Only reads the pack: registering it here would let a late answer for a previous
+    // organisation change the brand every later `templatesFor` sees.
+    queryFn: () => fetchOrganisationBrand(organisation.id),
+    gcTime: 0,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
   const submit = async () => {
     const text = prompt.trim();
     if (!text || busy || !config) return;
     setBusy(true);
     try {
-      const { projectId, draftError } = await createFromPrompt({
+      const { projectId } = await createFromPrompt({
         organisationId: organisation.id,
         prompt: text,
         formatId,
         ai,
       });
       void queryClient.invalidateQueries({ queryKey: PROJECTS_QUERY_KEY });
-      if (draftError) toast.error(`${draftError} The template is ready for your own text.`);
       navigate(editorPath(projectId));
     } catch (err) {
+      // The prompt stays in the field: the user can try again or edit it.
       toast.error(errorText(err));
       setBusy(false);
     }
   };
 
-  const startFromTemplate = async (templateId: StudioTemplateId, name: string) => {
+  const startFromTemplate = async (
+    templateId: string,
+    name: string,
+    schemeId: SchemeId | null = null
+  ) => {
     if (busy) return;
     setBusy(true);
     try {
@@ -100,6 +108,7 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
         templateId,
         name,
         formatId,
+        schemeId,
       });
       void queryClient.invalidateQueries({ queryKey: PROJECTS_QUERY_KEY });
       navigate(editorPath(projectId));
@@ -170,75 +179,31 @@ export function StartPage({ config }: { config: StudioConfig | undefined }) {
       </PromptHero>
 
       <div className="studio-start__body">
-        <RecentProjects />
-        <section className="studio-start__section" aria-labelledby="templates-heading">
+        <section
+          className="studio-start__section studio-start__section--compact"
+          aria-labelledby="templates-heading"
+        >
           <div className="studio-start__head">
             <h2 id="templates-heading" className="studio-start__heading">
               Start from a template
             </h2>
             <p className="studio-muted">Opens in the format chosen above.</p>
           </div>
-          <TileList aria-label="Templates">
-            {TEMPLATE_CATALOG.map((template) => (
-              <li key={template.id}>
-                <Tile
-                  disabled={busy}
-                  ratio="4 / 5"
-                  media={
-                    <span className="studio-template-icon" data-template={template.id}>
-                      {TEMPLATE_ICONS[template.id]}
-                    </span>
-                  }
-                  title={template.label}
-                  meta={template.description}
-                  onClick={() => void startFromTemplate(template.id, template.label)}
-                />
-              </li>
-            ))}
-          </TileList>
+          <TemplateGallery
+            formatId={formatId}
+            brand={brand.data ?? studioBrand}
+            disabled={busy}
+            hiddenIds={hiddenIds}
+            canHide={canHide}
+            onToggleHidden={setHidden}
+            showBlank
+            onPickBlank={() => void startFromTemplate(BLANK_TEMPLATE_ID, 'Blank')}
+            onPick={(entry, schemeId) => void startFromTemplate(entry.id, entry.title, schemeId)}
+          />
         </section>
+        <ProjectGrid />
       </div>
+      <PreviewHost />
     </PageShell>
-  );
-}
-
-function RecentProjects() {
-  const { organisation } = useLoggedIn();
-  const projects = useQuery({
-    queryKey: projectsKey(organisation.id),
-    queryFn: () => api.listProjects(organisation.id),
-  });
-  const recent = [...(projects.data ?? [])]
-    .sort((a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt))
-    .slice(0, RECENT_COUNT);
-  if (recent.length === 0) return null;
-  return (
-    <section className="studio-start__section" aria-labelledby="recent-heading">
-      <div className="studio-start__head">
-        <h2 id="recent-heading" className="studio-start__heading">
-          Recent projects
-        </h2>
-        <a
-          className="ui-link studio-link"
-          href={PROJECTS_PATH}
-          onClick={followInApp(PROJECTS_PATH)}
-        >
-          Show all
-        </a>
-      </div>
-      <TileList layout="row" aria-label="Recent projects">
-        {recent.map((project) => (
-          <li key={project.id}>
-            <Tile
-              href={editorPath(project.id)}
-              onClick={followInApp(editorPath(project.id))}
-              media={project.thumbnailUrl ? <img src={project.thumbnailUrl} alt="" /> : null}
-              title={project.name}
-              meta={relativeTime(project.updatedAt)}
-            />
-          </li>
-        ))}
-      </TileList>
-    </section>
   );
 }

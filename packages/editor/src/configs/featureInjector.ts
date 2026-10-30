@@ -19,7 +19,7 @@ import { canAddHostElement, hostElementKinds } from '@ggraphic/editor/utils/elem
 import { MAX_ICON_SELECTIONS, selectedCatalogIconIds } from '@ggraphic/editor/utils/iconInstances';
 
 import type { ExtendedAssetsSectionProps } from '@ggraphic/editor/sidebar/sections/assets/index';
-import type { IconState } from '@ggraphic/editor/configs/factory/baseTypes';
+import type { BaseCanvasActions, IconState } from '@ggraphic/editor/configs/factory/baseTypes';
 import type { SectionContext } from '@ggraphic/editor/configs/types';
 import type { CircleBadgeInstance } from '@ggraphic/editor/primitives/CircleBadge';
 import type { ChartInstance } from '@ggraphic/editor/utils/chartUtils';
@@ -118,6 +118,8 @@ export function injectFeatureProps<S extends object, A extends object>(
       stateWithIcons.iconStates
     );
     injected.onIconToggle = actions.toggleIcon as (id: string, selected: boolean) => void;
+    injected.onAddExternalIcon = (id, payload) =>
+      (actions.toggleIcon as BaseCanvasActions['toggleIcon'])(id, true, undefined, payload);
     injected.maxIconSelections = MAX_ICON_SELECTIONS;
 
     // Optional: icon update handler

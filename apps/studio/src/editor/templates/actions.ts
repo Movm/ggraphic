@@ -7,7 +7,9 @@
  *
  * Every action is one user intent and records one history entry.
  */
+import { withBinding, withoutBinding, type BindingRef } from '@ggraphic/core';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { blockElementIds, type LiftedBlock } from '@ggraphic/editor/blocks/liftedBlock';
 import { type IconState } from '@ggraphic/editor/configs/factory/baseTypes';
 import { type AdditionalText } from '@ggraphic/editor/configs/types';
 import { type AssetInstance, createAssetInstance } from '@ggraphic/editor/utils/canvasAssets';
@@ -22,7 +24,7 @@ import {
   type UserImagePlacement,
 } from '@ggraphic/editor/utils/userImageUtils';
 
-import { type StudioPageState } from './pageState';
+import { type PageGroup, type StudioPageState } from './pageState';
 import { headlineFont, bodyFont, scaleFor } from './typography';
 
 type SetState = (
@@ -270,9 +272,50 @@ export function createStudioActions(
         layerOrder: withoutLayer(prev.layerOrder, id),
       })),
 
+    // ── Blocks ───────────────────────────────────────────────────────────────
+    // A placed block is one history step; its parts form a group, and the page takes the block's
+    // colour world when it has none, so a brand change later rebinds the block as it does the page.
+    insertBlock: (block: LiftedBlock) => {
+      // Once, outside `commit`: it runs the change for the state and again for the history entry.
+      const ids = blockElementIds(block);
+      const group: PageGroup = {
+        id: newId('group'),
+        ...(block.blockRef && { blockRef: block.blockRef }),
+        elementIds: ids,
+      };
+      commit((prev) => {
+        return {
+          ...prev,
+          additionalTexts: [...prev.additionalTexts, ...block.additionalTexts],
+          shapeInstances: [...prev.shapeInstances, ...block.shapeInstances],
+          assetInstances: [...(prev.assetInstances ?? []), ...block.assetInstances],
+          chartInstances: [...(prev.chartInstances ?? []), ...block.chartInstances],
+          userImageInstances: [...prev.userImageInstances, ...block.userImageInstances],
+          pillBadgeInstances: [...(prev.pillBadgeInstances ?? []), ...block.pillBadgeInstances],
+          circleBadgeInstances: [
+            ...(prev.circleBadgeInstances ?? []),
+            ...block.circleBadgeInstances,
+          ],
+          selectedIcons: [...prev.selectedIcons, ...block.selectedIcons],
+          iconStates: { ...prev.iconStates, ...block.iconStates },
+          layerOrder: [...(prev.layerOrder ?? []), ...block.layerOrder],
+          // A group of one is no group (`pruneGroups` would drop it anyway).
+          ...(ids.length > 1 && { groups: [...(prev.groups ?? []), group] }),
+          ...(!prev.brandScheme && block.brandScheme && { brandScheme: block.brandScheme }),
+        };
+      });
+    },
+
     // ── Background ───────────────────────────────────────────────────────────
-    setBackgroundColor: (color: string) =>
-      commit((prev) => ({ ...prev, backgroundColor: color }), true),
+    // A swatch pick carries its role: the ground then follows the brand. A free colour unbinds it.
+    setBackgroundColor: (color: string, ref?: BindingRef) =>
+      commit((prev) => {
+        const { bind: _previous, ...rest } = prev;
+        const bind = ref
+          ? withBinding(prev.bind, 'backgroundColor', { ref, value: color })
+          : withoutBinding(prev.bind, 'backgroundColor');
+        return { ...rest, backgroundColor: color, ...(bind ? { bind } : {}) };
+      }, true),
   };
 }
 

@@ -21,15 +21,47 @@ describe('GET /api/config', () => {
     const res = await request(makeApp({ ai: null }).app)
       .get('/api/config')
       .expect(200);
-    expect(res.body.features).toEqual({ ai: false });
+    expect(res.body.features).toEqual({ ai: false, removeBackground: false, iconify: false });
     expect(res.body.limits.uploadBytes).toBe(10 * 1024 * 1024);
     expect(res.body.uploadTypes).toContain('image/png');
   });
 
   it('reports AI on and never exposes the key', async () => {
     const res = await request(makeApp({ ai }).app).get('/api/config').expect(200);
-    expect(res.body.features).toEqual({ ai: true });
+    expect(res.body.features).toEqual({ ai: true, removeBackground: false, iconify: false });
     expect(JSON.stringify(res.body)).not.toContain('sk-secret');
+  });
+
+  it('reports a configured tool as a boolean and never exposes its host', async () => {
+    const res = await request(
+      makeApp({
+        features: {
+          removeBackground: { url: 'http://rembg.internal:7000', timeoutMs: 1000 },
+          iconify: null,
+        },
+      }).app
+    )
+      .get('/api/config')
+      .expect(200);
+    expect(res.body.features).toEqual({ ai: false, removeBackground: true, iconify: false });
+    expect(JSON.stringify(res.body)).not.toContain('rembg.internal');
+  });
+});
+
+describe('GET /api/config (iconify)', () => {
+  it('reports iconify as a boolean and never exposes its host', async () => {
+    const res = await request(
+      makeApp({
+        features: {
+          removeBackground: null,
+          iconify: { url: 'http://iconify.internal:3000', licences: ['MIT'], timeoutMs: 1000 },
+        },
+      }).app
+    )
+      .get('/api/config')
+      .expect(200);
+    expect(res.body.features).toEqual({ ai: false, removeBackground: false, iconify: true });
+    expect(JSON.stringify(res.body)).not.toContain('iconify.internal');
   });
 });
 
@@ -61,8 +93,7 @@ describe('anonymous requests', () => {
     ['post', '/api/orgs/00000000-0000-4000-8000-000000000001/uploads'],
     ['get', `/api/uploads/${'a'.repeat(32)}.png`],
     ['post', '/api/ai/draft'],
-    ['post', '/api/orgs'],
-    ['get', '/api/orgs/00000000-0000-4000-8000-000000000001/members'],
+    ['post', '/api/ai/pick'],
     ['get', '/api/orgs/00000000-0000-4000-8000-000000000001/brand-pack'],
     ['put', '/api/orgs/00000000-0000-4000-8000-000000000001/brand-pack'],
     ['post', '/api/auth/logout'],

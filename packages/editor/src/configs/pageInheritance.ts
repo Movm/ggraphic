@@ -22,6 +22,12 @@ const INHERITABLE_KEYS = [
   'colorScheme',
   'colorSchemeId',
   'backgroundMode',
+  // Brand bindings (F0): an added or converted page stays bound to its brand.
+  'bind',
+  'brandScheme',
+  'brandStamp',
+  // `templateRef` and `groups` (F0) are deliberately not inheritable: they
+  // describe one page's origin and its element groups, not a style to carry on.
 ] as const;
 
 export function extractInheritablePageState(

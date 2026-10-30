@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { messages } from '@ggraphic/editor/i18n/messages';
 import type { StockImageAttribution } from '@ggraphic/schema';
 
 /**
@@ -21,7 +22,7 @@ export function photoCreditLine(
     );
   }
   if (names.length === 0) return '';
-  return `${names.length > 1 ? 'Fotos' : 'Foto'}: ${names.join(', ')} auf Unsplash`;
+  return messages().credit.photoLine(names.length, names.join(', '));
 }
 
 /** Hängt den Bildnachweis mit einer Leerzeile an den Beitragstext. */

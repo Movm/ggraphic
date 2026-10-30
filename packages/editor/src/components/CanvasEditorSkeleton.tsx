@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { getCanvasFormatOrDefault } from '@ggraphic/editor/formats/index';
 
 import type { ReactNode } from 'react';
@@ -77,12 +78,13 @@ export function CanvasEditorSkeleton({
   aspectRatio,
   topBar = true,
 }: CanvasEditorSkeletonProps) {
+  const t = useMessages();
   return (
     <div
       role="status"
       aria-live="polite"
       aria-busy="true"
-      aria-label="Editor wird geladen"
+      aria-label={t.shell.loadingEditor}
       className="flex flex-col h-dvh min-h-[500px] bg-[var(--editor-bg)]"
     >
       {topBar && (

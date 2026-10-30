@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { messages } from '@ggraphic/editor/i18n/messages';
 /**
  * Common Action Creators for Canvas Factory
  *
@@ -31,6 +32,7 @@ import type { IconState, BaseCanvasState } from '@ggraphic/editor/configs/factor
 import type { AdditionalText } from '@ggraphic/editor/configs/types';
 import type { AssetInstance } from '@ggraphic/editor/utils/canvasAssets';
 import type { CircleBadgeInstance } from '@ggraphic/editor/utils/circleBadgeUtils';
+import type { ExternalIconPayload } from '@ggraphic/editor/utils/externalIcons';
 import type { FrameClipType, FrameInstance } from '@ggraphic/editor/utils/frameUtils';
 import type { IllustrationInstance } from '@ggraphic/editor/utils/illustrations/types';
 import type { PillBadgeInstance } from '@ggraphic/editor/utils/pillBadgeUtils';
@@ -147,7 +149,12 @@ export function createIconActions<
   const { defaultColor, defaultOpacity = 1, defaultScale = 1 } = config;
 
   return {
-    toggleIcon: (id: string, selected: boolean, options?: ElementPlacement) => {
+    toggleIcon: (
+      id: string,
+      selected: boolean,
+      options?: ElementPlacement,
+      external?: ExternalIconPayload
+    ) => {
       if (selected) {
         const newIconState: IconState = {
           x: options?.center?.x ?? canvasWidth / 2,
@@ -156,6 +163,7 @@ export function createIconActions<
           rotation: 0,
           ...(defaultColor ? { color: defaultColor } : {}),
           opacity: defaultOpacity,
+          ...(external ? { svg: external.svg, source: external.source } : {}),
         };
         setState((prev) => ({
           ...prev,
@@ -392,7 +400,7 @@ export function createAdditionalTextActions<TState extends { additionalTexts: Ad
     addHeader: () => {
       const newText: AdditionalText = {
         id: uuid(),
-        text: 'Überschrift',
+        text: messages().sidebar.text.defaultHeader,
         type: 'header',
         y: canvasHeight / 3,
         ...textPreset('header', canvasWidth, insertScale),
@@ -407,7 +415,7 @@ export function createAdditionalTextActions<TState extends { additionalTexts: Ad
     addSubheader: () => {
       const newText: AdditionalText = {
         id: uuid(),
-        text: 'Untertitel',
+        text: messages().sidebar.text.defaultSubheader,
         type: 'subheader',
         y: canvasHeight * 0.4,
         ...textPreset('subheader', canvasWidth, insertScale),
@@ -422,7 +430,7 @@ export function createAdditionalTextActions<TState extends { additionalTexts: Ad
     addText: () => {
       const newText: AdditionalText = {
         id: uuid(),
-        text: 'Text hier eingeben',
+        text: messages().sidebar.text.defaultBody,
         type: 'body',
         y: canvasHeight / 2,
         ...textPreset('body', canvasWidth, insertScale),

@@ -19,6 +19,8 @@
  * Katalog zieht `@iconify` nach und hat in der Node-Lane nichts zu suchen.
  */
 
+import { externalIconKey, isExternalIconId } from './externalIcons.js';
+
 import type { IconState } from '../configs/factory/baseTypes.js';
 import type { IconDef } from '@ggraphic/editor/utils/canvasIcons';
 
@@ -27,7 +29,7 @@ import type { IconDef } from '@ggraphic/editor/utils/canvasIcons';
  * lockereren Zustandstyp (alles optional) — der passt hier herein, ohne dass
  * die Auflösung zweimal geschrieben werden muss.
  */
-export type IconIdCarrier = { iconId?: string };
+export type IconIdCarrier = { iconId?: string; svg?: string };
 
 /**
  * Katalog-IDs von vor dem Iconify-Umbau, die noch als Instanz-ID in
@@ -123,5 +125,12 @@ export function resolveIconDef(
   iconStates: Record<string, IconIdCarrier> | undefined,
   iconMap: Record<string, IconDef> | null | undefined
 ): IconDef | null {
-  return iconMap?.[catalogIconId(instanceId, iconStates)] ?? null;
+  const catalogId = catalogIconId(instanceId, iconStates);
+  // An icon from the host's search is identified by id AND content: the document's own
+  // copy of the SVG decides which icon is drawn.
+  if (isExternalIconId(catalogId)) {
+    const key = externalIconKey(catalogId, iconStates?.[instanceId]?.svg);
+    return key ? (iconMap?.[key] ?? null) : null;
+  }
+  return iconMap?.[catalogId] ?? null;
 }

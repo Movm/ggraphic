@@ -157,6 +157,11 @@ export function useCanvasKeyboardHandlers<TState extends Partial<BaseCanvasState
           commands.cut();
           keepFocusAfterRemoval(target);
           return;
+        case 'ungroup':
+          if (!commands.capabilities().canUngroup) break;
+          e.preventDefault();
+          commands.ungroup();
+          return;
         case 'selectAll':
           e.preventDefault();
           commands.selectAll();

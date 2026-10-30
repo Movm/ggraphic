@@ -410,16 +410,6 @@ body {
   flex-wrap: wrap;
   gap: var(--ui-space-2) var(--ui-space-4);
 }
-.studio-topnav__org {
-  font-weight: var(--ui-weight-bold);
-  color: var(--ui-color-text);
-}
-/* A native select in the kit's field look, compact (the kit's Select cannot be driven natively). */
-.studio-select {
-  width: auto;
-  height: var(--ui-control-sm);
-  padding: 0 var(--ui-space-3);
-}
 
 .studio-page {
   max-width: 1120px;
@@ -459,15 +449,6 @@ body {
   font-weight: var(--ui-weight-bold);
   line-height: 1.05;
   letter-spacing: var(--ui-tracking-title);
-}
-.studio-section {
-  margin-bottom: var(--ui-space-8);
-}
-.studio-section__title {
-  margin: 0 0 var(--ui-space-3);
-  font-size: 1.375rem;
-  font-weight: var(--ui-weight-bold);
-  letter-spacing: -0.02em;
 }
 .studio-subtitle {
   margin: var(--ui-space-4) 0 var(--ui-space-2);
@@ -510,55 +491,6 @@ body {
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
-}
-
-/* New project, radio choices */
-.studio-new {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--ui-space-4);
-  padding: var(--ui-space-5);
-}
-.studio-new__name {
-  width: 100%;
-  max-width: 420px;
-}
-.studio-choices {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ui-space-2);
-  margin: 0;
-  padding: 0;
-  border: none;
-}
-.studio-choices legend {
-  margin-bottom: var(--ui-space-2);
-  font-weight: var(--ui-weight-bold);
-}
-.studio-choice {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
-  padding: var(--ui-space-2) var(--ui-space-3);
-  border: 1.5px solid var(--ui-color-border-control);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-surface);
-  cursor: pointer;
-}
-.studio-choice:has(input:checked) {
-  border-color: var(--ui-color-accent);
-  background: var(--ui-color-selection);
-}
-.studio-choice:has(input:focus-visible) {
-  outline: var(--ui-focus-ring);
-  outline-offset: var(--ui-focus-offset);
-}
-.studio-choice span {
-  color: var(--ui-color-text-secondary);
-}
-.studio-choice strong {
-  color: var(--ui-color-text);
 }
 
 /* Project cards */
@@ -750,9 +682,10 @@ body {
 }
 .studio-banner {
   position: fixed;
-  top: 64px;
+  /* Under the editor's floating toolbar slot (a sticky 3.5rem band below the top bar, z-index 90). */
+  top: calc(var(--editor-topbar-height) + 3.5rem + 8px);
   left: 50%;
-  z-index: 60;
+  z-index: 100;
   align-items: center;
   flex-wrap: wrap;
   max-width: min(720px, calc(100vw - 32px));
@@ -825,39 +758,6 @@ body {
   margin: 0 0 var(--ui-space-3);
   font-size: 1.125rem;
 }
-.studio-template-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-space-2);
-  margin: 0 0 var(--ui-space-4);
-  padding: 0;
-  list-style: none;
-}
-.studio-template-option {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  width: 100%;
-  padding: 10px var(--ui-space-3);
-  border: 1.5px solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-surface);
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.studio-template-option:hover {
-  background: var(--ui-color-surface-hover);
-}
-.studio-template-option[aria-current='true'] {
-  border-color: var(--ui-color-accent);
-}
-.studio-template-option span {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-text-sm);
-}
 .studio-dialog__actions {
   display: flex;
   justify-content: flex-end;
@@ -927,7 +827,7 @@ body {
 .studio-auth__switch {
   margin: 0;
 }
-.studio-members {
+.studio-assets {
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-2);
@@ -935,44 +835,19 @@ body {
   padding: 0;
   list-style: none;
 }
-.studio-member {
+.studio-asset {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--ui-space-3);
   padding: var(--ui-space-3) var(--ui-space-4);
 }
-.studio-member__who {
+.studio-asset__who {
   display: flex;
   flex-direction: column;
   flex: 1 1 200px;
   min-width: 0;
   overflow-wrap: anywhere;
-}
-.studio-invite {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  gap: var(--ui-space-2) var(--ui-space-3);
-  margin: var(--ui-space-3) 0;
-}
-.studio-invite__role,
-.studio-invite__field {
-  flex: 0 1 320px;
-}
-.studio-invite__link {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--ui-space-3);
-  margin: var(--ui-space-3) 0;
-}
-.studio-invite__link .studio-invite__field {
-  width: 100%;
-  max-width: none;
-}
-.studio-invite__link input {
-  font-family: var(--ui-font-mono);
 }
 .studio-brand {
   display: grid;
@@ -1012,8 +887,32 @@ body {
   color: var(--ui-color-accent);
   font-weight: var(--ui-weight-bold);
 }
-.studio-brand__add {
-  align-self: flex-start;
+.studio-brand__derived {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--ui-space-2) var(--ui-space-4);
+  margin: var(--ui-space-3) 0 0;
+}
+.studio-brand__derived-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--ui-space-2);
+}
+.studio-brand__derived dt {
+  color: var(--ui-color-text-secondary);
+}
+.studio-brand__derived dd {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  margin: 0;
+  font-family: var(--ui-font-mono);
+}
+.studio-brand__swatch {
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid var(--ui-color-border-control);
+  border-radius: var(--ui-radius-sm);
 }
 .studio-brand__colors {
   display: grid;
@@ -1039,26 +938,15 @@ body {
   background: var(--ui-color-surface);
   cursor: pointer;
 }
-.studio-brand__grounds {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-space-3);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.studio-brand__ground {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  align-items: end;
-  gap: var(--ui-space-2) var(--ui-space-3);
-}
 .studio-brand__upload {
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-3);
   padding-top: var(--ui-space-2);
   border-top: 1px solid var(--ui-color-border);
+}
+.studio-brand__add {
+  align-self: flex-start;
 }
 .studio-brand__row {
   display: grid;
@@ -1105,15 +993,111 @@ body {
 .studio-brand-preview__page p {
   overflow-wrap: anywhere;
 }
+.studio-brand-preview__outline {
+  box-sizing: border-box;
+  border: 1px dashed color-mix(in srgb, currentColor 50%, transparent);
+  pointer-events: none;
+}
+.studio-brand-preview__envelope {
+  display: flex;
+}
 .studio-brand-preview__logo {
-  position: absolute;
-  max-width: 22%;
-  max-height: 14%;
+  max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
+}
+.studio-brand__range {
+  width: 100%;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .heterogeneous-multipage__pages-container {
     transition: none;
   }
+}
+
+/* Start page: compact template row and the project search */
+.studio-start__section--compact {
+  gap: var(--ui-space-4);
+}
+.studio-start__section--compact .studio-start__heading {
+  font-size: var(--ui-text-lg);
+}
+.studio-search {
+  width: 100%;
+  max-width: 320px;
+}
+
+/* Template gallery */
+.studio-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-4);
+}
+.studio-gallery__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--ui-space-3) var(--ui-space-5);
+}
+.studio-gallery__photo {
+  min-width: 10rem;
+}
+.studio-gallery .ui-tiles--grid {
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+}
+.studio-gallery__item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+  min-width: 0;
+}
+.studio-gallery__item[data-hidden='true'] .ui-tile {
+  opacity: 0.55;
+}
+.studio-gallery__media {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.studio-gallery__media > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.studio-gallery__skeleton {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--ui-color-bg-subtle);
+  animation: studio-gallery-pulse 1.4s ease-in-out infinite;
+}
+@keyframes studio-gallery-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .studio-gallery__skeleton {
+    animation: none;
+  }
+}
+.studio-gallery__hide {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ui-color-text-muted);
+  font: inherit;
+  font-size: var(--ui-text-sm);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.studio-dialog--wide {
+  width: min(960px, 100%);
+  max-height: 90dvh;
+  overflow-y: auto;
+}
+.studio-dialog--wide .studio-gallery {
+  margin-bottom: var(--ui-space-4);
 }

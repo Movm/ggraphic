@@ -1,19 +1,18 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
- * Routes on the History API: `/` (the start page with the prompt), `/projects`
- * (all projects), `/p/:id` (the editor), `/members` and `/brand` (the current
- * organisation), `/licenses` (open to everyone) and `/invite/:token`. The server answers every other path with index.html.
+ * Routes on the History API: `/` (the start page: the prompt and the projects), `/projects`
+ * (kept for old links; redirects to `/`), `/trash`, `/p/:id` (the editor), `/brand` (the
+ * current organisation's brand) and `/licenses` (open to everyone). The server answers every other path with index.html.
  */
 import { useSyncExternalStore } from 'react';
 
 export type Route =
   | { name: 'start' }
   | { name: 'projects' }
-  | { name: 'members' }
+  | { name: 'trash' }
   | { name: 'brand' }
   | { name: 'licenses' }
-  | { name: 'editor'; projectId: string }
-  | { name: 'invite'; token: string };
+  | { name: 'editor'; projectId: string };
 
 const decode = (part: string) => {
   try {
@@ -26,17 +25,14 @@ const decode = (part: string) => {
 export function parseRoute(pathname: string): Route {
   const editor = /^\/p\/([^/]+)\/?$/.exec(pathname);
   if (editor) return { name: 'editor', projectId: decode(editor[1]) };
-  const invite = /^\/invite\/([^/]+)\/?$/.exec(pathname);
-  if (invite) return { name: 'invite', token: decode(invite[1]) };
   if (/^\/projects\/?$/.test(pathname)) return { name: 'projects' };
-  if (/^\/members\/?$/.test(pathname)) return { name: 'members' };
+  if (/^\/trash\/?$/.test(pathname)) return { name: 'trash' };
   if (/^\/brand\/?$/.test(pathname)) return { name: 'brand' };
   if (/^\/licenses\/?$/.test(pathname)) return { name: 'licenses' };
   return { name: 'start' };
 }
 
-export const PROJECTS_PATH = '/projects';
-export const MEMBERS_PATH = '/members';
+export const TRASH_PATH = '/trash';
 export const BRAND_PATH = '/brand';
 export const LICENSES_PATH = '/licenses';
 
@@ -44,6 +40,13 @@ export const editorPath = (projectId: string) => `/p/${encodeURIComponent(projec
 
 const listeners = new Set<() => void>();
 const notify = () => listeners.forEach((listener) => listener());
+
+/** Like `navigate`, but the current entry is replaced, so Back does not return to the old path. */
+export function redirect(path: string): void {
+  if (path === window.location.pathname) return;
+  window.history.replaceState(null, '', path);
+  notify();
+}
 
 export function navigate(path: string): void {
   if (path === window.location.pathname) return;

@@ -37,11 +37,12 @@ const DOOR: Partial<Record<CanvasCommandId, keyof CanvasCommands>> = {
   editText: 'editText',
   flipHorizontal: 'flip',
   flipVertical: 'flip',
+  ungroup: 'ungroup',
 };
 
 function mockCommands(canEditText = true): CanvasCommands {
   return {
-    capabilities: vi.fn(() => ({ canEditText })),
+    capabilities: vi.fn(() => ({ canEditText, canUngroup: true })),
     copy: vi.fn(),
     cut: vi.fn(),
     paste: vi.fn(),
@@ -50,6 +51,7 @@ function mockCommands(canEditText = true): CanvasCommands {
     selectAll: vi.fn(),
     moveLayer: vi.fn(),
     toggleLock: vi.fn(),
+    ungroup: vi.fn(),
     insertFrameImage: vi.fn(() => true),
     editText: vi.fn(),
     flip: vi.fn(),

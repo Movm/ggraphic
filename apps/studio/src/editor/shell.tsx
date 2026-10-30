@@ -3,6 +3,7 @@
  * The Studio's part of the editor shell (`registerEditorShell`): the "AI draft"
  * document tab and the page picker behind "Add page" and "Change template".
  */
+import { SCHEME_IDS, type SchemeId } from '@ggraphic/core';
 import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
 import {
   registerEditorShell,
@@ -11,14 +12,38 @@ import {
 } from '@ggraphic/editor/components/CanvasEditor/editorShell';
 import { Button } from '@ggraphic/ui';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { PiSparkle } from 'react-icons/pi';
 
-import { ApiError } from '../api/client';
+import { useHiddenTemplates } from '../start/hiddenTemplates';
+import { TemplateGallery } from '../start/TemplateGallery';
+import { apiErrorText } from '../ui/errorText';
 import { toast } from '../ui/toast';
 
 import { draftDeckOps } from './aiDraft';
-import { formatSize } from './document';
-import { TEMPLATE_CATALOG } from './templates/catalog';
+import { DEFAULT_FORMAT, formatSize } from './document';
+import { type CatalogEntry } from './templates/catalog';
+import { FREE_PAGE_CONFIG_ID } from './templates/ids';
+import { templatePageState } from './templates/instantiate';
+import { PreviewHost } from './templates/previews';
+import { BlockInsertProvider } from './blocks/BlockInsertProvider';
+
+/** The id of the template a page was placed from, if its state says so. */
+function templateRefOf(state: Record<string, unknown> | undefined): string | null {
+  const ref = state?.['templateRef'];
+  return typeof ref === 'object' && ref !== null && typeof (ref as { id?: unknown }).id === 'string'
+    ? (ref as { id: string }).id
+    : null;
+}
+
+/** An emptied page: no elements and no template, the ground and its binding stay. */
+function blankPageState(current: Record<string, unknown> | undefined): Record<string, unknown> {
+  const kept: Record<string, unknown> = {};
+  for (const key of ['backgroundColor', 'bind', 'brandScheme', 'brandStamp']) {
+    if (current && key in current) kept[key] = current[key];
+  }
+  return { ...kept, shapeInstances: [], additionalTexts: [], layerOrder: [] };
+}
 
 export const AI_DRAFT_TAB_ID = 'ai-draft';
 
@@ -27,13 +52,14 @@ const FIELD =
 const PRIMARY_BUTTON =
   'inline-flex items-center justify-center gap-2 rounded-lg border-none bg-[var(--editor-accent)] px-4 py-2 text-sm font-semibold text-white cursor-pointer disabled:cursor-default disabled:opacity-60';
 
-function errorText(err: unknown): string {
-  if (err instanceof ApiError) {
-    if (err.code === 'ai_timeout') return 'The AI took too long. Try a shorter briefing.';
-    if (err.code === 'ai_disabled') return 'AI is not available on this server.';
-    return err.message;
-  }
-  return 'The draft could not be created.';
+const DRAFT_FAILED = 'The draft could not be created.';
+
+/** What a failed AI draft tells the person: by code, never the server's text. */
+export function draftErrorText(err: unknown): string {
+  return apiErrorText(err, DRAFT_FAILED, {
+    ai_timeout: 'The AI took too long. Try a shorter briefing.',
+    ai_disabled: 'AI is not available on this server.',
+  });
 }
 
 /** The "AI draft" tab: a briefing in, the draft's texts onto the design. */
@@ -65,7 +91,7 @@ export function AiDraftSection({ formatId, deck, onShowPage, canAddPage }: Edito
       if (inserted) onShowPage(inserted);
       toast(inserted ? 'Draft added as a new page.' : 'Draft applied to this page.');
     } catch (err) {
-      setError(errorText(err));
+      setError(draftErrorText(err));
     } finally {
       setBusy(false);
     }
@@ -110,11 +136,16 @@ export function StudioPagePicker({
   onClose,
   mode,
   currentTemplateId,
+  formatId,
   onSelectTemplate,
+  addPage,
+  currentState,
   onDuplicateCurrent,
 }: EditorPagePickerProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  // Hidden for everyone here: owners show them again on the start page.
+  const { hiddenIds } = useHiddenTemplates();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -127,7 +158,31 @@ export function StudioPagePicker({
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
-  return (
+  const targetFormat = formatId ?? DEFAULT_FORMAT;
+  // Every page is a free page whose config stays, so a template's page travels with the choice.
+  const pickTemplate = (entry: CatalogEntry, schemeId: SchemeId) => {
+    const state = templatePageState(entry, targetFormat, { schemeId });
+    if (!state) {
+      // Say so instead of adding a blank page the user did not ask for.
+      toast.error('This template cannot be placed on the current format and brand.');
+      return;
+    }
+    if (mode === 'add') void addPage?.(FREE_PAGE_CONFIG_ID, false, state);
+    else onSelectTemplate(FREE_PAGE_CONFIG_ID, state);
+    onClose();
+  };
+  const pickBlank = () => {
+    if (mode === 'add') void addPage?.(FREE_PAGE_CONFIG_ID, false, undefined);
+    else onSelectTemplate(FREE_PAGE_CONFIG_ID, blankPageState(currentState));
+    onClose();
+  };
+  // The page keeps its colour world on the new template when that offers it; otherwise the tile
+  // starts in the template's first world.
+  const scheme = currentState?.['brandScheme'];
+  const pageScheme = SCHEME_IDS.find((id) => id === scheme) ?? null;
+  const heldTemplateId = templateRefOf(currentState) ?? currentTemplateId;
+  // On the body: a box that opened the picker (the small "Add page" button) must not size or clip it.
+  return createPortal(
     <div className="studio-overlay">
       {/* Clicking beside the dialog closes it; Escape does the same from the keyboard. */}
       <div className="studio-overlay__backdrop" onClick={onClose} role="presentation" />
@@ -136,29 +191,21 @@ export function StudioPagePicker({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="studio-dialog"
+        className="studio-dialog studio-dialog--wide"
       >
         <h2 id={titleId} className="studio-dialog__title">
           {mode === 'add' ? 'Add a page' : 'Change template'}
         </h2>
-        <ul className="studio-template-list">
-          {TEMPLATE_CATALOG.map((template) => (
-            <li key={template.id}>
-              <button
-                type="button"
-                className="studio-template-option"
-                aria-current={template.id === currentTemplateId ? 'true' : undefined}
-                onClick={() => {
-                  onSelectTemplate(template.id);
-                  onClose();
-                }}
-              >
-                <strong>{template.label}</strong>
-                <span>{template.description}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
+        <TemplateGallery
+          formatId={targetFormat}
+          hiddenIds={hiddenIds}
+          showBlank
+          defaultSchemeId={pageScheme}
+          currentTemplateId={heldTemplateId}
+          onPick={pickTemplate}
+          onPickBlank={pickBlank}
+        />
+        <PreviewHost />
         <div className="studio-dialog__actions">
           {mode === 'add' && onDuplicateCurrent ? (
             <Button
@@ -177,7 +224,8 @@ export function StudioPagePicker({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -198,5 +246,6 @@ export function registerStudioEditorShell(): void {
       },
     ],
     pagePicker: { Picker: StudioPagePicker },
+    Provider: BlockInsertProvider,
   });
 }

@@ -3,7 +3,13 @@
  * The core's BrandPack as a zod schema. The two assertions at the bottom fail to
  * compile when the schema and `@ggraphic/core`'s type drift apart in either direction.
  */
-import type { BrandPack } from '@ggraphic/core';
+import {
+  BRAND_LAYOUT_BOUNDS,
+  isBindingRef,
+  LOGO_CORNERS,
+  type BindingRef,
+  type BrandPack,
+} from '@ggraphic/core';
 import { z } from 'zod';
 
 export const hexColor = z
@@ -11,7 +17,14 @@ export const hexColor = z
   .regex(/^#[0-9A-Fa-f]{6}$/, 'expected a colour as #RRGGBB')
   .transform((v) => v.toUpperCase());
 
-const swatch = z.object({ id: z.string().min(1), label: z.string(), color: hexColor });
+const bindingRef = z.custom<BindingRef>(isBindingRef, 'expected a binding ref');
+
+const swatch = z.object({
+  id: z.string().min(1),
+  label: z.string(),
+  color: hexColor,
+  ref: bindingRef.optional(),
+});
 
 export const brandColorRoles = [
   'primary',
@@ -39,6 +52,19 @@ export const fontFamily = z
   .max(60)
   .regex(/^[\p{L}\p{N}][\p{L}\p{N} _-]*$/u, 'letters, digits, spaces, - and _ only');
 
+export const brandLayoutSchema = z.object({
+  margin: z.number().min(BRAND_LAYOUT_BOUNDS.margin.min).max(BRAND_LAYOUT_BOUNDS.margin.max),
+  logoCorner: z.enum(LOGO_CORNERS),
+  logoMaxWidth: z
+    .number()
+    .min(BRAND_LAYOUT_BOUNDS.logoMaxWidth.min)
+    .max(BRAND_LAYOUT_BOUNDS.logoMaxWidth.max),
+  logoMaxHeight: z
+    .number()
+    .min(BRAND_LAYOUT_BOUNDS.logoMaxHeight.min)
+    .max(BRAND_LAYOUT_BOUNDS.logoMaxHeight.max),
+});
+
 export const brandPackSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
@@ -61,6 +87,8 @@ export const brandPackSchema = z.object({
     body: fontFamily,
     quoteShort: fontFamily,
     quoteEmphasis: fontFamily,
+    serif: fontFamily.optional(),
+    condensed: fontFamily.optional(),
     boldFamilies: z.record(z.string(), z.string()).readonly().optional(),
   }),
   fontFaces: z.array(
@@ -78,6 +106,15 @@ export const brandPackSchema = z.object({
       label: z.string(),
     })
     .nullable(),
+  logoAlt: z
+    .object({
+      src: z.string().regex(/^\/api\/brand-assets\/[0-9a-f]{32}\.(png|webp)$/),
+      label: z.string(),
+      ground: z.enum(['dark', 'light']),
+    })
+    .nullable()
+    .optional(),
+  layout: brandLayoutSchema.optional(),
   quoteMark: z.object({ src: z.string() }).nullable(),
 });
 

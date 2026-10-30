@@ -7,6 +7,7 @@ import { createDb } from './db/client.ts';
 import { accounts } from './db/schema.ts';
 import { runMigrations } from './db/migrate.ts';
 import { adoptLegacyUploads } from './legacyUploads.ts';
+import { startTrashPurge } from './trashPurge.ts';
 
 const config = loadConfig();
 if (config.allowInsecureCookie) {
@@ -41,7 +42,10 @@ const server = createApp({ config, db }).listen(config.port, config.host, () => 
   console.log(`Self-registration: ${config.allowRegistration ? 'open' : 'closed'}`);
 });
 
+const trashPurge = startTrashPurge({ pool, db, config });
+
 function shutdown() {
+  trashPurge?.stop();
   server.close(() => {
     void pool.end().then(() => process.exit(0));
   });

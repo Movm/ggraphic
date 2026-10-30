@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { useId } from 'react';
 
 import './toolTiles.css';
@@ -288,6 +289,7 @@ function BlobTile() {
 }
 
 function TextPathTile() {
+  const t = useMessages();
   const id = useId();
   return (
     <Frame>
@@ -308,7 +310,7 @@ function TextPathTile() {
         letterSpacing="1.2"
       >
         <textPath href={`#${id}`} startOffset="50%" textAnchor="middle">
-          PFADTEXT
+          {t.sidebar.tools.pathTextTile}
         </textPath>
       </text>
       <circle cx="10" cy="52" r="3.2" fill="#fff" className="tt-k500" strokeWidth="1.8" />

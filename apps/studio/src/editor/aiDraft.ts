@@ -12,7 +12,7 @@ import { fitFontSizeToSlot, PLAIN_STYLE } from '@ggraphic/schema';
 
 import { type Draft } from '../api/client';
 
-import { HEADLINE_TEMPLATE_ID } from './templates/ids';
+import { FREE_PAGE_CONFIG_ID, HEADLINE_TEMPLATE_ID } from './templates/ids';
 import { seedPageState, TEXT_ROLES } from './templates/seeds';
 
 interface DeckPage {
@@ -41,8 +41,16 @@ export function fillTexts(texts: readonly AdditionalText[], draft: Draft): Addit
   const byRole = draftTexts(draft);
   const fillable = texts.some((t) => t.id === TEXT_ROLES.headline || t.id === TEXT_ROLES.subline);
   if (!fillable) return null;
+  return fillById(texts, byRole);
+}
+
+/** `texts` with the text of every id in `byId` replaced, each fitted above the text below it. */
+export function fillById(
+  texts: readonly AdditionalText[],
+  byId: ReadonlyMap<string, string>
+): AdditionalText[] {
   return texts.map((t) => {
-    const value = byRole.get(t.id);
+    const value = byId.get(t.id);
     return value === undefined ? t : fitToSlot({ ...t, text: value }, texts);
   });
 }
@@ -105,7 +113,7 @@ export function draftDeckOps(
     inserts: [
       {
         afterPageId: active?.id ?? null,
-        configId: HEADLINE_TEMPLATE_ID,
+        configId: FREE_PAGE_CONFIG_ID,
         state: { ...seed, additionalTexts: texts, layerOrder },
       },
     ],

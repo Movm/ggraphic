@@ -5,7 +5,7 @@
  * server's source of truth. The server serves this app, so every call is
  * same-origin (`/api/...`). Every non-GET call carries the session's CSRF token.
  */
-import { type BrandPack } from '@ggraphic/core';
+import { LOGO_CORNERS, type BrandPack } from '@ggraphic/core';
 import { z } from 'zod';
 
 const projectSummarySchema = z.object({
@@ -23,10 +23,19 @@ const projectSchema = projectSummarySchema.extend({
   document: z.record(z.string(), z.unknown()),
 });
 
+const trashItemSchema = z.object({
+  id: z.string(),
+  organisationId: z.string(),
+  name: z.string(),
+  deletedAt: z.string(),
+  purgeAt: z.string(),
+  daysLeft: z.number().int(),
+});
+
 const projectListSchema = z.object({ projects: z.array(projectSummarySchema) });
 
 const configSchema = z.object({
-  features: z.object({ ai: z.boolean() }),
+  features: z.object({ ai: z.boolean(), removeBackground: z.boolean(), iconify: z.boolean() }),
   limits: z.object({
     uploadBytes: z.number().int(),
     thumbnailBytes: z.number().int(),
@@ -34,6 +43,16 @@ const configSchema = z.object({
   }),
   uploadTypes: z.array(z.string()),
 });
+
+const iconHitSchema = z.object({
+  prefix: z.string(),
+  name: z.string(),
+  setTitle: z.string(),
+  licence: z.string(),
+  author: z.string(),
+});
+
+const iconSearchSchema = z.object({ icons: z.array(iconHitSchema), total: z.number().int() });
 
 const uploadSchema = z.object({
   url: z.string(),
@@ -48,11 +67,19 @@ const draftSchema = z.object({
   callToAction: z.string().optional(),
 });
 
+const pickSchema = z.object({
+  templateId: z.string(),
+  schemeId: z.string().nullable(),
+  fills: z.record(z.string(), z.string()),
+});
+
 const errorSchema = z.object({
   error: z.string(),
   message: z.string().optional(),
   currentVersion: z.number().int().optional(),
 });
+
+const hiddenTemplatesSchema = z.object({ templateIds: z.array(z.string()) });
 
 const roleSchema = z.enum(['owner', 'editor']);
 
@@ -71,33 +98,17 @@ const sessionSchema = z.object({
     .nullable(),
   csrfToken: z.string().nullable(),
   organisations: z.array(organisationSchema),
-  canCreateOrganisations: z.boolean(),
-});
-
-const memberSchema = z.object({
-  accountId: z.string(),
-  email: z.string(),
-  displayName: z.string(),
-  role: roleSchema,
-});
-
-const invitationSchema = z.object({
-  id: z.string(),
-  role: roleSchema,
-  createdAt: z.string(),
-  expiresAt: z.string(),
-  allowsSignup: z.boolean(),
-  url: z.string().optional(),
-});
-
-const invitationInfoSchema = z.object({
-  organisationName: z.string(),
-  role: roleSchema,
-  allowsSignup: z.boolean(),
 });
 
 const hex = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
 const swatchSchema = z.object({ id: z.string(), label: z.string(), color: hex });
+
+const brandLayoutSchema = z.object({
+  margin: z.number(),
+  logoCorner: z.enum(LOGO_CORNERS),
+  logoMaxWidth: z.number(),
+  logoMaxHeight: z.number(),
+});
 
 /** Mirrors the core's BrandPack; `satisfies` below keeps the two in step. */
 const brandPackSchema = z.object({
@@ -125,6 +136,8 @@ const brandPackSchema = z.object({
     body: z.string(),
     quoteShort: z.string(),
     quoteEmphasis: z.string(),
+    serif: z.string().optional(),
+    condensed: z.string().optional(),
     boldFamilies: z.record(z.string(), z.string()).optional(),
   }),
   fontFaces: z.array(
@@ -139,6 +152,15 @@ const brandPackSchema = z.object({
   logo: z
     .object({ src: z.string().startsWith('/api/brand-assets/'), label: z.string() })
     .nullable(),
+  logoAlt: z
+    .object({
+      src: z.string().startsWith('/api/brand-assets/'),
+      label: z.string(),
+      ground: z.enum(['dark', 'light']),
+    })
+    .nullable()
+    .optional(),
+  layout: brandLayoutSchema.optional(),
   quoteMark: z.object({ src: z.string() }).nullable(),
 }) satisfies z.ZodType<BrandPack>;
 
@@ -146,8 +168,15 @@ const brandSettingsSchema = z.object({
   name: z.string(),
   colors: brandPackSchema.shape.colors,
   backgrounds: z.array(z.object({ label: z.string(), color: hex, ink: hex })),
-  fonts: z.object({ headline: z.string(), body: z.string() }),
+  fonts: z.object({
+    headline: z.string(),
+    body: z.string(),
+    serif: z.string().nullable(),
+    condensed: z.string().nullable(),
+  }),
   logoAssetId: z.string().nullable(),
+  logoAlt: z.object({ assetId: z.string(), ground: z.enum(['dark', 'light']) }).nullable(),
+  layout: brandLayoutSchema.nullable(),
 });
 
 const brandAssetSchema = z.object({
@@ -169,20 +198,41 @@ const brandPackResponseSchema = z.object({
   bundledFonts: z.array(z.string()),
 });
 
+export type TrashItem = z.infer<typeof trashItemSchema>;
 export type ProjectSummary = z.infer<typeof projectSummarySchema>;
 export type Role = z.infer<typeof roleSchema>;
 export type Organisation = z.infer<typeof organisationSchema>;
 export type Session = z.infer<typeof sessionSchema>;
-export type Member = z.infer<typeof memberSchema>;
-export type Invitation = z.infer<typeof invitationSchema>;
-export type InvitationInfo = z.infer<typeof invitationInfoSchema>;
 export type BrandSettings = z.infer<typeof brandSettingsSchema>;
+/** What the brand form sends: three colours; the server derives the rest. */
+export interface BrandInput {
+  name: string;
+  colors: { primary: string; secondary: string; accent: string };
+  fonts: BrandSettings['fonts'];
+  logoAssetId: string | null;
+  logoAlt: BrandSettings['logoAlt'];
+  layout: BrandSettings['layout'];
+}
 export type BrandAsset = z.infer<typeof brandAssetSchema>;
 export type BrandPackResponse = z.infer<typeof brandPackResponseSchema>;
 export type Project = z.infer<typeof projectSchema>;
 export type StudioConfig = z.infer<typeof configSchema>;
 export type Upload = z.infer<typeof uploadSchema>;
 export type Draft = z.infer<typeof draftSchema>;
+export type Pick = z.infer<typeof pickSchema>;
+
+/** What the AI may choose from: `apps/studio-server/src/contract.ts` `pickBody`. */
+export interface PickBody {
+  brief: string;
+  templates: {
+    id: string;
+    label: string;
+    description: string;
+    slots: { id: string; label: string; maxChars: number }[];
+  }[];
+  schemes: { id: string; label: string }[];
+  format?: { width: number; height: number } | null;
+}
 
 /** A failed call: HTTP status plus the server's `{ error, message?, currentVersion? }`. */
 export class ApiError extends Error {
@@ -190,14 +240,21 @@ export class ApiError extends Error {
     readonly status: number,
     readonly code: string,
     message: string,
-    readonly currentVersion: number | null = null
+    readonly currentVersion: number | null = null,
+    /** Seconds from a Retry-After header, when the server sent one. */
+    readonly retryAfter: number | null = null
   ) {
     super(message);
     this.name = 'ApiError';
   }
 
   get isVersionConflict(): boolean {
-    return this.status === 409;
+    return this.status === 409 && !this.isSchemaRefusal;
+  }
+
+  /** The server holds a newer document format than this build writes. */
+  get isSchemaRefusal(): boolean {
+    return this.status === 409 && this.code === 'schema-version';
   }
 }
 
@@ -211,11 +268,13 @@ export function onUnauthenticated(listener: () => void): () => void {
   return () => unauthenticatedListeners.delete(listener);
 }
 
-async function request<T>(
-  path: string,
-  schema: z.ZodType<T> | null,
-  init: RequestInit = {}
-): Promise<T> {
+/** One call; a failed answer becomes an `ApiError` from the server's error body. */
+function secondsOf(header: string | null): number | null {
+  const seconds = Number.parseInt(header ?? '', 10);
+  return Number.isFinite(seconds) && seconds > 0 ? seconds : null;
+}
+
+async function send(path: string, init: RequestInit = {}): Promise<Response> {
   const method = (init.method ?? 'GET').toUpperCase();
   const headers = new Headers(init.headers);
   if (method !== 'GET' && csrfToken) headers.set('X-CSRF-Token', csrfToken);
@@ -236,9 +295,19 @@ async function request<T>(
       parsed.success ? parsed.data.error : 'http_error',
       (parsed.success ? parsed.data.message : undefined) ??
         `The request failed (HTTP ${response.status}).`,
-      parsed.success ? (parsed.data.currentVersion ?? null) : null
+      parsed.success ? (parsed.data.currentVersion ?? null) : null,
+      secondsOf(response.headers.get('Retry-After'))
     );
   }
+  return response;
+}
+
+async function request<T>(
+  path: string,
+  schema: z.ZodType<T> | null,
+  init: RequestInit = {}
+): Promise<T> {
+  const response = await send(path, init);
   if (schema === null) return undefined as T;
   const result = schema.safeParse(await response.json());
   if (!result.success) {
@@ -287,48 +356,11 @@ export const api = {
     await request('/auth/logout', null, { method: 'POST' });
     csrfToken = null;
   },
-  getInvitation: (token: string) =>
-    request(`/auth/invitations/${encodeURIComponent(token)}`, invitationInfoSchema),
-  acceptInvitation: (token: string, signup: Signup | null) =>
-    withSession(
-      request(
-        `/auth/invitations/${encodeURIComponent(token)}/accept`,
-        sessionSchema,
-        json('POST', signup ?? {})
-      )
-    ),
-
-  // ── Organisations ────────────────────────────────────────────────────────
-  createOrganisation: (name: string) =>
-    request('/orgs', organisationSchema, json('POST', { name })),
-  listMembers: async (orgId: string) =>
-    (await request(`${org(orgId)}/members`, z.object({ members: z.array(memberSchema) }))).members,
-  updateMember: (orgId: string, accountId: string, role: Role) =>
-    request(
-      `${org(orgId)}/members/${encodeURIComponent(accountId)}`,
-      null,
-      json('PATCH', { role })
-    ),
-  removeMember: (orgId: string, accountId: string) =>
-    request(`${org(orgId)}/members/${encodeURIComponent(accountId)}`, null, {
-      method: 'DELETE',
-    }),
-  listInvitations: async (orgId: string) =>
-    (
-      await request(
-        `${org(orgId)}/invitations`,
-        z.object({ invitations: z.array(invitationSchema) })
-      )
-    ).invitations,
-  createInvitation: (orgId: string, role: Role) =>
-    request(`${org(orgId)}/invitations`, invitationSchema, json('POST', { role })),
-  revokeInvitation: (orgId: string, id: string) =>
-    request(`${org(orgId)}/invitations/${encodeURIComponent(id)}`, null, { method: 'DELETE' }),
 
   // ── Brand pack ───────────────────────────────────────────────────────────
   getBrandPack: (orgId: string) => request(`${org(orgId)}/brand-pack`, brandPackResponseSchema),
-  saveBrandPack: (orgId: string, settings: BrandSettings) =>
-    request(`${org(orgId)}/brand-pack`, brandPackResponseSchema, json('PUT', settings)),
+  saveBrandPack: (orgId: string, input: BrandInput) =>
+    request(`${org(orgId)}/brand-pack`, brandPackResponseSchema, json('PUT', input)),
   uploadLogo: (orgId: string, file: Blob, filename: string) => {
     const form = new FormData();
     form.append('file', file, filename);
@@ -360,6 +392,16 @@ export const api = {
       method: 'DELETE',
     }),
 
+  // ── Hidden templates ─────────────────────────────────────────────────────
+  listHiddenTemplates: async (orgId: string) =>
+    (await request(`${org(orgId)}/hidden-templates`, hiddenTemplatesSchema)).templateIds,
+  setTemplateHidden: (orgId: string, templateId: string, hidden: boolean) =>
+    request(
+      `${org(orgId)}/hidden-templates/${encodeURIComponent(templateId)}`,
+      null,
+      json('PUT', { hidden })
+    ),
+
   // ── Projects ─────────────────────────────────────────────────────────────
   listProjects: async (orgId: string) =>
     (await request(`${org(orgId)}/projects`, projectListSchema)).projects,
@@ -371,11 +413,30 @@ export const api = {
 
   updateProject: (
     id: string,
-    body: { version: number; name?: string; document?: Record<string, unknown> }
+    body: {
+      version: number;
+      name?: string;
+      document?: Record<string, unknown>;
+      schemaVersion?: number;
+    }
   ) => request(`/projects/${encodeURIComponent(id)}`, projectSchema, json('PATCH', body)),
 
   deleteProject: (id: string) =>
     request(`/projects/${encodeURIComponent(id)}`, null, { method: 'DELETE' }),
+
+  listTrash: async (orgId: string) =>
+    (await request(`${org(orgId)}/trash`, z.object({ projects: z.array(trashItemSchema) })))
+      .projects,
+
+  /** Idempotent: a project that is not in the trash comes back unchanged. */
+  restoreProject: (id: string) =>
+    request(`/projects/${encodeURIComponent(id)}/restore`, projectSummarySchema, {
+      method: 'POST',
+    }),
+
+  /** "Delete now": only works on a trashed project, and cannot be undone. */
+  purgeProject: (id: string) =>
+    request(`/projects/${encodeURIComponent(id)}/purge`, null, { method: 'DELETE' }),
 
   putThumbnail: (id: string, png: Blob) =>
     request(`/projects/${encodeURIComponent(id)}/thumbnail`, projectSummarySchema, {
@@ -392,4 +453,45 @@ export const api = {
 
   draft: (body: { briefing: string; width: number; height: number }) =>
     request('/ai/draft', draftSchema, json('POST', body)),
+  /** A transparent PNG of the image; the server forwards it to the instance's rembg service. */
+  removeBackground: async (image: Blob, filename: string) => {
+    const form = new FormData();
+    form.append('file', image, filename);
+    const response = await send('/images/remove-background', { method: 'POST', body: form });
+    return new Blob([await response.arrayBuffer()], { type: 'image/png' });
+  },
+  /** Icons from the instance's Iconify proxy; only licences the operator allows come back. */
+  searchIcons: async (query: string, limit: number, signal?: AbortSignal) => {
+    const params = new URLSearchParams({ q: query, limit: String(limit) });
+    const result = await request(
+      `/assets/icons/search?${params.toString()}`,
+      iconSearchSchema,
+      signal ? { signal } : {}
+    );
+    return result.icons;
+  },
+  /**
+   * Asks the server to fetch the icons of a search again in batches. Answers the wait it asks for
+   * before another attempt (a Retry-After on the answer or on a 429), or null when they are ready.
+   */
+  refreshIcons: async (query: string, limit: number) => {
+    const params = new URLSearchParams({ q: query, limit: String(limit), refresh: '1' });
+    try {
+      const response = await send(`/assets/icons/search?${params.toString()}`);
+      return { retryAfterSeconds: secondsOf(response.headers.get('Retry-After')) };
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 429) {
+        return { retryAfterSeconds: err.retryAfter ?? 10 };
+      }
+      throw err;
+    }
+  },
+  /** One icon as SVG markup, through the same proxy. */
+  iconSvg: async (prefix: string, name: string) => {
+    const response = await send(
+      `/assets/icons/${encodeURIComponent(prefix)}/${encodeURIComponent(name)}.svg`
+    );
+    return response.text();
+  },
+  pick: (body: PickBody) => request('/ai/pick', pickSchema, json('POST', body)),
 };

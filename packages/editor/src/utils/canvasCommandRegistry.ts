@@ -64,6 +64,7 @@ export const CANVAS_COMMANDS = {
   sendBackward: command('sendBackward', 'page', null),
   sendToBack: command('sendToBack', 'page', null),
   toggleLock: command('toggleLock', 'page', null),
+  ungroup: command('ungroup', 'page', { key: 'g', mod: true, shift: true, alsoKeys: [] }),
   editText: command('editText', 'page', { key: 'F2', mod: false, shift: false, alsoKeys: [] }),
   insertFrameImage: command('insertFrameImage', 'page', {
     key: 'Enter',

@@ -3,6 +3,7 @@ import { createContext, useContext } from 'react';
 
 import type {
   CanvasCarouselService,
+  CanvasIconSearchService,
   CanvasFeedbackService,
   CanvasFileDeliveryService,
   CanvasImageShareService,
@@ -148,6 +149,12 @@ export interface CanvasEditorServices extends CanvasEditorHostServices {
     file: File | Blob,
     onProgress?: (p: { phase: string; progress: number; message: string }) => void
   ) => Promise<{ file: File; objectUrl: string }>;
+
+  /**
+   * Search across a large icon catalogue (`CanvasIconSearchService`). When
+   * omitted, the Elements tab offers the bundled icons only.
+   */
+  iconSearch?: CanvasIconSearchService;
 
   /**
    * Edit an image with a natural-language instruction via Flux. The host

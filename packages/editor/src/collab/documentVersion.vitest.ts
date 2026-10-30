@@ -67,7 +67,7 @@ const countUpdates = (doc: Y.Doc, run: () => void): number => {
   return n;
 };
 
-describe('a v1 Y.Doc under the v1 core', () => {
+describe('a v1 Y.Doc under the v1 core registry', () => {
   it('reads as version 1 without any stamp', () => {
     const doc = v1Doc();
     expect(getMetaMap(doc).has(YDOC_KEYS.schemaVersion)).toBe(false);
@@ -79,7 +79,7 @@ describe('a v1 Y.Doc under the v1 core', () => {
     const before = Y.encodeStateAsUpdate(doc);
     let status = '';
     const updates = countUpdates(doc, () => {
-      status = migrateYDocument(doc).status;
+      status = migrateYDocument(doc, v1Registry()).status;
     });
     expect(status).toBe('current');
     expect(updates).toBe(0);
@@ -88,10 +88,10 @@ describe('a v1 Y.Doc under the v1 core', () => {
 
   it('stamps on seed, only upwards', () => {
     const doc = new Y.Doc();
-    stampYDocument(doc);
+    stampYDocument(doc, v1Registry());
     expect(getMetaMap(doc).get(YDOC_KEYS.schemaVersion)).toBe(1);
     getMetaMap(doc).set(YDOC_KEYS.schemaVersion, 5);
-    stampYDocument(doc);
+    stampYDocument(doc, v1Registry());
     expect(getMetaMap(doc).get(YDOC_KEYS.schemaVersion)).toBe(5);
   });
 });

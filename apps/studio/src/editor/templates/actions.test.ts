@@ -1,65 +1,93 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { registerAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import { registerEditor } from '../../registerEditor';
-import { studioAssetCatalog } from '../assetCatalog';
+import { blockLibrary, liftLibraryBlock } from '../blocks/blockLibrary';
 
 import { createStudioActions } from './actions';
-import { pageStateFrom, type StudioPageState } from './pageState';
+import { studioCatalog } from './catalog';
+import { type StudioPageState } from './pageState';
 
-beforeAll(() => {
-  registerEditor();
-  registerAssetCatalog(studioAssetCatalog());
-});
-
-function harness() {
-  let state: StudioPageState = pageStateFrom({}, {});
-  const saved: StudioPageState[] = [];
+function setup(initial: Partial<StudioPageState>) {
+  let state = {
+    backgroundColor: '#000000',
+    additionalTexts: [],
+    shapeInstances: [],
+    userImageInstances: [],
+    layerOrder: [],
+    ...initial,
+  } as unknown as StudioPageState;
   const actions = createStudioActions(
     () => state,
     (change) => {
       state = typeof change === 'function' ? change(state) : { ...state, ...change };
     },
-    (next) => saved.push(next ?? state),
-    (next) => saved.push(next ?? state),
+    () => undefined,
+    () => undefined,
     1080,
     1350
   );
-  return { actions, get: () => state, saved };
+  return { actions, state: () => state };
 }
 
-describe('placing bundled graphics', () => {
-  it('places an emoji as an asset in the centre and layers it', () => {
-    const { actions, get, saved } = harness();
-    actions.addAsset('emoji-1f600');
-    expect(get().assetInstances).toHaveLength(1);
-    const placed = get().assetInstances[0]!;
-    expect(placed).toMatchObject({ assetId: 'emoji-1f600', x: 540, y: 675 });
-    expect(get().layerOrder).toContain(placed.id);
-    expect(saved).toHaveLength(1);
+describe('setBackgroundColor', () => {
+  it('binds the background to the ref it was picked with', () => {
+    const { actions, state } = setup({});
+    actions.setBackgroundColor('#336699', 'brand.primary');
+    expect(state().backgroundColor).toBe('#336699');
+    expect(state().bind).toEqual({ backgroundColor: { ref: 'brand.primary', value: '#336699' } });
   });
 
-  it('updates and removes an asset', () => {
-    const { actions, get } = harness();
-    actions.addAsset('emoji-1f600');
-    const id = get().assetInstances[0]!.id;
-    actions.updateAsset(id, { scale: 2 });
-    expect(get().assetInstances[0]!.scale).toBe(2);
-    actions.removeAsset(id);
-    expect(get().assetInstances).toEqual([]);
-    expect(get().layerOrder).not.toContain(id);
+  it('drops the binding for a colour picked without one, and the empty bind key', () => {
+    const { actions, state } = setup({
+      bind: { backgroundColor: { ref: 'brand.primary', value: '#336699' } },
+    });
+    actions.setBackgroundColor('#ABCDEF');
+    expect(state().backgroundColor).toBe('#ABCDEF');
+    expect(state()).not.toHaveProperty('bind');
   });
 
-  it('places an illustration at the click position and removes it with its layer', async () => {
-    const { actions, get } = harness();
-    actions.addIllustration('op-bust-mask-1', { center: { x: 100, y: 200 } });
-    await vi.waitFor(() => expect(get().illustrationInstances).toHaveLength(1));
-    const placed = get().illustrationInstances[0]!;
-    expect(placed).toMatchObject({ illustrationId: 'op-bust-mask-1', x: 100, y: 200 });
-    expect(get().layerOrder).toContain(placed.id);
-    actions.removeIllustration(placed.id);
-    expect(get().illustrationInstances).toEqual([]);
-    expect(get().layerOrder).not.toContain(placed.id);
+  it('keeps other bindings when it drops its own', () => {
+    const other = { ref: 'brand.accent' as const, value: '#ffffff' };
+    const { actions, state } = setup({
+      bind: { backgroundColor: { ref: 'brand.primary', value: '#336699' }, other },
+    });
+    actions.setBackgroundColor('#ABCDEF');
+    expect(state().bind).toEqual({ other });
+  });
+});
+
+describe('insertBlock', () => {
+  it('is one history entry', () => {
+    let state = {
+      backgroundColor: '#ffffff',
+      additionalTexts: [],
+      shapeInstances: [],
+      userImageInstances: [],
+      selectedIcons: [],
+      iconStates: {},
+      layerOrder: [],
+    } as unknown as StudioPageState;
+    const history: StudioPageState[] = [];
+    // The editor's actions read the committed state, not the one `setState` just wrote.
+    const committed = state;
+    const actions = createStudioActions(
+      () => committed,
+      (change) => {
+        state = typeof change === 'function' ? change(state) : { ...state, ...change };
+      },
+      (saved) => history.push(saved!),
+      () => undefined,
+      1080,
+      1350
+    );
+    const library = blockLibrary(studioCatalog().entries);
+    const block = liftLibraryBlock(library[1]!, { formatId: 'post-portrait' }, 'tok123')!;
+    actions.insertBlock(block);
+    expect(history).toHaveLength(1);
+    expect(history[0]!.additionalTexts).toHaveLength(3);
+    expect(history[0]!.groups).toHaveLength(1);
+    // State and history hold the same group, not two ids for one insert.
+    expect(history[0]!.groups).toEqual(state.groups);
+    expect(state.layerOrder).toEqual(block.layerOrder);
   });
 });

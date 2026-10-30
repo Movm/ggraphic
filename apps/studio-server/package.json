@@ -20,7 +20,9 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@ggraphic/ai": "workspace:*",
     "@ggraphic/core": "workspace:*",
+    "@ggraphic/schema": "workspace:*",
     "argon2": "^0.45.1",
     "drizzle-orm": "^0.45.4",
     "express": "^5.3.0",

@@ -2,7 +2,8 @@
 /**
  * The editor's module-level registers, filled once before the first render:
  * the neutral brand, English texts, the Studio templates, the shell parts and
- * the toast, and the bundled illustrations and emoji (`assetCatalog.ts`).
+ * the toast, and the bundled illustrations and emoji with the template blocks
+ * (`assetCatalog.ts`).
  */
 import { studioBrand } from './brand';
 import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
@@ -18,8 +19,8 @@ import { toast } from './ui/toast';
 export function registerEditor(): void {
   registerBrandPacks([studioBrand]);
   registerMessages('en');
-  registerAssetCatalog(studioAssetCatalog());
   registerStudioTemplates();
   registerStudioEditorShell();
   registerToast(toast);
+  registerAssetCatalog(studioAssetCatalog());
 }

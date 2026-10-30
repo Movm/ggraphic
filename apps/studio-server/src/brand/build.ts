@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import type { BrandPack, BrandSwatch } from '@ggraphic/core';
+import { type BrandPack, type BrandSwatch, clampBrandLayout } from '@ggraphic/core';
 import type { BrandSettings } from '../contract.ts';
 import { brandPackSchema } from './brandPackSchema.ts';
 
@@ -19,6 +19,8 @@ export interface FontAsset {
 export interface LogoAsset {
   fileName: string;
 }
+
+export type LogoAltAsset = LogoAsset & { ground: 'dark' | 'light' };
 
 const ROLE_LABELS: Record<keyof BrandSettings['colors'], string> = {
   primary: 'Primary',
@@ -45,6 +47,7 @@ const role = (settings: BrandSettings, key: keyof BrandSettings['colors']): Bran
   id: key,
   label: ROLE_LABELS[key],
   color: settings.colors[key],
+  ref: `brand.${key}`,
 });
 
 const uniqueColors = (colors: string[]) => [...new Set(colors)];
@@ -58,7 +61,8 @@ export function buildBrandPack(
   organisationId: string,
   settings: BrandSettings,
   fonts: FontAsset[],
-  logo: LogoAsset | null
+  logo: LogoAsset | null,
+  logoAlt: LogoAltAsset | null
 ): BrandPack {
   const c = settings.colors;
   const backgrounds = settings.backgrounds.map((b, i) => ({
@@ -112,6 +116,8 @@ export function buildBrandPack(
       body: settings.fonts.body,
       quoteShort: settings.fonts.headline,
       quoteEmphasis: settings.fonts.body,
+      ...(settings.fonts.serif ? { serif: settings.fonts.serif } : {}),
+      ...(settings.fonts.condensed ? { condensed: settings.fonts.condensed } : {}),
     },
     fontFaces: fonts.map((f) => ({
       family: f.family,
@@ -123,6 +129,17 @@ export function buildBrandPack(
     logo: logo
       ? { src: `/api/brand-assets/${logo.fileName}`, label: `${settings.name} logo` }
       : null,
+    ...(logoAlt
+      ? {
+          logoAlt: {
+            src: `/api/brand-assets/${logoAlt.fileName}`,
+            label: `${settings.name} logo (alternative)`,
+            ground: logoAlt.ground,
+          },
+        }
+      : {}),
+    // Stored under wider bounds (before 30 × 12 percent): clamp, never reject.
+    ...(settings.layout ? { layout: clampBrandLayout(settings.layout) } : {}),
     quoteMark: null,
   };
   return brandPackSchema.parse(pack);

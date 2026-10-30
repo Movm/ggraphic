@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
- * The current organisation's brand pack: name, the eight colour roles, the grounds,
- * fonts and logo, with a live preview. Owners only; the server checks that too.
+ * The current organisation's brand pack: name, three colours (the other roles and the
+ * grounds are derived), fonts and logo, with a live preview. Owners only; the server checks that too.
  */
 import { Alert, Button, Card, Select, TextField } from '@ggraphic/ui';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -19,35 +19,59 @@ import {
   ApiError,
   type BrandAsset,
   type BrandPackResponse,
+  type BrandInput,
   type BrandSettings,
 } from '../api/client';
-import { aliasFontFamily } from '@ggraphic/core';
+import {
+  aliasFontFamily,
+  BRAND_LAYOUT_BOUNDS,
+  clampBrandLayout,
+  DEFAULT_BRAND_LAYOUT,
+  deriveBrandColors,
+  deriveGrounds,
+  LOGO_CORNERS,
+  type BrandLayout,
+  type LogoCorner,
+} from '@ggraphic/core';
 
 import { studioBrand } from '../brand';
 import { loadBrandFonts } from '../brandLoader';
 import { useLoggedIn } from '../session/SessionContext';
 import { PageShell, PageTitle } from '../ui/PageShell';
+import { apiErrorText } from '../ui/errorText';
 import { toast } from '../ui/toast';
 import { BrandPreview } from './BrandPreview';
 
-type ColorRole = keyof BrandSettings['colors'];
+type InputRole = keyof BrandInput['colors'];
 
-export const COLOR_ROLES: readonly { role: ColorRole; label: string; hint: string }[] = [
+export const COLOR_INPUTS: readonly { role: InputRole; label: string; hint: string }[] = [
   { role: 'primary', label: 'Primary', hint: 'Main colour and default ground' },
   { role: 'secondary', label: 'Secondary', hint: 'Second colour, new shapes' },
   { role: 'accent', label: 'Accent', hint: 'Emphasis on dark ground' },
-  { role: 'accentOnLight', label: 'Accent on light', hint: 'Emphasis on light ground' },
-  { role: 'attention', label: 'Attention', hint: 'Badges and warnings' },
-  { role: 'textOnDark', label: 'Text on dark', hint: 'Text on dark grounds' },
-  { role: 'textOnLight', label: 'Text on light', hint: 'Text on light grounds' },
-  { role: 'surface', label: 'Surface', hint: 'Light neutral ground' },
 ];
 
-const MAX_GROUNDS = 12;
+/** The roles the Studio works out from the three above; shown, never edited. */
+const DERIVED_ROLES = [
+  { role: 'accentOnLight', label: 'Accent on light' },
+  { role: 'attention', label: 'Attention' },
+  { role: 'textOnDark', label: 'Text on dark' },
+  { role: 'textOnLight', label: 'Text on light' },
+  { role: 'surface', label: 'Surface' },
+] as const;
+
 // Radix Select items cannot carry an empty value.
 const NO_LOGO = 'none';
-let keyCounter = 0;
-const newKey = () => `ground-${keyCounter++}`;
+const SAME_FONT = 'same';
+
+const CORNER_LABELS: Record<LogoCorner, string> = {
+  'top-left': 'Top left',
+  'top-right': 'Top right',
+  'bottom-left': 'Bottom left',
+  'bottom-right': 'Bottom right',
+};
+const GROUND_LABELS = { dark: 'For dark grounds', light: 'For light grounds' } as const;
+
+const percent = (fraction: number) => `${Math.round(fraction * 100)} %`;
 const HEX = /^#[0-9A-Fa-f]{6}$/;
 
 /** What the form starts with before an organisation has saved a brand. */
@@ -56,13 +80,17 @@ export function defaultSettings(name: string): BrandSettings {
     name,
     colors: { ...studioBrand.colors },
     backgrounds: studioBrand.backgrounds.map(({ label, color, ink }) => ({ label, color, ink })),
-    fonts: { headline: studioBrand.fonts.headline, body: studioBrand.fonts.body },
+    fonts: {
+      headline: studioBrand.fonts.headline,
+      body: studioBrand.fonts.body,
+      serif: null,
+      condensed: null,
+    },
     logoAssetId: null,
+    logoAlt: null,
+    layout: null,
   };
 }
-
-const errorText = (err: unknown) =>
-  err instanceof ApiError ? err.message : 'Something went wrong.';
 
 export function BrandPage() {
   const { organisation } = useLoggedIn();
@@ -79,7 +107,7 @@ export function BrandPage() {
   } else if (brand.isPending) {
     content = <p className="studio-muted">Loading the brand…</p>;
   } else if (brand.isError) {
-    content = <Alert tone="danger">{errorText(brand.error)}</Alert>;
+    content = <Alert tone="danger">{apiErrorText(brand.error)}</Alert>;
   } else {
     content = (
       <BrandEditor
@@ -111,30 +139,90 @@ function BrandEditor({
   data: BrandPackResponse;
 }) {
   const queryClient = useQueryClient();
-  const [settings, setSettings] = useState<BrandSettings>(() =>
-    data.settings
-      ? {
-          ...data.settings,
-          // A pack saved before the font swap may still name the old families.
-          fonts: {
-            headline: aliasFontFamily(data.settings.fonts.headline),
-            body: aliasFontFamily(data.settings.fonts.body),
-          },
-        }
-      : defaultSettings(orgName)
+  const [input, setInput] = useState<BrandInput>(() => {
+    const stored = data.settings ?? defaultSettings(orgName);
+    const { primary, secondary, accent } = stored.colors;
+    return {
+      name: stored.name,
+      colors: { primary, secondary, accent },
+      // A pack saved before the font swap may still name the old families.
+      fonts: {
+        headline: aliasFontFamily(stored.fonts.headline),
+        body: aliasFontFamily(stored.fonts.body),
+        serif: stored.fonts.serif && aliasFontFamily(stored.fonts.serif),
+        condensed: stored.fonts.condensed && aliasFontFamily(stored.fonts.condensed),
+      },
+      logoAssetId: stored.logoAssetId,
+      logoAlt: stored.logoAlt,
+      layout: clampBrandLayout(stored.layout ?? DEFAULT_BRAND_LAYOUT),
+    };
+  });
+  // The second logo is picked first and given its ground second: until then it is not valid.
+  // A stored one whose asset is gone, or is now the main logo, shows as none.
+  const [alt, setAlt] = useState<{ assetId: string; ground: 'dark' | 'light' | null } | null>(
+    () => {
+      const stored = data.settings?.logoAlt;
+      const usable =
+        stored &&
+        stored.assetId !== data.settings?.logoAssetId &&
+        data.assets.some((x) => x.kind === 'logo' && x.id === stored.assetId);
+      return usable ? { assetId: stored.assetId, ground: stored.ground } : null;
+    }
   );
-  const [groundIndex, setGroundIndex] = useState<number | 'primary'>('primary');
-  // Stable list keys for the grounds, which have no id of their own until the server builds one.
-  const [groundKeys, setGroundKeys] = useState(() => settings.backgrounds.map(newKey));
+  const layout = input.layout ?? DEFAULT_BRAND_LAYOUT;
+  const altIncomplete = alt !== null && alt.ground === null;
+  const [groundIndex, setGroundIndex] = useState(0);
   const fonts = useMemo(() => data.assets.filter((a) => a.kind === 'font'), [data.assets]);
   const logos = data.assets.filter((a) => a.kind === 'logo');
   const families = [...new Set([...data.bundledFonts, ...fonts.map((f) => f.family ?? '')])].filter(
     Boolean
   );
-  const invalid = [
-    ...Object.values(settings.colors),
-    ...settings.backgrounds.flatMap((b) => [b.color, b.ink]),
-  ].some((c) => !HEX.test(c));
+  const invalid = Object.values(input.colors).some((c) => !HEX.test(c));
+  const derived = useMemo(
+    () => (invalid ? null : deriveBrandColors(input.colors)),
+    [input.colors, invalid]
+  );
+  const grounds = useMemo(
+    () => (invalid ? [] : deriveGrounds(input.colors)),
+    [input.colors, invalid]
+  );
+  // The preview keeps the last good look while a colour is half typed.
+  const previewColors = derived ?? data.settings?.colors ?? studioBrand.colors;
+  const settings: BrandSettings = {
+    name: input.name,
+    colors: previewColors,
+    backgrounds: grounds,
+    fonts: input.fonts,
+    logoAssetId: input.logoAssetId,
+    logoAlt: input.logoAlt,
+    layout,
+  };
+  // E4: a pack saved with hand-set roles changes them on the next save.
+  const rederives = useMemo(() => {
+    if (!data.settings) return false;
+    const { primary, secondary, accent } = data.settings.colors;
+    const fresh = deriveBrandColors({ primary, secondary, accent });
+    if (!fresh) return false;
+    if (
+      DERIVED_ROLES.some(
+        ({ role }) => data.settings!.colors[role].toLowerCase() !== fresh[role].toLowerCase()
+      )
+    ) {
+      return true;
+    }
+    // Saving replaces the stored grounds too.
+    const freshGrounds = deriveGrounds({ primary, secondary, accent });
+    const stored = data.settings.backgrounds;
+    return (
+      stored.length !== freshGrounds.length ||
+      freshGrounds.some(
+        (g, i) =>
+          stored[i]!.label !== g.label ||
+          stored[i]!.color.toLowerCase() !== g.color.toLowerCase() ||
+          stored[i]!.ink.toLowerCase() !== g.ink.toLowerCase()
+      )
+    );
+  }, [data.settings]);
 
   // Uploaded families must be loaded for the preview to show them.
   useEffect(() => {
@@ -153,27 +241,30 @@ function BrandEditor({
   const reload = () => queryClient.invalidateQueries({ queryKey: ['brand-pack', orgId] });
 
   const save = useMutation({
-    mutationFn: () => api.saveBrandPack(orgId, settings),
+    mutationFn: () =>
+      api.saveBrandPack(orgId, {
+        ...input,
+        logoAlt: alt?.ground ? { assetId: alt.assetId, ground: alt.ground } : null,
+      }),
     onSuccess: (next) => {
       setData(next);
       toast('Brand saved. Projects opened from now on use it.');
     },
-    onError: (err) => toast.error(errorText(err)),
+    onError: (err) => toast.error(apiErrorText(err)),
   });
 
-  const setColor = (role: ColorRole, color: string) =>
-    setSettings((s) => ({ ...s, colors: { ...s.colors, [role]: color } }));
-  const setGround = (index: number, patch: Partial<BrandSettings['backgrounds'][number]>) =>
-    setSettings((s) => ({
-      ...s,
-      backgrounds: s.backgrounds.map((b, i) => (i === index ? { ...b, ...patch } : b)),
-    }));
+  const setColor = (role: InputRole, color: string) =>
+    setInput((s) => ({ ...s, colors: { ...s.colors, [role]: color } }));
 
-  const ground =
-    groundIndex === 'primary'
-      ? { color: settings.colors.primary, ink: settings.colors.textOnDark }
-      : (settings.backgrounds[groundIndex] ?? settings.backgrounds[0]!);
-  const logoUrl = logos.find((l) => l.id === settings.logoAssetId)?.url ?? null;
+  const ground = grounds[groundIndex] ??
+    grounds[0] ?? {
+      color: previewColors.primary,
+      ink: previewColors.textOnDark,
+    };
+  const setLayout = (patch: Partial<BrandLayout>) =>
+    setInput((s) => ({ ...s, layout: { ...(s.layout ?? DEFAULT_BRAND_LAYOUT), ...patch } }));
+  const logoUrl = logos.find((l) => l.id === input.logoAssetId)?.url ?? null;
+  const altUrl = alt?.ground ? (logos.find((l) => l.id === alt.assetId)?.url ?? null) : null;
 
   return (
     <div className="studio-brand">
@@ -181,87 +272,96 @@ function BrandEditor({
         className="studio-brand__form"
         onSubmit={(e: FormEvent) => {
           e.preventDefault();
-          if (!invalid && !save.isPending) save.mutate();
+          if (!invalid && !altIncomplete && !save.isPending) save.mutate();
         }}
       >
         <TextField
           label="Brand name"
           required
           maxLength={100}
-          value={settings.name}
-          onChange={(e) => setSettings((s) => ({ ...s, name: e.target.value }))}
+          value={input.name}
+          onChange={(e) => setInput((s) => ({ ...s, name: e.target.value }))}
         />
 
         <fieldset className="studio-brand__group">
           <legend>Colours</legend>
+          <p className="studio-muted">
+            Choose three colours. The Studio works out the rest so text stays readable.
+          </p>
+          {rederives ? (
+            <Alert tone="warning">
+              This brand has hand-set colours. Saving works out the other colours from these three
+              again.
+            </Alert>
+          ) : null}
           <div className="studio-brand__colors">
-            {COLOR_ROLES.map(({ role, label, hint }) => (
+            {COLOR_INPUTS.map(({ role, label, hint }) => (
               <ColorField
                 key={role}
                 label={label}
                 hint={hint}
-                value={settings.colors[role]}
+                value={input.colors[role]}
                 onChange={(color) => setColor(role, color)}
               />
             ))}
           </div>
+          <dl className="studio-brand__derived" aria-label="Derived colours">
+            {DERIVED_ROLES.map(({ role, label }) => (
+              <div key={role} className="studio-brand__derived-row">
+                <dt>{label}</dt>
+                <dd>
+                  <span
+                    className="studio-brand__swatch"
+                    aria-hidden="true"
+                    style={{ background: derived?.[role] ?? 'transparent' }}
+                  />
+                  {derived?.[role].toUpperCase() ?? '–'}
+                </dd>
+              </div>
+            ))}
+          </dl>
         </fieldset>
 
         <fieldset className="studio-brand__group">
-          <legend>Grounds</legend>
-          <p className="studio-muted">Colours a page can sit on, each with its text colour.</p>
-          <ul className="studio-brand__grounds">
-            {settings.backgrounds.map((b, i) => (
-              <li key={groundKeys[i]} className="studio-brand__ground">
-                <TextField
-                  label={`Name of ground ${i + 1}`}
-                  value={b.label}
-                  maxLength={40}
-                  required
-                  onChange={(e) => setGround(i, { label: e.target.value })}
+          <legend>Layout</legend>
+          <p className="studio-muted">
+            Where templates keep their content and the logo. The preview outlines both.
+          </p>
+          <RangeField
+            label="Margin"
+            min={pct(BRAND_LAYOUT_BOUNDS.margin.min)}
+            max={pct(BRAND_LAYOUT_BOUNDS.margin.max)}
+            value={layout.margin}
+            onChange={(margin) => setLayout({ margin })}
+          />
+          <fieldset className="studio-chips">
+            <legend className="studio-muted">Logo corner</legend>
+            {LOGO_CORNERS.map((corner) => (
+              <label key={corner} className="studio-chip">
+                <input
+                  type="radio"
+                  name="logo-corner"
+                  checked={layout.logoCorner === corner}
+                  onChange={() => setLayout({ logoCorner: corner })}
                 />
-                <ColorField
-                  label="Colour"
-                  value={b.color}
-                  onChange={(color) => setGround(i, { color })}
-                />
-                <ColorField label="Text" value={b.ink} onChange={(ink) => setGround(i, { ink })} />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={settings.backgrounds.length <= 1}
-                  onClick={() => {
-                    setGroundIndex('primary');
-                    setGroundKeys((keys) => keys.filter((_, j) => j !== i));
-                    setSettings((s) => ({
-                      ...s,
-                      backgrounds: s.backgrounds.filter((_, j) => j !== i),
-                    }));
-                  }}
-                >
-                  Remove
-                </Button>
-              </li>
+                <span>{CORNER_LABELS[corner]}</span>
+              </label>
             ))}
-          </ul>
-          <Button
-            variant="outline"
-            size="sm"
-            className="studio-brand__add"
-            disabled={settings.backgrounds.length >= MAX_GROUNDS}
-            onClick={() => {
-              setGroundKeys((keys) => [...keys, newKey()]);
-              setSettings((s) => ({
-                ...s,
-                backgrounds: [
-                  ...s.backgrounds,
-                  { label: 'New ground', color: '#FFFFFF', ink: s.colors.textOnLight },
-                ],
-              }));
-            }}
-          >
-            Add a ground
-          </Button>
+          </fieldset>
+          <RangeField
+            label="Logo width"
+            min={pct(BRAND_LAYOUT_BOUNDS.logoMaxWidth.min)}
+            max={pct(BRAND_LAYOUT_BOUNDS.logoMaxWidth.max)}
+            value={layout.logoMaxWidth}
+            onChange={(logoMaxWidth) => setLayout({ logoMaxWidth })}
+          />
+          <RangeField
+            label="Logo height"
+            min={pct(BRAND_LAYOUT_BOUNDS.logoMaxHeight.min)}
+            max={pct(BRAND_LAYOUT_BOUNDS.logoMaxHeight.max)}
+            value={layout.logoMaxHeight}
+            onChange={(logoMaxHeight) => setLayout({ logoMaxHeight })}
+          />
         </fieldset>
 
         <fieldset className="studio-brand__group">
@@ -270,11 +370,31 @@ function BrandEditor({
             <Select
               key={slot}
               label={slot === 'headline' ? 'Headlines' : 'Body text'}
-              value={settings.fonts[slot]}
+              value={input.fonts[slot]}
               onValueChange={(family) =>
-                setSettings((s) => ({ ...s, fonts: { ...s.fonts, [slot]: family } }))
+                setInput((s) => ({ ...s, fonts: { ...s.fonts, [slot]: family } }))
               }
               options={families.map((f) => ({ value: f, label: f }))}
+            />
+          ))}
+          {(['serif', 'condensed'] as const).map((slot) => (
+            <Select
+              key={slot}
+              label={slot === 'serif' ? 'Serif' : 'Condensed'}
+              value={input.fonts[slot] ?? SAME_FONT}
+              onValueChange={(family) =>
+                setInput((s) => ({
+                  ...s,
+                  fonts: { ...s.fonts, [slot]: family === SAME_FONT ? null : family },
+                }))
+              }
+              options={[
+                {
+                  value: SAME_FONT,
+                  label: slot === 'serif' ? 'Same as quotes' : 'Same as headlines',
+                },
+                ...families.map((f) => ({ value: f, label: f })),
+              ]}
             />
           ))}
           <FontUpload orgId={orgId} onUploaded={() => void reload()} />
@@ -293,17 +413,18 @@ function BrandEditor({
           <LogoUpload
             orgId={orgId}
             onUploaded={(asset) => {
-              setSettings((s) => ({ ...s, logoAssetId: asset.id }));
+              setInput((s) => ({ ...s, logoAssetId: asset.id }));
               void reload();
             }}
           />
           {logos.length > 0 ? (
             <Select
               label="Logo in use"
-              value={settings.logoAssetId ?? NO_LOGO}
-              onValueChange={(value) =>
-                setSettings((s) => ({ ...s, logoAssetId: value === NO_LOGO ? null : value }))
-              }
+              value={input.logoAssetId ?? NO_LOGO}
+              onValueChange={(value) => {
+                setInput((s) => ({ ...s, logoAssetId: value === NO_LOGO ? null : value }));
+                if (alt?.assetId === value) setAlt(null);
+              }}
               options={[
                 { value: NO_LOGO, label: 'No logo' },
                 ...logos.map((l, i) => ({
@@ -313,13 +434,52 @@ function BrandEditor({
               ]}
             />
           ) : null}
+          {logos.length > 1 ? (
+            <>
+              <Select
+                label="Second logo"
+                hint="Used on grounds of one kind, instead of the logo in use."
+                value={alt?.assetId ?? NO_LOGO}
+                onValueChange={(value) =>
+                  setAlt(value === NO_LOGO ? null : { assetId: value, ground: null })
+                }
+                options={[
+                  { value: NO_LOGO, label: 'No second logo' },
+                  ...logos
+                    .map((l, i) => ({
+                      id: l.id,
+                      value: l.id,
+                      label: `Logo ${i + 1} (${l.contentType === 'image/png' ? 'PNG' : 'WebP'})`,
+                    }))
+                    .filter((o) => o.id !== input.logoAssetId),
+                ]}
+              />
+              {alt ? (
+                <fieldset className="studio-chips">
+                  <legend className="studio-muted">Second logo is used</legend>
+                  {(['dark', 'light'] as const).map((g) => (
+                    <label key={g} className="studio-chip">
+                      <input
+                        type="radio"
+                        name="logo-alt-ground"
+                        checked={alt.ground === g}
+                        onChange={() => setAlt({ assetId: alt.assetId, ground: g })}
+                      />
+                      <span>{GROUND_LABELS[g]}</span>
+                    </label>
+                  ))}
+                </fieldset>
+              ) : null}
+            </>
+          ) : null}
           <AssetList
             orgId={orgId}
             assets={logos}
             onDeleted={(asset) => {
-              if (settings.logoAssetId === asset.id) {
-                setSettings((s) => ({ ...s, logoAssetId: null }));
+              if (input.logoAssetId === asset.id) {
+                setInput((s) => ({ ...s, logoAssetId: null }));
               }
+              if (alt?.assetId === asset.id) setAlt(null);
               void reload();
             }}
             describe={(a, i) => `Logo ${i + 1}`}
@@ -327,38 +487,79 @@ function BrandEditor({
           />
         </fieldset>
 
-        {invalid ? <Alert tone="danger">Every colour must be written as #RRGGBB.</Alert> : null}
-        <Button type="submit" className="studio-brand__save" disabled={invalid || save.isPending}>
+        {altIncomplete ? (
+          <Alert tone="warning">Choose which grounds the second logo is for.</Alert>
+        ) : null}
+        <Button
+          type="submit"
+          className="studio-brand__save"
+          disabled={invalid || altIncomplete || save.isPending}
+        >
           {save.isPending ? 'Saving…' : 'Save brand'}
         </Button>
       </form>
 
       <aside className="studio-brand__preview" aria-label="Live preview">
-        <BrandPreview settings={settings} ground={ground} logoUrl={logoUrl} />
+        <BrandPreview
+          settings={settings}
+          ground={ground}
+          logoUrl={logoUrl}
+          logoAlt={altUrl && alt?.ground ? { url: altUrl, ground: alt.ground } : null}
+          layout={layout}
+        />
         <fieldset className="studio-chips">
           <legend className="studio-muted">Preview on</legend>
-          <label className="studio-chip">
-            <input
-              type="radio"
-              name="preview-ground"
-              checked={groundIndex === 'primary'}
-              onChange={() => setGroundIndex('primary')}
-            />
-            <span>Primary</span>
-          </label>
-          {settings.backgrounds.map((b, i) => (
-            <label key={groundKeys[i]} className="studio-chip">
+          {grounds.map((b, i) => (
+            <label key={b.label} className="studio-chip">
               <input
                 type="radio"
                 name="preview-ground"
                 checked={groundIndex === i}
                 onChange={() => setGroundIndex(i)}
               />
-              <span>{b.label || `Ground ${i + 1}`}</span>
+              <span>{b.label}</span>
             </label>
           ))}
         </fieldset>
       </aside>
+    </div>
+  );
+}
+
+/** A fraction as a whole percent, for a slider's bounds. */
+const pct = (fraction: number): number => Math.round(fraction * 100);
+
+/** A percentage slider over a 0–1 fraction (the layout stores fractions). */
+function RangeField({
+  label,
+  min,
+  max,
+  value,
+  onChange,
+}: {
+  label: string;
+  min: number;
+  max: number;
+  value: number;
+  onChange: (fraction: number) => void;
+}) {
+  const id = useId();
+  return (
+    <div className="ui-field">
+      <label htmlFor={id} className="ui-field__label">
+        {label}: {percent(value)}
+      </label>
+      <input
+        id={id}
+        type="range"
+        className="studio-brand__range"
+        min={min}
+        max={max}
+        step={1}
+        aria-valuetext={percent(value)}
+        value={Math.round(value * 100)}
+        onChange={(e) => onChange(Number(e.target.value) / 100)}
+      />
     </div>
   );
 }
@@ -387,7 +588,7 @@ function ColorField({
       value={value}
       maxLength={7}
       spellCheck={false}
-      aria-invalid={!valid}
+      error={valid ? undefined : 'Write the colour as #RRGGBB.'}
       onChange={(e) => onChange(e.target.value.trim())}
       endAdornment={
         <input
@@ -469,7 +670,12 @@ function FontUpload({ orgId, onUploaded }: { orgId: string; onUploaded: () => vo
       setFormKey((k) => k + 1);
       onUploaded();
     },
-    onError: (err) => setFileError(errorText(err)),
+    onError: (err) =>
+      setFileError(
+        apiErrorText(err, undefined, {
+          unsupported_media_type: 'Fonts must be WOFF2, TTF or OTF.',
+        })
+      ),
   });
   const ready = file && family.trim() && licence.trim();
 
@@ -556,7 +762,12 @@ function LogoUpload({
     },
     // Shown next to the field and kept until the next attempt: a toast is gone in seconds, and
     // the server's reason ("SVG is not accepted") is what the person needs to read.
-    onError: (err) => setError(errorText(err)),
+    onError: (err) =>
+      setError(
+        apiErrorText(err, undefined, {
+          unsupported_media_type: 'Logos must be PNG or WebP. SVG is not accepted.',
+        })
+      ),
   });
   return (
     <FileField
@@ -590,16 +801,16 @@ function AssetList({
   const remove = useMutation({
     mutationFn: (asset: BrandAsset) => api.deleteBrandAsset(orgId, asset.id),
     onSuccess: (_v, asset) => onDeleted(asset),
-    onError: (err) => toast.error(errorText(err)),
+    onError: (err) => toast.error(apiErrorText(err)),
   });
   if (assets.length === 0) return null;
   return (
-    <ul className="studio-members">
+    <ul className="studio-assets">
       {assets.map((a, i) => (
         <Card asChild variant="outlined" key={a.id}>
-          <li className="studio-member">
+          <li className="studio-asset">
             {preview ? <img className="studio-brand__thumb" src={a.url} alt="" /> : null}
-            <span className="studio-member__who">{describe(a, i)}</span>
+            <span className="studio-asset__who">{describe(a, i)}</span>
             <Button
               variant="outline"
               size="sm"
