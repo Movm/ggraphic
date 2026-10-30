@@ -18,7 +18,7 @@ vi.mock('@ggraphic/templates-open', async (importOriginal) => {
   const photoQuote = {
     ...quote,
     id: 'test-photo-quote',
-    title: { en: 'Photo quote' },
+    title: { en: 'Mock photo quote' },
     tags: { ...quote['tags'], occasions: ['summer'] },
     // The gate only needs the slot to name an element; the role is what the gallery reads.
     slots: { ...quote['slots'], subline: { ...quote['slots']!['subline'], role: 'photo' } },
@@ -122,7 +122,7 @@ describe('the template gallery', () => {
   it('filters by occasion, shown only when a template has one', async () => {
     gallery();
     await userEvent.click(screen.getByRole('radio', { name: 'Summer' }));
-    expect(tiles().getByRole('button', { name: /^Photo quote/ })).toBeInTheDocument();
+    expect(tiles().getByRole('button', { name: /^Mock photo quote/ })).toBeInTheDocument();
     expect(tiles().queryByRole('button', { name: /^Headline/ })).not.toBeInTheDocument();
   });
 
@@ -130,11 +130,11 @@ describe('the template gallery', () => {
     gallery();
     await userEvent.click(screen.getByRole('combobox', { name: 'Photo' }));
     await userEvent.click(await screen.findByRole('option', { name: 'With photo' }));
-    expect(tiles().getByRole('button', { name: /^Photo quote/ })).toBeInTheDocument();
+    expect(tiles().getByRole('button', { name: /^Mock photo quote/ })).toBeInTheDocument();
     expect(tiles().queryByRole('button', { name: /^Headline/ })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('combobox', { name: 'Photo' }));
     await userEvent.click(await screen.findByRole('option', { name: 'Without photo' }));
-    expect(tiles().queryByRole('button', { name: /^Photo quote/ })).not.toBeInTheDocument();
+    expect(tiles().queryByRole('button', { name: /^Mock photo quote/ })).not.toBeInTheDocument();
     expect(tiles().getByRole('button', { name: /^Headline/ })).toBeInTheDocument();
   });
 
@@ -195,7 +195,7 @@ describe('the template gallery', () => {
         <TemplateGallery
           formatId="post-portrait"
           onPick={() => {}}
-          hiddenIds={new Set(['studio-number', 'test-portrait-only'])}
+          hiddenIds={new Set(['studio-number', 'studio-photo-number', 'test-portrait-only'])}
         />
       </>
     );
