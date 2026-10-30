@@ -279,6 +279,7 @@ export interface GenericCanvasRef {
     pixelRatio?: number;
     quality?: number;
     includeBackground?: boolean;
+    keepPlaceholders?: boolean;
   }) => string | undefined;
   captureCanvas: (options?: Partial<ExportOptions>) => Promise<string | null>;
   /** One print tile as JPEG bytes (format px rect, whole-pixel output size). */

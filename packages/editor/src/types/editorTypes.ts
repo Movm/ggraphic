@@ -58,6 +58,12 @@ export interface ExportOptions {
   quality?: number;
   pixelRatio?: number;
   includeBackground?: boolean;
+  /**
+   * A preview (page strip, gallery) keeps what only the editor shows, such as
+   * the placeholder of an empty photo slot. Unset, the capture is an export
+   * and leaves it out.
+   */
+  keepPlaceholders?: boolean;
 }
 
 export interface ExportResult {

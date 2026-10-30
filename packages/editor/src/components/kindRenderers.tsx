@@ -505,6 +505,7 @@ export const KIND_RENDERERS: KindRenderers = {
         key={userImage.id}
         elementId={userImage.id}
         userImage={userImage}
+        brandScheme={typeof ctx.state.brandScheme === 'string' ? ctx.state.brandScheme : null}
         onSelect={() => handlers.handleElementSelect(userImage.id)}
         onDragEnd={(x: number, y: number) => handlers.handleUserImageDragEnd(userImage.id, x, y)}
         onTransformEnd={(x: number, y: number, w: number, h: number, r: number) =>

@@ -631,7 +631,10 @@ function buildSlide(
   }
   for (const badge of carried.circleBadgeInstances) add(badge.id, () => mapCircleBadge(badge));
   for (const pill of carried.pillBadgeInstances) add(pill.id, () => mapPill(pill, measure));
-  for (const image of carried.userImageInstances) add(image.id, () => mapUserImage(image));
+  for (const image of carried.userImageInstances) {
+    // An empty photo slot shows a placeholder in the editor only.
+    if (image.src) add(image.id, () => mapUserImage(image));
+  }
   for (const chart of carried.chartInstances) add(chart.id, () => mapChart(chart));
 
   // Unbekannte Sammlungen von Elementen mit Id: gerastert statt verloren.

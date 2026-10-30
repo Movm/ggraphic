@@ -8,7 +8,7 @@
  */
 
 import { useState, useEffect, useRef, useMemo, memo } from 'react';
-import { Image, Group, Rect, Transformer } from 'react-konva';
+import { Image, Group, Rect, Transformer, Circle, Line } from 'react-konva';
 
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { LOCKED_TRANSFORMER, useIsItemLocked } from '@ggraphic/editor/components/canvasItemLock';
@@ -43,6 +43,7 @@ import {
   straightScaleCrop,
   straightSceneFunc,
 } from '@ggraphic/editor/utils/straighten';
+import { EXPORT_HIDDEN_NAME } from '@ggraphic/editor/utils/captureStage';
 import { touchAnchorStyleFunc } from '@ggraphic/editor/utils/touchInput';
 
 import {
@@ -57,6 +58,7 @@ import {
   imageFilterAttrs,
 } from '../utils/imageFilters.js';
 import { cropKeyOf, userImageKeyCrop } from '../utils/keyboardCrop.js';
+import { photoPlaceholderLook } from '../utils/photoPlaceholder.js';
 import { userImageBox } from '../utils/renderedBoxes.js';
 import { userImageCropUpdate } from '../utils/userImageCrop.js';
 import { USER_PHOTO_NODE_NAME, type UserImageInstance } from '../utils/userImageUtils.js';
@@ -87,6 +89,8 @@ export interface UserImagePrimitiveProps extends SnapProps {
   /** Seitenverhältnis-Vorgabe des Zuschneide-Modus: setzt den Rahmen und hält ihn beim Ziehen. */
   cropAspect?: CropAspectId;
   draggable?: boolean;
+  /** The page's colour world; an empty slot takes the colours of its placeholder from it. */
+  brandScheme?: string | null;
 }
 
 function UserImagePrimitiveInner({
@@ -100,6 +104,7 @@ function UserImagePrimitiveInner({
   onCroppingChange,
   cropAspect = 'free',
   draggable = true,
+  brandScheme = null,
   ...snapProps
 }: UserImagePrimitiveProps) {
   const locked = useIsItemLocked();
@@ -263,7 +268,109 @@ function UserImagePrimitiveInner({
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [keyCropActive]);
 
-  if (!image) return null;
+  // Shared by the photo and by the placeholder of an empty slot.
+  const groupProps = {
+    x: userImage.x,
+    y: userImage.y,
+    scaleX: userImage.scale,
+    scaleY: userImage.scale,
+    rotation: userImage.rotation,
+    opacity: userImage.opacity,
+    onMouseDown: (e: Konva.KonvaEventObject<MouseEvent>) => {
+      e.cancelBubble = true;
+      onSelect(userImage.id);
+    },
+    onTouchStart: (e: Konva.KonvaEventObject<TouchEvent>) => {
+      e.cancelBubble = true;
+      onSelect(userImage.id);
+    },
+    onDragStart: snap.onDragStart,
+    onDragMove: snap.onDragMove,
+    onDragEnd: (e: Konva.KonvaEventObject<DragEvent>) => {
+      snap.onDragEnd();
+      onDragEnd(e.target.x(), e.target.y());
+    },
+    onTransformEnd: () => {
+      const node = groupRef.current;
+      if (!node) return;
+
+      const scaleX = node.scaleX();
+      const scaleY = node.scaleY();
+      const newWidth = userImage.width * scaleX;
+      const newHeight = userImage.height * scaleY;
+      const newRotation = node.rotation();
+
+      node.scaleX(1);
+      node.scaleY(1);
+
+      onTransformEnd(node.x(), node.y(), newWidth, newHeight, newRotation);
+    },
+  };
+
+  const noPhoto = !userImage.src || (settled?.src === userImage.src && !settled.ok);
+  if (!image && !noPhoto) return null;
+
+  if (!image || noPhoto) {
+    // The slot keeps its frame: same position, scale, rotation and mask as a photo would get.
+    const look = photoPlaceholderLook(brandScheme, userImage.width, userImage.height);
+    return (
+      <>
+        <Group ref={groupRef} {...groupProps} draggable={draggable && !locked}>
+          <Group name={EXPORT_HIDDEN_NAME}>
+            <Rect
+              width={userImage.width}
+              height={userImage.height}
+              fill={look.fill}
+              cornerRadius={userImage.mask === 'kreis' ? look.circleRadius : 0}
+            />
+            <Group
+              name="placeholder-icon"
+              x={look.icon.x}
+              y={look.icon.y}
+              opacity={look.icon.opacity}
+              listening={false}
+            >
+              <Line
+                points={look.icon.mountain}
+                stroke={look.icon.color}
+                strokeWidth={look.icon.stroke}
+                lineCap="round"
+                lineJoin="round"
+              />
+              <Circle
+                x={look.icon.sun.x}
+                y={look.icon.sun.y}
+                radius={look.icon.sun.r}
+                stroke={look.icon.color}
+                strokeWidth={look.icon.stroke}
+              />
+            </Group>
+          </Group>
+          {isSelected && (
+            <Rect
+              name="selection-chrome"
+              width={userImage.width}
+              height={userImage.height}
+              stroke={activeBrand().colors.primary}
+              strokeWidth={2 / userImage.scale}
+              dash={[5, 5]}
+              listening={false}
+            />
+          )}
+        </Group>
+        {isSelected && (
+          <Transformer
+            ref={transformerRef}
+            keepRatio={true}
+            enabledAnchors={['top-left', 'top-right', 'bottom-left', 'bottom-right']}
+            rotateEnabled={true}
+            {...ELEMENT_TRANSFORMER}
+            {...(locked ? LOCKED_TRANSFORMER : {})}
+          />
+        )}
+      </>
+    );
+  }
 
   const { width, height } = userImage;
   const natural = { width: image.naturalWidth, height: image.naturalHeight };
@@ -335,44 +442,10 @@ function UserImagePrimitiveInner({
     <>
       <Group
         ref={groupRef}
-        x={userImage.x}
-        y={userImage.y}
-        scaleX={userImage.scale}
-        scaleY={userImage.scale}
-        rotation={userImage.rotation}
-        opacity={userImage.opacity}
+        {...groupProps}
         draggable={draggable && !isCropping && !locked}
         onDblClick={() => !locked && onCroppingChange?.(!cropping)}
         onDblTap={() => !locked && onCroppingChange?.(!cropping)}
-        onMouseDown={(e) => {
-          e.cancelBubble = true;
-          onSelect(userImage.id);
-        }}
-        onTouchStart={(e) => {
-          e.cancelBubble = true;
-          onSelect(userImage.id);
-        }}
-        onDragStart={snap.onDragStart}
-        onDragMove={snap.onDragMove}
-        onDragEnd={(e) => {
-          snap.onDragEnd();
-          onDragEnd(e.target.x(), e.target.y());
-        }}
-        onTransformEnd={() => {
-          const node = groupRef.current;
-          if (!node) return;
-
-          const scaleX = node.scaleX();
-          const scaleY = node.scaleY();
-          const newWidth = width * scaleX;
-          const newHeight = height * scaleY;
-          const newRotation = node.rotation();
-
-          node.scaleX(1);
-          node.scaleY(1);
-
-          onTransformEnd(node.x(), node.y(), newWidth, newHeight, newRotation);
-        }}
       >
         {isCropping && photo && (
           // The whole photo, dimmed: what lies outside the frame shows where it can go.
@@ -598,6 +671,7 @@ export const UserImagePrimitive = memo(UserImagePrimitiveInner, (prevProps, next
   if (prev.shadowOffsetY !== next.shadowOffsetY) return false;
   if (prev.shadowOpacity !== next.shadowOpacity) return false;
 
+  if (prevProps.brandScheme !== nextProps.brandScheme) return false;
   if (prevProps.isSelected !== nextProps.isSelected) return false;
   if (prevProps.draggable !== nextProps.draggable) return false;
   if (prevProps.isCropping !== nextProps.isCropping) return false;
