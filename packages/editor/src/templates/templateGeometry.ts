@@ -16,6 +16,7 @@ import {
 } from '@ggraphic/core';
 import { layoutRichTextBlock, PLAIN_STYLE, type MeasureRun } from '@ggraphic/schema';
 
+import { GRAIN_SPECK_ALPHA } from '../utils/grainSpec.js';
 import { plainTextLines } from '../utils/plainTextLayout.js';
 import { usesRichText } from '../utils/textRouting.js';
 import { createRunMeasurer, type MeasureWidth, type TextAccent } from '../utils/textUtils.js';
@@ -158,6 +159,15 @@ type El = Readonly<Record<string, unknown>>;
 
 const UNKNOWN = { kind: 'unknown' } as const;
 
+type Box = NonNullable<ReturnType<GateAdapter['box']>>;
+
+/** The square a notch cuts from the top-right corner of `box`, clamped as the renderer clamps it. */
+function notchCut(box: Box | null, side: number): Box | null {
+  if (!box) return null;
+  const n = Math.min(side, Math.min(box.width, box.height) / 2);
+  return { x: box.x + box.width - n, y: box.y, width: n, height: n };
+}
+
 /**
  * What an image paints: every pixel lies between black and white, or between the duotone's two
  * colours when both are set. Anything that can leave that range, or that does not fill the box
@@ -165,7 +175,7 @@ const UNKNOWN = { kind: 'unknown' } as const;
  */
 function photoCover(el: El): ReturnType<GateAdapter['cover']> {
   const hasTint = str(el, 'tint') !== '' || num(el, 'tintStrength') !== 0;
-  if (hasTint || str(el, 'mask') !== '' || num(el, 'notch') !== 0 || num(el, 'opacity', 1) < 1) return UNKNOWN;
+  if (hasTint || str(el, 'mask') !== '' || num(el, 'opacity', 1) < 1) return UNKNOWN;
   const low = str(el, 'duotoneLow');
   const high = str(el, 'duotoneHigh');
   if (low === '' || high === '') return { kind: 'photo', low: '#000000', high: '#ffffff' };
@@ -427,7 +437,7 @@ export async function loadIllustrationLookup(): Promise<IllustrationLookup> {
  * ignores an element's declared `source`, so the gate must not trust it either.
  */
 export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapter {
-  return {
+  const adapter: GateAdapter = {
     geometry: TEMPLATE_GEOMETRY,
     colorFields: COLOR_FIELDS,
     assetFields: ASSET_FIELDS,
@@ -638,41 +648,67 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
       }
       return null;
     },
-    cover(stateKey, el) {
+    cover(stateKey, el, canvasWidth) {
       // Texts paint no ground. A flat opaque shape is one, a photo is a range of grounds, a
-      // translucent shape or a shade is an overlay; every other kind (frame, chart, badge,
-      // icon, sticker, illustration) is not provably any of them.
+      // translucent shape, a glow, grain or a shade is an overlay; every other kind (frame,
+      // chart, badge, icon, sticker, illustration) is not provably any of them.
       if (stateKey === 'additionalTexts') return null;
       const blend = el['blendMode'];
       const untransformed = (blend === undefined || blend === 'normal') && !isRotated(el);
-      if (stateKey === 'userImageInstances') return untransformed ? photoCover(el) : UNKNOWN;
-      if (stateKey !== 'shapeInstances') return UNKNOWN;
-      // Only a plain rectangle fills its box; any other shape (or rounded corners) leaves
-      // parts of the box bare, and a text there sits on whatever lies below.
-      if ((el['type'] !== undefined && el['type'] !== 'rect') || num(el, 'cornerRadius') !== 0) {
-        return UNKNOWN;
+      const notch = num(el, 'notch');
+      const cut = notch > 0 ? notchCut(adapter.box(stateKey, el, 1), notch * canvasWidth) : null;
+      if (stateKey === 'userImageInstances') {
+        const photo = untransformed ? photoCover(el) : UNKNOWN;
+        return cut && photo ? { ...photo, cut } : photo;
       }
-      // A cut corner leaves part of the box bare.
-      if (num(el, 'notch') !== 0) return UNKNOWN;
-      // A glow fades to nothing: no ground at all at the edge.
-      if (el['glow'] === true) return UNKNOWN;
-      // Specks and dots change the colour under a text.
-      if (num(el, 'grain') !== 0 || el['pattern'] !== undefined) return UNKNOWN;
+      if (stateKey !== 'shapeInstances') return UNKNOWN;
+      const type = el['type'];
+      const shade = el['shade'];
+      const glow = el['glow'] === true && (shade === undefined || shade === null);
+      // Only a plain rectangle fills its box; any other shape (or rounded corners) leaves
+      // parts of the box bare, and a text there sits on whatever lies below. A glow ellipse
+      // is the exception: its bare corners are glow alpha 0, inside the range it judges.
+      const plain = type === undefined || type === 'rect' || (glow && type === 'ellipse');
+      if (!plain || num(el, 'cornerRadius') !== 0) return UNKNOWN;
       const gradient = el['fillGradient'];
       const fill = parseColor(str(el, 'fill'));
       if (!untransformed || !fill) return UNKNOWN;
-      const shade = el['shade'];
+      const grainAmount = Math.min(1, num(el, 'grain'));
+      const mods = {
+        ...(cut ? { cut } : {}),
+        ...(el['pattern'] === 'dots' ? { dots: true as const } : {}),
+        ...(grainAmount > 0
+          ? {
+              grain: {
+                fill: el['grainTone'] === 'light' ? '#ffffff' : '#000000',
+                alpha: [0, (grainAmount * GRAIN_SPECK_ALPHA) / 255] as [number, number],
+              },
+            }
+          : {}),
+      };
       if (shade === 'bottom' || shade === 'top') {
         return fill.a === 1 && num(el, 'opacity', 1) === 1
-          ? { kind: 'shade', fill: str(el, 'fill'), direction: shade }
+          ? { kind: 'shade', fill: str(el, 'fill'), direction: shade, ...mods }
           : UNKNOWN;
       }
-      if (shade || (gradient !== undefined && gradient !== null)) return UNKNOWN;
+      if (shade || (!glow && gradient !== undefined && gradient !== null)) return UNKNOWN;
+      if (glow) {
+        // Full `fill` at the centre, nothing at the edge: an alpha anywhere in [0, opacity].
+        return fill.a === 1
+          ? {
+              kind: 'range',
+              fill: str(el, 'fill'),
+              alpha: [0, num(el, 'opacity', 1)],
+              ...mods,
+            }
+          : UNKNOWN;
+      }
       const alpha = num(el, 'opacity', 1) * fill.a;
-      if (alpha < 1) return { kind: 'veil', fill: toHex({ ...fill, a: 1 }), alpha };
-      return { kind: 'solid', fill: str(el, 'fill') };
+      if (alpha < 1) return { kind: 'veil', fill: toHex({ ...fill, a: 1 }), alpha, ...mods };
+      return { kind: 'solid', fill: str(el, 'fill'), ...mods };
     },
   };
+  return adapter;
 }
 
 export const TEMPLATE_GATE_ADAPTER: GateAdapter = createTemplateGateAdapter(() => undefined);

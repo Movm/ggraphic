@@ -87,15 +87,30 @@ export interface GateAdapter {
    */
   cover(
     stateKey: string,
-    el: Readonly<Record<string, unknown>>
-  ):
-    | { kind: 'solid'; fill: string }
-    | { kind: 'photo'; low: string; high: string }
-    | { kind: 'veil'; fill: string; alpha: number }
-    | { kind: 'shade'; fill: string; direction: ShadeDirection }
-    | { kind: 'unknown' }
-    | null;
+    el: Readonly<Record<string, unknown>>,
+    canvasWidth: number
+  ): GateCover | null;
 }
+
+/**
+ * What an element paints (see `GateAdapter.cover`). `range` is `fill` at an alpha anywhere in
+ * `alpha` (a glow: full in the middle, nothing at the edge). Any kind may carry: `cut`, a box the
+ * element leaves bare (a notch), so a text lying wholly inside it is not on this element; `dots`,
+ * a dot pattern over the element, which no text lying on it can be judged against; `grain`, a
+ * layer of `fill` at any alpha in `alpha` over it.
+ */
+export type GateCover = (
+  | { kind: 'solid'; fill: string }
+  | { kind: 'photo'; low: string; high: string }
+  | { kind: 'veil'; fill: string; alpha: number }
+  | { kind: 'shade'; fill: string; direction: ShadeDirection }
+  | { kind: 'range'; fill: string; alpha: [number, number] }
+  | { kind: 'unknown' }
+) & {
+  cut?: Box;
+  dots?: true;
+  grain?: { fill: string; alpha: [number, number] };
+};
 
 export const GATE_RULES = [
   'bounds',
@@ -625,7 +640,7 @@ function checkPlaced(
         const below = placed.get(belowId);
         // The logo is owned by logo-overlap; a text on it is reported there.
         if (below && below.key === 'userImageInstances' && isLogo(below.el)) continue;
-        const cover = below && ctx.adapter.cover(below.key, below.el);
+        const cover = below && ctx.adapter.cover(below.key, below.el, canvas.width);
         if (!below || !cover) continue;
         const area = ctx.adapter.box(below.key, below.el, 1);
         if (!area) {
@@ -637,23 +652,35 @@ function checkPlaced(
         if (!overlaps(box, area)) continue;
         // Only an element holding the whole text box is its ground; one that covers part of it
         // puts the text on two grounds (or an edge), which is not judged by either.
-        if (!inside(box, area) || cover.kind === 'unknown') {
+        if (cover.cut && overlaps(box, cover.cut)) {
+          // A text wholly in the cut is not on this element; one half in it lies on two grounds.
+          if (inside(box, cover.cut)) continue;
           grounds = null;
           break;
         }
+        if (!inside(box, area) || cover.kind === 'unknown' || cover.dots) {
+          grounds = null;
+          break;
+        }
+        // Two alpha ranges over one text: the alphas move together, not independently. Not judged.
+        const ranges =
+          (cover.grain ? 1 : 0) + (cover.kind === 'shade' || cover.kind === 'range' ? 1 : 0);
+        if (ranges > 0 && (ranges > 1 || overlays.some((o) => o.shade))) {
+          grounds = null;
+          stackedShades = true;
+          break;
+        }
+        if (cover.grain) {
+          overlays.push({ shade: true, fill: cover.grain.fill, alpha: cover.grain.alpha });
+        }
         if (cover.kind === 'veil') {
           overlays.push({ fill: cover.fill, alpha: [cover.alpha, cover.alpha] });
-        } else if (cover.kind === 'shade') {
-          // Two shades over one text: the alphas move together, not independently. Not judged.
-          if (overlays.some((o) => o.shade)) {
-            grounds = null;
-            stackedShades = true;
-            break;
-          }
+        } else if (cover.kind === 'shade' || cover.kind === 'range') {
           overlays.push({
             shade: true,
             fill: cover.fill,
-            alpha: shadeAlphaRange(cover.direction, box, area),
+            alpha:
+              cover.kind === 'shade' ? shadeAlphaRange(cover.direction, box, area) : cover.alpha,
           });
         } else {
           grounds = cover.kind === 'solid' ? [cover.fill] : photoColours(cover.low, cover.high);
