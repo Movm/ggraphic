@@ -844,6 +844,16 @@ export interface ShapeInstance {
    * edge (a soft colour field). Wins over `fillGradient`, loses to `shade`. Stored, so never renamed.
    */
   glow?: boolean;
+  /** `rect` only: opacity (0–1) of a noise layer over the fill. Stored, so never renamed. */
+  grain?: number;
+  /** `dark`: dark specks; `light`: soft white specks. Absent: `dark`. */
+  grainTone?: 'dark' | 'light';
+  /** `rect` only: a grid of dots over the fill. */
+  pattern?: 'dots';
+  /** Colour of the dots (bindable). */
+  patternColor?: string;
+  /** Distance between the dots, a share of the canvas width (0.037 = 40 px on 1080). */
+  patternSpacing?: number;
 }
 
 /**

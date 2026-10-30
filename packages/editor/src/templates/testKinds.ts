@@ -133,6 +133,8 @@ const POPULATED: Record<string, Fields> = {
     shadowOffsetY: 5,
     shadowOpacity: 0.5,
     notch: 0.05,
+    grain: 0.3,
+    patternSpacing: 0.04,
   },
   frameInstances: {
     borderDash: [4, 2],
