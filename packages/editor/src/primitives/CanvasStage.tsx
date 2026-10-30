@@ -270,7 +270,10 @@ export const CanvasStage = forwardRef<CanvasStageRef, CanvasStageProps>(
           ? stage.find('.canvas-background').filter((node) => node.visible())
           : [];
 
-        const run = () => withSelectionChromeHidden(stage, () => capture(stage, region));
+        const run = () =>
+          withSelectionChromeHidden(stage, () => capture(stage, region), {
+            keepPlaceholders: options.keepPlaceholders,
+          });
 
         if (backgroundNodes.length === 0) return run();
         backgroundNodes.forEach((node) => node.hide());

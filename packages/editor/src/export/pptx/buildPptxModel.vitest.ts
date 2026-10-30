@@ -65,6 +65,10 @@ describe('buildPptxModel duotone images', () => {
     });
   });
 
+  it('emits nothing for an image slot without a source', () => {
+    expect(photoItems(photo({ src: '' }))).toEqual([]);
+  });
+
   it('an image with one or no duotone colour stays a native picture', () => {
     expect(photoItems(photo())[0]).toMatchObject({ kind: 'image' });
     expect(photoItems(photo({ duotoneLow: '#112233' }))[0]).toMatchObject({ kind: 'image' });
