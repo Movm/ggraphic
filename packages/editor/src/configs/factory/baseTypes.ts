@@ -6,10 +6,12 @@
  * These provide the foundation for the factory pattern.
  */
 
+import { type Bindings } from '@ggraphic/core';
 import type { AssetInstance } from '../../utils/canvasAssets.js';
 import type { HostElementState } from '../../utils/canvasItem.js';
 import type { AdditionalText, LayoutResult } from '../types.js';
 import type { StockImageAttribution } from '@ggraphic/editor/common/imageSourceTypes';
+import type { ExternalIconPayload, IconSource } from '@ggraphic/editor/utils/externalIcons';
 import type { ChartInstance, ChartType } from '@ggraphic/editor/utils/chartTypes';
 import type { CircleBadgeInstance } from '@ggraphic/editor/utils/circleBadgeUtils';
 import type { FrameClipType, FrameInstance } from '@ggraphic/editor/utils/frameUtils';
@@ -55,6 +57,8 @@ export interface IconState {
   scale: number;
   rotation: number;
   color?: string;
+  /** Fields that follow a brand role; see `@ggraphic/core` bindings. */
+  bind?: Bindings;
   opacity?: number;
   /**
    * Katalog-ID des gezeigten Icons. Fehlt sie, IST der Schlüssel in
@@ -64,6 +68,18 @@ export interface IconState {
    * wird immer über `catalogIconId` in `utils/iconInstances.ts`.
    */
   iconId?: string;
+  /**
+   * Icons from a host's icon search: a COPY of the SVG (so exports and reloads work offline,
+   * and nothing is hotlinked) and where it came from, for the licence and credit line.
+   * Bundled icons carry neither.
+   *
+   * This is the markup as it was stored, possibly by another client: NEVER read or draw it
+   * directly. `registerStoredExternalIcons` sanitises it into the registry
+   * (`utils/externalIcons.ts`), and `resolveIconDef` / `externalIconKey` look it up there.
+   * It is not rewritten in place on load, because that would save every document on open.
+   */
+  svg?: string;
+  source?: IconSource;
   /** Mirrored about the centre (negative node scale); omit for upright. */
   flipX?: boolean;
   flipY?: boolean;
@@ -113,7 +129,12 @@ export interface BaseCanvasActions {
   removeAsset: (id: string) => void;
 
   // Icon management
-  toggleIcon: (id: string, selected: boolean, options?: ElementPlacement) => void;
+  toggleIcon: (
+    id: string,
+    selected: boolean,
+    options?: ElementPlacement,
+    external?: ExternalIconPayload
+  ) => void;
   updateIcon: (id: string, partial: Partial<IconState>) => void;
 
   // Shape management

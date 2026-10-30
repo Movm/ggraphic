@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { messages } from '@ggraphic/editor/i18n/messages';
 /**
  * StandaloneCanvas — Lightweight canvas component for direct embedding
  *
@@ -38,7 +39,7 @@ function StandaloneCanvasInner({ configId, config: configProp, ...canvas }: Stan
     startedRef.current = true;
     const template = getTemplate(configId);
     if (!template) {
-      setError(`Unknown canvas type: ${configId}`);
+      setError(messages().errors.unknownCanvasType(configId));
     } else {
       template
         .load(canvas.formatId)
@@ -50,14 +51,20 @@ function StandaloneCanvasInner({ configId, config: configProp, ...canvas }: Stan
         })
         .catch((err) => {
           if (configIdRef.current === configId) {
-            setError(err instanceof Error ? err.message : 'Failed to load canvas config');
+            // The error text is for the console; a person gets the catalogue message.
+            console.error(err);
+            setError(messages().errors.canvasConfigLoad);
           }
         });
     }
   }
 
   if (error) {
-    return <div className={canvas.className}>Canvas error: {error}</div>;
+    return (
+      <div className={canvas.className}>
+        {messages().errors.canvasError}: {error}
+      </div>
+    );
   }
 
   if (!config) {

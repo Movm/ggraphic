@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-/** The organisation switcher, the organisation's pages and logout, in every page header. */
-import { Avatar, Button, TopNav, Wordmark } from '@ggraphic/ui';
+/** The top bar of every page: the wordmark (to the start page) and the profile menu. */
+import { Button, Menu, TopNav, Wordmark, type MenuItem } from '@ggraphic/ui';
 import { useQueryClient } from '@tanstack/react-query';
-import { useId, type MouseEvent } from 'react';
+import { type MouseEvent } from 'react';
 
 import { api } from '../api/client';
-import { BRAND_PATH, LICENSES_PATH, MEMBERS_PATH, navigate, PROJECTS_PATH } from '../router';
+import { BRAND_PATH, LICENSES_PATH, navigate } from '../router';
 import { useLoggedIn } from '../session/SessionContext';
 import { toast } from './toast';
 
@@ -19,11 +19,9 @@ function followInApp(e: MouseEvent<HTMLElement>) {
 }
 
 export function AccountBar() {
-  const { session, organisation, selectOrganisation } = useLoggedIn();
+  const { session, organisation } = useLoggedIn();
   const queryClient = useQueryClient();
-  const selectId = useId();
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-  const link = (label: string, href: string) => ({ label, href, current: pathname === href });
+  const name = session.account.displayName || session.account.email;
 
   const logout = async () => {
     try {
@@ -38,58 +36,38 @@ export function AccountBar() {
     navigate('/');
   };
 
+  const items: MenuItem[] = [
+    ...(organisation.role === 'owner'
+      ? [{ label: 'Brand', onSelect: () => navigate(BRAND_PATH) }]
+      : []),
+    { label: 'Licences', onSelect: () => navigate(LICENSES_PATH) },
+    { label: 'Log out', onSelect: () => void logout() },
+  ];
+
   return (
     <TopNav
       className="studio-topnav"
-      label="Organisation and account"
+      label="Account"
       brand={
         <Wordmark href="/" size="sm">
           ggraphic Studio
         </Wordmark>
       }
-      links={[
-        link('Projects', PROJECTS_PATH),
-        link('Members', MEMBERS_PATH),
-        ...(organisation.role === 'owner' ? [link('Brand', BRAND_PATH)] : []),
-        link('Licences', LICENSES_PATH),
-      ]}
       onClick={followInApp}
       actions={
-        <>
-          {session.organisations.length > 1 ? (
-            <span className="studio-topnav__org">
-              <label htmlFor={selectId} className="ui-visually-hidden">
-                Organisation
-              </label>
-              <select
-                id={selectId}
-                className="ui-field__input studio-select"
-                value={organisation.id}
-                onChange={(e) => {
-                  selectOrganisation(e.target.value);
-                  navigate(PROJECTS_PATH);
-                }}
-              >
-                {session.organisations.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.name}
-                  </option>
-                ))}
-              </select>
-            </span>
-          ) : (
-            <span className="studio-topnav__org">{organisation.name}</span>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void logout()}
-            title={session.account.email}
-          >
-            Log out
-          </Button>
-          <Avatar name={session.account.displayName || session.account.email} label="Account" />
-        </>
+        <Menu
+          trigger={
+            <Button
+              variant="outline"
+              size="sm"
+              aria-label={`Account: ${name}`}
+              title={session.account.email}
+            >
+              {name}
+            </Button>
+          }
+          items={items}
+        />
       }
     />
   );

@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
+import { type BindingRef } from '@ggraphic/core';
+
 import { CustomColorSwatch } from '@ggraphic/editor/components/CustomColorSwatch';
 import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { cn } from '@ggraphic/editor/utils/cn';
@@ -7,7 +9,7 @@ import React from 'react';
 
 interface FloatingColorPickerProps {
   currentColor: string;
-  onColorSelect: (color: string) => void;
+  onColorSelect: (color: string, ref?: BindingRef) => void;
   isExpanded?: boolean;
   onExpandChange?: (expanded: boolean) => void;
   colors?: ColorOption[];
@@ -147,7 +149,7 @@ export function FloatingColorPicker({
           style={{ backgroundColor: color.value }}
           onClick={(e) => {
             e.stopPropagation();
-            onColorSelect(color.value);
+            onColorSelect(color.value, color.ref);
           }}
           title={color.name}
           aria-label={color.name}
@@ -159,7 +161,7 @@ export function FloatingColorPicker({
         <CustomColorSwatch
           value={currentColor}
           presets={colorOptions.map((color) => color.value)}
-          onPick={onColorSelect}
+          onPick={(picked) => onColorSelect(picked)}
           className={`size-8 max-canvas-mobile:size-[26px] ${HIT_44}`}
           outlineOffset={3}
         />

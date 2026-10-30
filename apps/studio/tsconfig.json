@@ -6,9 +6,21 @@
     "noEmit": true,
     "types": ["vite/client", "node"],
     "tsBuildInfoFile": "./node_modules/.cache/tsbuildinfo",
+    "paths": {
+      "@ggraphic/templates-open/test/testBrands": [
+        "../../packages/templates-open/test/testBrands.ts"
+      ]
+    },
     "noUncheckedIndexedAccess": false,
     "noPropertyAccessFromIndexSignature": false
   },
-  "include": ["src/**/*", "vite.config.ts", "vitest.config.ts", "vitest.setup.ts"],
+  "include": [
+    "src/**/*",
+    "e2e/**/*",
+    "playwright.config.ts",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "vitest.setup.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }

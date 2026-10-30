@@ -57,6 +57,7 @@ import { blockElementIds, placeBlock, type LiftedBlock } from '../blocks/liftedB
 import { hostEmittedStateKeys } from '../collab/pageElementStateKeys.js';
 import { useSelectionAwareness } from '../collab/useSelectionAwareness.js';
 import { useYjsPageStateSync } from '../collab/useYjsPageStateSync.js';
+import { readGroups } from '../groups/pageGroups.js';
 import {
   useCanvasInteractions,
   useCanvasStoreReset,
@@ -267,6 +268,8 @@ const BLOCK_CASCADE = 40;
 export interface BlockPageSurface {
   backgroundMode?: unknown;
   backgroundColor?: unknown;
+  /** The page's colour world, if it has one. */
+  brandScheme?: unknown;
 }
 
 export interface GenericCanvasRef {
@@ -613,6 +616,13 @@ function GenericCanvasWithRef<
     // eslint-disable-next-line react-hooks/exhaustive-deps -- layoutKey is a stable string derived from layout-relevant state fields
   }, [config, layoutKey, isFontAvailable, fontGeneration]);
 
+  const stateForGroups = useRef(state);
+  stateForGroups.current = state;
+  const getGroups = useCallback(
+    () => readGroups(stateForGroups.current as Record<string, unknown>),
+    []
+  );
+
   const {
     setSelectedElement,
     selectElement,
@@ -620,7 +630,7 @@ function GenericCanvasWithRef<
     handleStageClick,
     handleSnapChange,
     getSnapTargets,
-  } = useCanvasInteractions({ stageRef, marqueeEnabled: interactive });
+  } = useCanvasInteractions({ stageRef, marqueeEnabled: interactive, getGroups });
 
   const store = useCanvasStore();
   const { setSnapLines, updateElementPosition } = store.getState();
@@ -947,8 +957,9 @@ function GenericCanvasWithRef<
         // The drop point before the await: the pointer is only known now.
         const stage = stageRef.current?.getStage();
         const drop = at && stage ? locateDrop(stage, at, stageWidth / referenceWidth) : null;
-        const { backgroundMode, backgroundColor } = liveStateRef.current.state as BlockPageSurface;
-        const block = await make({ backgroundMode, backgroundColor });
+        const { backgroundMode, backgroundColor, brandScheme } = liveStateRef.current
+          .state as BlockPageSurface;
+        const block = await make({ backgroundMode, backgroundColor, brandScheme });
         if (!block) return false;
         const canvas = { width: referenceWidth, height: referenceHeight };
         // Clicked in again and again, each lands a step down-right, not on the last.

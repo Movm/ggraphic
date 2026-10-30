@@ -40,8 +40,26 @@ export async function loadBrandFonts(faces: readonly BrandFontFace[]): Promise<v
   await Promise.all(faces.map(loadFace));
 }
 
+const prepared = new WeakMap<BrandPack, Promise<void>>();
+
+/**
+ * Loads the fonts and measures the logos `pack` draws with, registering nothing: what a page in
+ * this brand needs before it renders. Once per pack object.
+ */
+export function prepareBrandPack(pack: BrandPack): Promise<void> {
+  let pending = prepared.get(pack);
+  if (!pending) {
+    pending = Promise.all([
+      loadBrandFonts(pack.fontFaces),
+      pack.logo && measureLogo(pack.logo.src),
+      pack.logoAlt && measureLogo(pack.logoAlt.src),
+    ]).then(() => undefined);
+    prepared.set(pack, pending);
+  }
+  return pending;
+}
+
 export async function applyBrandPack(pack: BrandPack | null): Promise<void> {
-  if (pack)
-    await Promise.all([loadBrandFonts(pack.fontFaces), pack.logo && measureLogo(pack.logo.src)]);
+  if (pack) await prepareBrandPack(pack);
   registerBrandPacks(pack ? [pack, studioBrand] : [studioBrand]);
 }

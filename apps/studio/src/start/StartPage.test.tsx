@@ -1,23 +1,61 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 
-import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
+import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
 
 import { type StudioConfig } from '../api/client';
 import { studioBrand } from '../brand';
 import { rememberLogoSize } from '../logoSize';
-import { TEST_ORG, TEST_PROJECTS_URL, WithSession } from '../testing/session';
+import { LoggedInContext } from '../session/SessionContext';
+import { TEST_ORG, TEST_PROJECTS_URL, WithSession, testSession } from '../testing/session';
 import { Toaster } from '../ui/toast';
 
 import { nameFromPrompt } from './createFromPrompt';
 import { StartPage } from './StartPage';
 
+// The real pack has no template that one brand can fully drop, so add one that lives in the light world only.
+vi.mock('@ggraphic/templates-open', async (importOriginal) => {
+  const original = await importOriginal<{ OPEN_TEMPLATES: readonly Record<string, unknown>[] }>();
+  const quote = original.OPEN_TEMPLATES.find((t) => t['id'] === 'studio-quote')!;
+  const lightOnly = {
+    ...quote,
+    id: 'studio-light-only',
+    title: { en: 'Light only' },
+    schemes: ['light'],
+  };
+  return { ...original, OPEN_TEMPLATES: [...original.OPEN_TEMPLATES, lightOnly] };
+});
+
+// The preview canvas is not drawn here: the test reads the page it is asked to draw.
+const drawn = vi.hoisted(() => ({ states: [] as Record<string, unknown>[] }));
+vi.mock('@ggraphic/editor/components/PagePreview', async () => {
+  const { useEffect } = await import('react');
+  return {
+    PagePreview: ({
+      state,
+      onRendered,
+    }: {
+      state: Record<string, unknown>;
+      onRendered: (dataUrl: string) => void;
+    }) => {
+      useEffect(() => {
+        drawn.states.push(state);
+        onRendered('data:image/png;base64,x');
+      }, [state, onRendered]);
+      return null;
+    },
+  };
+});
+vi.mock('@ggraphic/editor/configs/configLoader', () => ({
+  loadCanvasConfig: async () => ({ id: 'studio-blank', canvas: { width: 1080, height: 1350 } }),
+}));
+
 const config = (ai: boolean): StudioConfig => ({
-  features: { ai },
+  features: { ai, removeBackground: false, iconify: false },
   limits: { uploadBytes: 1e7, thumbnailBytes: 1e6, documentBytes: 5e6 },
   uploadTypes: ['image/png'],
 });
@@ -28,17 +66,29 @@ const DRAFT = {
   body: 'Old market, 3 pm',
 };
 
+const PICK = {
+  templateId: 'studio-headline',
+  schemeId: null,
+  fills: { headline: DRAFT.headline, subline: DRAFT.subline, body: DRAFT.body },
+};
+
 type Call = { method: string; url: string; body: Record<string, unknown> | null };
 
 /** `fetch` with a Studio server that knows one project after the first POST. */
 function fakeServer({
-  draft,
+  ai,
   listed = [],
   pack = null,
+  createFails = null,
+  hidden = [],
 }: {
-  draft: 'ok' | 'timeout';
+  ai: 'ok' | 'timeout';
   listed?: unknown[];
   pack?: unknown;
+  /** The project POST answers with this error instead of creating. */
+  createFails?: { status: number; error: string; message: string } | null;
+  /** Template ids the organisation hid. */
+  hidden?: string[];
 }) {
   const calls: Call[] = [];
   const project = (document: unknown, version: number) => ({
@@ -64,13 +114,20 @@ function fakeServer({
       typeof init?.body === 'string' ? (JSON.parse(init.body) as Record<string, unknown>) : null;
     calls.push({ method, url, body });
     if (url === TEST_PROJECTS_URL && method === 'GET') return json(200, { projects: listed });
+    if (url === TEST_PROJECTS_URL && method === 'POST' && createFails) {
+      return json(createFails.status, { error: createFails.error, message: createFails.message });
+    }
     if (url === TEST_PROJECTS_URL && method === 'POST')
       return json(201, project(body?.document, 1));
     if (url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET')
       return json(200, { settings: null, assets: [], pack, bundledFonts: [] });
-    if (url === '/api/ai/draft') {
-      return draft === 'ok'
-        ? json(200, DRAFT)
+    if (url === `/api/orgs/${TEST_ORG}/hidden-templates` && method === 'GET')
+      return json(200, { templateIds: hidden });
+    if (url.startsWith(`/api/orgs/${TEST_ORG}/hidden-templates/`) && method === 'PUT')
+      return new Response(null, { status: 204 });
+    if (url === '/api/ai/pick') {
+      return ai === 'ok'
+        ? json(200, PICK)
         : json(502, { error: 'ai_timeout', message: 'The AI provider did not answer in time.' });
     }
     if (url === '/api/projects/p1' && method === 'PATCH') {
@@ -102,11 +159,11 @@ const firstPageState = (calls: Call[]) => {
     .state;
 };
 
-function renderStart(ai: boolean) {
+function renderStart(ai: boolean, role: 'owner' | 'editor' = 'owner') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <WithSession>
+      <WithSession role={role}>
         <StartPage config={config(ai)} />
       </WithSession>
       <Toaster />
@@ -121,8 +178,8 @@ describe('StartPage', () => {
     registerBrandPacks([studioBrand]);
   });
 
-  it('creates a project, fills it with the AI draft and opens it', async () => {
-    const { fetchMock, calls } = fakeServer({ draft: 'ok' });
+  it('creates a project from what the AI picked and opens it', async () => {
+    const { fetchMock, calls } = fakeServer({ ai: 'ok' });
     vi.stubGlobal('fetch', fetchMock);
     const user = userEvent.setup();
     renderStart(true);
@@ -139,17 +196,17 @@ describe('StartPage', () => {
     expect(post.body?.['name']).toBe('Invite everyone to the street festival…');
     expect((post.body?.['document'] as { formatId: string }).formatId).toBe('profile-square');
 
-    const draftCall = calls.find((c) => c.url === '/api/ai/draft')!;
-    expect(draftCall.body).toEqual({
-      briefing: 'Invite everyone to the street festival next Saturday afternoon',
-      width: 1080,
-      height: 1080,
+    const pickCall = calls.find((c) => c.url === '/api/ai/pick')!;
+    expect(pickCall.body).toMatchObject({
+      brief: 'Invite everyone to the street festival next Saturday afternoon',
+      format: { width: 1080, height: 1080 },
     });
 
-    const patch = calls.find((c) => c.method === 'PATCH')!;
-    expect(patch.body?.['version']).toBe(1);
-    const page = headlineOf(patch.body?.['document']);
-    expect(page.configId).toBe('studio-headline');
+    // One project, created with the texts in it: no placeholder first, no later patch.
+    expect(calls.filter((c) => c.method === 'POST' && c.url === TEST_PROJECTS_URL)).toHaveLength(1);
+    expect(calls.some((c) => c.method === 'PATCH')).toBe(false);
+    const page = headlineOf(post.body?.['document']);
+    expect(page.configId).toBe('studio-blank');
     expect(page.texts).toMatchObject({
       headline: DRAFT.headline,
       subline: DRAFT.subline,
@@ -158,7 +215,7 @@ describe('StartPage', () => {
   });
 
   it('without AI puts the prompt into the headline and says how to turn AI on', async () => {
-    const { fetchMock, calls } = fakeServer({ draft: 'ok' });
+    const { fetchMock, calls } = fakeServer({ ai: 'ok' });
     vi.stubGlobal('fetch', fetchMock);
     const user = userEvent.setup();
     renderStart(false);
@@ -170,7 +227,7 @@ describe('StartPage', () => {
     await user.click(screen.getByRole('button', { name: /Create/ }));
 
     await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
-    expect(calls.some((c) => c.url === '/api/ai/draft')).toBe(false);
+    expect(calls.some((c) => c.url === '/api/ai/pick')).toBe(false);
     expect(calls.some((c) => c.method === 'PATCH')).toBe(false);
     const post = calls.find((c) => c.method === 'POST' && c.url === TEST_PROJECTS_URL)!;
     expect(headlineOf(post.body?.['document']).texts['headline']).toBe(
@@ -178,8 +235,8 @@ describe('StartPage', () => {
     );
   });
 
-  it('opens the template with a notice when the draft fails', async () => {
-    const { fetchMock, calls } = fakeServer({ draft: 'timeout' });
+  it('creates nothing and keeps the prompt when the AI fails', async () => {
+    const { fetchMock, calls } = fakeServer({ ai: 'timeout' });
     vi.stubGlobal('fetch', fetchMock);
     const user = userEvent.setup();
     renderStart(true);
@@ -187,21 +244,69 @@ describe('StartPage', () => {
     await user.type(screen.getByLabelText('Describe your graphic'), 'Library opens on Sundays');
     await user.keyboard('{Enter}');
 
-    await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
-    expect(calls.some((c) => c.method === 'PATCH')).toBe(false);
-    expect(await screen.findByText(/took too long.*ready for your own text/)).toBeInTheDocument();
-    // The project was created with the untouched template.
-    const post = calls.find((c) => c.method === 'POST' && c.url === TEST_PROJECTS_URL)!;
-    expect(headlineOf(post.body?.['document']).texts['headline']).toBe('A clear headline');
+    expect(await screen.findByText(/The AI took too long to answer/)).toBeInTheDocument();
+    expect(screen.queryByText(/did not answer in time/)).not.toBeInTheDocument();
+    expect(window.location.pathname).toBe('/');
+    expect(calls.some((c) => c.method === 'POST' && c.url === TEST_PROJECTS_URL)).toBe(false);
+    expect(screen.getByLabelText('Describe your graphic')).toHaveValue('Library opens on Sundays');
+    expect(screen.getByRole('button', { name: /Create/ })).toBeEnabled();
+  });
+
+  it.each([
+    [
+      500,
+      'internal',
+      'duplicate key value violates unique constraint "projects_pkey"',
+      /project could not be created/i,
+    ],
+    [403, 'forbidden', 'role viewer may not insert into projects', /not allowed/i],
+    [413, 'too_large', 'body exceeds 5242880 bytes', /too large/i],
+    [429, 'rate_limited', 'rate limit exceeded: 30/min', /too many/i],
+  ])(
+    'tells %s from createProject in plain words, not the server text',
+    async (status, error, message, friendly) => {
+      const { fetchMock } = fakeServer({ ai: 'ok', createFails: { status, error, message } });
+      vi.stubGlobal('fetch', fetchMock);
+      const user = userEvent.setup();
+      renderStart(false);
+
+      await user.type(screen.getByLabelText('Describe your graphic'), 'Library opens on Sundays');
+      await user.keyboard('{Enter}');
+
+      expect(await screen.findByText(friendly)).toBeInTheDocument();
+      expect(screen.queryByText(message)).not.toBeInTheDocument();
+      expect(screen.getByLabelText('Describe your graphic')).toHaveValue(
+        'Library opens on Sundays'
+      );
+    }
+  );
+
+  it('says the server is unreachable when createProject cannot connect', async () => {
+    const { fetchMock } = fakeServer({ ai: 'ok' });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
+        String(input) === TEST_PROJECTS_URL && init?.method === 'POST'
+          ? Promise.reject(new TypeError('Failed to fetch'))
+          : fetchMock(input, init)
+      )
+    );
+    const user = userEvent.setup();
+    renderStart(false);
+
+    await user.type(screen.getByLabelText('Describe your graphic'), 'Library opens on Sundays');
+    await user.keyboard('{Enter}');
+
+    expect(await screen.findByText(/check your connection/i)).toBeInTheDocument();
   });
 
   it('shows a loading state while the draft runs', async () => {
     let release: (r: Response) => void = () => {};
-    const { fetchMock } = fakeServer({ draft: 'ok' });
+    const { fetchMock } = fakeServer({ ai: 'ok' });
     vi.stubGlobal(
       'fetch',
       vi.fn((input: RequestInfo | URL, init?: RequestInit) =>
-        String(input) === '/api/ai/draft'
+        String(input) === '/api/ai/pick'
           ? new Promise<Response>((resolve) => (release = resolve))
           : fetchMock(input, init)
       )
@@ -215,7 +320,7 @@ describe('StartPage', () => {
     expect(await screen.findByRole('button', { name: 'Writing your draft…' })).toBeDisabled();
     expect(screen.getByText(/up to a minute/)).toHaveAttribute('role', 'status');
     release(
-      new Response(JSON.stringify(DRAFT), { headers: { 'Content-Type': 'application/json' } })
+      new Response(JSON.stringify(PICK), { headers: { 'Content-Type': 'application/json' } })
     );
     await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
   });
@@ -239,9 +344,9 @@ describe('StartPage sections', () => {
     thumbnailUrl: null,
   });
 
-  it('lists recent projects newest first as links to the editor', async () => {
+  it('lists the projects newest first as links to the editor', async () => {
     const { fetchMock } = fakeServer({
-      draft: 'ok',
+      ai: 'ok',
       listed: [
         listed('old', 'Old poster', '2026-01-01T10:00:00.000Z'),
         listed('new', 'New poster', '2026-10-01T10:00:00.000Z'),
@@ -250,23 +355,161 @@ describe('StartPage sections', () => {
     vi.stubGlobal('fetch', fetchMock);
     renderStart(true);
 
-    const recent = await screen.findByRole('list', { name: 'Recent projects' });
+    const recent = await screen.findByRole('list', { name: 'Projects' });
     const links = within(recent).getAllByRole('link');
     expect(links.map((l) => l.getAttribute('href'))).toEqual(['/p/new', '/p/old']);
-    expect(links[0]).toHaveTextContent('New poster');
-    expect(screen.getByRole('link', { name: 'Show all' })).toHaveAttribute('href', '/projects');
+    expect(links[0]).toHaveAccessibleName(/^Open New poster/);
   });
 
-  it('shows no recent section without projects', async () => {
-    const { fetchMock, calls } = fakeServer({ draft: 'ok' });
+  it('shows an empty state instead of the grid without projects', async () => {
+    const { fetchMock, calls } = fakeServer({ ai: 'ok' });
     vi.stubGlobal('fetch', fetchMock);
     renderStart(true);
     await waitFor(() => expect(calls.some((c) => c.url === TEST_PROJECTS_URL)).toBe(true));
-    expect(screen.queryByRole('heading', { name: 'Recent projects' })).not.toBeInTheDocument();
+    expect(await screen.findByText(/No projects yet/)).toBeInTheDocument();
+    expect(screen.queryByRole('list', { name: 'Projects' })).not.toBeInTheDocument();
+  });
+
+  it('a hidden template is not in the gallery or the AI offers', async () => {
+    const { fetchMock, calls } = fakeServer({ ai: 'ok', hidden: ['studio-quote'] });
+    vi.stubGlobal('fetch', fetchMock);
+    const user = userEvent.setup();
+    renderStart(true, 'editor');
+    const templates = screen.getByRole('list', { name: 'Templates' });
+    await waitFor(() =>
+      expect(within(templates).queryByRole('button', { name: /^Quote/ })).not.toBeInTheDocument()
+    );
+    expect(within(templates).getByRole('button', { name: /^Headline/ })).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Describe your graphic'), 'A quote about small steps');
+    await user.click(screen.getByRole('button', { name: /Create/ }));
+    await waitFor(() => expect(calls.some((c) => c.url === '/api/ai/pick')).toBe(true));
+    const offered = (
+      calls.find((c) => c.url === '/api/ai/pick')!.body as { templates: { id: string }[] }
+    ).templates.map((t) => t.id);
+    expect(offered).toContain('studio-headline');
+    expect(offered).not.toContain('studio-quote');
+  });
+
+  it('owners see the hide toggle and use it, editors do not see it', async () => {
+    const { fetchMock, calls } = fakeServer({ ai: 'ok', hidden: ['studio-quote'] });
+    vi.stubGlobal('fetch', fetchMock);
+    const user = userEvent.setup();
+    const view = renderStart(true, 'owner');
+    // The owner still sees the hidden tile, to show it again.
+    const show = await screen.findByRole('button', { name: 'Show Quote in the gallery' });
+    await user.click(show);
+    await waitFor(() =>
+      expect(
+        calls.find((c) => c.method === 'PUT' && c.url.endsWith('/hidden-templates/studio-quote'))
+          ?.body
+      ).toEqual({ hidden: false })
+    );
+    view.unmount();
+
+    renderStart(true, 'editor');
+    await screen.findByRole('list', { name: 'Templates' });
+    expect(
+      screen.queryByRole('button', { name: /^(Hide|Show) .* gallery$/ })
+    ).not.toBeInTheDocument();
+  });
+
+  it('puts the templates between the prompt and the project grid', async () => {
+    const { fetchMock } = fakeServer({
+      ai: 'ok',
+      listed: [listed('a', 'A poster', '2026-10-01T10:00:00.000Z')],
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderStart(true);
+    const grid = await screen.findByRole('list', { name: 'Projects' });
+    const prompt = screen.getByRole('textbox', { name: 'Describe your graphic' });
+    const templates = screen.getByRole('list', { name: 'Templates' });
+    const before = Node.DOCUMENT_POSITION_FOLLOWING;
+    expect(prompt.compareDocumentPosition(templates) & before).toBeTruthy();
+    expect(templates.compareDocumentPosition(grid) & before).toBeTruthy();
+  });
+
+  it("offers only the templates the organisation's brand can place", async () => {
+    const near = {
+      ...studioBrand,
+      id: 'near',
+      colors: { ...studioBrand.colors, secondary: '#FAFAFA' },
+    };
+    const { fetchMock, calls } = fakeServer({ ai: 'ok', pack: near });
+    vi.stubGlobal('fetch', fetchMock);
+    renderStart(true);
+
+    const templates = screen.getByRole('list', { name: 'Templates' });
+    await waitFor(() =>
+      expect(calls.some((c) => c.url === `/api/orgs/${TEST_ORG}/brand-pack`)).toBe(true)
+    );
+    await waitFor(() =>
+      expect(
+        within(templates).queryByRole('button', { name: /^Light only/ })
+      ).not.toBeInTheDocument()
+    );
+    expect(within(templates).getByRole('button', { name: /^Quote/ })).toBeInTheDocument();
+    expect(within(templates).getByRole('button', { name: /^Headline/ })).toBeInTheDocument();
+    expect(within(templates).getByRole('button', { name: /^Blank/ })).toBeInTheDocument();
+  });
+
+  it('does not let a late brand answer for the previous organisation change the tiles', async () => {
+    const near = {
+      ...studioBrand,
+      id: 'near',
+      colors: { ...studioBrand.colors, secondary: '#FAFAFA' },
+    };
+    let releaseA: () => void = () => {};
+    const answered = (pack: unknown) =>
+      new Response(JSON.stringify({ settings: null, assets: [], pack, bundledFonts: [] }), {
+        headers: { 'Content-Type': 'application/json' },
+      });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: RequestInfo | URL) => {
+        const url = String(input);
+        if (url === '/api/orgs/org-a/brand-pack') {
+          await new Promise<void>((resolve) => (releaseA = resolve));
+          return answered(near);
+        }
+        if (url === '/api/orgs/org-b/brand-pack') return answered(null);
+        return new Response(JSON.stringify({ projects: [] }), {
+          headers: { 'Content-Type': 'application/json' },
+        });
+      })
+    );
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const as = (id: string) => (
+      <QueryClientProvider client={client}>
+        <LoggedInContext.Provider
+          value={{ ...testSession(), organisation: { id, name: id, role: 'owner' } }}
+        >
+          <StartPage config={config(false)} />
+        </LoggedInContext.Provider>
+      </QueryClientProvider>
+    );
+    const user = userEvent.setup();
+    const view = render(as('org-a'));
+    view.rerender(as('org-b'));
+
+    const templates = screen.getByRole('list', { name: 'Templates' });
+    // B answered: its studio brand keeps the light-only template.
+    expect(
+      await within(templates).findByRole('button', { name: /^Light only/ })
+    ).toBeInTheDocument();
+    // A answers late with a brand that cannot place it; a new format redraws the tiles.
+    releaseA();
+    // Wait for the real condition: A's answer has landed in the query cache (and, before the fix,
+    // registered A's brand).
+    await waitFor(() =>
+      expect(client.getQueryState(['start-brand', 'org-a'])?.status).toBe('success')
+    );
+    await user.click(screen.getByRole('radio', { name: /1080 × 1080/ }));
+    expect(within(templates).getByRole('button', { name: /^Light only/ })).toBeInTheDocument();
   });
 
   it('creates a project from a template in the chosen format', async () => {
-    const { fetchMock, calls } = fakeServer({ draft: 'ok' });
+    const { fetchMock, calls } = fakeServer({ ai: 'ok' });
     vi.stubGlobal('fetch', fetchMock);
     const user = userEvent.setup();
     renderStart(true);
@@ -280,13 +523,64 @@ describe('StartPage sections', () => {
     expect(post.body?.['name']).toBe('Quote');
     const document = post.body?.['document'] as { formatId: string };
     expect(document.formatId).toBe('slide-16-9');
-    expect(headlineOf(document).configId).toBe('studio-quote');
-    expect(calls.some((c) => c.url === '/api/ai/draft')).toBe(false);
+    expect(headlineOf(document).configId).toBe('studio-blank');
+    expect(
+      (document as unknown as { pages: { state: { templateRef: { id: string } } }[] }).pages[0]!
+        .state.templateRef.id
+    ).toBe('studio-quote');
+    expect(calls.some((c) => c.url === '/api/ai/pick')).toBe(false);
+  });
+
+  it('picking a world on a tile starts the project in that world', async () => {
+    const { fetchMock, calls } = fakeServer({ ai: 'ok' });
+    vi.stubGlobal('fetch', fetchMock);
+    const user = userEvent.setup();
+    renderStart(false);
+
+    const worlds = screen.getByRole('group', { name: 'Headline + text colour world' });
+    await user.click(within(worlds).getByRole('radio', { name: 'Dark' }));
+    const templates = screen.getByRole('list', { name: 'Templates' });
+    await user.click(within(templates).getByRole('button', { name: /^Headline/ }));
+
+    await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
+    expect(firstPageState(calls)['brandScheme']).toBe('dark');
+  });
+
+  it("draws the tile previews in the organisation's brand, which stays unregistered", async () => {
+    rememberLogoSize(BRAND_LOGO, 400, 100);
+    drawn.states.length = 0;
+    const visible: ((v: boolean) => void)[] = [];
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        constructor(private cb: IntersectionObserverCallback) {}
+        observe(target: Element) {
+          visible.push((isIntersecting) =>
+            this.cb([{ isIntersecting, target } as IntersectionObserverEntry], this as never)
+          );
+        }
+        unobserve() {}
+        disconnect() {}
+      }
+    );
+    const { fetchMock, calls } = fakeServer({ ai: 'ok', pack: orgPack });
+    vi.stubGlobal('fetch', fetchMock);
+    renderStart(false);
+    await waitFor(() =>
+      expect(calls.some((c) => c.url === `/api/orgs/${TEST_ORG}/brand-pack`)).toBe(true)
+    );
+    // Wait for the answer: only then do the tiles hold the organisation's brand.
+    await waitFor(() => expect(activeBrand().id).not.toBe(orgPack.id));
+    await new Promise((r) => setTimeout(r, 50));
+    act(() => visible.forEach((show) => show(true)));
+    await waitFor(() => expect(drawn.states.length).toBeGreaterThan(0));
+    expect(drawn.states.some((s) => s['backgroundColor'] === '#0f3a52')).toBe(true);
+    expect(activeBrand().id).not.toBe(orgPack.id);
   });
 
   it('builds a template project in the organisation brand, logo included', async () => {
     rememberLogoSize(BRAND_LOGO, 400, 100);
-    const { fetchMock, calls } = fakeServer({ draft: 'ok', pack: orgPack });
+    const { fetchMock, calls } = fakeServer({ ai: 'ok', pack: orgPack });
     vi.stubGlobal('fetch', fetchMock);
     const user = userEvent.setup();
     renderStart(false);
@@ -296,14 +590,15 @@ describe('StartPage sections', () => {
     await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
 
     const state = firstPageState(calls);
-    expect(state['backgroundColor']).toBe('#0F3A52');
+    // Seeds write colours in canonical (lower-case) form, as the rebind does.
+    expect(state['backgroundColor']).toBe('#0f3a52');
     const images = state['userImageInstances'] as { id: string; src: string }[];
     expect(images.map((i) => [i.id, i.src])).toEqual([['brand-logo', BRAND_LOGO]]);
   });
 
   it('builds a prompt project in the organisation brand', async () => {
     rememberLogoSize(BRAND_LOGO, 400, 100);
-    const { fetchMock, calls } = fakeServer({ draft: 'ok', pack: orgPack });
+    const { fetchMock, calls } = fakeServer({ ai: 'ok', pack: orgPack });
     vi.stubGlobal('fetch', fetchMock);
     const user = userEvent.setup();
     renderStart(false);
@@ -313,19 +608,20 @@ describe('StartPage sections', () => {
     await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
 
     const state = firstPageState(calls);
-    expect(state['backgroundColor']).toBe('#0F3A52');
+    // Seeds write colours in canonical (lower-case) form, as the rebind does.
+    expect(state['backgroundColor']).toBe('#0f3a52');
     const images = state['userImageInstances'] as { id: string }[];
     expect(images.map((i) => i.id)).toEqual(['brand-logo']);
   });
 
   it('has no axe violations', async () => {
     const { fetchMock, calls } = fakeServer({
-      draft: 'ok',
+      ai: 'ok',
       listed: [listed('a', 'A poster', '2026-10-01T10:00:00.000Z')],
     });
     vi.stubGlobal('fetch', fetchMock);
     const { container } = renderStart(true);
-    await screen.findByRole('list', { name: 'Recent projects' });
+    await screen.findByRole('list', { name: 'Projects' });
     expect(calls.length).toBeGreaterThan(0);
     // Contrast needs real layout and stylesheets; it is measured in the browser.
     const results = await axe(container, {

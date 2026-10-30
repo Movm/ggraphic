@@ -3,10 +3,12 @@
  * The host services the Studio hands the editor (`CanvasEditorProvider`):
  * uploads go to `POST /api/orgs/:orgId/uploads`, the organisation's logo is
  * offered in the Uploads tab, downloads are named `ggraphic-…`, and the
- * AI draft tab appears only when the server has AI turned on.
+ * AI draft tab appears only when the server has AI turned on. The background
+ * removal tool appears only when the server has a rembg service configured.
+ * The other tools need no service: QR code, blob, gradient text and text path.
  *
  * Not supplied, so the editor runs on its fallbacks: stock photos, Unsplash
- * (no key in this version), AI images, background removal, gallery autosave
+ * (no key in this version), AI images, gallery autosave
  * (`imageShares`: the Studio saves the document itself), print, carousel.
  */
 import { type CanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
@@ -21,7 +23,8 @@ import {
 } from '@ggraphic/editor/hostServices';
 import { useState, useSyncExternalStore } from 'react';
 
-import { api, ApiError, type Draft } from '../api/client';
+import { api, type Draft } from '../api/client';
+import { apiErrorText } from '../ui/errorText';
 
 /** The AI draft behind the "AI draft" tab (`aiDraftTab.tsx`). */
 export interface StudioAiDraftService {
@@ -104,7 +107,7 @@ const makeUseStudioUpload = (organisationId: string) => (): CanvasMediaUploadSta
         const result: CanvasMediaUploadResult = { id: url, shareToken: url };
         return result;
       } catch (err) {
-        setError(err instanceof ApiError ? err.message : 'The upload failed.');
+        setError(apiErrorText(err, 'The upload failed.'));
         return null;
       } finally {
         setActive((n) => n - 1);
@@ -138,16 +141,30 @@ export function resetSessionUploads(): void {
   setSessionUploads([]);
 }
 
+// ── Icon search ────────────────────────────────────────────────────────────
+
+const ICON_SEARCH_LIMIT = 60;
+
+/** Where the browser shows an icon from: the server's proxy, never the third party. */
+const iconPreviewUrl = (prefix: string, name: string) =>
+  `/api/assets/icons/${encodeURIComponent(prefix)}/${encodeURIComponent(name)}.svg`;
+
 // ── The services object ────────────────────────────────────────────────────
 
 let uploadsOrganisation: string | null = null;
 
 export function createStudioServices({
   ai,
+  removeBackground = false,
+  iconify = false,
   organisationId,
   logo = null,
 }: {
   ai: boolean;
+  /** `features.removeBackground` of `GET /api/config`. */
+  removeBackground?: boolean;
+  /** `features.iconify` of `GET /api/config`. */
+  iconify?: boolean;
   organisationId: string;
   /** The organisation's logo, offered first in the Uploads tab. */
   logo?: { src: string; label: string } | null;
@@ -181,6 +198,30 @@ export function createStudioServices({
     imageUrls: studioImageUrls,
     fileDelivery: { ...browserFileDelivery, filenamePrefix: 'ggraphic', shareTitle: 'ggraphic' },
     unsplashUtmSource: 'ggraphic',
+    qrPreviewUrl: 'https://example.org',
+    ...(removeBackground
+      ? {
+          removeBackgroundFromImage: async (image: File | Blob) => {
+            const png = await api.removeBackground(
+              image,
+              image instanceof File ? image.name : 'image'
+            );
+            const base = image instanceof File ? image.name.replace(/\.[^.]+$/, '') : 'image';
+            const file = new File([png], `${base}-cutout.png`, { type: 'image/png' });
+            return { file, objectUrl: URL.createObjectURL(file) };
+          },
+        }
+      : {}),
+    ...(iconify
+      ? {
+          iconSearch: {
+            search: (query, signal) => api.searchIcons(query, ICON_SEARCH_LIMIT, signal),
+            svg: (prefix, name) => api.iconSvg(prefix, name),
+            refresh: (query) => api.refreshIcons(query, ICON_SEARCH_LIMIT),
+            previewUrl: (prefix, name) => iconPreviewUrl(prefix, name),
+          },
+        }
+      : {}),
     ...(ai
       ? {
           aiDraft: {

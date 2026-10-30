@@ -11,7 +11,9 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run --maxWorkers=2"
+    "test": "vitest run --maxWorkers=2",
+    "gate:render": "playwright test",
+    "gate:render:update": "playwright test --update-snapshots"
   },
   "dependencies": {
     "@fontsource/fraunces": "^5.3.0",
@@ -20,6 +22,7 @@
     "@ggraphic/core": "workspace:*",
     "@ggraphic/editor": "workspace:*",
     "@ggraphic/schema": "workspace:*",
+    "@ggraphic/templates-open": "workspace:*",
     "@ggraphic/ui": "workspace:*",
     "@tanstack/react-query": "^5.104.1",
     "konva": "^10.9.0",
@@ -31,6 +34,7 @@
   },
   "devDependencies": {
     "@napi-rs/canvas": "^1.0.13",
+    "@playwright/test": "1.64.1",
     "@tailwindcss/vite": "^4.3.3",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",

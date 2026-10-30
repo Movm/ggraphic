@@ -14,9 +14,14 @@
  * licence. A set with no row, or one under a licence outside ALLOWED, fails.
  * This part reads files only and needs no node_modules.
  *
+ * It also fails when a tracked source file under apps/ or packages/ lacks an
+ * SPDX-License-Identifier line in its first lines, or names another licence than the
+ * package it sits in declares.
+ *
  * Needs node_modules (runs on the typecheck job). No dependencies.
  * `--self-test` builds fixture trees and runs the red probes; needs no install.
  */
+import { execFileSync } from 'node:child_process';
 import {
   existsSync,
   mkdirSync,
@@ -44,7 +49,7 @@ export const ALLOWED = new Set([
   'Zlib',
 ]);
 
-export const ROOT_PACKAGES = ['schema', 'core', 'editor', 'collab', 'ui'];
+export const ROOT_PACKAGES = ['schema', 'core', 'editor', 'collab', 'ui', 'ai', 'templates-open'];
 
 // Packages whose manifest declares no licence although they ship one. Keyed by exact
 // version, so a bump falls back to the manifest and needs a fresh look.
@@ -242,6 +247,60 @@ export function checkBundledAssets(root) {
   return problems;
 }
 
+const SOURCE_FILE = /\.(?:[cm]?[jt]sx?|css)$/;
+const HEADER_LINES = 5;
+
+/** Source files (relative paths) that carry no SPDX-License-Identifier in their first lines. */
+export function missingSpdxHeaders(root, files) {
+  return files
+    .filter((file) => SOURCE_FILE.test(file))
+    .filter((file) => {
+      const head = readFileSync(join(root, file), 'utf8').split('\n', HEADER_LINES).join('\n');
+      return !head.includes('SPDX-License-Identifier:');
+    });
+}
+
+const SPDX_ID = /SPDX-License-Identifier:\s*([^\s*]+)/;
+
+/**
+ * Source files whose SPDX id differs from the licence their package declares (the nearest
+ * package.json above the file). A file with no header is `missingSpdxHeaders`' business.
+ * Returns `{ file, found, expected }`.
+ */
+export function mismatchedSpdxHeaders(root, files) {
+  const licenceOf = new Map();
+  const nearest = (file) => {
+    let dir = dirname(file);
+    for (;;) {
+      if (!licenceOf.has(dir)) {
+        const pkg = readJson(join(root, dir, 'package.json'));
+        licenceOf.set(dir, pkg ? (declaredLicense(pkg) ?? null) : undefined);
+      }
+      const known = licenceOf.get(dir);
+      if (known !== undefined) return known;
+      if (dir === '.' || dir === '') return null;
+      dir = dirname(dir);
+    }
+  };
+  const out = [];
+  for (const file of files.filter((f) => SOURCE_FILE.test(f))) {
+    const head = readFileSync(join(root, file), 'utf8').split('\n', HEADER_LINES).join('\n');
+    const found = SPDX_ID.exec(head)?.[1];
+    const expected = nearest(file);
+    if (found && expected && found !== expected) out.push({ file, found, expected });
+  }
+  return out;
+}
+
+function trackedSources(root) {
+  return execFileSync('git', ['ls-files', '-z', 'apps', 'packages'], {
+    cwd: root,
+    encoding: 'utf8',
+  })
+    .split('\0')
+    .filter(Boolean);
+}
+
 function selfTest() {
   const base = mkdtempSync(join(tmpdir(), 'ggraphic-licenses-'));
   const failures = [];
@@ -343,6 +402,29 @@ function selfTest() {
     );
     const undraw = 'apps/studio/public/illustrations/undraw';
     expectAssets('asset-undraw', assetRoot('a6', row(undraw, 'MIT'), [undraw]), true, 'never');
+
+    const sources = join(base, 'sources');
+    mkdirSync(sources, { recursive: true });
+    writeFileSync(join(sources, 'ok.ts'), '// SPDX-License-Identifier: MPL-2.0\nexport {};\n');
+    writeFileSync(join(sources, 'bare.ts'), 'export {};\n');
+    writeFileSync(join(sources, 'notes.md'), 'no header needed\n');
+    const bare = missingSpdxHeaders(sources, ['ok.ts', 'bare.ts', 'notes.md']);
+    if (bare.length !== 1 || bare[0] !== 'bare.ts')
+      failures.push(`spdx: expected only bare.ts, got ${JSON.stringify(bare)}`);
+    // A header that names another licence than the package declares.
+    const pkgDir = join(base, 'ids', 'packages', 'p');
+    write(join(pkgDir, 'package.json'), { name: 'p', version: '1.0.0', license: 'MPL-2.0' });
+    writeFileSync(join(pkgDir, 'right.ts'), '// SPDX-License-Identifier: MPL-2.0\nexport {};\n');
+    writeFileSync(
+      join(pkgDir, 'wrong.ts'),
+      '// SPDX-License-Identifier: AGPL-3.0-only\nexport {};\n'
+    );
+    const wrong = mismatchedSpdxHeaders(join(base, 'ids'), [
+      'packages/p/right.ts',
+      'packages/p/wrong.ts',
+    ]);
+    if (wrong.length !== 1 || wrong[0].file !== 'packages/p/wrong.ts')
+      failures.push(`spdx-id: expected only wrong.ts, got ${JSON.stringify(wrong)}`);
   } finally {
     rmSync(base, { recursive: true, force: true });
   }
@@ -357,7 +439,7 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
       for (const f of failures) console.error(`  · ${f}`);
       process.exit(1);
     }
-    console.log('✓ ggraphic licence self-test: 15 probes ok');
+    console.log('✓ ggraphic licence self-test: 17 probes ok');
   } else {
     const root = fileURLToPath(new URL('..', import.meta.url));
     const assetProblems = checkBundledAssets(root);
@@ -383,5 +465,24 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
       process.exit(1);
     }
     console.log(`✓ ${count} package(s) in the @ggraphic dependency tree have allowed licences`);
+    const bare = missingSpdxHeaders(root, trackedSources(root));
+    if (bare.length > 0) {
+      console.error(
+        `\n✖ ${bare.length} source file(s) without an SPDX-License-Identifier header:\n`
+      );
+      for (const file of bare) console.error(`  ${file}`);
+      process.exit(1);
+    }
+    console.log('✓ every source file under apps/ and packages/ carries an SPDX header');
+    const wrong = mismatchedSpdxHeaders(root, trackedSources(root));
+    if (wrong.length > 0) {
+      console.error(
+        `\n✖ ${wrong.length} source file(s) whose SPDX id differs from their package's licence:\n`
+      );
+      for (const w of wrong)
+        console.error(`  ${w.file}: ${w.found}, package declares ${w.expected}`);
+      process.exit(1);
+    }
+    console.log("✓ every SPDX header names its package's licence");
   }
 }

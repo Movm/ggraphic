@@ -83,7 +83,7 @@ export function AiEditTool({ onJumpToUploads }: AiEditToolProps) {
           </p>
         </>
       }
-      actionLabel="Bearbeiten"
+      actionLabel={t.topBar.edit}
       actionIcon={HiPencilSquare}
       canSubmit={canSubmit}
       isBusy={isBusy || isUploading}

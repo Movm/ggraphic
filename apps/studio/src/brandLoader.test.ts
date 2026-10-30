@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { studioBrand } from './brand';
 import { applyBrandPack } from './brandLoader';
+import * as logoSize from './logoSize';
 
 const orgPack = {
   ...studioBrand,
@@ -14,6 +15,7 @@ const orgPack = {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   void applyBrandPack(null);
 });
 
@@ -40,6 +42,20 @@ describe('applyBrandPack', () => {
       }),
     ]);
     expect(load).toHaveBeenCalled();
+  });
+
+  it('measures both logos', async () => {
+    const measure = vi.spyOn(logoSize, 'measureLogo').mockResolvedValue(undefined as never);
+    await applyBrandPack({
+      ...studioBrand,
+      id: 'org-2',
+      logo: { src: '/api/brand-assets/a.png', label: 'A' },
+      logoAlt: { src: '/api/brand-assets/b.png', label: 'B', ground: 'light' },
+    });
+    expect(measure.mock.calls.map((c) => c[0])).toEqual([
+      '/api/brand-assets/a.png',
+      '/api/brand-assets/b.png',
+    ]);
   });
 
   it('falls back to the Studio pack alone', async () => {

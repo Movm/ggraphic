@@ -28,7 +28,7 @@
  */
 
 import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { messages, useMessages } from '@ggraphic/editor/i18n/messages';
 import { pagePersistedStateKeys } from '@ggraphic/editor/collab/pageElementStateKeys';
 import { serializeDeck } from '@ggraphic/editor/collab/pagesDoc';
 import { createPageSyncedCallbacks } from '@ggraphic/editor/collab/wrapCallbacksWithPageSync';
@@ -84,8 +84,7 @@ import { SidebarPanel } from '@ggraphic/editor/sidebar/SidebarPanel';
 import { SidebarTabBar } from '@ggraphic/editor/sidebar/SidebarTabBar';
 import { LayersSection } from '@ggraphic/editor/sidebar/sections/LayersSection';
 import { collectAltTextPages as collectCapturedAltTextPages } from '@ggraphic/editor/utils/collectAltTextPages';
-import { photoCreditLine } from '@ggraphic/editor/utils/photoCredit';
-import { pagePhotoCredits } from '@ggraphic/editor/utils/photoCredits';
+import { creditLines } from '@ggraphic/editor/utils/photoCredits';
 import { scrollBehavior } from '@ggraphic/editor/utils/scrollBehavior';
 import { CanvasAnnouncer } from '@ggraphic/editor/components/CanvasAnnouncer';
 import { CanvasContextMenu } from '@ggraphic/editor/components/CanvasContextMenu/CanvasContextMenu';
@@ -414,8 +413,8 @@ function CanvasEditorInner({
     setTemplateChangePageId(null);
   }, []);
   const handleSelectTemplateChange = useCallback(
-    (configId: string) => {
-      if (templateChangePageId) void setPageConfig(templateChangePageId, configId);
+    (configId: string, state?: Record<string, unknown>) => {
+      if (templateChangePageId) void setPageConfig(templateChangePageId, configId, state);
       setTemplateChangePageId(null);
     },
     [templateChangePageId, setPageConfig]
@@ -423,7 +422,9 @@ function CanvasEditorInner({
   const templateChangePage = useMemo(() => {
     if (templateChangePageId === null) return null;
     const index = pages.findIndex((p) => p.id === templateChangePageId);
-    return index >= 0 ? { index, configId: pages[index].configId } : null;
+    return index >= 0
+      ? { index, configId: pages[index].configId, state: pages[index].state }
+      : null;
   }, [templateChangePageId, pages]);
 
   // Sidebar handlers - functional setState (Rule 5.5)
@@ -632,7 +633,7 @@ function CanvasEditorInner({
       const deck = serializeDeck(pagesDoc);
       const refs = canvasRefsRef.current;
       if (deck.some((_, i) => !refs[i]?.current)) {
-        throw new Error('Nicht alle Folien konnten exportiert werden');
+        throw new Error(messages().errors.exportSlidesPartial);
       }
       return exportPptxDeck({
         pages: deck.map((page) => page.state),
@@ -892,7 +893,7 @@ function CanvasEditorInner({
         const ext = format === 'jpeg' ? 'jpg' : format;
         await fileDelivery.downloadDataUrl(
           dataUrl,
-          `${filenamePrefix}-seite-${currentPageIndex + 1}.${ext}`
+          `${filenamePrefix}-page-${currentPageIndex + 1}.${ext}`
         );
         onDownload?.(dataUrl);
       }
@@ -934,7 +935,7 @@ function CanvasEditorInner({
     if (!printFormat) return;
     const pages = printPages();
     if (pages.some((_, i) => !canvasRefsRef.current[i]?.current)) {
-      throw new Error('Nicht alle Seiten konnten exportiert werden');
+      throw new Error(messages().errors.exportPagesPartial);
     }
     const pdf = await exportPrintPdf({ format: printFormat, pages });
     const blob = new Blob([pdf as BlobPart], { type: 'application/pdf' });
@@ -945,10 +946,10 @@ function CanvasEditorInner({
   const handleDownloadPptx = useCallback(
     async (onProgress: (done: number, total: number) => void) => {
       const blob = await buildPptx(onProgress);
-      const filename = printPdfFilename(documentTitle ?? 'Präsentation', filenamePrefix).replace(
-        /\.pdf$/,
-        '.pptx'
-      );
+      const filename = printPdfFilename(
+        documentTitle ?? messages().defaults.presentationTitle,
+        filenamePrefix
+      ).replace(/\.pdf$/, '.pptx');
       await fileDelivery.downloadBlob(blob, filename);
     },
     [buildPptx, documentTitle, fileDelivery, filenamePrefix]
@@ -961,7 +962,7 @@ function CanvasEditorInner({
     const blob = new Blob([pdf as BlobPart], { type: 'application/pdf' });
     await fileDelivery.downloadBlob(
       blob,
-      printPdfFilename(documentTitle ?? 'Präsentation', filenamePrefix)
+      printPdfFilename(documentTitle ?? messages().defaults.presentationTitle, filenamePrefix)
     );
   }, [exportAllPages, documentTitle, fileDelivery, filenamePrefix]);
 
@@ -1046,7 +1047,8 @@ function CanvasEditorInner({
     ? activeEditorTab.tab.label
     : activeTab === 'layers'
       ? layersTab.label
-      : (activeTab && activeConfig?.tabs.find((tab) => tab.id === activeTab)?.label) || 'Auswahl';
+      : (activeTab && activeConfig?.tabs.find((tab) => tab.id === activeTab)?.label) ||
+        messages().topBar.selection;
   useMobileSheetFit({
     enabled: isMobileSheetOpen,
     zoom,
@@ -1069,7 +1071,7 @@ function CanvasEditorInner({
 
     if (route === 'native-host') {
       dataUrls.forEach((dataUrl, i) =>
-        fileDelivery.shareDataUrlViaNativeHost(dataUrl, `${filenamePrefix}-seite-${i + 1}.png`, {
+        fileDelivery.shareDataUrlViaNativeHost(dataUrl, `${filenamePrefix}-page-${i + 1}.png`, {
           title: shareTitle,
         })
       );
@@ -1079,7 +1081,7 @@ function CanvasEditorInner({
     const files = await Promise.all(
       dataUrls.map(async (dataUrl, i) => {
         const blob = await (await fetch(dataUrl)).blob();
-        return new File([blob], `${filenamePrefix}-seite-${i + 1}.png`, { type: 'image/png' });
+        return new File([blob], `${filenamePrefix}-page-${i + 1}.png`, { type: 'image/png' });
       })
     );
 
@@ -1110,7 +1112,7 @@ function CanvasEditorInner({
           if (dataUrl) {
             await fileDelivery.downloadDataUrl(
               dataUrl,
-              `${filenamePrefix}-slider-seite-${currentPageIndex + 1}.png`
+              `${filenamePrefix}-slider-page-${currentPageIndex + 1}.png`
             );
           }
         }
@@ -1268,7 +1270,7 @@ function CanvasEditorInner({
 
   const noop = useCallback(() => {}, []);
   const getPhotoCredit = useCallback(
-    () => photoCreditLine(serializeDeck(pagesDoc).flatMap((page) => pagePhotoCredits(page.state))),
+    () => creditLines(serializeDeck(pagesDoc).map((page) => page.state)),
     [pagesDoc]
   );
   // Als String, damit Notiz-Tippen (neues `pages`) die Leiste nicht neu baut
@@ -1683,7 +1685,8 @@ function CanvasEditorInner({
 
                   return (
                     <PageWrapper
-                      key={page.id}
+                      // A replaced state (convert, undo) mounts the page afresh on the new state.
+                      key={`${page.id}:${page.stateEpoch ?? 0}`}
                       page={page}
                       index={index}
                       pageCount={pageCount}
@@ -1730,6 +1733,7 @@ function CanvasEditorInner({
                     onSelectTemplate={handleSelectTemplateChange}
                     onClose={handleCloseTemplateChange}
                     currentTemplateId={templateChangePage.configId}
+                    currentState={templateChangePage.state}
                     activeTemplateId={currentTemplateId}
                     pages={pages}
                     formatId={formatId}

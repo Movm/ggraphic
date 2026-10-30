@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Before a session: first-run setup on an empty instance, otherwise login, and
- * registration when the instance allows it. Also used by the invitation page.
+ * registration when the instance allows it.
  */
 import {
   Alert,
@@ -15,7 +15,8 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { useState, type FormEvent, type ReactNode } from 'react';
 
-import { api, ApiError, type Session } from '../api/client';
+import { api, type Session } from '../api/client';
+import { authErrorText } from '../ui/errorText';
 import { SESSION_QUERY_KEY } from '../session/SessionContext';
 
 export type AuthMode = 'setup' | 'login' | 'register';
@@ -33,9 +34,6 @@ const SUBMIT: Record<AuthMode, string> = {
 };
 
 export const PASSWORD_MIN = 10;
-
-const errorText = (err: unknown) =>
-  err instanceof ApiError ? err.message : 'Something went wrong. Try again.';
 
 export interface Credentials {
   email: string;
@@ -71,7 +69,7 @@ export function CredentialsForm({
     try {
       await onSubmit({ email, displayName, password, setupToken });
     } catch (err) {
-      setError(errorText(err));
+      setError(authErrorText(err));
       setBusy(false);
     }
   };
@@ -178,9 +176,6 @@ export function AuthPage({ session }: { session: Session }) {
             {mode === 'login' ? 'Create one' : 'Log in'}
           </button>
         </p>
-      ) : null}
-      {mode === 'login' && !session.registrationOpen ? (
-        <p className="studio-muted">New here? Ask an organisation owner for an invitation link.</p>
       ) : null}
     </StudioAuthLayout>
   );

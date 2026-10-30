@@ -35,6 +35,11 @@ export interface PageView {
   state: Record<string, unknown>;
   /** Reference to the page's Y.Map — used by GenericCanvas for config binding. */
   yMap: Y.Map<unknown>;
+  /**
+   * Identifies the page's `state` Y.Map. Edits change the map's entries, never the map; a whole
+   * replacement (convert, undo or redo of one) gives the page a new map and so a new epoch.
+   */
+  stateEpoch: number;
 }
 
 export interface SerializedPage {
@@ -78,6 +83,18 @@ export const getPagesMap = (doc: Y.Doc): Y.Map<Y.Map<unknown>> =>
 
 export const getMetaMap = (doc: Y.Doc): Y.Map<unknown> => doc.getMap<unknown>(YDOC_KEYS.meta);
 
+const stateEpochs = new WeakMap<object, number>();
+let nextStateEpoch = 1;
+const epochOf = (stateY: unknown): number => {
+  if (!(stateY instanceof Y.Map)) return 0;
+  let epoch = stateEpochs.get(stateY);
+  if (epoch === undefined) {
+    epoch = nextStateEpoch++;
+    stateEpochs.set(stateY, epoch);
+  }
+  return epoch;
+};
+
 const pageToView = (yMap: Y.Map<unknown>): PageView | null => {
   const id = yMap.get(YDOC_KEYS.id);
   const configId = yMap.get(YDOC_KEYS.configId);
@@ -87,7 +104,7 @@ const pageToView = (yMap: Y.Map<unknown>): PageView | null => {
   }
   const stateY = yMap.get(YDOC_KEYS.state);
   const state = stateY instanceof Y.Map ? Object.fromEntries(stateY.entries()) : {};
-  return { id, configId, pos, state, yMap };
+  return { id, configId, pos, state, yMap, stateEpoch: epochOf(stateY) };
 };
 
 /** All pages, sorted by (pos, id) — the canonical page order. */
@@ -123,7 +140,11 @@ export function buildPage(def: PageDef, pos: string): Y.Map<unknown> {
 
 const cloneYMapShallow = (source: Y.Map<unknown>): Y.Map<unknown> => {
   const copy = new Y.Map<unknown>();
-  for (const [k, v] of source.entries()) copy.set(k, v);
+  // Plain values are copied, not shared: a duplicated page's arrays (`groups`,
+  // element lists) must not alias the source page's.
+  for (const [k, v] of source.entries()) {
+    copy.set(k, v instanceof Y.AbstractType ? v.clone() : structuredClone(v));
+  }
   return copy;
 };
 

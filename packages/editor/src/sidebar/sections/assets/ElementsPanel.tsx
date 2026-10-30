@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
 import { useDebounce } from '@ggraphic/editor/hooks/useDebounce';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { messages, useMessages } from '@ggraphic/editor/i18n/messages';
 import { registeredAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
 import { cn } from '@ggraphic/editor/utils/cn';
 import { addHostElement } from '@ggraphic/editor/utils/elementKinds';
@@ -31,6 +31,7 @@ import { ElementTile } from './ElementTile.js';
 import { galleryStickerItem, type ElementItem } from './elementTypes.js';
 import { EmojiTonePicker } from '@ggraphic/editor/sidebar/sections/assets/EmojiTonePicker';
 import { FotosCatalog } from './FotosCatalog.js';
+import { IconifyCatalog } from './IconifyCatalog.js';
 import { RecentCarousel } from './RecentCarousel.js';
 import { StickerCatalog } from './StickerCatalog.js';
 import { canRun, useElementCatalog, type CategoryId } from './useElementCatalog.js';
@@ -49,7 +50,7 @@ const BRAND_COUNT = 4;
 const useNoBlocks = (): ElementBlocks | null => null;
 
 function countLabel(n: number): string {
-  return `${n} ${n === 1 ? 'Element' : 'Elemente'}`;
+  return messages().common.elements(n);
 }
 
 function SearchField({
@@ -144,7 +145,7 @@ function BlockGroups({
 export function ElementsPanel(props: ExtendedAssetsSectionProps) {
   const t = useMessages();
   const isMobile = useIsCanvasMobile();
-  const { userLocale = 'de-DE', searchUnsplashImages } = useCanvasEditorServices();
+  const { userLocale = 'de-DE', searchUnsplashImages, iconSearch } = useCanvasEditorServices();
   // Opened for a selected frame or illustration ("Mehr" on the phone), it starts in that category.
   const [cat, setCat] = useState<CategoryId | null>(() =>
     props.selectedFrameId ? 'rahmen' : props.selectedIllustrationId ? 'illustrationen' : null
@@ -317,6 +318,16 @@ export function ElementsPanel(props: ExtendedAssetsSectionProps) {
       ? (props.illustrationInstances?.find((i) => i.id === props.selectedIllustrationId) ?? null)
       : null;
 
+  // Icons from the host's icon search, below a search query, next to the bundled ones.
+  const iconify =
+    hasQuery && iconSearch && props.onAddExternalIcon ? (
+      <IconifyCatalog
+        query={q}
+        onAdd={props.onAddExternalIcon}
+        full={(selectedIcons?.length ?? 0) >= maxIcons ? maxIcons : null}
+      />
+    ) : null;
+
   const grid = (items: readonly ElementItem[]) => (
     <ElementGrid
       items={items}
@@ -377,13 +388,24 @@ export function ElementsPanel(props: ExtendedAssetsSectionProps) {
         </StickerCatalog>
       );
     }
+    if (category.id === 'icons' && iconify) {
+      return (
+        <div className="flex flex-col gap-5">
+          {body}
+          {iconify}
+        </div>
+      );
+    }
     return body;
   }
 
   const showResultsHeader = hasQuery && (category?.searchable ?? true);
   // In Fotos an empty local search still leads on to Unsplash, so the body stays.
   const searchesUnsplash = category?.id === 'fotos' && searchUnsplashImages !== undefined;
-  const showNoResults = showResultsHeader && results.length === 0 && !searchesUnsplash;
+  // The icon search below a query can still find icons the bundled sets lack.
+  const searchesIcons = iconify !== null && (category === null || category.id === 'icons');
+  const showNoResults =
+    showResultsHeader && results.length === 0 && !searchesUnsplash && !searchesIcons;
 
   return (
     <div
@@ -437,7 +459,9 @@ export function ElementsPanel(props: ExtendedAssetsSectionProps) {
 
       {showNoResults ? (
         <div className="flex flex-col items-center gap-1.5 px-3 py-10 text-center">
-          <strong className="text-[15px] text-[var(--editor-text)]">Nichts gefunden</strong>
+          <strong className="text-[15px] text-[var(--editor-text)]">
+            {t.sidebar.elements.nothingFound}
+          </strong>
           {noResultsHint && (
             <span className="text-sm text-[var(--editor-text-muted)] [text-wrap:pretty]">
               {noResultsHint}
@@ -459,7 +483,10 @@ export function ElementsPanel(props: ExtendedAssetsSectionProps) {
           {renderCategoryBody()}
         </>
       ) : hasQuery ? (
-        grid(results)
+        <>
+          {grid(results)}
+          {iconify}
+        </>
       ) : (
         <>
           {recent.length > 0 && (

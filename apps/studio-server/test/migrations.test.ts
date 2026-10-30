@@ -38,7 +38,16 @@ describe.skipIf(!url)('upgrade from 0001 (Postgres)', () => {
     expect(await runMigrations(pool, onlyFirst)).toEqual(['0001_init.sql']);
     await pool.query("INSERT INTO projects (name) VALUES ('one'), ('two')");
 
-    expect(await runMigrations(pool)).toEqual(['0002_accounts.sql']);
+    expect(await runMigrations(pool)).toEqual([
+      '0002_accounts.sql',
+      '0003_trash.sql',
+      '0004_brand_layout_fonts_logo.sql',
+      '0005_hidden_templates.sql',
+    ]);
+    // The trash column is additive: projects from before it are live.
+    expect((await pool.query('SELECT 1 FROM projects WHERE deleted_at IS NOT NULL')).rowCount).toBe(
+      0
+    );
     const { rows } = await pool.query('SELECT name, organisation_id FROM projects ORDER BY name');
     expect(rows).toEqual([
       { name: 'one', organisation_id: DEFAULT_ORG },
@@ -60,5 +69,40 @@ describe.skipIf(!url)('upgrade from 0001 (Postgres)', () => {
     const { rows } = await pool.query('SELECT file_name, organisation_id, size FROM uploads');
     expect(rows).toEqual([{ file_name: keep, organisation_id: DEFAULT_ORG, size: PNG_1X1.length }]);
     expect(await adoptLegacyUploads(db, join(dir, 'missing'))).toBe(0);
+  });
+
+  it('migration 0004 on a database with brand_packs rows leaves them readable', async () => {
+    // Runs on the schema the first test migrated; 0004 is already applied, so rebuild up to 0003.
+    const before = mkdtempSync(join(tmpdir(), 'migrations-0003-'));
+    for (const f of ['0001_init.sql', '0002_accounts.sql', '0003_trash.sql']) {
+      copyFileSync(join(MIGRATIONS, f), join(before, f));
+    }
+    await admin.query(`DROP SCHEMA ${name} CASCADE`);
+    await admin.query(`CREATE SCHEMA ${name}`);
+    await runMigrations(pool, before);
+    await pool.query(
+      `INSERT INTO brand_packs (organisation_id, name, colors, backgrounds, fonts)
+       VALUES ($1, 'Old', '{}', '[]', '{"headline":"Raleway","body":"Instrument Sans"}')`,
+      [DEFAULT_ORG]
+    );
+    expect(await runMigrations(pool)).toEqual([
+      '0004_brand_layout_fonts_logo.sql',
+      '0005_hidden_templates.sql',
+    ]);
+    const { rows } = await pool.query(
+      'SELECT name, fonts, layout, logo_alt_asset_id, logo_alt_ground FROM brand_packs'
+    );
+    expect(rows).toEqual([
+      {
+        name: 'Old',
+        fonts: { headline: 'Raleway', body: 'Instrument Sans' },
+        layout: null,
+        logo_alt_asset_id: null,
+        logo_alt_ground: null,
+      },
+    ]);
+    await expect(pool.query("UPDATE brand_packs SET logo_alt_ground = 'grey'")).rejects.toThrow(
+      /logo_alt_ground/
+    );
   });
 });

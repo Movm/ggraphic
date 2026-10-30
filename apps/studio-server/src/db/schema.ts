@@ -94,6 +94,8 @@ export const projects = pgTable('projects', {
   version: integer('version').notNull().default(1),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  /** Set when the project is moved to the trash; null while it is live. See src/trash.ts. */
+  deletedAt: timestamp('deleted_at', { withTimezone: true }),
 });
 
 export const projectThumbnails = pgTable('project_thumbnails', {
@@ -139,6 +141,11 @@ export const brandPacks = pgTable('brand_packs', {
   backgrounds: jsonb('backgrounds').$type<unknown[]>().notNull(),
   fonts: jsonb('fonts').$type<Record<string, unknown>>().notNull(),
   logoAssetId: uuid('logo_asset_id').references(() => brandAssets.id, { onDelete: 'set null' }),
+  layout: jsonb('layout').$type<Record<string, unknown>>(),
+  logoAltAssetId: uuid('logo_alt_asset_id').references(() => brandAssets.id, {
+    onDelete: 'set null',
+  }),
+  logoAltGround: text('logo_alt_ground', { enum: ['dark', 'light'] }),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -146,3 +153,16 @@ export type ProjectRow = InferSelectModel<typeof projects>;
 export type AccountRow = InferSelectModel<typeof accounts>;
 export type BrandAssetRow = InferSelectModel<typeof brandAssets>;
 export type BrandPackRow = InferSelectModel<typeof brandPacks>;
+
+export const hiddenTemplates = pgTable(
+  'hidden_templates',
+  {
+    organisationId: uuid('organisation_id')
+      .notNull()
+      .references(() => organisations.id, { onDelete: 'cascade' }),
+    templateId: text('template_id').notNull(),
+    hiddenBy: uuid('hidden_by').references(() => accounts.id, { onDelete: 'set null' }),
+    hiddenAt: timestamp('hidden_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.organisationId, t.templateId] })]
+);

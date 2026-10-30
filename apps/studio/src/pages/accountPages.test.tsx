@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
+import { DEFAULT_BRAND_LAYOUT } from '@ggraphic/core';
 
 import { type Role, type Session } from '../api/client';
 import { studioBrand } from '../brand';
 import { TEST_ORG, WithSession } from '../testing/session';
 import { AuthPage } from './AuthPage';
 import { BrandPage, defaultSettings } from './BrandPage';
-import { MembersPage } from './MembersPage';
 
 const json = (status: number, body: unknown) =>
   new Response(status === 204 ? null : JSON.stringify(body), {
@@ -50,7 +50,6 @@ const anonymous = (over: Partial<Session> = {}): Session => ({
   account: null,
   csrfToken: null,
   organisations: [],
-  canCreateOrganisations: false,
   ...over,
 });
 
@@ -99,6 +98,36 @@ describe('AuthPage', () => {
     });
   });
 
+  it('does not point to invitation links, which no longer exist', () => {
+    renderWith(<AuthPage session={anonymous()} />);
+    expect(screen.queryByText(/invitation/i)).toBeNull();
+  });
+
+  it('does not show server text it has no fixed wording for', async () => {
+    const leak = 'SQLSTATE 23505 duplicate key in accounts_email_key';
+    stubServer(() => json(500, { error: 'internal', message: leak }));
+    const user = userEvent.setup();
+    renderWith(<AuthPage session={anonymous()} />);
+    await user.type(screen.getByLabelText('Email'), 'a@example.org');
+    await user.type(screen.getByLabelText('Password'), 'x');
+    await user.click(screen.getByRole('button', { name: 'Log in' }));
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(/something went wrong/i);
+    expect(alert).not.toHaveTextContent(leak);
+  });
+
+  it('says the fixed reason for a known code whatever text the server sent', async () => {
+    stubServer(() => json(401, { error: 'invalid_credentials', message: 'raw: bad hash' }));
+    const user = userEvent.setup();
+    renderWith(<AuthPage session={anonymous()} />);
+    await user.type(screen.getByLabelText('Email'), 'a@example.org');
+    await user.type(screen.getByLabelText('Password'), 'x');
+    await user.click(screen.getByRole('button', { name: 'Log in' }));
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Email or password is wrong.');
+    expect(alert).not.toHaveTextContent('raw: bad hash');
+  });
+
   it('shows the server message when login fails and hides registration when closed', async () => {
     stubServer(() =>
       json(401, { error: 'invalid_credentials', message: 'Email or password is wrong.' })
@@ -113,63 +142,43 @@ describe('AuthPage', () => {
   });
 });
 
-describe('MembersPage', () => {
-  const members = [
-    { accountId: 'acc-1', email: 'me@example.org', displayName: 'Me', role: 'owner' },
-    { accountId: 'acc-2', email: 'ed@example.org', displayName: 'Ed', role: 'editor' },
-  ];
+const logoAsset = (id: string) => ({
+  id,
+  kind: 'logo',
+  url: `/api/brand-assets/${id}.png`,
+  contentType: 'image/png',
+  size: 10,
+  family: null,
+  weight: null,
+  style: null,
+  licence: null,
+});
+const LOGO_A = '11111111-1111-4111-8111-111111111111';
+const LOGO_B = '22222222-2222-4222-8222-222222222222';
 
-  it('lets an owner create an invitation link and change a role', async () => {
-    const calls = stubServer((method, url) => {
-      if (url === `/api/orgs/${TEST_ORG}/members`) return json(200, { members });
-      if (url === `/api/orgs/${TEST_ORG}/invitations` && method === 'GET') {
-        return json(200, { invitations: [] });
-      }
-      if (url === `/api/orgs/${TEST_ORG}/invitations` && method === 'POST') {
-        return json(201, {
-          id: 'inv-1',
-          role: 'editor',
-          createdAt: '2026-10-28T10:00:00.000Z',
-          expiresAt: '2026-11-04T10:00:00.000Z',
-          allowsSignup: true,
-          url: '/invite/secret-token',
-        });
-      }
-      if (method === 'PATCH') return json(204, null);
-      return undefined;
+// jsdom lacks the pointer-capture and scroll APIs Radix Select calls; restored after each test.
+const radixMethods = [
+  'hasPointerCapture',
+  'releasePointerCapture',
+  'setPointerCapture',
+  'scrollIntoView',
+] as const;
+const originalMethods = new Map(radixMethods.map((m) => [m, Element.prototype[m]]));
+function polyfillRadix() {
+  for (const m of radixMethods) {
+    Object.defineProperty(Element.prototype, m, {
+      value: m === 'hasPointerCapture' ? () => false : () => undefined,
+      configurable: true,
+      writable: true,
     });
-    const user = userEvent.setup();
-    renderWith(<MembersPage />);
-    await screen.findByText('Ed');
-    const list = within(screen.getByRole('main')).getAllByRole('listitem');
-    expect(within(list[1]!).getByText('Ed')).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: 'Create invitation link' }));
-    expect(
-      await screen.findByDisplayValue(`${window.location.origin}/invite/secret-token`)
-    ).toBeInTheDocument();
-    expect(screen.getByText(/Anyone who has this link can join/)).toBeInTheDocument();
-
-    await user.selectOptions(screen.getByLabelText('Role of Ed'), 'owner');
-    await waitFor(() =>
-      expect(calls.find((c) => c.method === 'PATCH')).toMatchObject({
-        url: `/api/orgs/${TEST_ORG}/members/acc-2`,
-        body: { role: 'owner' },
-      })
-    );
-  });
-
-  it('shows editors the list without management controls', async () => {
-    const calls = stubServer((_m, url) =>
-      url === `/api/orgs/${TEST_ORG}/members` ? json(200, { members }) : undefined
-    );
-    renderWith(<MembersPage />, 'editor');
-    expect(await screen.findByText('Ed')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Create invitation link' })).toBeNull();
-    expect(screen.queryByLabelText('Role of Ed')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Leave' })).toBeInTheDocument();
-    expect(calls.some((c) => c.url.endsWith('/invitations'))).toBe(false);
-  });
+  }
+}
+afterEach(() => {
+  for (const m of radixMethods) {
+    const original = originalMethods.get(m);
+    if (original) Element.prototype[m] = original as never;
+    else delete (Element.prototype as unknown as Record<string, unknown>)[m];
+  }
 });
 
 describe('BrandPage', () => {
@@ -200,20 +209,103 @@ describe('BrandPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'Save brand' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
-    const saved = calls.find((c) => c.method === 'PUT')!.body as {
-      colors: Record<string, string>;
-      backgrounds: unknown[];
-      fonts: Record<string, string>;
+    // Only the three chosen colours go out; the server derives the rest.
+    expect(calls.find((c) => c.method === 'PUT')!.body).toEqual({
+      name: 'Example org',
+      colors: {
+        primary: '#112233',
+        secondary: studioBrand.colors.secondary,
+        accent: studioBrand.colors.accent,
+      },
+      fonts: { headline: 'Raleway', body: 'Instrument Sans', serif: null, condensed: null },
+      logoAssetId: null,
+      logoAlt: null,
+      layout: DEFAULT_BRAND_LAYOUT,
+    });
+  });
+
+  it('shows the derived colours and updates them live; attention cannot be edited', async () => {
+    stubServer((method, url) =>
+      url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET' ? json(200, empty) : undefined
+    );
+    const user = userEvent.setup();
+    renderWith(<BrandPage />);
+    const list = await screen.findByLabelText('Derived colours');
+    const surface = () => within(list).getByText('Surface').parentElement!.textContent;
+    const before = surface();
+    expect(within(list).getByText('Attention')).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Attention/)).toBeNull();
+    expect(screen.queryByLabelText(/^Surface/)).toBeNull();
+
+    const primary = screen.getByLabelText(/^Primary Main colour/);
+    await user.clear(primary);
+    await user.type(primary, '#0b3d2e');
+    expect(surface()).not.toBe(before);
+  });
+
+  it('tells the owner that saving re-derives hand-set colours of an existing pack', async () => {
+    const settings = defaultSettings('Org');
+    settings.colors = { ...settings.colors, surface: '#FF00FF' };
+    stubServer((method, url) =>
+      url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET'
+        ? json(200, { ...empty, settings })
+        : undefined
+    );
+    renderWith(<BrandPage />);
+    expect(await screen.findByText(/hand-set colours/)).toBeInTheDocument();
+  });
+
+  it('also tells the owner when only the stored grounds differ from the derived ones', async () => {
+    const { deriveBrandColors, deriveGrounds } = await import('@ggraphic/core');
+    const base = defaultSettings('Org');
+    const { primary, secondary, accent } = base.colors;
+    const grounds = deriveGrounds({ primary, secondary, accent }).map(({ label, color, ink }) => ({
+      label,
+      color,
+      ink,
+    }));
+    grounds[0] = { ...grounds[0]!, color: '#FF00FF' };
+    const edited = {
+      ...base,
+      colors: deriveBrandColors({ primary, secondary, accent })!,
+      backgrounds: grounds,
     };
-    expect(saved.colors['primary']).toBe('#112233');
-    expect(saved.backgrounds).toHaveLength(studioBrand.backgrounds.length);
-    expect(saved.fonts).toEqual({ headline: 'Raleway', body: 'Instrument Sans' });
+    stubServer((method, url) =>
+      url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET'
+        ? json(200, { ...empty, settings: edited })
+        : undefined
+    );
+    renderWith(<BrandPage />);
+    expect(await screen.findByText(/hand-set colours/)).toBeInTheDocument();
+  });
+
+  it('shows no notice for a new pack or one that already matches the derivation', async () => {
+    const { deriveBrandColors, deriveGrounds } = await import('@ggraphic/core');
+    const base = defaultSettings('Org');
+    const { primary, secondary, accent } = base.colors;
+    const matching = {
+      ...base,
+      colors: deriveBrandColors({ primary, secondary, accent })!,
+      backgrounds: deriveGrounds({ primary, secondary, accent }).map(({ label, color, ink }) => ({
+        label,
+        color,
+        ink,
+      })),
+    };
+    stubServer((method, url) =>
+      url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET'
+        ? json(200, { ...empty, settings: matching })
+        : undefined
+    );
+    renderWith(<BrandPage />);
+    await screen.findByLabelText(/^Primary Main colour/);
+    expect(screen.queryByText(/hand-set colours/)).toBeNull();
   });
 
   it('shows and saves the successors of replaced font families', async () => {
     const settings = {
       ...defaultSettings('Org'),
-      fonts: { headline: 'Raleway', body: 'PT Sans' },
+      fonts: { headline: 'Raleway', body: 'PT Sans', serif: null, condensed: null },
     };
     const calls = stubServer((method, url, body) => {
       if (url !== `/api/orgs/${TEST_ORG}/brand-pack`) return undefined;
@@ -226,7 +318,12 @@ describe('BrandPage', () => {
     await user.click(screen.getByRole('button', { name: 'Save brand' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
     const saved = calls.find((c) => c.method === 'PUT')!.body as { fonts: Record<string, string> };
-    expect(saved.fonts).toEqual({ headline: 'Raleway', body: 'Instrument Sans' });
+    expect(saved.fonts).toEqual({
+      headline: 'Raleway',
+      body: 'Instrument Sans',
+      serif: null,
+      condensed: null,
+    });
   });
 
   it('blocks saving an invalid colour', async () => {
@@ -238,8 +335,177 @@ describe('BrandPage', () => {
     const accent = await screen.findByLabelText(/^Accent Emphasis on dark/);
     await user.clear(accent);
     await user.type(accent, 'pink');
-    expect(screen.getByRole('alert')).toHaveTextContent('#RRGGBB');
+    expect(accent).toHaveAccessibleDescription(/#RRGGBB/);
+    expect(accent).toBeInvalid();
     expect(screen.getByRole('button', { name: 'Save brand' })).toBeDisabled();
+  });
+
+  it('saves margin, logo corner and logo size', async () => {
+    const calls = stubServer((method, url, body) => {
+      if (url !== `/api/orgs/${TEST_ORG}/brand-pack`) return undefined;
+      if (method === 'GET') return json(200, empty);
+      return json(200, { ...empty, settings: body });
+    });
+    const user = userEvent.setup();
+    renderWith(<BrandPage />);
+    const margin = await screen.findByLabelText(/^Margin/);
+    fireEvent.change(margin, { target: { value: '10' } });
+    await user.click(screen.getByRole('radio', { name: 'Top left' }));
+    await user.click(screen.getByRole('button', { name: 'Save brand' }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
+    expect((calls.find((c) => c.method === 'PUT')!.body as { layout: unknown }).layout).toEqual({
+      margin: 0.1,
+      logoCorner: 'top-left',
+      logoMaxWidth: 0.22,
+      logoMaxHeight: 0.08,
+    });
+  });
+
+  it('serif and condensed default to the fallback and save null', async () => {
+    const calls = stubServer((method, url, body) => {
+      if (url !== `/api/orgs/${TEST_ORG}/brand-pack`) return undefined;
+      if (method === 'GET') return json(200, empty);
+      return json(200, { ...empty, settings: body });
+    });
+    const user = userEvent.setup();
+    renderWith(<BrandPage />);
+    expect(await screen.findByLabelText('Serif')).toHaveTextContent('Same as quotes');
+    expect(screen.getByLabelText('Condensed')).toHaveTextContent('Same as headlines');
+    await user.click(screen.getByRole('button', { name: 'Save brand' }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
+    const fonts = (
+      calls.find((c) => c.method === 'PUT')!.body as { fonts: Record<string, unknown> }
+    ).fonts;
+    expect(fonts.serif).toBeNull();
+    expect(fonts.condensed).toBeNull();
+  });
+
+  it('a second logo needs a ground', async () => {
+    const withLogos = { ...empty, assets: [logoAsset(LOGO_A), logoAsset(LOGO_B)] };
+    stubServer((method, url) =>
+      url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET'
+        ? json(200, withLogos)
+        : undefined
+    );
+    polyfillRadix();
+    const user = userEvent.setup();
+    renderWith(<BrandPage />);
+    await user.click(await screen.findByLabelText('Second logo'));
+    await user.click(await screen.findByRole('option', { name: 'Logo 2 (PNG)' }));
+    expect(screen.getByRole('button', { name: 'Save brand' })).toBeDisabled();
+    await user.click(screen.getByRole('radio', { name: 'For dark grounds' }));
+    expect(screen.getByRole('button', { name: 'Save brand' })).toBeEnabled();
+  });
+
+  it('limits the logo box to 5–30 % wide and 3–12 % high and shows an older value clamped', async () => {
+    const settings = {
+      ...defaultSettings('Org'),
+      layout: { margin: 0.06, logoCorner: 'top-right', logoMaxWidth: 0.4, logoMaxHeight: 0.2 },
+    };
+    const stored = { ...empty, settings };
+    const calls = stubServer((method, url, body) => {
+      if (url !== `/api/orgs/${TEST_ORG}/brand-pack`) return undefined;
+      if (method === 'GET') return json(200, stored);
+      return json(200, { ...stored, settings: body });
+    });
+    const user = userEvent.setup();
+    renderWith(<BrandPage />);
+    const width = await screen.findByLabelText(/^Logo width/);
+    const height = screen.getByLabelText(/^Logo height/);
+    expect(width).toHaveAttribute('min', '5');
+    expect(width).toHaveAttribute('max', '30');
+    expect(height).toHaveAttribute('min', '3');
+    expect(height).toHaveAttribute('max', '12');
+    expect(width).toHaveValue('30');
+    expect(height).toHaveValue('12');
+    await user.click(screen.getByRole('button', { name: 'Save brand' }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
+    expect(
+      (calls.find((c) => c.method === 'PUT')!.body as { layout: Record<string, number> }).layout
+    ).toMatchObject({ logoMaxWidth: 0.3, logoMaxHeight: 0.12 });
+  });
+
+  it('keeps a stored layout and second logo when saving untouched', async () => {
+    const layout = {
+      margin: 0.06,
+      logoCorner: 'top-right',
+      logoMaxWidth: 0.3,
+      logoMaxHeight: 0.12,
+    };
+    const settings = {
+      ...defaultSettings('Org'),
+      layout,
+      logoAssetId: LOGO_A,
+      logoAlt: { assetId: LOGO_B, ground: 'light' },
+    };
+    const stored = { ...empty, settings, assets: [logoAsset(LOGO_A), logoAsset(LOGO_B)] };
+    const calls = stubServer((method, url, body) => {
+      if (url !== `/api/orgs/${TEST_ORG}/brand-pack`) return undefined;
+      if (method === 'GET') return json(200, stored);
+      return json(200, { ...stored, settings: body });
+    });
+    const user = userEvent.setup();
+    renderWith(<BrandPage />);
+    await screen.findByLabelText(/^Primary Main colour/);
+    await user.click(screen.getByRole('button', { name: 'Save brand' }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
+    const saved = calls.find((c) => c.method === 'PUT')!.body as Record<string, unknown>;
+    expect(saved.layout).toEqual(layout);
+    expect(saved.logoAlt).toEqual({ assetId: LOGO_B, ground: 'light' });
+    expect(saved.logoAssetId).toBe(LOGO_A);
+  });
+
+  it('shows a stored second logo whose asset is gone as none and saves null', async () => {
+    const settings = {
+      ...defaultSettings('Org'),
+      logoAlt: { assetId: LOGO_B, ground: 'dark' },
+    };
+    const stored = {
+      ...empty,
+      settings,
+      assets: [logoAsset(LOGO_A), logoAsset(LOGO_A.replace('1', '3'))],
+    };
+    const calls = stubServer((method, url, body) => {
+      if (url !== `/api/orgs/${TEST_ORG}/brand-pack`) return undefined;
+      if (method === 'GET') return json(200, stored);
+      return json(200, { ...stored, settings: body });
+    });
+    const user = userEvent.setup();
+    renderWith(<BrandPage />);
+    expect(await screen.findByLabelText('Second logo')).toHaveTextContent('No second logo');
+    await user.click(screen.getByRole('button', { name: 'Save brand' }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
+    expect(
+      (calls.find((c) => c.method === 'PUT')!.body as { logoAlt: unknown }).logoAlt
+    ).toBeNull();
+  });
+
+  it('does not offer the logo in use as the second logo', async () => {
+    const settings = { ...defaultSettings('Org'), logoAssetId: LOGO_A };
+    const stored = { ...empty, settings, assets: [logoAsset(LOGO_A), logoAsset(LOGO_B)] };
+    stubServer((method, url) =>
+      url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET' ? json(200, stored) : undefined
+    );
+    polyfillRadix();
+    const user = userEvent.setup();
+    renderWith(<BrandPage />);
+    await user.click(await screen.findByLabelText('Second logo'));
+    expect(await screen.findByRole('option', { name: 'Logo 2 (PNG)' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Logo 1 (PNG)' })).toBeNull();
+  });
+
+  it('draws the preview logo at full opacity, outside the dashed outlines', async () => {
+    const settings = { ...defaultSettings('Org'), logoAssetId: LOGO_A };
+    const stored = { ...empty, settings, assets: [logoAsset(LOGO_A)] };
+    stubServer((method, url) =>
+      url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET' ? json(200, stored) : undefined
+    );
+    renderWith(<BrandPage />);
+    const figure = await screen.findByRole('figure', { name: /Preview/ });
+    const img = within(figure).getByRole('img');
+    for (let el: HTMLElement | null = img; el && el !== figure; el = el.parentElement) {
+      expect(el.className).not.toContain('studio-brand-preview__outline');
+    }
   });
 
   it('has no axe violations on the brand page', async () => {
@@ -284,6 +550,14 @@ describe('BrandPage', () => {
     expect(alert).toHaveTextContent(message);
     expect(input).toHaveAttribute('aria-invalid', 'true');
     expect(input.getAttribute('aria-describedby')).toContain(alert.id);
+  });
+
+  it('does not show the server text when the brand cannot be loaded', async () => {
+    const leak = 'SQLSTATE 23505 duplicate key in brand_packs_pkey';
+    stubServer(() => json(500, { error: 'internal', message: leak }));
+    renderWith(<BrandPage />);
+    expect(await screen.findByRole('alert')).toHaveTextContent(/something went wrong/i);
+    expect(screen.queryByText(leak)).not.toBeInTheDocument();
   });
 
   it('tells editors that only owners edit the brand', async () => {

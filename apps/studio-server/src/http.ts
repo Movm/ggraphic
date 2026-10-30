@@ -7,11 +7,14 @@ import type { ApiError } from './contract.ts';
 export class HttpError extends Error {
   readonly status: number;
   readonly body: ApiError;
+  /** Seconds for the Retry-After header of a 429 or 503. */
+  readonly retryAfter: number | null;
 
-  constructor(status: number, body: ApiError) {
+  constructor(status: number, body: ApiError, retryAfter: number | null = null) {
     super(body.message ?? body.error);
     this.status = status;
     this.body = body;
+    this.retryAfter = retryAfter;
   }
 }
 
@@ -59,6 +62,7 @@ interface BodyParserError {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const errorHandler: ErrorRequestHandler = (err: unknown, _req, res, _next) => {
   if (err instanceof HttpError) {
+    if (err.retryAfter !== null) res.set('Retry-After', String(err.retryAfter));
     res.status(err.status).json(err.body);
     return;
   }

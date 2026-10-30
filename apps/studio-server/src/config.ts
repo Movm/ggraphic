@@ -16,6 +16,13 @@ const flag = (fallback: boolean) =>
     .default(fallback ? 'true' : 'false')
     .transform((v) => v === 'true');
 
+/** Unset keeps the default (follow the keys), `false` switches a configured tool off. */
+const TOGGLE_HINT = 'must be "true" or "false"';
+const toggle = z
+  .enum(['true', 'false'], { error: TOGGLE_HINT })
+  .optional()
+  .transform((v) => (v === undefined ? null : v === 'true'));
+
 const PROXY_KEYWORDS = new Set(['loopback', 'linklocal', 'uniquelocal']);
 
 function isProxyEntry(entry: string): boolean {
@@ -78,6 +85,8 @@ const envSchema = z.object({
     .default(5 * 1024 * 1024),
   COOKIE_SECURE: flag(true),
   ALLOW_REGISTRATION: flag(false),
+  // The 30-day purge of the trash runs in the server process; `false` switches it off.
+  TRASH_PURGE_ENABLED: flag(true),
   // Exactly "1": the operator knowingly serves sessions over plain HTTP beyond loopback.
   ALLOW_INSECURE_COOKIE: z.literal('1').optional(),
   TRUST_PROXY: trustProxy,
@@ -87,6 +96,15 @@ const envSchema = z.object({
   OPENAI_API_KEY: optionalString,
   OPENAI_MODEL: optionalString,
   AI_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
+  AI_ENABLED: toggle,
+  REMBG_URL: optionalString,
+  REMBG_ENABLED: toggle,
+  REMBG_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
+  // Iconify needs no key, so it is opt-in: search terms leave the instance when it is on.
+  ICONIFY_ENABLED: toggle,
+  ICONIFY_API_URL: optionalString,
+  ICONIFY_LICENCES: optionalString,
+  ICONIFY_TIMEOUT_MS: z.coerce.number().int().positive().default(10_000),
 });
 
 export interface AiConfig {
@@ -95,6 +113,39 @@ export interface AiConfig {
   model: string;
   timeoutMs: number;
 }
+
+export interface RembgConfig {
+  /** Operator-set base URL of the rembg server, without a trailing slash. */
+  url: string;
+  timeoutMs: number;
+}
+
+export interface IconifyConfig {
+  /** The Iconify API the proxy talks to, without a trailing slash. Never taken from a user. */
+  url: string;
+  /** SPDX ids of the icon-set licences Studio offers. */
+  licences: string[];
+  timeoutMs: number;
+}
+
+/** Tools that need an external service. Each is null when switched off. */
+export interface Features {
+  removeBackground: RembgConfig | null;
+  iconify: IconifyConfig | null;
+}
+
+export const ICONIFY_DEFAULT_URL = 'https://api.iconify.design';
+export const ICONIFY_DEFAULT_LICENCES = [
+  'MIT',
+  'Apache-2.0',
+  'ISC',
+  'CC0-1.0',
+  'OFL-1.1',
+  'CC-BY-4.0',
+  'CC-BY-3.0',
+];
+/** NC, ND and SA variants and the GPL family do not belong in designs people export and sell. */
+const FORBIDDEN_LICENCE = /(^|-)(NC|ND|SA)(-|$)|GPL/i;
 
 export interface Config {
   databaseUrl: string;
@@ -110,8 +161,10 @@ export interface Config {
   dataDir: string;
   /** false only for plain-HTTP setups whose browser drops Secure cookies (Safari on localhost). */
   cookieSecure: boolean;
-  /** Self-registration after the first account. Off by default; invitations always work. */
+  /** Self-registration after the first account. Off by default. */
   allowRegistration: boolean;
+  /** Purge projects 30 days after they were deleted. On by default. */
+  trashPurgeEnabled: boolean;
   /** COOKIE_SECURE=false on a non-loopback HOST, acknowledged with ALLOW_INSECURE_COOKIE=1. */
   allowInsecureCookie: boolean;
   trustProxy: false | number | string[];
@@ -122,6 +175,25 @@ export interface Config {
   setupToken: string | null;
   /** null when AI is not configured; the feature is then switched off. */
   ai: AiConfig | null;
+  /** The other external tools; `ai` stays above because the AI routes read it directly. */
+  features: Features;
+}
+
+/**
+ * The rule for every external tool: on when its key or URL is present, off with
+ * `<TOOL>_ENABLED=false`, and `<TOOL>_ENABLED=true` without the key or URL is an error.
+ */
+function resolveFeature<T>(
+  name: string,
+  enabled: boolean | null,
+  needs: string,
+  config: T | null
+): T | null {
+  if (enabled === false) return null;
+  if (enabled === true && config === null) {
+    throw new Error(`Invalid configuration: ${name}_ENABLED=true needs ${needs}`);
+  }
+  return config;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -131,7 +203,12 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   );
   const parsed = envSchema.safeParse(set);
   if (!parsed.success) {
-    const fields = parsed.error.issues.map((issue) => issue.path.join('.')).join(', ');
+    // Names only, never values; a switch also says which values it takes.
+    const fields = parsed.error.issues
+      .map(
+        (issue) => issue.path.join('.') + (issue.message === TOGGLE_HINT ? ` ${TOGGLE_HINT}` : '')
+      )
+      .join(', ');
     throw new Error(`Invalid configuration: ${fields}`);
   }
   const e = parsed.data;
@@ -141,7 +218,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       'Invalid configuration: COOKIE_SECURE=false sends session cookies over plain HTTP; on a non-loopback HOST it needs ALLOW_INSECURE_COOKIE=1'
     );
   }
-  const ai =
+  const ai = resolveFeature(
+    'AI',
+    e.AI_ENABLED,
+    'OPENAI_BASE_URL, OPENAI_API_KEY and OPENAI_MODEL',
     e.OPENAI_BASE_URL && e.OPENAI_API_KEY && e.OPENAI_MODEL
       ? {
           baseUrl: e.OPENAI_BASE_URL.replace(/\/+$/, ''),
@@ -149,6 +229,30 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
           model: e.OPENAI_MODEL,
           timeoutMs: e.AI_TIMEOUT_MS,
         }
+      : null
+  );
+  if (e.REMBG_URL && !/^https?:\/\/[^\s/]/i.test(e.REMBG_URL)) {
+    throw new Error('Invalid configuration: REMBG_URL');
+  }
+  const removeBackground = resolveFeature(
+    'REMBG',
+    e.REMBG_ENABLED,
+    'REMBG_URL',
+    e.REMBG_URL ? { url: e.REMBG_URL.replace(/\/+$/, ''), timeoutMs: e.REMBG_TIMEOUT_MS } : null
+  );
+  const iconifyUrl = e.ICONIFY_API_URL ?? ICONIFY_DEFAULT_URL;
+  if (!/^https?:\/\/[^\s/]/i.test(iconifyUrl)) {
+    throw new Error('Invalid configuration: ICONIFY_API_URL');
+  }
+  const licences = e.ICONIFY_LICENCES
+    ? e.ICONIFY_LICENCES.split(',').map((l) => l.trim())
+    : ICONIFY_DEFAULT_LICENCES;
+  if (licences.some((l) => !/^[A-Za-z0-9.+-]+$/.test(l) || FORBIDDEN_LICENCE.test(l))) {
+    throw new Error('Invalid configuration: ICONIFY_LICENCES');
+  }
+  const iconify: IconifyConfig | null =
+    e.ICONIFY_ENABLED === true
+      ? { url: iconifyUrl.replace(/\/+$/, ''), licences, timeoutMs: e.ICONIFY_TIMEOUT_MS }
       : null;
   return {
     databaseUrl: e.DATABASE_URL,
@@ -163,9 +267,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     fontMaxBytes: e.FONT_MAX_BYTES,
     cookieSecure: e.COOKIE_SECURE,
     allowRegistration: e.ALLOW_REGISTRATION,
+    trashPurgeEnabled: e.TRASH_PURGE_ENABLED,
     allowInsecureCookie: !e.COOKIE_SECURE && !loopback,
     trustProxy: e.TRUST_PROXY,
     setupToken: e.SETUP_TOKEN ?? null,
     ai,
+    features: { removeBackground, iconify },
   };
 }

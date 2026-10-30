@@ -13,7 +13,7 @@ const EXTENSION_BY_TYPE: Record<string, string> = {
 
 /**
  * Packs rendered pages (data URLs) into a ZIP in the browser, as
- * `seite-1.png`, `seite-2.png`, … — the extension follows each image's type.
+ * `page-1.png`, `page-2.png`, … — the extension follows each image's type.
  *
  * A page that cannot be packed throws: a ZIP with fewer images than pages
  * reads as data loss.
@@ -24,7 +24,7 @@ export function zipPageImages(dataUrls: string[]): Blob {
     const parsed = parseDataUrl(dataUrl);
     const extension = parsed ? EXTENSION_BY_TYPE[parsed.mediaType] : undefined;
     if (!parsed || !extension) throw new Error(messages().errors.pageExport(i + 1));
-    files[`seite-${i + 1}.${extension}`] = Uint8Array.from(atob(parsed.base64), (c) =>
+    files[`page-${i + 1}.${extension}`] = Uint8Array.from(atob(parsed.base64), (c) =>
       c.charCodeAt(0)
     );
   });

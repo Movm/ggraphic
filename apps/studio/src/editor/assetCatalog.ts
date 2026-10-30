@@ -13,12 +13,15 @@
 import { type CanvasAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
 import { KAWAII_ILLUSTRATIONS } from '@ggraphic/editor/utils/illustrations/kawaii';
 
+import { STUDIO_ELEMENT_PANEL } from './blocks/blockPanel';
+
 const SKIN_TONE = /1f3f[b-f]/;
 
 export function studioAssetCatalog(): CanvasAssetCatalog {
   return {
     assets: [],
     isInstanceSrc: () => false,
+    elementPanel: STUDIO_ELEMENT_PANEL,
     emojiSrc: (code) => `/emoji/emoji_u${code}.svg`,
     emojiOffered: (code, group) => group !== 'Flaggen' && !SKIN_TONE.test(code),
     illustrations: {

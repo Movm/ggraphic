@@ -77,8 +77,8 @@ and stay as they are.
 ### (b) Migration registry
 
 `createMigrationRegistry(coreMigrations)` builds a registry; the core's
-default registry (`documentMigrations`) ships with **no** steps, so
-`CANVAS_DOCUMENT_VERSION` is 1 and loading is the identity.
+default registry (`documentMigrations`) ships with one step (1 → 2, the
+identity on pages; see "Version 2"), so `CANVAS_DOCUMENT_VERSION` is 2.
 
 - A core step is `{ from: n, migrate(doc) }` and lifts the whole document from
   n to n + 1. Steps must be contiguous from 1.
@@ -162,11 +162,46 @@ shape into a newer document. `newer` and `invalid` both become a refusal:
 ### (f) F0
 
 Documents stored by the reference host today carry no version, so they **are** version 1,
-unchanged. This change rewrites nothing at rest: opening a v1 Y.Doc runs the
-identity chain and writes no key (not even a stamp); `initial_state` is read
-as before. No stored field is renamed. The only new bytes are additive: a
+unchanged. Versioning itself rewrote nothing at rest. Since v2, opening an
+unstamped or v1 Y.Doc runs the identity step and writes the `schemaVersion`
+stamp once, nothing else; a newer doc is never written. Read-only enforcement
+for viewers belongs to the collab host (server-side), as it already did for the
+legacy lift and kind migrations. `initial_state` is read as before. No stored field is renamed. The only new bytes are additive: a
 `schemaVersion` key in the `meta` of newly seeded Y.Docs and in newly written
 gallery deck drafts.
+
+## Version 2
+
+Version 2 admits three page-state keys for brand bindings: `bind`
+(field → `{ ref, value }`), `brandScheme` (a scheme id) and `brandStamp` (an
+8-hex string). The core step 1 → 2 is the identity: `migrate` returns the
+document unchanged, and the loader only raises `schemaVersion` to 2. A version
+1 page never carries these keys, so there is nothing to rewrite.
+
+Why bump at all: a build that predates the keys does not know them and would
+drop them on its next write (no `on<Key>Change` writer, not inherited by added
+pages). Version 2 makes such a build refuse the document read-only (`newer`)
+instead. The keys are F0: names and shapes are additive-only from here.
+
+`colorScheme` / `colorSchemeId` are a different, host-owned pair and not part
+of this; the brand key is `brandScheme` on purpose.
+
+## Version 3
+
+Version 3 admits two page-state keys for templates: `templateRef`
+(`{ id, version }`, the template a page came from; `version` an integer ≥ 1)
+and `groups` (a list of `{ id, blockRef?, elementIds }`, element groups). The
+core step 2 → 3 is the identity: `migrate` returns the document unchanged, and
+the loader only raises `schemaVersion` to 3. A version 2 page never carries
+these keys, so there is nothing to rewrite. Opening a v2 Y.Doc writes the v3
+stamp once, nothing else; a v4 document is refused read-only (`newer`).
+
+Why bump at all: a build that predates the keys would drop them on its next
+write. The keys are F0: names and shapes are additive-only from here. They are
+persisted and emitted like any page key, but deliberately **not** inherited by
+an added or converted page (they describe one page), and the PPTX export
+classifies them as unmapped: `templateRef` has nothing to draw, and group
+members are exported one by one.
 
 ## Deliberately left out
 

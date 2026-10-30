@@ -1,7 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Request and response shapes of /api. Types are derived from these schemas only.
+import { OFFER_ID_PATTERN } from '@ggraphic/schema';
 import { z } from 'zod';
-import { brandColorsSchema, fontFamily, hexColor } from './brand/brandPackSchema.ts';
+import {
+  brandColorsSchema,
+  brandLayoutSchema,
+  fontFamily,
+  hexColor,
+} from './brand/brandPackSchema.ts';
 
 /** The editor document. Opaque to the server: any JSON object. */
 const documentSchema = z.record(z.string(), z.unknown());
@@ -40,6 +46,18 @@ export const projectSummarySchema = z.object({
   thumbnailUrl: z.string().nullable(),
 });
 
+/** A project in the trash. Without a document or thumbnail: it can only be restored or purged. */
+export const trashItemSchema = z.object({
+  id: z.uuid(),
+  organisationId: z.uuid(),
+  name: z.string(),
+  deletedAt: z.iso.datetime(),
+  /** When the purge may remove it for good. */
+  purgeAt: z.iso.datetime(),
+  /** Whole days until then, rounded up; 0 once it is due. */
+  daysLeft: z.int(),
+});
+
 export const projectSchema = projectSummarySchema.extend({ document: documentSchema });
 
 export const draftBody = z.object({
@@ -68,8 +86,40 @@ export const draftSchema = z.object({
     .transform((v) => v || undefined),
 });
 
+const offerId = z.string().regex(OFFER_ID_PATTERN);
+const offerText = z.string().trim().min(1).max(200);
+
+/** The templates and colour worlds the model may choose from, and the brief to choose for. */
+export const pickBody = z.object({
+  brief: z.string().trim().min(1).max(4000),
+  templates: z
+    .array(
+      z.object({
+        id: offerId,
+        label: offerText,
+        description: offerText,
+        slots: z
+          .array(z.object({ id: offerId, label: offerText, maxChars: z.int().min(1).max(2000) }))
+          .min(1)
+          .max(8),
+      })
+    )
+    .min(1)
+    .max(12),
+  schemes: z.array(z.object({ id: offerId, label: offerText })).max(8),
+  format: z
+    .object({ width: z.int().min(1).max(20_000), height: z.int().min(1).max(20_000) })
+    .nullish(),
+});
+
+export const pickSchema = z.object({
+  templateId: z.string(),
+  schemeId: z.string().nullable(),
+  fills: z.record(z.string(), z.string()),
+});
+
 export const configSchema = z.object({
-  features: z.object({ ai: z.boolean() }),
+  features: z.object({ ai: z.boolean(), removeBackground: z.boolean(), iconify: z.boolean() }),
   limits: z.object({
     uploadBytes: z.int(),
     thumbnailBytes: z.int(),
@@ -97,7 +147,6 @@ const emailSchema = z.string().trim().toLowerCase().pipe(z.email().max(254));
 const displayNameSchema = z.string().trim().min(1).max(100);
 // Length bounds mirror src/auth/passwords.ts.
 const passwordSchema = z.string().min(10).max(256);
-const orgNameSchema = z.string().trim().min(1).max(100);
 
 export const signupBody = z.object({
   email: emailSchema,
@@ -135,41 +184,22 @@ export const sessionStateSchema = z.object({
   /** Send as X-CSRF-Token on every non-GET request. */
   csrfToken: z.string().nullable(),
   organisations: z.array(organisationSchema),
-  /** Whether this account may create organisations. */
+  /** Always false: one organisation per person. Deprecated, kept for older web clients. */
   canCreateOrganisations: z.boolean(),
 });
 
-export const createOrganisationBody = z.object({ name: orgNameSchema });
-
-export const memberSchema = z.object({
-  accountId: z.uuid(),
-  email: z.string(),
-  displayName: z.string(),
-  role: roleSchema,
-});
-
-export const updateMemberBody = z.object({ role: roleSchema });
-
-export const createInvitationBody = z.object({ role: roleSchema.default('editor') });
-
-export const invitationSchema = z.object({
-  id: z.uuid(),
-  role: roleSchema,
-  createdAt: z.iso.datetime(),
-  expiresAt: z.iso.datetime(),
-  allowsSignup: z.boolean(),
-  /** Only in the answer to the create call: the token is not stored. */
-  url: z.string().optional(),
-});
-
-export const invitationInfoSchema = z.object({
-  organisationName: z.string(),
-  role: roleSchema,
-  /** Whether a new account can be created with this link. */
-  allowsSignup: z.boolean(),
-});
-
 // --- Brand packs ------------------------------------------------------------------------
+
+const brandFontsBody = z.object({
+  headline: fontFamily,
+  body: fontFamily,
+  serif: fontFamily.nullable().default(null),
+  condensed: fontFamily.nullable().default(null),
+});
+const brandLogoAltBody = z
+  .object({ assetId: z.uuid(), ground: z.enum(['dark', 'light']) })
+  .nullable()
+  .default(null);
 
 export const brandSettingsBody = z.object({
   name: z.string().trim().min(1).max(100),
@@ -178,9 +208,54 @@ export const brandSettingsBody = z.object({
     .array(z.object({ label: z.string().trim().min(1).max(40), color: hexColor, ink: hexColor }))
     .min(1)
     .max(12),
-  fonts: z.object({ headline: fontFamily, body: fontFamily }),
+  fonts: brandFontsBody,
   logoAssetId: z.uuid().nullable().default(null),
+  logoAlt: brandLogoAltBody,
+  layout: brandLayoutSchema.nullable().default(null),
 });
+
+/**
+ * The PUT's own shapes. A key an older client does not know is MISSING (keep what is stored),
+ * an explicit `null` clears it; the stored shape above always has them as `null`.
+ */
+const brandFontsWrite = z.object({
+  headline: fontFamily,
+  body: fontFamily,
+  serif: fontFamily.nullable().optional(),
+  condensed: fontFamily.nullable().optional(),
+});
+const brandLogoAltWrite = z
+  .object({ assetId: z.uuid(), ground: z.enum(['dark', 'light']) })
+  .nullable()
+  .optional();
+const brandLayoutWrite = brandLayoutSchema.nullable().optional();
+
+/**
+ * What the brand form sends: three colours; the other five roles and the grounds are derived
+ * by the server (`deriveBrandColors` / `deriveGrounds` in @ggraphic/core).
+ */
+export const brandInputBody = z.object({
+  name: z.string().trim().min(1).max(100),
+  colors: z.strictObject({ primary: hexColor, secondary: hexColor, accent: hexColor }),
+  fonts: brandFontsWrite,
+  logoAssetId: z.uuid().nullable().default(null),
+  logoAlt: brandLogoAltWrite,
+  layout: brandLayoutWrite,
+});
+
+/** The full body older clients still send; the same missing-keeps / null-clears rule. */
+const brandFullWriteBody = brandSettingsBody.extend({
+  fonts: brandFontsWrite,
+  logoAlt: brandLogoAltWrite,
+  layout: brandLayoutWrite,
+});
+
+/**
+ * The brand PUT: the three-colour body, or the full body older clients still send. From the
+ * full body only the three inputs count; the rest is derived again, so what is stored never
+ * depends on which shape arrived.
+ */
+export const brandWriteBody = z.union([brandInputBody, brandFullWriteBody]);
 
 export const fontUploadFields = z.object({
   family: fontFamily,
@@ -208,16 +283,23 @@ export type BrandAsset = z.infer<typeof brandAssetSchema>;
 export type Role = z.infer<typeof roleSchema>;
 export type SessionState = z.infer<typeof sessionStateSchema>;
 export type Organisation = z.infer<typeof organisationSchema>;
-export type Member = z.infer<typeof memberSchema>;
-export type Invitation = z.infer<typeof invitationSchema>;
-export type InvitationInfo = z.infer<typeof invitationInfoSchema>;
 
 export type CreateProjectBody = z.infer<typeof createProjectBody>;
 export type UpdateProjectBody = z.infer<typeof updateProjectBody>;
 export type ProjectSummary = z.infer<typeof projectSummarySchema>;
 export type Project = z.infer<typeof projectSchema>;
+export type TrashItem = z.infer<typeof trashItemSchema>;
 export type DraftBody = z.infer<typeof draftBody>;
+export type PickBody = z.infer<typeof pickBody>;
+export type Pick = z.infer<typeof pickSchema>;
 export type Draft = z.output<typeof draftSchema>;
 export type StudioConfig = z.infer<typeof configSchema>;
 export type Upload = z.infer<typeof uploadSchema>;
 export type ApiError = z.infer<typeof errorSchema>;
+
+export const hiddenTemplatesSchema = z.object({ templateIds: z.array(z.string()) });
+export const hideTemplateBody = z.object({ hidden: z.boolean() });
+/** A catalogue template id: lowercase words joined by single hyphens. */
+export const TEMPLATE_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+export const templateIdParam = z.string().max(64).regex(TEMPLATE_ID_PATTERN);
+export type HiddenTemplates = z.infer<typeof hiddenTemplatesSchema>;

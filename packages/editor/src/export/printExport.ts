@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { messages } from '@ggraphic/editor/i18n/messages';
 import { mmToPx, type PrintCanvasFormat } from '@ggraphic/editor/formats/index';
 
 import {
@@ -90,7 +91,7 @@ export async function exportPrintPdf({
     const out: PrintPdfPage = { tiles: [] };
     for (const planned of tiles) {
       const jpeg = await pages[p].captureTile(planned.tile, pixelRatio);
-      if (!jpeg) throw new Error(`Seite ${p + 1} konnte nicht exportiert werden`);
+      if (!jpeg) throw new Error(messages().errors.pageExport(p + 1));
       out.tiles.push({
         jpeg,
         xMm: planned.xMm,
@@ -126,9 +127,7 @@ export function lowResolutionWarnings(
         displayedWidthMm: image.displayedWidthPx / pxPerMm,
       });
       if (Number.isFinite(dpi) && dpi < format.print.exportDpi * MIN_PRINT_DPI_SHARE) {
-        warnings.push(
-          `Foto ${n} ist für den Druck zu klein (ca. ${Math.round(dpi)} dpi, empfohlen ${format.print.exportDpi}).`
-        );
+        warnings.push(messages().errors.photoTooSmall(n, Math.round(dpi), format.print.exportDpi));
       }
     }
   }

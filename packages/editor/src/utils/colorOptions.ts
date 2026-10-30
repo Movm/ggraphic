@@ -4,7 +4,7 @@
  * them as `ColorOption`s; the mapping is cached per pack, so a picker gets the
  * same array on every render.
  */
-import { type BrandPack, type BrandSwatch } from '@ggraphic/core';
+import { type BindingRef, type BrandPack, type BrandSwatch } from '@ggraphic/core';
 
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 
@@ -13,6 +13,8 @@ export interface ColorOption {
   id: string;
   name: string;
   value: string;
+  /** The role the swatch stands for; picking it binds the field to the brand. */
+  ref?: BindingRef;
 }
 
 const pickerOptions = new WeakMap<readonly BrandSwatch[], ColorOption[]>();
@@ -20,7 +22,12 @@ const pickerOptions = new WeakMap<readonly BrandSwatch[], ColorOption[]>();
 export function asColorOptions(swatches: readonly BrandSwatch[]): ColorOption[] {
   let options = pickerOptions.get(swatches);
   if (!options) {
-    options = swatches.map(({ id, label, color }) => ({ id, name: label, value: color }));
+    options = swatches.map(({ id, label, color, ref }) => ({
+      id,
+      name: label,
+      value: color,
+      ...(ref && { ref }),
+    }));
     pickerOptions.set(swatches, options);
   }
   return options;

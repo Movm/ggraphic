@@ -6,12 +6,10 @@ import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import { api, onUnauthenticated, type StudioConfig } from './api/client';
 import { AuthPage } from './pages/AuthPage';
 import { BrandPage } from './pages/BrandPage';
-import { InvitePage } from './pages/InvitePage';
 import { LicensesPage } from './pages/LicensesPage';
-import { MembersPage } from './pages/MembersPage';
-import { ProjectListPage } from './pages/ProjectListPage';
+import { TrashPage } from './pages/TrashPage';
 import { StartPage } from './start/StartPage';
-import { parseRoute, usePathname, type Route } from './router';
+import { parseRoute, redirect, usePathname, type Route } from './router';
 import { SESSION_QUERY_KEY, SessionProvider, type LoggedIn } from './session/SessionContext';
 import { Toaster } from './ui/toast';
 
@@ -39,10 +37,16 @@ function unreachable(retry: () => void) {
   );
 }
 
+/** `/projects` was the project list; the projects now live on the start page. */
+function RedirectToStart() {
+  useEffect(() => redirect('/'), []);
+  return null;
+}
+
 function LoggedInRoutes({ route, config }: { route: Route; config: StudioConfig | undefined }) {
   if (route.name === 'start') return <StartPage config={config} />;
-  if (route.name === 'projects') return <ProjectListPage />;
-  if (route.name === 'members') return <MembersPage />;
+  if (route.name === 'projects') return <RedirectToStart />;
+  if (route.name === 'trash') return <TrashPage />;
   if (route.name === 'brand') return <BrandPage />;
   if (route.name !== 'editor') return null;
   if (!config) return loading('Connecting…');
@@ -74,8 +78,6 @@ export function App() {
     content = loading('Connecting…');
   } else if (session.isError) {
     content = unreachable(() => void session.refetch());
-  } else if (route.name === 'invite') {
-    content = <InvitePage token={route.token} session={session.data} />;
   } else if (!session.data.account) {
     content = <AuthPage session={session.data} />;
   } else {

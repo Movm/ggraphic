@@ -5,12 +5,12 @@
  * load/write paths: `DOCUMENT_VERSIONING.md` at the package root.
  *
  * A document without a version is version 1 — every document stored before
- * versioning existed — and loads unchanged.
+ * versioning existed — and loads, lifted to the current version.
  */
 import { z } from 'zod';
 
 /** The core format version this build reads and writes. */
-export const CANVAS_DOCUMENT_VERSION = 1;
+export const CANVAS_DOCUMENT_VERSION = 3;
 
 const versionSchema = z.number().int().min(1);
 
@@ -119,8 +119,18 @@ export function createMigrationRegistry(core: readonly CoreMigration[]): Migrati
   };
 }
 
-/** The core's steps: none — version 1 is today's shape. */
-const CORE_MIGRATIONS: readonly CoreMigration[] = [];
+/**
+ * The core's steps. Both are the identity on pages: the bumps exist so an
+ * older build refuses a document it would strip keys from.
+ * - 1 → 2 admits the page keys `bind`, `brandScheme` and `brandStamp` (brand
+ *   bindings). See `DOCUMENT_VERSIONING.md`, "Version 2".
+ * - 2 → 3 admits `templateRef` and `groups` (template origin, element groups).
+ *   See `DOCUMENT_VERSIONING.md`, "Version 3".
+ */
+const CORE_MIGRATIONS: readonly CoreMigration[] = [
+  { from: 1, migrate: (doc) => doc },
+  { from: 2, migrate: (doc) => doc },
+];
 
 /** The registry every load uses unless a caller passes its own. */
 export const documentMigrations: MigrationRegistry = createMigrationRegistry(CORE_MIGRATIONS);
