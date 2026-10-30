@@ -75,6 +75,7 @@
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 0.88,
+            "fontStyle": "bold",
             "bind": {
               "fill": "ink",
               "fontFamily": "font.condensed"
