@@ -1,0 +1,216 @@
+{
+  "formatVersion": 1,
+  "id": "studio-quote-giant-mark",
+  "version": 1,
+  "kind": "template",
+  "family": "quote",
+  "title": {
+    "en": "Quote with giant mark",
+    "de": "Zitat mit Riesenzeichen"
+  },
+  "description": {
+    "en": "A giant quotation mark behind a short statement, a small square portrait with name and role",
+    "de": "Ein riesiges Anführungszeichen hinter einer kurzen Aussage, ein kleines Quadrat-Porträt mit Name und Rolle"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "light", "dark", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0.673913,
+            "y": 0.672269,
+            "width": 0.326087,
+            "height": 0.252101,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "quote-mark",
+            "type": "header",
+            "text": "“",
+            "x": 0.046296,
+            "y": 0,
+            "width": 0.388889,
+            "fontSize": 0.703704,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "accent",
+              "fontFamily": "font.serif"
+            }
+          },
+          {
+            "id": "quote",
+            "type": "header",
+            "text": "Rent is no luxury. A home is a right.",
+            "x": 0,
+            "y": 0.285714,
+            "width": 1,
+            "fontSize": 0.092593,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.96,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "name",
+            "type": "body",
+            "text": "Jane Doe",
+            "x": 0,
+            "y": 0.739496,
+            "width": 0.630435,
+            "fontSize": 0.048148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "role",
+            "type": "body",
+            "text": "Initiative or role",
+            "x": 0,
+            "y": 0.789916,
+            "width": 0.630435,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": ["quote-mark", "quote", "photo", "name", "role", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "quote-mark": "canvas"
+  },
+  "slots": {
+    "quote": {
+      "role": "quote",
+      "label": {
+        "en": "Quotation",
+        "de": "Zitat"
+      },
+      "budget": {
+        "maxWords": 10,
+        "maxLines": 3,
+        "maxChars": 52
+      }
+    },
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "name": {
+      "role": "name",
+      "label": {
+        "en": "Name",
+        "de": "Name"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 26
+      }
+    },
+    "role": {
+      "role": "body",
+      "label": {
+        "en": "Text",
+        "de": "Text"
+      },
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 2,
+        "maxChars": 36
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "quote-with-person",
+      "title": {
+        "en": "Quote with person",
+        "de": "Zitat mit Person"
+      },
+      "elementIds": ["quote", "name", "role"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "quote-mark": "“",
+      "quote": "Rent is no luxury. A home is a right.",
+      "name": "Jane Doe",
+      "role": "Initiative or role"
+    },
+    "de": {
+      "quote-mark": "„",
+      "quote": "Wohnen ist ein Recht, kein Luxus.",
+      "name": "Erika Muster",
+      "role": "Initiative oder Rolle"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
