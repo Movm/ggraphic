@@ -17,6 +17,7 @@ import { LOCKED_TRANSFORMER, useIsItemLocked } from '@ggraphic/editor/components
 import { useBoxSnap, type SnapProps } from '@ggraphic/editor/hooks/useBoxSnap';
 import { gradientFillProps } from '@ggraphic/editor/utils/gradientFill';
 import { translucentHitFunc } from '@ggraphic/editor/utils/gradientHitArea';
+import { shapeGradient } from '@ggraphic/editor/utils/shade';
 import { handDrawnPath } from '@ggraphic/editor/utils/handDrawn';
 import {
   ELEMENT_TRANSFORMER,
@@ -480,12 +481,17 @@ const ShapePrimitiveInner: React.FC<ShapePrimitiveProps> = ({
     null
   );
   useEffect(() => {
-    if (shape.fillGradient && shapeRef.current) {
-      setGradientProps(gradientFillProps(shape.fillGradient, shapeRef.current.getSelfRect()));
+    const gradient = shapeGradient({
+      fill: shape.fill,
+      shade: shape.shade,
+      fillGradient: shape.fillGradient,
+    });
+    if (gradient && shapeRef.current) {
+      setGradientProps(gradientFillProps(gradient, shapeRef.current.getSelfRect()));
     } else {
       setGradientProps(null);
     }
-  }, [shape.fillGradient, shape.type, shape.width, shape.height]);
+  }, [shape.fillGradient, shape.shade, shape.fill, shape.type, shape.width, shape.height]);
 
   const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
     snap.onDragEnd();
@@ -536,7 +542,7 @@ const ShapePrimitiveInner: React.FC<ShapePrimitiveProps> = ({
     scaleY: signedScale(shape.scaleY, shape.flipY === true),
     [MIRROR_X_ATTR]: shape.flipX === true,
     draggable,
-    hitFunc: fillsArea ? translucentHitFunc(shape.fillGradient) : undefined,
+    hitFunc: fillsArea ? translucentHitFunc(shapeGradient(shape)) : undefined,
     onMouseDown: (e) => {
       e.cancelBubble = true;
       onSelect(shape.id);
@@ -617,6 +623,7 @@ export const ShapePrimitive = memo(ShapePrimitiveInner, (prevProps, nextProps) =
   if (prevShape.shadowOffsetY !== nextShape.shadowOffsetY) return false;
   if (prevShape.shadowOpacity !== nextShape.shadowOpacity) return false;
   if (prevShape.fillGradient !== nextShape.fillGradient) return false;
+  if (prevShape.shade !== nextShape.shade) return false;
   if (prevShape.blendMode !== nextShape.blendMode) return false;
   if (prevShape.flipX !== nextShape.flipX) return false;
   if (prevShape.flipY !== nextShape.flipY) return false;
