@@ -9,7 +9,8 @@ import {
 } from '../brand/layout.js';
 import type { Box } from '../brand/logoFit.js';
 import type { SchemeId } from '../brand/schemes.js';
-import { contrastRatio, parseColor } from '../color/color.js';
+import { contrastRatio, mixColors, parseColor } from '../color/color.js';
+import { SHADE_STOPS, shadeAlphaAt, type ShadeDirection } from '../color/shade.js';
 import {
   forEachElement,
   instantiateTemplatePage,
@@ -76,14 +77,22 @@ export interface GateAdapter {
     notCheckable?: string;
   } | null;
   /**
-   * What the element paints under later layers: `solid` is an opaque flat fill, `unknown` is
-   * anything else (an image, a gradient, a translucent fill, a chart, a badge), null is nothing
-   * (a text).
+   * What the element paints under later layers: `solid` is an opaque flat fill; `photo` is an
+   * image whose every pixel lies between `low` and `high` (so any mix of the two is a possible
+   * ground); `veil` is a flat fill of `fill` at `alpha`; `shade` is `fill` fading in along
+   * `SHADE_STOPS[direction]` over the element's box; `unknown` is anything else (a gradient,
+   * a chart, a badge, an adjusted image), null is nothing (a text).
    */
   cover(
     stateKey: string,
     el: Readonly<Record<string, unknown>>
-  ): { kind: 'solid'; fill: string } | { kind: 'unknown' } | null;
+  ):
+    | { kind: 'solid'; fill: string }
+    | { kind: 'photo'; low: string; high: string }
+    | { kind: 'veil'; fill: string; alpha: number }
+    | { kind: 'shade'; fill: string; direction: ShadeDirection }
+    | { kind: 'unknown' }
+    | null;
 }
 
 export const GATE_RULES = [
@@ -141,6 +150,8 @@ const isObj = (v: unknown): v is Obj => v !== null && typeof v === 'object' && !
 const MAX_WORDS_OUTSIDE_BODY = 60;
 const TEXT_CONTRAST = 4.5;
 const LARGE_TEXT_CONTRAST = 3.0;
+/** A photo is judged on this many evenly spaced mixes of its darkest and lightest colour. */
+const PHOTO_SAMPLES = 17;
 /** A box may overshoot its frame by this much (rounding) before it counts as leaving it. */
 const SLACK = 1;
 /** Stand-in logo, so a placed template shows the logo element the way a brand with a logo does. */
@@ -151,6 +162,21 @@ const refOf = (entry: unknown): unknown => (isObj(entry) ? entry['ref'] : entry)
 const bindOf = (el: Obj): Obj => (isObj(el['bind']) ? el['bind'] : {});
 const isLogo = (el: Obj): boolean => refOf(bindOf(el)['src']) === 'brand.logo';
 const fmt = (n: number): string => String(Math.round(n * 100) / 100);
+
+/**
+ * The smallest alpha a shade has over the vertical span of `box` inside the shade's `area`:
+ * the alpha is piecewise linear, so its minimum sits at an end of the span or at a stop.
+ */
+function shadeAlphaOver(direction: ShadeDirection, box: Box, area: Box): number {
+  const top = Math.min(Math.max((box.y - area.y) / area.height, 0), 1);
+  const bottom = Math.min(Math.max((box.y + box.height - area.y) / area.height, 0), 1);
+  const at = [
+    top,
+    bottom,
+    ...SHADE_STOPS[direction].map(([o]) => o).filter((o) => o > top && o < bottom),
+  ];
+  return Math.min(...at.map((t) => shadeAlphaAt(direction, t)));
+}
 
 function intersects(a: Box, b: Box): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
@@ -467,16 +493,19 @@ function checkPlaced(
       fail(`text opacity or alpha is below 1, contrast not determinable`);
       continue;
     }
-    // The ground: the badge's own fill, else the topmost layer below the text that overlaps
-    // it (it must hold the whole box), else the page background.
-    let ground: string | null = text.ground ?? null;
-    if (ground === null) {
+    // The possible grounds: the badge's own fill, else what lies below the text. Walking down
+    // from the text, a veil or shade holding the whole box is laid on a stack and the walk goes
+    // on; a solid or photo holding the whole box ends it, as does the page background. A photo
+    // is any mix of its two extremes, so it yields several grounds and the worst one counts.
+    let grounds: string[] | null = text.ground === undefined ? null : [text.ground];
+    if (grounds === null) {
       const at = order.indexOf(id);
       if (!box || at === -1) {
         fail(`${NOT_DETERMINABLE} (the text is not in layerOrder)`);
         continue;
       }
-      ground = typeof state['backgroundColor'] === 'string' ? state['backgroundColor'] : '';
+      grounds = [typeof state['backgroundColor'] === 'string' ? state['backgroundColor'] : ''];
+      const overlays: { fill: string; alpha: number }[] = [];
       for (const belowId of order.slice(0, at).reverse()) {
         const below = placed.get(belowId);
         // The logo is owned by logo-overlap; a text on it is reported there.
@@ -486,22 +515,57 @@ function checkPlaced(
         const area = ctx.adapter.box(below.key, below.el, 1);
         if (!area) {
           // An element of unknown extent could lie under the text.
-          if (cover.kind === 'unknown') ground = null;
+          if (cover.kind === 'unknown') grounds = null;
           if (cover.kind === 'unknown') break;
           continue;
         }
         if (!overlaps(box, area)) continue;
-        // Only a shape holding the whole text box is its ground; one that covers part of it
+        // Only an element holding the whole text box is its ground; one that covers part of it
         // puts the text on two grounds (or an edge), which is not judged by either.
-        ground = cover.kind === 'solid' && inside(box, area) ? cover.fill : null;
-        break;
+        if (!inside(box, area) || cover.kind === 'unknown') {
+          grounds = null;
+          break;
+        }
+        if (cover.kind === 'veil') {
+          overlays.push({ fill: cover.fill, alpha: cover.alpha });
+        } else if (cover.kind === 'shade') {
+          overlays.push({ fill: cover.fill, alpha: shadeAlphaOver(cover.direction, box, area) });
+        } else {
+          grounds =
+            cover.kind === 'solid'
+              ? [cover.fill]
+              : Array.from({ length: PHOTO_SAMPLES }, (_, i) =>
+                  mixColors(cover.low, cover.high, i / (PHOTO_SAMPLES - 1))
+                ).filter((c): c is string => c !== null);
+          if (cover.kind === 'photo' && grounds.length !== PHOTO_SAMPLES) grounds = null;
+          break;
+        }
+      }
+      // Composite bottom-up: the overlay nearest the ground goes on first.
+      if (grounds !== null) {
+        for (const o of overlays.reverse()) {
+          if (!opaque(o.fill) || !(o.alpha >= 0 && o.alpha <= 1)) {
+            grounds = null;
+            break;
+          }
+          grounds = grounds.map((g) => (opaque(g) ? (mixColors(g, o.fill, o.alpha) ?? '') : ''));
+        }
       }
     }
-    if (ground === null || !opaque(ground)) {
+    if (grounds === null || grounds.length === 0 || !grounds.every(opaque)) {
       fail(`${NOT_DETERMINABLE} under ${text.fill}`);
       continue;
     }
-    const ratio = contrastRatio(text.fill, ground);
+    // The worst ground is the one with the least contrast; an unreadable one is worst of all.
+    let ground = grounds[0] as string;
+    let ratio = contrastRatio(text.fill, ground);
+    for (const g of grounds.slice(1)) {
+      const r = contrastRatio(text.fill, g);
+      if (r === null || (ratio !== null && r < ratio)) {
+        ground = g;
+        ratio = r;
+      }
+    }
     const large = text.fontSize >= (text.bold ? 18.67 : 24) * (short / 1080);
     const need = large ? LARGE_TEXT_CONTRAST : TEXT_CONTRAST;
     if (ratio === null || ratio < need) {
