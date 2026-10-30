@@ -438,6 +438,7 @@ export const en: Messages = {
     warm: 'Warm',
     cool: 'Cool',
     bw: 'B/W',
+    duotone: 'Duotone',
     vintage: 'Vintage',
   },
 

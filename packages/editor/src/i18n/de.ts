@@ -448,6 +448,7 @@ export const de = {
     warm: 'Warm',
     cool: 'Kühl',
     bw: 'S/W',
+    duotone: 'Duotone',
     vintage: 'Vintage',
   },
 

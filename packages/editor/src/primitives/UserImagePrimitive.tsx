@@ -211,6 +211,8 @@ function UserImagePrimitiveInner({
     userImage.invert,
     userImage.tint,
     userImage.tintStrength,
+    userImage.duotoneLow,
+    userImage.duotoneHigh,
     userImage.vignette,
     userImage.flipX,
     userImage.flipY,
@@ -579,6 +581,8 @@ export const UserImagePrimitive = memo(UserImagePrimitiveInner, (prevProps, next
   if (prev.invert !== next.invert) return false;
   if (prev.tint !== next.tint) return false;
   if (prev.tintStrength !== next.tintStrength) return false;
+  if (prev.duotoneLow !== next.duotoneLow) return false;
+  if (prev.duotoneHigh !== next.duotoneHigh) return false;
   if (prev.vignette !== next.vignette) return false;
   if (prev.flipX !== next.flipX) return false;
   if (prev.flipY !== next.flipY) return false;

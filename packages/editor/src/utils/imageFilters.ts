@@ -5,6 +5,16 @@
  * array of filters that read node attrs). See https://konvajs.org/api/Konva.Filters.html
  */
 
+import {
+  duotoneRamp,
+  resolveRef,
+  resolveScheme,
+  SCHEME_IDS,
+  withBinding,
+  withoutBinding,
+  type Bindings,
+  type SchemeId,
+} from '@ggraphic/core';
 import Konva from 'konva';
 
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
@@ -72,6 +82,28 @@ export const TintFilter: KonvaFilter = function (imageData) {
   }
 };
 
+/** True when both duotone colours are set: a duotone is two colours or none. */
+const hasDuotone = (img: { duotoneLow?: string | null; duotoneHigh?: string | null }): boolean =>
+  !!img.duotoneLow && !!img.duotoneHigh;
+
+/**
+ * Two-colour duotone from the node's `duotoneLow` / `duotoneHigh`: the photo's
+ * luma picks the colour from the ramp, replacing the photo's own colours.
+ */
+export const DuotoneFilter: KonvaFilter = function (imageData) {
+  const low = this.getAttr('duotoneLow') as string | null | undefined;
+  const high = this.getAttr('duotoneHigh') as string | null | undefined;
+  if (!low || !high) return;
+  const ramp = duotoneRamp(low, high);
+  const d = imageData.data;
+  for (let i = 0; i < d.length; i += 4) {
+    const l = Math.round(0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]);
+    d[i] = ramp[l * 3]!;
+    d[i + 1] = ramp[l * 3 + 1]!;
+    d[i + 2] = ramp[l * 3 + 2]!;
+  }
+};
+
 /**
  * Darkens towards the edges by the node's `vignette` (0..1): untouched in the
  * middle, full strength in the corners, eased in between.
@@ -129,6 +161,7 @@ export function getActiveImageFilters(img: ImageAdjustments): KonvaFilter[] {
   if (img.sepia) filters.push(Konva.Filters.Sepia);
   if (img.invert) filters.push(Konva.Filters.Invert);
   if (img.tintStrength) filters.push(TintFilter);
+  if (hasDuotone(img)) filters.push(DuotoneFilter);
   if (img.vignette) filters.push(VignetteFilter);
   if (img.flipX || img.flipY) filters.push(FlipFilter);
   return filters;
@@ -149,6 +182,8 @@ export function imageFilterAttrs(img: ImageAdjustments) {
     temperature: img.temperature ?? 0,
     tint: img.tint,
     tintStrength: img.tintStrength ?? 0,
+    duotoneLow: img.duotoneLow,
+    duotoneHigh: img.duotoneHigh,
     vignette: img.vignette ?? 0,
     flipX: !!img.flipX,
     flipY: !!img.flipY,
@@ -167,6 +202,8 @@ export const EMPTY_ADJUSTMENTS: ImageAdjustments = {
   sepia: false,
   invert: false,
   tintStrength: 0,
+  duotoneLow: null,
+  duotoneHigh: null,
   vignette: 0,
 };
 
@@ -228,6 +265,14 @@ export const IMAGE_PRESETS: ImagePreset[] = [
     values: { ...EMPTY_ADJUSTMENTS, grayscale: true, contrast: 12 },
   },
   {
+    // The colours come from the page's world when it is applied (`duotoneLook`).
+    id: 'duotone',
+    get label() {
+      return messages().imageLooks.duotone;
+    },
+    values: { ...EMPTY_ADJUSTMENTS, tint: null },
+  },
+  {
     id: 'vintage',
     get label() {
       return messages().imageLooks.vintage;
@@ -235,6 +280,49 @@ export const IMAGE_PRESETS: ImagePreset[] = [
     values: { ...EMPTY_ADJUSTMENTS, sepia: true, contrast: -10, brightness: 0.05 },
   },
 ];
+
+type Bound = { bind?: Bindings };
+
+/**
+ * The Duotone look for an image on a page in world `brandScheme` (none: `primary`):
+ * `duo-low` / `duo-high` of that world, bound to it, with the other colour looks
+ * cleared. Null when the brand has no such world.
+ */
+export function duotoneLook(
+  img: Bound | undefined,
+  brandScheme: string | null | undefined
+): (ImageAdjustments & { bind: Bindings }) | null {
+  const brand = activeBrand();
+  const id: SchemeId = (SCHEME_IDS as readonly string[]).includes(brandScheme ?? '')
+    ? (brandScheme as SchemeId)
+    : 'primary';
+  const scheme = resolveScheme(brand, id);
+  const low = resolveRef('duo-low', brand, scheme);
+  const high = resolveRef('duo-high', brand, scheme);
+  if (!low || !high) return null;
+  let bind = withBinding(img?.bind, 'duotoneLow', { ref: 'duo-low', value: low });
+  bind = withBinding(bind, 'duotoneHigh', { ref: 'duo-high', value: high });
+  return {
+    ...EMPTY_ADJUSTMENTS,
+    tint: null,
+    duotoneLow: low,
+    duotoneHigh: high,
+    bind,
+  };
+}
+
+/** Clears the duotone and its two bindings; `bind` is undefined once none is left. */
+export function withoutDuotone(img: Bound | undefined): {
+  duotoneLow: null;
+  duotoneHigh: null;
+  bind: Bindings | undefined;
+} {
+  return {
+    duotoneLow: null,
+    duotoneHigh: null,
+    bind: withoutBinding(withoutBinding(img?.bind, 'duotoneLow'), 'duotoneHigh'),
+  };
+}
 
 /** The template background photo's look, stored on the page state; null when untouched. */
 export function backgroundAdjustments(state: Record<string, unknown>): ImageAdjustments | null {
