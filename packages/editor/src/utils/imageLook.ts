@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { duotoneLook, withoutDuotone } from './imageFilters.js';
+import { BW_LOOK, duotoneLook, withoutDuotone } from './imageFilters.js';
 
 import type { Bindings } from '@ggraphic/core';
 
@@ -7,8 +7,6 @@ import type { Bindings } from '@ggraphic/core';
 export const IMAGE_LOOK_IDS = ['none', 'bw', 'duotone', 'darken'] as const;
 export type ImageLookId = (typeof IMAGE_LOOK_IDS)[number];
 
-/** Black & white: grayscale with the prototype's `contrast(1.12)` (Task 4 measurement). */
-const BW_CONTRAST = 6;
 const DARKEN_BRIGHTNESS = -0.3;
 
 export interface LookFields {
@@ -38,15 +36,21 @@ export function imageLookPatch(
     case 'none':
       return {
         grayscale: false,
-        ...(img.contrast === BW_CONTRAST && { contrast: 0 }),
+        ...(img.contrast === BW_LOOK.contrast && { contrast: 0 }),
         ...(img.brightness === DARKEN_BRIGHTNESS && { brightness: 0 }),
         ...withoutDuotone(img),
       };
     case 'bw':
-      return { grayscale: true, contrast: BW_CONTRAST, ...withoutDuotone(img) };
+      return { ...BW_LOOK, ...withoutDuotone(img) };
     case 'duotone':
       return duotoneLook(img, brandScheme) ?? {};
     case 'darken':
-      return { brightness: DARKEN_BRIGHTNESS };
+      // Exclusive: a look ends B/W (and its contrast) and the duotone.
+      return {
+        brightness: DARKEN_BRIGHTNESS,
+        grayscale: false,
+        ...(img.contrast === BW_LOOK.contrast && { contrast: 0 }),
+        ...withoutDuotone(img),
+      };
   }
 }

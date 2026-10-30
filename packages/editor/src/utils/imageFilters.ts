@@ -207,6 +207,9 @@ export const EMPTY_ADJUSTMENTS: ImageAdjustments = {
   vignette: 0,
 };
 
+/** Black & white, defined once: grayscale with the prototype's `contrast(1.12)` (≈ 6). Sidebar preset and Look control share it. */
+export const BW_LOOK = { grayscale: true, contrast: 6 } as const;
+
 export interface ImagePreset {
   id: string;
   label: string;
@@ -262,7 +265,7 @@ export const IMAGE_PRESETS: ImagePreset[] = [
     get label() {
       return messages().imageLooks.bw;
     },
-    values: { ...EMPTY_ADJUSTMENTS, grayscale: true, contrast: 12 },
+    values: { ...EMPTY_ADJUSTMENTS, ...BW_LOOK },
   },
   {
     // The colours come from the page's world when it is applied (`duotoneLook`).
