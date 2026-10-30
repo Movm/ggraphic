@@ -62,6 +62,8 @@ describe('pickOffers', () => {
       'studio-headline',
       'studio-quote',
       'studio-number',
+      'studio-photo-quote',
+      'studio-photo-number',
     ]);
     expect(templates.some((t) => t.id === BLANK_TEMPLATE_ID)).toBe(false);
   });
@@ -71,6 +73,8 @@ describe('pickOffers', () => {
       'studio-headline',
       'studio-quote',
       'studio-number',
+      'studio-photo-quote',
+      'studio-photo-number',
     ]);
     expect(templates.find((t) => t.id === 'studio-quote')!.slots).toEqual([
       { id: 'headline', label: 'The quotation', maxChars: 160 },
@@ -80,7 +84,7 @@ describe('pickOffers', () => {
 
   it('lists only text ids the template seed carries, with a limit each', () => {
     for (const t of templates) {
-      const seedIds = (seedFor(t.id as never, 1080, 1080).additionalTexts ?? []).map((x) => x.id);
+      const seedIds = (seedFor(t.id as never, 1080, 1350).additionalTexts ?? []).map((x) => x.id);
       expect(t.slots.length).toBeGreaterThan(0);
       for (const slot of t.slots) {
         expect(seedIds).toContain(slot.id);

@@ -91,7 +91,12 @@ export async function defaults(): Promise<Record<string, Fields[]>> {
     circleBadgeInstances: [createCircleBadgeInstance() as unknown as Fields],
     pillBadgeInstances: [createPillBadgeInstance() as unknown as Fields],
     userImageInstances: [
-      (await createUserImageInstanceFromUrl('blob:x', 'x.png', 1080, 1350)) as unknown as Fields,
+      {
+        ...(await createUserImageInstanceFromUrl('blob:x', 'x.png', 1080, 1350)),
+        // Colour fields the inventory test must see listed as bindable.
+        duotoneLow: '#112233',
+        duotoneHigh: '#ddeeff',
+      } as unknown as Fields,
     ],
     chartInstances: [createChartInstance('bar', 1080, 1350) as unknown as Fields],
   };

@@ -20,6 +20,7 @@ import type {
 } from '@ggraphic/editor/ai/types';
 import type { StockImage, StockImageAttribution } from '@ggraphic/editor/common/imageSourceTypes';
 import type { AltTextPage, CanvasSpecEditBridge } from '@ggraphic/editor/editorSeamTypes';
+import type { SlotBudget } from '@ggraphic/core';
 import type { CanvasAiCapabilities } from '@ggraphic/schema';
 import type { ComponentType, PropsWithChildren } from 'react';
 
@@ -243,6 +244,21 @@ export interface CanvasEditorServices extends CanvasEditorHostServices {
    * When omitted, page ops leave the chrome as it is.
    */
   carousel?: CanvasCarouselService;
+
+  /**
+   * The text budget of a template element. While a text is selected, the editor
+   * warns when it exceeds the budget. Warns only: nothing is clamped. When omitted,
+   * the editor shows no budget status.
+   */
+  slotBudgets?: CanvasSlotBudgetService;
+}
+
+export interface CanvasSlotBudgetService {
+  /** The budget and role of element `elementId` on a page in state `pageState`, or null when it has none. */
+  budgetFor(
+    pageState: Readonly<Record<string, unknown>>,
+    elementId: string
+  ): { budget: SlotBudget; role: string } | null;
 }
 
 const CanvasEditorContext = createContext<CanvasEditorServices>({});

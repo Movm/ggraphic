@@ -5,6 +5,7 @@
  * headline or subline text (a blank page, say) gets a new "Headline + text"
  * page after it instead.
  */
+import { minTextSizePx } from '@ggraphic/core';
 import { type ReplaceDeckOps } from '@ggraphic/editor/collab/pagesDoc';
 import { type AdditionalText } from '@ggraphic/editor/configs/types';
 import { runMeasurer } from '@ggraphic/editor/utils/textUtils';
@@ -37,32 +38,47 @@ function textsOf(state: Record<string, unknown>): AdditionalText[] {
 }
 
 /** `texts` filled with the draft; null when the page has no headline or subline to fill. */
-export function fillTexts(texts: readonly AdditionalText[], draft: Draft): AdditionalText[] | null {
+export function fillTexts(
+  texts: readonly AdditionalText[],
+  draft: Draft,
+  canvasHeight?: number
+): AdditionalText[] | null {
   const byRole = draftTexts(draft);
   const fillable = texts.some((t) => t.id === TEXT_ROLES.headline || t.id === TEXT_ROLES.subline);
   if (!fillable) return null;
-  return fillById(texts, byRole);
+  return fillById(texts, byRole, canvasHeight);
 }
 
-/** `texts` with the text of every id in `byId` replaced, each fitted above the text below it. */
+/**
+ * `texts` with the text of every id in `byId` replaced, each fitted above the text below it.
+ * With `canvasHeight`, no fitted text goes below the legibility floor (`minTextSizePx`).
+ */
 export function fillById(
   texts: readonly AdditionalText[],
-  byId: ReadonlyMap<string, string>
+  byId: ReadonlyMap<string, string>,
+  canvasHeight?: number
 ): AdditionalText[] {
   return texts.map((t) => {
     const value = byId.get(t.id);
-    return value === undefined ? t : fitToSlot({ ...t, text: value }, texts);
+    return value === undefined ? t : fitToSlot({ ...t, text: value }, texts, canvasHeight);
   });
 }
 
 /**
  * A text grows downwards, so a long one runs into the next text below it. Shrink it
  * until it ends above that text; a word that does not fit even hyphenated shrinks too.
+ * Not below the legibility floor of the canvas, unless the text itself is smaller already
+ * (it is never grown); the status line then warns about the overflow instead.
  */
-function fitToSlot(text: AdditionalText, texts: readonly AdditionalText[]): AdditionalText {
+function fitToSlot(
+  text: AdditionalText,
+  texts: readonly AdditionalText[],
+  canvasHeight?: number
+): AdditionalText {
   const { fontSize, width, fontFamily } = text;
   const below = texts.filter((other) => other.y > text.y).map((other) => other.y);
   if (!fontSize || !width || below.length === 0) return text;
+  const floor = canvasHeight === undefined ? undefined : minTextSizePx(canvasHeight);
   const fitted = fitFontSizeToSlot(
     text.text,
     {
@@ -70,6 +86,7 @@ function fitToSlot(text: AdditionalText, texts: readonly AdditionalText[]): Addi
       maxHeight: Math.min(...below) - text.y,
       fontSize,
       lineHeight: text.lineHeight ?? 1,
+      ...(floor === undefined ? {} : { minSize: Math.min(floor, fontSize) }),
     },
     (size) => (line) =>
       runMeasurer(size, fontFamily ?? '', text.fontStyle ?? 'normal')(line, PLAIN_STYLE)
@@ -89,7 +106,7 @@ export function draftDeckOps(
 ): ReplaceDeckOps {
   const active = pages.find((p) => p.id === activePageId) ?? pages[0] ?? null;
   if (active) {
-    const filled = fillTexts(textsOf(active.state), draft);
+    const filled = fillTexts(textsOf(active.state), draft, size.height);
     if (filled) {
       return {
         updates: [{ pageId: active.id, state: { ...active.state, additionalTexts: filled } }],

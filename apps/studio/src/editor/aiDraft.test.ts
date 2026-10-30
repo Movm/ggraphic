@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import { minTextSizePx } from '@ggraphic/core';
 import { PLAIN_STYLE, wrapLines } from '@ggraphic/schema';
 import { runMeasurer } from '@ggraphic/editor/utils/textUtils';
 import { describe, expect, it } from 'vitest';
 
-import { draftDeckOps, draftTexts, fillTexts } from './aiDraft';
+import { draftDeckOps, draftTexts, fillById, fillTexts } from './aiDraft';
 import {
   BLANK_TEMPLATE_ID,
   FREE_PAGE_CONFIG_ID,
@@ -62,6 +63,27 @@ describe('fillTexts', () => {
     // A short headline keeps the seeded size.
     const short = fillTexts(texts, { ...draft, headline: 'Hello' })!;
     expect(short.find((t) => t.id === 'headline')!.fontSize).toBe(seeded.fontSize);
+  });
+
+  it('fitToSlot never shrinks a text below 0.035 of the canvas height', () => {
+    const texts = seedFor(HEADLINE_TEMPLATE_ID, SIZE.width, SIZE.height).additionalTexts ?? [];
+    const floor = minTextSizePx(SIZE.height);
+    const huge = 'Gemeinschaftsgarten Stadtrand wächst und wächst weiter '.repeat(12);
+    const fill = new Map([['headline', huge]]);
+    const without = fillById(texts, fill).find((t) => t.id === 'headline')!;
+    // The long text would shrink under the floor without it.
+    expect(without.fontSize).toBeLessThan(floor);
+    const floored = fillById(texts, fill, SIZE.height).find((t) => t.id === 'headline')!;
+    expect(floored.fontSize).toBeGreaterThanOrEqual(floor);
+  });
+
+  it('keeps a text that is already below the floor and never grows it', () => {
+    const texts = seedFor(HEADLINE_TEMPLATE_ID, SIZE.width, SIZE.height).additionalTexts ?? [];
+    const small = texts.map((t) => (t.id === 'headline' ? { ...t, fontSize: 20 } : t));
+    const out = fillById(small, new Map([['headline', 'x '.repeat(200)]]), SIZE.height).find(
+      (t) => t.id === 'headline'
+    )!;
+    expect(out.fontSize).toBeLessThanOrEqual(20);
   });
 
   it('returns null for a page without a headline or subline', () => {

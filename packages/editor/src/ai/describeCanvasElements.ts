@@ -79,7 +79,7 @@ function describeItem(item: CanvasItem, state: BaseCanvasState): SummaryEntry | 
     case 'shape': {
       const s = item.data;
       const plane = isComposerPlane(s.id) ? ' (Hintergrundfläche)' : '';
-      const gradient = s.fillGradient ? ' · Verlauf' : '';
+      const gradient = s.fillGradient || s.shade ? ' · Verlauf' : '';
       return {
         id: s.id,
         kind: 'shape',

@@ -21,6 +21,8 @@ export {
   toHex,
   type Rgba,
 } from './color/color.js';
+export { duotoneRamp } from './color/duotone.js';
+export { SHADE_STOPS, shadeAlphaAt, type ShadeDirection } from './color/shade.js';
 export {
   SCHEME_IDS,
   SURFACE_ROLES,
@@ -80,3 +82,12 @@ export {
   type TemplateFrameKind,
   type TemplateInput,
 } from './templates/instantiate.js';
+export {
+  MIN_TEXT_SHARE,
+  checkSlotBudget,
+  countChars,
+  countWords,
+  minTextSizePx,
+  type BudgetViolation,
+  type SlotBudget,
+} from './templates/slotBudget.js';
