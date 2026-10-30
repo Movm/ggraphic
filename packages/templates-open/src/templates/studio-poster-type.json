@@ -1,0 +1,243 @@
+{
+  "formatVersion": 1,
+  "id": "studio-poster-type",
+  "version": 1,
+  "kind": "template",
+  "family": "poster",
+  "title": {
+    "en": "Typographic poster",
+    "de": "Typografisches Plakat"
+  },
+  "description": {
+    "en": "Four giant lines of type and a coloured disc on a calm ground",
+    "de": "Vier riesige Schriftzeilen und eine farbige Scheibe auf ruhigem Grund"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["light", "primary", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "square",
+            "type": "rect",
+            "x": 0.974074,
+            "y": 0.020741,
+            "width": 0.051852,
+            "height": 0.041481,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          },
+          {
+            "id": "disc",
+            "type": "ellipse",
+            "x": 0.869565,
+            "y": 0.571429,
+            "width": 0.26087,
+            "height": 0.201681,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink2"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "line-1",
+            "type": "header",
+            "text": "More",
+            "x": 0.059259,
+            "y": 0.071111,
+            "width": 0.814815,
+            "fontSize": 0.222222,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.86,
+            "fontWeight": 800,
+            "letterSpacing": -0.045,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "line-2",
+            "type": "header",
+            "text": "room",
+            "x": 0.059259,
+            "y": 0.223704,
+            "width": 0.814815,
+            "fontSize": 0.222222,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.86,
+            "fontWeight": 800,
+            "letterSpacing": -0.045,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "line-3",
+            "type": "header",
+            "text": "for",
+            "x": 0.059259,
+            "y": 0.376296,
+            "width": 0.481481,
+            "fontSize": 0.222222,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.86,
+            "fontWeight": 800,
+            "letterSpacing": -0.045,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "line-4",
+            "type": "header",
+            "text": "all.",
+            "x": 0.059259,
+            "y": 0.528889,
+            "width": 0.611111,
+            "fontSize": 0.222222,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.86,
+            "fontWeight": 800,
+            "letterSpacing": -0.045,
+            "bind": {
+              "fill": "accent",
+              "fontFamily": "font.headline"
+            }
+          }
+        ],
+        "layerOrder": ["square", "disc", "line-1", "line-2", "line-3", "line-4", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "square": "canvas",
+    "line-1": "canvas",
+    "line-2": "canvas",
+    "line-3": "canvas",
+    "line-4": "canvas"
+  },
+  "slots": {
+    "line-1": {
+      "role": "headline",
+      "label": {
+        "en": "Line 1",
+        "de": "Zeile 1"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 8
+      }
+    },
+    "line-2": {
+      "role": "headline",
+      "label": {
+        "en": "Line 2",
+        "de": "Zeile 2"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 8
+      }
+    },
+    "line-3": {
+      "role": "headline",
+      "label": {
+        "en": "Line 3",
+        "de": "Zeile 3"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 8
+      }
+    },
+    "line-4": {
+      "role": "headline",
+      "label": {
+        "en": "Line 4",
+        "de": "Zeile 4"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 8
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-left"],
+  "placeholders": {
+    "en": {
+      "line-1": "More",
+      "line-2": "room",
+      "line-3": "for",
+      "line-4": "all."
+    },
+    "de": {
+      "line-1": "Mehr",
+      "line-2": "Platz",
+      "line-3": "für",
+      "line-4": "alle."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

@@ -1,0 +1,446 @@
+{
+  "formatVersion": 1,
+  "id": "studio-petition-face",
+  "version": 1,
+  "kind": "template",
+  "family": "petition",
+  "title": {
+    "en": "Petition with a face",
+    "de": "Petition mit Gesicht"
+  },
+  "description": {
+    "en": "A progress bar, a portrait with a quote on plates, and a call to sign at the bottom",
+    "de": "Ein Fortschrittsbalken, ein Porträt mit Zitat auf Boxen und unten der Aufruf zur Unterschrift"
+  },
+  "tags": {
+    "tone": "warm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["light", "primary", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "track",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.022689,
+            "width": 1,
+            "height": 0.005042,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.15,
+            "bind": {
+              "fill": "ink"
+            }
+          },
+          {
+            "id": "progress",
+            "type": "rect",
+            "x": 0.415761,
+            "y": 0.022689,
+            "width": 0.831522,
+            "height": 0.005042,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          },
+          {
+            "id": "quote-plate-1",
+            "type": "rect",
+            "x": 0.380435,
+            "y": 0.603361,
+            "width": 0.76087,
+            "height": 0.063866,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          },
+          {
+            "id": "quote-plate-2",
+            "type": "rect",
+            "x": 0.413043,
+            "y": 0.67563,
+            "width": 0.826087,
+            "height": 0.063866,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          },
+          {
+            "id": "name-plate",
+            "type": "rect",
+            "x": 0.304348,
+            "y": 0.736975,
+            "width": 0.608696,
+            "height": 0.042017,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ground"
+            }
+          },
+          {
+            "id": "cta-band",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.888889,
+            "width": 1,
+            "height": 0.222222,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0.184783,
+            "y": 0.067227,
+            "width": 0.630435,
+            "height": 0.747899,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "notch": 0.051852
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "label",
+            "type": "body",
+            "text": "PETITION",
+            "x": 0.074074,
+            "y": 0.045185,
+            "width": 0.277778,
+            "fontSize": 0.022222,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 600,
+            "letterSpacing": 0.08,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "count",
+            "type": "body",
+            "text": "12,480 of 15,000 signatures",
+            "x": 0.444444,
+            "y": 0.044444,
+            "width": 0.481481,
+            "fontSize": 0.02037,
+            "align": "right",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "quote-1",
+            "type": "header",
+            "text": "“I want my child",
+            "x": 0.028261,
+            "y": 0.581513,
+            "width": 0.706522,
+            "fontSize": 0.042593,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 700,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "quote-2",
+            "type": "header",
+            "text": "to get to school safely.”",
+            "x": 0.028261,
+            "y": 0.653782,
+            "width": 0.771739,
+            "fontSize": 0.042593,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 700,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "name",
+            "type": "body",
+            "text": "Aylin, mother of two",
+            "x": 0.017391,
+            "y": 0.72605,
+            "width": 0.576087,
+            "fontSize": 0.024074,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "cta",
+            "type": "header",
+            "text": "Sign now",
+            "x": 0,
+            "y": 0.946218,
+            "width": 0.543478,
+            "fontSize": 0.040741,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 700,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "link",
+            "type": "body",
+            "text": "example.org/schoolway",
+            "x": 0.074074,
+            "y": 0.939259,
+            "width": 0.462963,
+            "fontSize": 0.025926,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.3,
+            "fontWeight": 400,
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": [
+          "label",
+          "count",
+          "track",
+          "progress",
+          "photo",
+          "quote-plate-1",
+          "quote-1",
+          "quote-plate-2",
+          "quote-2",
+          "name-plate",
+          "name",
+          "cta-band",
+          "cta",
+          "link",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {
+    "label": "canvas",
+    "count": "canvas",
+    "cta-band": "canvas",
+    "link": "canvas"
+  },
+  "slots": {
+    "label": {
+      "role": "subline",
+      "label": {
+        "en": "Label",
+        "de": "Label"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 12
+      }
+    },
+    "count": {
+      "role": "number",
+      "label": {
+        "en": "Counter",
+        "de": "Zähler"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 1,
+        "maxChars": 40
+      }
+    },
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "quote-1": {
+      "role": "quote",
+      "label": {
+        "en": "Quote line 1",
+        "de": "Zitat Zeile 1"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 1,
+        "maxChars": 28
+      }
+    },
+    "quote-2": {
+      "role": "quote",
+      "label": {
+        "en": "Quote line 2",
+        "de": "Zitat Zeile 2"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 1,
+        "maxChars": 28
+      }
+    },
+    "name": {
+      "role": "name",
+      "label": {
+        "en": "Name",
+        "de": "Name"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 1,
+        "maxChars": 30
+      }
+    },
+    "cta": {
+      "role": "cta",
+      "label": {
+        "en": "Call",
+        "de": "Aufruf"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 24
+      }
+    },
+    "link": {
+      "role": "body",
+      "label": {
+        "en": "Link",
+        "de": "Link"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 30
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "progress",
+      "title": {
+        "en": "Progress",
+        "de": "Fortschritt"
+      },
+      "elementIds": ["track", "progress", "count"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right"],
+  "placeholders": {
+    "en": {
+      "label": "PETITION",
+      "count": "12,480 of 15,000 signatures",
+      "quote-1": "“I want my child",
+      "quote-2": "to get to school safely.”",
+      "name": "Aylin, mother of two",
+      "cta": "Sign now",
+      "link": "example.org/schoolway"
+    },
+    "de": {
+      "label": "PETITION",
+      "count": "12.480 von 15.000 Unterschriften",
+      "quote-1": "„Ich will, dass mein Kind",
+      "quote-2": "sicher zur Schule kommt.“",
+      "name": "Aylin, Mutter von zwei",
+      "cta": "Mitzeichnen",
+      "link": "beispiel.org/schulweg"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

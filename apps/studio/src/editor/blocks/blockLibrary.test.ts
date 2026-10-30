@@ -27,6 +27,13 @@ describe('blockLibrary', () => {
       'studio-event-programme/date-with-place',
       'studio-photo-quote/quote-with-person',
       'studio-photo-number/number-with-line',
+      'studio-demand-photo-band/demand-band',
+      'studio-figure-of-the-month/number-with-explanation',
+      'studio-invitation-panel/date-with-place',
+      'studio-petition-face/progress',
+      'studio-quote-card/quote-with-name',
+      'studio-statement-panel-dots/statement-with-text',
+      'studio-study-kicker-boxes/kicker-headline',
     ]);
     expect(find(QUOTE)).toMatchObject({
       version: 1,

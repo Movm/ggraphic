@@ -1,0 +1,305 @@
+{
+  "formatVersion": 1,
+  "id": "studio-figure-of-the-month",
+  "version": 1,
+  "kind": "template",
+  "family": "figure",
+  "title": {
+    "en": "Figure of the month",
+    "de": "Zahl des Monats"
+  },
+  "description": {
+    "en": "One giant percentage with a lead-in above, an explanation below and a source line",
+    "de": "Eine riesige Prozentzahl mit Einleitung darüber, Erklärung darunter und einer Quellenzeile"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["light", "primary", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "lower",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.785185,
+            "width": 1,
+            "height": 0.42963,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.06,
+            "bind": {
+              "fill": "ink"
+            }
+          },
+          {
+            "id": "square",
+            "type": "rect",
+            "x": 0.974074,
+            "y": 0.020741,
+            "width": 0.051852,
+            "height": 0.041481,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          },
+          {
+            "id": "rule",
+            "type": "rect",
+            "x": 0.082609,
+            "y": 0.582353,
+            "width": 0.104348,
+            "height": 0.005042,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "lead",
+            "type": "body",
+            "text": "Of 1,204 respondents want",
+            "x": 0.030435,
+            "y": 0.109244,
+            "width": 0.5,
+            "fontSize": 0.031481,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.25,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "number",
+            "type": "header",
+            "text": "73 %",
+            "x": 0.015217,
+            "y": 0.184874,
+            "width": 0.978261,
+            "fontSize": 0.296296,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 800,
+            "letterSpacing": -0.05,
+            "bind": {
+              "fill": "accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "more green space in their neighbourhood",
+            "x": 0.030435,
+            "y": 0.605042,
+            "width": 0.934783,
+            "fontSize": 0.055556,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 700,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "text",
+            "type": "body",
+            "text": "Mentioned most often: shade, benches and water points for hot summers.",
+            "x": 0.030435,
+            "y": 0.781513,
+            "width": 0.847826,
+            "fontSize": 0.031481,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.4,
+            "fontWeight": 400,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "source",
+            "type": "body",
+            "text": "Source: example survey among members, September 2026",
+            "x": 0.030435,
+            "y": 0.92437,
+            "width": 0.5,
+            "fontSize": 0.02037,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.3,
+            "fontWeight": 400,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": [
+          "lower",
+          "square",
+          "rule",
+          "lead",
+          "number",
+          "headline",
+          "text",
+          "source",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {
+    "lower": "canvas",
+    "square": "canvas"
+  },
+  "slots": {
+    "lead": {
+      "role": "subline",
+      "label": {
+        "en": "Lead-in",
+        "de": "Einleitung"
+      },
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 3,
+        "maxChars": 40
+      }
+    },
+    "number": {
+      "role": "number",
+      "label": {
+        "en": "Figure",
+        "de": "Zahl"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 5
+      }
+    },
+    "headline": {
+      "role": "headline",
+      "label": {
+        "en": "Explanation",
+        "de": "Erklärung"
+      },
+      "budget": {
+        "maxWords": 7,
+        "maxLines": 3,
+        "maxChars": 48
+      }
+    },
+    "text": {
+      "role": "body",
+      "label": {
+        "en": "Detail",
+        "de": "Detail"
+      },
+      "budget": {
+        "maxWords": 12,
+        "maxLines": 3,
+        "maxChars": 80
+      }
+    },
+    "source": {
+      "role": "body",
+      "label": {
+        "en": "Source",
+        "de": "Quelle"
+      },
+      "budget": {
+        "maxWords": 9,
+        "maxLines": 2,
+        "maxChars": 64
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "number-with-explanation",
+      "title": {
+        "en": "Number with explanation",
+        "de": "Zahl mit Erklärung"
+      },
+      "elementIds": ["number", "headline", "text"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "lead": "Of 1,204 respondents want",
+      "number": "73 %",
+      "headline": "more green space in their neighbourhood",
+      "text": "Mentioned most often: shade, benches and water points for hot summers.",
+      "source": "Source: example survey among members, September 2026"
+    },
+    "de": {
+      "lead": "Von 1.204 Befragten wünschen sich",
+      "number": "73 %",
+      "headline": "mehr Grünflächen im eigenen Viertel",
+      "text": "Am häufigsten genannt: Schatten, Sitzbänke und Wasserstellen.",
+      "source": "Quelle: Beispielumfrage unter Mitgliedern, 09/2026"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

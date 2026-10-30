@@ -1,0 +1,355 @@
+{
+  "formatVersion": 1,
+  "id": "studio-comparison-stacked",
+  "version": 1,
+  "kind": "template",
+  "family": "comparison",
+  "title": {
+    "en": "Stacked comparison",
+    "de": "Gestapelter Vergleich"
+  },
+  "description": {
+    "en": "Two photos one above the other, each with a label and a short line, a colour band between them",
+    "de": "Zwei Fotos übereinander mit je einem Label und einer kurzen Zeile, dazwischen ein Farbband"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "dark", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "veil-before",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.24,
+            "width": 1,
+            "height": 0.48,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.6,
+            "bind": {
+              "fill": "deep"
+            }
+          },
+          {
+            "id": "scrim-before",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.24,
+            "width": 1,
+            "height": 0.48,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "shade": "top",
+            "bind": {
+              "fill": "deep"
+            }
+          },
+          {
+            "id": "band",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.5,
+            "width": 1,
+            "height": 0.04,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          },
+          {
+            "id": "veil-after",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.76,
+            "width": 1,
+            "height": 0.48,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.3,
+            "bind": {
+              "fill": "deep"
+            }
+          },
+          {
+            "id": "scrim-after",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.76,
+            "width": 1,
+            "height": 0.48,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "shade": "bottom",
+            "bind": {
+              "fill": "deep"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo-before",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 0.48,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "notch": 0.051852,
+            "grayscale": true,
+            "contrast": 6
+          },
+          {
+            "id": "photo-after",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0.52,
+            "width": 1,
+            "height": 0.48,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "label-before",
+            "type": "body",
+            "text": "BEFORE · 2021",
+            "x": 0,
+            "y": 0.142857,
+            "width": 0.456522,
+            "fontSize": 0.024074,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 600,
+            "letterSpacing": 0.08,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "line-before",
+            "type": "header",
+            "text": "The empty corner shop",
+            "x": 0,
+            "y": 0.179832,
+            "width": 0.521739,
+            "fontSize": 0.055556,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 800,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "label-after",
+            "type": "body",
+            "text": "AFTER · 2026",
+            "x": 0,
+            "y": 0.823529,
+            "width": 0.586957,
+            "fontSize": 0.024074,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 600,
+            "letterSpacing": 0.08,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "line-after",
+            "type": "header",
+            "text": "A café for everyone",
+            "x": 0,
+            "y": 0.860504,
+            "width": 0.76087,
+            "fontSize": 0.055556,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 800,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          }
+        ],
+        "layerOrder": [
+          "photo-before",
+          "veil-before",
+          "scrim-before",
+          "label-before",
+          "line-before",
+          "band",
+          "photo-after",
+          "veil-after",
+          "scrim-after",
+          "label-after",
+          "line-after",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {
+    "photo-before": "canvas",
+    "veil-before": "canvas",
+    "scrim-before": "canvas",
+    "band": "canvas",
+    "photo-after": "canvas",
+    "veil-after": "canvas",
+    "scrim-after": "canvas"
+  },
+  "slots": {
+    "photo-before": {
+      "role": "photo",
+      "label": {
+        "en": "Photo before",
+        "de": "Foto vorher"
+      },
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "label-before": {
+      "role": "subline",
+      "label": {
+        "en": "Label before",
+        "de": "Label vorher"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 20
+      }
+    },
+    "line-before": {
+      "role": "headline",
+      "label": {
+        "en": "Line before",
+        "de": "Zeile vorher"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 3,
+        "maxChars": 26
+      }
+    },
+    "photo-after": {
+      "role": "photo",
+      "label": {
+        "en": "Photo after",
+        "de": "Foto nachher"
+      },
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "label-after": {
+      "role": "subline",
+      "label": {
+        "en": "Label after",
+        "de": "Label nachher"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 20
+      }
+    },
+    "line-after": {
+      "role": "headline",
+      "label": {
+        "en": "Line after",
+        "de": "Zeile nachher"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 1,
+        "maxChars": 22
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "label-before": "BEFORE · 2021",
+      "line-before": "The empty corner shop",
+      "label-after": "AFTER · 2026",
+      "line-after": "A café for everyone"
+    },
+    "de": {
+      "label-before": "VORHER · 2021",
+      "line-before": "Der leere Eckladen",
+      "label-after": "NACHHER · 2026",
+      "line-after": "Ein Café für alle"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
