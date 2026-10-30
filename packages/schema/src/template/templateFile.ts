@@ -10,7 +10,14 @@ import { migrateDocument } from '../document/migrations.js';
 export const TEMPLATE_FORMAT_VERSION = 1;
 export const TEMPLATE_FORMATS = ['1:1', '4:5', '16:9'] as const;
 /** Equals core's `SCHEME_IDS`; a cross-package test pins them equal. */
-export const TEMPLATE_SCHEME_IDS = ['primary', 'secondary', 'light', 'dark', 'photo'] as const;
+export const TEMPLATE_SCHEME_IDS = [
+  'primary',
+  'secondary',
+  'accent',
+  'light',
+  'dark',
+  'photo',
+] as const;
 /** Equals core's `LOGO_CORNERS`; a cross-package test pins them equal. */
 export const TEMPLATE_LOGO_CORNERS = [
   'top-left',
