@@ -84,4 +84,23 @@ describe('App', () => {
     expect(await screen.findByRole('heading', { name: 'Log in' })).toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: 'Log out' })).not.toBeInTheDocument();
   });
+
+  it('shows the third-party notices at /licenses without a session', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => json(401, { error: 'unauthenticated' }))
+    );
+    window.history.replaceState(null, '', '/licenses');
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <App />
+      </QueryClientProvider>
+    );
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Licences' })).toBeInTheDocument();
+    expect(screen.getByText(/Noto Emoji/)).toBeInTheDocument();
+    expect(screen.getByText(/Apache License/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to the Studio' })).toHaveAttribute('href', '/');
+  });
 });

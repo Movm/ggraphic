@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Routes on the History API: `/` (the start page: the prompt and the projects), `/projects`
- * (kept for old links; redirects to `/`), `/trash`, `/p/:id` (the editor) and `/brand` (the
- * current organisation's brand). The server answers every other path with index.html.
+ * (kept for old links; redirects to `/`), `/trash`, `/p/:id` (the editor), `/brand` (the
+ * current organisation's brand) and `/licenses` (open to everyone). The server answers every other path with index.html.
  */
 import { useSyncExternalStore } from 'react';
 
@@ -11,6 +11,7 @@ export type Route =
   | { name: 'projects' }
   | { name: 'trash' }
   | { name: 'brand' }
+  | { name: 'licenses' }
   | { name: 'editor'; projectId: string };
 
 const decode = (part: string) => {
@@ -27,11 +28,13 @@ export function parseRoute(pathname: string): Route {
   if (/^\/projects\/?$/.test(pathname)) return { name: 'projects' };
   if (/^\/trash\/?$/.test(pathname)) return { name: 'trash' };
   if (/^\/brand\/?$/.test(pathname)) return { name: 'brand' };
+  if (/^\/licenses\/?$/.test(pathname)) return { name: 'licenses' };
   return { name: 'start' };
 }
 
 export const TRASH_PATH = '/trash';
 export const BRAND_PATH = '/brand';
+export const LICENSES_PATH = '/licenses';
 
 export const editorPath = (projectId: string) => `/p/${encodeURIComponent(projectId)}`;
 

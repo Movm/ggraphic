@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { type MouseEvent } from 'react';
 
 import { api } from '../api/client';
-import { BRAND_PATH, navigate } from '../router';
+import { BRAND_PATH, LICENSES_PATH, navigate } from '../router';
 import { useLoggedIn } from '../session/SessionContext';
 import { toast } from './toast';
 
@@ -40,6 +40,7 @@ export function AccountBar() {
     ...(organisation.role === 'owner'
       ? [{ label: 'Brand', onSelect: () => navigate(BRAND_PATH) }]
       : []),
+    { label: 'Licences', onSelect: () => navigate(LICENSES_PATH) },
     { label: 'Log out', onSelect: () => void logout() },
   ];
 
