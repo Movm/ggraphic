@@ -26,6 +26,8 @@ import { useState, useSyncExternalStore } from 'react';
 import { api, type Draft } from '../api/client';
 import { apiErrorText } from '../ui/errorText';
 
+import { budgetFor } from './templates/slotBudgets';
+
 /** The AI draft behind the "AI draft" tab (`aiDraftTab.tsx`). */
 export interface StudioAiDraftService {
   draft: (briefing: string, size: { width: number; height: number }) => Promise<Draft>;
@@ -197,6 +199,7 @@ export function createStudioServices({
     },
     imageUrls: studioImageUrls,
     fileDelivery: { ...browserFileDelivery, filenamePrefix: 'ggraphic', shareTitle: 'ggraphic' },
+    slotBudgets: { budgetFor },
     unsplashUtmSource: 'ggraphic',
     qrPreviewUrl: 'https://example.org',
     ...(removeBackground

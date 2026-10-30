@@ -804,6 +804,14 @@ export const de = {
     fontSize: 'Schriftgröße',
   },
 
+  budget: {
+    words: (actual: number, limit: number) => `${actual} von ${limit} Wörtern`,
+    chars: (actual: number, limit: number) => `${actual} von ${limit} Zeichen`,
+    lines: (actual: number, limit: number) => `${actual} von ${limit} Zeilen`,
+    fontSize: (actual: number, limit: number) =>
+      `Schrift ${actual} px, mindestens ${limit} px für gute Lesbarkeit`,
+  },
+
   shell: {
     loadingEditor: 'Editor wird geladen',
     zoomReset: 'Zoom auf 100 % zurücksetzen',
