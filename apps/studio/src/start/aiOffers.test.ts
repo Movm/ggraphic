@@ -54,6 +54,8 @@ describe('pickOffers with hidden templates', () => {
   });
 });
 
+const LEGACY_IDS = ['studio-headline', 'studio-quote', 'studio-number'];
+
 describe('pickOffers', () => {
   const { templates, schemes } = pickOffers('post-portrait');
 
@@ -62,6 +64,12 @@ describe('pickOffers', () => {
       'studio-headline',
       'studio-quote',
       'studio-number',
+      'studio-event-giant-date',
+      'studio-event-photo-date',
+      'studio-event-programme',
+      'studio-event-date-bands',
+      'studio-event-countdown',
+      'studio-event-panel',
       'studio-photo-quote',
       'studio-photo-number',
     ]);
@@ -73,6 +81,12 @@ describe('pickOffers', () => {
       'studio-headline',
       'studio-quote',
       'studio-number',
+      'studio-event-giant-date',
+      'studio-event-photo-date',
+      'studio-event-programme',
+      'studio-event-date-bands',
+      'studio-event-countdown',
+      'studio-event-panel',
       'studio-photo-quote',
       'studio-photo-number',
     ]);
@@ -83,11 +97,25 @@ describe('pickOffers', () => {
   });
 
   it('lists only text ids the template seed carries, with a limit each', () => {
-    for (const t of templates) {
-      const seedIds = (seedFor(t.id as never, 1080, 1350).additionalTexts ?? []).map((x) => x.id);
+    for (const t of templates.filter((x) => LEGACY_IDS.includes(x.id))) {
+      const seedIds = (seedFor(t.id as never, 1080, 1080).additionalTexts ?? []).map((x) => x.id);
       expect(t.slots.length).toBeGreaterThan(0);
       for (const slot of t.slots) {
         expect(seedIds).toContain(slot.id);
+        expect(slot.maxChars).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('offers the file-based templates only text ids their page carries, with a limit each', () => {
+    const files = templates.filter((x) => !LEGACY_IDS.includes(x.id));
+    expect(files.length).toBeGreaterThan(0);
+    for (const t of files) {
+      const state = studioCatalog().entries.find((e) => e.id === t.id)!.template.pages[0].state;
+      const textIds = ((state['additionalTexts'] ?? []) as { id: string }[]).map((x) => x.id);
+      expect(t.slots.length).toBeGreaterThan(0);
+      for (const slot of t.slots) {
+        expect(textIds).toContain(slot.id);
         expect(slot.maxChars).toBeGreaterThan(0);
       }
     }

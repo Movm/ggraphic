@@ -1,0 +1,308 @@
+{
+  "formatVersion": 1,
+  "id": "studio-event-panel",
+  "version": 1,
+  "kind": "template",
+  "family": "event",
+  "title": {
+    "en": "Panel of three",
+    "de": "Podium mit drei Köpfen"
+  },
+  "description": {
+    "en": "A title question, a date line and three equal portraits with first names",
+    "de": "Eine Titelfrage, eine Datumszeile und drei gleich große Porträts mit Vornamen"
+  },
+  "tags": {
+    "tone": "warm",
+    "occasions": ["event"],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [],
+        "userImageInstances": [
+          {
+            "id": "photo-1",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0.403361,
+            "width": 0.315217,
+            "height": 0.369748,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "photo-2",
+            "src": "",
+            "fileName": "",
+            "x": 0.342391,
+            "y": 0.403361,
+            "width": 0.315217,
+            "height": 0.369748,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "photo-3",
+            "src": "",
+            "fileName": "",
+            "x": 0.684783,
+            "y": 0.403361,
+            "width": 0.315217,
+            "height": 0.369748,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "title",
+            "type": "header",
+            "text": "Who shapes our streets?",
+            "x": 0,
+            "y": 0.016807,
+            "width": 1,
+            "fontSize": 0.096296,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "when",
+            "type": "body",
+            "text": "Thu, 5 Feb, 7 pm, Culture Hall",
+            "x": 0,
+            "y": 0.243697,
+            "width": 1,
+            "fontSize": 0.051852,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "name-1",
+            "type": "body",
+            "text": "Ida",
+            "x": 0,
+            "y": 0.794118,
+            "width": 0.315217,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "name-2",
+            "type": "body",
+            "text": "Tomas",
+            "x": 0.342391,
+            "y": 0.794118,
+            "width": 0.315217,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "name-3",
+            "type": "body",
+            "text": "Reya",
+            "x": 0.684783,
+            "y": 0.794118,
+            "width": 0.315217,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": [
+          "title",
+          "when",
+          "photo-1",
+          "name-1",
+          "photo-2",
+          "name-2",
+          "photo-3",
+          "name-3",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "title": {
+      "role": "headline",
+      "label": {
+        "en": "Title question",
+        "de": "Titelfrage"
+      },
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 3,
+        "maxChars": 40
+      }
+    },
+    "when": {
+      "role": "date",
+      "label": {
+        "en": "Date and place",
+        "de": "Datum und Ort"
+      },
+      "budget": {
+        "maxWords": 9,
+        "maxLines": 2,
+        "maxChars": 44
+      }
+    },
+    "photo-1": {
+      "role": "photo",
+      "label": {
+        "en": "Portrait 1",
+        "de": "Porträt 1"
+      },
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "name-1": {
+      "role": "name",
+      "label": {
+        "en": "First name 1",
+        "de": "Vorname 1"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 12
+      }
+    },
+    "photo-2": {
+      "role": "photo",
+      "label": {
+        "en": "Portrait 2",
+        "de": "Porträt 2"
+      },
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "name-2": {
+      "role": "name",
+      "label": {
+        "en": "First name 2",
+        "de": "Vorname 2"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 12
+      }
+    },
+    "photo-3": {
+      "role": "photo",
+      "label": {
+        "en": "Portrait 3",
+        "de": "Porträt 3"
+      },
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "name-3": {
+      "role": "name",
+      "label": {
+        "en": "First name 3",
+        "de": "Vorname 3"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 12
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right", "bottom-left"],
+  "placeholders": {
+    "en": {
+      "title": "Who shapes our streets?",
+      "when": "Thu, 5 Feb, 7 pm, Culture Hall",
+      "name-1": "Ida",
+      "name-2": "Tomas",
+      "name-3": "Reya"
+    },
+    "de": {
+      "title": "Wer gestaltet unsere Straßen?",
+      "when": "Do, 5. Feb., 19 Uhr, Kulturhalle",
+      "name-1": "Ida",
+      "name-2": "Tomas",
+      "name-3": "Reya"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

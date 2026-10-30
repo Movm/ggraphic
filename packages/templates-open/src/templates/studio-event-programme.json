@@ -1,0 +1,431 @@
+{
+  "formatVersion": 1,
+  "id": "studio-event-programme",
+  "version": 1,
+  "kind": "template",
+  "family": "event",
+  "title": {
+    "en": "Programme with times",
+    "de": "Programm mit Uhrzeiten"
+  },
+  "description": {
+    "en": "A title, a date line and four rows of time and item",
+    "de": "Ein Titel, eine Datumszeile und vier Zeilen mit Uhrzeit und Programmpunkt"
+  },
+  "tags": {
+    "tone": "plain",
+    "occasions": ["event"],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "rule",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.314286,
+            "width": 1,
+            "height": 0.006723,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "title",
+            "type": "header",
+            "text": "Neighbourhood evening",
+            "x": 0,
+            "y": 0.02521,
+            "width": 1,
+            "fontSize": 0.096296,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "when",
+            "type": "body",
+            "text": "Tuesday, 9 March, Town Hall",
+            "x": 0,
+            "y": 0.235294,
+            "width": 1,
+            "fontSize": 0.048148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "time-1",
+            "type": "header",
+            "text": "17:30",
+            "x": 0,
+            "y": 0.352941,
+            "width": 0.358696,
+            "fontSize": 0.081481,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "item-1",
+            "type": "body",
+            "text": "Welcome",
+            "x": 0.380435,
+            "y": 0.368067,
+            "width": 0.619565,
+            "fontSize": 0.055556,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.05,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "time-2",
+            "type": "header",
+            "text": "18:00",
+            "x": 0,
+            "y": 0.470588,
+            "width": 0.358696,
+            "fontSize": 0.081481,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "item-2",
+            "type": "body",
+            "text": "Talk",
+            "x": 0.380435,
+            "y": 0.485714,
+            "width": 0.619565,
+            "fontSize": 0.055556,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.05,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "time-3",
+            "type": "header",
+            "text": "19:00",
+            "x": 0,
+            "y": 0.588235,
+            "width": 0.358696,
+            "fontSize": 0.081481,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "item-3",
+            "type": "body",
+            "text": "Open floor",
+            "x": 0.380435,
+            "y": 0.603361,
+            "width": 0.619565,
+            "fontSize": 0.055556,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.05,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "time-4",
+            "type": "header",
+            "text": "20:30",
+            "x": 0,
+            "y": 0.705882,
+            "width": 0.358696,
+            "fontSize": 0.081481,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "item-4",
+            "type": "body",
+            "text": "Wrap-up",
+            "x": 0.380435,
+            "y": 0.721008,
+            "width": 0.619565,
+            "fontSize": 0.055556,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.05,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": [
+          "title",
+          "when",
+          "rule",
+          "time-1",
+          "item-1",
+          "time-2",
+          "item-2",
+          "time-3",
+          "item-3",
+          "time-4",
+          "item-4",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "title": {
+      "role": "headline",
+      "label": {
+        "en": "Event title",
+        "de": "Titel der Veranstaltung"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 2,
+        "maxChars": 30
+      }
+    },
+    "when": {
+      "role": "date",
+      "label": {
+        "en": "Date and place",
+        "de": "Datum und Ort"
+      },
+      "budget": {
+        "maxWords": 8,
+        "maxLines": 1,
+        "maxChars": 34
+      }
+    },
+    "time-1": {
+      "role": "date",
+      "label": {
+        "en": "Time 1",
+        "de": "Uhrzeit 1"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 5
+      }
+    },
+    "item-1": {
+      "role": "subline",
+      "label": {
+        "en": "Item 1",
+        "de": "Programmpunkt 1"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 18
+      }
+    },
+    "time-2": {
+      "role": "date",
+      "label": {
+        "en": "Time 2",
+        "de": "Uhrzeit 2"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 5
+      }
+    },
+    "item-2": {
+      "role": "subline",
+      "label": {
+        "en": "Item 2",
+        "de": "Programmpunkt 2"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 18
+      }
+    },
+    "time-3": {
+      "role": "date",
+      "label": {
+        "en": "Time 3",
+        "de": "Uhrzeit 3"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 5
+      }
+    },
+    "item-3": {
+      "role": "subline",
+      "label": {
+        "en": "Item 3",
+        "de": "Programmpunkt 3"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 18
+      }
+    },
+    "time-4": {
+      "role": "date",
+      "label": {
+        "en": "Time 4",
+        "de": "Uhrzeit 4"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 5
+      }
+    },
+    "item-4": {
+      "role": "subline",
+      "label": {
+        "en": "Item 4",
+        "de": "Programmpunkt 4"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 18
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "date-with-place",
+      "title": {
+        "en": "Date with place",
+        "de": "Datum mit Ort"
+      },
+      "elementIds": ["when", "rule"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right", "bottom-left"],
+  "placeholders": {
+    "en": {
+      "title": "Neighbourhood evening",
+      "when": "Tuesday, 9 March, Town Hall",
+      "time-1": "17:30",
+      "item-1": "Welcome",
+      "time-2": "18:00",
+      "item-2": "Talk",
+      "time-3": "19:00",
+      "item-3": "Open floor",
+      "time-4": "20:30",
+      "item-4": "Wrap-up"
+    },
+    "de": {
+      "title": "Abend im Quartier",
+      "when": "Dienstag, 9. März, Rathaus",
+      "time-1": "17:30",
+      "item-1": "Ankommen",
+      "time-2": "18:00",
+      "item-2": "Vortrag",
+      "time-3": "19:00",
+      "item-3": "Gespräch",
+      "time-4": "20:30",
+      "item-4": "Ausklang"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
