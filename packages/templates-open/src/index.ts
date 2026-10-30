@@ -12,6 +12,13 @@ import studioPhotoNumber from './templates/studio-photo-number.json' with { type
 import studioPhotoQuote from './templates/studio-photo-quote.json' with { type: 'json' };
 import studioQuote from './templates/studio-quote.json' with { type: 'json' };
 
+import studioStatementBar from './templates/studio-statement-bar.json' with { type: 'json' };
+import studioStatementPhoto from './templates/studio-statement-photo.json' with { type: 'json' };
+import studioStatementSandwich from './templates/studio-statement-sandwich.json' with { type: 'json' };
+import studioStatementSerif from './templates/studio-statement-serif.json' with { type: 'json' };
+import studioStatementSplitWord from './templates/studio-statement-split-word.json' with { type: 'json' };
+import studioStatementStack from './templates/studio-statement-stack.json' with { type: 'json' };
+
 import studioPersonBroadcast from './templates/studio-person-broadcast.json' with { type: 'json' };
 import studioPersonNameBlock from './templates/studio-person-name-block.json' with { type: 'json' };
 import studioPersonNameBoxes from './templates/studio-person-name-boxes.json' with { type: 'json' };
@@ -44,6 +51,13 @@ export const OPEN_TEMPLATES: readonly unknown[] = [
   studioEventPanel,
   studioPhotoQuote,
   studioPhotoNumber,
+
+  studioStatementBar,
+  studioStatementPhoto,
+  studioStatementSandwich,
+  studioStatementSerif,
+  studioStatementSplitWord,
+  studioStatementStack,
 
   studioPersonBroadcast,
   studioPersonNameBlock,
