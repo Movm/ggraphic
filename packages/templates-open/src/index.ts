@@ -12,6 +12,13 @@ import studioPhotoNumber from './templates/studio-photo-number.json' with { type
 import studioPhotoQuote from './templates/studio-photo-quote.json' with { type: 'json' };
 import studioQuote from './templates/studio-quote.json' with { type: 'json' };
 
+import studioPersonBroadcast from './templates/studio-person-broadcast.json' with { type: 'json' };
+import studioPersonNameBlock from './templates/studio-person-name-block.json' with { type: 'json' };
+import studioPersonNameBoxes from './templates/studio-person-name-boxes.json' with { type: 'json' };
+import studioPersonNameTop from './templates/studio-person-name-top.json' with { type: 'json' };
+import studioPersonNewFace from './templates/studio-person-new-face.json' with { type: 'json' };
+import studioPersonPair from './templates/studio-person-pair.json' with { type: 'json' };
+
 import studioNumberOneDigit from './templates/studio-number-one-digit.json' with { type: 'json' };
 import studioNumberPercent from './templates/studio-number-percent.json' with { type: 'json' };
 import studioNumberPhotoStrip from './templates/studio-number-photo-strip.json' with { type: 'json' };
@@ -37,6 +44,13 @@ export const OPEN_TEMPLATES: readonly unknown[] = [
   studioEventPanel,
   studioPhotoQuote,
   studioPhotoNumber,
+
+  studioPersonBroadcast,
+  studioPersonNameBlock,
+  studioPersonNameBoxes,
+  studioPersonNameTop,
+  studioPersonNewFace,
+  studioPersonPair,
 
   studioNumberOneDigit,
   studioNumberPercent,
