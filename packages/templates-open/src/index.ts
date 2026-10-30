@@ -12,6 +12,12 @@ import studioPhotoNumber from './templates/studio-photo-number.json' with { type
 import studioPhotoQuote from './templates/studio-photo-quote.json' with { type: 'json' };
 import studioQuote from './templates/studio-quote.json' with { type: 'json' };
 
+import studioCallDemo from './templates/studio-call-demo.json' with { type: 'json' };
+import studioCallImperative from './templates/studio-call-imperative.json' with { type: 'json' };
+import studioCallProgress from './templates/studio-call-progress.json' with { type: 'json' };
+import studioCallThreeSteps from './templates/studio-call-three-steps.json' with { type: 'json' };
+import studioCallTwoHalves from './templates/studio-call-two-halves.json' with { type: 'json' };
+
 import studioDataBarRanking from './templates/studio-data-bar-ranking.json' with { type: 'json' };
 import studioDataShareBar from './templates/studio-data-share-bar.json' with { type: 'json' };
 import studioDataThreeColumns from './templates/studio-data-three-columns.json' with { type: 'json' };
@@ -62,6 +68,12 @@ export const OPEN_TEMPLATES: readonly unknown[] = [
   studioEventPanel,
   studioPhotoQuote,
   studioPhotoNumber,
+
+  studioCallDemo,
+  studioCallImperative,
+  studioCallProgress,
+  studioCallThreeSteps,
+  studioCallTwoHalves,
 
   studioDataBarRanking,
   studioDataShareBar,

@@ -1,0 +1,382 @@
+{
+  "formatVersion": 1,
+  "id": "studio-call-three-steps",
+  "version": 1,
+  "kind": "template",
+  "family": "call",
+  "title": {
+    "en": "Three steps",
+    "de": "Drei Schritte"
+  },
+  "description": {
+    "en": "A call title and three numbered steps on colour squares",
+    "de": "Ein Aufrufstitel und drei nummerierte Schritte auf Farbquadraten"
+  },
+  "tags": {
+    "tone": "warm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "square-1",
+            "type": "rect",
+            "x": 0.081522,
+            "y": 0.348739,
+            "width": 0.163043,
+            "height": 0.12605,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          },
+          {
+            "id": "square-2",
+            "type": "rect",
+            "x": 0.081522,
+            "y": 0.558824,
+            "width": 0.163043,
+            "height": 0.12605,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          },
+          {
+            "id": "square-3",
+            "type": "rect",
+            "x": 0.081522,
+            "y": 0.768908,
+            "width": 0.163043,
+            "height": 0.12605,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "title",
+            "type": "header",
+            "text": "How to join in",
+            "x": 0,
+            "y": 0.02521,
+            "width": 0.543478,
+            "fontSize": 0.074074,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "number-1",
+            "type": "header",
+            "text": "1",
+            "x": 0,
+            "y": 0.294118,
+            "width": 0.163043,
+            "fontSize": 0.083333,
+            "align": "center",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "step-1",
+            "type": "body",
+            "text": "Sign up on the website",
+            "x": 0.206522,
+            "y": 0.294118,
+            "width": 0.793478,
+            "fontSize": 0.051852,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.08,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "number-2",
+            "type": "header",
+            "text": "2",
+            "x": 0,
+            "y": 0.504202,
+            "width": 0.163043,
+            "fontSize": 0.083333,
+            "align": "center",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "step-2",
+            "type": "body",
+            "text": "Confirm the link in the mail",
+            "x": 0.206522,
+            "y": 0.504202,
+            "width": 0.793478,
+            "fontSize": 0.051852,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.08,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "number-3",
+            "type": "header",
+            "text": "3",
+            "x": 0,
+            "y": 0.714286,
+            "width": 0.163043,
+            "fontSize": 0.083333,
+            "align": "center",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "step-3",
+            "type": "body",
+            "text": "Bring your neighbours along",
+            "x": 0.206522,
+            "y": 0.714286,
+            "width": 0.793478,
+            "fontSize": 0.051852,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.08,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": [
+          "title",
+          "square-1",
+          "number-1",
+          "step-1",
+          "square-2",
+          "number-2",
+          "step-2",
+          "square-3",
+          "number-3",
+          "step-3",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "title": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 2,
+        "maxChars": 28
+      }
+    },
+    "number-1": {
+      "role": "number",
+      "label": {
+        "en": "Step number 1",
+        "de": "Schritt 1"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 2
+      }
+    },
+    "step-1": {
+      "role": "body",
+      "label": {
+        "en": "Step 1",
+        "de": "Schritt 1"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 2,
+        "maxChars": 40
+      }
+    },
+    "number-2": {
+      "role": "number",
+      "label": {
+        "en": "Step number 2",
+        "de": "Schritt 2"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 2
+      }
+    },
+    "step-2": {
+      "role": "body",
+      "label": {
+        "en": "Step 2",
+        "de": "Schritt 2"
+      },
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 2,
+        "maxChars": 40
+      }
+    },
+    "number-3": {
+      "role": "number",
+      "label": {
+        "en": "Step number 3",
+        "de": "Schritt 3"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 2
+      }
+    },
+    "step-3": {
+      "role": "body",
+      "label": {
+        "en": "Step 3",
+        "de": "Schritt 3"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 2,
+        "maxChars": 40
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "step-1",
+      "title": {
+        "en": "Step one",
+        "de": "Schritt eins"
+      },
+      "elementIds": ["square-1", "number-1", "step-1"]
+    },
+    {
+      "id": "step-2",
+      "title": {
+        "en": "Step two",
+        "de": "Schritt zwei"
+      },
+      "elementIds": ["square-2", "number-2", "step-2"]
+    },
+    {
+      "id": "step-3",
+      "title": {
+        "en": "Step three",
+        "de": "Schritt drei"
+      },
+      "elementIds": ["square-3", "number-3", "step-3"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "title": "How to join in",
+      "number-1": "1",
+      "step-1": "Sign up on the website",
+      "number-2": "2",
+      "step-2": "Confirm the link in the mail",
+      "number-3": "3",
+      "step-3": "Bring your neighbours along"
+    },
+    "de": {
+      "title": "So machst du mit",
+      "number-1": "1",
+      "step-1": "Auf der Website eintragen",
+      "number-2": "2",
+      "step-2": "Link in der Mail bestätigen",
+      "number-3": "3",
+      "step-3": "Nachbarn mitnehmen"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
