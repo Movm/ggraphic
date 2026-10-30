@@ -1,23 +1,10 @@
 // SPDX-License-Identifier: MPL-2.0
+import { SHADE_STOPS, type ShadeDirection } from '@ggraphic/core';
 import Konva from 'konva';
 
 import type { GradientFill } from './gradientFill.js';
 
-export type ShadeDirection = 'bottom' | 'top';
-
-/** [offset, alpha] top → bottom, the prototype photo gradients (`.shade-b`, `.shade-t`) converted. */
-const SHADE_STOPS: Readonly<Record<ShadeDirection, ReadonlyArray<readonly [number, number]>>> = {
-  bottom: [
-    [0, 0],
-    [0.62, 0.82],
-    [1, 0.94],
-  ],
-  top: [
-    [0, 0.88],
-    [0.55, 0.6],
-    [1, 0],
-  ],
-};
+export type { ShadeDirection };
 
 /**
  * The gradient a shade shape paints: `color` fading in from one edge of a photo,

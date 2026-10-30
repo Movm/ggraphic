@@ -7,7 +7,13 @@
  * number (or number array) that is in neither; the guard runs over the factory default
  * and a populated fixture that sets every optional number. Keyed by `stateKey`, as `BINDABLE_FIELDS` is.
  */
-import { aliasFontFamily, type GateAdapter, type GeometryTable } from '@ggraphic/core';
+import {
+  aliasFontFamily,
+  parseColor,
+  toHex,
+  type GateAdapter,
+  type GeometryTable,
+} from '@ggraphic/core';
 import { layoutRichTextBlock, PLAIN_STYLE, type MeasureRun } from '@ggraphic/schema';
 
 import { plainTextLines } from '../utils/plainTextLayout.js';
@@ -143,6 +149,25 @@ export const UNSCALED_FIELDS: Readonly<Record<string, Readonly<Record<string, st
 };
 
 type El = Readonly<Record<string, unknown>>;
+
+const UNKNOWN = { kind: 'unknown' } as const;
+
+/**
+ * What an image paints: every pixel lies between black and white, or between the duotone's two
+ * colours when both are set. Anything that can leave that range, or that does not fill the box
+ * (a mask, a partial opacity, a tint), is not provable.
+ */
+function photoCover(el: El): ReturnType<GateAdapter['cover']> {
+  const hasTint = str(el, 'tint') !== '' || num(el, 'tintStrength') !== 0;
+  if (hasTint || str(el, 'mask') !== '' || num(el, 'opacity', 1) < 1) return UNKNOWN;
+  const low = str(el, 'duotoneLow');
+  const high = str(el, 'duotoneHigh');
+  if (low === '' || high === '') return { kind: 'photo', low: '#000000', high: '#ffffff' };
+  // The filter chain (`imageFilters.ts`) runs the duotone after every other colour filter,
+  // which then maps the photo onto its ramp; only a vignette after it can leave that range.
+  const recoloured = num(el, 'vignette') !== 0;
+  return recoloured ? UNKNOWN : { kind: 'photo', low, high };
+}
 const isRecord = (v: unknown): v is El => typeof v === 'object' && v !== null && !Array.isArray(v);
 const str = (el: El, field: string): string => (typeof el[field] === 'string' ? el[field] : '');
 const num = (el: El, field: string, fallback = 0): number => {
@@ -564,21 +589,26 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
       return null;
     },
     cover(stateKey, el) {
-      // Texts paint no ground. A shape is a ground only when flat and opaque; every other
-      // kind (photo, frame, chart, badge, icon, sticker, illustration) is not provably one.
+      // Texts paint no ground. A flat opaque shape is one, a photo is a range of grounds, a
+      // translucent shape or a shade is an overlay; every other kind (frame, chart, badge,
+      // icon, sticker, illustration) is not provably any of them.
       if (stateKey === 'additionalTexts') return null;
-      if (stateKey !== 'shapeInstances') return { kind: 'unknown' };
-      const gradient = el['fillGradient'];
       const blend = el['blendMode'];
-      if (
-        (gradient !== undefined && gradient !== null) ||
-        Boolean(el['shade']) ||
-        num(el, 'opacity', 1) < 1 ||
-        (blend !== undefined && blend !== 'normal') ||
-        isRotated(el)
-      ) {
-        return { kind: 'unknown' };
+      const untransformed = (blend === undefined || blend === 'normal') && !isRotated(el);
+      if (stateKey === 'userImageInstances') return untransformed ? photoCover(el) : UNKNOWN;
+      if (stateKey !== 'shapeInstances') return UNKNOWN;
+      const gradient = el['fillGradient'];
+      const fill = parseColor(str(el, 'fill'));
+      if (!untransformed || !fill) return UNKNOWN;
+      const shade = el['shade'];
+      if (shade === 'bottom' || shade === 'top') {
+        return fill.a === 1 && num(el, 'opacity', 1) === 1
+          ? { kind: 'shade', fill: str(el, 'fill'), direction: shade }
+          : UNKNOWN;
       }
+      if (shade || (gradient !== undefined && gradient !== null)) return UNKNOWN;
+      const alpha = num(el, 'opacity', 1) * fill.a;
+      if (alpha < 1) return { kind: 'veil', fill: toHex({ ...fill, a: 1 }), alpha };
       return { kind: 'solid', fill: str(el, 'fill') };
     },
   };

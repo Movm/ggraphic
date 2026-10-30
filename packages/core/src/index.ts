@@ -22,6 +22,7 @@ export {
   type Rgba,
 } from './color/color.js';
 export { duotoneRamp } from './color/duotone.js';
+export { SHADE_STOPS, shadeAlphaAt, type ShadeDirection } from './color/shade.js';
 export {
   SCHEME_IDS,
   SURFACE_ROLES,

@@ -623,3 +623,108 @@ describe('render gate stage 1', () => {
     );
   });
 });
+
+describe('contrast over photos, veils and shades', () => {
+  /** The stand-in adapter, plus the photo, veil and shade grounds an editor reports. */
+  const grounds: GateAdapter = {
+    ...adapter,
+    cover: (key, el) => {
+      if (key === 'userImageInstances') {
+        return {
+          kind: 'photo',
+          low: String(el['duotoneLow'] ?? '#000000'),
+          high: String(el['duotoneHigh'] ?? '#ffffff'),
+        };
+      }
+      if (key === 'shapeInstances') {
+        if (el['shade']) {
+          return { kind: 'shade', fill: String(el['fill']), direction: el['shade'] as 'bottom' };
+        }
+        if (num(el, 'opacity', 1) < 1) {
+          return { kind: 'veil', fill: String(el['fill']), alpha: num(el, 'opacity', 1) };
+        }
+      }
+      return adapter.cover(key, el);
+    },
+  };
+  const ctx = () => context({ adapter: grounds, manifestPaths: new Set(['/p.png']) });
+  const photo = (over: Obj = {}) => ({
+    id: 'pic',
+    src: '/p.png',
+    x: 0,
+    y: 0,
+    width: 1,
+    height: 1,
+    ...over,
+  });
+  const black = (over: Obj) => ({ id: 'veil', fill: '#000000', x: 0, y: 0, width: 1, ...over });
+  const build = (shapes: Obj[], pic: Obj | null, textY: number, textFill = '#ffffff') =>
+    template(
+      { fixed: { headline: ['fill'], veil: ['fill'] } },
+      {
+        shapeInstances: shapes,
+        userImageInstances: pic ? [pic, logo] : [logo],
+        additionalTexts: [{ ...headline, y: textY, fill: textFill, bind: undefined }],
+        layerOrder: [
+          pic ? 'pic' : '',
+          ...shapes.map((s) => String(s['id'])),
+          'logo',
+          'headline',
+        ].filter(Boolean),
+      }
+    );
+  const details = (t: TemplateInput) =>
+    checkTemplate(t, ctx()).map((p) => `${p.rule}: ${p.detail}`);
+
+  it('white text fully inside a bottom shade of #000000 over a photo passes where alpha is high enough', () => {
+    const t = build([black({ height: 1, shade: 'bottom' })], photo(), 0.8);
+    expect(details(t)).toEqual([]);
+  });
+
+  it('the same text placed in the thin top part of the shade fails and names the worst ground', () => {
+    const t = build([black({ height: 1, shade: 'bottom' })], photo(), 0.3);
+    const found = details(t);
+    expect(found).toHaveLength(1);
+    expect(found[0]).toMatch(/^contrast: headline: #ffffff on #9a9a9a is 2\.81, needs 3$/);
+  });
+
+  it('white text on an untreated photo with no overlay fails (worst ground #ffffff)', () => {
+    const found = details(build([], photo(), 0.5));
+    expect(found).toHaveLength(1);
+    expect(found[0]).toContain('#ffffff on #ffffff');
+  });
+
+  it('text on a duotone photo is judged against the duotone range, not black/white', () => {
+    const dark = photo({ duotoneLow: '#0b1d12', duotoneHigh: '#2a5a3a' });
+    expect(details(build([], dark, 0.5))).toEqual([]);
+    const light = photo({ duotoneLow: '#0b1d12', duotoneHigh: '#e8f5ec' });
+    expect(details(build([], light, 0.5))).toHaveLength(1);
+  });
+
+  it('a veil (shape opacity 0.35, fill #000000) over a duotone photo darkens every candidate', () => {
+    const duo = photo({ duotoneLow: '#4a4a4a', duotoneHigh: '#a0a0a0' });
+    // Without the veil the lightest candidate #a0a0a0 is too bright for white text.
+    expect(details(build([], duo, 0.5))).toHaveLength(1);
+    const veiled = build([black({ height: 1, opacity: 0.35 })], duo, 0.5);
+    expect(details(veiled)).toEqual([]);
+  });
+
+  it('a shade or veil that covers only part of the text box fails as two grounds', () => {
+    // The text box spans y 0.3..0.37; the veil ends at 0.33.
+    const t = build([black({ height: 0.33, opacity: 0.9 })], photo(), 0.3);
+    const found = details(t);
+    expect(found).toHaveLength(1);
+    expect(found[0]).toContain('ground not determinable');
+  });
+
+  it('a photo that covers only part of the text box fails', () => {
+    const t = build([], photo({ height: 0.33 }), 0.3, '#000000');
+    expect(details(t)[0]).toContain('ground not determinable');
+  });
+
+  it('a veil over a solid ground is composited onto its colour', () => {
+    const t = build([black({ id: 'veil', height: 1, opacity: 0.5 })], null, 0.5);
+    // page background is #000000 and the text white: passes either way, but the ground is mixed.
+    expect(details(t)).toEqual([]);
+  });
+});
