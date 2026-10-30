@@ -6,6 +6,7 @@ import {
   checkTemplate,
   GATE_RULES,
   type GateAdapter,
+  type GateCover,
   type GateContext,
   type GateRule,
 } from './gate.js';
@@ -628,7 +629,7 @@ describe('contrast over photos, veils and shades', () => {
   /** The stand-in adapter, plus the photo, veil and shade grounds an editor reports. */
   const grounds: GateAdapter = {
     ...adapter,
-    cover: (key, el) => {
+    cover: (key, el, width) => {
       if (key === 'userImageInstances') {
         return {
           kind: 'photo',
@@ -644,7 +645,7 @@ describe('contrast over photos, veils and shades', () => {
           return { kind: 'veil', fill: String(el['fill']), alpha: num(el, 'opacity', 1) };
         }
       }
-      return adapter.cover(key, el);
+      return adapter.cover(key, el, width);
     },
   };
   const ctx = () => context({ adapter: grounds, manifestPaths: new Set(['/p.png']) });
@@ -847,5 +848,109 @@ describe('contrast over photos, veils and shades', () => {
       }
     );
     expect(details(t)).toEqual([]);
+  });
+});
+
+describe('contrast over notched, glow and grain grounds', () => {
+  /** The stand-in adapter, plus the covers an editor reports for a notch, glow, grain and dots. */
+  const devices: GateAdapter = {
+    ...adapter,
+    cover: (key, el, canvasWidth) => {
+      if (key !== 'shapeInstances') return adapter.cover(key, el, canvasWidth);
+      const n = num(el, 'notch') * canvasWidth;
+      const mods: Omit<GateCover, 'kind'> = {
+        ...(n > 0
+          ? {
+              cut: {
+                x: num(el, 'x') + num(el, 'width') - n,
+                y: num(el, 'y'),
+                width: n,
+                height: n,
+              },
+            }
+          : {}),
+        ...(el['pattern'] === 'dots' ? { dots: true as const } : {}),
+        ...(el['grainFill']
+          ? {
+              grain: {
+                fill: String(el['grainFill']),
+                alpha: [0, num(el, 'grainMax')] as [number, number],
+              },
+            }
+          : {}),
+      };
+      const fill = String(el['fill']);
+      return el['glowMax'] !== undefined
+        ? { kind: 'range', fill, alpha: [0, num(el, 'glowMax')], ...mods }
+        : { kind: 'solid', fill, ...mods };
+    },
+  };
+  const panel = (over: Obj = {}) => ({
+    id: 'panel',
+    fill: '#000000',
+    x: 0,
+    y: 0,
+    width: 1,
+    height: 1,
+    ...over,
+  });
+  const build = (shape: Obj, text: Obj = {}) =>
+    template(
+      { fixed: { headline: ['fill'], panel: ['fill'] } },
+      {
+        shapeInstances: [shape],
+        additionalTexts: [{ ...headline, y: 0.5, fontSize: 0.03, bind: undefined, ...text }],
+        layerOrder: ['panel', 'logo', 'headline'],
+      }
+    );
+  const details = (t: TemplateInput) =>
+    checkTemplate(t, context({ adapter: devices })).map((p) => `${p.rule}: ${p.detail}`);
+  // A narrow text high up at the right edge: wholly inside a 0.1 notch (108 px of 1080).
+  const inCut = { x: 0.9, y: 0.01, width: 0.08, fontSize: 0.02 };
+
+  it('text on a notched panel away from the notch passes like on an un-notched one', () => {
+    expect(details(build(panel({ notch: 0.1 })))).toEqual([]);
+    expect(details(build(panel()))).toEqual([]);
+  });
+
+  it('text on a notched light panel away from the notch fails like on an un-notched one', () => {
+    const light = panel({ fill: '#ffffff', notch: 0.1 });
+    expect(details(build(light))[0]).toContain('#ffffff on #ffffff');
+  });
+
+  it('text wholly inside the cut is judged against what lies beneath the panel', () => {
+    // The page is black: white text in the cut passes, though the panel is white.
+    const t = build(panel({ fill: '#ffffff', notch: 0.1 }), inCut);
+    expect(details(t)).toEqual([]);
+    expect(details(build(panel({ fill: '#ffffff' }), inCut))[0]).toContain('#ffffff on #ffffff');
+  });
+
+  it('text half in the cut fails closed', () => {
+    const t = build(panel({ fill: '#ffffff', notch: 0.1 }), { ...inCut, x: 0.8, width: 0.15 });
+    expect(details(t)[0]).toContain('ground not determinable');
+  });
+
+  it('judges a glow as an alpha range of its fill: dark glow passes, light glow fails', () => {
+    expect(details(build(panel({ glowMax: 0.9 })))).toEqual([]);
+    const light = details(build(panel({ fill: '#ffffff', glowMax: 0.9 })));
+    expect(light).toHaveLength(1);
+    expect(light[0]).toMatch(/^contrast: headline: #ffffff on #/);
+  });
+
+  it('judges grain as an alpha range of black or white over the ground', () => {
+    const ok = panel({ fill: '#000000', grainFill: '#ffffff', grainMax: 0.2 });
+    expect(details(build(ok))).toEqual([]);
+    const bad = panel({ fill: '#000000', grainFill: '#ffffff', grainMax: 0.8 });
+    expect(details(build(bad))[0]).toMatch(/^contrast: headline: #ffffff on #/);
+  });
+
+  it('fails closed on a grain layer under a second alpha range', () => {
+    const t = build(panel({ grainFill: '#ffffff', grainMax: 0.2, glowMax: 0.5 }));
+    expect(details(t)[0]).toContain('stacked shades');
+  });
+
+  it('a dot pattern fails a text lying on it and leaves a text off it alone', () => {
+    expect(details(build(panel({ pattern: 'dots' })))[0]).toContain('ground not determinable');
+    expect(details(build(panel({ pattern: 'dots', height: 0.3 })))).toEqual([]);
   });
 });

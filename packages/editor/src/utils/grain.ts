@@ -5,6 +5,7 @@
  */
 import Konva from 'konva';
 
+import { GRAIN_SPECK_ALPHA } from './grainSpec.js';
 import type { ShapeInstance } from './shapes.js';
 
 export const GRAIN_TILE_SIZE = 256;
@@ -27,7 +28,7 @@ function mulberry32(seed: number): () => number {
 }
 
 /** Peak alpha of a speck: uniform 0…140 gives a mean near 70, visible texture rather than a tint. */
-const SPECK_ALPHA = 140;
+const SPECK_ALPHA = GRAIN_SPECK_ALPHA;
 
 /**
  * Square RGBA noise of `size` × `size`: colour flat (black for `dark`, white for `light`),

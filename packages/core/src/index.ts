@@ -67,6 +67,7 @@ export {
   GATE_RULES,
   checkTemplate,
   type GateAdapter,
+  type GateCover,
   type GateBudget,
   type GateContext,
   type GateProblem,

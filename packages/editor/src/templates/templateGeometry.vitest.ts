@@ -143,7 +143,7 @@ describe('template geometry', () => {
   });
 
   it('only a flat, opaque shape is a ground', () => {
-    const cover = (key: string, el: Fields) => TEMPLATE_GATE_ADAPTER.cover(key, el);
+    const cover = (key: string, el: Fields) => TEMPLATE_GATE_ADAPTER.cover(key, el, 1000);
     expect(cover('shapeInstances', { fill: '#000', opacity: 1 })).toEqual({
       kind: 'solid',
       fill: '#000',
@@ -166,7 +166,7 @@ describe('template geometry', () => {
   });
 
   it('cover() maps photo, duotone photo, shade shape, veil shape and keeps unknown for tint, blend and rotation', () => {
-    const cover = (key: string, el: Fields) => TEMPLATE_GATE_ADAPTER.cover(key, el);
+    const cover = (key: string, el: Fields) => TEMPLATE_GATE_ADAPTER.cover(key, el, 1000);
     const unknown = { kind: 'unknown' };
     const image = 'userImageInstances';
     expect(cover(image, { src: '/p.png' })).toEqual({
@@ -422,8 +422,8 @@ describe('template gate adapter: line count of a text', () => {
 
   it('treats a rotated shape as a ground of unknown paint', () => {
     const shape = { fill: '#ffffff', opacity: 1, rotation: 45 };
-    expect(TEMPLATE_GATE_ADAPTER.cover('shapeInstances', shape)).toEqual({ kind: 'unknown' });
-    expect(TEMPLATE_GATE_ADAPTER.cover('shapeInstances', { ...shape, rotation: 0 })).toEqual({
+    expect(TEMPLATE_GATE_ADAPTER.cover('shapeInstances', shape, 1000)).toEqual({ kind: 'unknown' });
+    expect(TEMPLATE_GATE_ADAPTER.cover('shapeInstances', { ...shape, rotation: 0 }, 1000)).toEqual({
       kind: 'solid',
       fill: '#ffffff',
     });
@@ -633,5 +633,61 @@ describe('template gate adapter: what the renderer scales, turns and draws', () 
     // Combining marks of Instrument Sans lie outside every CSS unicode-range of the Studio.
     expect(check({ text: 'é', fontFamily: 'Instrument Sans' })).toContain('not checkable');
     expect(check({ text: 'Fußball', fontFamily: 'Instrument Sans' })).toBeNull();
+  });
+
+  describe('cover() of notch, glow, grain and dots', () => {
+    const cover = (el: Fields, key = 'shapeInstances') =>
+      TEMPLATE_GATE_ADAPTER.cover(key, el, 1000);
+    // A shape's x, y is its centre: the box runs 100..500 × 50..350.
+    const rect = { type: 'rect', fill: '#005538', x: 300, y: 200, width: 400, height: 300 };
+
+    it('reports the notch as a cut box in the top-right corner, clamped to half the short side', () => {
+      expect(cover({ ...rect, notch: 0.05 })).toEqual({
+        kind: 'solid',
+        fill: '#005538',
+        cut: { x: 450, y: 50, width: 50, height: 50 },
+      });
+      expect(cover({ ...rect, notch: 0.5 })).toMatchObject({
+        cut: { x: 350, y: 50, width: 150, height: 150 },
+      });
+    });
+
+    it('reports a notched photo as the photo with a cut', () => {
+      const photo = { src: '/p.png', x: 0, y: 0, width: 600, height: 400, notch: 0.1 };
+      expect(cover(photo, 'userImageInstances')).toEqual({
+        kind: 'photo',
+        low: '#000000',
+        high: '#ffffff',
+        cut: { x: 500, y: 0, width: 100, height: 100 },
+      });
+    });
+
+    it('reports a glow as an alpha range [0, opacity] of its fill, on a rect and an ellipse', () => {
+      expect(cover({ ...rect, glow: true, opacity: 0.6 })).toEqual({
+        kind: 'range',
+        fill: '#005538',
+        alpha: [0, 0.6],
+      });
+      expect(cover({ ...rect, type: 'ellipse', glow: true })).toMatchObject({ kind: 'range' });
+      expect(cover({ ...rect, type: 'ellipse' })).toEqual({ kind: 'unknown' });
+    });
+
+    it('a shade wins over a glow, as it does in the renderer', () => {
+      expect(cover({ ...rect, glow: true, shade: 'top' })).toMatchObject({ kind: 'shade' });
+    });
+
+    it('reports grain as black or white over [0, grain × 140/255]', () => {
+      const dark = cover({ ...rect, grain: 1 }) as { grain: { fill: string; alpha: number[] } };
+      expect(dark.grain.fill).toBe('#000000');
+      expect(dark.grain.alpha[0]).toBe(0);
+      expect(dark.grain.alpha[1]).toBeCloseTo(140 / 255);
+      const light = cover({ ...rect, grain: 0.5, grainTone: 'light' }) as typeof dark;
+      expect(light.grain.fill).toBe('#ffffff');
+      expect(light.grain.alpha[1]).toBeCloseTo(70 / 255);
+    });
+
+    it('flags a dot pattern', () => {
+      expect(cover({ ...rect, pattern: 'dots' })).toMatchObject({ kind: 'solid', dots: true });
+    });
   });
 });
