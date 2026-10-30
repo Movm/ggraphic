@@ -13,7 +13,8 @@ describe('render gate stage 1 over the pack', () => {
         `${p.templateId} [${p.rule}] ${p.brand ?? ''} ${p.scheme ?? ''} ${p.format ?? ''}: ${p.detail}`
     );
     expect(lines).toEqual([]);
-  });
+    // Every template × brand × scheme × format: ~3 s locally, ~8 s on CI, and the pack keeps growing.
+  }, 60_000);
 
   it('testBrandPacks has brandDefault plus the 11 ids', () => {
     const packs = testBrandPacks();
