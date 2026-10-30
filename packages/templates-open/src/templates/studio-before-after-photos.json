@@ -1,0 +1,196 @@
+{
+  "formatVersion": 1,
+  "id": "studio-before-after-photos",
+  "version": 1,
+  "kind": "template",
+  "family": "before-after",
+  "title": {
+    "en": "Two photos with years",
+    "de": "Zwei Fotos mit Jahreszahl"
+  },
+  "description": {
+    "en": "Two photos side by side with a before and an after label and a year each",
+    "de": "Zwei Fotos nebeneinander mit je einer Vorher- und Nachher-Beschriftung und einer Jahreszahl"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["photo", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "shade",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.759259,
+            "width": 1,
+            "height": 0.481481,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "shade": "bottom",
+            "bind": {
+              "fill": "shade"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo-before",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 0.5,
+            "height": 1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "grayscale": true,
+            "contrast": 6
+          },
+          {
+            "id": "photo-after",
+            "src": "",
+            "fileName": "",
+            "x": 0.5,
+            "y": 0,
+            "width": 0.5,
+            "height": 1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "before",
+            "type": "header",
+            "text": "Before 2019",
+            "x": 0,
+            "y": 0.848739,
+            "width": 0.434783,
+            "fontSize": 0.059259,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.98,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "after",
+            "type": "header",
+            "text": "After 2026",
+            "x": 0.543478,
+            "y": 0.848739,
+            "width": 0.434783,
+            "fontSize": 0.059259,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.98,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          }
+        ],
+        "layerOrder": ["photo-before", "photo-after", "shade", "before", "after", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo-before": "canvas",
+    "photo-after": "canvas",
+    "shade": "canvas"
+  },
+  "slots": {
+    "photo-before": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "photo-after": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "before": {
+      "role": "headline",
+      "label": {
+        "en": "Before label",
+        "de": "Vorher-Beschriftung"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 2,
+        "maxChars": 14
+      }
+    },
+    "after": {
+      "role": "headline",
+      "label": {
+        "en": "After label",
+        "de": "Nachher-Beschriftung"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 2,
+        "maxChars": 14
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "before": "Before 2019",
+      "after": "After 2026"
+    },
+    "de": {
+      "before": "Vorher 2019",
+      "after": "Nachher 2026"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
