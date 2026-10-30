@@ -97,6 +97,12 @@ export interface AdditionalText {
   accent?: TextAccent | null;
   /** How `++marker++` runs look (a box behind the run); omit and they render like the rest. */
   marker?: TextMarker | null;
+  /** Flat plate fill; wins over `marker.fill`, so a template can bind it. */
+  markerFill?: string;
+  /** Flat ink on the plate; wins over `marker.color`. */
+  markerColor?: string;
+  /** Flat accent colour; wins over `accent.fill`. */
+  accentFill?: string;
 }
 
 /** Text element configuration */

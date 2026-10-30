@@ -177,6 +177,33 @@ export interface TextMarker {
   padY?: number;
 }
 
+/** The plate a text draws: the flat `markerFill`/`markerColor` over the nested `marker`. */
+export function effectiveMarker(text: {
+  marker?: TextMarker | null;
+  markerFill?: string | null;
+  markerColor?: string | null;
+}): TextMarker | undefined {
+  const { marker, markerFill, markerColor } = text;
+  if (!markerFill && !markerColor) return marker ?? undefined;
+  return {
+    padX: 0.18,
+    padY: 0.04,
+    ...marker,
+    fill: markerFill ?? marker?.fill ?? '#FFFFFF',
+    color: markerColor ?? marker?.color ?? '#000000',
+  };
+}
+
+/** The accent a text draws: the flat `accentFill` over the nested `accent`. */
+export function effectiveAccent(text: {
+  accent?: TextAccent | null;
+  accentFill?: string | null;
+}): TextAccent | undefined {
+  const { accent, accentFill } = text;
+  if (!accentFill) return accent ?? undefined;
+  return { ...accent, fill: accentFill };
+}
+
 /**
  * Familien, deren `bold italic` in `typography.css` ein echter Schnitt ist:
  * Fraunces trägt dort Bold Italic als `italic` und Black Italic als
