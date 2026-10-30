@@ -1,7 +1,7 @@
 {
   "formatVersion": 1,
   "id": "studio-event-programme",
-  "version": 1,
+  "version": 2,
   "kind": "template",
   "family": "event",
   "title": {
@@ -75,7 +75,8 @@
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 0.95,
-            "fontStyle": "bold",
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
@@ -93,7 +94,7 @@
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 1.12,
-            "fontStyle": "bold",
+            "fontWeight": 600,
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
@@ -111,7 +112,8 @@
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 0.95,
-            "fontStyle": "bold",
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
@@ -129,7 +131,7 @@
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 1.05,
-            "fontStyle": "bold",
+            "fontWeight": 600,
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
@@ -147,7 +149,8 @@
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 0.95,
-            "fontStyle": "bold",
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
@@ -165,7 +168,7 @@
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 1.05,
-            "fontStyle": "bold",
+            "fontWeight": 600,
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
@@ -183,7 +186,8 @@
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 0.95,
-            "fontStyle": "bold",
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
@@ -201,7 +205,7 @@
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 1.05,
-            "fontStyle": "bold",
+            "fontWeight": 600,
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
@@ -219,7 +223,8 @@
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 0.95,
-            "fontStyle": "bold",
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
@@ -237,7 +242,7 @@
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 1.05,
-            "fontStyle": "bold",
+            "fontWeight": 600,
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"

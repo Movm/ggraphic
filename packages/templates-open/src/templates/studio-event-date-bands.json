@@ -1,7 +1,7 @@
 {
   "formatVersion": 1,
   "id": "studio-event-date-bands",
-  "version": 1,
+  "version": 2,
   "kind": "template",
   "family": "event",
   "title": {
@@ -107,7 +107,7 @@
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 1.12,
-            "fontStyle": "bold",
+            "fontWeight": 700,
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
@@ -119,13 +119,14 @@
             "text": "06",
             "x": 0.032609,
             "y": 0.121008,
-            "width": 0.391304,
+            "width": 0.326087,
             "fontSize": 0.203704,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 0.88,
-            "fontStyle": "bold",
+            "fontWeight": 400,
+            "letterSpacing": -0.005,
             "bind": {
               "fill": "ground",
               "fontFamily": "font.condensed"
@@ -143,7 +144,7 @@
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 1.1,
-            "fontStyle": "bold",
+            "fontWeight": 700,
             "bind": {
               "fill": "ground",
               "fontFamily": "font.body"
@@ -153,15 +154,15 @@
             "id": "name-1",
             "type": "body",
             "text": "Garden breakfast",
-            "x": 0.434783,
+            "x": 0.369565,
             "y": 0.151261,
-            "width": 0.532609,
+            "width": 0.597826,
             "fontSize": 0.055556,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 1.05,
-            "fontStyle": "bold",
+            "fontWeight": 700,
             "bind": {
               "fill": "ground",
               "fontFamily": "font.body"
@@ -173,13 +174,14 @@
             "text": "07",
             "x": 0.032609,
             "y": 0.398319,
-            "width": 0.391304,
+            "width": 0.326087,
             "fontSize": 0.203704,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 0.88,
-            "fontStyle": "bold",
+            "fontWeight": 400,
+            "letterSpacing": -0.005,
             "bind": {
               "fill": "ground",
               "fontFamily": "font.condensed"
@@ -197,7 +199,7 @@
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 1.1,
-            "fontStyle": "bold",
+            "fontWeight": 700,
             "bind": {
               "fill": "ground",
               "fontFamily": "font.body"
@@ -207,15 +209,15 @@
             "id": "name-2",
             "type": "body",
             "text": "Bike repair day",
-            "x": 0.434783,
+            "x": 0.369565,
             "y": 0.428571,
-            "width": 0.532609,
+            "width": 0.597826,
             "fontSize": 0.055556,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 1.05,
-            "fontStyle": "bold",
+            "fontWeight": 700,
             "bind": {
               "fill": "ground",
               "fontFamily": "font.body"
@@ -227,13 +229,14 @@
             "text": "28",
             "x": 0.032609,
             "y": 0.67563,
-            "width": 0.391304,
+            "width": 0.326087,
             "fontSize": 0.203704,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 0.88,
-            "fontStyle": "bold",
+            "fontWeight": 400,
+            "letterSpacing": -0.005,
             "bind": {
               "fill": "ground",
               "fontFamily": "font.condensed"
@@ -251,7 +254,7 @@
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 1.1,
-            "fontStyle": "bold",
+            "fontWeight": 700,
             "bind": {
               "fill": "ground",
               "fontFamily": "font.body"
@@ -261,15 +264,15 @@
             "id": "name-3",
             "type": "body",
             "text": "Planning round",
-            "x": 0.434783,
+            "x": 0.369565,
             "y": 0.705882,
-            "width": 0.532609,
+            "width": 0.597826,
             "fontSize": 0.055556,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 1.05,
-            "fontStyle": "bold",
+            "fontWeight": 700,
             "bind": {
               "fill": "ground",
               "fontFamily": "font.body"
