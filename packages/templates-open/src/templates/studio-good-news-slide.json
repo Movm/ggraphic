@@ -18,7 +18,7 @@
     "topics": []
   },
   "formats": ["4:5"],
-  "schemes": ["light", "primary", "dark"],
+  "schemes": ["primary", "dark"],
   "schemaVersion": 3,
   "pages": [
     {
@@ -44,7 +44,7 @@
             "grain": 0.5,
             "grainTone": "light",
             "bind": {
-              "fill": "ink"
+              "fill": "deep"
             }
           },
           {
@@ -109,7 +109,7 @@
             "fontWeight": 600,
             "letterSpacing": 0.08,
             "bind": {
-              "fill": "ground",
+              "fill": "ink",
               "fontFamily": "font.body"
             }
           },
@@ -128,7 +128,7 @@
             "fontWeight": 800,
             "letterSpacing": -0.045,
             "bind": {
-              "fill": "ground",
+              "fill": "ink",
               "fontFamily": "font.headline"
             }
           },

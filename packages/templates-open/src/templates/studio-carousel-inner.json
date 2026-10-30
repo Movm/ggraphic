@@ -18,7 +18,7 @@
     "topics": []
   },
   "formats": ["4:5"],
-  "schemes": ["primary", "dark", "photo"],
+  "schemes": ["dark", "primary", "photo"],
   "schemaVersion": 3,
   "pages": [
     {
