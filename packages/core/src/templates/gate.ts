@@ -199,7 +199,7 @@ function judge(textFill: string, intervals: [Ground, Ground][], need: number): s
     : null;
 }
 
-type Overlay = { fill: string; alpha: [number, number] };
+type Overlay = { fill: string; alpha: [number, number]; shade?: true };
 type Ground = { hex: string; lum: number };
 
 const hex2 = (n: number): string => n.toString(16).padStart(2, '0');
@@ -221,12 +221,53 @@ function photoColours(low: string, high: string): string[] | null {
 const toHexOf = (c: { r: number; g: number; b: number }): string =>
   `#${hex2(c.r)}${hex2(c.g)}${hex2(c.b)}`;
 
+const SEARCH_STEPS = 60;
+
 /**
- * The luminance interval of a ground under an overlay stack (bottom first). A veil has one
- * alpha, a shade a range; compositing moves the colour towards the fill, so the corner
- * combinations of the alphas bound the luminance. Null when a colour cannot be composited.
+ * The interval under a stack holding one shade (bottom first). The composite is linear in the
+ * shade's alpha per channel and the luminance is convex in it (channels may move in opposite
+ * directions), so the maximum sits at an end of the alpha range and the minimum is found by
+ * ternary search, which is exact for a convex function.
+ */
+function shadeInterval(base: string, overlays: Overlay[]): [Ground, Ground] | null {
+  const start = parseColor(base);
+  if (!start || start.a !== 1) return null;
+  const fills = overlays.map((o) => parseColor(o.fill));
+  if (fills.some((f) => !f || f.a !== 1)) return null;
+  const at = (shadeAlpha: number): Ground => {
+    let c = [start.r, start.g, start.b];
+    overlays.forEach((o, i) => {
+      const f = fills[i]!;
+      const a = o.shade ? shadeAlpha : o.alpha[0];
+      c = [c[0]! + (f.r - c[0]!) * a, c[1]! + (f.g - c[1]!) * a, c[2]! + (f.b - c[2]!) * a];
+    });
+    const [r, g, b] = c as [number, number, number];
+    return {
+      hex: `#${hex2(Math.round(r))}${hex2(Math.round(g))}${hex2(Math.round(b))}`,
+      lum: relativeLuminance({ r, g, b, a: 1 }),
+    };
+  };
+  const [lo, hi] = overlays.find((o) => o.shade)!.alpha;
+  const ends = [at(lo), at(hi)];
+  let a = lo;
+  let b = hi;
+  for (let i = 0; i < SEARCH_STEPS; i++) {
+    const m1 = a + (b - a) / 3;
+    const m2 = b - (b - a) / 3;
+    if (at(m1).lum < at(m2).lum) b = m2;
+    else a = m1;
+  }
+  const inner = at((a + b) / 2);
+  const all = [...ends, inner].sort((x, y) => x.lum - y.lum);
+  return [all[0]!, all[all.length - 1]!];
+}
+
+/**
+ * The luminance interval of a ground under an overlay stack (bottom first). Veils have one
+ * alpha; compositing moves the colour towards the fill. Null when a colour cannot be composited.
  */
 function groundInterval(base: string, overlays: Overlay[]): [Ground, Ground] | null {
+  if (overlays.some((o) => o.shade)) return shadeInterval(base, overlays);
   let colours = [base];
   for (const o of overlays) {
     const alphas = o.alpha[0] === o.alpha[1] ? [o.alpha[0]] : o.alpha;
@@ -572,6 +613,7 @@ function checkPlaced(
     // luminance interval.
     let grounds: string[] | null = text.ground === undefined ? null : [text.ground];
     const overlays: Overlay[] = [];
+    let stackedShades = false;
     if (grounds === null) {
       const at = order.indexOf(id);
       if (!box || at === -1) {
@@ -602,7 +644,14 @@ function checkPlaced(
         if (cover.kind === 'veil') {
           overlays.push({ fill: cover.fill, alpha: [cover.alpha, cover.alpha] });
         } else if (cover.kind === 'shade') {
+          // Two shades over one text: the alphas move together, not independently. Not judged.
+          if (overlays.some((o) => o.shade)) {
+            grounds = null;
+            stackedShades = true;
+            break;
+          }
           overlays.push({
+            shade: true,
             fill: cover.fill,
             alpha: shadeAlphaRange(cover.direction, box, area),
           });
@@ -617,7 +666,7 @@ function checkPlaced(
     const bad = overlays.some((o) => !opaque(o.fill) || !(o.alpha[0] >= 0 && o.alpha[1] <= 1));
     const intervals = grounds && !bad ? grounds.map((g) => groundInterval(g, overlays)) : [];
     if (intervals.length === 0 || intervals.some((i) => i === null)) {
-      fail(`${NOT_DETERMINABLE} under ${text.fill}`);
+      fail(`${NOT_DETERMINABLE}${stackedShades ? ' (stacked shades)' : ''} under ${text.fill}`);
       continue;
     }
     const large = text.fontSize >= (text.bold ? 18.67 : 24) * (short / 1080);

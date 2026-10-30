@@ -691,7 +691,7 @@ describe('contrast over photos, veils and shades', () => {
     const t = build([black({ height: 1, shade: 'bottom' })], photo(), 0.3);
     const found = details(t);
     expect(found).toHaveLength(1);
-    expect(found[0]).toMatch(/^contrast: headline: #ffffff on #9a9a9a is 2\.81, needs 3$/);
+    expect(found[0]).toMatch(/^contrast: headline: #ffffff on #9a9a9a is 2\.82, needs 3$/);
   });
 
   it('white text on an untreated photo with no overlay fails (worst ground #ffffff)', () => {
@@ -793,6 +793,45 @@ describe('contrast over photos, veils and shades', () => {
     );
     // black 0.3 on white gives #b3b3b3, then red 0.3 gives #ca7d7d (the reverse order: #b37d7d).
     expect(details(t)).toEqual(['contrast: headline: #ffffff on #ca7d7d is 3.12, needs 4.5']);
+  });
+
+  it('uses the interior luminance minimum of a coloured shade, not only its end values', () => {
+    // Green page under a red bottom shade: the red channel rises while the green one falls, so
+    // luminance dips to about 0.152 inside the span, below both ends (about 0.65 and 0.189).
+    const t = template(
+      { fixed: { headline: ['fill'], veil: ['fill'], page: ['backgroundColor'] } },
+      {
+        backgroundColor: '#00ff00',
+        bind: undefined,
+        shapeInstances: [black({ fill: '#ff0000', y: 0.3, height: 0.7, shade: 'bottom' })],
+        additionalTexts: [
+          { ...headline, y: 0.3, fontSize: 0.1944, fill: '#727272', bind: undefined },
+        ],
+        layerOrder: ['veil', 'logo', 'headline'],
+      }
+    );
+    const found = details(t);
+    expect(found.length).toBeGreaterThan(0);
+    for (const f of found) expect(f).toContain("the ground can match the text's luminance");
+  });
+
+  it('does not judge two shades over one text', () => {
+    const t = template(
+      { fixed: { headline: ['fill'], a: ['fill'], b: ['fill'], page: ['backgroundColor'] } },
+      {
+        backgroundColor: '#ffffff',
+        bind: undefined,
+        shapeInstances: [
+          black({ id: 'a', height: 1, shade: 'bottom' }),
+          black({ id: 'b', height: 1, shade: 'bottom' }),
+        ],
+        additionalTexts: [{ ...headline, y: 0.8, bind: undefined }],
+        layerOrder: ['a', 'b', 'logo', 'headline'],
+      }
+    );
+    const found = details(t);
+    expect(found.length).toBeGreaterThan(0);
+    for (const f of found) expect(f).toContain('ground not determinable (stacked shades)');
   });
 
   it('a shade span that contains a stop is judged over its whole alpha range', () => {
