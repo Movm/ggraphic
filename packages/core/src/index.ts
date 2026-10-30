@@ -80,3 +80,12 @@ export {
   type TemplateFrameKind,
   type TemplateInput,
 } from './templates/instantiate.js';
+export {
+  MIN_TEXT_SHARE,
+  checkSlotBudget,
+  countChars,
+  countWords,
+  minTextSizePx,
+  type BudgetViolation,
+  type SlotBudget,
+} from './templates/slotBudget.js';
