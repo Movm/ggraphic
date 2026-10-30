@@ -19,7 +19,7 @@ export const SURFACE_ROLES = [
 export type SurfaceRole = (typeof SURFACE_ROLES)[number];
 
 /** The colour worlds a brand yields, in the order they are offered. */
-export const SCHEME_IDS = ['primary', 'secondary', 'accent', 'light', 'dark', 'photo'] as const;
+export const SCHEME_IDS = ['primary', 'secondary', 'light', 'dark', 'accent', 'photo'] as const;
 export type SchemeId = (typeof SCHEME_IDS)[number];
 
 export interface Scheme {

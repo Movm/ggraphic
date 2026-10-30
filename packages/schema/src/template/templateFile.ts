@@ -13,9 +13,9 @@ export const TEMPLATE_FORMATS = ['1:1', '4:5', '16:9'] as const;
 export const TEMPLATE_SCHEME_IDS = [
   'primary',
   'secondary',
-  'accent',
   'light',
   'dark',
+  'accent',
   'photo',
 ] as const;
 /** Equals core's `LOGO_CORNERS`; a cross-package test pins them equal. */
