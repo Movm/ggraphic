@@ -1,0 +1,279 @@
+{
+  "formatVersion": 1,
+  "id": "studio-question-photo-duel",
+  "version": 1,
+  "kind": "template",
+  "family": "question",
+  "title": {
+    "en": "Photo duel A against B",
+    "de": "Foto-Duell A gegen B"
+  },
+  "description": {
+    "en": "A question above two photos marked A and B and a short call to vote",
+    "de": "Eine Frage über zwei Fotos mit den Marken A und B und eine kurze Aufforderung zur Abstimmung"
+  },
+  "tags": {
+    "tone": "warm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "light", "dark", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "badge-a",
+            "type": "rect",
+            "x": 0.059783,
+            "y": 0.231092,
+            "width": 0.119565,
+            "height": 0.092437,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          },
+          {
+            "id": "badge-b",
+            "type": "rect",
+            "x": 0.581522,
+            "y": 0.231092,
+            "width": 0.119565,
+            "height": 0.092437,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo-a",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0.184874,
+            "width": 0.478261,
+            "height": 0.605042,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "photo-b",
+            "src": "",
+            "fileName": "",
+            "x": 0.521739,
+            "y": 0.184874,
+            "width": 0.478261,
+            "height": 0.605042,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "question",
+            "type": "header",
+            "text": "Which playground?",
+            "x": 0,
+            "y": 0.016807,
+            "width": 1,
+            "fontSize": 0.057407,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "letter-a",
+            "type": "header",
+            "text": "A",
+            "x": 0,
+            "y": 0.191597,
+            "width": 0.119565,
+            "fontSize": 0.064815,
+            "align": "center",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "letter-b",
+            "type": "header",
+            "text": "B",
+            "x": 0.521739,
+            "y": 0.191597,
+            "width": 0.119565,
+            "fontSize": 0.064815,
+            "align": "center",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "call",
+            "type": "body",
+            "text": "A or B?",
+            "x": 0,
+            "y": 0.823529,
+            "width": 0.434783,
+            "fontSize": 0.048148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": [
+          "question",
+          "photo-a",
+          "photo-b",
+          "badge-a",
+          "letter-a",
+          "badge-b",
+          "letter-b",
+          "call",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "question": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 28
+      }
+    },
+    "photo-a": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "photo-b": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "letter-a": {
+      "role": "name",
+      "label": {
+        "en": "Letter A",
+        "de": "Buchstabe A"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 2
+      }
+    },
+    "letter-b": {
+      "role": "name",
+      "label": {
+        "en": "Letter B",
+        "de": "Buchstabe B"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 2
+      }
+    },
+    "call": {
+      "role": "cta",
+      "label": {
+        "en": "Call to action",
+        "de": "Handlungsaufruf"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 20
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right"],
+  "placeholders": {
+    "en": {
+      "question": "Which playground?",
+      "letter-a": "A",
+      "letter-b": "B",
+      "call": "A or B?"
+    },
+    "de": {
+      "question": "Welcher Spielplatz?",
+      "letter-a": "A",
+      "letter-b": "B",
+      "call": "A oder B?"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

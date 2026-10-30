@@ -1,0 +1,357 @@
+{
+  "formatVersion": 1,
+  "id": "studio-question-estimate",
+  "version": 1,
+  "kind": "template",
+  "family": "question",
+  "title": {
+    "en": "Estimate with three answers",
+    "de": "Schätzfrage mit drei Antworten"
+  },
+  "description": {
+    "en": "A question and three possible answers A, B and C, each on a colour square",
+    "de": "Eine Frage und drei mögliche Antworten A, B und C, jede auf einem Farbquadrat"
+  },
+  "tags": {
+    "tone": "warm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "square-a",
+            "type": "rect",
+            "x": 0.081522,
+            "y": 0.432773,
+            "width": 0.163043,
+            "height": 0.12605,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          },
+          {
+            "id": "square-b",
+            "type": "rect",
+            "x": 0.081522,
+            "y": 0.609244,
+            "width": 0.163043,
+            "height": 0.12605,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          },
+          {
+            "id": "square-c",
+            "type": "rect",
+            "x": 0.081522,
+            "y": 0.785714,
+            "width": 0.163043,
+            "height": 0.12605,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "question",
+            "type": "header",
+            "text": "How many flats have a rent cap?",
+            "x": 0,
+            "y": 0.02521,
+            "width": 0.543478,
+            "fontSize": 0.042593,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.98,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "letter-a",
+            "type": "header",
+            "text": "A",
+            "x": 0,
+            "y": 0.376471,
+            "width": 0.163043,
+            "fontSize": 0.077778,
+            "align": "center",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "answer-a",
+            "type": "header",
+            "text": "4 %",
+            "x": 0.217391,
+            "y": 0.379832,
+            "width": 0.782609,
+            "fontSize": 0.088889,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "letter-b",
+            "type": "header",
+            "text": "B",
+            "x": 0,
+            "y": 0.552941,
+            "width": 0.163043,
+            "fontSize": 0.077778,
+            "align": "center",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "answer-b",
+            "type": "header",
+            "text": "11 %",
+            "x": 0.217391,
+            "y": 0.556303,
+            "width": 0.782609,
+            "fontSize": 0.088889,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "letter-c",
+            "type": "header",
+            "text": "C",
+            "x": 0,
+            "y": 0.729412,
+            "width": 0.163043,
+            "fontSize": 0.077778,
+            "align": "center",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "answer-c",
+            "type": "header",
+            "text": "27 %",
+            "x": 0.217391,
+            "y": 0.732773,
+            "width": 0.782609,
+            "fontSize": 0.088889,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          }
+        ],
+        "layerOrder": [
+          "question",
+          "square-a",
+          "letter-a",
+          "answer-a",
+          "square-b",
+          "letter-b",
+          "answer-b",
+          "square-c",
+          "letter-c",
+          "answer-c",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "question": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 7,
+        "maxLines": 4,
+        "maxChars": 48
+      }
+    },
+    "letter-a": {
+      "role": "name",
+      "label": {
+        "en": "Letter A",
+        "de": "Buchstabe A"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 2
+      }
+    },
+    "answer-a": {
+      "role": "number",
+      "label": {
+        "en": "Answer A",
+        "de": "Antwort A"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 6
+      }
+    },
+    "letter-b": {
+      "role": "name",
+      "label": {
+        "en": "Letter B",
+        "de": "Buchstabe B"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 2
+      }
+    },
+    "answer-b": {
+      "role": "number",
+      "label": {
+        "en": "Answer B",
+        "de": "Antwort B"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 6
+      }
+    },
+    "letter-c": {
+      "role": "name",
+      "label": {
+        "en": "Letter C",
+        "de": "Buchstabe C"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 2
+      }
+    },
+    "answer-c": {
+      "role": "number",
+      "label": {
+        "en": "Answer C",
+        "de": "Antwort C"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 6
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "question": "How many flats have a rent cap?",
+      "letter-a": "A",
+      "answer-a": "4 %",
+      "letter-b": "B",
+      "answer-b": "11 %",
+      "letter-c": "C",
+      "answer-c": "27 %"
+    },
+    "de": {
+      "question": "Wie viele Wohnungen sind mietgebunden?",
+      "letter-a": "A",
+      "answer-a": "4 %",
+      "letter-b": "B",
+      "answer-b": "11 %",
+      "letter-c": "C",
+      "answer-c": "27 %"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

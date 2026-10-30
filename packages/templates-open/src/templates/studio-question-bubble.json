@@ -1,0 +1,153 @@
+{
+  "formatVersion": 1,
+  "id": "studio-question-bubble",
+  "version": 1,
+  "kind": "template",
+  "family": "question",
+  "title": {
+    "en": "Speech bubble",
+    "de": "Sprechblase"
+  },
+  "description": {
+    "en": "A question on a large colour bubble and a call to answer in the comments below",
+    "de": "Eine Frage auf einer großen Farbfläche als Sprechblase und darunter die Aufforderung, in den Kommentaren zu antworten"
+  },
+  "tags": {
+    "tone": "warm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "bubble",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.336134,
+            "width": 1,
+            "height": 0.537815,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "question",
+            "type": "header",
+            "text": "What is missing in your neighbourhood?",
+            "x": 0.054348,
+            "y": 0.12605,
+            "width": 0.891304,
+            "fontSize": 0.081481,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "call",
+            "type": "body",
+            "text": "Tell us in the comments.",
+            "x": 0,
+            "y": 0.689076,
+            "width": 1,
+            "fontSize": 0.055556,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.08,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": ["bubble", "question", "call", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "question": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 4,
+        "maxChars": 40
+      }
+    },
+    "call": {
+      "role": "cta",
+      "label": {
+        "en": "Call to action",
+        "de": "Handlungsaufruf"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 2,
+        "maxChars": 36
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-left"],
+  "placeholders": {
+    "en": {
+      "question": "What is missing in your neighbourhood?",
+      "call": "Tell us in the comments."
+    },
+    "de": {
+      "question": "Was fehlt in deinem Viertel?",
+      "call": "Schreib es in die Kommentare."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
