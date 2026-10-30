@@ -29,12 +29,16 @@ describe('the catalogue', () => {
       'studio-event-date-bands',
       'studio-event-countdown',
       'studio-event-panel',
+      'studio-photo-quote',
+      'studio-photo-number',
     ]);
     expect(entries.every((e) => e.source === 'pack')).toBe(true);
     expect(entries.filter((e) => e.needsPhoto).map((e) => e.id)).toEqual([
       'studio-event-photo-date',
       'studio-event-countdown',
       'studio-event-panel',
+      'studio-photo-quote',
+      'studio-photo-number',
     ]);
     expect(catalogTemplate('studio-quote')?.family).toBe('quote');
     expect(catalogTemplate('nope')).toBeNull();

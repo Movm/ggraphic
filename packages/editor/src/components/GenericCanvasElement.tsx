@@ -305,7 +305,7 @@ const MemoizedImageElement = memo(function MemoizedImageElement<
   }
 
   // `sizeStateKey` wurde bisher nur geschrieben (handleImageTransformEnd) und
-  // nie gelesen — Groessenaenderungen an Profilbild und Sonnenblume fielen
+  // nie gelesen — Groessenaenderungen an Profilbild und Deko-Grafik fielen
   // beim naechsten Neuzeichnen zurueck.
   const { x, y, width, height, opacity } = resolveImageElementBox(config, state, layout);
 

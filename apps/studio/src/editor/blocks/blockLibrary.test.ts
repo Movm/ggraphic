@@ -25,6 +25,8 @@ describe('blockLibrary', () => {
       'studio-event-giant-date/date-with-place',
       'studio-event-photo-date/date-with-place',
       'studio-event-programme/date-with-place',
+      'studio-photo-quote/quote-with-person',
+      'studio-photo-number/number-with-line',
     ]);
     expect(find(QUOTE)).toMatchObject({
       version: 1,

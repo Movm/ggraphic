@@ -448,6 +448,7 @@ export const de = {
     warm: 'Warm',
     cool: 'Kühl',
     bw: 'S/W',
+    duotone: 'Duotone',
     vintage: 'Vintage',
   },
 
@@ -804,6 +805,14 @@ export const de = {
     fontSize: 'Schriftgröße',
   },
 
+  budget: {
+    words: (actual: number, limit: number) => `${actual} von ${limit} Wörtern`,
+    chars: (actual: number, limit: number) => `${actual} von ${limit} Zeichen`,
+    lines: (actual: number, limit: number) => `${actual} von ${limit} Zeilen`,
+    fontSize: (actual: number, limit: number) =>
+      `Schrift ${actual} px, mindestens ${limit} px für gute Lesbarkeit`,
+  },
+
   shell: {
     loadingEditor: 'Editor wird geladen',
     zoomReset: 'Zoom auf 100 % zurücksetzen',
@@ -901,6 +910,11 @@ export const de = {
     confirmDeletePage: 'Seite wirklich löschen?',
     deletePage: 'Seite löschen',
     adjustImage: 'Bild anpassen (Filter, Helligkeit, Kontrast…)',
+    imageLook: 'Look',
+    imageLookNone: 'Ohne',
+    imageLookBw: 'Schwarzweiß',
+    imageLookDuotone: 'Duoton',
+    imageLookDarken: 'Abdunkeln',
     straighten: 'Begradigen in Grad',
     expandWithAi: 'Foto per KI auf das Format des Rahmens erweitern',
     autoCrop: 'Ausschnitt automatisch wählen',

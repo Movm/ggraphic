@@ -70,6 +70,8 @@ describe('pickOffers', () => {
       'studio-event-date-bands',
       'studio-event-countdown',
       'studio-event-panel',
+      'studio-photo-quote',
+      'studio-photo-number',
     ]);
     expect(templates.some((t) => t.id === BLANK_TEMPLATE_ID)).toBe(false);
   });
@@ -85,6 +87,8 @@ describe('pickOffers', () => {
       'studio-event-date-bands',
       'studio-event-countdown',
       'studio-event-panel',
+      'studio-photo-quote',
+      'studio-photo-number',
     ]);
     expect(templates.find((t) => t.id === 'studio-quote')!.slots).toEqual([
       { id: 'headline', label: 'The quotation', maxChars: 160 },

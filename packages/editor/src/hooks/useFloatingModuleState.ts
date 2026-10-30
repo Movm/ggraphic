@@ -141,6 +141,10 @@ function floatingModuleEqual(
     a.data.shadowOffsetY === b.data.shadowOffsetY &&
     a.data.shadowOpacity === b.data.shadowOpacity &&
     a.data.blur === b.data.blur &&
+    a.data.grayscale === b.data.grayscale &&
+    a.data.brightness === b.data.brightness &&
+    a.data.duotoneLow === b.data.duotoneLow &&
+    a.data.duotoneHigh === b.data.duotoneHigh &&
     a.data.fillGradient === b.data.fillGradient &&
     a.data.align === b.data.align
   );

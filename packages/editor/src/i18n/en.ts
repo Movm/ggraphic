@@ -438,6 +438,7 @@ export const en: Messages = {
     warm: 'Warm',
     cool: 'Cool',
     bw: 'B/W',
+    duotone: 'Duotone',
     vintage: 'Vintage',
   },
 
@@ -791,6 +792,14 @@ export const en: Messages = {
     fontSize: 'Font size',
   },
 
+  budget: {
+    words: (actual: number, limit: number) => `${actual} of ${limit} words`,
+    chars: (actual: number, limit: number) => `${actual} of ${limit} characters`,
+    lines: (actual: number, limit: number) => `${actual} of ${limit} lines`,
+    fontSize: (actual: number, limit: number) =>
+      `Text size ${actual} px, at least ${limit} px for legibility`,
+  },
+
   shell: {
     loadingEditor: 'Loading the editor',
     zoomReset: 'Reset zoom to 100%',
@@ -887,6 +896,11 @@ export const en: Messages = {
     confirmDeletePage: 'Really delete this page?',
     deletePage: 'Delete page',
     adjustImage: 'Adjust image (filter, brightness, contrast…)',
+    imageLook: 'Look',
+    imageLookNone: 'None',
+    imageLookBw: 'Black & white',
+    imageLookDuotone: 'Duotone',
+    imageLookDarken: 'Darken',
     straighten: 'Straighten in degrees',
     expandWithAi: 'Expand the photo to the frame format with AI',
     autoCrop: 'Choose crop automatically',

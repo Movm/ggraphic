@@ -424,6 +424,17 @@ body {
   margin: 0 auto;
   padding: var(--ui-space-6) var(--ui-gutter);
 }
+.studio-notices {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: var(--ui-space-6) var(--ui-gutter);
+}
+.studio-notices__text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
 .studio-header {
   display: flex;
   flex-wrap: wrap;

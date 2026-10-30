@@ -29,7 +29,7 @@ export function getMobileSelectionArea(
   if (!selectedId) return null;
   if (configTarget) return configTarget;
   if (!module) return null;
-  // Eine Vorlagen-Deko (Anführungszeichen, Sonnenblume, Logo) ist kein Foto.
+  // Eine Vorlagen-Deko (Anführungszeichen, Blume, Logo) ist kein Foto.
   if (module.type === 'image' && !module.data.isPhoto) return null;
   return AREA_CANDIDATES[module.type]?.find((id) => visibleTabIds.includes(id)) ?? null;
 }

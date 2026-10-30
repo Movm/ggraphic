@@ -242,7 +242,7 @@ function mapShape(shape: ShapeInstance): PptxItem {
   if (!native) return raster(shape.id, placement, 'shape-path');
   // A native pptx shape can't carry the mirror the stage draws; the raster does.
   if (shape.flipX || shape.flipY) return raster(shape.id, placement, 'shape-flipped');
-  if (shape.fillGradient || shape.blendMode) {
+  if (shape.fillGradient || shape.shade || shape.blendMode) {
     return raster(shape.id, placement, 'shape-styled');
   }
   return {
@@ -435,6 +435,7 @@ function isAdjusted(image: ImageAdjustments): boolean {
     !!image.sepia ||
     !!image.invert ||
     !!image.tint ||
+    (!!image.duotoneLow && !!image.duotoneHigh) ||
     !!image.vignette ||
     !!image.flipX ||
     !!image.flipY
@@ -630,7 +631,10 @@ function buildSlide(
   }
   for (const badge of carried.circleBadgeInstances) add(badge.id, () => mapCircleBadge(badge));
   for (const pill of carried.pillBadgeInstances) add(pill.id, () => mapPill(pill, measure));
-  for (const image of carried.userImageInstances) add(image.id, () => mapUserImage(image));
+  for (const image of carried.userImageInstances) {
+    // An empty photo slot shows a placeholder in the editor only.
+    if (image.src) add(image.id, () => mapUserImage(image));
+  }
   for (const chart of carried.chartInstances) add(chart.id, () => mapChart(chart));
 
   // Unbekannte Sammlungen von Elementen mit Id: gerastert statt verloren.
