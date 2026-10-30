@@ -483,13 +483,14 @@ describe('brandFingerprint', () => {
 });
 
 describe('P2 brand additions', () => {
-  it('fingerprint of brandDefault is unchanged by P2', () => {
-    expect(brandFingerprint(brandDefault)).toBe('6f060f15');
+  it('fingerprint of brandDefault (re-stamped when its fonts became Bricolage/Anton)', () => {
+    expect(brandFingerprint(brandDefault)).toBe('0df912b2');
   });
 
-  it('serif falls back to quoteEmphasis and condensed to headline', () => {
+  it('resolves the brand font roles', () => {
     expect(resolveRef('font.serif', brandDefault, null)).toBe('Fraunces');
-    expect(resolveRef('font.condensed', brandDefault, null)).toBe('Raleway');
+    expect(resolveRef('font.condensed', brandDefault, null)).toBe('Anton');
+    expect(resolveRef('font.headline', brandDefault, null)).toBe('Bricolage Grotesque');
     const lora = { ...brandDefault, fonts: { ...brandDefault.fonts, serif: 'Lora' } };
     expect(resolveRef('font.serif', lora, null)).toBe('Lora');
   });

@@ -18,7 +18,7 @@ import { layoutRichTextBlock, type MeasureRun } from '@ggraphic/schema';
 import { describe, expect, it } from 'vitest';
 
 import { usesRichText } from '../utils/textRouting.js';
-import { runFont } from '../utils/textUtils.js';
+import { konvaFontStyle, runFont } from '../utils/textUtils.js';
 import { TEMPLATE_GATE_ADAPTER as adapter } from './templateGeometry.js';
 
 const req = createRequire(import.meta.url);
@@ -32,7 +32,13 @@ Konva.Util.createCanvasElement = () => {
   return canvas;
 };
 
-const FAMILIES = { Raleway: 'raleway', Fraunces: 'fraunces', 'Instrument Sans': 'instrument-sans' };
+const FAMILIES = {
+  Raleway: 'raleway',
+  Fraunces: 'fraunces',
+  'Instrument Sans': 'instrument-sans',
+  'Bricolage Grotesque': 'bricolage-grotesque',
+  Anton: 'anton',
+};
 const studio = createRequire(
   join(dirname(fileURLToPath(import.meta.url)), '../../../../apps/studio/package.json')
 );
@@ -41,7 +47,9 @@ for (const [family, pkg] of Object.entries(FAMILIES)) {
   const dir = join(dirname(studio.resolve(`@fontsource/${pkg}/package.json`)), 'files');
   subsets[family] = [];
   for (const file of readdirSync(dir).filter((f) => f.endsWith('.woff2'))) {
-    const m = new RegExp(`^${pkg}-([a-z-]+)-(400|700)-(normal|italic)\\.woff2$`).exec(file);
+    const m = new RegExp(`^${pkg}-([a-z-]+)-(400|500|600|700|800)-(normal|italic)\\.woff2$`).exec(
+      file
+    );
     if (!m) continue;
     if (!subsets[family]!.includes(m[1]!)) subsets[family]!.push(m[1]!);
     GlobalFonts.registerFromPath(join(dir, file), `${family}__${m[1]}`);
@@ -58,6 +66,7 @@ interface Sample {
   text: string;
   family: string;
   fontStyle: string;
+  fontWeight?: number;
   size: number;
   width: number;
   letterSpacing: number;
@@ -66,7 +75,7 @@ interface Sample {
 /** What the canvas draws: Konva's `Text` or the rich layout, routed as `CanvasText` routes. */
 function referenceLines(s: Sample): number {
   const measure: MeasureRun = (text, style) => {
-    const run = runFont(s.family, s.fontStyle, style, null);
+    const run = runFont(s.family, s.fontStyle, style, null, s.fontWeight);
     return realWidth(text, run.fontFamily, run.fontStyle, s.size);
   };
   if (usesRichText({ text: s.text, width: s.width }, measure)) {
@@ -75,7 +84,7 @@ function referenceLines(s: Sample): number {
   const node = new Konva.Text({
     text: s.text,
     fontFamily: stack(s.family),
-    fontStyle: s.fontStyle,
+    fontStyle: konvaFontStyle(s.fontStyle, s.fontWeight),
     fontSize: s.size,
     width: s.width,
     letterSpacing: s.letterSpacing,
@@ -89,6 +98,7 @@ const gateLines = (s: Sample): number =>
     text: s.text,
     fontFamily: s.family,
     fontStyle: s.fontStyle,
+    ...(s.fontWeight === undefined ? {} : { fontWeight: s.fontWeight }),
     fontSize: s.size,
     width: s.width,
     letterSpacing: s.letterSpacing,
@@ -167,6 +177,22 @@ describe('gate line count against the renderer layout (real fonts)', () => {
     }
   });
 
+  it.each([100, 300, 400, 500, 600, 700, 800, 900])(
+    'is not below the reference at fontWeight %d (Bricolage Grotesque, Anton)',
+    (fontWeight) => {
+      for (const family of ['Bricolage Grotesque', 'Anton']) {
+        for (const text of [
+          'WWWWW '.repeat(6).trim(),
+          'Gemeinschaftsgartenverein Klimaschutzprogramm Bundesverfassungsgericht',
+          'Kein Platz für Hass und Hetze in unserer Stadt',
+        ]) {
+          const v = { ...sample(text, { size: 80, width: 600 }), family, fontWeight };
+          expect(gateLines(v), JSON.stringify(v)).toBeGreaterThanOrEqual(referenceLines(v));
+        }
+      }
+    }
+  );
+
   it('is not below the reference on 3000 seeded random texts', () => {
     let seed = 7;
     const rnd = () => (seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
@@ -189,7 +215,7 @@ describe('gate line count against the renderer layout (real fonts)', () => {
       else if (kind < 0.25) text = ` ${text}`;
       const s: Sample = {
         text,
-        family: families[Math.floor(rnd() * 3)]!,
+        family: families[Math.floor(rnd() * families.length)]!,
         fontStyle: styles[Math.floor(rnd() * 4)]!,
         letterSpacing: [0, 0, 3, -3][Math.floor(rnd() * 4)]!,
         width: 80 + Math.floor(rnd() * 900),

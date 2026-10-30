@@ -120,6 +120,18 @@ describe('readTemplateFile', () => {
     if (result.status === 'invalid') expect(result.reason).toContain('fontStyle');
   });
 
+  it.each([100, 400, 800, 900])('accepts fontWeight %d', (fontWeight) => {
+    const state = { texts: [{ id: 't1', text: 'Hello', fontWeight, bind: { fill: 'ink' } }] };
+    expect(readTemplateFile(with_({ pages: [{ state }] })).status).toBe('ok');
+  });
+
+  it.each([0, 450, 1000, '800'])('rejects fontWeight %j', (fontWeight) => {
+    const state = { texts: [{ id: 't1', text: 'Hello', fontWeight, bind: { fill: 'ink' } }] };
+    const result = readTemplateFile(with_({ pages: [{ state }] }));
+    expect(result.status).toBe('invalid');
+    if (result.status === 'invalid') expect(result.reason).toContain('fontWeight');
+  });
+
   it('a block naming a missing element is invalid', () => {
     const result = readTemplateFile(
       with_({ blocks: [{ id: 'b', title: { en: 'B' }, elementIds: ['nope'] }] })

@@ -195,8 +195,33 @@ const FLAT_EM = 1.2; // only to size a box that is flagged anyway
 const KERN_EM = 0.06;
 
 const tables = new Map<string, Map<number, number>>();
-function widthTable(family: string, bold: boolean): Map<number, number> | null {
-  const key = `${family}/${bold ? 'bold' : 'regular'}`;
+/** `regular` is 400 and `bold` is 700; the other classes carry their weight as the name. */
+const classWeight = (name: string): number =>
+  name === 'regular' ? 400 : name === 'bold' ? 700 : Number(name);
+
+/**
+ * The width class that measures `weight`: the class of that weight when the family ships one,
+ * else the next heavier one (never narrower than the face drawn), else the heaviest it has.
+ */
+const classes = new Map<string, string | null>();
+function widthClass(family: string, weight: number): string | null {
+  const memo = `${family}/${weight}`;
+  const known = classes.get(memo);
+  if (known !== undefined) return known;
+  const prefix = `${family}/`;
+  const shipped = Object.keys(FONT_WIDTHS)
+    .filter((key) => key.startsWith(prefix))
+    .map((key) => key.slice(prefix.length))
+    .sort((a, b) => classWeight(a) - classWeight(b));
+  const picked = shipped.find((name) => classWeight(name) >= weight) ?? shipped.at(-1) ?? null;
+  classes.set(memo, picked);
+  return picked;
+}
+
+function widthTable(family: string, weight: number): Map<number, number> | null {
+  const cls = widthClass(family, weight);
+  if (cls === null) return null;
+  const key = `${family}/${cls}`;
   const cached = tables.get(key);
   if (cached) return cached;
   const raw = FONT_WIDTHS[key];
@@ -220,6 +245,13 @@ function familyOf(fontFamily: string): string {
   return first === '' ? '' : aliasFontFamily(first);
 }
 
+/** The weight a style string asks for: a numeric token, else bold is 700 and the rest 400. */
+function weightOfStyle(style: string): number {
+  const numeric = /\b([1-9]00)\b/.exec(style);
+  if (numeric) return Number(numeric[1]);
+  return style.includes('bold') ? 700 : 400;
+}
+
 /** `normal`, `italic`, `bold` or `bold italic`: a weight of 600 or more, or the word bold, is bold. */
 function normalFontStyle(fontStyle: string): 'normal' | 'italic' | 'bold' | 'bold italic' {
   const tokens = fontStyle.toLowerCase().split(/\s+/);
@@ -239,11 +271,11 @@ function tableWidth(
   text: string,
   fontSize: number,
   family: string,
-  bold: boolean,
+  weight: number,
   note: Note
 ): number {
   if (text === '') return 0;
-  const table = widthTable(familyOf(family), bold);
+  const table = widthTable(familyOf(family), weight);
   if (!table) {
     note.reason ??= `text width not checkable (no width table for font "${family}")`;
   }
@@ -265,6 +297,8 @@ interface TextProps {
   fontSize: number;
   fontFamily: string;
   fontStyle: 'normal' | 'italic' | 'bold' | 'bold italic';
+  /** A numeric `fontWeight`; null when the text has none. */
+  fontWeight: number | null;
   width: number;
   letterSpacing: number;
   accent: TextAccent | null;
@@ -279,6 +313,7 @@ const textPropsOf = (el: Readonly<Record<string, unknown>>): TextProps => {
     fontSize: num(el, 'fontSize'),
     fontFamily: str(el, 'fontFamily'),
     fontStyle: normalFontStyle(str(el, 'fontStyle')),
+    fontWeight: typeof el['fontWeight'] === 'number' ? el['fontWeight'] : null,
     width: num(el, 'width'),
     // The plain path renders no letter spacing today; a positive value is counted anyway.
     letterSpacing: Math.max(0, num(el, 'letterSpacing')),
@@ -293,11 +328,15 @@ function tableRunMeasure(p: TextProps, note: Note): MeasureRun {
     : false;
   const measured: MeasureWidth = (text, size, family, style) => {
     // A bold request on an italic run draws the italic face (maybe synthetically emboldened):
-    // use the bold table whenever bold is asked anywhere.
-    const bold = style.includes('bold') || p.fontStyle.includes('bold') || accentBold;
-    return tableWidth(text, size, family, bold, note);
+    // use the bold table whenever bold is asked anywhere; a numeric weight is the base weight.
+    const weight = Math.max(
+      weightOfStyle(style),
+      p.fontWeight ?? (p.fontStyle.includes('bold') ? 700 : 400),
+      accentBold ? 700 : 400
+    );
+    return tableWidth(text, size, family, weight, note);
   };
-  return createRunMeasurer(measured, p.fontSize, p.fontFamily, p.fontStyle, p.accent);
+  return createRunMeasurer(measured, p.fontSize, p.fontFamily, p.fontStyle, p.accent, p.fontWeight);
 }
 
 interface TextLayout {
@@ -328,10 +367,10 @@ function widestLine(
   fontStyle: string
 ): { width: number; lines: number; unmeasurable: string | null } {
   const note: Note = { reason: null };
-  const bold = normalFontStyle(fontStyle).includes('bold');
+  const weight = normalFontStyle(fontStyle).includes('bold') ? 700 : 400;
   const parts = text.split('\n');
   const width = Math.max(
-    ...parts.map((line) => tableWidth(line, fontSize, fontFamily, bold, note))
+    ...parts.map((line) => tableWidth(line, fontSize, fontFamily, weight, note))
   );
   return { width, lines: parts.length, unmeasurable: note.reason };
 }
@@ -532,7 +571,8 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
         return {
           fill: typeof el['fill'] === 'string' ? el['fill'] : '',
           fontSize: props.fontSize * scale,
-          bold: props.fontStyle.includes('bold'),
+          bold:
+            props.fontWeight !== null ? props.fontWeight >= 700 : props.fontStyle.includes('bold'),
           opacity,
           ...(boundsProblem ? { boundsProblem } : {}),
           ...(el['fillGradient'] ? { notCheckable: 'text gradient not checkable' } : {}),

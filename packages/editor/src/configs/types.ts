@@ -53,6 +53,9 @@ export interface BaseElementConfig<TState = Record<string, unknown>> {
   order?: number;
 }
 
+/** Numeric font weight; the nine CSS steps. */
+export type FontWeight = 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900;
+
 /** Dynamic additional text element */
 export interface AdditionalText {
   id: string;
@@ -66,6 +69,8 @@ export interface AdditionalText {
   fontSize: number;
   fontFamily: string;
   fontStyle?: 'normal' | 'italic' | 'bold' | 'bold italic';
+  /** Numeric weight; wins over the bold part of `fontStyle`. Absent = `fontStyle` alone. */
+  fontWeight?: FontWeight;
   fill: string;
   rotation?: number;
   scale?: number;

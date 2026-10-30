@@ -52,7 +52,7 @@ and are checked, including the licence in each set's `info.json`, by
 
 ## Fonts
 
-Fraunces, Instrument Sans, Raleway and Bricolage Grotesque are bundled from
+Fraunces, Instrument Sans, Raleway, Bricolage Grotesque and Anton are bundled from
 the Fontsource packages and licensed under the SIL Open Font License 1.1
 (full text below).
 
@@ -60,6 +60,7 @@ the Fontsource packages and licensed under the SIL Open Font License 1.1
 - Copyright 2022 The Instrument Sans Project Authors (https://github.com/Instrument/instrument-sans)
 - Copyright 2010 The Raleway Project Authors (impallari@gmail.com), with Reserved Font Name "Raleway"
 - Copyright 2022 The Bricolage Grotesque Project Authors (https://github.com/ateliertriay/bricolage)
+- Copyright 2020 The Anton Project Authors (https://github.com/googlefonts/AntonFont)
 
 ## Licence texts
 

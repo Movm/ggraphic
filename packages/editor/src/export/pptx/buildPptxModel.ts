@@ -24,6 +24,7 @@ import {
 import { ICON_TARGET_SIZE, ILLUSTRATION_TARGET_SIZE } from '@ggraphic/editor/utils/motifSizes';
 import { photoStripBeside, type ShapeInstance } from '@ggraphic/editor/utils/shapes';
 import { backgroundStraighten } from '@ggraphic/editor/utils/straighten';
+import { konvaFontStyle } from '@ggraphic/editor/utils/textUtils';
 
 import {
   estimateMeasure,
@@ -265,12 +266,13 @@ function mapText(text: AdditionalText, measure: PptxMeasureText): PptxItem {
   const lineHeight = text.lineHeight ?? 1.2;
   const paragraphs = textParagraphs(text);
   const style = text.fontStyle ?? 'normal';
+  const bold = text.fontWeight !== undefined ? text.fontWeight >= 600 : style.includes('bold');
   const lines = wrappedLineCount(
     paragraphs,
     text.width,
     text.fontSize,
     text.fontFamily,
-    style,
+    konvaFontStyle(style, text.fontWeight),
     measure
   );
   const local = { x: 0, y: 0, width: text.width, height: lines * text.fontSize * lineHeight };
@@ -285,7 +287,7 @@ function mapText(text: AdditionalText, measure: PptxMeasureText): PptxItem {
     fontFace: text.fontFamily,
     fontSize: text.fontSize * scale,
     color: text.fill,
-    bold: style.includes('bold'),
+    bold,
     italic: style.includes('italic'),
     align: text.align ?? 'left',
     valign: 'top',

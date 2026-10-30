@@ -217,7 +217,12 @@ describe('BrandPage', () => {
         secondary: studioBrand.colors.secondary,
         accent: studioBrand.colors.accent,
       },
-      fonts: { headline: 'Raleway', body: 'Instrument Sans', serif: null, condensed: null },
+      fonts: {
+        headline: 'Bricolage Grotesque',
+        body: 'Instrument Sans',
+        serif: null,
+        condensed: null,
+      },
       logoAssetId: null,
       logoAlt: null,
       layout: DEFAULT_BRAND_LAYOUT,

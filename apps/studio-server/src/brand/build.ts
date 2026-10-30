@@ -7,7 +7,13 @@ const WHITE = '#FFFFFF';
 const BLACK = '#000000';
 
 /** Families the Studio web app bundles (OFL); an organisation may pick them without upload. */
-export const BUNDLED_FONT_FAMILIES = ['Raleway', 'Instrument Sans', 'Fraunces'] as const;
+export const BUNDLED_FONT_FAMILIES = [
+  'Raleway',
+  'Instrument Sans',
+  'Fraunces',
+  'Bricolage Grotesque',
+  'Anton',
+] as const;
 
 export interface FontAsset {
   fileName: string;

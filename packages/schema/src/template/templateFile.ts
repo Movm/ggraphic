@@ -212,6 +212,7 @@ function elementsById(state: Readonly<Record<string, unknown>>): [string, unknow
 }
 
 const FONT_STYLES: readonly string[] = ['normal', 'italic', 'bold', 'bold italic'];
+const FONT_WEIGHTS: readonly number[] = [100, 200, 300, 400, 500, 600, 700, 800, 900];
 
 const invalid = (reason: string): TemplateReadResult => ({ status: 'invalid', reason });
 
@@ -235,6 +236,10 @@ function crossReferences(file: TemplateFile): string | null {
     const style = isRecord(item) ? item['fontStyle'] : undefined;
     if (style !== undefined && !FONT_STYLES.includes(style as string)) {
       return `${id}.fontStyle: must be one of ${FONT_STYLES.join(', ')}`;
+    }
+    const weight = isRecord(item) ? item['fontWeight'] : undefined;
+    if (weight !== undefined && !FONT_WEIGHTS.includes(weight as number)) {
+      return `${id}.fontWeight: must be one of ${FONT_WEIGHTS.join(', ')}`;
     }
   }
   if (known.has('page')) return 'pages.0.state: "page" is reserved and cannot be an element id';

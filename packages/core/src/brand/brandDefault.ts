@@ -65,9 +65,11 @@ export const brandDefault: BrandPack = {
     outlines: [WHITE, BLACK, NIGHT, SIGNAL],
   },
   fonts: {
-    headline: 'Raleway',
+    headline: 'Bricolage Grotesque',
     body: 'Instrument Sans',
-    quoteShort: 'Raleway',
+    serif: 'Fraunces',
+    condensed: 'Anton',
+    quoteShort: 'Bricolage Grotesque',
     quoteEmphasis: 'Fraunces',
   },
   fontFaces: [],
