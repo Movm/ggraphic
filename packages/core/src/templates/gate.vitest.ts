@@ -251,6 +251,12 @@ describe('render gate stage 1', () => {
     expect(rules(template(), body)).toEqual([]);
   });
 
+  it('does not count emphasis markers against the word or character budget', () => {
+    const slots = { headline: { role: 'headline', budget: { maxWords: 4, maxChars: 17 } } };
+    const ok = context({ slots, placeholderTexts: { headline: 'Das ==Ziel== ist klar' } });
+    expect(rules(template(), ok)).toEqual([]);
+  });
+
   it('holds large text to 3.0 and small text to 4.5', () => {
     // #7f93ad on #1d3557 is between 3 and 4.5: fine at 24 px+, not below.
     const grey = (fontSize: number) =>

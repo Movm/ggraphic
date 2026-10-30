@@ -43,7 +43,6 @@ export function checkSlotBudget(
     fontSize: number;
     canvasHeight: number;
     lineCount?: number;
-    role?: string;
   },
   budget: SlotBudget
 ): BudgetViolation[] {
@@ -61,9 +60,7 @@ export function checkSlotBudget(
       out.push({ kind: 'lines', limit: budget.maxLines, actual: input.lineCount });
     }
   }
-  if (input.role !== 'source') {
-    const limit = minTextSizePx(input.canvasHeight);
-    if (input.fontSize < limit) out.push({ kind: 'fontSize', limit, actual: input.fontSize });
-  }
+  const limit = minTextSizePx(input.canvasHeight);
+  if (input.fontSize < limit) out.push({ kind: 'fontSize', limit, actual: input.fontSize });
   return out;
 }
