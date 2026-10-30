@@ -12,6 +12,13 @@ import studioPhotoNumber from './templates/studio-photo-number.json' with { type
 import studioPhotoQuote from './templates/studio-photo-quote.json' with { type: 'json' };
 import studioQuote from './templates/studio-quote.json' with { type: 'json' };
 
+import studioPhotoTextBox from './templates/studio-photo-text-box.json' with { type: 'json' };
+import studioPhotoTextFade from './templates/studio-photo-text-fade.json' with { type: 'json' };
+import studioPhotoTextMarker from './templates/studio-photo-text-marker.json' with { type: 'json' };
+import studioPhotoTextPanel from './templates/studio-photo-text-panel.json' with { type: 'json' };
+import studioPhotoTextQuestion from './templates/studio-photo-text-question.json' with { type: 'json' };
+import studioPhotoTextQuiet from './templates/studio-photo-text-quiet.json' with { type: 'json' };
+
 import studioStatementBar from './templates/studio-statement-bar.json' with { type: 'json' };
 import studioStatementPhoto from './templates/studio-statement-photo.json' with { type: 'json' };
 import studioStatementSandwich from './templates/studio-statement-sandwich.json' with { type: 'json' };
@@ -51,6 +58,13 @@ export const OPEN_TEMPLATES: readonly unknown[] = [
   studioEventPanel,
   studioPhotoQuote,
   studioPhotoNumber,
+
+  studioPhotoTextBox,
+  studioPhotoTextFade,
+  studioPhotoTextMarker,
+  studioPhotoTextPanel,
+  studioPhotoTextQuestion,
+  studioPhotoTextQuiet,
 
   studioStatementBar,
   studioStatementPhoto,

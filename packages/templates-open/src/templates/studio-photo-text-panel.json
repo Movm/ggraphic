@@ -1,0 +1,183 @@
+{
+  "formatVersion": 1,
+  "id": "studio-photo-text-panel",
+  "version": 1,
+  "kind": "template",
+  "family": "photo-text",
+  "title": {
+    "en": "Photo, text panel and strip",
+    "de": "Foto, Textfläche und Streifen"
+  },
+  "description": {
+    "en": "A photo on top, a headline on the page colour and a colour strip with a call at the bottom",
+    "de": "Oben ein Foto, darunter eine Headline auf der Seitenfarbe und unten ein Farbstreifen mit einem Aufruf"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "light", "dark", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "strip",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.877778,
+            "width": 1,
+            "height": 0.244444,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 0.548148,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "Heat on site: every hour counts.",
+            "x": 0,
+            "y": 0.588235,
+            "width": 1,
+            "fontSize": 0.066667,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.96,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "cta",
+            "type": "body",
+            "text": "More heat protection, now.",
+            "x": 0,
+            "y": 0.87395,
+            "width": 1,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": ["photo", "headline", "strip", "cta", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas",
+    "strip": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "headline": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 7,
+        "maxLines": 3,
+        "maxChars": 44
+      }
+    },
+    "cta": {
+      "role": "cta",
+      "label": {
+        "en": "Call to action",
+        "de": "Handlungsaufruf"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 1,
+        "maxChars": 28
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "headline-with-strip",
+      "title": {
+        "en": "Headline with strip",
+        "de": "Headline mit Streifen"
+      },
+      "elementIds": ["headline", "strip", "cta"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "headline": "Heat on site: every hour counts.",
+      "cta": "More heat protection, now."
+    },
+    "de": {
+      "headline": "Hitze auf dem Bau: Jede Stunde zählt.",
+      "cta": "Mehr Hitzeschutz, jetzt."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

@@ -1,0 +1,183 @@
+{
+  "formatVersion": 1,
+  "id": "studio-photo-text-quiet",
+  "version": 1,
+  "kind": "template",
+  "family": "photo-text",
+  "title": {
+    "en": "Quiet two lines",
+    "de": "Leise zwei Zeilen"
+  },
+  "description": {
+    "en": "A full photo with a small line and a larger line on a fade at the bottom",
+    "de": "Ein Vollfoto mit einer kleinen und einer größeren Zeile auf einem Verlauf unten"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["photo", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "shade",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.592593,
+            "width": 1,
+            "height": 0.814815,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "shade": "bottom",
+            "bind": {
+              "fill": "shade"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "kicker",
+            "type": "body",
+            "text": "Open-air pools in Hesse",
+            "x": 0,
+            "y": 0.714286,
+            "width": 0.869565,
+            "fontSize": 0.048148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "One in three is at risk.",
+            "x": 0,
+            "y": 0.773109,
+            "width": 0.891304,
+            "fontSize": 0.081481,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.98,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          }
+        ],
+        "layerOrder": ["photo", "shade", "kicker", "headline", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas",
+    "shade": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "kicker": {
+      "role": "subline",
+      "label": {
+        "en": "Small line",
+        "de": "Kleine Zeile"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 1,
+        "maxChars": 30
+      }
+    },
+    "headline": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 2,
+        "maxChars": 32
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "headline-with-line",
+      "title": {
+        "en": "Headline with line",
+        "de": "Headline mit Zeile"
+      },
+      "elementIds": ["kicker", "headline"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "kicker": "Open-air pools in Hesse",
+      "headline": "One in three is at risk."
+    },
+    "de": {
+      "kicker": "Freibäder in Hessen",
+      "headline": "Jedes dritte ist bedroht."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
