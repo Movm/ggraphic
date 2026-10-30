@@ -151,7 +151,11 @@ describe('template geometry', () => {
       kind: 'solid',
       fill: '#000',
     });
-    expect(cover('shapeInstances', { fill: '#000', opacity: 0.9 })).toEqual({ kind: 'unknown' });
+    expect(cover('shapeInstances', { fill: '#000', opacity: 0.9 })).toEqual({
+      kind: 'veil',
+      fill: '#000000',
+      alpha: 0.9,
+    });
     expect(cover('shapeInstances', { fill: '#000', fillGradient: { stops: [] } })).toEqual({
       kind: 'unknown',
     });
@@ -159,9 +163,78 @@ describe('template geometry', () => {
       kind: 'unknown',
     });
     expect(cover('additionalTexts', { fill: '#000' })).toBeNull();
-    for (const key of ['userImageInstances', 'frameInstances', 'chartInstances', 'iconStates']) {
+    for (const key of ['frameInstances', 'chartInstances', 'iconStates']) {
       expect(cover(key, {})).toEqual({ kind: 'unknown' });
     }
+  });
+
+  it('cover() maps photo, duotone photo, shade shape, veil shape and keeps unknown for tint, blend and rotation', () => {
+    const cover = (key: string, el: Fields) => TEMPLATE_GATE_ADAPTER.cover(key, el);
+    const unknown = { kind: 'unknown' };
+    const image = 'userImageInstances';
+    expect(cover(image, { src: '/p.png' })).toEqual({
+      kind: 'photo',
+      low: '#000000',
+      high: '#ffffff',
+    });
+    expect(cover(image, { duotoneLow: '#0b1d12', duotoneHigh: '#e8f5ec' })).toEqual({
+      kind: 'photo',
+      low: '#0b1d12',
+      high: '#e8f5ec',
+    });
+    // One duotone colour alone does nothing; the photo keeps its full range.
+    expect(cover(image, { duotoneLow: '#0b1d12' })).toEqual({
+      kind: 'photo',
+      low: '#000000',
+      high: '#ffffff',
+    });
+    expect(cover(image, { tint: '#00ff00', tintStrength: 0.5 })).toEqual(unknown);
+    expect(cover(image, { tintStrength: 0.5 })).toEqual(unknown);
+    expect(cover(image, { blendMode: 'multiply' })).toEqual(unknown);
+    expect(cover(image, { rotation: 10 })).toEqual(unknown);
+    expect(cover(image, { opacity: 0.5 })).toEqual(unknown);
+    expect(cover(image, { mask: 'kreis' })).toEqual(unknown);
+    const duo = { duotoneLow: '#000000', duotoneHigh: '#444444' };
+    // The duotone runs after the other colour filters, so they keep its range; a vignette does not.
+    expect(cover(image, { ...duo, brightness: 0.4, contrast: 7, grayscale: true })).toEqual({
+      kind: 'photo',
+      ...{ low: '#000000', high: '#444444' },
+    });
+    expect(cover(image, { ...duo, vignette: 0.3 })).toEqual(unknown);
+
+    expect(cover('shapeInstances', { fill: '#101820', shade: 'bottom' })).toEqual({
+      kind: 'shade',
+      fill: '#101820',
+      direction: 'bottom',
+    });
+    expect(cover('shapeInstances', { fill: '#101820', shade: 'top', opacity: 0.5 })).toEqual(
+      unknown
+    );
+    expect(cover('shapeInstances', { fill: '#10182080', shade: 'top' })).toEqual(unknown);
+    expect(cover('shapeInstances', { fill: '#101820', shade: 'top', rotation: 5 })).toEqual(
+      unknown
+    );
+    // Only a plain rectangle fills its box.
+    expect(cover('shapeInstances', { type: 'rect', fill: '#000', opacity: 1 })).toEqual({
+      kind: 'solid',
+      fill: '#000',
+    });
+    for (const shape of [{ type: 'circle' }, { type: 'star' }, { type: 'rect', cornerRadius: 8 }]) {
+      expect(cover('shapeInstances', { fill: '#000', ...shape })).toEqual(unknown);
+      expect(cover('shapeInstances', { fill: '#000', opacity: 0.5, ...shape })).toEqual(unknown);
+      expect(cover('shapeInstances', { fill: '#000', shade: 'top', ...shape })).toEqual(unknown);
+    }
+    expect(cover('shapeInstances', { fill: '#000000', opacity: 0.35 })).toEqual({
+      kind: 'veil',
+      fill: '#000000',
+      alpha: 0.35,
+    });
+    const veil = cover('shapeInstances', { fill: '#00000080', opacity: 0.5 });
+    expect(veil).toMatchObject({ kind: 'veil', fill: '#000000' });
+    expect(veil && 'alpha' in veil ? veil.alpha : 0).toBeCloseTo(0.25, 2);
+    expect(cover('shapeInstances', { fill: '#000', opacity: 0.5, blendMode: 'multiply' })).toEqual(
+      unknown
+    );
   });
 
   it('colorFields holds no font or image field', () => {

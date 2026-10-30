@@ -77,3 +77,29 @@ describe('withSelectionChromeHidden', () => {
     expect(stage.draw).not.toHaveBeenCalled();
   });
 });
+
+describe('withSelectionChromeHidden and export-hidden nodes', () => {
+  it('hides export-hidden nodes by default, like an export', () => {
+    const placeholder = node('export-hidden');
+    const stage = stageWith([placeholder]);
+
+    const seen: boolean[] = [];
+    withSelectionChromeHidden(stage, () => seen.push(placeholder.visible()));
+
+    expect(seen).toEqual([false]);
+    expect(placeholder.visible()).toBe(true);
+  });
+
+  it('keeps export-hidden nodes for a preview but still hides the chrome', () => {
+    const placeholder = node('export-hidden');
+    const chrome = node('selection-chrome');
+    const stage = stageWith([placeholder, chrome]);
+
+    const seen: boolean[] = [];
+    withSelectionChromeHidden(stage, () => seen.push(placeholder.visible(), chrome.visible()), {
+      keepPlaceholders: true,
+    });
+
+    expect(seen).toEqual([true, false]);
+  });
+});

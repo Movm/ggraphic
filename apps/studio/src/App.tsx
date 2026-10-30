@@ -6,6 +6,7 @@ import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import { api, onUnauthenticated, type StudioConfig } from './api/client';
 import { AuthPage } from './pages/AuthPage';
 import { BrandPage } from './pages/BrandPage';
+import { LicensesPage } from './pages/LicensesPage';
 import { TrashPage } from './pages/TrashPage';
 import { StartPage } from './start/StartPage';
 import { parseRoute, redirect, usePathname, type Route } from './router';
@@ -70,7 +71,10 @@ export function App() {
   );
 
   let content: ReactNode;
-  if (session.isPending) {
+  if (route.name === 'licenses') {
+    // Open to everyone: the notices are not behind the login.
+    content = <LicensesPage />;
+  } else if (session.isPending) {
     content = loading('Connecting…');
   } else if (session.isError) {
     content = unreachable(() => void session.refetch());

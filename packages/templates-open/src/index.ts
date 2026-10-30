@@ -8,6 +8,8 @@ import studioEventCountdown from './templates/studio-event-countdown.json' with 
 import studioEventPanel from './templates/studio-event-panel.json' with { type: 'json' };
 import studioHeadline from './templates/studio-headline.json' with { type: 'json' };
 import studioNumber from './templates/studio-number.json' with { type: 'json' };
+import studioPhotoNumber from './templates/studio-photo-number.json' with { type: 'json' };
+import studioPhotoQuote from './templates/studio-photo-quote.json' with { type: 'json' };
 import studioQuote from './templates/studio-quote.json' with { type: 'json' };
 
 /** The pack's template files as parsed JSON; consumers read each through `readTemplateFile`. */
@@ -21,6 +23,8 @@ export const OPEN_TEMPLATES: readonly unknown[] = [
   studioEventDateBands,
   studioEventCountdown,
   studioEventPanel,
+  studioPhotoQuote,
+  studioPhotoNumber,
 ];
 
 export interface OpenTemplateAsset {

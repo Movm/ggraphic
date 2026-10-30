@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
- * What the Studio's pages can do with their elements: texts, shapes, icons,
- * placed images and the background colour. The editor calls these by name
+ * What the Studio's pages can do with their elements: texts, shapes, icons, emoji,
+ * illustrations, placed images and the background colour. The editor calls these by name
  * (`OptionalCanvasActions`): the canvas for moves and edits, the sidebar
  * sections for adding, the delete key for removing (`utils/elementKinds.ts`).
  *
@@ -12,7 +12,10 @@ import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { blockElementIds, type LiftedBlock } from '@ggraphic/editor/blocks/liftedBlock';
 import { type IconState } from '@ggraphic/editor/configs/factory/baseTypes';
 import { type AdditionalText } from '@ggraphic/editor/configs/types';
+import { type AssetInstance, createAssetInstance } from '@ggraphic/editor/utils/canvasAssets';
 import { iconInstanceIdsFor } from '@ggraphic/editor/utils/iconInstances';
+import { createIllustration } from '@ggraphic/editor/utils/illustrations/registry';
+import { type IllustrationInstance } from '@ggraphic/editor/utils/illustrations/types';
 import { createShape, type ShapeInstance, type ShapeType } from '@ggraphic/editor/utils/shapes';
 import {
   createUserImageInstanceFromUrl,
@@ -185,6 +188,62 @@ export function createStudioActions(
         }),
         true
       ),
+
+    // ── Emoji and other catalogue graphics ───────────────────────────────────
+    addAsset: (assetId: string, options?: ElementPlacement) => {
+      const placed: AssetInstance = {
+        ...createAssetInstance(assetId, width, height),
+        ...options?.center,
+      };
+      commit((prev) => ({
+        ...prev,
+        assetInstances: [...prev.assetInstances, placed],
+        layerOrder: withLayer(prev.layerOrder, placed.id),
+      }));
+    },
+    updateAsset: (id: string, partial: Partial<AssetInstance>) =>
+      commit(
+        (prev) => ({
+          ...prev,
+          assetInstances: prev.assetInstances.map((x) => (x.id === id ? { ...x, ...partial } : x)),
+        }),
+        true
+      ),
+    removeAsset: (id: string) =>
+      commit((prev) => ({
+        ...prev,
+        assetInstances: prev.assetInstances.filter((x) => x.id !== id),
+        layerOrder: withoutLayer(prev.layerOrder, id),
+      })),
+
+    // ── Illustrations ────────────────────────────────────────────────────────
+    addIllustration: (id: string, options?: ElementPlacement) => {
+      void createIllustration(id, width, height).then((created) => {
+        // The primitive centres the artwork on x/y.
+        const placed: IllustrationInstance = { ...created, ...options?.center };
+        commit((prev) => ({
+          ...prev,
+          illustrationInstances: [...prev.illustrationInstances, placed],
+          layerOrder: withLayer(prev.layerOrder, placed.id),
+        }));
+      });
+    },
+    updateIllustration: (id: string, partial: Partial<IllustrationInstance>) =>
+      commit(
+        (prev) => ({
+          ...prev,
+          illustrationInstances: prev.illustrationInstances.map((x) =>
+            x.id === id ? ({ ...x, ...partial } as IllustrationInstance) : x
+          ),
+        }),
+        true
+      ),
+    removeIllustration: (id: string) =>
+      commit((prev) => ({
+        ...prev,
+        illustrationInstances: prev.illustrationInstances.filter((x) => x.id !== id),
+        layerOrder: withoutLayer(prev.layerOrder, id),
+      })),
 
     // ── Placed images (uploads) ──────────────────────────────────────────────
     addUserImageFromUrl: (url: string, fileName: string, options?: UserImagePlacement) => {

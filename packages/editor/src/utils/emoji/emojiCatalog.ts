@@ -37,22 +37,27 @@ export async function loadEmojiCatalog(): Promise<EmojiCatalogGroup[]> {
       .map((a) => [a.id, a])
   );
   const raw = (await import('./emojiCatalog.json')).default as unknown as RawCatalog;
-  catalog = raw.groups.map((group) => ({
-    label: group.label,
-    emoji: group.emoji.map(([code, label, tags, tones]) => {
-      const id = emojiCodeAssetId(code);
-      const curated = curatedById.get(id);
-      return {
-        id,
-        src: emojiCodeSrc(code),
-        label: curated?.label ?? label,
-        category: 'emoji',
-        tags: curated ? [...tags, ...curated.tags] : ['emoji', ...tags],
-        audience: 'all',
-        tones: tones ?? null,
-      };
-    }),
-  }));
+  const offered = catalogue.emojiOffered ?? (() => true);
+  catalog = raw.groups
+    .map((group) => ({
+      label: group.label,
+      emoji: group.emoji
+        .filter(([code]) => offered(code, group.label))
+        .map(([code, label, tags, tones]) => {
+          const id = emojiCodeAssetId(code);
+          const curated = curatedById.get(id);
+          return {
+            id,
+            src: emojiCodeSrc(code),
+            label: curated?.label ?? label,
+            category: 'emoji' as const,
+            tags: curated ? [...tags, ...curated.tags] : ['emoji', ...tags],
+            audience: 'all' as const,
+            tones: tones?.every((tone) => offered(tone, group.label)) ? tones : null,
+          };
+        }),
+    }))
+    .filter((group) => group.emoji.length > 0);
   return catalog;
 }
 

@@ -66,7 +66,11 @@ export function PagePreview({
           if (cancelled) return;
           let dataUrl: string | undefined;
           try {
-            dataUrl = ref.toDataURL({ format: 'png', pixelRatio: width / stageWidth });
+            dataUrl = ref.toDataURL({
+              format: 'png',
+              pixelRatio: width / stageWidth,
+              keepPlaceholders: true,
+            });
           } catch {
             dataUrl = undefined;
           }

@@ -25,6 +25,7 @@ import { useYjsCanvasBinding } from '@ggraphic/editor/collab/useYjsCanvasBinding
 import { stateKeyOfCallback } from '@ggraphic/editor/collab/wrapCallbacksWithPageSync';
 import { CropGhostOverlay } from '@ggraphic/editor/components/CropGhostOverlay';
 import { PrintGuides } from '@ggraphic/editor/components/PrintGuides';
+import { SlotBudgetStatus } from '@ggraphic/editor/components/SlotBudgetStatus';
 import { getCanvasFormatOrDefault } from '@ggraphic/editor/formats/index';
 import { useAnnounce } from '@ggraphic/editor/hooks/useAnnounce';
 import { useSelectionAnnouncement } from '@ggraphic/editor/hooks/useSelectionAnnouncement';
@@ -112,6 +113,7 @@ import type { LockState } from '../utils/layerLock.js';
 import type { CanvasEditorStoreApi } from '@ggraphic/editor/stores/createCanvasEditorStore';
 import type { ExportOptions } from '@ggraphic/editor/types/editorTypes';
 import type { PageCommandId } from '@ggraphic/editor/utils/canvasCommandRegistry';
+import type { ImageLookId } from '@ggraphic/editor/utils/imageLook';
 import type { GradientFill } from '@ggraphic/editor/utils/gradientFill';
 import type { TextAlign } from '@ggraphic/editor/utils/textAlign';
 import type { HocuspocusProvider } from '@hocuspocus/provider';
@@ -278,6 +280,7 @@ export interface GenericCanvasRef {
     pixelRatio?: number;
     quality?: number;
     includeBackground?: boolean;
+    keepPlaceholders?: boolean;
   }) => string | undefined;
   captureCanvas: (options?: Partial<ExportOptions>) => Promise<string | null>;
   /** One print tile as JPEG bytes (format px rect, whole-pixel output size). */
@@ -347,6 +350,7 @@ export interface GenericCanvasRef {
   handleShadowChange?: (id: string, patch: ShadowPatch, type: string) => void;
   handleOutlineChange?: (id: string, patch: { stroke?: string; strokeWidth?: number }) => void;
   handleBlurChange?: (id: string, blur: number) => void;
+  handleImageLookChange?: (id: string, look: ImageLookId) => void;
   handleCropImage?: () => void;
   /** Zuschneide-Modus: zurück zum Stand beim Betreten bzw. mit dem aktuellen Stand beenden. */
   handleCancelCrop?: () => void;
@@ -1123,6 +1127,7 @@ function GenericCanvasWithRef<
         bridgeRef.current?.handleShadowChange(id, patch, type),
       handleOutlineChange: (id, patch) => bridgeRef.current?.handleOutlineChange(id, patch),
       handleBlurChange: (id, blur) => bridgeRef.current?.handleBlurChange(id, blur),
+      handleImageLookChange: (id, look) => bridgeRef.current?.handleImageLookChange(id, look),
       handleCropImage: () => bridgeRef.current?.handleCropImage(),
       handleCancelCrop: cropSession.cancel,
       handleFinishCrop: cropSession.finish,
@@ -1165,7 +1170,18 @@ function GenericCanvasWithRef<
         listening={interactive}
         ariaLabel={stageLabel}
         className={`${config.id}-stage`}
-        overlay={interactive ? <CropGhostOverlay getStage={getStage} /> : null}
+        overlay={
+          interactive ? (
+            <>
+              <CropGhostOverlay getStage={getStage} />
+              <SlotBudgetStatus
+                state={state as Record<string, unknown>}
+                canvasWidth={referenceWidth}
+                canvasHeight={referenceHeight}
+              />
+            </>
+          ) : null
+        }
       >
         <CanvasRenderLayer
           sortedRenderList={sortedRenderList}

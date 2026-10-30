@@ -1,0 +1,250 @@
+{
+  "formatVersion": 1,
+  "id": "studio-photo-quote",
+  "version": 1,
+  "kind": "template",
+  "family": "quote",
+  "title": {
+    "en": "Photo quote",
+    "de": "Foto-Zitat"
+  },
+  "description": {
+    "en": "A full photo with the quotation set on a fade at the bottom",
+    "de": "Ein Vollfoto, das Zitat unten auf einem Verlauf"
+  },
+  "tags": {
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["photo", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "veil",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.5,
+            "width": 1,
+            "height": 1,
+            "fill": "#000000",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.45,
+            "bind": {
+              "fill": "shade"
+            }
+          },
+          {
+            "id": "shade",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.65,
+            "width": 1,
+            "height": 0.7,
+            "fill": "#000000",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "shade": "bottom",
+            "bind": {
+              "fill": "shade"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.0,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "quote-mark",
+            "type": "header",
+            "text": "“",
+            "x": 0.068519,
+            "y": 0.437037,
+            "width": 0.277778,
+            "fontSize": 0.240741,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.quoteEmphasis"
+            }
+          },
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "Nobody asked me to lead. I just kept turning up.",
+            "x": 0.074074,
+            "y": 0.592593,
+            "width": 0.851852,
+            "fontSize": 0.061111,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.06,
+            "fontStyle": "italic",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.quoteEmphasis"
+            }
+          },
+          {
+            "id": "name",
+            "type": "subheader",
+            "text": "Name Surname, 34, Town",
+            "x": 0.074074,
+            "y": 0.807407,
+            "width": 0.759259,
+            "fontSize": 0.048148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "role",
+            "type": "body",
+            "text": "Role or occupation",
+            "x": 0.074074,
+            "y": 0.851852,
+            "width": 0.759259,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": [
+          "photo",
+          "veil",
+          "shade",
+          "brand-logo",
+          "quote-mark",
+          "headline",
+          "name",
+          "role"
+        ]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas",
+    "shade": "canvas",
+    "quote-mark": "canvas",
+    "headline": "canvas",
+    "name": "canvas",
+    "role": "canvas",
+    "veil": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxWords": 1
+      }
+    },
+    "headline": {
+      "role": "quote",
+      "budget": {
+        "maxWords": 22,
+        "maxLines": 4,
+        "maxChars": 130
+      }
+    },
+    "name": {
+      "role": "name",
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 1,
+        "maxChars": 36
+      }
+    },
+    "role": {
+      "role": "body",
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 1,
+        "maxChars": 36
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "quote-with-person",
+      "title": {
+        "en": "Quote with person",
+        "de": "Zitat mit Person"
+      },
+      "elementIds": ["quote-mark", "headline", "name", "role"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right", "top-left"],
+  "placeholders": {
+    "en": {
+      "quote-mark": "“",
+      "headline": "Nobody asked me to lead. I just kept turning up.",
+      "name": "Name Surname, 34, Town",
+      "role": "Role or occupation"
+    },
+    "de": {
+      "headline": "Niemand hat mich gebeten, voranzugehen. Ich bin einfach geblieben.",
+      "name": "Vorname Nachname, 34, Ort",
+      "role": "Beruf oder Rolle"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

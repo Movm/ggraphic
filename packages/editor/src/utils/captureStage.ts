@@ -5,18 +5,31 @@ import type { CanvasStageRef } from '../primitives/CanvasStage.js';
 import type { ExportOptions } from '@ggraphic/editor/types/editorTypes';
 import type Konva from 'konva';
 
+/** Konva node name of what the editor shows but no export contains. */
+export const EXPORT_HIDDEN_NAME = 'export-hidden';
+
 /**
  * Runs `capture` with all selection chrome on the stage hidden — Konva
  * Transformers plus the dashed selection Rects primitives render alongside
  * them (tagged `name="selection-chrome"`). Callers don't have to mutate the
  * user's selection (or wait for a deselect re-render) to get a clean shot;
  * exactly the nodes that were hidden are restored.
+ *
+ * Nodes named `export-hidden` (the placeholder of an empty photo slot) are
+ * hidden too: every capture is an export unless it says it is a preview with
+ * `keepPlaceholders`.
  */
-export function withSelectionChromeHidden<T>(stage: Konva.Stage | null, capture: () => T): T {
+export function withSelectionChromeHidden<T>(
+  stage: Konva.Stage | null,
+  capture: () => T,
+  { keepPlaceholders = false }: { keepPlaceholders?: boolean } = {}
+): T {
   const hidden = stage
-    ? [...stage.find('Transformer'), ...stage.find('.selection-chrome')].filter((node) =>
-        node.visible()
-      )
+    ? [
+        ...stage.find('Transformer'),
+        ...stage.find('.selection-chrome'),
+        ...(keepPlaceholders ? [] : stage.find(`.${EXPORT_HIDDEN_NAME}`)),
+      ].filter((node) => node.visible())
     : [];
   if (hidden.length === 0 || !stage) return capture();
   hidden.forEach((node) => node.hide());

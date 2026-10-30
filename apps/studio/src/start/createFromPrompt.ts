@@ -48,7 +48,7 @@ export function filledDocument(
   const texts = page.state['additionalTexts'] as AdditionalText[];
   const headline = prompt.trim().slice(0, HEADLINE_MAX);
   const filled = draft
-    ? fillTexts(texts, draft)
+    ? fillTexts(texts, draft, formatSize(formatId).height)
     : texts.map((t) => (t.id === 'headline' ? { ...t, text: headline } : t));
   return {
     ...doc,
@@ -94,7 +94,11 @@ export function pickedDocument(formatId: string, picked: Pick): StudioDocument |
   const texts = placed['additionalTexts'] as AdditionalText[];
   const state = {
     ...placed,
-    additionalTexts: fillById(texts, new Map(Object.entries(picked.fills))),
+    additionalTexts: fillById(
+      texts,
+      new Map(Object.entries(picked.fills)),
+      formatSize(formatId).height
+    ),
   };
   return { formatId, pages: [{ configId: FREE_PAGE_CONFIG_ID, state }] };
 }

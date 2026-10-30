@@ -52,7 +52,7 @@ export function usePageThumbnails({
         if (cacheRef.current.has(page.id)) return;
         const ref = canvasRefsRef.current[idx]?.current;
         if (!ref?.toDataURL) return;
-        const dataUrl = ref.toDataURL({ format: 'png', pixelRatio });
+        const dataUrl = ref.toDataURL({ format: 'png', pixelRatio, keepPlaceholders: true });
         if (dataUrl) {
           cacheRef.current.set(page.id, dataUrl);
           markCaptured(capturedStateRef.current, page, ref);
@@ -84,7 +84,7 @@ export function usePageThumbnails({
       const page = pagesRef.current[index];
       const ref = canvasRefsRef.current[index]?.current;
       if (!page || !ref?.toDataURL) return false;
-      const dataUrl = ref.toDataURL({ format: 'png', pixelRatio });
+      const dataUrl = ref.toDataURL({ format: 'png', pixelRatio, keepPlaceholders: true });
       if (!dataUrl) return false;
       markCaptured(capturedStateRef.current, page, ref);
       if (cacheRef.current.get(page.id) === dataUrl) return false;

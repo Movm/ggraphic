@@ -43,7 +43,7 @@ export function createStudioConfig(
   return {
     id: templateId,
     canvas: { width, height },
-    features: { icons: true, shapes: true },
+    features: { icons: true, shapes: true, illustrations: true },
     multiPage: { enabled: true, maxPages: 10, heterogeneous: true },
     backgroundType: 'color',
     fonts: { primary: activeBrand().fonts.headline, fontSize: 60, requireFontLoad: true },
@@ -54,7 +54,7 @@ export function createStudioConfig(
         id: 'elements',
         icon: PiSquaresFour,
         label: 'Elements',
-        ariaLabel: 'Elements: shapes and icons',
+        ariaLabel: 'Elements: shapes, icons, illustrations and emoji',
       },
       {
         id: 'uploads',
@@ -84,7 +84,10 @@ export function createStudioConfig(
       }),
       elements: section({
         component: AssetsSection,
-        propsFactory: (state, actions, context) => injectFeatureProps(state, actions, context),
+        propsFactory: (state, actions, context) => ({
+          onAddAsset: actions.addAsset,
+          ...injectFeatureProps(state, actions, context),
+        }),
       }),
       uploads: section({
         component: UploadsSection,
