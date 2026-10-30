@@ -1,0 +1,184 @@
+{
+  "formatVersion": 1,
+  "id": "studio-photo-number",
+  "version": 1,
+  "kind": "template",
+  "family": "number",
+  "title": {
+    "en": "Photo number",
+    "de": "Foto-Zahl"
+  },
+  "description": {
+    "en": "An outlined figure over a two-colour photo",
+    "de": "Eine Umriss-Zahl über einem Zweifarb-Foto"
+  },
+  "tags": {
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["photo", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "overlay",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.5,
+            "width": 1,
+            "height": 1,
+            "fill": "#000000",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.6,
+            "bind": {
+              "fill": "shade"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "grayscale": true,
+            "contrast": 7,
+            "brightness": 0.05,
+            "duotoneLow": "#000000",
+            "duotoneHigh": "#ffffff",
+            "bind": {
+              "duotoneLow": "duo-low",
+              "duotoneHigh": "duo-high"
+            }
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "number",
+            "type": "header",
+            "text": "25",
+            "x": 0.055556,
+            "y": 0.081481,
+            "width": 0.888889,
+            "fontSize": 0.740741,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.9,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "hectares of new city forest by 2030",
+            "x": 0.074074,
+            "y": 0.651852,
+            "width": 0.740741,
+            "fontSize": 0.066667,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.98,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          }
+        ],
+        "layerOrder": ["photo", "overlay", "brand-logo", "number", "headline"]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas",
+    "overlay": "canvas",
+    "number": "canvas",
+    "headline": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxWords": 1
+      }
+    },
+    "number": {
+      "role": "number",
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 4
+      }
+    },
+    "headline": {
+      "role": "headline",
+      "budget": {
+        "maxWords": 8,
+        "maxLines": 2,
+        "maxChars": 40
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "number-with-line",
+      "title": {
+        "en": "Number with line",
+        "de": "Zahl mit Zeile"
+      },
+      "elementIds": ["number", "headline"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right", "bottom-left"],
+  "placeholders": {
+    "en": {
+      "number": "25",
+      "headline": "hectares of new city forest by 2030"
+    },
+    "de": {
+      "headline": "Hektar neuer Stadtwald bis 2030"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

@@ -9,7 +9,9 @@ import {
 } from '../brand/layout.js';
 import type { Box } from '../brand/logoFit.js';
 import type { SchemeId } from '../brand/schemes.js';
-import { contrastRatio, parseColor } from '../color/color.js';
+import { mixColors, parseColor, relativeLuminance } from '../color/color.js';
+import { duotoneRamp } from '../color/duotone.js';
+import { SHADE_STOPS, shadeAlphaAt, type ShadeDirection } from '../color/shade.js';
 import {
   forEachElement,
   instantiateTemplatePage,
@@ -17,6 +19,7 @@ import {
   type GeometryTable,
   type TemplateInput,
 } from './instantiate.js';
+import { countChars, countWords } from './slotBudget.js';
 
 /**
  * What the render gate needs to know of an editor's element kinds. The editor fills it
@@ -75,14 +78,23 @@ export interface GateAdapter {
     notCheckable?: string;
   } | null;
   /**
-   * What the element paints under later layers: `solid` is an opaque flat fill, `unknown` is
-   * anything else (an image, a gradient, a translucent fill, a chart, a badge), null is nothing
-   * (a text).
+   * What the element paints under later layers: `solid` is an opaque flat fill; `photo` is an
+   * image the gate judges against every colour it can paint: all 256 greys when `low` and `high`
+   * are black and white (an untreated photo), else the 256 entries of `duotoneRamp(low, high)`.
+   * Its pixels are assumed opaque (a transparent cut-out would show what lies beneath); `veil` is a flat fill of `fill` at `alpha`; `shade` is `fill` fading in along
+   * `SHADE_STOPS[direction]` over the element's box; `unknown` is anything else (a gradient,
+   * a chart, a badge, an adjusted image), null is nothing (a text).
    */
   cover(
     stateKey: string,
     el: Readonly<Record<string, unknown>>
-  ): { kind: 'solid'; fill: string } | { kind: 'unknown' } | null;
+  ):
+    | { kind: 'solid'; fill: string }
+    | { kind: 'photo'; low: string; high: string }
+    | { kind: 'veil'; fill: string; alpha: number }
+    | { kind: 'shade'; fill: string; direction: ShadeDirection }
+    | { kind: 'unknown' }
+    | null;
 }
 
 export const GATE_RULES = [
@@ -149,10 +161,135 @@ const GATE_LOGO_SIZE = { width: 400, height: 100 };
 const refOf = (entry: unknown): unknown => (isObj(entry) ? entry['ref'] : entry);
 const bindOf = (el: Obj): Obj => (isObj(el['bind']) ? el['bind'] : {});
 const isLogo = (el: Obj): boolean => refOf(bindOf(el)['src']) === 'brand.logo';
-/** Breaking whitespace only: a no-break or narrow no-break space (\u00a0, \u202f) joins "73 %" into one word. */
-const BREAKING_SPACE = /[ \t\n\r\f\v\u1680\u2000-\u2006\u2008-\u200a\u2028\u2029\u205f\u3000]+/;
-const words = (text: string): number => text.split(BREAKING_SPACE).filter(Boolean).length;
 const fmt = (n: number): string => String(Math.round(n * 100) / 100);
+
+/**
+ * The smallest and largest alpha a shade has over the vertical span of `box` inside the shade's
+ * `area`: the alpha is piecewise linear, so both lie at an end of the span or at a stop inside it.
+ */
+function shadeAlphaRange(direction: ShadeDirection, box: Box, area: Box): [number, number] {
+  const top = Math.min(Math.max((box.y - area.y) / area.height, 0), 1);
+  const bottom = Math.min(Math.max((box.y + box.height - area.y) / area.height, 0), 1);
+  const at = [
+    top,
+    bottom,
+    ...SHADE_STOPS[direction].map(([o]) => o).filter((o) => o > top && o < bottom),
+  ].map((t) => shadeAlphaAt(direction, t));
+  return [Math.min(...at), Math.max(...at)];
+}
+
+/**
+ * Null if the text passes on every ground in every interval, else the failure. Contrast only
+ * depends on relative luminance: a text whose luminance lies inside an interval meets a ground
+ * of contrast 1; otherwise the worst contrast is at an interval end.
+ */
+function judge(textFill: string, intervals: [Ground, Ground][], need: number): string | null {
+  const text = parseColor(textFill);
+  if (!text) return `${textFill} is unreadable`;
+  const lt = relativeLuminance(text);
+  const ends = intervals.flatMap(([lo, hi]) => [lo, hi]);
+  const hit = intervals.find(([lo, hi]) => lo.lum <= lt && lt <= hi.lum);
+  if (hit) {
+    return `${textFill} on ${(lt - hit[0].lum < hit[1].lum - lt ? hit[0] : hit[1]).hex}: the ground can match the text's luminance (contrast 1), needs ${need}`;
+  }
+  const ratioOf = (g: Ground) => (Math.max(lt, g.lum) + 0.05) / (Math.min(lt, g.lum) + 0.05);
+  const worst = ends.reduce((w, g) => (ratioOf(g) < ratioOf(w) ? g : w));
+  return ratioOf(worst) < need
+    ? `${textFill} on ${worst.hex} is ${fmt(ratioOf(worst))}, needs ${need}`
+    : null;
+}
+
+type Overlay = { fill: string; alpha: [number, number]; shade?: true };
+type Ground = { hex: string; lum: number };
+
+const hex2 = (n: number): string => n.toString(16).padStart(2, '0');
+
+/** The colours a photo can paint: every grey, or the duotone ramp. Null if a colour is unparseable. */
+function photoColours(low: string, high: string): string[] | null {
+  const lo = parseColor(low);
+  const hi = parseColor(high);
+  if (!lo || !hi) return null;
+  if (toHexOf(lo) === '#000000' && toHexOf(hi) === '#ffffff') {
+    return Array.from({ length: 256 }, (_, i) => `#${hex2(i)}${hex2(i)}${hex2(i)}`);
+  }
+  const ramp = duotoneRamp(low, high);
+  return Array.from(
+    { length: 256 },
+    (_, i) => `#${hex2(ramp[i * 3]!)}${hex2(ramp[i * 3 + 1]!)}${hex2(ramp[i * 3 + 2]!)}`
+  );
+}
+const toHexOf = (c: { r: number; g: number; b: number }): string =>
+  `#${hex2(c.r)}${hex2(c.g)}${hex2(c.b)}`;
+
+const SEARCH_STEPS = 60;
+
+/**
+ * The interval under a stack holding one shade (bottom first). The composite is linear in the
+ * shade's alpha per channel and the luminance is convex in it (channels may move in opposite
+ * directions), so the maximum sits at an end of the alpha range and the minimum is found by
+ * ternary search, which is exact for a convex function.
+ */
+function shadeInterval(base: string, overlays: Overlay[]): [Ground, Ground] | null {
+  const start = parseColor(base);
+  if (!start || start.a !== 1) return null;
+  const fills = overlays.map((o) => parseColor(o.fill));
+  if (fills.some((f) => !f || f.a !== 1)) return null;
+  const at = (shadeAlpha: number): Ground => {
+    let c = [start.r, start.g, start.b];
+    overlays.forEach((o, i) => {
+      const f = fills[i]!;
+      const a = o.shade ? shadeAlpha : o.alpha[0];
+      c = [c[0]! + (f.r - c[0]!) * a, c[1]! + (f.g - c[1]!) * a, c[2]! + (f.b - c[2]!) * a];
+    });
+    const [r, g, b] = c as [number, number, number];
+    return {
+      hex: `#${hex2(Math.round(r))}${hex2(Math.round(g))}${hex2(Math.round(b))}`,
+      lum: relativeLuminance({ r, g, b, a: 1 }),
+    };
+  };
+  const [lo, hi] = overlays.find((o) => o.shade)!.alpha;
+  const ends = [at(lo), at(hi)];
+  let a = lo;
+  let b = hi;
+  for (let i = 0; i < SEARCH_STEPS; i++) {
+    const m1 = a + (b - a) / 3;
+    const m2 = b - (b - a) / 3;
+    if (at(m1).lum < at(m2).lum) b = m2;
+    else a = m1;
+  }
+  const inner = at((a + b) / 2);
+  const all = [...ends, inner].sort((x, y) => x.lum - y.lum);
+  return [all[0]!, all[all.length - 1]!];
+}
+
+/**
+ * The luminance interval of a ground under an overlay stack (bottom first). Veils have one
+ * alpha; compositing moves the colour towards the fill. Null when a colour cannot be composited.
+ */
+function groundInterval(base: string, overlays: Overlay[]): [Ground, Ground] | null {
+  if (overlays.some((o) => o.shade)) return shadeInterval(base, overlays);
+  let colours = [base];
+  for (const o of overlays) {
+    const alphas = o.alpha[0] === o.alpha[1] ? [o.alpha[0]] : o.alpha;
+    const next: string[] = [];
+    for (const c of colours) {
+      for (const a of alphas) {
+        const mixed = mixColors(c, o.fill, a);
+        if (mixed === null) return null;
+        next.push(mixed);
+      }
+    }
+    colours = next;
+  }
+  const grounds: Ground[] = [];
+  for (const hex of colours) {
+    const c = parseColor(hex);
+    if (!c || c.a !== 1) return null;
+    grounds.push({ hex, lum: relativeLuminance(c) });
+  }
+  grounds.sort((x, y) => x.lum - y.lum);
+  return [grounds[0]!, grounds[grounds.length - 1]!];
+}
 
 function intersects(a: Box, b: Box): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
@@ -268,16 +405,16 @@ export function checkTemplate(t: TemplateInput, ctx: GateContext): GateProblem[]
     }
     for (const [textId, text] of texts) {
       if (textId !== id) continue;
-      if (maxChars !== undefined && [...text].length > maxChars) {
+      if (maxChars !== undefined && countChars(text) > maxChars) {
         problem(
           'budget',
-          `placeholder of ${id} has ${[...text].length} characters, over maxChars ${maxChars}`
+          `placeholder of ${id} has ${countChars(text)} characters, over maxChars ${maxChars}`
         );
       }
-      if (maxWords !== undefined && words(text) > maxWords) {
+      if (maxWords !== undefined && countWords(text) > maxWords) {
         problem(
           'budget',
-          `placeholder of ${id} has ${words(text)} words, over maxWords ${maxWords}`
+          `placeholder of ${id} has ${countWords(text)} words, over maxWords ${maxWords}`
         );
       }
     }
@@ -469,16 +606,21 @@ function checkPlaced(
       fail(`text opacity or alpha is below 1, contrast not determinable`);
       continue;
     }
-    // The ground: the badge's own fill, else the topmost layer below the text that overlaps
-    // it (it must hold the whole box), else the page background.
-    let ground: string | null = text.ground ?? null;
-    if (ground === null) {
+    // The possible grounds: the badge's own fill, else what lies below the text. Walking down
+    // from the text, a veil or shade holding the whole box is laid on a stack and the walk goes
+    // on; a solid or photo holding the whole box ends it, as does the page background. A photo
+    // yields every colour it can paint, a shade an alpha range: each ground is judged as a
+    // luminance interval.
+    let grounds: string[] | null = text.ground === undefined ? null : [text.ground];
+    const overlays: Overlay[] = [];
+    let stackedShades = false;
+    if (grounds === null) {
       const at = order.indexOf(id);
       if (!box || at === -1) {
         fail(`${NOT_DETERMINABLE} (the text is not in layerOrder)`);
         continue;
       }
-      ground = typeof state['backgroundColor'] === 'string' ? state['backgroundColor'] : '';
+      grounds = [typeof state['backgroundColor'] === 'string' ? state['backgroundColor'] : ''];
       for (const belowId of order.slice(0, at).reverse()) {
         const below = placed.get(belowId);
         // The logo is owned by logo-overlap; a text on it is reported there.
@@ -488,28 +630,48 @@ function checkPlaced(
         const area = ctx.adapter.box(below.key, below.el, 1);
         if (!area) {
           // An element of unknown extent could lie under the text.
-          if (cover.kind === 'unknown') ground = null;
+          if (cover.kind === 'unknown') grounds = null;
           if (cover.kind === 'unknown') break;
           continue;
         }
         if (!overlaps(box, area)) continue;
-        // Only a shape holding the whole text box is its ground; one that covers part of it
+        // Only an element holding the whole text box is its ground; one that covers part of it
         // puts the text on two grounds (or an edge), which is not judged by either.
-        ground = cover.kind === 'solid' && inside(box, area) ? cover.fill : null;
-        break;
+        if (!inside(box, area) || cover.kind === 'unknown') {
+          grounds = null;
+          break;
+        }
+        if (cover.kind === 'veil') {
+          overlays.push({ fill: cover.fill, alpha: [cover.alpha, cover.alpha] });
+        } else if (cover.kind === 'shade') {
+          // Two shades over one text: the alphas move together, not independently. Not judged.
+          if (overlays.some((o) => o.shade)) {
+            grounds = null;
+            stackedShades = true;
+            break;
+          }
+          overlays.push({
+            shade: true,
+            fill: cover.fill,
+            alpha: shadeAlphaRange(cover.direction, box, area),
+          });
+        } else {
+          grounds = cover.kind === 'solid' ? [cover.fill] : photoColours(cover.low, cover.high);
+          break;
+        }
       }
     }
-    if (ground === null || !opaque(ground)) {
-      fail(`${NOT_DETERMINABLE} under ${text.fill}`);
+    // Bottom-up: the overlay nearest the ground goes on first.
+    overlays.reverse();
+    const bad = overlays.some((o) => !opaque(o.fill) || !(o.alpha[0] >= 0 && o.alpha[1] <= 1));
+    const intervals = grounds && !bad ? grounds.map((g) => groundInterval(g, overlays)) : [];
+    if (intervals.length === 0 || intervals.some((i) => i === null)) {
+      fail(`${NOT_DETERMINABLE}${stackedShades ? ' (stacked shades)' : ''} under ${text.fill}`);
       continue;
     }
-    const ratio = contrastRatio(text.fill, ground);
     const large = text.fontSize >= (text.bold ? 18.67 : 24) * (short / 1080);
     const need = large ? LARGE_TEXT_CONTRAST : TEXT_CONTRAST;
-    if (ratio === null || ratio < need) {
-      fail(
-        `${text.fill} on ${ground} is ${ratio === null ? 'unreadable' : fmt(ratio)}, needs ${need}`
-      );
-    }
+    const verdict = judge(text.fill, intervals as [Ground, Ground][], need);
+    if (verdict) fail(verdict);
   }
 }

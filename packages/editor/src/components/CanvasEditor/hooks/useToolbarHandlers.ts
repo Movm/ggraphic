@@ -10,6 +10,7 @@ import type { PageCommandId } from '@ggraphic/editor/utils/canvasCommandRegistry
 import { type SelectionGeometry } from '@ggraphic/editor/utils/canvasCommands';
 import type { CropAspectId } from '@ggraphic/editor/utils/cropAspect';
 import type { GradientFill } from '@ggraphic/editor/utils/gradientFill';
+import type { ImageLookId } from '@ggraphic/editor/utils/imageLook';
 import type { TextAlign } from '@ggraphic/editor/utils/textAlign';
 import type React from 'react';
 
@@ -87,6 +88,8 @@ export function useToolbarHandlers({
       handleOutlineChange: (id: string, patch: { stroke?: string; strokeWidth?: number }) =>
         page()?.handleOutlineChange?.(id, patch),
       handleBlurChange: (id: string, blur: number) => page()?.handleBlurChange?.(id, blur),
+      handleImageLookChange: (id: string, look: ImageLookId) =>
+        page()?.handleImageLookChange?.(id, look),
       handleCropImage: () => page()?.handleCropImage?.(),
       handleCancelCrop: () => page()?.handleCancelCrop?.(),
       handleFinishCrop: () => page()?.handleFinishCrop?.(),

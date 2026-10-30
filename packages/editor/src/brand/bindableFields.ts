@@ -39,7 +39,13 @@ const BINDABLE = {
     'fontFamily',
   ] satisfies FieldsOf<PillBadgeInstance>,
   // `src` is bound only to the brand logo.
-  userImageInstances: ['shadowColor', 'tint', 'src'] satisfies FieldsOf<UserImageInstance>,
+  userImageInstances: [
+    'shadowColor',
+    'tint',
+    'src',
+    'duotoneLow',
+    'duotoneHigh',
+  ] satisfies FieldsOf<UserImageInstance>,
   chartInstances: ['background'] satisfies FieldsOf<ChartInstance>,
   // The page's background and the colours its templates pick through `fillStateKey`.
   page: [

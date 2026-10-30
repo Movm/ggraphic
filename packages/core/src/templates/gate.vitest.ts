@@ -251,6 +251,12 @@ describe('render gate stage 1', () => {
     expect(rules(template(), body)).toEqual([]);
   });
 
+  it('does not count emphasis markers against the word or character budget', () => {
+    const slots = { headline: { role: 'headline', budget: { maxWords: 4, maxChars: 17 } } };
+    const ok = context({ slots, placeholderTexts: { headline: 'Das ==Ziel== ist klar' } });
+    expect(rules(template(), ok)).toEqual([]);
+  });
+
   it('holds large text to 3.0 and small text to 4.5', () => {
     // #7f93ad on #1d3557 is between 3 and 4.5: fine at 24 px+, not below.
     const grey = (fontSize: number) =>
@@ -615,5 +621,231 @@ describe('render gate stage 1', () => {
     expect(new Set(found.filter((p) => p.rule === 'logo-overlap').map((p) => p.brand))).toEqual(
       new Set(['default', 'other'])
     );
+  });
+});
+
+describe('contrast over photos, veils and shades', () => {
+  /** The stand-in adapter, plus the photo, veil and shade grounds an editor reports. */
+  const grounds: GateAdapter = {
+    ...adapter,
+    cover: (key, el) => {
+      if (key === 'userImageInstances') {
+        return {
+          kind: 'photo',
+          low: String(el['duotoneLow'] ?? '#000000'),
+          high: String(el['duotoneHigh'] ?? '#ffffff'),
+        };
+      }
+      if (key === 'shapeInstances') {
+        if (el['shade']) {
+          return { kind: 'shade', fill: String(el['fill']), direction: el['shade'] as 'bottom' };
+        }
+        if (num(el, 'opacity', 1) < 1) {
+          return { kind: 'veil', fill: String(el['fill']), alpha: num(el, 'opacity', 1) };
+        }
+      }
+      return adapter.cover(key, el);
+    },
+  };
+  const ctx = () => context({ adapter: grounds, manifestPaths: new Set(['/p.png']) });
+  const photo = (over: Obj = {}) => ({
+    id: 'pic',
+    src: '/p.png',
+    x: 0,
+    y: 0,
+    width: 1,
+    height: 1,
+    ...over,
+  });
+  const black = (over: Obj) => ({ id: 'veil', fill: '#000000', x: 0, y: 0, width: 1, ...over });
+  const build = (
+    shapes: Obj[],
+    pic: Obj | null,
+    textY: number,
+    textFill = '#ffffff',
+    fontSize = 0.06
+  ) =>
+    template(
+      { fixed: { headline: ['fill'], veil: ['fill'] } },
+      {
+        shapeInstances: shapes,
+        userImageInstances: pic ? [pic, logo] : [logo],
+        additionalTexts: [{ ...headline, y: textY, fill: textFill, fontSize, bind: undefined }],
+        layerOrder: [
+          pic ? 'pic' : '',
+          ...shapes.map((s) => String(s['id'])),
+          'logo',
+          'headline',
+        ].filter(Boolean),
+      }
+    );
+  const details = (t: TemplateInput) =>
+    checkTemplate(t, ctx()).map((p) => `${p.rule}: ${p.detail}`);
+
+  it('white text fully inside a bottom shade of #000000 over a photo passes where alpha is high enough', () => {
+    const t = build([black({ height: 1, shade: 'bottom' })], photo(), 0.8);
+    expect(details(t)).toEqual([]);
+  });
+
+  it('the same text placed in the thin top part of the shade fails and names the worst ground', () => {
+    const t = build([black({ height: 1, shade: 'bottom' })], photo(), 0.3);
+    const found = details(t);
+    expect(found).toHaveLength(1);
+    expect(found[0]).toMatch(/^contrast: headline: #ffffff on #9a9a9a is 2\.82, needs 3$/);
+  });
+
+  it('white text on an untreated photo with no overlay fails (worst ground #ffffff)', () => {
+    const found = details(build([], photo(), 0.5));
+    expect(found).toHaveLength(1);
+    expect(found[0]).toContain('#ffffff on #ffffff');
+  });
+
+  it('text on a duotone photo is judged against the duotone range, not black/white', () => {
+    const dark = photo({ duotoneLow: '#0b1d12', duotoneHigh: '#2a5a3a' });
+    expect(details(build([], dark, 0.5))).toEqual([]);
+    const light = photo({ duotoneLow: '#0b1d12', duotoneHigh: '#e8f5ec' });
+    expect(details(build([], light, 0.5))).toHaveLength(1);
+  });
+
+  it('a veil (shape opacity 0.35, fill #000000) over a duotone photo darkens every candidate', () => {
+    const duo = photo({ duotoneLow: '#4a4a4a', duotoneHigh: '#a0a0a0' });
+    // Without the veil the lightest candidate #a0a0a0 is too bright for white text.
+    expect(details(build([], duo, 0.5))).toHaveLength(1);
+    const veiled = build([black({ height: 1, opacity: 0.35 })], duo, 0.5);
+    expect(details(veiled)).toEqual([]);
+  });
+
+  it('a shade or veil that covers only part of the text box fails as two grounds', () => {
+    // The text box spans y 0.3..0.37; the veil ends at 0.33.
+    const t = build([black({ height: 0.33, opacity: 0.9 })], photo(), 0.3);
+    const found = details(t);
+    expect(found).toHaveLength(1);
+    expect(found[0]).toContain('ground not determinable');
+  });
+
+  it('a photo that covers only part of the text box fails', () => {
+    const t = build([], photo({ height: 0.33 }), 0.3, '#000000');
+    expect(details(t)[0]).toContain('ground not determinable');
+  });
+
+  it('a veil over a solid ground is composited onto its colour', () => {
+    // A light page under a 0.5 black veil: the ground is #808080 and white text just fails 4.5.
+    const t = template(
+      { fixed: { headline: ['fill'], veil: ['fill'], page: ['backgroundColor'] } },
+      {
+        backgroundColor: '#ffffff',
+        bind: undefined,
+        shapeInstances: [black({ height: 1, opacity: 0.5 })],
+        additionalTexts: [{ ...headline, fontSize: 0.02, y: 0.5, bind: undefined }],
+        layerOrder: ['veil', 'logo', 'headline'],
+      }
+    );
+    expect(details(t)).toEqual(['contrast: headline: #ffffff on #808080 is 3.95, needs 4.5']);
+  });
+
+  it('judges the duotone ramp, not the segment between its colours (review counterexample 1)', () => {
+    // high is below low in the red channel: the brightest pixel is #c800ff, not #0000ff.
+    const duo = photo({ duotoneLow: '#c80000', duotoneHigh: '#0000ff' });
+    const found = details(build([], duo, 0.5, '#ffffff', 0.02));
+    expect(found).toHaveLength(1);
+    expect(found[0]).toContain('#ffffff on #c800ff is 4.29, needs 4.5');
+  });
+
+  it('judges dark text against the darkest row of a shade (review counterexample 2)', () => {
+    const duo = photo({ duotoneLow: '#d0d0d0', duotoneHigh: '#ffffff' });
+    // The text box spans t 0.30..0.52 of the shade: alpha 0.40..0.69, so its bottom row is much darker.
+    const t = build([black({ y: 0.2, height: 0.3333, shade: 'bottom' })], duo, 0.3, '#1a1a1a');
+    const found = details(t);
+    // One finding per layout (the text box differs a little in each), all against dark rows.
+    expect(found.length).toBeGreaterThan(0);
+    for (const f of found) expect(f).toMatch(/^contrast: headline: #1a1a1a on #[0-9a-f]{6}/);
+  });
+
+  it('fails at contrast 1 when the text luminance lies inside a shade interval', () => {
+    const t = template(
+      { fixed: { headline: ['fill'], veil: ['fill'], page: ['backgroundColor'] } },
+      {
+        backgroundColor: '#ffffff',
+        bind: undefined,
+        shapeInstances: [black({ height: 1, shade: 'bottom' })],
+        additionalTexts: [{ ...headline, y: 0.5, fill: '#494949', bind: undefined }],
+        layerOrder: ['veil', 'logo', 'headline'],
+      }
+    );
+    const found = details(t);
+    expect(found).toHaveLength(1);
+    expect(found[0]).toContain("the ground can match the text's luminance (contrast 1)");
+  });
+
+  it('composites stacked veils with different fills bottom-up', () => {
+    const t = template(
+      { fixed: { headline: ['fill'], low: ['fill'], high: ['fill'], page: ['backgroundColor'] } },
+      {
+        backgroundColor: '#ffffff',
+        bind: undefined,
+        shapeInstances: [
+          black({ id: 'low', height: 1, opacity: 0.3 }),
+          black({ id: 'high', fill: '#ff0000', height: 1, opacity: 0.3 }),
+        ],
+        additionalTexts: [{ ...headline, fontSize: 0.02, y: 0.5, bind: undefined }],
+        layerOrder: ['low', 'high', 'logo', 'headline'],
+      }
+    );
+    // black 0.3 on white gives #b3b3b3, then red 0.3 gives #ca7d7d (the reverse order: #b37d7d).
+    expect(details(t)).toEqual(['contrast: headline: #ffffff on #ca7d7d is 3.12, needs 4.5']);
+  });
+
+  it('uses the interior luminance minimum of a coloured shade, not only its end values', () => {
+    // Green page under a red bottom shade: the red channel rises while the green one falls, so
+    // luminance dips to about 0.152 inside the span, below both ends (about 0.65 and 0.189).
+    const t = template(
+      { fixed: { headline: ['fill'], veil: ['fill'], page: ['backgroundColor'] } },
+      {
+        backgroundColor: '#00ff00',
+        bind: undefined,
+        shapeInstances: [black({ fill: '#ff0000', y: 0.3, height: 0.7, shade: 'bottom' })],
+        additionalTexts: [
+          { ...headline, y: 0.3, fontSize: 0.1944, fill: '#727272', bind: undefined },
+        ],
+        layerOrder: ['veil', 'logo', 'headline'],
+      }
+    );
+    const found = details(t);
+    expect(found.length).toBeGreaterThan(0);
+    for (const f of found) expect(f).toContain("the ground can match the text's luminance");
+  });
+
+  it('does not judge two shades over one text', () => {
+    const t = template(
+      { fixed: { headline: ['fill'], a: ['fill'], b: ['fill'], page: ['backgroundColor'] } },
+      {
+        backgroundColor: '#ffffff',
+        bind: undefined,
+        shapeInstances: [
+          black({ id: 'a', height: 1, shade: 'bottom' }),
+          black({ id: 'b', height: 1, shade: 'bottom' }),
+        ],
+        additionalTexts: [{ ...headline, y: 0.8, bind: undefined }],
+        layerOrder: ['a', 'b', 'logo', 'headline'],
+      }
+    );
+    const found = details(t);
+    expect(found.length).toBeGreaterThan(0);
+    for (const f of found) expect(f).toContain('ground not determinable (stacked shades)');
+  });
+
+  it('a shade span that contains a stop is judged over its whole alpha range', () => {
+    // Text over t 0.5..0.644 of a bottom shade crosses the 0.62 stop: alpha 0.66..0.82 on white.
+    const t = template(
+      { fixed: { headline: ['fill'], veil: ['fill'], page: ['backgroundColor'] } },
+      {
+        backgroundColor: '#ffffff',
+        bind: undefined,
+        shapeInstances: [black({ height: 1, shade: 'bottom' })],
+        additionalTexts: [{ ...headline, y: 0.5, fontSize: 0.12, bind: undefined }],
+        layerOrder: ['veil', 'logo', 'headline'],
+      }
+    );
+    expect(details(t)).toEqual([]);
   });
 });

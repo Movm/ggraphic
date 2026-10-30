@@ -3,7 +3,14 @@ import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { CustomColorSwatch } from '@ggraphic/editor/components/CustomColorSwatch';
 import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { Switch } from '@ggraphic/editor/ui/switch';
-import { defaultTint, EMPTY_ADJUSTMENTS, IMAGE_PRESETS } from '@ggraphic/editor/utils/imageFilters';
+import {
+  defaultTint,
+  duotoneLook,
+  EMPTY_ADJUSTMENTS,
+  IMAGE_PRESETS,
+  withoutDuotone,
+  type ImagePreset,
+} from '@ggraphic/editor/utils/imageFilters';
 import {
   CROP_PRESETS,
   cropPresetUpdate,
@@ -33,6 +40,8 @@ export interface ImageAdjustSectionProps {
     adjustments: ImageAdjustments;
     onUpdate: (partial: Partial<ImageAdjustments>) => void;
   } | null;
+  /** The page's colour world (`brandScheme` of its state); the Duotone look takes its colours from it. */
+  brandScheme?: string | null;
 }
 
 const GROUP_LABEL = 'text-[11px] font-semibold uppercase tracking-wide text-foreground-muted';
@@ -41,6 +50,7 @@ export function ImageAdjustSection({
   selectedImage,
   onUpdateImage,
   backgroundPhoto = null,
+  brandScheme = null,
 }: ImageAdjustSectionProps) {
   const { tints, shadows } = activeBrand().effects;
   const t = useMessages();
@@ -49,6 +59,24 @@ export function ImageAdjustSection({
   if (!adj) return null;
   const set = (partial: Partial<ImageAdjustments>) =>
     img ? onUpdateImage(img.id, partial) : backgroundPhoto?.onUpdate(partial);
+  // A look other than Duotone ends the duotone and the bindings of its two colours.
+  const applyPreset = (preset: ImagePreset) => {
+    if (preset.id === 'duotone') {
+      const look = duotoneLook(img ?? undefined, brandScheme);
+      // The page background photo has no bindings to carry: it takes the colours only.
+      if (!look) return;
+      if (img) onUpdateImage(img.id, look);
+      else {
+        const { bind: _bind, ...colours } = look;
+        backgroundPhoto?.onUpdate(colours);
+      }
+      return;
+    }
+    set({ ...preset.values, ...(img ? withoutDuotone(img) : {}) });
+  };
+  // Picking a tint colour replaces a duotone.
+  const setTint = (partial: Partial<ImageAdjustments>) =>
+    set({ ...partial, ...(img ? withoutDuotone(img) : { duotoneLow: null, duotoneHigh: null }) });
   const setShadow = (partial: Partial<UserImageInstance>) => img && onUpdateImage(img.id, partial);
   const shadowOn = !!img?.shadowColor;
   const applyCrop = (preset: CropPreset) => {
@@ -74,7 +102,7 @@ export function ImageAdjustSection({
         <span className="text-sm font-semibold text-foreground">{t.sidebar.imageAdjust.title}</span>
         <button
           type="button"
-          onClick={() => set(EMPTY_ADJUSTMENTS)}
+          onClick={() => set({ ...EMPTY_ADJUSTMENTS, ...(img ? withoutDuotone(img) : {}) })}
           className="rounded-md px-2 py-1 text-xs text-foreground-muted hover:text-foreground"
         >
           {t.sidebar.imageAdjust.reset}
@@ -89,7 +117,7 @@ export function ImageAdjustSection({
             <button
               key={preset.id}
               type="button"
-              onClick={() => set(preset.values)}
+              onClick={() => applyPreset(preset)}
               className="rounded-md border border-editor-border-strong px-2 py-1.5 text-xs text-foreground-muted transition-colors hover:border-primary-500 hover:text-foreground"
             >
               {preset.label}
@@ -148,7 +176,7 @@ export function ImageAdjustSection({
             <button
               key={c}
               type="button"
-              onClick={() => set({ tint: c, tintStrength: adj.tintStrength || 1 })}
+              onClick={() => setTint({ tint: c, tintStrength: adj.tintStrength || 1 })}
               title={colorName(c)}
               aria-label={t.sidebar.imageAdjust.tintIn(colorName(c))}
               aria-pressed={(adj.tint ?? defaultTint()) === c && !!adj.tintStrength}
@@ -166,7 +194,7 @@ export function ImageAdjustSection({
           <CustomColorSwatch
             value={adj.tintStrength ? adj.tint : null}
             presets={tints}
-            onPick={(color) => set({ tint: color, tintStrength: adj.tintStrength || 1 })}
+            onPick={(color) => setTint({ tint: color, tintStrength: adj.tintStrength || 1 })}
             className="size-6"
           />
         </div>
@@ -341,7 +369,11 @@ export function ImageAdjustSection({
         ).map(([key, label]) => (
           <div key={key} className="flex items-center justify-between">
             <span className="text-xs text-foreground">{label}</span>
-            <Switch checked={!!adj[key]} onCheckedChange={(v) => set({ [key]: v })} />
+            <Switch
+              checked={!!adj[key]}
+              onCheckedChange={(v) => set({ [key]: v })}
+              aria-label={label}
+            />
           </div>
         ))}
       </div>
