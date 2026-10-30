@@ -25,7 +25,7 @@ const brands: [string, BrandPack][] = [
 describe('accent world', () => {
   it('has the brand accent as ground and a readable ink', () => {
     const ids = deriveSchemes(brandDefault).map((x) => x.id);
-    expect(ids).toEqual(['primary', 'secondary', 'accent', 'light', 'dark', 'photo']);
+    expect(ids).toEqual(['primary', 'secondary', 'light', 'dark', 'accent', 'photo']);
     const accent = deriveSchemes(brandDefault).find((x) => x.id === 'accent')!;
     expect(accent.roles.ground).toBe(brandDefault.colors.accent.toLowerCase());
     expect(contrastRatio(accent.roles.ink, accent.roles.ground)).toBeGreaterThanOrEqual(4.5);
@@ -87,7 +87,7 @@ describe('deriveSchemes', () => {
 
   it('accent falls back to ink and says so', () => {
     const light = deriveSchemes(
-      withColors({ accent: '#E6D200', accentOnLight: '#E6D200', attention: '#E6D200' })
+      withColors({ accent: '#FFE600', accentOnLight: '#FFE600', attention: '#FFE600' })
     ).find((x) => x.id === 'light')!;
     expect(light.roles.accent).toBe(light.roles.ink);
     expect(light.fallbacks).toContain('accent');
