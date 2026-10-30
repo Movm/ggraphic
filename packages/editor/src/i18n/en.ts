@@ -791,6 +791,14 @@ export const en: Messages = {
     fontSize: 'Font size',
   },
 
+  budget: {
+    words: (actual: number, limit: number) => `${actual} of ${limit} words`,
+    chars: (actual: number, limit: number) => `${actual} of ${limit} characters`,
+    lines: (actual: number, limit: number) => `${actual} of ${limit} lines`,
+    fontSize: (actual: number, limit: number) =>
+      `Text size ${actual} px, at least ${limit} px for legibility`,
+  },
+
   shell: {
     loadingEditor: 'Loading the editor',
     zoomReset: 'Reset zoom to 100%',

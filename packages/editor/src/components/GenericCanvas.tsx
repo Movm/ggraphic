@@ -24,6 +24,7 @@ import { useEmitHostStateChanges } from '@ggraphic/editor/collab/useEmitHostStat
 import { useYjsCanvasBinding } from '@ggraphic/editor/collab/useYjsCanvasBinding';
 import { stateKeyOfCallback } from '@ggraphic/editor/collab/wrapCallbacksWithPageSync';
 import { CropGhostOverlay } from '@ggraphic/editor/components/CropGhostOverlay';
+import { SlotBudgetStatus } from '@ggraphic/editor/components/SlotBudgetStatus';
 import { PrintGuides } from '@ggraphic/editor/components/PrintGuides';
 import { getCanvasFormatOrDefault } from '@ggraphic/editor/formats/index';
 import { useAnnounce } from '@ggraphic/editor/hooks/useAnnounce';
@@ -1165,7 +1166,18 @@ function GenericCanvasWithRef<
         listening={interactive}
         ariaLabel={stageLabel}
         className={`${config.id}-stage`}
-        overlay={interactive ? <CropGhostOverlay getStage={getStage} /> : null}
+        overlay={
+          interactive ? (
+            <>
+              <CropGhostOverlay getStage={getStage} />
+              <SlotBudgetStatus
+                state={state as Record<string, unknown>}
+                canvasWidth={referenceWidth}
+                canvasHeight={referenceHeight}
+              />
+            </>
+          ) : null
+        }
       >
         <CanvasRenderLayer
           sortedRenderList={sortedRenderList}
