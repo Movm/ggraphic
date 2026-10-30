@@ -26,7 +26,7 @@ import {
   nodeRotation,
   signedScale,
 } from '@ggraphic/editor/utils/orientation';
-import { shapeGradient } from '@ggraphic/editor/utils/shade';
+import { glowGradient, shapeGradient } from '@ggraphic/editor/utils/shade';
 import {
   assertNever,
   isComposerPlane,
@@ -141,6 +141,60 @@ interface CommonShapeProps {
   fillRadialGradientColorStops?: Array<number | string>;
 }
 
+/**
+ * A rect or ellipse drawn by hand: same box and origin as the Konva node it replaces, only the
+ * outline (the notch) or the fill (the glow) differs.
+ */
+function outlined(
+  shape: ShapeInstance,
+  commonProps: CommonShapeProps,
+  shapeRef: React.RefObject<Konva.Shape | null>,
+  notchSize: number
+): React.ReactElement {
+  const { width, height } = shape;
+  const trace = (ctx: Konva.Context) => {
+    if (shape.type === 'ellipse') {
+      ctx.beginPath();
+      ctx.ellipse(width / 2, height / 2, width / 2, height / 2, 0, 0, Math.PI * 2);
+      ctx.closePath();
+    } else {
+      traceNotch(ctx, width, height, notchSize);
+    }
+  };
+  return (
+    <Shape
+      ref={shapeRef}
+      {...commonProps}
+      width={width}
+      height={height}
+      offsetX={width / 2}
+      offsetY={height / 2}
+      sceneFunc={(ctx, node) => {
+        trace(ctx);
+        if (!shape.glow) {
+          ctx.fillStrokeShape(node);
+          return;
+        }
+        // The fade is elliptical: a circular gradient squeezed to the shape's height.
+        const glow = glowGradient(shape.fill, width, height);
+        ctx.save();
+        ctx.clip();
+        ctx.translate(width / 2, height / 2);
+        ctx.scale(1, height / width);
+        const paint = ctx.createRadialGradient(0, 0, 0, 0, 0, glow.radius ?? width / 2);
+        for (const stop of glow.stops) paint.addColorStop(stop.offset, stop.color);
+        ctx.setAttr('fillStyle', paint);
+        ctx.fillRect(-width, -width, width * 2, width * 2);
+        ctx.restore();
+      }}
+      hitFunc={(ctx, node) => {
+        trace(ctx);
+        ctx.fillShape(node);
+      }}
+    />
+  );
+}
+
 function renderShape(
   shape: ShapeInstance,
   commonProps: CommonShapeProps,
@@ -149,22 +203,8 @@ function renderShape(
 ): React.ReactElement {
   switch (shape.type) {
     case 'rect':
-      if (notchSize > 0) {
-        // Same box and origin as the Rect; only the outline differs.
-        return (
-          <Shape
-            ref={shapeRef}
-            {...commonProps}
-            width={shape.width}
-            height={shape.height}
-            offsetX={shape.width / 2}
-            offsetY={shape.height / 2}
-            sceneFunc={(ctx, node) => {
-              traceNotch(ctx, shape.width, shape.height, notchSize);
-              ctx.fillStrokeShape(node);
-            }}
-          />
-        );
+      if (notchSize > 0 || shape.glow) {
+        return outlined(shape, commonProps, shapeRef, notchSize);
       }
       return (
         <Rect
@@ -199,6 +239,7 @@ function renderShape(
         />
       );
     case 'ellipse':
+      if (shape.glow) return outlined(shape, commonProps, shapeRef, 0);
       return (
         <Ellipse
           ref={shapeRef as React.RefObject<Konva.Ellipse>}
@@ -505,13 +546,25 @@ const ShapePrimitiveInner: React.FC<ShapePrimitiveProps> = ({
       fill: shape.fill,
       shade: shape.shade,
       fillGradient: shape.fillGradient,
+      type: shape.type,
+      glow: shape.glow,
+      width: shape.width,
+      height: shape.height,
     });
     if (gradient && shapeRef.current) {
       setGradientProps(gradientFillProps(gradient, shapeRef.current.getSelfRect()));
     } else {
       setGradientProps(null);
     }
-  }, [shape.fillGradient, shape.shade, shape.fill, shape.type, shape.width, shape.height]);
+  }, [
+    shape.fillGradient,
+    shape.shade,
+    shape.glow,
+    shape.fill,
+    shape.type,
+    shape.width,
+    shape.height,
+  ]);
 
   const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
     snap.onDragEnd();
@@ -647,6 +700,7 @@ export const ShapePrimitive = memo(ShapePrimitiveInner, (prevProps, nextProps) =
   if (prevShape.shade !== nextShape.shade) return false;
   if (prevShape.blendMode !== nextShape.blendMode) return false;
   if (prevShape.notch !== nextShape.notch) return false;
+  if (prevShape.glow !== nextShape.glow) return false;
   if (prevShape.flipX !== nextShape.flipX) return false;
   if (prevShape.flipY !== nextShape.flipY) return false;
 
