@@ -70,13 +70,13 @@ describe('usePageThumbnails', () => {
     });
     expect(result.current.get('p4')).toBe('p4:mint');
 
-    shown.set('p4', 'p4:tanne');
-    rerender({ pages: ids.map((id) => page(id, id === 'p4' ? 'tanne' : 'mint')) });
+    shown.set('p4', 'p4:forest');
+    rerender({ pages: ids.map((id) => page(id, id === 'p4' ? 'forest' : 'mint')) });
     act(() => {
       vi.advanceTimersByTime(1500);
     });
 
-    expect(result.current.get('p4')).toBe('p4:tanne');
+    expect(result.current.get('p4')).toBe('p4:forest');
   });
 
   it('takes a page again once an image that was still loading has arrived', () => {
@@ -110,8 +110,8 @@ describe('usePageThumbnails', () => {
     const dragging = vi.spyOn(Konva, 'isDragging').mockReturnValue(true);
     const p2Calls = spies[1].mock.calls.length;
 
-    shown.set('p2', 'p2:tanne');
-    rerender({ pages: [pages[0], page('p2', 'tanne')] });
+    shown.set('p2', 'p2:forest');
+    rerender({ pages: [pages[0], page('p2', 'forest')] });
     tick(1500);
     tick(1500);
     expect(spies[1].mock.calls.length).toBe(p2Calls);
@@ -121,7 +121,7 @@ describe('usePageThumbnails', () => {
     tick(1500);
 
     expect(spies[1].mock.calls.length).toBe(p2Calls + 1);
-    expect(result.current.get('p2')).toBe('p2:tanne');
+    expect(result.current.get('p2')).toBe('p2:forest');
   });
 
   it('wartet auch während einer Transformation', () => {
@@ -129,14 +129,14 @@ describe('usePageThumbnails', () => {
     tick(2000);
     const transforming = vi.spyOn(Konva, 'isTransforming').mockReturnValue(true);
 
-    shown.set('p1', 'p1:tanne');
-    rerender({ pages: [page('p1', 'tanne')] });
+    shown.set('p1', 'p1:forest');
+    rerender({ pages: [page('p1', 'forest')] });
     tick(1500);
     expect(result.current.get('p1')).toBe('p1:mint');
 
     transforming.mockReturnValue(false);
     tick(1500);
-    expect(result.current.get('p1')).toBe('p1:tanne');
+    expect(result.current.get('p1')).toBe('p1:forest');
   });
 
   it('nimmt mit requestIdleCallback erst im Idle-Callback auf', () => {
@@ -154,8 +154,8 @@ describe('usePageThumbnails', () => {
     expect(requestIdle).not.toHaveBeenCalled();
     const p2Calls = spies[1].mock.calls.length;
 
-    shown.set('p2', 'p2:tanne');
-    rerender({ pages: [pages[0], page('p2', 'tanne')] });
+    shown.set('p2', 'p2:forest');
+    rerender({ pages: [pages[0], page('p2', 'forest')] });
     tick(1500);
     expect(requestIdle).toHaveBeenCalledTimes(1);
     expect(requestIdle.mock.calls[0][1]).toEqual({ timeout: 1500 });
@@ -170,6 +170,6 @@ describe('usePageThumbnails', () => {
     });
 
     expect(spies[1].mock.calls.length).toBe(p2Calls + 1);
-    expect(result.current.get('p2')).toBe('p2:tanne');
+    expect(result.current.get('p2')).toBe('p2:forest');
   });
 });

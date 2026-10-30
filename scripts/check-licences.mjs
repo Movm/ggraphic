@@ -8,6 +8,12 @@
  * be allowed in their info.json: the package.json can say MIT while the icon
  * data carries a different licence (Remix Icon changed its licence at 4.9.0).
  *
+ * Bundled files: every directory of graphics the Studio ships under
+ * apps/studio/public (`/emoji`, `/illustrations/<set>`) needs a row in
+ * THIRD_PARTY_NOTICES.md that names it in backticks and carries an allowed
+ * licence. A set with no row, or one under a licence outside ALLOWED, fails.
+ * This part reads files only and needs no node_modules.
+ *
  * It also fails when a tracked source file under apps/ or packages/ lacks an
  * SPDX-License-Identifier line in its first lines, or names another licence than the
  * package it sits in declares.
@@ -19,6 +25,7 @@ import { execFileSync } from 'node:child_process';
 import {
   existsSync,
   mkdirSync,
+  readdirSync,
   mkdtempSync,
   readFileSync,
   realpathSync,
@@ -180,6 +187,66 @@ export function checkLicenses(rootDirs) {
   return { problems, count: seen.size };
 }
 
+const NOTICES_FILE = 'THIRD_PARTY_NOTICES.md';
+// Never bundled, whatever a notices row says.
+const FORBIDDEN_SETS = ['undraw', 'unsplash', 'fontawesome', 'font-awesome'];
+
+const subdirs = (dir) =>
+  existsSync(dir)
+    ? readdirSync(dir, { withFileTypes: true })
+        .filter((e) => e.isDirectory())
+        .map((e) => e.name)
+    : [];
+
+/** The directories of bundled graphics, as repo-relative paths. `illustrations/thumbs/<set>` belongs to its set. */
+export function bundledAssetDirs(root) {
+  const pub = join(root, 'apps', 'studio', 'public');
+  const dirs = [];
+  for (const top of subdirs(pub)) {
+    if (top !== 'illustrations') {
+      dirs.push(`apps/studio/public/${top}`);
+      continue;
+    }
+    const sets = subdirs(join(pub, top));
+    for (const set of sets.filter((n) => n !== 'thumbs'))
+      dirs.push(`apps/studio/public/${top}/${set}`);
+    for (const thumbs of subdirs(join(pub, top, 'thumbs')))
+      if (!sets.includes(thumbs)) dirs.push(`apps/studio/public/${top}/thumbs/${thumbs}`);
+  }
+  return dirs;
+}
+
+/** Problems of the bundled graphics against the notices file: a list of { path, message }. */
+export function checkBundledAssets(root) {
+  const dirs = bundledAssetDirs(root);
+  if (dirs.length === 0) return [];
+  const notices = join(root, NOTICES_FILE);
+  if (!existsSync(notices))
+    return dirs.map((d) => ({ path: d, message: `${NOTICES_FILE} is missing` }));
+  const rows = readFileSync(notices, 'utf8')
+    .split('\n')
+    .filter((line) => line.trimStart().startsWith('|'))
+    .map((line) => line.split('|').map((cell) => cell.trim()));
+  const problems = [];
+  for (const dir of dirs) {
+    if (FORBIDDEN_SETS.some((name) => dir.toLowerCase().includes(name)))
+      problems.push({ path: dir, message: `${dir}: this set must never be bundled` });
+    const row = rows.find((cells) => cells.some((cell) => cell.includes(`\`${dir}\``)));
+    if (!row) {
+      problems.push({ path: dir, message: `${dir}: no entry in ${NOTICES_FILE}` });
+      continue;
+    }
+    const licenceCell = row[3] ?? '';
+    const licenceId = licenceCell.match(/^[A-Za-z0-9.+-]+/)?.[0] ?? '';
+    if (!ALLOWED.has(licenceId))
+      problems.push({
+        path: dir,
+        message: `${dir}: licence "${licenceCell}" in ${NOTICES_FILE} is not allowed`,
+      });
+  }
+  return problems;
+}
+
 const SOURCE_FILE = /\.(?:[cm]?[jt]sx?|css)$/;
 const HEADER_LINES = 5;
 
@@ -299,6 +366,43 @@ function selfTest() {
       license: { spdx: 'Apache-2.0' },
     });
     expect('iconify-info-good', good, false);
+
+    const assetRoot = (name, notices, dirs) => {
+      const root = join(base, name);
+      for (const d of dirs) mkdirSync(join(root, d), { recursive: true });
+      if (notices !== null) writeFileSync(join(root, NOTICES_FILE), notices);
+      return root;
+    };
+    const row = (dir, licence) => `| \`${dir}\` | A work | ${licence} | https://example.org |\n`;
+    const set = 'apps/studio/public/illustrations/zz';
+    const expectAssets = (label, root, wantRed, needle) => {
+      const problems = checkBundledAssets(root);
+      if (
+        problems.length > 0 !== wantRed ||
+        (needle && !problems.some((p) => p.message.includes(needle)))
+      )
+        failures.push(
+          `${label}: expected ${wantRed ? 'red' : 'green'}, got ${JSON.stringify(problems)}`
+        );
+    };
+    expectAssets('asset-listed', assetRoot('a1', row(set, 'CC0-1.0'), [set]), false);
+    expectAssets('asset-unlisted', assetRoot('a2', row('other', 'MIT'), [set]), true, 'no entry');
+    expectAssets('asset-no-notices', assetRoot('a3', null, [set]), true, 'is missing');
+    expectAssets(
+      'asset-bad-licence',
+      assetRoot('a4', row(set, 'CC-BY-NC-4.0'), [set]),
+      true,
+      'not allowed'
+    );
+    expectAssets(
+      'asset-thumbs-orphan',
+      assetRoot('a5', row(set, 'MIT'), [set, 'apps/studio/public/illustrations/thumbs/yy']),
+      true,
+      'thumbs/yy'
+    );
+    const undraw = 'apps/studio/public/illustrations/undraw';
+    expectAssets('asset-undraw', assetRoot('a6', row(undraw, 'MIT'), [undraw]), true, 'never');
+
     const sources = join(base, 'sources');
     mkdirSync(sources, { recursive: true });
     writeFileSync(join(sources, 'ok.ts'), '// SPDX-License-Identifier: MPL-2.0\nexport {};\n');
@@ -335,9 +439,15 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
       for (const f of failures) console.error(`  · ${f}`);
       process.exit(1);
     }
-    console.log('✓ ggraphic licence self-test: 11 probes ok');
+    console.log('✓ ggraphic licence self-test: 17 probes ok');
   } else {
     const root = fileURLToPath(new URL('..', import.meta.url));
+    const assetProblems = checkBundledAssets(root);
+    if (assetProblems.length > 0) {
+      console.error(`\n✖ ${assetProblems.length} bundled asset problem(s):\n`);
+      for (const p of assetProblems) console.error(`  ${p.message}`);
+      process.exit(1);
+    }
     const dirs = ROOT_PACKAGES.map((p) => join(root, 'packages', p));
     const missing = dirs.filter(
       (d) => !existsSync(join(d, 'node_modules')) && !existsSync(join(root, 'node_modules'))

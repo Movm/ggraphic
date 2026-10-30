@@ -31,18 +31,25 @@ describe('AccountBar', () => {
     expect(screen.getByRole('button', { name: /Account/ })).toBeInTheDocument();
   });
 
-  it('offers Brand to owners, then Log out', async () => {
+  it('offers Brand to owners, then Licences and Log out', async () => {
     const user = userEvent.setup();
     renderBar('owner');
     await user.click(screen.getByRole('button', { name: /Account/ }));
-    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Brand', 'Log out']);
+    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual([
+      'Brand',
+      'Licences',
+      'Log out',
+    ]);
   });
 
   it('leaves Brand out for editors', async () => {
     const user = userEvent.setup();
     renderBar('editor');
     await user.click(screen.getByRole('button', { name: /Account/ }));
-    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual(['Log out']);
+    expect(screen.getAllByRole('menuitem').map((i) => i.textContent)).toEqual([
+      'Licences',
+      'Log out',
+    ]);
   });
 
   it('logs out through the API', async () => {
