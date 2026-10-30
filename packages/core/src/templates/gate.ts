@@ -17,7 +17,7 @@ import {
   type GeometryTable,
   type TemplateInput,
 } from './instantiate.js';
-import { countWords } from './slotBudget.js';
+import { countChars, countWords } from './slotBudget.js';
 
 /**
  * What the render gate needs to know of an editor's element kinds. The editor fills it
@@ -266,10 +266,10 @@ export function checkTemplate(t: TemplateInput, ctx: GateContext): GateProblem[]
     }
     for (const [textId, text] of texts) {
       if (textId !== id) continue;
-      if (maxChars !== undefined && [...text].length > maxChars) {
+      if (maxChars !== undefined && countChars(text) > maxChars) {
         problem(
           'budget',
-          `placeholder of ${id} has ${[...text].length} characters, over maxChars ${maxChars}`
+          `placeholder of ${id} has ${countChars(text)} characters, over maxChars ${maxChars}`
         );
       }
       if (maxWords !== undefined && countWords(text) > maxWords) {

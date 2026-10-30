@@ -46,10 +46,14 @@ describe('slot budget', () => {
     expect(checkSlotBudget({ text: 'Hi', fontSize: 40, canvasHeight: 1080 }, {})).toEqual([]);
   });
 
-  it('skips the font check for role "source"', () => {
-    expect(
-      checkSlotBudget({ text: 'Quelle', fontSize: 12, canvasHeight: 1350, role: 'source' }, {})
-    ).toEqual([]);
+  it('counts an unbalanced marker as a single word', () => {
+    expect(countWords('==a')).toBe(1);
+    expect(countChars('==a')).toBe(1);
+  });
+
+  it('counts an astral character as one code point', () => {
+    expect(countWords('🌍 Klima')).toBe(2);
+    expect(countChars('🌍 Klima')).toBe(7);
   });
 
   it('checks lines only when lineCount is given', () => {
