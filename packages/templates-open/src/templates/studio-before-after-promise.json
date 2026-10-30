@@ -1,0 +1,241 @@
+{
+  "formatVersion": 1,
+  "id": "studio-before-after-promise",
+  "version": 1,
+  "kind": "template",
+  "family": "before-after",
+  "title": {
+    "en": "Promised and now",
+    "de": "Versprochen und jetzt"
+  },
+  "description": {
+    "en": "A promise with a date label and below it what is the case now, each on its own line",
+    "de": "Ein Versprechen mit Datumslabel und darunter, was jetzt gilt, jeweils in einer eigenen Zeile"
+  },
+  "tags": {
+    "tone": "warm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "label-promise",
+            "type": "rect",
+            "x": 0.179348,
+            "y": 0.063025,
+            "width": 0.358696,
+            "height": 0.07563,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          },
+          {
+            "id": "label-now",
+            "type": "rect",
+            "x": 0.13587,
+            "y": 0.668067,
+            "width": 0.271739,
+            "height": 0.07563,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "date",
+            "type": "body",
+            "text": "July 2026",
+            "x": 0.032609,
+            "y": 0.043697,
+            "width": 0.304348,
+            "fontSize": 0.040741,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "promise",
+            "type": "header",
+            "text": "Rent cap promised.",
+            "x": 0,
+            "y": 0.12605,
+            "width": 1,
+            "fontSize": 0.074074,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.96,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "now",
+            "type": "body",
+            "text": "Now",
+            "x": 0.027174,
+            "y": 0.648739,
+            "width": 0.217391,
+            "fontSize": 0.040741,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "result",
+            "type": "header",
+            "text": "Still no law.",
+            "x": 0,
+            "y": 0.731092,
+            "width": 0.543478,
+            "fontSize": 0.066667,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.96,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          }
+        ],
+        "layerOrder": [
+          "label-promise",
+          "date",
+          "promise",
+          "label-now",
+          "now",
+          "result",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "date": {
+      "role": "date",
+      "label": {
+        "en": "Date label",
+        "de": "Datumslabel"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 14
+      }
+    },
+    "promise": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 3,
+        "maxChars": 28
+      }
+    },
+    "now": {
+      "role": "subline",
+      "label": {
+        "en": "Now label",
+        "de": "Jetzt-Label"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 10
+      }
+    },
+    "result": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 3,
+        "maxChars": 28
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right"],
+  "placeholders": {
+    "en": {
+      "date": "July 2026",
+      "promise": "Rent cap promised.",
+      "now": "Now",
+      "result": "Still no law."
+    },
+    "de": {
+      "date": "Juli 2026",
+      "promise": "Mietendeckel versprochen.",
+      "now": "Jetzt",
+      "result": "Noch immer kein Gesetz."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
