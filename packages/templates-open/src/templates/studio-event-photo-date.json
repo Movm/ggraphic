@@ -1,0 +1,218 @@
+{
+  "formatVersion": 1,
+  "id": "studio-event-photo-date",
+  "version": 1,
+  "kind": "template",
+  "family": "event",
+  "title": {
+    "en": "Photo with date plate",
+    "de": "Foto mit Datumsfläche"
+  },
+  "description": {
+    "en": "A photo on top, a colour plate with the date on its lower edge, title and venue below",
+    "de": "Oben ein Foto, an dessen unterer Kante eine Farbfläche mit dem Datum, darunter Titel und Ort"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": ["event"],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "plate",
+            "type": "rect",
+            "x": 0.233696,
+            "y": 0.605042,
+            "width": 0.467391,
+            "height": 0.142857,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 0.592593,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "date",
+            "type": "header",
+            "text": "9 Jan",
+            "x": 0.032609,
+            "y": 0.558824,
+            "width": 0.413043,
+            "fontSize": 0.096296,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "title",
+            "type": "header",
+            "text": "Poetry night in the greenhouse",
+            "x": 0,
+            "y": 0.714286,
+            "width": 1,
+            "fontSize": 0.081481,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "venue",
+            "type": "body",
+            "text": "Garden Hall, 7 pm",
+            "x": 0,
+            "y": 0.882353,
+            "width": 0.847826,
+            "fontSize": 0.048148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": ["photo", "plate", "date", "title", "venue", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "label": {
+        "en": "Photo",
+        "de": "Foto"
+      },
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "date": {
+      "role": "date",
+      "label": {
+        "en": "The date",
+        "de": "Das Datum"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 6
+      }
+    },
+    "title": {
+      "role": "headline",
+      "label": {
+        "en": "Event title",
+        "de": "Titel der Veranstaltung"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 2,
+        "maxChars": 32
+      }
+    },
+    "venue": {
+      "role": "place",
+      "label": {
+        "en": "Venue and time",
+        "de": "Ort und Uhrzeit"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 1,
+        "maxChars": 22
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "date-with-place",
+      "title": {
+        "en": "Date with place",
+        "de": "Datum mit Ort"
+      },
+      "elementIds": ["plate", "date", "venue"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right", "top-left"],
+  "placeholders": {
+    "en": {
+      "date": "9 Jan",
+      "title": "Poetry night in the greenhouse",
+      "venue": "Garden Hall, 7 pm"
+    },
+    "de": {
+      "date": "9. Jan",
+      "title": "Lyrikabend im Gewächshaus",
+      "venue": "Gartenhaus, 19 Uhr"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

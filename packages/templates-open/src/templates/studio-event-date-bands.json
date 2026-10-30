@@ -1,0 +1,453 @@
+{
+  "formatVersion": 1,
+  "id": "studio-event-date-bands",
+  "version": 1,
+  "kind": "template",
+  "family": "event",
+  "title": {
+    "en": "Three date bands",
+    "de": "Drei Termine als Bänder"
+  },
+  "description": {
+    "en": "Three full-width bands, each with a big day, the month and an event name",
+    "de": "Drei Querbänder, jedes mit großem Tag, Monat und Name der Veranstaltung"
+  },
+  "tags": {
+    "tone": "bold",
+    "occasions": ["event"],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "band-1",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.226891,
+            "width": 1,
+            "height": 0.252101,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          },
+          {
+            "id": "band-2",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.504202,
+            "width": 1,
+            "height": 0.252101,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          },
+          {
+            "id": "band-3",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.781513,
+            "width": 1,
+            "height": 0.252101,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "series",
+            "type": "body",
+            "text": "Autumn series on the square",
+            "x": 0,
+            "y": 0,
+            "width": 0.597826,
+            "fontSize": 0.048148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "day-1",
+            "type": "header",
+            "text": "06",
+            "x": 0.032609,
+            "y": 0.121008,
+            "width": 0.391304,
+            "fontSize": 0.203704,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.88,
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.condensed"
+            }
+          },
+          {
+            "id": "month-1",
+            "type": "body",
+            "text": "OCT",
+            "x": 0.032609,
+            "y": 0.295798,
+            "width": 0.326087,
+            "fontSize": 0.048148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "name-1",
+            "type": "body",
+            "text": "Garden breakfast",
+            "x": 0.434783,
+            "y": 0.151261,
+            "width": 0.532609,
+            "fontSize": 0.055556,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.05,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "day-2",
+            "type": "header",
+            "text": "07",
+            "x": 0.032609,
+            "y": 0.398319,
+            "width": 0.391304,
+            "fontSize": 0.203704,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.88,
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.condensed"
+            }
+          },
+          {
+            "id": "month-2",
+            "type": "body",
+            "text": "OCT",
+            "x": 0.032609,
+            "y": 0.573109,
+            "width": 0.326087,
+            "fontSize": 0.048148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "name-2",
+            "type": "body",
+            "text": "Bike repair day",
+            "x": 0.434783,
+            "y": 0.428571,
+            "width": 0.532609,
+            "fontSize": 0.055556,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.05,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "day-3",
+            "type": "header",
+            "text": "28",
+            "x": 0.032609,
+            "y": 0.67563,
+            "width": 0.391304,
+            "fontSize": 0.203704,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.88,
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.condensed"
+            }
+          },
+          {
+            "id": "month-3",
+            "type": "body",
+            "text": "OCT",
+            "x": 0.032609,
+            "y": 0.85042,
+            "width": 0.326087,
+            "fontSize": 0.048148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "name-3",
+            "type": "body",
+            "text": "Planning round",
+            "x": 0.434783,
+            "y": 0.705882,
+            "width": 0.532609,
+            "fontSize": 0.055556,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.05,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": [
+          "series",
+          "band-1",
+          "day-1",
+          "month-1",
+          "name-1",
+          "band-2",
+          "day-2",
+          "month-2",
+          "name-2",
+          "band-3",
+          "day-3",
+          "month-3",
+          "name-3",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "series": {
+      "role": "headline",
+      "label": {
+        "en": "Series title",
+        "de": "Titel der Reihe"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 2,
+        "maxChars": 34
+      }
+    },
+    "day-1": {
+      "role": "date",
+      "label": {
+        "en": "Day 1",
+        "de": "Tag 1"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 2
+      }
+    },
+    "month-1": {
+      "role": "date",
+      "label": {
+        "en": "Month 1",
+        "de": "Monat 1"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 3
+      }
+    },
+    "name-1": {
+      "role": "subline",
+      "label": {
+        "en": "Event 1",
+        "de": "Veranstaltung 1"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 3,
+        "maxChars": 30
+      }
+    },
+    "day-2": {
+      "role": "date",
+      "label": {
+        "en": "Day 2",
+        "de": "Tag 2"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 2
+      }
+    },
+    "month-2": {
+      "role": "date",
+      "label": {
+        "en": "Month 2",
+        "de": "Monat 2"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 3
+      }
+    },
+    "name-2": {
+      "role": "subline",
+      "label": {
+        "en": "Event 2",
+        "de": "Veranstaltung 2"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 3,
+        "maxChars": 30
+      }
+    },
+    "day-3": {
+      "role": "date",
+      "label": {
+        "en": "Day 3",
+        "de": "Tag 3"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 2
+      }
+    },
+    "month-3": {
+      "role": "date",
+      "label": {
+        "en": "Month 3",
+        "de": "Monat 3"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 3
+      }
+    },
+    "name-3": {
+      "role": "subline",
+      "label": {
+        "en": "Event 3",
+        "de": "Veranstaltung 3"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 3,
+        "maxChars": 30
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "series": "Autumn series on the square",
+      "day-1": "06",
+      "month-1": "OCT",
+      "name-1": "Garden breakfast",
+      "day-2": "07",
+      "month-2": "OCT",
+      "name-2": "Bike repair day",
+      "day-3": "28",
+      "month-3": "OCT",
+      "name-3": "Planning round"
+    },
+    "de": {
+      "series": "Herbstreihe auf dem Platz",
+      "day-1": "06",
+      "month-1": "OKT",
+      "name-1": "Gartenfrühstück",
+      "day-2": "07",
+      "month-2": "OKT",
+      "name-2": "Fahrradtag",
+      "day-3": "28",
+      "month-3": "OKT",
+      "name-3": "Planungsrunde"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
