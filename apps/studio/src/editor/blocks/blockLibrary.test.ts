@@ -27,6 +27,7 @@ describe('blockLibrary', () => {
       'studio-event-programme/date-with-place',
       'studio-photo-quote/quote-with-person',
       'studio-photo-number/number-with-line',
+      'studio-data-bar-ranking/chart-source',
       'studio-photo-text-box/box-with-headline',
       'studio-photo-text-fade/headline-with-line',
       'studio-photo-text-marker/headline-with-line',

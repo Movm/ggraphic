@@ -1,0 +1,564 @@
+{
+  "formatVersion": 1,
+  "id": "studio-data-bar-ranking",
+  "version": 1,
+  "kind": "template",
+  "family": "data",
+  "title": {
+    "en": "Ranking with five bars",
+    "de": "Rangliste mit fünf Balken"
+  },
+  "description": {
+    "en": "A title, five horizontal bars with labels and values, and a source line",
+    "de": "Ein Titel, fünf waagrechte Balken mit Beschriftung und Wert und eine Quellenzeile"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "bar-1",
+            "type": "rect",
+            "x": 0.434783,
+            "y": 0.344538,
+            "width": 0.869565,
+            "height": 0.047059,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          },
+          {
+            "id": "bar-2",
+            "type": "rect",
+            "x": 0.380435,
+            "y": 0.470588,
+            "width": 0.76087,
+            "height": 0.047059,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink2"
+            }
+          },
+          {
+            "id": "bar-3",
+            "type": "rect",
+            "x": 0.347826,
+            "y": 0.596639,
+            "width": 0.695652,
+            "height": 0.047059,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink2"
+            }
+          },
+          {
+            "id": "bar-4",
+            "type": "rect",
+            "x": 0.304348,
+            "y": 0.722689,
+            "width": 0.608696,
+            "height": 0.047059,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink2"
+            }
+          },
+          {
+            "id": "bar-5",
+            "type": "rect",
+            "x": 0.23913,
+            "y": 0.848739,
+            "width": 0.478261,
+            "height": 0.047059,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink2"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "title",
+            "type": "header",
+            "text": "Share of income spent on rent, in percent",
+            "x": 0,
+            "y": 0.016807,
+            "width": 0.543478,
+            "fontSize": 0.051852,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.98,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "label-1",
+            "type": "body",
+            "text": "Alder",
+            "x": 0,
+            "y": 0.268908,
+            "width": 0.326087,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "value-1",
+            "type": "body",
+            "text": "40",
+            "x": 0.891304,
+            "y": 0.321008,
+            "width": 0.108696,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "label-2",
+            "type": "body",
+            "text": "Birch",
+            "x": 0,
+            "y": 0.394958,
+            "width": 0.326087,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "value-2",
+            "type": "body",
+            "text": "35",
+            "x": 0.782609,
+            "y": 0.447059,
+            "width": 0.108696,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "label-3",
+            "type": "body",
+            "text": "Cedar",
+            "x": 0,
+            "y": 0.521008,
+            "width": 0.326087,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "value-3",
+            "type": "body",
+            "text": "32",
+            "x": 0.717391,
+            "y": 0.573109,
+            "width": 0.108696,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "label-4",
+            "type": "body",
+            "text": "Dune",
+            "x": 0,
+            "y": 0.647059,
+            "width": 0.326087,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "value-4",
+            "type": "body",
+            "text": "28",
+            "x": 0.630435,
+            "y": 0.69916,
+            "width": 0.108696,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "label-5",
+            "type": "body",
+            "text": "Elm",
+            "x": 0,
+            "y": 0.773109,
+            "width": 0.326087,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "value-5",
+            "type": "body",
+            "text": "22",
+            "x": 0.5,
+            "y": 0.82521,
+            "width": 0.108696,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "source",
+            "type": "body",
+            "text": "Example survey, 2026",
+            "x": 0,
+            "y": 0.915966,
+            "width": 0.76087,
+            "fontSize": 0.024074,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.2,
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": [
+          "title",
+          "label-1",
+          "bar-1",
+          "value-1",
+          "label-2",
+          "bar-2",
+          "value-2",
+          "label-3",
+          "bar-3",
+          "value-3",
+          "label-4",
+          "bar-4",
+          "value-4",
+          "label-5",
+          "bar-5",
+          "value-5",
+          "source",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "title": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 8,
+        "maxLines": 4,
+        "maxChars": 56
+      }
+    },
+    "label-1": {
+      "role": "name",
+      "label": {
+        "en": "Label 1",
+        "de": "Beschriftung 1"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 12
+      }
+    },
+    "value-1": {
+      "role": "number",
+      "label": {
+        "en": "Value 1",
+        "de": "Wert 1"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 4
+      }
+    },
+    "label-2": {
+      "role": "name",
+      "label": {
+        "en": "Label 2",
+        "de": "Beschriftung 2"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 12
+      }
+    },
+    "value-2": {
+      "role": "number",
+      "label": {
+        "en": "Value 2",
+        "de": "Wert 2"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 4
+      }
+    },
+    "label-3": {
+      "role": "name",
+      "label": {
+        "en": "Label 3",
+        "de": "Beschriftung 3"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 12
+      }
+    },
+    "value-3": {
+      "role": "number",
+      "label": {
+        "en": "Value 3",
+        "de": "Wert 3"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 4
+      }
+    },
+    "label-4": {
+      "role": "name",
+      "label": {
+        "en": "Label 4",
+        "de": "Beschriftung 4"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 12
+      }
+    },
+    "value-4": {
+      "role": "number",
+      "label": {
+        "en": "Value 4",
+        "de": "Wert 4"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 4
+      }
+    },
+    "label-5": {
+      "role": "name",
+      "label": {
+        "en": "Label 5",
+        "de": "Beschriftung 5"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 12
+      }
+    },
+    "value-5": {
+      "role": "number",
+      "label": {
+        "en": "Value 5",
+        "de": "Wert 5"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 4
+      }
+    },
+    "source": {
+      "role": "body",
+      "label": {
+        "en": "Source",
+        "de": "Quelle"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 1,
+        "maxChars": 40
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "chart-source",
+      "title": {
+        "en": "Source line",
+        "de": "Quellenzeile"
+      },
+      "elementIds": ["source"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "title": "Share of income spent on rent, in percent",
+      "label-1": "Alder",
+      "value-1": "40",
+      "label-2": "Birch",
+      "value-2": "35",
+      "label-3": "Cedar",
+      "value-3": "32",
+      "label-4": "Dune",
+      "value-4": "28",
+      "label-5": "Elm",
+      "value-5": "22",
+      "source": "Example survey, 2026"
+    },
+    "de": {
+      "title": "Anteil der Miete am Einkommen in Prozent",
+      "label-1": "Erle",
+      "value-1": "40",
+      "label-2": "Birke",
+      "value-2": "35",
+      "label-3": "Zeder",
+      "value-3": "32",
+      "label-4": "Düne",
+      "value-4": "28",
+      "label-5": "Ulme",
+      "value-5": "22",
+      "source": "Beispielerhebung, 2026"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

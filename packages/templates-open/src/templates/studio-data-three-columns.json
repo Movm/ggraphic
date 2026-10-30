@@ -1,0 +1,407 @@
+{
+  "formatVersion": 1,
+  "id": "studio-data-three-columns",
+  "version": 1,
+  "kind": "template",
+  "family": "data",
+  "title": {
+    "en": "Three columns with average",
+    "de": "Drei Säulen mit Durchschnitt"
+  },
+  "description": {
+    "en": "Three columns of different height with a value on top and a label below, and a dashed-style average line",
+    "de": "Drei unterschiedlich hohe Säulen mit Wert oben und Beschriftung unten, dazu eine Durchschnittslinie"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "column-1",
+            "type": "rect",
+            "x": 0.152174,
+            "y": 0.738655,
+            "width": 0.304348,
+            "height": 0.287395,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink2"
+            }
+          },
+          {
+            "id": "column-2",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.685714,
+            "width": 0.304348,
+            "height": 0.393277,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          },
+          {
+            "id": "column-3",
+            "type": "rect",
+            "x": 0.847826,
+            "y": 0.613866,
+            "width": 0.304348,
+            "height": 0.536975,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink2"
+            }
+          },
+          {
+            "id": "average-line",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.47605,
+            "width": 1,
+            "height": 0.004202,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0,
+            "bind": {
+              "fill": "ink"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "title",
+            "type": "header",
+            "text": "Who pays for tutoring after school",
+            "x": 0,
+            "y": 0.016807,
+            "width": 0.543478,
+            "fontSize": 0.051852,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.98,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "value-1",
+            "type": "header",
+            "text": "38 %",
+            "x": 0.021739,
+            "y": 0.606723,
+            "width": 0.26087,
+            "fontSize": 0.074074,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "label-1",
+            "type": "body",
+            "text": "South",
+            "x": 0,
+            "y": 0.90084,
+            "width": 0.304348,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "value-2",
+            "type": "header",
+            "text": "52 %",
+            "x": 0.369565,
+            "y": 0.50084,
+            "width": 0.26087,
+            "fontSize": 0.074074,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "label-2",
+            "type": "body",
+            "text": "Centre",
+            "x": 0.347826,
+            "y": 0.90084,
+            "width": 0.304348,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "value-3",
+            "type": "header",
+            "text": "71 %",
+            "x": 0.717391,
+            "y": 0.357143,
+            "width": 0.26087,
+            "fontSize": 0.074074,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "label-3",
+            "type": "body",
+            "text": "North",
+            "x": 0.695652,
+            "y": 0.90084,
+            "width": 0.304348,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "average",
+            "type": "body",
+            "text": "Avg 54 %",
+            "x": 0,
+            "y": 0.420168,
+            "width": 0.413043,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": [
+          "title",
+          "column-1",
+          "value-1",
+          "label-1",
+          "column-2",
+          "value-2",
+          "label-2",
+          "column-3",
+          "value-3",
+          "label-3",
+          "average-line",
+          "average",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "title": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 4,
+        "maxChars": 48
+      }
+    },
+    "value-1": {
+      "role": "number",
+      "label": {
+        "en": "Value 1",
+        "de": "Wert 1"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 5
+      }
+    },
+    "label-1": {
+      "role": "name",
+      "label": {
+        "en": "Label 1",
+        "de": "Beschriftung 1"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 12
+      }
+    },
+    "value-2": {
+      "role": "number",
+      "label": {
+        "en": "Value 2",
+        "de": "Wert 2"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 5
+      }
+    },
+    "label-2": {
+      "role": "name",
+      "label": {
+        "en": "Label 2",
+        "de": "Beschriftung 2"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 12
+      }
+    },
+    "value-3": {
+      "role": "number",
+      "label": {
+        "en": "Value 3",
+        "de": "Wert 3"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 5
+      }
+    },
+    "label-3": {
+      "role": "name",
+      "label": {
+        "en": "Label 3",
+        "de": "Beschriftung 3"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 12
+      }
+    },
+    "average": {
+      "role": "number",
+      "label": {
+        "en": "Average",
+        "de": "Durchschnitt"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 10
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "title": "Who pays for tutoring after school",
+      "value-1": "38 %",
+      "label-1": "South",
+      "value-2": "52 %",
+      "label-2": "Centre",
+      "value-3": "71 %",
+      "label-3": "North",
+      "average": "Avg 54 %"
+    },
+    "de": {
+      "title": "Wer nach der Schule Nachhilfe bezahlt",
+      "value-1": "38 %",
+      "label-1": "Süd",
+      "value-2": "52 %",
+      "label-2": "Mitte",
+      "value-3": "71 %",
+      "label-3": "Nord",
+      "average": "Ø 54 %"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
