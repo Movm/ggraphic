@@ -584,6 +584,7 @@ export const KIND_RENDERERS: KindRenderers = {
         fontFamily={textItem.fontFamily}
         fontStyle={textItem.fontStyle || 'normal'}
         fontWeight={textItem.fontWeight}
+        letterSpacing={textItem.letterSpacing}
         fill={textItem.fill}
         stroke={textItem.stroke}
         strokeWidth={textItem.strokeWidth}

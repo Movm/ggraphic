@@ -132,6 +132,18 @@ describe('readTemplateFile', () => {
     if (result.status === 'invalid') expect(result.reason).toContain('fontWeight');
   });
 
+  it.each([-0.1, 0, 0.08, 0.3])('accepts letterSpacing %d', (letterSpacing) => {
+    const state = { texts: [{ id: 't1', text: 'Hello', letterSpacing, bind: { fill: 'ink' } }] };
+    expect(readTemplateFile(with_({ pages: [{ state }] })).status).toBe('ok');
+  });
+
+  it.each([-0.2, 0.31, 12, '0.1', null])('rejects letterSpacing %j', (letterSpacing) => {
+    const state = { texts: [{ id: 't1', text: 'Hello', letterSpacing, bind: { fill: 'ink' } }] };
+    const result = readTemplateFile(with_({ pages: [{ state }] }));
+    expect(result.status).toBe('invalid');
+    if (result.status === 'invalid') expect(result.reason).toContain('letterSpacing');
+  });
+
   it('a block naming a missing element is invalid', () => {
     const result = readTemplateFile(
       with_({ blocks: [{ id: 'b', title: { en: 'B' }, elementIds: ['nope'] }] })

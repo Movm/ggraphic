@@ -16,10 +16,7 @@ import type { IllustrationDef } from '../utils/illustrations/types.js';
 import { CATALOG, defaults, populated, registerAssetCatalog, type Fields } from './testKinds.js';
 
 /** Numbers a type declares that no factory sets and nothing yet reads. */
-// `letterSpacing` is a planned field of text; listed now so templates can carry it.
-const NOT_ON_THE_TYPE: Record<string, readonly string[]> = {
-  additionalTexts: ['letterSpacing'],
-};
+const NOT_ON_THE_TYPE: Record<string, readonly string[]> = {};
 
 const isNumeric = (value: unknown): boolean =>
   (typeof value === 'number' && Number.isFinite(value)) ||
@@ -398,7 +395,7 @@ describe('template gate adapter: line count of a text', () => {
     const tight = lines('additionalTexts', text({ text: 'aaaaaaaaaaaaaaaa', width: 1300 }));
     const spaced = lines(
       'additionalTexts',
-      text({ text: 'aaaaaaaaaaaaaaaa', width: 1300, letterSpacing: 30 })
+      text({ text: 'aaaaaaaaaaaaaaaa', width: 1300, letterSpacing: 0.3 })
     );
     expect(spaced).toBeGreaterThan(tight);
     expect(lines('additionalTexts', text({ text: 'W'.repeat(30), width: 1000 }))).toBe(4);

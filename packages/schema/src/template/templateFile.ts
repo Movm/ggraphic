@@ -237,6 +237,13 @@ function crossReferences(file: TemplateFile): string | null {
     if (style !== undefined && !FONT_STYLES.includes(style as string)) {
       return `${id}.fontStyle: must be one of ${FONT_STYLES.join(', ')}`;
     }
+    const spacing = isRecord(item) ? item['letterSpacing'] : undefined;
+    if (
+      spacing !== undefined &&
+      !(typeof spacing === 'number' && spacing >= -0.1 && spacing <= 0.3)
+    ) {
+      return `${id}.letterSpacing: must be a number of em from -0.1 to 0.3`;
+    }
     const weight = isRecord(item) ? item['fontWeight'] : undefined;
     if (weight !== undefined && !FONT_WEIGHTS.includes(weight as number)) {
       return `${id}.fontWeight: must be one of ${FONT_WEIGHTS.join(', ')}`;
