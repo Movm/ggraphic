@@ -1,0 +1,219 @@
+{
+  "formatVersion": 1,
+  "id": "studio-call-two-halves",
+  "version": 1,
+  "kind": "template",
+  "family": "call",
+  "title": {
+    "en": "Two halves, two ways",
+    "de": "Zwei Hälften, zwei Wege"
+  },
+  "description": {
+    "en": "The page split into two halves, each with a capital call and a short line",
+    "de": "Die Fläche in zwei Hälften geteilt, jede mit einem Versalien-Aufruf und einer kurzen Zeile"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "half",
+            "type": "rect",
+            "x": 0.75,
+            "y": 0.5,
+            "width": 0.5,
+            "height": 1,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "call-left",
+            "type": "header",
+            "text": "GIVE TIME",
+            "x": 0,
+            "y": 0.10084,
+            "width": 0.48913,
+            "fontSize": 0.077778,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.condensed"
+            }
+          },
+          {
+            "id": "text-left",
+            "type": "body",
+            "text": "Join in locally.",
+            "x": 0,
+            "y": 0.537815,
+            "width": 0.456522,
+            "fontSize": 0.051852,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "call-right",
+            "type": "header",
+            "text": "GIVE MONEY",
+            "x": 0.532609,
+            "y": 0.10084,
+            "width": 0.467391,
+            "fontSize": 0.077778,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.condensed"
+            }
+          },
+          {
+            "id": "text-right",
+            "type": "body",
+            "text": "Every euro counts.",
+            "x": 0.554348,
+            "y": 0.537815,
+            "width": 0.445652,
+            "fontSize": 0.051852,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": ["half", "call-left", "text-left", "call-right", "text-right", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "half": "canvas"
+  },
+  "slots": {
+    "call-left": {
+      "role": "headline",
+      "label": {
+        "en": "Left call",
+        "de": "Linker Aufruf"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 3,
+        "maxChars": 16
+      }
+    },
+    "text-left": {
+      "role": "body",
+      "label": {
+        "en": "Left line",
+        "de": "Linke Zeile"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 3,
+        "maxChars": 28
+      }
+    },
+    "call-right": {
+      "role": "headline",
+      "label": {
+        "en": "Right call",
+        "de": "Rechter Aufruf"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 3,
+        "maxChars": 16
+      }
+    },
+    "text-right": {
+      "role": "body",
+      "label": {
+        "en": "Right line",
+        "de": "Rechte Zeile"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 3,
+        "maxChars": 28
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-left"],
+  "placeholders": {
+    "en": {
+      "call-left": "GIVE TIME",
+      "text-left": "Join in locally.",
+      "call-right": "GIVE MONEY",
+      "text-right": "Every euro counts."
+    },
+    "de": {
+      "call-left": "ZEIT SCHENKEN",
+      "text-left": "Vor Ort mitmachen.",
+      "call-right": "GELD SPENDEN",
+      "text-right": "Jeder Euro zählt."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

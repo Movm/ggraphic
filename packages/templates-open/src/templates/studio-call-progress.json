@@ -1,0 +1,267 @@
+{
+  "formatVersion": 1,
+  "id": "studio-call-progress",
+  "version": 1,
+  "kind": "template",
+  "family": "call",
+  "title": {
+    "en": "Petition progress",
+    "de": "Petitionsfortschritt"
+  },
+  "description": {
+    "en": "A headline, a progress bar with two figures and a button-like call below",
+    "de": "Eine Headline, ein Fortschrittsbalken mit zwei Zahlen und darunter eine Schaltfläche als Aufruf"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "track",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.441176,
+            "width": 1,
+            "height": 0.07563,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink2"
+            }
+          },
+          {
+            "id": "progress",
+            "type": "rect",
+            "x": 0.31413,
+            "y": 0.441176,
+            "width": 0.628261,
+            "height": 0.07563,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          },
+          {
+            "id": "button",
+            "type": "rect",
+            "x": 0.347826,
+            "y": 0.705882,
+            "width": 0.695652,
+            "height": 0.10084,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "18,600 signatures still missing.",
+            "x": 0,
+            "y": 0.02521,
+            "width": 0.543478,
+            "fontSize": 0.055556,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "current",
+            "type": "body",
+            "text": "31,400",
+            "x": 0,
+            "y": 0.504202,
+            "width": 0.434783,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "goal",
+            "type": "body",
+            "text": "50,000",
+            "x": 0.565217,
+            "y": 0.504202,
+            "width": 0.434783,
+            "fontSize": 0.044444,
+            "align": "right",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "cta",
+            "type": "body",
+            "text": "Sign now",
+            "x": 0.032609,
+            "y": 0.678992,
+            "width": 0.630435,
+            "fontSize": 0.042593,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": [
+          "headline",
+          "track",
+          "progress",
+          "current",
+          "goal",
+          "button",
+          "cta",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "headline": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 4,
+        "maxChars": 40
+      }
+    },
+    "current": {
+      "role": "number",
+      "label": {
+        "en": "Signatures so far",
+        "de": "Bisherige Unterschriften"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 8
+      }
+    },
+    "goal": {
+      "role": "number",
+      "label": {
+        "en": "Goal",
+        "de": "Ziel"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 8
+      }
+    },
+    "cta": {
+      "role": "cta",
+      "label": {
+        "en": "Button text",
+        "de": "Schaltflächentext"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 22
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "progress-bar",
+      "title": {
+        "en": "Progress bar",
+        "de": "Fortschrittsbalken"
+      },
+      "elementIds": ["track", "progress", "current", "goal"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "headline": "18,600 signatures still missing.",
+      "current": "31,400",
+      "goal": "50,000",
+      "cta": "Sign now"
+    },
+    "de": {
+      "headline": "Noch 18.600 Unterschriften fehlen.",
+      "current": "31.400",
+      "goal": "50.000",
+      "cta": "Jetzt unterschreiben"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
