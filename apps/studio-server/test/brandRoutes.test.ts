@@ -52,7 +52,7 @@ describe.skipIf(!hasDb)('brand packs (Postgres)', () => {
   it('has no pack until an owner saves one', async () => {
     const res = await editor.get(base).expect(200);
     expect(res.body).toMatchObject({ settings: null, assets: [], pack: null });
-    expect(res.body.bundledFonts).toEqual(['Raleway', 'Instrument Sans', 'Fraunces']);
+    expect(res.body.bundledFonts).toEqual(['Raleway', 'Instrument Sans', 'Fraunces', 'Bricolage Grotesque', 'Anton']);
   });
 
   it('saves settings, builds the pack and lets editors read but not write', async () => {
