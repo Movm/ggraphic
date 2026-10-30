@@ -293,7 +293,11 @@ export function useFloatingModuleHandlers<
       if (!activeFloatingModule) return;
       const id = activeFloatingModule.data.id;
       if (activeFloatingModule.type === 'shape') {
-        actions.updateShape?.(id, { fillGradient: gradient });
+        // A gradient the user picks replaces a shade; clearing the gradient leaves the shade be.
+        actions.updateShape?.(
+          id,
+          gradient ? { fillGradient: gradient, shade: null } : { fillGradient: gradient }
+        );
       } else if (activeFloatingModule.type === 'text') {
         const additionalTexts = state.additionalTexts ?? [];
         if (additionalTexts.find((t) => t.id === id)) {

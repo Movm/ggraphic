@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { shadeGradient } from './shade.js';
+import type { GradientFill } from './gradientFill.js';
+import { shadeGradient, shapeGradient } from './shade.js';
 
 describe('shadeGradient', () => {
   it('bottom: transparent at the top, 0.82 at 62 %, 0.94 at the bottom edge', () => {
@@ -33,5 +34,25 @@ describe('shadeGradient', () => {
         }
       }
     }
+  });
+});
+
+describe('shapeGradient', () => {
+  const own: GradientFill = { type: 'linear', angle: 0, stops: [{ offset: 0, color: '#fff' }] };
+
+  it('a shade wins over fillGradient', () => {
+    expect(shapeGradient({ fill: '#112233', shade: 'top', fillGradient: own })).toEqual(
+      shadeGradient('#112233', 'top')
+    );
+  });
+
+  it('is null for a flat fill, and ignores a null shade', () => {
+    expect(shapeGradient({ fill: '#112233' })).toBeNull();
+    expect(shapeGradient({ fill: '#112233', shade: null, fillGradient: null })).toBeNull();
+  });
+
+  it('passes fillGradient through without a shade', () => {
+    const fillGradient = own;
+    expect(shapeGradient({ fill: '#112233', fillGradient })).toBe(fillGradient);
   });
 });

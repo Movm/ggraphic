@@ -828,7 +828,7 @@ export interface ShapeInstance {
    * Photo gradient: `fill` fading in from the bottom or top edge (see `shadeGradient`).
    * When set it wins over `fillGradient`. Stored, so never renamed.
    */
-  shade?: 'bottom' | 'top';
+  shade?: 'bottom' | 'top' | null;
   /** Blends the fill into what lies beneath (Konva `globalCompositeOperation`); omit for normal. */
   blendMode?: ShapeBlendMode;
   /** Mirrored about the centre (negative node scale); omit for upright. */
