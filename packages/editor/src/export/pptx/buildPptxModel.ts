@@ -243,7 +243,7 @@ function mapShape(shape: ShapeInstance): PptxItem {
   if (!native) return raster(shape.id, placement, 'shape-path');
   // A native pptx shape can't carry the mirror the stage draws; the raster does.
   if (shape.flipX || shape.flipY) return raster(shape.id, placement, 'shape-flipped');
-  if (shape.fillGradient || shape.shade || shape.blendMode) {
+  if (shape.fillGradient || shape.shade || shape.blendMode || shape.notch) {
     return raster(shape.id, placement, 'shape-styled');
   }
   return {
@@ -460,7 +460,7 @@ function mapUserImage(image: UserImageInstance): PptxItem {
     image.fit === 'cover' &&
     ((image.cropZoom ?? 1) !== 1 || !!image.panX || !!image.panY || !!image.cropRotation);
   const ovalMask = image.mask === 'kreis' && Math.abs(image.width - image.height) > 0.5;
-  if (isAdjusted(image) || image.shadowColor || movedCrop || ovalMask) {
+  if (isAdjusted(image) || image.shadowColor || movedCrop || ovalMask || image.notch) {
     return raster(image.id, placement, 'image-adjusted');
   }
   return {

@@ -98,6 +98,7 @@ const ANGLE = 'angle; independent of the page size';
 const OPACITY = 'opacity; independent of the page size';
 const SHADOW_OPACITY = 'opacity; independent of the page size';
 const EM = 'em, relative to the font size; independent of the page size';
+const CANVAS_SHARE = 'a share of the canvas width; independent of the page size';
 const ADJUSTMENT = 'image adjustment (a filter strength or a share); independent of the page size';
 
 export const UNSCALED_FIELDS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
@@ -116,6 +117,7 @@ export const UNSCALED_FIELDS: Readonly<Record<string, Readonly<Record<string, st
     scaleY: RATIO,
     opacity: OPACITY,
     shadowOpacity: SHADOW_OPACITY,
+    notch: CANVAS_SHARE,
   },
   frameInstances: {
     rotation: ANGLE,
@@ -145,6 +147,7 @@ export const UNSCALED_FIELDS: Readonly<Record<string, Readonly<Record<string, st
     panX: ADJUSTMENT,
     panY: ADJUSTMENT,
     cropRotation: ANGLE,
+    notch: CANVAS_SHARE,
   },
   chartInstances: { scale: RATIO, rotation: ANGLE, opacity: OPACITY },
 };
@@ -160,7 +163,7 @@ const UNKNOWN = { kind: 'unknown' } as const;
  */
 function photoCover(el: El): ReturnType<GateAdapter['cover']> {
   const hasTint = str(el, 'tint') !== '' || num(el, 'tintStrength') !== 0;
-  if (hasTint || str(el, 'mask') !== '' || num(el, 'opacity', 1) < 1) return UNKNOWN;
+  if (hasTint || str(el, 'mask') !== '' || num(el, 'notch') !== 0 || num(el, 'opacity', 1) < 1) return UNKNOWN;
   const low = str(el, 'duotoneLow');
   const high = str(el, 'duotoneHigh');
   if (low === '' || high === '') return { kind: 'photo', low: '#000000', high: '#ffffff' };
@@ -647,6 +650,8 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
       if ((el['type'] !== undefined && el['type'] !== 'rect') || num(el, 'cornerRadius') !== 0) {
         return UNKNOWN;
       }
+      // A cut corner leaves part of the box bare.
+      if (num(el, 'notch') !== 0) return UNKNOWN;
       const gradient = el['fillGradient'];
       const fill = parseColor(str(el, 'fill'));
       if (!untransformed || !fill) return UNKNOWN;
