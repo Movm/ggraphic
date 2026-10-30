@@ -1,0 +1,291 @@
+{
+  "formatVersion": 1,
+  "id": "studio-number-two-columns",
+  "version": 1,
+  "kind": "template",
+  "family": "number",
+  "title": {
+    "en": "Two growing columns",
+    "de": "Zwei Säulen im Wachstum"
+  },
+  "description": {
+    "en": "Two columns of different height with a figure above each, for a before and after comparison",
+    "de": "Zwei unterschiedlich hohe Säulen mit je einer Zahl darüber, für einen Vorher-Nachher-Vergleich"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "bar-a",
+            "type": "rect",
+            "x": 0.23913,
+            "y": 0.907563,
+            "width": 0.391304,
+            "height": 0.117647,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink2"
+            }
+          },
+          {
+            "id": "bar-b",
+            "type": "rect",
+            "x": 0.717391,
+            "y": 0.705882,
+            "width": 0.391304,
+            "height": 0.521008,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "More than four times as many members",
+            "x": 0,
+            "y": 0,
+            "width": 0.565217,
+            "fontSize": 0.059259,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.96,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "number-a",
+            "type": "header",
+            "text": "14",
+            "x": 0.043478,
+            "y": 0.672269,
+            "width": 0.391304,
+            "fontSize": 0.175926,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.9,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "year-a",
+            "type": "body",
+            "text": "2021",
+            "x": 0.076087,
+            "y": 0.887395,
+            "width": 0.326087,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.body"
+            }
+          },
+          {
+            "id": "number-b",
+            "type": "header",
+            "text": "62",
+            "x": 0.521739,
+            "y": 0.285714,
+            "width": 0.391304,
+            "fontSize": 0.175926,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.9,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "year-b",
+            "type": "body",
+            "text": "2026",
+            "x": 0.554348,
+            "y": 0.907563,
+            "width": 0.326087,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": [
+          "headline",
+          "number-a",
+          "bar-a",
+          "year-a",
+          "number-b",
+          "bar-b",
+          "year-b",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "headline": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 7,
+        "maxLines": 4,
+        "maxChars": 44
+      }
+    },
+    "number-a": {
+      "role": "number",
+      "label": {
+        "en": "First figure",
+        "de": "Erste Zahl"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 4
+      }
+    },
+    "year-a": {
+      "role": "date",
+      "label": {
+        "en": "First year",
+        "de": "Erstes Jahr"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 6
+      }
+    },
+    "number-b": {
+      "role": "number",
+      "label": {
+        "en": "Second figure",
+        "de": "Zweite Zahl"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 4
+      }
+    },
+    "year-b": {
+      "role": "date",
+      "label": {
+        "en": "Second year",
+        "de": "Zweites Jahr"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 6
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "column-a",
+      "title": {
+        "en": "First column",
+        "de": "Erste Säule"
+      },
+      "elementIds": ["number-a", "bar-a", "year-a"]
+    },
+    {
+      "id": "column-b",
+      "title": {
+        "en": "Second column",
+        "de": "Zweite Säule"
+      },
+      "elementIds": ["number-b", "bar-b", "year-b"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "headline": "More than four times as many members",
+      "number-a": "14",
+      "year-a": "2021",
+      "number-b": "62",
+      "year-b": "2026"
+    },
+    "de": {
+      "headline": "Mehr als viermal so viele Mitglieder",
+      "number-a": "14",
+      "year-a": "2021",
+      "number-b": "62",
+      "year-b": "2026"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
