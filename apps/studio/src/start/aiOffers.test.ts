@@ -50,7 +50,10 @@ describe('pickOffers with hidden templates', () => {
     const all = pickOffers('post-portrait').templates.map((t) => t.id);
     expect(all).toContain('studio-quote');
     const rest = pickOffers('post-portrait', activeBrand(), new Set(['studio-quote'])).templates;
-    expect(rest.map((t) => t.id)).toEqual(all.filter((id) => id !== 'studio-quote'));
+    // The offer is capped, so a hidden template lets the next one move up.
+    expect(rest.map((t) => t.id).slice(0, all.length - 1)).toEqual(
+      all.filter((id) => id !== 'studio-quote')
+    );
   });
 });
 
@@ -72,6 +75,7 @@ describe('pickOffers', () => {
       'studio-event-panel',
       'studio-photo-quote',
       'studio-photo-number',
+      'studio-quote-giant-mark',
     ]);
     expect(templates.some((t) => t.id === BLANK_TEMPLATE_ID)).toBe(false);
   });
@@ -89,6 +93,7 @@ describe('pickOffers', () => {
       'studio-event-panel',
       'studio-photo-quote',
       'studio-photo-number',
+      'studio-quote-giant-mark',
     ]);
     expect(templates.find((t) => t.id === 'studio-quote')!.slots).toEqual([
       { id: 'headline', label: 'The quotation', maxChars: 160 },

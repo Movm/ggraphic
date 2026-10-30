@@ -1,0 +1,184 @@
+{
+  "formatVersion": 1,
+  "id": "studio-quote-side-portrait",
+  "version": 1,
+  "kind": "template",
+  "family": "quote",
+  "title": {
+    "en": "Quote beside portrait",
+    "de": "Zitat neben Porträt"
+  },
+  "description": {
+    "en": "A black-and-white portrait cut off at the right edge, the statement on the left with a name plate",
+    "de": "Ein Schwarzweiß-Porträt am rechten Rand angeschnitten, links die Aussage mit Namensfläche"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "light", "dark", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "plate",
+            "type": "rect",
+            "x": 0.206522,
+            "y": 0.638655,
+            "width": 0.413043,
+            "height": 0.134454,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0.462963,
+            "y": 0,
+            "width": 0.537037,
+            "height": 1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "grayscale": true,
+            "contrast": 6
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "quote",
+            "type": "header",
+            "text": "Good work pays off. For everyone, not just the loud.",
+            "x": 0,
+            "y": 0.07563,
+            "width": 0.434783,
+            "fontSize": 0.053704,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.98,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "name",
+            "type": "body",
+            "text": "Name, role",
+            "x": 0.026087,
+            "y": 0.591597,
+            "width": 0.369565,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontStyle": "bold",
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.body"
+            }
+          }
+        ],
+        "layerOrder": ["photo", "quote", "plate", "name", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "quote": {
+      "role": "quote",
+      "label": {
+        "en": "Quotation",
+        "de": "Zitat"
+      },
+      "budget": {
+        "maxWords": 12,
+        "maxLines": 9,
+        "maxChars": 64
+      }
+    },
+    "name": {
+      "role": "name",
+      "label": {
+        "en": "Name",
+        "de": "Name"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 2,
+        "maxChars": 20
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "quote-with-person",
+      "title": {
+        "en": "Quote with person",
+        "de": "Zitat mit Person"
+      },
+      "elementIds": ["quote", "plate", "name"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-left"],
+  "placeholders": {
+    "en": {
+      "quote": "Good work pays off. For everyone, not just the loud.",
+      "name": "Name, role"
+    },
+    "de": {
+      "quote": "Gute Arbeit zahlt sich aus. Für alle, nicht nur für die Lauten.",
+      "name": "Name, Rolle"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

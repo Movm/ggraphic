@@ -27,6 +27,12 @@ describe('blockLibrary', () => {
       'studio-event-programme/date-with-place',
       'studio-photo-quote/quote-with-person',
       'studio-photo-number/number-with-line',
+      'studio-quote-giant-mark/quote-with-person',
+      'studio-quote-portrait/quote-with-person',
+      'studio-quote-side-portrait/quote-with-person',
+      'studio-quote-two-voices/voice-1',
+      'studio-quote-two-voices/voice-2',
+      'studio-quote-typographic/quote-with-person',
     ]);
     expect(find(QUOTE)).toMatchObject({
       version: 1,

@@ -31,6 +31,11 @@ describe('the catalogue', () => {
       'studio-event-panel',
       'studio-photo-quote',
       'studio-photo-number',
+      'studio-quote-giant-mark',
+      'studio-quote-portrait',
+      'studio-quote-side-portrait',
+      'studio-quote-two-voices',
+      'studio-quote-typographic',
     ]);
     expect(entries.every((e) => e.source === 'pack')).toBe(true);
     expect(entries.filter((e) => e.needsPhoto).map((e) => e.id)).toEqual([
@@ -39,6 +44,10 @@ describe('the catalogue', () => {
       'studio-event-panel',
       'studio-photo-quote',
       'studio-photo-number',
+      'studio-quote-giant-mark',
+      'studio-quote-portrait',
+      'studio-quote-side-portrait',
+      'studio-quote-two-voices',
     ]);
     expect(catalogTemplate('studio-quote')?.family).toBe('quote');
     expect(catalogTemplate('nope')).toBeNull();
