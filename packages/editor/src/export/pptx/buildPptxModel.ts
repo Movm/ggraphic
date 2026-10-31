@@ -24,6 +24,7 @@ import {
 import { ICON_TARGET_SIZE, ILLUSTRATION_TARGET_SIZE } from '@ggraphic/editor/utils/motifSizes';
 import { photoStripBeside, type ShapeInstance } from '@ggraphic/editor/utils/shapes';
 import { hasCorners } from '@ggraphic/editor/utils/cornerRadius';
+import { bubbleExtent, tailOf } from '../../utils/shapeDevices.js';
 import { backgroundStraighten } from '@ggraphic/editor/utils/straighten';
 import { konvaFontStyle } from '@ggraphic/editor/utils/textUtils';
 
@@ -222,13 +223,29 @@ function shapeLocalBox(shape: ShapeInstance): PptxBox {
       const half = r * Math.sin((72 * Math.PI) / 180);
       return { x: -half, y: -r, width: 2 * half, height: r + r * Math.cos((36 * Math.PI) / 180) };
     }
-    default:
-      return {
+    default: {
+      const flat = {
         x: -shape.width / 2,
         y: -shape.height / 2,
         width: shape.width,
         height: shape.height,
       };
+      // A speech bubble's tail lies outside width × height; a bent arrow's curve off its flat box.
+      const tail = tailOf(shape);
+      if (tail) {
+        const out = bubbleExtent(shape.width, shape.height, tail);
+        return { x: flat.x + out.x, y: flat.y + out.y, width: out.width, height: out.height };
+      }
+      if (shape.type === 'line-arrow' && shape.bend) {
+        const stroke = shape.strokeWidth ?? 6;
+        const sag = shape.bend * shape.width * 1.1;
+        const pad = Math.max(16, stroke * 2.5) / 2 + stroke / 2;
+        const top = Math.min(flat.y, Math.min(0, sag) - pad);
+        const bottom = Math.max(flat.y + flat.height, Math.max(0, sag) + pad);
+        return { ...flat, y: top, height: bottom - top };
+      }
+      return flat;
+    }
   }
 }
 
@@ -252,6 +269,8 @@ function mapShape(shape: ShapeInstance): PptxItem {
     shape.glow ||
     (shape.grain ?? 0) > 0 ||
     shape.pattern ||
+    // The tail is part of the outline, which a native roundRect cannot carry.
+    tailOf(shape) ||
     // pptx rounds every corner of a roundRect the same.
     Array.isArray(shape.cornerRadius)
   ) {
