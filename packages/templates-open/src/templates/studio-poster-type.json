@@ -29,6 +29,26 @@
         },
         "shapeInstances": [
           {
+            "id": "stripes",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.5,
+            "width": 1,
+            "height": 1,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.4,
+            "pattern": "stripes",
+            "patternSpacing": 0.066667,
+            "patternColor": "#eeeeee",
+            "bind": {
+              "fill": "ground",
+              "patternColor": "deep"
+            }
+          },
+          {
             "id": "square",
             "type": "rect",
             "x": 0.974074,
@@ -154,17 +174,27 @@
             "fontWeight": 800,
             "letterSpacing": -0.045,
             "bind": {
-              "fill": "accent",
+              "fill": "ink",
               "fontFamily": "font.headline"
             },
             "maxFontSize": 0.277778
           }
         ],
-        "layerOrder": ["square", "disc", "line-1", "line-2", "line-3", "line-4", "brand-logo"]
+        "layerOrder": [
+          "stripes",
+          "square",
+          "disc",
+          "line-1",
+          "line-2",
+          "line-3",
+          "line-4",
+          "brand-logo"
+        ]
       }
     }
   ],
   "frames": {
+    "stripes": "canvas",
     "square": "canvas",
     "line-1": "canvas",
     "line-2": "canvas",

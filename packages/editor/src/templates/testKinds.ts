@@ -146,6 +146,7 @@ const POPULATED: Record<string, Fields> = {
     aspectRatioLock: 1.5,
   },
   userImageInstances: {
+    cornerRadius: [6, 0, 0, 6],
     blur: 2,
     shadowBlur: 3,
     shadowOffsetX: 4,

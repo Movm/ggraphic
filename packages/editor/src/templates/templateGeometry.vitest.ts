@@ -713,6 +713,30 @@ describe('template gate adapter: what the renderer scales, turns and draws', () 
       expect(light.grain.alpha[1]).toBeCloseTo(70 / 255);
     });
 
+    it('reports a stripe pattern as the stripe colour over the fill', () => {
+      expect(cover({ ...rect, pattern: 'stripes', patternColor: '#fbe1ec' })).toMatchObject({
+        kind: 'solid',
+        fill: '#005538',
+        stripes: '#fbe1ec',
+      });
+      // No stripe colour to judge against: not provable.
+      expect(cover({ ...rect, pattern: 'stripes' })).toEqual({ kind: 'unknown' });
+    });
+
+    it('does not prove a photo with rounded corners fills its box', () => {
+      const photo = { src: '/p.png', x: 0, y: 0, width: 600, height: 400 };
+      expect(cover(photo, 'userImageInstances')).toMatchObject({ kind: 'photo' });
+      expect(cover({ ...photo, cornerRadius: [0, 0, 0, 64] }, 'userImageInstances')).toEqual({
+        kind: 'unknown',
+      });
+      expect(cover({ ...photo, cornerRadius: 32 }, 'userImageInstances')).toEqual({
+        kind: 'unknown',
+      });
+      expect(cover({ ...photo, cornerRadius: [0, 0, 0, 0] }, 'userImageInstances')).toMatchObject({
+        kind: 'photo',
+      });
+    });
+
     it('flags a dot pattern', () => {
       expect(cover({ ...rect, pattern: 'dots' })).toMatchObject({ kind: 'solid', dots: true });
     });

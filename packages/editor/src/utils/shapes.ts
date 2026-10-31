@@ -2,6 +2,7 @@
 import { type Bindings, type PlateHug } from '@ggraphic/core';
 import { messages } from '@ggraphic/editor/i18n/messages';
 
+import { type CornerRadius } from './cornerRadius.js';
 import { defaultMarkerFill } from './markerColors.js';
 
 import type { GradientFill } from '@ggraphic/editor/utils/gradientFill';
@@ -811,7 +812,8 @@ export interface ShapeInstance {
   scaleX: number;
   scaleY: number;
   opacity: number;
-  cornerRadius?: number;
+  /** `rounded-rect`: one radius for all corners, or one per corner (tl, tr, br, bl). */
+  cornerRadius?: CornerRadius;
   /** Canvas px a composer card grew with its text (cardFollowsText); not a hand resize. */
   textGrowth?: number;
   strokeWidth?: number;
@@ -848,11 +850,14 @@ export interface ShapeInstance {
   grain?: number;
   /** `dark`: dark specks; `light`: soft white specks. Absent: `dark`. */
   grainTone?: 'dark' | 'light';
-  /** `rect` only: a grid of dots over the fill. */
-  pattern?: 'dots';
-  /** Colour of the dots (bindable). */
+  /** `rect` only: a grid of dots, or vertical stripes (every second band), over the fill. */
+  pattern?: 'dots' | 'stripes';
+  /** Colour of the dots or stripes (bindable). */
   patternColor?: string;
-  /** Distance between the dots, a share of the canvas width (0.037 = 40 px on 1080). */
+  /**
+   * Distance between the dots (0.037 = 40 px on 1080), or the width of one stripe band
+   * (0.0667 = 72 px on 1080), as a share of the canvas width.
+   */
   patternSpacing?: number;
   /** `rect` only: the plate follows a text's lines (see `hugPlates`); padding in px. Not drawn. Stored, so never renamed. */
   hug?: PlateHug;
