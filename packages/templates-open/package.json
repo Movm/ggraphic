@@ -1,9 +1,13 @@
 {
   "name": "@ggraphic/templates-open",
   "version": "0.0.0",
-  "private": true,
   "description": "The open template pack: the Studio's starter designs as template files",
   "license": "CC0-1.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Movm/ggraphic.git",
+    "directory": "packages/templates-open"
+  },
   "type": "module",
   "sideEffects": false,
   "main": "./dist/index.js",
