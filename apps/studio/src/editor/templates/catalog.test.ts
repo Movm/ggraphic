@@ -46,7 +46,13 @@ describe('the catalogue', () => {
       'studio-poster-type',
       'studio-quote-card',
       'studio-split-photos-band',
+      'studio-statement-bar',
       'studio-statement-panel-dots',
+      'studio-statement-photo',
+      'studio-statement-sandwich',
+      'studio-statement-serif',
+      'studio-statement-split-word',
+      'studio-statement-stack',
       'studio-study-kicker-boxes',
     ]);
     expect(entries.every((e) => e.source === 'pack')).toBe(true);
@@ -67,6 +73,8 @@ describe('the catalogue', () => {
       'studio-invitation-panel',
       'studio-petition-face',
       'studio-split-photos-band',
+      'studio-statement-photo',
+      'studio-statement-sandwich',
       'studio-study-kicker-boxes',
     ]);
     expect(catalogTemplate('studio-quote')?.family).toBe('quote');

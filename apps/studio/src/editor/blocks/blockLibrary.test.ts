@@ -32,7 +32,11 @@ describe('blockLibrary', () => {
       'studio-invitation-panel/date-with-place',
       'studio-petition-face/progress',
       'studio-quote-card/quote-with-name',
+      'studio-statement-bar/statement-lines',
       'studio-statement-panel-dots/statement-with-text',
+      'studio-statement-serif/statement-with-line',
+      'studio-statement-split-word/split-word',
+      'studio-statement-stack/statement-with-line',
       'studio-study-kicker-boxes/kicker-headline',
     ]);
     expect(find(QUOTE)).toMatchObject({
