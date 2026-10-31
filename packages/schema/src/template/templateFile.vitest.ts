@@ -181,6 +181,36 @@ describe('readTemplateFile', () => {
     if (result.status === 'invalid') expect(result.reason).toContain('slots.ghost');
   });
 
+  it('accepts a page counter and a struck-through text, and texts without them', () => {
+    for (const extra of [{ counter: 'page' }, { strikethrough: true }, {}]) {
+      const state = { texts: [{ id: 'ghost', text: '5', ...extra }] };
+      expect(readTemplateFile(with_({ pages: [{ state }] })).status).toBe('ok');
+    }
+  });
+
+  it.each([
+    ['counter', 'slide'],
+    ['counter', true],
+    ['counter', null],
+    ['strikethrough', false],
+    ['strikethrough', 1],
+    ['strikethrough', 'true'],
+  ])('rejects %s %j', (field, value) => {
+    const state = { texts: [{ id: 'ghost', text: '5', [field]: value }] };
+    const result = readTemplateFile(with_({ pages: [{ state }] }));
+    expect(result.status).toBe('invalid');
+    if (result.status === 'invalid') expect(result.reason).toContain(field);
+  });
+
+  it('rejects a slot on a page counter: its text is the page number, not content', () => {
+    const state = { texts: [{ id: 'ghost', text: '5', counter: 'page' }] };
+    const result = readTemplateFile(
+      with_({ pages: [{ state }], slots: { ghost: { role: 'headline', budget: { maxWords: 1 } } } })
+    );
+    expect(result.status).toBe('invalid');
+    if (result.status === 'invalid') expect(result.reason).toContain('slots.ghost');
+  });
+
   it('a block naming a missing element is invalid', () => {
     const result = readTemplateFile(
       with_({ blocks: [{ id: 'b', title: { en: 'B' }, elementIds: ['nope'] }] })

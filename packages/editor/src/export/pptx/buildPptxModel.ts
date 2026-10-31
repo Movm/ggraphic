@@ -22,6 +22,7 @@ import {
   type ChartType,
 } from '@ggraphic/editor/utils/chartUtils';
 import { ICON_TARGET_SIZE, ILLUSTRATION_TARGET_SIZE } from '@ggraphic/editor/utils/motifSizes';
+import { shownText } from '../../utils/pageCounter.js';
 import { photoStripBeside, type ShapeInstance } from '@ggraphic/editor/utils/shapes';
 import { hasCorners } from '@ggraphic/editor/utils/cornerRadius';
 import { backgroundStraighten } from '@ggraphic/editor/utils/straighten';
@@ -276,7 +277,9 @@ function mapShape(shape: ShapeInstance): PptxItem {
   };
 }
 
-function mapText(text: AdditionalText, measure: PptxMeasureText): PptxItem {
+function mapText(authored: AdditionalText, measure: PptxMeasureText, pageNumber: number): PptxItem {
+  // A page counter is the number of its slide.
+  const text = { ...authored, text: shownText(authored, pageNumber) };
   const scale = text.scale || 1;
   const lineHeight = text.lineHeight ?? 1.2;
   const paragraphs = textParagraphs(text);
@@ -305,6 +308,7 @@ function mapText(text: AdditionalText, measure: PptxMeasureText): PptxItem {
     bold,
     italic: style.includes('italic'),
     letterSpacing: text.letterSpacing ?? 0,
+    strikethrough: text.strikethrough === true,
     align: text.align ?? 'left',
     valign: 'top',
     lineHeight,
@@ -371,6 +375,7 @@ function mapPill(pill: PillBadgeInstance, measure: PptxMeasureText): PptxItem[] 
       bold: style.includes('bold'),
       italic: style.includes('italic'),
       letterSpacing: 0,
+      strikethrough: false,
       align: 'center',
       valign: 'middle',
       lineHeight: 1,
@@ -432,6 +437,7 @@ function mapCircleBadge(badge: CircleBadgeInstance): PptxItem[] {
       bold: line.fontWeight === 'bold',
       italic: false,
       letterSpacing: 0,
+      strikethrough: false,
       align: 'center',
       valign: 'top',
       lineHeight: 1,
@@ -604,7 +610,8 @@ function mapBackgroundPhoto(state: PptxPageState, page: PptxBox): PptxItem | nul
 function buildSlide(
   state: PptxPageState,
   format: CanvasFormat,
-  measure: PptxMeasureText
+  measure: PptxMeasureText,
+  pageNumber: number
 ): PptxSlideModel {
   const page: PptxBox = { x: 0, y: 0, width: format.width, height: format.height };
   const carried = carryInstanceState(state as Record<string, unknown>);
@@ -642,7 +649,8 @@ function buildSlide(
       )
     );
   }
-  for (const text of carried.additionalTexts) add(text.id, () => mapText(text, measure));
+  for (const text of carried.additionalTexts)
+    add(text.id, () => mapText(text, measure, pageNumber));
   for (const illustration of carried.illustrationInstances) {
     add(illustration.id, () =>
       raster(
@@ -728,6 +736,6 @@ export function buildPptxModel(
   const measure = options.measure ?? estimateMeasure;
   return {
     page: { width: format.width, height: format.height },
-    slides: pages.map((state) => buildSlide(state, format, measure)),
+    slides: pages.map((state, index) => buildSlide(state, format, measure, index + 1)),
   };
 }

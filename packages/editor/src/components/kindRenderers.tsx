@@ -16,6 +16,7 @@ import { CanvasText } from '../primitives/index.js';
 import { AssetPrimitive } from '../primitives/AssetPrimitive.js';
 import { IllustrationPrimitive } from '../primitives/IllustrationPrimitive.js';
 import { resolveIconDef } from '../utils/iconInstances.js';
+import { shownText } from '../utils/pageCounter.js';
 import { effectiveAccent, effectiveMarker } from '../utils/textUtils.js';
 
 import type { OptionalCanvasActions } from '../hooks/useCanvasElementHandlers.js';
@@ -160,6 +161,8 @@ export interface RenderCtx {
   croppingElement: string | null;
   setCroppingElement: (id: string | null) => void;
   cropAspect: CropAspectId;
+  /** The page this item is drawn on, from 1; absent for a canvas that is no page of a deck. */
+  pageNumber?: number;
 }
 
 // Selectable wrapper factory: each wrapper subscribes to the store for its
@@ -577,7 +580,7 @@ export const KIND_RENDERERS: KindRenderers = {
         key={textItem.id}
         elementId={textItem.id}
         id={textItem.id}
-        text={textItem.text}
+        text={shownText(textItem, ctx.pageNumber)}
         x={textItem.x}
         y={textItem.y}
         width={textItem.width}
@@ -586,6 +589,7 @@ export const KIND_RENDERERS: KindRenderers = {
         fontStyle={textItem.fontStyle || 'normal'}
         fontWeight={textItem.fontWeight}
         letterSpacing={textItem.letterSpacing}
+        strikethrough={textItem.strikethrough}
         fill={textItem.fill}
         stroke={textItem.stroke}
         strokeWidth={textItem.strokeWidth}
@@ -619,7 +623,7 @@ export const KIND_RENDERERS: KindRenderers = {
             rotation,
           });
         }}
-        editable={true}
+        editable={textItem.counter === undefined}
         onSnapChange={handleSnapChange}
         onSnapLinesChange={setSnapLines}
         getSnapTargets={getSnapTargets}

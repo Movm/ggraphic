@@ -25,6 +25,7 @@ import {
 } from '@ggraphic/schema';
 
 import { GRAIN_SPECK_ALPHA } from '../utils/grainSpec.js';
+import { PAGE_COUNTER_PROBE } from '../utils/pageCounter.js';
 import { plainTextLines } from '../utils/plainTextLayout.js';
 import { usesRichText } from '../utils/textRouting.js';
 import { createRunMeasurer, type MeasureWidth, type TextAccent } from '../utils/textUtils.js';
@@ -343,7 +344,8 @@ interface TextProps {
 const textPropsOf = (el: Readonly<Record<string, unknown>>): TextProps => {
   const accent = el['accent'];
   return {
-    text: str(el, 'text'),
+    // A page counter shows a different numeral on every page: the gate judges the widest one.
+    text: el['counter'] === 'page' ? PAGE_COUNTER_PROBE : str(el, 'text'),
     fontSize: num(el, 'fontSize'),
     fontFamily: str(el, 'fontFamily'),
     fontStyle: normalFontStyle(str(el, 'fontStyle')),

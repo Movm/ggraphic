@@ -260,6 +260,16 @@ function crossReferences(file: TemplateFile): string | null {
     if (decorative !== undefined && decorative !== true) {
       return `${id}.decorative: must be true when present`;
     }
+    // A line through the whole text; only `true` means anything.
+    const strike = isRecord(item) ? item['strikethrough'] : undefined;
+    if (strike !== undefined && strike !== true) {
+      return `${id}.strikethrough: must be true when present`;
+    }
+    // The text shows the number of its page, so it is no content to fill or budget.
+    const counter = isRecord(item) ? item['counter'] : undefined;
+    if (counter !== undefined && counter !== 'page') {
+      return `${id}.counter: must be "page" when present`;
+    }
     // The prototype's size: the fit never goes above it, so it cannot lie under the plain size.
     const maxFontSize = isRecord(item) ? item['maxFontSize'] : undefined;
     if (maxFontSize !== undefined) {
@@ -283,6 +293,9 @@ function crossReferences(file: TemplateFile): string | null {
     const slotted = elements.find(([elementId]) => elementId === id)?.[1];
     if (isRecord(slotted) && slotted['decorative'] === true) {
       return `slots.${id}: a decorative text is no content and cannot be a slot`;
+    }
+    if (isRecord(slotted) && slotted['counter'] === 'page') {
+      return `slots.${id}: a page counter shows the page number and cannot be a slot`;
     }
   }
   const bound = new Map<string, Set<string>>();

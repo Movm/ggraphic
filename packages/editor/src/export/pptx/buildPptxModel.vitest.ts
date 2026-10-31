@@ -2,9 +2,12 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildPptxModel } from './buildPptxModel.js';
+import { pptxUnits } from './pptxUnits.js';
+import { textRuns } from './writeText.js';
 import { shadeGradient } from '../../utils/shade.js';
 
 import type { CanvasFormat } from '../../formats/index.js';
+import type { PptxTextItem } from './types.js';
 import type { ShapeInstance } from '../../utils/shapes.js';
 import type { UserImageInstance } from '../../utils/userImageUtils.js';
 
@@ -141,5 +144,45 @@ describe('buildPptxModel texture', () => {
 
   it('leaves a rect with grain 0 native', () => {
     expect(items(shape({ grain: 0 }))[0]).toMatchObject({ kind: 'shape' });
+  });
+});
+
+describe('buildPptxModel text devices', () => {
+  const text = (extra: Record<string, unknown> = {}) => ({
+    id: 't1',
+    text: '5',
+    type: 'body',
+    x: 0,
+    y: 0,
+    width: 600,
+    fontSize: 100,
+    fontFamily: 'Raleway',
+    fill: '#005538',
+    ...extra,
+  });
+  const slides = (pages: Record<string, unknown>[]) =>
+    buildPptxModel(pages as never, format).slides;
+  const firstText = (slide: { items: unknown[] }) => slide.items[0] as PptxTextItem;
+  const words = (item: PptxTextItem) => item.paragraphs.flatMap((p) => p.runs.map((r) => r.text));
+
+  it('writes a struck-through text with a strike on every run', () => {
+    const units = pptxUnits(1080);
+    const [slide] = slides([
+      { additionalTexts: [text({ text: 'Ein ==Mythos==', strikethrough: true })] },
+    ]);
+    const runs = textRuns(firstText(slide!), units);
+    expect(runs.length).toBeGreaterThan(1);
+    for (const run of runs) expect(run.options?.strike).toBe('sngStrike');
+  });
+
+  it('writes no strike without it', () => {
+    const [slide] = slides([{ additionalTexts: [text()] }]);
+    expect(textRuns(firstText(slide!), pptxUnits(1080))[0]!.options?.strike).toBeUndefined();
+  });
+
+  it('writes the number of its slide for a page counter', () => {
+    const page = { additionalTexts: [text({ counter: 'page' })] };
+    const deck = slides([page, page, page]);
+    expect(deck.map((slide) => words(firstText(slide)).join(''))).toEqual(['1', '2', '3']);
   });
 });
