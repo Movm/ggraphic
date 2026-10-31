@@ -1,0 +1,205 @@
+{
+  "formatVersion": 1,
+  "id": "studio-day-jubilee",
+  "version": 1,
+  "kind": "template",
+  "family": "day",
+  "title": {
+    "en": "Jubilee number",
+    "de": "Jubiläumszahl"
+  },
+  "description": {
+    "en": "A congratulations label, a giant jubilee number and a line saying what is celebrated",
+    "de": "Ein Glückwunsch-Label, eine riesige Jubiläumszahl und eine Zeile, was gefeiert wird"
+  },
+  "tags": {
+    "tone": "warm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "label-plate",
+            "type": "rect",
+            "x": 0.255435,
+            "y": 0.035294,
+            "width": 0.51087,
+            "height": 0.084034,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            },
+            "hug": {
+              "text": "label",
+              "padX": 0.018519,
+              "padY": 0.012963
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "label",
+            "type": "body",
+            "text": "CONGRATS",
+            "x": 0.030435,
+            "y": 0.013445,
+            "width": 0.456522,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontWeight": 700,
+            "letterSpacing": 0.03,
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.044444
+          },
+          {
+            "id": "number",
+            "type": "header",
+            "text": "100",
+            "x": 0,
+            "y": 0.184874,
+            "width": 1,
+            "fontSize": 0.666667,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.92,
+            "fontWeight": 400,
+            "letterSpacing": -0.005,
+            "bind": {
+              "fill": "accent",
+              "fontFamily": "font.condensed"
+            },
+            "maxFontSize": 0.666667
+          },
+          {
+            "id": "title",
+            "type": "header",
+            "text": "years of the North Library",
+            "x": 0,
+            "y": 0.731092,
+            "width": 0.934783,
+            "fontSize": 0.077778,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.96,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.077778
+          }
+        ],
+        "layerOrder": ["label-plate", "label", "number", "title", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "label": {
+      "role": "subline",
+      "label": {
+        "en": "Label",
+        "de": "Label"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 16
+      }
+    },
+    "number": {
+      "role": "number",
+      "label": {
+        "en": "Figure",
+        "de": "Zahl"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 4
+      }
+    },
+    "title": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 2,
+        "maxChars": 36
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "number-with-explanation",
+      "title": {
+        "en": "Number with explanation",
+        "de": "Zahl mit Erklärung"
+      },
+      "elementIds": ["number", "title"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "label": "CONGRATS",
+      "number": "100",
+      "title": "years of the North Library"
+    },
+    "de": {
+      "label": "GLÜCKWUNSCH",
+      "number": "100",
+      "title": "Jahre Stadtbibliothek Nord"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

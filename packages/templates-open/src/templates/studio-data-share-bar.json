@@ -1,0 +1,402 @@
+{
+  "formatVersion": 1,
+  "id": "studio-data-share-bar",
+  "version": 1,
+  "kind": "template",
+  "family": "data",
+  "title": {
+    "en": "One bar in three shares",
+    "de": "Ein Balken in drei Anteilen"
+  },
+  "description": {
+    "en": "One wide bar split into three shares, each with a figure and a label, and a closing sentence",
+    "de": "Ein breiter Balken in drei Anteilen mit je einer Zahl und einer Beschriftung und einem Schlusssatz"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "share-1",
+            "type": "rect",
+            "x": 0.239674,
+            "y": 0.445378,
+            "width": 0.479348,
+            "height": 0.319328,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          },
+          {
+            "id": "share-2",
+            "type": "rect",
+            "x": 0.634239,
+            "y": 0.445378,
+            "width": 0.309783,
+            "height": 0.319328,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          },
+          {
+            "id": "share-3",
+            "type": "rect",
+            "x": 0.894565,
+            "y": 0.445378,
+            "width": 0.21087,
+            "height": 0.319328,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink2"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "title",
+            "type": "header",
+            "text": "Who pays for the energy transition?",
+            "x": 0,
+            "y": 0.02521,
+            "width": 1,
+            "fontSize": 0.088889,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.088889
+          },
+          {
+            "id": "value-1",
+            "type": "header",
+            "text": "48",
+            "x": 0.023913,
+            "y": 0.310924,
+            "width": 0.446739,
+            "fontSize": 0.085185,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.085185
+          },
+          {
+            "id": "label-1",
+            "type": "body",
+            "text": "Homes",
+            "x": 0.023913,
+            "y": 0.521008,
+            "width": 0.446739,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.044444
+          },
+          {
+            "id": "value-2",
+            "type": "header",
+            "text": "31",
+            "x": 0.503261,
+            "y": 0.310924,
+            "width": 0.277174,
+            "fontSize": 0.085185,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.085185
+          },
+          {
+            "id": "label-2",
+            "type": "body",
+            "text": "Industry",
+            "x": 0.503261,
+            "y": 0.521008,
+            "width": 0.277174,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.044444
+          },
+          {
+            "id": "value-3",
+            "type": "header",
+            "text": "21",
+            "x": 0.813043,
+            "y": 0.310924,
+            "width": 0.178261,
+            "fontSize": 0.085185,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.085185
+          },
+          {
+            "id": "label-3",
+            "type": "body",
+            "text": "State",
+            "x": 0.813043,
+            "y": 0.521008,
+            "width": 0.178261,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.044444
+          },
+          {
+            "id": "text",
+            "type": "body",
+            "text": "Almost half stays with households.",
+            "x": 0,
+            "y": 0.672269,
+            "width": 1,
+            "fontSize": 0.055556,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.08,
+            "fontWeight": 700,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.055556
+          }
+        ],
+        "layerOrder": [
+          "title",
+          "share-1",
+          "value-1",
+          "label-1",
+          "share-2",
+          "value-2",
+          "label-2",
+          "share-3",
+          "value-3",
+          "label-3",
+          "text",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "title": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 2,
+        "maxChars": 40
+      }
+    },
+    "value-1": {
+      "role": "number",
+      "label": {
+        "en": "Value 1",
+        "de": "Wert 1"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 4
+      }
+    },
+    "label-1": {
+      "role": "name",
+      "label": {
+        "en": "Label 1",
+        "de": "Beschriftung 1"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 14
+      }
+    },
+    "value-2": {
+      "role": "number",
+      "label": {
+        "en": "Value 2",
+        "de": "Wert 2"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 4
+      }
+    },
+    "label-2": {
+      "role": "name",
+      "label": {
+        "en": "Label 2",
+        "de": "Beschriftung 2"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 14
+      }
+    },
+    "value-3": {
+      "role": "number",
+      "label": {
+        "en": "Value 3",
+        "de": "Wert 3"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 4
+      }
+    },
+    "label-3": {
+      "role": "name",
+      "label": {
+        "en": "Label 3",
+        "de": "Beschriftung 3"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 14
+      }
+    },
+    "text": {
+      "role": "body",
+      "label": {
+        "en": "Takeaway",
+        "de": "Aussage"
+      },
+      "budget": {
+        "maxWords": 7,
+        "maxLines": 3,
+        "maxChars": 56
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right"],
+  "placeholders": {
+    "en": {
+      "title": "Who pays for the energy transition?",
+      "value-1": "48",
+      "label-1": "Homes",
+      "value-2": "31",
+      "label-2": "Industry",
+      "value-3": "21",
+      "label-3": "State",
+      "text": "Almost half stays with households."
+    },
+    "de": {
+      "title": "Wer zahlt die Energiewende?",
+      "value-1": "48",
+      "label-1": "Haushalte",
+      "value-2": "31",
+      "label-2": "Industrie",
+      "value-3": "21",
+      "label-3": "Staat",
+      "text": "Fast die Hälfte bleibt bei den Haushalten."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "formatVersion": 1,
+  "id": "studio-statement-sandwich",
+  "version": 1,
+  "kind": "template",
+  "family": "statement",
+  "title": {
+    "en": "Word sandwich",
+    "de": "Wörter-Sandwich"
+  },
+  "description": {
+    "en": "A photo strip between two lines of giant type",
+    "de": "Ein Fotostreifen zwischen zwei Zeilen riesiger Schrift"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "light", "dark", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0.218487,
+            "width": 1,
+            "height": 0.537815,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "grayscale": true,
+            "contrast": 6
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "top",
+            "type": "header",
+            "text": "CITY",
+            "x": 0,
+            "y": 0,
+            "width": 0.565217,
+            "fontSize": 0.199074,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.9,
+            "fontWeight": 400,
+            "letterSpacing": -0.005,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.condensed"
+            },
+            "maxFontSize": 0.199074
+          },
+          {
+            "id": "bottom",
+            "type": "header",
+            "text": "FOR ALL.",
+            "x": 0,
+            "y": 0.781513,
+            "width": 1,
+            "fontSize": 0.305556,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.9,
+            "fontWeight": 400,
+            "letterSpacing": -0.005,
+            "bind": {
+              "fill": "accent",
+              "fontFamily": "font.condensed"
+            },
+            "maxFontSize": 0.305556
+          }
+        ],
+        "layerOrder": ["top", "photo", "bottom", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "top": {
+      "role": "headline",
+      "label": {
+        "en": "Top line",
+        "de": "Obere Zeile"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 8
+      }
+    },
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "bottom": {
+      "role": "headline",
+      "label": {
+        "en": "Bottom line",
+        "de": "Untere Zeile"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 12
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "top": "CITY",
+      "bottom": "FOR ALL."
+    },
+    "de": {
+      "top": "STADT",
+      "bottom": "ALLEN."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
