@@ -1,0 +1,167 @@
+{
+  "formatVersion": 1,
+  "id": "studio-statement-serif",
+  "version": 1,
+  "kind": "template",
+  "family": "statement",
+  "title": {
+    "en": "Serif statement",
+    "de": "Serifen-Statement"
+  },
+  "description": {
+    "en": "A short colour rule, a statement in serif type and a line of context",
+    "de": "Eine kurze Farblinie, eine Aussage in Serifenschrift und eine Kontextzeile"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "rule",
+            "type": "rect",
+            "x": 0.086957,
+            "y": 0.038655,
+            "width": 0.173913,
+            "height": 0.010084,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "Saving must ==never== mean forgetting people.",
+            "x": 0,
+            "y": 0.092437,
+            "width": 1,
+            "fontSize": 0.109259,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.98,
+            "fontWeight": 600,
+            "letterSpacing": -0.025,
+            "accentFill": "#ffffff",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.serif",
+              "accentFill": "accent"
+            },
+            "maxFontSize": 0.109259
+          },
+          {
+            "id": "subline",
+            "type": "body",
+            "text": "Budget 2027: stop the cuts to inclusion support.",
+            "x": 0,
+            "y": 0.605042,
+            "width": 0.826087,
+            "fontSize": 0.048148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontWeight": 500,
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.048148
+          }
+        ],
+        "layerOrder": ["rule", "headline", "subline", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "headline": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 8,
+        "maxLines": 4,
+        "maxChars": 60
+      }
+    },
+    "subline": {
+      "role": "subline",
+      "label": {
+        "en": "Subline",
+        "de": "Unterzeile"
+      },
+      "budget": {
+        "maxWords": 8,
+        "maxLines": 3,
+        "maxChars": 56
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "statement-with-line",
+      "title": {
+        "en": "Statement with line",
+        "de": "Aussage mit Satz"
+      },
+      "elementIds": ["headline", "subline"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-left"],
+  "placeholders": {
+    "en": {
+      "headline": "Saving must ==never== mean forgetting people.",
+      "subline": "Budget 2027: stop the cuts to inclusion support."
+    },
+    "de": {
+      "headline": "Sparen darf ==nie== heißen, Menschen zu vergessen.",
+      "subline": "Haushalt 2027: Kürzungen bei der Inklusion stoppen."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
