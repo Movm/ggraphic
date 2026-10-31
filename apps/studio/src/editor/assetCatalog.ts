@@ -23,7 +23,7 @@ export function studioAssetCatalog(): CanvasAssetCatalog {
     isInstanceSrc: () => false,
     elementPanel: STUDIO_ELEMENT_PANEL,
     emojiSrc: (code) => `/emoji/emoji_u${code}.svg`,
-    emojiOffered: (code, group) => group !== 'Flaggen' && !SKIN_TONE.test(code),
+    emojiOffered: (code, group) => group !== 'flags' && !SKIN_TONE.test(code),
     illustrations: {
       loadKawaii: () => Promise.resolve(KAWAII_ILLUSTRATIONS),
       loadSvg: async () => {
