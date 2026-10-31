@@ -5,7 +5,8 @@
  * held still for a moment, `PATCH /api/projects/:id` stores them with the
  * version last read. A 409 stops saving until the user decides (reload, or
  * overwrite with the version on screen). A 404 (the project was trashed meanwhile) stops it too. A PNG thumbnail follows a save, at
- * most every half minute.
+ * most every half minute; a save inside that window gets its thumbnail when the window ends, or on
+ * leaving, whichever comes first.
  */
 import { type CanvasEditorExportApi } from '@ggraphic/editor/components/CanvasEditor/types';
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
@@ -63,6 +64,8 @@ export function useAutosave({
   const busyRef = useRef(false);
   const blockedRef = useRef(false);
   const thumbnailAtRef = useRef(0);
+  /** A save got no thumbnail yet: the card still shows an older state. */
+  const thumbnailTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const currentDocument = useCallback(() => {
     const pages = exportApi.current?.getPages();
@@ -98,10 +101,17 @@ export function useAutosave({
         openedJsonRef.current = null;
         blockedRef.current = false;
         setStatus(JSON.stringify(currentDocument()) === json ? 'saved' : 'pending');
-        if (Date.now() - thumbnailAtRef.current > THUMBNAIL_EVERY_MS) {
+        const sinceThumbnail = Date.now() - thumbnailAtRef.current;
+        if (sinceThumbnail > THUMBNAIL_EVERY_MS) {
           thumbnailAtRef.current = Date.now();
           // Best effort: a missing thumbnail must not show as a failed save.
           void uploadThumbnail().catch(() => undefined);
+        } else if (thumbnailTimerRef.current === null) {
+          thumbnailTimerRef.current = setTimeout(() => {
+            thumbnailTimerRef.current = null;
+            thumbnailAtRef.current = Date.now();
+            void uploadThumbnail().catch(() => undefined);
+          }, THUMBNAIL_EVERY_MS - sinceThumbnail);
         }
       } catch (err) {
         if (err instanceof ApiError && err.isVersionConflict) {
@@ -224,8 +234,23 @@ export function useAutosave({
     }
   }, [projectId, save]);
 
-  /** Saves now, e.g. before leaving the editor. */
-  const flush = useCallback(() => (blockedRef.current ? Promise.resolve() : save()), [save]);
+  useEffect(
+    () => () => {
+      if (thumbnailTimerRef.current !== null) clearTimeout(thumbnailTimerRef.current);
+    },
+    []
+  );
+
+  /** Saves now, e.g. before leaving the editor, with the thumbnail a save is still owed. */
+  const flush = useCallback(async () => {
+    if (blockedRef.current) return;
+    await save();
+    if (thumbnailTimerRef.current === null) return;
+    clearTimeout(thumbnailTimerRef.current);
+    thumbnailTimerRef.current = null;
+    thumbnailAtRef.current = Date.now();
+    await uploadThumbnail().catch(() => undefined);
+  }, [save, uploadThumbnail]);
 
   return { status, overwrite, flush, hasUnsaved, retry: () => void save(true) };
 }
