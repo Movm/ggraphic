@@ -156,6 +156,17 @@ describe.skipIf(!hasDb)('routes as a member (Postgres)', () => {
       });
     });
 
+    it('takes the whole catalogue of a format, not only its first dozen', async () => {
+      const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(answer(good));
+      const many = Array.from({ length: 79 }, (_, i) => ({ ...offer.templates[0], id: `t${i}` }));
+      await (
+        await loggedIn({ ai }, fetchMock)
+      )
+        .post('/api/ai/pick')
+        .send({ ...offer, templates: [...many, offer.templates[1]] })
+        .expect(200);
+    });
+
     it('repairs a first answer with an unknown template id', async () => {
       const fetchMock = vi
         .fn<typeof fetch>()
@@ -211,8 +222,8 @@ describe.skipIf(!hasDb)('routes as a member (Postgres)', () => {
       ['a brief over 4000 characters', { ...offer, brief: 'x'.repeat(4001) }],
       ['no templates', { ...offer, templates: [] }],
       [
-        '13 templates',
-        { ...offer, templates: Array.from({ length: 13 }, () => offer.templates[0]) },
+        '201 templates',
+        { ...offer, templates: Array.from({ length: 201 }, () => offer.templates[0]) },
       ],
       ['9 schemes', { ...offer, schemes: Array.from({ length: 9 }, () => offer.schemes[0]) }],
       ['an id outside [a-z0-9-]', { ...offer, schemes: [{ id: 'Dark Mode', label: 'x' }] }],
