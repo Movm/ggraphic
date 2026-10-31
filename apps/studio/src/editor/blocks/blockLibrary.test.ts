@@ -39,6 +39,7 @@ describe('blockLibrary', () => {
       'studio-photo-text-marker/headline-with-line',
       'studio-photo-text-panel/headline-with-strip',
       'studio-photo-text-quiet/headline-with-line',
+      'studio-day-jubilee/number-with-explanation',
       'studio-demand-photo-band/demand-band',
       'studio-figure-of-the-month/number-with-explanation',
       'studio-invitation-panel/date-with-place',
