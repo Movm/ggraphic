@@ -13,6 +13,7 @@ import { blockElementIds, type LiftedBlock } from '@ggraphic/editor/blocks/lifte
 import { type IconState } from '@ggraphic/editor/configs/factory/baseTypes';
 import { type AdditionalText } from '@ggraphic/editor/configs/types';
 import { type AssetInstance, createAssetInstance } from '@ggraphic/editor/utils/canvasAssets';
+import { type ExternalIconPayload } from '@ggraphic/editor/utils/externalIcons';
 import { iconInstanceIdsFor } from '@ggraphic/editor/utils/iconInstances';
 import { createIllustration } from '@ggraphic/editor/utils/illustrations/registry';
 import { type IllustrationInstance } from '@ggraphic/editor/utils/illustrations/types';
@@ -173,7 +174,12 @@ export function createStudioActions(
 
     // ── Icons ────────────────────────────────────────────────────────────────
     // `selectedIcons` lists instance ids; the first copy of an icon carries its catalogue id.
-    toggleIcon: (id: string, selected: boolean, options?: ElementPlacement) => {
+    toggleIcon: (
+      id: string,
+      selected: boolean,
+      options?: ElementPlacement,
+      external?: ExternalIconPayload
+    ) => {
       if (selected) {
         const iconState: IconState = {
           x: options?.center?.x ?? width / 2,
@@ -182,6 +188,8 @@ export function createStudioActions(
           rotation: 0,
           color: inkFor(getState().backgroundColor),
           opacity: 1,
+          // An icon from the icon search: the page keeps its markup (to draw it) and its source (to credit it).
+          ...(external ? { svg: external.svg, source: external.source } : {}),
         };
         commit((prev) => ({
           ...prev,
