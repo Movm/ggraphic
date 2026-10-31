@@ -85,8 +85,9 @@ export function defaultSettings(name: string): BrandSettings {
     fonts: {
       headline: studioBrand.fonts.headline,
       body: studioBrand.fonts.body,
-      serif: null,
-      condensed: null,
+      // The neutral brand's families: none would fall back to the headline and body fonts.
+      serif: studioBrand.fonts.serif ?? null,
+      condensed: studioBrand.fonts.condensed ?? null,
     },
     logoAssetId: null,
     logoAlt: null,
@@ -412,7 +413,8 @@ function BrandEditor({
               options={[
                 {
                   value: SAME_FONT,
-                  label: slot === 'serif' ? 'Same as quotes' : 'Same as headlines',
+                  // The server builds the quote emphasis from the body font (brand/build.ts).
+                  label: slot === 'serif' ? 'Same as body text' : 'Same as headlines',
                 },
                 ...families.map((f) => ({ value: f, label: f })),
               ]}
