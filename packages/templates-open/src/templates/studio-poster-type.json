@@ -180,7 +180,16 @@
             "maxFontSize": 0.277778
           }
         ],
-        "layerOrder": ["stripes", "square", "disc", "line-1", "line-2", "line-3", "line-4", "brand-logo"]
+        "layerOrder": [
+          "stripes",
+          "square",
+          "disc",
+          "line-1",
+          "line-2",
+          "line-3",
+          "line-4",
+          "brand-logo"
+        ]
       }
     }
   ],
