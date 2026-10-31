@@ -111,7 +111,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.024074
           },
           {
             "id": "headline",
@@ -120,7 +121,7 @@
             "x": 0.066667,
             "y": 0.125926,
             "width": 0.833333,
-            "fontSize": 0.12037,
+            "fontSize": 0.17037,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -130,7 +131,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.17037
           },
           {
             "id": "text",
@@ -148,7 +150,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.022222
           }
         ],
         "layerOrder": ["panel", "label", "headline", "photo", "dot", "text", "brand-logo"]

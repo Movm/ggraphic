@@ -124,7 +124,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.quoteEmphasis"
-            }
+            },
+            "maxFontSize": 0.061111
           },
           {
             "id": "name",

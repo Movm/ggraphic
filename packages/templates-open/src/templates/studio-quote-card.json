@@ -114,7 +114,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.serif"
-            }
+            },
+            "maxFontSize": 0.259259
           },
           {
             "id": "quote",
@@ -123,7 +124,7 @@
             "x": 0.030435,
             "y": 0.240336,
             "width": 0.913043,
-            "fontSize": 0.057407,
+            "fontSize": 0.062963,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -133,7 +134,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.serif"
-            }
+            },
+            "maxFontSize": 0.062963
           },
           {
             "id": "name",
@@ -151,7 +153,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.027778
           },
           {
             "id": "role",
@@ -169,7 +172,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.027778
           }
         ],
         "layerOrder": [

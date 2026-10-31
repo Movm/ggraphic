@@ -116,7 +116,7 @@
             "x": 0,
             "y": 0.764706,
             "width": 0.934783,
-            "fontSize": 0.059259,
+            "fontSize": 0.074074,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -126,7 +126,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.074074
           },
           {
             "id": "subline",
@@ -135,7 +136,7 @@
             "x": 0,
             "y": 0.907563,
             "width": 0.934783,
-            "fontSize": 0.031481,
+            "fontSize": 0.037037,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -144,7 +145,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.037037
           }
         ],
         "layerOrder": ["photo", "band", "band-glow-1", "edge", "headline", "subline", "brand-logo"]

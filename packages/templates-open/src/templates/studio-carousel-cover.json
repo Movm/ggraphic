@@ -215,7 +215,7 @@
             "x": 0.026087,
             "y": 0.02437,
             "width": 0.271739,
-            "fontSize": 0.02037,
+            "fontSize": 0.022222,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -225,7 +225,8 @@
             "bind": {
               "fill": "on-accent",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.022222
           },
           {
             "id": "title",
@@ -234,7 +235,7 @@
             "x": 0,
             "y": 0.092437,
             "width": 1,
-            "fontSize": 0.114815,
+            "fontSize": 0.155556,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -246,7 +247,8 @@
               "fill": "ink",
               "fontFamily": "font.headline",
               "accentFill": "accent"
-            }
+            },
+            "maxFontSize": 0.155556
           },
           {
             "id": "swipe",
@@ -264,7 +266,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.024074
           }
         ],
         "layerOrder": [

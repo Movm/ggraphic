@@ -125,7 +125,8 @@
             "bind": {
               "fill": "ink2",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.024074
           },
           {
             "id": "title",
@@ -134,7 +135,7 @@
             "x": 0,
             "y": 0.05042,
             "width": 0.956522,
-            "fontSize": 0.066667,
+            "fontSize": 0.081481,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -144,7 +145,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.081481
           },
           {
             "id": "when",
@@ -162,7 +164,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.031481
           },
           {
             "id": "button-text",
@@ -171,7 +174,7 @@
             "x": 0.030435,
             "y": 0.376471,
             "width": 0.613043,
-            "fontSize": 0.024074,
+            "fontSize": 0.025926,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -180,7 +183,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.025926
           },
           {
             "id": "note",
@@ -198,7 +202,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.024074
           }
         ],
         "layerOrder": [

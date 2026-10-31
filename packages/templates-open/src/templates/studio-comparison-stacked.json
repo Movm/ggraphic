@@ -161,7 +161,7 @@
             "type": "body",
             "text": "BEFORE · 2021",
             "x": 0,
-            "y": 0.142857,
+            "y": 0.10084,
             "width": 0.456522,
             "fontSize": 0.024074,
             "align": "left",
@@ -173,16 +173,17 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.024074
           },
           {
             "id": "line-before",
             "type": "header",
             "text": "The empty corner shop",
             "x": 0,
-            "y": 0.179832,
+            "y": 0.137815,
             "width": 0.521739,
-            "fontSize": 0.055556,
+            "fontSize": 0.07037,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -192,7 +193,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.07037
           },
           {
             "id": "label-after",
@@ -211,7 +213,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.024074
           },
           {
             "id": "line-after",
@@ -220,7 +223,7 @@
             "x": 0,
             "y": 0.860504,
             "width": 0.76087,
-            "fontSize": 0.055556,
+            "fontSize": 0.07037,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -230,7 +233,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.07037
           }
         ],
         "layerOrder": [

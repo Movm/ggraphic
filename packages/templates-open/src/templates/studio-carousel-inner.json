@@ -200,7 +200,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.07037
           },
           {
             "id": "text",
@@ -218,7 +219,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.033333
           }
         ],
         "layerOrder": [

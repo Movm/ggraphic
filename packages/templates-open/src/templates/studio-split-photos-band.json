@@ -112,7 +112,7 @@
             "x": 0,
             "y": 0.421849,
             "width": 0.978261,
-            "fontSize": 0.061111,
+            "fontSize": 0.07963,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -122,7 +122,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.07963
           }
         ],
         "layerOrder": ["photo-top", "band", "band-glow-1", "headline", "photo-bottom", "brand-logo"]

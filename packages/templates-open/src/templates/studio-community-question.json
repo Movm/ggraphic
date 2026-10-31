@@ -139,7 +139,7 @@
             "x": 0.176087,
             "y": 0.406723,
             "width": 0.647826,
-            "fontSize": 0.055556,
+            "fontSize": 0.07037,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -149,7 +149,8 @@
             "bind": {
               "fill": "ground",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.07037
           },
           {
             "id": "text",
@@ -167,7 +168,8 @@
             "bind": {
               "fill": "ground",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.02963
           }
         ],
         "layerOrder": [

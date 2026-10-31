@@ -61,7 +61,8 @@
             "bind": {
               "fill": "accent",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.277778
           },
           {
             "id": "headline",
@@ -78,7 +79,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.059259
           },
           {
             "id": "subline",
