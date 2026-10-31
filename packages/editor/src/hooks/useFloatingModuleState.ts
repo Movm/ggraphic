@@ -150,7 +150,10 @@ function floatingModuleEqual(
     a.data.duotoneLow === b.data.duotoneLow &&
     a.data.duotoneHigh === b.data.duotoneHigh &&
     a.data.fillGradient === b.data.fillGradient &&
-    a.data.align === b.data.align
+    a.data.align === b.data.align &&
+    // The font role picker reads both: a role change must reach it without a new selection.
+    a.data.fontFamily === b.data.fontFamily &&
+    a.data.bind === b.data.bind
   );
 }
 
