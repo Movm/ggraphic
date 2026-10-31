@@ -32,6 +32,12 @@ describe('blockLibrary', () => {
       'studio-invitation-panel/date-with-place',
       'studio-petition-face/progress',
       'studio-quote-card/quote-with-name',
+      'studio-quote-giant-mark/quote-with-person',
+      'studio-quote-portrait/quote-with-person',
+      'studio-quote-side-portrait/quote-with-person',
+      'studio-quote-two-voices/voice-1',
+      'studio-quote-two-voices/voice-2',
+      'studio-quote-typographic/quote-with-person',
       'studio-statement-panel-dots/statement-with-text',
       'studio-study-kicker-boxes/kicker-headline',
     ]);
