@@ -231,8 +231,8 @@
     {
       "id": "quote-with-name",
       "title": {
-        "en": "Quote with name",
-        "de": "Zitat mit Name"
+        "en": "Quote card with name and role",
+        "de": "Zitatkarte mit Name und Rolle"
       },
       "elementIds": ["quote", "rule", "name", "role"]
     }
