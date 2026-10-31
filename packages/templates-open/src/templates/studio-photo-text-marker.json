@@ -1,0 +1,191 @@
+{
+  "formatVersion": 1,
+  "id": "studio-photo-text-marker",
+  "version": 1,
+  "kind": "template",
+  "family": "photo-text",
+  "title": {
+    "en": "Question headline",
+    "de": "Headline als Frage"
+  },
+  "description": {
+    "en": "A full photo with a two-line question on a fade at the bottom and a sentence below",
+    "de": "Ein Vollfoto mit einer zweizeiligen Frage auf einem Verlauf unten und einem Satz darunter"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["photo", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "shade",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.592593,
+            "width": 1,
+            "height": 0.814815,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "shade": "bottom",
+            "bind": {
+              "fill": "shade"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "++No room++ ++to play?++",
+            "x": 0,
+            "y": 0.588235,
+            "width": 1,
+            "fontSize": 0.109259,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.2,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "markerFill": "#ffffff",
+            "markerColor": "#000000",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline",
+              "markerFill": "accent",
+              "markerColor": "on-accent"
+            },
+            "maxFontSize": 0.109259
+          },
+          {
+            "id": "subline",
+            "type": "body",
+            "text": "One child in three lives far from a playground.",
+            "x": 0,
+            "y": 0.865546,
+            "width": 1,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontWeight": 500,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.044444
+          }
+        ],
+        "layerOrder": ["photo", "shade", "headline", "subline", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas",
+    "shade": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "headline": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 2,
+        "maxChars": 28
+      }
+    },
+    "subline": {
+      "role": "subline",
+      "label": {
+        "en": "Subline",
+        "de": "Unterzeile"
+      },
+      "budget": {
+        "maxWords": 10,
+        "maxLines": 2,
+        "maxChars": 64
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "headline-with-line",
+      "title": {
+        "en": "Headline with line",
+        "de": "Headline mit Satz"
+      },
+      "elementIds": ["headline", "subline"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "headline": "++No room++ ++to play?++",
+      "subline": "One child in three lives far from a playground."
+    },
+    "de": {
+      "headline": "++Kein Platz++ ++zum Spielen?++",
+      "subline": "Jedes dritte Kind wohnt weit weg vom Spielplatz."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
