@@ -64,13 +64,6 @@
       "author": "Moritz Wächter"
     },
     {
-      "file": "meeting.jpg",
-      "role": "scene",
-      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
-      "licence": "CC0-1.0",
-      "author": "Moritz Wächter"
-    },
-    {
       "file": "portrait-3.jpg",
       "role": "portrait",
       "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
@@ -134,13 +127,6 @@
       "author": "Moritz Wächter"
     },
     {
-      "file": "playground.jpg",
-      "role": "scene",
-      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
-      "licence": "CC0-1.0",
-      "author": "Moritz Wächter"
-    },
-    {
       "file": "seedlings.jpg",
       "role": "detail",
       "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
@@ -150,6 +136,20 @@
     {
       "file": "cup.jpg",
       "role": "detail",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "facade.jpg",
+      "role": "scene",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "hills.jpg",
+      "role": "scene",
       "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
       "licence": "CC0-1.0",
       "author": "Moritz Wächter"

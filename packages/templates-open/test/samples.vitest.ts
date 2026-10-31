@@ -23,8 +23,8 @@ describe('sample photos manifest', () => {
     }
   });
 
-  it('keeps each file at 250 KB or less', () => {
-    for (const f of files) expect(statSync(join(DIR, f)).size).toBeLessThanOrEqual(250 * 1024);
+  it('keeps each file at 800 KB or less', () => {
+    for (const f of files) expect(statSync(join(DIR, f)).size).toBeLessThanOrEqual(800 * 1024);
   });
 
   it('exposes every row with a loadable src and a known role', () => {

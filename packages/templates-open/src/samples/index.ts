@@ -31,7 +31,6 @@ const URLS: Record<string, string> = {
   'bicycles.jpg': new URL('./bicycles.jpg', import.meta.url).href,
   'square.jpg': new URL('./square.jpg', import.meta.url).href,
   'hands.jpg': new URL('./hands.jpg', import.meta.url).href,
-  'meeting.jpg': new URL('./meeting.jpg', import.meta.url).href,
   'portrait-3.jpg': new URL('./portrait-3.jpg', import.meta.url).href,
   'portrait-4.jpg': new URL('./portrait-4.jpg', import.meta.url).href,
   'portrait-5.jpg': new URL('./portrait-5.jpg', import.meta.url).href,
@@ -41,8 +40,9 @@ const URLS: Record<string, string> = {
   'river.jpg': new URL('./river.jpg', import.meta.url).href,
   'solar.jpg': new URL('./solar.jpg', import.meta.url).href,
   'tram.jpg': new URL('./tram.jpg', import.meta.url).href,
-  'playground.jpg': new URL('./playground.jpg', import.meta.url).href,
   'seedlings.jpg': new URL('./seedlings.jpg', import.meta.url).href,
+  'facade.jpg': new URL('./facade.jpg', import.meta.url).href,
+  'hills.jpg': new URL('./hills.jpg', import.meta.url).href,
   'cup.jpg': new URL('./cup.jpg', import.meta.url).href,
 };
 

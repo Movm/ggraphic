@@ -193,7 +193,7 @@ async function run(): Promise<void> {
   createRoot(root).render(
     <Stage
       config={config}
-      state={withSamplePhotos(state, SAMPLE_PHOTOS, entry.id)}
+      state={withSamplePhotos(state, SAMPLE_PHOTOS, entry.id, formatSize(formatId))}
       formatId={formatId}
       overflow={overflow}
     />
