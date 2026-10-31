@@ -118,6 +118,7 @@ describe('buildPptxModel texture', () => {
   it.each([
     ['grain', { grain: 0.3 }],
     ['dots', { pattern: 'dots' as const }],
+    ['stripes', { pattern: 'stripes' as const }],
   ])('rasterises a rect with %s', (_name, extra) => {
     expect(items(shape(extra))[0]).toMatchObject({ kind: 'raster', reason: 'shape-styled' });
   });

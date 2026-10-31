@@ -103,7 +103,8 @@ export interface GateAdapter {
  * What an element paints (see `GateAdapter.cover`). `range` is `fill` at an alpha anywhere in
  * `alpha` (a glow: full in the middle, nothing at the edge). Any kind may carry: `cut`, a box the
  * element leaves bare (a notch), so a text lying wholly inside it is not on this element; `dots`,
- * a dot pattern over the element, which no text lying on it can be judged against; `grain`, a
+ * a dot pattern over the element, which no text lying on it can be judged against; `stripes`, the
+ * colour of stripe bands over a solid element, so a text on it is judged against fill and stripe; `grain`, a
  * layer of `fill` at any alpha in `alpha` over it.
  */
 export type GateCover = (
@@ -116,6 +117,7 @@ export type GateCover = (
 ) & {
   cut?: Box;
   dots?: true;
+  stripes?: string;
   grain?: { fill: string; alpha: [number, number] };
 };
 
@@ -693,6 +695,11 @@ function checkPlaced(
           grounds = null;
           break;
         }
+        // Stripes only have a known pair of grounds over a flat fill.
+        if (cover.stripes && cover.kind !== 'solid') {
+          grounds = null;
+          break;
+        }
         // Two alpha ranges over one text: the alphas move together, not independently. Not judged.
         const ranges =
           (cover.grain ? 1 : 0) + (cover.kind === 'shade' || cover.kind === 'range' ? 1 : 0);
@@ -714,7 +721,10 @@ function checkPlaced(
               cover.kind === 'shade' ? shadeAlphaRange(cover.direction, box, area) : cover.alpha,
           });
         } else {
-          grounds = cover.kind === 'solid' ? [cover.fill] : photoColours(cover.low, cover.high);
+          grounds =
+            cover.kind === 'solid'
+              ? [cover.fill, ...(cover.stripes ? [cover.stripes] : [])]
+              : photoColours(cover.low, cover.high);
           break;
         }
       }

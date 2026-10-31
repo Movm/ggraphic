@@ -74,6 +74,35 @@ describe('dot pattern', () => {
   });
 });
 
+describe('stripe pattern', () => {
+  // 40 px bands on the 1000 px stage: fill first, then the stripe colour, alternating.
+  const stripes: ShapeInstance = {
+    ...base,
+    pattern: 'stripes',
+    patternColor: '#FF0000',
+    patternSpacing: 0.04,
+  };
+
+  it('alternates bands of fill and stripe colour from the left edge', () => {
+    const { at } = mount(stripes);
+    expect(at(20, 50)).toEqual([0, 0, 255, 255]);
+    expect(at(60, 50)).toEqual([255, 0, 0, 255]);
+    expect(at(100, 50)).toEqual([0, 0, 255, 255]);
+    expect(at(140, 50)).toEqual([255, 0, 0, 255]);
+  });
+
+  it('is cut to the notch and sits in a second node over the fill', () => {
+    const { at, stage } = mount({ ...stripes, notch: 0.1 });
+    expect(at(150, 20)[3]).toBe(0);
+    expect(at(60, 50)).toEqual([255, 0, 0, 255]);
+    const names = stage
+      .find('Shape')
+      .map((n) => n.name())
+      .filter((n) => n.startsWith('shape-'));
+    expect(names).toEqual(['shape-t', 'shape-texture-t-dots']);
+  });
+});
+
 describe('grain', () => {
   const region = (at: (x: number, y: number) => number[]) => {
     const seen = new Set<string>();

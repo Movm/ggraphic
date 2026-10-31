@@ -913,6 +913,7 @@ describe('contrast over notched, glow and grain grounds', () => {
             }
           : {}),
         ...(el['pattern'] === 'dots' ? { dots: true as const } : {}),
+        ...(el['stripeFill'] ? { stripes: String(el['stripeFill']) } : {}),
         ...(el['grainFill']
           ? {
               grain: {
@@ -990,6 +991,15 @@ describe('contrast over notched, glow and grain grounds', () => {
   it('fails closed on a grain layer under a second alpha range', () => {
     const t = build(panel({ grainFill: '#ffffff', grainMax: 0.2, glowMax: 0.5 }));
     expect(details(t)[0]).toContain('stacked shades');
+  });
+
+  it('judges a text on stripes against the stripe colour as well as the ground', () => {
+    // White text: the black ground passes, a white stripe fails it, a dark one passes.
+    expect(details(build(panel({ stripeFill: '#222222' })))).toEqual([]);
+    const bad = details(build(panel({ stripeFill: '#ffffff' })));
+    expect(bad).toHaveLength(1);
+    expect(bad[0]).toMatch(/^contrast: headline: #ffffff on #/);
+    expect(details(build(panel({ stripeFill: '#ffffff', height: 0.3 })))).toEqual([]);
   });
 
   it('a dot pattern fails a text lying on it and leaves a text off it alone', () => {

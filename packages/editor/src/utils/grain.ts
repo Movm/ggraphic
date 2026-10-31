@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 /**
- * Grain and dot pattern for rects: a noise tile and a dot grid, both drawn by `ShapePrimitive`
+ * Grain and patterns for rects: a noise tile, a dot grid and stripes, both drawn by `ShapePrimitive`
  * as a second node over the fill. Deterministic, so goldens stay stable.
  */
 import Konva from 'konva';
@@ -100,6 +100,25 @@ export function paintDots(
     ctx.moveTo(c.x + radius, c.y);
     ctx.arc(c.x, c.y, radius, 0, Math.PI * 2);
   }
+  ctx.fill();
+}
+
+/**
+ * Fills the clip already set on `ctx` with vertical stripes of `shape.patternColor`: bands of
+ * `patternSpacing` (a canvas share) alternate fill, stripe, fill, … from the left edge.
+ */
+export function paintStripes(
+  ctx: Konva.Context,
+  shape: Pick<ShapeInstance, 'patternColor' | 'patternSpacing'>,
+  width: number,
+  height: number,
+  canvasWidth: number
+): void {
+  const band = (shape.patternSpacing ?? DEFAULT_PATTERN_SPACING) * canvasWidth;
+  if (!(band > 0)) return;
+  ctx.setAttr('fillStyle', shape.patternColor ?? 'rgba(255,255,255,0.35)');
+  ctx.beginPath();
+  for (let x = band; x < width; x += 2 * band) ctx.rect(x, 0, band, height);
   ctx.fill();
 }
 
