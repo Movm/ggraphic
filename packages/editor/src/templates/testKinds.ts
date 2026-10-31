@@ -117,6 +117,7 @@ const POPULATED: Record<string, Fields> = {
     opacity: 1,
     lineHeight: 1.2,
     letterSpacing: 0.05,
+    maxFontSize: 90,
     strokeWidth: 2,
     shadowBlur: 3,
     shadowOffsetX: 4,

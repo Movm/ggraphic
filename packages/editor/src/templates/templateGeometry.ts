@@ -9,12 +9,20 @@
  */
 import {
   aliasFontFamily,
+  minTextSizePx,
   parseColor,
   toHex,
   type GateAdapter,
   type GeometryTable,
 } from '@ggraphic/core';
-import { layoutRichTextBlock, PLAIN_STYLE, type MeasureRun } from '@ggraphic/schema';
+import {
+  fitFontSizeToSlot,
+  layoutRichTextBlock,
+  PLAIN_STYLE,
+  slotFits,
+  type MeasureRun,
+  type SlotFit,
+} from '@ggraphic/schema';
 
 import { GRAIN_SPECK_ALPHA } from '../utils/grainSpec.js';
 import { plainTextLines } from '../utils/plainTextLayout.js';
@@ -33,6 +41,8 @@ export const TEMPLATE_GEOMETRY: GeometryTable = {
     y: 'y',
     width: 'w',
     fontSize: 's',
+    // The prototype's size, the ceiling of the fit: scaled like `fontSize`.
+    maxFontSize: 's',
     strokeWidth: 's',
     shadowBlur: 's',
     shadowOffsetX: 's',
@@ -379,6 +389,37 @@ function layoutText(p: TextProps): TextLayout {
   return { lines: Math.max(1, lines), unmeasurable: note.reason };
 }
 
+/**
+ * Fits a text to its box in its own font: the largest size from the legibility floor up to
+ * `maxFontSize` at which no word is wider than the box (words are never broken) and the lines,
+ * counted by the same layout as the gate, stay within `maxLines` (or the box `height`, when the
+ * element has one). Measured with the width tables like `layoutText`, so fitting and gate agree.
+ */
+function fitTextToBox(
+  el: Readonly<Record<string, unknown>>,
+  req: { maxLines?: number; canvasHeight: number }
+): { fontSize: number; fits: boolean } | null {
+  const props = textPropsOf(el);
+  const max = num(el, 'maxFontSize');
+  if (!(max > 0) || !(props.width > 0)) return null;
+  const height = num(el, 'height');
+  const slot: SlotFit = {
+    width: props.width,
+    maxHeight: height > 0 ? height : Number.POSITIVE_INFINITY,
+    fontSize: max,
+    maxSize: max,
+    minSize: Math.min(minTextSizePx(req.canvasHeight), max),
+    lineHeight: num(el, 'lineHeight', 1.2),
+    wholeWords: true,
+    ...(req.maxLines === undefined ? {} : { maxLines: req.maxLines }),
+    countLines: (size) => layoutText({ ...props, fontSize: size }).lines,
+  };
+  const measureAt = (size: number) => (text: string) =>
+    tableRunMeasure({ ...props, fontSize: size }, { reason: null })(text, PLAIN_STYLE);
+  const fontSize = fitFontSizeToSlot(props.text, slot, measureAt);
+  return { fontSize, fits: slotFits(props.text, slot, measureAt, fontSize) };
+}
+
 /** The widest explicit line of a text that does not wrap (a badge), and how many lines it has. */
 function widestLine(
   text: string,
@@ -498,6 +539,7 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
       }
       return [];
     },
+    fitText: fitTextToBox,
     lineCount(stateKey, el) {
       if (stateKey !== 'additionalTexts' || typeof el['text'] !== 'string') return 1;
       return layoutText(textPropsOf(el)).lines;

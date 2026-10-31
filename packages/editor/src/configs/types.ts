@@ -67,6 +67,11 @@ export interface AdditionalText {
   y: number;
   width: number;
   fontSize: number;
+  /**
+   * The prototype's size of a template text. A text with it has its `fontSize` fitted to the
+   * brand's font, never above this; omit for a text whose size is fixed.
+   */
+  maxFontSize?: number;
   fontFamily: string;
   fontStyle?: 'normal' | 'italic' | 'bold' | 'bold italic';
   /** Numeric weight; wins over the bold part of `fontStyle`. Absent = `fontStyle` alone. */

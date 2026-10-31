@@ -28,8 +28,33 @@ export interface TemplateInput {
   fixed?: Readonly<Record<string, readonly string[]>>;
   logoCorners?: readonly LogoCorner[];
   placeholders?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  /** Text budgets by element id; a fitted text takes its line limit from here. */
+  slots?: Readonly<Record<string, { budget: { maxLines?: number } }>>;
   blocks?: readonly { id: string; elementIds: readonly string[] }[];
 }
+
+/** What a text fit is asked: the slot's line limit and the canvas height (for the legibility floor). */
+export interface TextFitRequest {
+  maxLines?: number;
+  canvasHeight: number;
+}
+
+/** The size a text is fitted to; `fits` is false when it does not fit even at the floor. */
+export interface TextFit {
+  fontSize: number;
+  fits: boolean;
+}
+
+/**
+ * Fits a text that carries `maxFontSize` to its box in the font it now has: the largest size from
+ * the floor up to `maxFontSize` at which it fits. Null when the element cannot be fitted (no
+ * size or width to go by). The editor fills it in (`GateAdapter.fitText`), so that fitting, the
+ * render gate and the canvas measure alike.
+ */
+export type FitText = (
+  el: Readonly<Record<string, unknown>>,
+  req: TextFitRequest
+) => TextFit | null;
 
 export interface InstantiateContext {
   brand: BrandPack;
@@ -47,6 +72,8 @@ export interface InstantiateContext {
    * `<family>, <fallback>`; the binding's `value` stays the bare family.
    */
   fontFallback?: string | ((role: string) => string);
+  /** Fits every text with a numeric `maxFontSize` once it has its font, width and text. Without it the size stays as placed. */
+  fitText?: FitText;
 }
 
 /**
@@ -231,6 +258,19 @@ export function instantiateTemplatePage(
     const text = texts?.[id];
     if (text !== undefined) el['text'] = text;
   });
+
+  // Sizes fitted to the brand's fonts, up to the prototype's size.
+  if (ctx.fitText) {
+    forEachElement(state, (el, key, id) => {
+      if (key !== 'additionalTexts' || !isNum(el['maxFontSize'])) return;
+      const maxLines = t.slots?.[id]?.budget.maxLines;
+      const fit = ctx.fitText!(el, {
+        ...(maxLines === undefined ? {} : { maxLines }),
+        canvasHeight: H,
+      });
+      if (fit) el['fontSize'] = fit.fontSize;
+    });
+  }
 
   // The logo.
   const layerIds = (key: string) =>

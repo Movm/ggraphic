@@ -2,6 +2,7 @@
 import { rebindPages, type RebindContext } from '@ggraphic/core';
 
 import { formatSize, type StudioDocument } from './document';
+import { fittedFontSize } from './templates/fitting';
 
 /**
  * The document with every bound page field brought up to date with the brand.
@@ -11,6 +12,12 @@ export function rebindStudioDocument(
   doc: StudioDocument,
   ctx: RebindContext
 ): { doc: StudioDocument; changed: boolean } {
-  const { pages, changed } = rebindPages(doc.pages, { pageSize: formatSize(doc.formatId), ...ctx });
+  const pageSize = formatSize(doc.formatId);
+  const { pages, changed } = rebindPages(doc.pages, {
+    pageSize,
+    // A new brand font can be wider: texts with a prototype size are fitted again.
+    fitText: (el, page) => fittedFontSize(el, page, ctx.pageSize?.height ?? pageSize.height),
+    ...ctx,
+  });
   return changed ? { doc: { ...doc, pages }, changed } : { doc, changed };
 }

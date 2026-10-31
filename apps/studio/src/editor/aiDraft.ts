@@ -69,27 +69,42 @@ export function fillById(
  * until it ends above that text; a word that does not fit even hyphenated shrinks too.
  * Not below the legibility floor of the canvas, unless the text itself is smaller already
  * (it is never grown); the status line then warns about the overflow instead.
+ *
+ * A text with a prototype size (`maxFontSize`) is fitted the way a placed template text is: from
+ * that size down, no word broken, and it grows back up to it when the new text is short. It is
+ * measured in the weight and letter spacing it is drawn with.
  */
 function fitToSlot(
   text: AdditionalText,
   texts: readonly AdditionalText[],
   canvasHeight?: number
 ): AdditionalText {
-  const { fontSize, width, fontFamily } = text;
+  const { fontSize, width, fontFamily, maxFontSize } = text;
   const below = texts.filter((other) => other.y > text.y).map((other) => other.y);
-  if (!fontSize || !width || below.length === 0) return text;
+  const prototype = maxFontSize !== undefined && maxFontSize >= (fontSize ?? 0);
+  if (!fontSize || !width || (below.length === 0 && !prototype)) return text;
   const floor = canvasHeight === undefined ? undefined : minTextSizePx(canvasHeight);
+  const ceiling = prototype ? maxFontSize : fontSize;
   const fitted = fitFontSizeToSlot(
     text.text,
     {
       width,
-      maxHeight: Math.min(...below) - text.y,
-      fontSize,
+      maxHeight: below.length === 0 ? Number.POSITIVE_INFINITY : Math.min(...below) - text.y,
+      fontSize: ceiling,
       lineHeight: text.lineHeight ?? 1,
-      ...(floor === undefined ? {} : { minSize: Math.min(floor, fontSize) }),
+      ...(prototype ? { wholeWords: true } : {}),
+      ...(floor === undefined ? {} : { minSize: Math.min(floor, ceiling) }),
     },
     (size) => (line) =>
-      runMeasurer(size, fontFamily ?? '', text.fontStyle ?? 'normal')(line, PLAIN_STYLE)
+      runMeasurer(
+        size,
+        fontFamily ?? '',
+        text.fontStyle ?? 'normal',
+        0,
+        null,
+        text.fontWeight ?? null,
+        text.letterSpacing ?? null
+      )(line, PLAIN_STYLE)
   );
   return fitted === fontSize ? text : { ...text, fontSize: fitted };
 }

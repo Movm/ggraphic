@@ -15,6 +15,7 @@ import { SHADE_STOPS, shadeAlphaAt, type ShadeDirection } from '../color/shade.j
 import {
   forEachElement,
   instantiateTemplatePage,
+  type FitText,
   offeredSchemes,
   type GeometryTable,
   type TemplateInput,
@@ -57,6 +58,11 @@ export interface GateAdapter {
    * has no `maxLines` for, which would otherwise be measured as one line.
    */
   lineCount(stateKey: string, el: Readonly<Record<string, unknown>>): number;
+  /**
+   * Fits a text with `maxFontSize` to its box (see `FitText`). Optional: without it a text is
+   * judged at the size it is placed at.
+   */
+  fitText?: FitText;
   /** The box an element covers in canvas px, or null if it has none. `lines` is a text's line count. */
   box(stateKey: string, el: Readonly<Record<string, unknown>>, lines: number): Box | null;
   /**
@@ -492,14 +498,18 @@ export function checkTemplate(t: TemplateInput, ctx: GateContext): GateProblem[]
             layout,
             ...(hasLogo ? { logo: GATE_LOGO } : {}),
           };
-          const result = instantiateTemplatePage(t, {
-            brand: placedBrand,
-            canvas,
-            format,
-            geometry: ctx.adapter.geometry,
-            schemeId,
-            logoSizeOf: () => GATE_LOGO_SIZE,
-          });
+          const result = instantiateTemplatePage(
+            { ...t, slots: ctx.slots },
+            {
+              brand: placedBrand,
+              canvas,
+              format,
+              geometry: ctx.adapter.geometry,
+              ...(ctx.adapter.fitText ? { fitText: ctx.adapter.fitText } : {}),
+              schemeId,
+              logoSizeOf: () => GATE_LOGO_SIZE,
+            }
+          );
           const where = { brand: brand.id, scheme: schemeId, format };
           if (!result.ok) {
             add({
@@ -603,6 +613,22 @@ function checkPlaced(
       }
     }
     if (!text) continue;
+    // A fitted text is judged at its fitted size (the page was placed that way); one that does not
+    // fit even at the floor fails.
+    if (key === 'additionalTexts' && typeof el['maxFontSize'] === 'number') {
+      const maxLines = ctx.slots[id]?.budget.maxLines;
+      const fit = ctx.adapter.fitText?.(el, {
+        ...(maxLines === undefined ? {} : { maxLines }),
+        canvasHeight: canvas.height,
+      });
+      if (fit && !fit.fits) {
+        problem(
+          'bounds',
+          `${id} does not fit its box at the minimum size (${fmt(fit.fontSize)} px)`,
+          where
+        );
+      }
+    }
     if (box && envelope && intersects(box, envelope)) {
       problem('logo-overlap', `${id} runs into the logo envelope (${layoutLabel(layout)})`, where);
     }

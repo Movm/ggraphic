@@ -86,6 +86,53 @@ describe('fillTexts', () => {
     expect(out.fontSize).toBeLessThanOrEqual(20);
   });
 
+  describe('a text with a prototype size (maxFontSize)', () => {
+    const texts = () => {
+      const seeded = seedFor(HEADLINE_TEMPLATE_ID, SIZE.width, SIZE.height).additionalTexts ?? [];
+      return seeded.map((t) =>
+        t.id === 'headline' ? { ...t, fontSize: 60, maxFontSize: 160, width: 900 } : t
+      );
+    };
+    const headline = (list: ReturnType<typeof texts>, text: string, tweak = {}) =>
+      fillById(
+        list.map((t) => (t.id === 'headline' ? { ...t, ...tweak } : t)),
+        new Map([['headline', text]]),
+        SIZE.height
+      ).find((t) => t.id === 'headline')!;
+
+    it('grows a short text up to maxFontSize and shrinks a long one below it', () => {
+      expect(headline(texts(), 'Hallo').fontSize).toBe(160);
+      expect(headline(texts(), 'Gemeinschaftsgarten Stadtrand wächst').fontSize).toBeLessThan(160);
+    });
+
+    it('never breaks a word to fit', () => {
+      const out = headline(texts(), 'Gemeinschaftsgartenverein');
+      const word = runMeasurer(
+        out.fontSize!,
+        headlineFont(),
+        'bold'
+      )('Gemeinschaftsgartenverein', PLAIN_STYLE);
+      expect(word).toBeLessThanOrEqual(out.width!);
+    });
+
+    it('measures the weight and letter spacing the text is drawn with', () => {
+      const long = 'Gemeinschaftsgarten Stadtrand';
+      const plain = headline(texts(), long).fontSize!;
+      expect(headline(texts(), long, { letterSpacing: 0.15 }).fontSize!).toBeLessThan(plain);
+      expect(headline(texts(), long, { letterSpacing: -0.05 }).fontSize!).toBeGreaterThanOrEqual(
+        plain
+      );
+    });
+
+    it('RF1: a text without maxFontSize is never grown', () => {
+      const plain = texts().map((t) =>
+        t.id === 'headline' ? { ...t, maxFontSize: undefined } : t
+      );
+      const seeded = plain.find((t) => t.id === 'headline')!;
+      expect(headline(plain, 'Hallo').fontSize).toBe(seeded.fontSize);
+    });
+  });
+
   it('returns null for a page without a headline or subline', () => {
     expect(fillTexts([], draft)).toBeNull();
   });

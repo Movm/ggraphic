@@ -625,6 +625,49 @@ describe('render gate stage 1', () => {
   });
 });
 
+describe('fitted text sizes', () => {
+  // A stand-in fitter: the text fits at 100 px or less; the floor is passed in with the request.
+  const fitText: GateAdapter['fitText'] = (el, req) => {
+    const max = num(el, 'maxFontSize');
+    const floor = Math.min((3.5 * req.canvasHeight) / 100, max);
+    const size = Math.max(floor, Math.min(max, 100));
+    return { fontSize: size, fits: size <= 100 };
+  };
+  const fitting = (): GateContext => context({ adapter: { ...adapter, fitText } });
+  const big = (extra: Obj) => ({
+    additionalTexts: [{ ...headline, fontSize: 0.05, maxFontSize: 0.4, ...extra }],
+  });
+
+  it('judges a text at its fitted size: the same text fails at its fixed prototype size', () => {
+    const fixed = template({}, { additionalTexts: [{ ...headline, fontSize: 0.4 }] });
+    expect(rules(fixed, fitting())).toContain('bounds');
+    expect(checkTemplate(template({}, big({})), fitting())).toEqual([]);
+  });
+
+  it('fails a text that does not fit even at the floor', () => {
+    const never: GateAdapter['fitText'] = (el, req) => ({
+      fontSize: Math.min((3.5 * req.canvasHeight) / 100, num(el, 'maxFontSize')),
+      fits: false,
+    });
+    const problems = checkTemplate(
+      template({}, big({})),
+      context({ adapter: { ...adapter, fitText: never } })
+    );
+    expect(problems.map((p) => p.rule)).toContain('bounds');
+    expect(problems.map((p) => p.detail).join()).toContain('minimum size');
+  });
+
+  it('asks the fitter with the slot budget and the canvas height', () => {
+    const seen: unknown[] = [];
+    const spy: GateAdapter['fitText'] = (el, req) => {
+      seen.push(req);
+      return fitText(el, req);
+    };
+    checkTemplate(template({}, big({})), context({ adapter: { ...adapter, fitText: spy } }));
+    expect(seen[0]).toEqual({ maxLines: 2, canvasHeight: 1080 });
+  });
+});
+
 describe('contrast over photos, veils and shades', () => {
   /** The stand-in adapter, plus the photo, veil and shade grounds an editor reports. */
   const grounds: GateAdapter = {
