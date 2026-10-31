@@ -93,7 +93,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.027778
           }
         ],
         "layerOrder": ["glow-1", "photo", "caption", "brand-logo"]

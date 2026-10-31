@@ -111,7 +111,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.048148
           },
           {
             "id": "day-1",
@@ -130,7 +131,8 @@
             "bind": {
               "fill": "ground",
               "fontFamily": "font.condensed"
-            }
+            },
+            "maxFontSize": 0.203704
           },
           {
             "id": "month-1",
@@ -148,7 +150,8 @@
             "bind": {
               "fill": "ground",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.048148
           },
           {
             "id": "name-1",
@@ -166,7 +169,8 @@
             "bind": {
               "fill": "ground",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.055556
           },
           {
             "id": "day-2",
@@ -185,7 +189,8 @@
             "bind": {
               "fill": "ground",
               "fontFamily": "font.condensed"
-            }
+            },
+            "maxFontSize": 0.203704
           },
           {
             "id": "month-2",
@@ -203,7 +208,8 @@
             "bind": {
               "fill": "ground",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.048148
           },
           {
             "id": "name-2",
@@ -221,7 +227,8 @@
             "bind": {
               "fill": "ground",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.055556
           },
           {
             "id": "day-3",
@@ -240,7 +247,8 @@
             "bind": {
               "fill": "ground",
               "fontFamily": "font.condensed"
-            }
+            },
+            "maxFontSize": 0.203704
           },
           {
             "id": "month-3",
@@ -258,7 +266,8 @@
             "bind": {
               "fill": "ground",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.048148
           },
           {
             "id": "name-3",
@@ -276,7 +285,8 @@
             "bind": {
               "fill": "ground",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.055556
           }
         ],
         "layerOrder": [

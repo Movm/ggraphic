@@ -90,7 +90,7 @@
             "x": 0.055556,
             "y": 0.081481,
             "width": 0.888889,
-            "fontSize": 0.6,
+            "fontSize": 0.740741,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -99,7 +99,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.740741
           },
           {
             "id": "headline",
@@ -117,7 +118,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.066667
           }
         ],
         "layerOrder": ["photo", "overlay", "brand-logo", "number", "headline"]

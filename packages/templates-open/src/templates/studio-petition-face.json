@@ -64,9 +64,9 @@
             "id": "quote-plate-1",
             "type": "rect",
             "x": 0.380435,
-            "y": 0.603361,
+            "y": 0.609244,
             "width": 0.76087,
-            "height": 0.063866,
+            "height": 0.07563,
             "fill": "#ffffff",
             "rotation": 0,
             "scaleX": 1,
@@ -80,9 +80,9 @@
             "id": "quote-plate-2",
             "type": "rect",
             "x": 0.413043,
-            "y": 0.67563,
+            "y": 0.693277,
             "width": 0.826087,
-            "height": 0.063866,
+            "height": 0.07563,
             "fill": "#ffffff",
             "rotation": 0,
             "scaleX": 1,
@@ -96,7 +96,7 @@
             "id": "name-plate",
             "type": "rect",
             "x": 0.304348,
-            "y": 0.736975,
+            "y": 0.760504,
             "width": 0.608696,
             "height": 0.042017,
             "fill": "#ffffff",
@@ -173,7 +173,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.022222
           },
           {
             "id": "count",
@@ -182,7 +183,7 @@
             "x": 0.444444,
             "y": 0.044444,
             "width": 0.481481,
-            "fontSize": 0.02037,
+            "fontSize": 0.024074,
             "align": "right",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -191,16 +192,17 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.024074
           },
           {
             "id": "quote-1",
             "type": "header",
             "text": "“I want my child",
             "x": 0.028261,
-            "y": 0.581513,
+            "y": 0.583193,
             "width": 0.706522,
-            "fontSize": 0.042593,
+            "fontSize": 0.057407,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -210,16 +212,17 @@
             "bind": {
               "fill": "ground",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.057407
           },
           {
             "id": "quote-2",
             "type": "header",
             "text": "to get to school safely.”",
             "x": 0.028261,
-            "y": 0.653782,
+            "y": 0.667227,
             "width": 0.771739,
-            "fontSize": 0.042593,
+            "fontSize": 0.057407,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -229,14 +232,15 @@
             "bind": {
               "fill": "ground",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.057407
           },
           {
             "id": "name",
             "type": "body",
             "text": "Aylin, mother of two",
             "x": 0.017391,
-            "y": 0.72605,
+            "y": 0.74958,
             "width": 0.576087,
             "fontSize": 0.024074,
             "align": "left",
@@ -247,7 +251,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.024074
           },
           {
             "id": "cta",
@@ -256,7 +261,7 @@
             "x": 0,
             "y": 0.946218,
             "width": 0.543478,
-            "fontSize": 0.040741,
+            "fontSize": 0.048148,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -266,7 +271,8 @@
             "bind": {
               "fill": "on-accent",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.048148
           },
           {
             "id": "link",
@@ -275,7 +281,7 @@
             "x": 0.074074,
             "y": 0.939259,
             "width": 0.462963,
-            "fontSize": 0.025926,
+            "fontSize": 0.027778,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -284,7 +290,8 @@
             "bind": {
               "fill": "on-accent",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.027778
           }
         ],
         "layerOrder": [

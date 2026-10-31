@@ -99,7 +99,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.096296
           },
           {
             "id": "when",
@@ -117,7 +118,8 @@
             "bind": {
               "fill": "ink2",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.051852
           },
           {
             "id": "name-1",
@@ -135,7 +137,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.044444
           },
           {
             "id": "name-2",
@@ -153,7 +156,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.044444
           },
           {
             "id": "name-3",
@@ -171,7 +175,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.044444
           }
         ],
         "layerOrder": [

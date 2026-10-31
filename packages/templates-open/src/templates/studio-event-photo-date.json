@@ -92,7 +92,8 @@
             "bind": {
               "fill": "on-accent",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.103704
           },
           {
             "id": "title",
@@ -111,7 +112,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.081481
           },
           {
             "id": "venue",
@@ -129,7 +131,8 @@
             "bind": {
               "fill": "ink2",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.048148
           }
         ],
         "layerOrder": ["photo", "plate", "date", "title", "venue", "brand-logo"]

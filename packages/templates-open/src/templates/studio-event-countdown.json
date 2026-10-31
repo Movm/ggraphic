@@ -92,7 +92,8 @@
             "bind": {
               "fill": "accent",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.925926
           },
           {
             "id": "label",
@@ -110,7 +111,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.05
           },
           {
             "id": "date",
@@ -128,7 +130,8 @@
             "bind": {
               "fill": "on-accent",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.048148
           }
         ],
         "layerOrder": ["count", "label", "bar", "date", "photo", "brand-logo"]

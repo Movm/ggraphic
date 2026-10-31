@@ -70,7 +70,7 @@
             "x": 0,
             "y": 0.058824,
             "width": 1,
-            "fontSize": 0.268519,
+            "fontSize": 0.37963,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -80,7 +80,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.condensed"
-            }
+            },
+            "maxFontSize": 0.37963
           },
           {
             "id": "title",
@@ -99,7 +100,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.088889
           },
           {
             "id": "time",
@@ -117,7 +119,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.051852
           },
           {
             "id": "place",
@@ -135,7 +138,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.051852
           }
         ],
         "layerOrder": ["date", "rule", "title", "time", "place", "brand-logo"]

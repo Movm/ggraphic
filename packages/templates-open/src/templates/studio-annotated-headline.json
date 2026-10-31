@@ -125,7 +125,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.048148
           },
           {
             "id": "source",
@@ -144,7 +145,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.02037
           },
           {
             "id": "headline",
@@ -163,7 +165,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.051852
           },
           {
             "id": "closing",
@@ -172,7 +175,7 @@
             "x": 0.059259,
             "y": 0.893333,
             "width": 0.462963,
-            "fontSize": 0.048148,
+            "fontSize": 0.062963,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -182,7 +185,8 @@
             "bind": {
               "fill": "on-accent",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.062963
           }
         ],
         "layerOrder": [

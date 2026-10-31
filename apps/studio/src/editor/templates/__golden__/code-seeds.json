@@ -54,7 +54,8 @@
               "ref": "font.headline",
               "value": "Bricolage Grotesque"
             }
-          }
+          },
+          "maxFontSize": 104
         },
         {
           "id": "subline",
@@ -186,7 +187,8 @@
               "ref": "font.quoteEmphasis",
               "value": "Fraunces"
             }
-          }
+          },
+          "maxFontSize": 72
         },
         {
           "id": "subline",
@@ -249,7 +251,8 @@
               "ref": "font.headline",
               "value": "Bricolage Grotesque"
             }
-          }
+          },
+          "maxFontSize": 300
         },
         {
           "id": "headline",
@@ -273,7 +276,8 @@
               "ref": "font.headline",
               "value": "Bricolage Grotesque"
             }
-          }
+          },
+          "maxFontSize": 64
         },
         {
           "id": "subline",
@@ -389,7 +393,8 @@
               "ref": "font.headline",
               "value": "Bricolage Grotesque"
             }
-          }
+          },
+          "maxFontSize": 104
         },
         {
           "id": "subline",
@@ -553,7 +558,8 @@
               "ref": "font.quoteEmphasis",
               "value": "Fraunces"
             }
-          }
+          },
+          "maxFontSize": 72
         },
         {
           "id": "subline",
@@ -648,7 +654,8 @@
               "ref": "font.headline",
               "value": "Bricolage Grotesque"
             }
-          }
+          },
+          "maxFontSize": 300
         },
         {
           "id": "headline",
@@ -672,7 +679,8 @@
               "ref": "font.headline",
               "value": "Bricolage Grotesque"
             }
-          }
+          },
+          "maxFontSize": 64
         },
         {
           "id": "subline",
