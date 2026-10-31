@@ -1,0 +1,189 @@
+{
+  "formatVersion": 1,
+  "id": "studio-photo-text-fade",
+  "version": 1,
+  "kind": "template",
+  "family": "photo-text",
+  "title": {
+    "en": "Fade headline",
+    "de": "Headline auf Verlauf"
+  },
+  "description": {
+    "en": "A full photo with a heavy headline on a fade at the bottom and a sentence below",
+    "de": "Ein Vollfoto mit schwerer Headline auf einem Verlauf unten und einem Satz darunter"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["photo", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "shade",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.592593,
+            "width": 1,
+            "height": 0.814815,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "shade": "bottom",
+            "bind": {
+              "fill": "shade"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "The soil is running ==out==.",
+            "x": 0,
+            "y": 0.571429,
+            "width": 1,
+            "fontSize": 0.135185,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.94,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "accentFill": "#ffffff",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline",
+              "accentFill": "accent"
+            },
+            "maxFontSize": 0.135185
+          },
+          {
+            "id": "subline",
+            "type": "body",
+            "text": "Since 2000, one in twelve hectares of farmland has gone.",
+            "x": 0,
+            "y": 0.848739,
+            "width": 1,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontWeight": 500,
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.044444
+          }
+        ],
+        "layerOrder": ["photo", "shade", "headline", "subline", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas",
+    "shade": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "headline": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 2,
+        "maxChars": 30
+      }
+    },
+    "subline": {
+      "role": "subline",
+      "label": {
+        "en": "Subline",
+        "de": "Unterzeile"
+      },
+      "budget": {
+        "maxWords": 11,
+        "maxLines": 2,
+        "maxChars": 64
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "headline-with-line",
+      "title": {
+        "en": "Headline with line",
+        "de": "Headline mit Satz"
+      },
+      "elementIds": ["headline", "subline"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "headline": "The soil is running ==out==.",
+      "subline": "Since 2000, one in twelve hectares of farmland has gone."
+    },
+    "de": {
+      "headline": "Der Boden wird ==knapp==.",
+      "subline": "Seit 2000 ist jeder zwölfte Hektar Ackerland verloren."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

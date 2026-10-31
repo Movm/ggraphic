@@ -1,0 +1,172 @@
+{
+  "formatVersion": 1,
+  "id": "studio-day-thanks",
+  "version": 1,
+  "kind": "template",
+  "family": "day",
+  "title": {
+    "en": "Thanks as a word",
+    "de": "Danke als Wortfläche"
+  },
+  "description": {
+    "en": "A date line, a giant thank-you word and a sentence about who is thanked",
+    "de": "Eine Datumszeile, ein riesiges Dankeswort und ein Satz, wem gedankt wird"
+  },
+  "tags": {
+    "tone": "warm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "date",
+            "type": "body",
+            "text": "14 October",
+            "x": 0,
+            "y": 0,
+            "width": 0.76087,
+            "fontSize": 0.048148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontWeight": 700,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.048148
+          },
+          {
+            "id": "word",
+            "type": "header",
+            "text": "THANKS",
+            "x": 0,
+            "y": 0.10084,
+            "width": 1,
+            "fontSize": 0.361111,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.9,
+            "fontWeight": 400,
+            "letterSpacing": -0.005,
+            "bind": {
+              "fill": "accent",
+              "fontFamily": "font.condensed"
+            },
+            "maxFontSize": 0.361111
+          },
+          {
+            "id": "text",
+            "type": "body",
+            "text": "to 312 volunteers who cleaned the park on Saturday.",
+            "x": 0,
+            "y": 0.571429,
+            "width": 0.891304,
+            "fontSize": 0.055556,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.055556
+          }
+        ],
+        "layerOrder": ["date", "word", "text", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "date": {
+      "role": "date",
+      "label": {
+        "en": "Date",
+        "de": "Datum"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 20
+      }
+    },
+    "word": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 8
+      }
+    },
+    "text": {
+      "role": "body",
+      "label": {
+        "en": "Text",
+        "de": "Text"
+      },
+      "budget": {
+        "maxWords": 12,
+        "maxLines": 4,
+        "maxChars": 80
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-left"],
+  "placeholders": {
+    "en": {
+      "date": "14 October",
+      "word": "THANKS",
+      "text": "to 312 volunteers who cleaned the park on Saturday."
+    },
+    "de": {
+      "date": "14. Oktober",
+      "word": "DANKE",
+      "text": "an 312 Freiwillige, die am Samstag den Park geputzt haben."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

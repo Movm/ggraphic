@@ -1,0 +1,152 @@
+{
+  "formatVersion": 1,
+  "id": "studio-statement-stack",
+  "version": 1,
+  "kind": "template",
+  "family": "statement",
+  "title": {
+    "en": "Capital stack",
+    "de": "Versalien-Stapel"
+  },
+  "description": {
+    "en": "Three lines of heavy capital type with a short sentence below",
+    "de": "Drei Zeilen schwere Versalien mit einem kurzen Satz darunter"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "CARE NEEDS ++HANDS.++",
+            "x": 0,
+            "y": 0.058824,
+            "width": 1,
+            "fontSize": 0.199074,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.04,
+            "fontWeight": 400,
+            "letterSpacing": -0.005,
+            "markerFill": "#ffffff",
+            "markerColor": "#000000",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.condensed",
+              "markerFill": "accent",
+              "markerColor": "on-accent"
+            },
+            "maxFontSize": 0.199074
+          },
+          {
+            "id": "subline",
+            "type": "body",
+            "text": "Thousands of care jobs are unfilled.",
+            "x": 0,
+            "y": 0.714286,
+            "width": 0.869565,
+            "fontSize": 0.051852,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.051852
+          }
+        ],
+        "layerOrder": ["headline", "subline", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "headline": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 3,
+        "maxChars": 28
+      }
+    },
+    "subline": {
+      "role": "subline",
+      "label": {
+        "en": "Subline",
+        "de": "Unterzeile"
+      },
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 2,
+        "maxChars": 44
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "statement-with-line",
+      "title": {
+        "en": "Statement with line",
+        "de": "Aussage mit Satz"
+      },
+      "elementIds": ["headline", "subline"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-left"],
+  "placeholders": {
+    "en": {
+      "headline": "CARE NEEDS ++HANDS.++",
+      "subline": "Thousands of care jobs are unfilled."
+    },
+    "de": {
+      "headline": "PFLEGE BRAUCHT ++HÄNDE.++",
+      "subline": "Tausende Pflegestellen sind unbesetzt."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
