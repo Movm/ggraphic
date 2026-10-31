@@ -76,7 +76,7 @@
             "fill": "#ffffff",
             "lineHeight": 0.88,
             "fontWeight": 400,
-            "letterSpacing": -0.0071,
+            "letterSpacing": -0.005,
             "bind": {
               "fill": "ink",
               "fontFamily": "font.condensed"
