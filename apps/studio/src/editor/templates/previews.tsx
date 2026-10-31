@@ -131,7 +131,7 @@ export function resetPreviews(): void {
   queue.length = 0;
   waiting.clear();
   current = null;
-  pageConfig = null;
+  pageConfigs.clear();
   emit();
 }
 
@@ -146,34 +146,45 @@ function subscribeHost(listener: () => void): () => void {
 }
 const currentJob = () => current;
 
-let pageConfig: Promise<FullCanvasConfig> | null = null;
-function loadPageConfig(): Promise<FullCanvasConfig> {
-  // Boundary cast: the loader hands back the registry's config untyped.
-  pageConfig ??= loadCanvasConfig(FREE_PAGE_CONFIG_ID) as Promise<FullCanvasConfig>;
-  return pageConfig;
+/**
+ * The page config reads the active brand when it is built (its type face), so it is kept per
+ * brand: one built under the brand that happened to be active first must not serve another.
+ */
+const pageConfigs = new Map<string, Promise<FullCanvasConfig>>();
+const pageConfigKey = () => brandFingerprint(activeBrand());
+function loadPageConfig(key: string): Promise<FullCanvasConfig> {
+  let loading = pageConfigs.get(key);
+  if (!loading) {
+    // Boundary cast: the loader hands back the registry's config untyped.
+    loading = loadCanvasConfig(FREE_PAGE_CONFIG_ID) as Promise<FullCanvasConfig>;
+    pageConfigs.set(key, loading);
+  }
+  return loading;
 }
 
 /** Mount once per screen: renders the queued previews one at a time, where nobody sees them. */
 export function PreviewHost() {
   const job = useSyncExternalStore(subscribeHost, currentJob, currentJob);
-  const [config, setConfig] = useState<FullCanvasConfig | null>(null);
+  const [loaded, setLoaded] = useState<{ key: string; config: FullCanvasConfig } | null>(null);
   const hasJob = job !== null;
+  const configKey = hasJob ? pageConfigKey() : null;
+  const config = loaded && loaded.key === configKey ? loaded.config : null;
   // Loaded when the first job needs it; a failed load gives up on the waiting jobs
   // (a later request tries again) instead of leaving the queue stuck behind them.
   useEffect(() => {
-    if (!hasJob || config) return;
+    if (!configKey || config) return;
     let live = true;
-    loadPageConfig().then(
-      (loaded) => live && setConfig(loaded),
+    loadPageConfig(configKey).then(
+      (done) => live && setLoaded({ key: configKey, config: done }),
       () => {
-        pageConfig = null;
+        pageConfigs.delete(configKey);
         if (live) failAll();
       }
     );
     return () => {
       live = false;
     };
-  }, [hasJob, config]);
+  }, [configKey, config]);
 
   const jobKey = job?.key ?? null;
 
