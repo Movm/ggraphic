@@ -10,6 +10,7 @@ import {
 } from '../utils/templateRotation.js';
 
 import type { FullCanvasConfig, LayoutResult, AdditionalText } from '../configs/types.js';
+import type { FontRole } from '@ggraphic/core';
 import type { CircleBadgeInstance } from '@ggraphic/editor/primitives/CircleBadge';
 import type { ChartInstance, ChartType } from '@ggraphic/editor/utils/chartTypes';
 import type { FrameClipType, FrameInstance } from '@ggraphic/editor/utils/frameUtils';
@@ -94,6 +95,12 @@ export interface OptionalCanvasActions extends HostCanvasActions {
   ) => void;
   updateAdditionalText?: (id: string, attrs: Partial<AdditionalText>) => void;
   /**
+   * Sets the font of a free text to a brand font role: the family and its binding to the role,
+   * written together as one history step, so the text keeps following the role when the brand
+   * changes. Absent: the host offers no font roles, and the editor shows no picker.
+   */
+  setAdditionalTextFontRole?: (id: string, role: FontRole) => void;
+  /**
    * How a text edit in progress will leave the page (fitted size, hugging plates). A pure
    * function of the committed page: it changes and records nothing.
    */
@@ -164,6 +171,8 @@ export interface UseCanvasElementHandlersResult {
   handleElementSelect: (id: string) => void;
   handleTextChange: (id: string, text: string) => void;
   handleFontSizeChange: (id: string, size: number) => void;
+  /** Sets a free text to a brand font role; a text that is not one is left alone. */
+  handleFontRoleChange: (id: string, role: FontRole) => void;
   handleElementPositionChange: (id: string, x: number, y: number, w: number, h: number) => void;
   handleImageDragEnd: (id: string, x: number, y: number) => void;
   handleImageTransformEnd: (
@@ -320,6 +329,15 @@ export function useCanvasElementHandlers<
       }
     },
     [config.elements, state, actions, setState, debouncedSaveToHistory]
+  );
+
+  const handleFontRoleChange = useCallback(
+    (id: string, role: FontRole) => {
+      if (getStateArray<{ id: string }>(state, 'additionalTexts').some((t) => t.id === id)) {
+        actions.setAdditionalTextFontRole?.(id, role);
+      }
+    },
+    [state, actions]
   );
 
   const handleElementPositionChange = useCallback(
@@ -653,6 +671,7 @@ export function useCanvasElementHandlers<
       handleElementSelect,
       handleTextChange,
       handleFontSizeChange,
+      handleFontRoleChange,
       handleElementPositionChange,
       handleImageDragEnd,
       handleImageTransformEnd,
@@ -687,6 +706,7 @@ export function useCanvasElementHandlers<
       handleElementSelect,
       handleTextChange,
       handleFontSizeChange,
+      handleFontRoleChange,
       handleElementPositionChange,
       handleImageDragEnd,
       handleImageTransformEnd,
