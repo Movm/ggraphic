@@ -195,7 +195,18 @@ describe('the template gallery', () => {
         <TemplateGallery
           formatId="post-portrait"
           onPick={() => {}}
-          hiddenIds={new Set(['studio-number', 'studio-photo-number', 'test-portrait-only'])}
+          hiddenIds={
+            new Set([
+              'studio-number',
+              'studio-number-one-digit',
+              'studio-number-percent',
+              'studio-number-photo-strip',
+              'studio-number-two-columns',
+              'studio-number-word-stack',
+              'studio-photo-number',
+              'test-portrait-only',
+            ])
+          }
         />
       </>
     );
