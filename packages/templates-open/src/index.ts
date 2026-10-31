@@ -12,6 +12,12 @@ import studioPhotoNumber from './templates/studio-photo-number.json' with { type
 import studioPhotoQuote from './templates/studio-photo-quote.json' with { type: 'json' };
 import studioQuote from './templates/studio-quote.json' with { type: 'json' };
 
+import studioBeforeAfterMyth from './templates/studio-before-after-myth.json' with { type: 'json' };
+import studioBeforeAfterNumbers from './templates/studio-before-after-numbers.json' with { type: 'json' };
+import studioBeforeAfterPhotos from './templates/studio-before-after-photos.json' with { type: 'json' };
+import studioBeforeAfterPromise from './templates/studio-before-after-promise.json' with { type: 'json' };
+import studioBeforeAfterStacked from './templates/studio-before-after-stacked.json' with { type: 'json' };
+
 import studioAnnotatedHeadline from './templates/studio-annotated-headline.json' with { type: 'json' };
 import studioCarouselCover from './templates/studio-carousel-cover.json' with { type: 'json' };
 import studioCarouselInner from './templates/studio-carousel-inner.json' with { type: 'json' };
@@ -43,6 +49,12 @@ export const OPEN_TEMPLATES: readonly unknown[] = [
   studioEventPanel,
   studioPhotoQuote,
   studioPhotoNumber,
+
+  studioBeforeAfterMyth,
+  studioBeforeAfterNumbers,
+  studioBeforeAfterPhotos,
+  studioBeforeAfterPromise,
+  studioBeforeAfterStacked,
 
   studioAnnotatedHeadline,
   studioCarouselCover,
