@@ -186,7 +186,7 @@ describe('BrandPage', () => {
     settings: null,
     assets: [],
     pack: null,
-    bundledFonts: ['Raleway', 'Instrument Sans', 'Fraunces'],
+    bundledFonts: ['Raleway', 'Instrument Sans', 'Fraunces', 'Bricolage Grotesque', 'Anton'],
   };
 
   it('starts from the Studio colours, previews edits live and saves them', async () => {
@@ -220,8 +220,8 @@ describe('BrandPage', () => {
       fonts: {
         headline: 'Bricolage Grotesque',
         body: 'Instrument Sans',
-        serif: null,
-        condensed: null,
+        serif: 'Fraunces',
+        condensed: 'Anton',
       },
       logoAssetId: null,
       logoAlt: null,
@@ -282,6 +282,24 @@ describe('BrandPage', () => {
     );
     renderWith(<BrandPage />);
     expect(await screen.findByText(/hand-set colours/)).toBeInTheDocument();
+  });
+
+  it('starts a new brand with the default serif and condensed families, not with none', () => {
+    // An unset role falls back to another font: saving the untouched form would swap Anton out.
+    expect(defaultSettings('Org').fonts).toMatchObject({ serif: 'Fraunces', condensed: 'Anton' });
+  });
+
+  it('names the font an unset serif role really falls back to', async () => {
+    const settings = defaultSettings('Org');
+    settings.fonts = { ...settings.fonts, serif: null, condensed: null };
+    stubServer((method, url) =>
+      url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET'
+        ? json(200, { ...empty, settings })
+        : undefined
+    );
+    renderWith(<BrandPage />);
+    expect(await screen.findByLabelText('Serif')).toHaveTextContent('Same as body text');
+    expect(screen.getByLabelText('Condensed')).toHaveTextContent('Same as headlines');
   });
 
   it('previews the accent colour world as a ground of its own', async () => {
@@ -396,7 +414,7 @@ describe('BrandPage', () => {
     });
   });
 
-  it('serif and condensed default to the fallback and save null', async () => {
+  it('serif and condensed start on the default families and save them', async () => {
     const calls = stubServer((method, url, body) => {
       if (url !== `/api/orgs/${TEST_ORG}/brand-pack`) return undefined;
       if (method === 'GET') return json(200, empty);
@@ -404,15 +422,15 @@ describe('BrandPage', () => {
     });
     const user = userEvent.setup();
     renderWith(<BrandPage />);
-    expect(await screen.findByLabelText('Serif')).toHaveTextContent('Same as quotes');
-    expect(screen.getByLabelText('Condensed')).toHaveTextContent('Same as headlines');
+    expect(await screen.findByLabelText('Serif')).toHaveTextContent('Fraunces');
+    expect(screen.getByLabelText('Condensed')).toHaveTextContent('Anton');
     await user.click(screen.getByRole('button', { name: 'Save brand' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
     const fonts = (
       calls.find((c) => c.method === 'PUT')!.body as { fonts: Record<string, unknown> }
     ).fonts;
-    expect(fonts.serif).toBeNull();
-    expect(fonts.condensed).toBeNull();
+    expect(fonts.serif).toBe('Fraunces');
+    expect(fonts.condensed).toBe('Anton');
   });
 
   it('a second logo needs a ground', async () => {
