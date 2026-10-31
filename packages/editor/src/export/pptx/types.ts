@@ -81,6 +81,8 @@ export interface PptxTextItem extends PptxPlaced {
   italic: boolean;
   /** em; `spc` is this times the font size in points. */
   letterSpacing: number;
+  /** A line through every run. */
+  strikethrough: boolean;
   align: 'left' | 'center' | 'right';
   valign: 'top' | 'middle';
   /** Zeilenhöhe als Vielfaches der Schriftgröße. */

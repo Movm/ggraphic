@@ -54,6 +54,7 @@ function runOptions(
       ? { charSpacing: item.letterSpacing * units.pt(item.fontSize) }
       : {}),
     ...(run.underline ? { underline: { style: 'sng' as const } } : {}),
+    ...(item.strikethrough ? { strike: 'sngStrike' as const } : {}),
     ...(color ? { color: color.hex } : {}),
     ...(alpha < 1 ? { transparency: transparencyOf(alpha) } : {}),
     ...(highlight ? { highlight: highlight.hex } : {}),

@@ -107,7 +107,9 @@ export interface GateAdapter extends Partial<Pick<HugAdapter, 'textExtent' | 'pl
  * element leaves bare (a notch), so a text lying wholly inside it is not on this element; `dots`,
  * a dot pattern over the element, which no text lying on it can be judged against; `stripes`, the
  * colour of stripe bands over a solid element, so a text on it is judged against fill and stripe; `grain`, a
- * layer of `fill` at any alpha in `alpha` over it.
+ * layer of `fill` at any alpha in `alpha` over it; `inner`, the part of the element's box that is
+ * surely its ground (a rounded box leaves its corners bare, a speech bubble's box reaches out to its
+ * tail): a text that overlaps the box but does not lie wholly inside `inner` is not judged.
  */
 export type GateCover = (
   | { kind: 'solid'; fill: string }
@@ -118,6 +120,7 @@ export type GateCover = (
   | { kind: 'unknown' }
 ) & {
   cut?: Box;
+  inner?: Box;
   dots?: true;
   stripes?: string;
   grain?: { fill: string; alpha: [number, number] };
@@ -749,7 +752,7 @@ function checkPlaced(
           grounds = null;
           break;
         }
-        if (!inside(box, area) || cover.kind === 'unknown' || cover.dots) {
+        if (!inside(box, cover.inner ?? area) || cover.kind === 'unknown' || cover.dots) {
           grounds = null;
           break;
         }

@@ -123,6 +123,7 @@
             "lineHeight": 0.98,
             "fontWeight": 800,
             "letterSpacing": -0.03,
+            "strikethrough": true,
             "bind": {
               "fill": "ink2",
               "fontFamily": "font.headline"

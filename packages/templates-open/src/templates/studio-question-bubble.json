@@ -30,11 +30,12 @@
         "shapeInstances": [
           {
             "id": "bubble",
-            "type": "rect",
+            "type": "rounded-rect",
+            "cornerRadius": 0,
             "x": 0.5,
-            "y": 0.336134,
+            "y": 0.298487,
             "width": 1,
-            "height": 0.537815,
+            "height": 0.462521,
             "fill": "#ffffff",
             "rotation": 0,
             "scaleX": 1,
@@ -42,7 +43,10 @@
             "opacity": 1,
             "bind": {
               "fill": "accent"
-            }
+            },
+            "tailSide": "bottom",
+            "tailAt": 0.19,
+            "tailSize": 0.083333
           }
         ],
         "userImageInstances": [
