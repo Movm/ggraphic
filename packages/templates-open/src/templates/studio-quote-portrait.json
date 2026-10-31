@@ -1,0 +1,204 @@
+{
+  "formatVersion": 1,
+  "id": "studio-quote-portrait",
+  "version": 1,
+  "kind": "template",
+  "family": "quote",
+  "title": {
+    "en": "Portrait quote",
+    "de": "Porträt-Zitat"
+  },
+  "description": {
+    "en": "A portrait on top, the quotation in italic serif below, with name and role",
+    "de": "Oben ein Porträt, darunter das Zitat in kursiver Serife mit Name und Rolle"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "light", "dark", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 0.518519,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "quote",
+            "type": "header",
+            "text": "“Whoever cares for others has earned ==a rest==.”",
+            "x": 0,
+            "y": 0.558824,
+            "width": 1,
+            "fontSize": 0.07037,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.04,
+            "fontWeight": 500,
+            "letterSpacing": -0.01,
+            "fontStyle": "italic",
+            "accentFill": "#ffffff",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.serif",
+              "accentFill": "accent"
+            },
+            "maxFontSize": 0.07037
+          },
+          {
+            "id": "name",
+            "type": "body",
+            "text": "Name Surname",
+            "x": 0,
+            "y": 0.802521,
+            "width": 0.891304,
+            "fontSize": 0.048148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontWeight": 700,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.048148
+          },
+          {
+            "id": "role",
+            "type": "body",
+            "text": "Role or occupation",
+            "x": 0,
+            "y": 0.852941,
+            "width": 0.891304,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontWeight": 500,
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.044444
+          }
+        ],
+        "layerOrder": ["photo", "quote", "name", "role", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "quote": {
+      "role": "quote",
+      "label": {
+        "en": "Quotation",
+        "de": "Zitat"
+      },
+      "budget": {
+        "maxWords": 14,
+        "maxLines": 3,
+        "maxChars": 90
+      }
+    },
+    "name": {
+      "role": "name",
+      "label": {
+        "en": "Name",
+        "de": "Name"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 28
+      }
+    },
+    "role": {
+      "role": "body",
+      "label": {
+        "en": "Text",
+        "de": "Text"
+      },
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 1,
+        "maxChars": 36
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "quote-with-person",
+      "title": {
+        "en": "Quote with person",
+        "de": "Zitat mit Person"
+      },
+      "elementIds": ["quote", "name", "role"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "quote": "“Whoever cares for others has earned ==a rest==.”",
+      "name": "Name Surname",
+      "role": "Role or occupation"
+    },
+    "de": {
+      "quote": "„Wer sich kümmert, verdient ==Feierabend==.“",
+      "name": "Vorname Nachname",
+      "role": "Beruf oder Rolle"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
