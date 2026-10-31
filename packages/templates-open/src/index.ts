@@ -23,6 +23,11 @@ import studioFigureOfTheMonth from './templates/studio-figure-of-the-month.json'
 import studioFramedPhoto from './templates/studio-framed-photo.json' with { type: 'json' };
 import studioGoodNewsSlide from './templates/studio-good-news-slide.json' with { type: 'json' };
 import studioInvitationPanel from './templates/studio-invitation-panel.json' with { type: 'json' };
+import studioNumberOneDigit from './templates/studio-number-one-digit.json' with { type: 'json' };
+import studioNumberPercent from './templates/studio-number-percent.json' with { type: 'json' };
+import studioNumberPhotoStrip from './templates/studio-number-photo-strip.json' with { type: 'json' };
+import studioNumberTwoColumns from './templates/studio-number-two-columns.json' with { type: 'json' };
+import studioNumberWordStack from './templates/studio-number-word-stack.json' with { type: 'json' };
 import studioPetitionFace from './templates/studio-petition-face.json' with { type: 'json' };
 import studioPosterType from './templates/studio-poster-type.json' with { type: 'json' };
 import studioQuoteCard from './templates/studio-quote-card.json' with { type: 'json' };
@@ -60,6 +65,11 @@ export const OPEN_TEMPLATES: readonly unknown[] = [
   studioFramedPhoto,
   studioGoodNewsSlide,
   studioInvitationPanel,
+  studioNumberOneDigit,
+  studioNumberPercent,
+  studioNumberPhotoStrip,
+  studioNumberTwoColumns,
+  studioNumberWordStack,
   studioPetitionFace,
   studioPosterType,
   studioQuoteCard,
