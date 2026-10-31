@@ -7,7 +7,13 @@
  *
  * Every action is one user intent and records one history entry.
  */
-import { withBinding, withoutBinding, type BindingRef } from '@ggraphic/core';
+import {
+  resolveRef,
+  withBinding,
+  withoutBinding,
+  type BindingRef,
+  type FontRole,
+} from '@ggraphic/core';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { blockElementIds, type LiftedBlock } from '@ggraphic/editor/blocks/liftedBlock';
 import { type IconState } from '@ggraphic/editor/configs/factory/baseTypes';
@@ -30,7 +36,7 @@ import {
 import { fittedFontSize } from './fitting';
 import { withHuggedPlates } from './hug';
 import { type PageGroup, type StudioPageState } from './pageState';
-import { headlineFont, bodyFont, scaleFor } from './typography';
+import { headlineFont, bodyFont, fontStackFor, scaleFor } from './typography';
 
 type SetState = (
   partial: Partial<StudioPageState> | ((prev: StudioPageState) => StudioPageState)
@@ -61,10 +67,29 @@ function inkFor(background: string): string {
   return luminance > 0.5 ? activeBrand().colors.textOnLight : activeBrand().colors.textOnDark;
 }
 
+/** `role` is the brand font the preset's family stands for: a new text follows it from the start. */
 const TEXT_PRESETS = {
-  header: { text: 'Headline', size: 88, font: headlineFont, style: 'bold' as const },
-  subheader: { text: 'Subheading', size: 52, font: headlineFont, style: 'normal' as const },
-  body: { text: 'Your text here', size: 36, font: bodyFont, style: 'normal' as const },
+  header: {
+    text: 'Headline',
+    size: 88,
+    font: headlineFont,
+    role: 'headline' as const,
+    style: 'bold' as const,
+  },
+  subheader: {
+    text: 'Subheading',
+    size: 52,
+    font: headlineFont,
+    role: 'headline' as const,
+    style: 'normal' as const,
+  },
+  body: {
+    text: 'Your text here',
+    size: 36,
+    font: bodyFont,
+    role: 'body' as const,
+    style: 'normal' as const,
+  },
 };
 
 export function createStudioActions(
@@ -95,6 +120,10 @@ export function createStudioActions(
       width: textWidth,
       fontSize: Math.round(preset.size * s),
       fontFamily: preset.font(),
+      bind: withBinding(undefined, 'fontFamily', {
+        ref: `font.${preset.role}`,
+        value: activeBrand().fonts[preset.role],
+      }),
       fontStyle: preset.style,
       fill: inkFor(getState().backgroundColor),
       align: 'center',
@@ -105,6 +134,18 @@ export function createStudioActions(
       additionalTexts: [...prev.additionalTexts, text],
       layerOrder: withLayer(prev.layerOrder, text.id),
     }));
+  };
+
+  /**
+   * A text with a prototype size (`maxFontSize`) at the size it fits at on `page`, which a new
+   * text, a new font or a new brand font changes; any other text, or one that already fits, as it is.
+   */
+  const refitted = (
+    text: AdditionalText & Record<string, unknown>,
+    page: StudioPageState
+  ): AdditionalText => {
+    const fitted = fittedFontSize(text, page, height);
+    return fitted === null || fitted === text.fontSize ? text : { ...text, fontSize: fitted };
   };
 
   return {
@@ -125,14 +166,39 @@ export function createStudioActions(
               // A committed text change refits a text with a prototype size: shrink as it grows,
               // grow back as it shrinks. A size set by hand in the same change stands.
               if (!('text' in partial) || 'fontSize' in partial) return next;
-              const fitted = fittedFontSize(next, prev, height);
-              return fitted === null || fitted === next.fontSize
-                ? next
-                : { ...next, fontSize: fitted };
+              return refitted(next, prev);
             }),
           }),
         true
       ),
+    /**
+     * Sets the font of a free text to a brand role (`fontRoleOptions`): the family and the binding
+     * to the role are written together, so the text keeps following the role when the brand changes
+     * (a family set without the binding would lose it on the next rebind). One history step; the
+     * size is refitted to the new font and the plates that hug the text follow.
+     */
+    setAdditionalTextFontRole: (id: string, role: FontRole) => {
+      const ref = `font.${role}` as const;
+      const family = resolveRef(ref, activeBrand(), null);
+      if (family === null || !getState().additionalTexts.some((t) => t.id === id)) return;
+      commit((prev) =>
+        withHuggedPlates({
+          ...prev,
+          additionalTexts: prev.additionalTexts.map((t) =>
+            t.id === id
+              ? refitted(
+                  {
+                    ...t,
+                    fontFamily: fontStackFor(role, family),
+                    bind: withBinding(t.bind, 'fontFamily', { ref, value: family }),
+                  },
+                  prev
+                )
+              : t
+          ),
+        })
+      );
+    },
     /**
      * How the page will look once a text edit is committed, while it is still being typed: the
      * size the draft fits at and the plates that hug it. A function of the committed page that
