@@ -1,0 +1,236 @@
+{
+  "formatVersion": 1,
+  "id": "studio-person-broadcast",
+  "version": 1,
+  "kind": "template",
+  "family": "person",
+  "title": {
+    "en": "Broadcast notice",
+    "de": "Sendehinweis"
+  },
+  "description": {
+    "en": "A full photo with a date plate in the corner, a big capital title and the guest below",
+    "de": "Ein Vollfoto mit Datumsfläche in der Ecke, großem Versalientitel und dem Gast darunter"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["photo", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "shade",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.592593,
+            "width": 1,
+            "height": 0.814815,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "shade": "bottom",
+            "bind": {
+              "fill": "shade"
+            }
+          },
+          {
+            "id": "plate",
+            "type": "rect",
+            "x": 0.836957,
+            "y": 0.063025,
+            "width": 0.326087,
+            "height": 0.12605,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "when",
+            "type": "body",
+            "text": "Today 7:30 pm",
+            "x": 0.7,
+            "y": 0.018487,
+            "width": 0.282609,
+            "fontSize": 0.046296,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontWeight": 700,
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.046296
+          },
+          {
+            "id": "title",
+            "type": "header",
+            "text": "LIVE TALK",
+            "x": 0,
+            "y": 0.554622,
+            "width": 1,
+            "fontSize": 0.212963,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.9,
+            "fontWeight": 400,
+            "letterSpacing": -0.005,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.condensed"
+            },
+            "maxFontSize": 0.212963
+          },
+          {
+            "id": "guest",
+            "type": "body",
+            "text": "Pat Example, principal",
+            "x": 0,
+            "y": 0.92437,
+            "width": 0.826087,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.044444
+          }
+        ],
+        "layerOrder": ["photo", "shade", "plate", "when", "title", "guest", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas",
+    "shade": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "when": {
+      "role": "date",
+      "label": {
+        "en": "Day and time",
+        "de": "Tag und Uhrzeit"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 2,
+        "maxChars": 18
+      }
+    },
+    "title": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 2,
+        "maxChars": 12
+      }
+    },
+    "guest": {
+      "role": "name",
+      "label": {
+        "en": "Guest",
+        "de": "Gast"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 1,
+        "maxChars": 28
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "date-with-plate",
+      "title": {
+        "en": "Date with plate",
+        "de": "Datum mit Fläche"
+      },
+      "elementIds": ["plate", "when"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-left"],
+  "placeholders": {
+    "en": {
+      "when": "Today 7:30 pm",
+      "title": "LIVE TALK",
+      "guest": "Pat Example, principal"
+    },
+    "de": {
+      "when": "Heute 19:30",
+      "title": "LIVE-TALK",
+      "guest": "Pat Muster, Rektor"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
