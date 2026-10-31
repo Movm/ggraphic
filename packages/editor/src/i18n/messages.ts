@@ -74,6 +74,11 @@ export function registerHostMessages(
   update();
 }
 
+/** The language of the built-in catalogue in use; a host's own catalogue counts as German. */
+export function messageLocale(): MessageLocale {
+  return baseLocale;
+}
+
 /** The active catalogue, for code outside React. */
 export function messages(): Messages {
   return registered;

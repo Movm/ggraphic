@@ -129,7 +129,7 @@ export interface CanvasAssetCatalog {
    */
   emojiSrc?: (code: string) => string;
   /**
-   * Does the host ship the file of this emoji (`group` is the catalogue group's label)? A host
+   * Does the host ship the file of this emoji (`group` is emojibase's group key, e.g. `flags`)? A host
    * that bundles a subset lists only that; without it every emoji of the Noto set is offered.
    * An emoji whose five skin-tone files are not all offered loses the tone picker.
    */

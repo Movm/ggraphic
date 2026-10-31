@@ -2,6 +2,7 @@
   "source": "Noto Emoji e20cbc2; names: emojibase-data 17.0.0 (MIT, © Miles Johnson)",
   "groups": [
     {
+      "key": "smileys-emotion",
       "label": "Smileys & Emotionen",
       "emoji": [
         [
@@ -1768,6 +1769,7 @@
       ]
     },
     {
+      "key": "people-body",
       "label": "Menschen & Körper",
       "emoji": [
         [
@@ -6476,6 +6478,7 @@
       ]
     },
     {
+      "key": "animals-nature",
       "label": "Tiere & Natur",
       "emoji": [
         ["1f435", "Affengesicht", ["affe", "banane", "dschungel", "gesicht", "tier", "zoo"]],
@@ -6893,6 +6896,7 @@
       ]
     },
     {
+      "key": "food-drink",
       "label": "Essen & Trinken",
       "emoji": [
         ["1f347", "Trauben", ["frucht", "obst", "traube", "wein"]],
@@ -7331,6 +7335,7 @@
       ]
     },
     {
+      "key": "travel-places",
       "label": "Reisen & Orte",
       "emoji": [
         ["1f30d", "Globus mit Europa und Afrika", ["afrika", "erde", "europa", "weltkugel"]],
@@ -7822,6 +7827,7 @@
       ]
     },
     {
+      "key": "activities",
       "label": "Aktivitäten",
       "emoji": [
         ["1f383", "Halloweenkürbis", ["halloween", "herbst", "kürbis", "kürbislaterne"]],
@@ -8061,6 +8067,7 @@
       ]
     },
     {
+      "key": "objects",
       "label": "Gegenstände",
       "emoji": [
         ["1f453", "Brille", ["accessoire"]],
@@ -8979,6 +8986,7 @@
       ]
     },
     {
+      "key": "symbols",
       "label": "Symbole",
       "emoji": [
         ["1f3e7", "Symbol „Geldautomat“", ["atm", "geldautomat"]],
@@ -9601,6 +9609,7 @@
       ]
     },
     {
+      "key": "flags",
       "label": "Flaggen",
       "emoji": [
         [

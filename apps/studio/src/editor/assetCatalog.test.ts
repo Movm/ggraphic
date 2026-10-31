@@ -6,6 +6,7 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
+import { registerMessages } from '@ggraphic/editor/i18n/messages';
 import { registerAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
 import { loadEmojiCatalog } from '@ggraphic/editor/utils/emoji/emojiCatalog';
 import { describe, expect, it } from 'vitest';
@@ -28,6 +29,8 @@ describe('studioAssetCatalog', () => {
   });
 
   it('lists no emoji without a shipped file, no flags and no skin-tone variants', async () => {
+    // The Studio speaks English (registerEditor.ts): the emoji names do too.
+    registerMessages('en');
     registerAssetCatalog(catalog);
     const groups = await loadEmojiCatalog();
     const all = groups.flatMap((g) => g.emoji);
@@ -36,7 +39,8 @@ describe('studioAssetCatalog', () => {
       expect(onDisk(emoji.src.slice(1)), emoji.id).toBe(true);
       expect(emoji.tones, emoji.id).toBeNull();
     }
-    expect(groups.map((g) => g.label)).not.toContain('Flaggen');
+    expect(groups.map((g) => g.label)).not.toContain('Flags');
+    expect(all.find((e) => e.id === 'emoji-1f600')?.label).toBe('grinning face');
   });
 
   it('lists only illustrations whose SVG and thumbnail ship', async () => {
