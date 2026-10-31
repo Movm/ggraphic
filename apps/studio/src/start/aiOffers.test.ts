@@ -7,7 +7,12 @@ import { OFFER_ID_PATTERN } from '@ggraphic/schema';
 import { studioBrand } from '../brand';
 
 import { BLANK_TEMPLATE_ID } from '../editor/templates/ids';
-import { studioCatalog, type templatesIn, type CatalogEntry } from '../editor/templates/catalog';
+import {
+  studioCatalog,
+  templatesFor,
+  type templatesIn,
+  type CatalogEntry,
+} from '../editor/templates/catalog';
 import { seedFor } from '../editor/templates/seeds';
 
 import { pickOffers } from './aiOffers';
@@ -50,10 +55,7 @@ describe('pickOffers with hidden templates', () => {
     const all = pickOffers('post-portrait').templates.map((t) => t.id);
     expect(all).toContain('studio-quote');
     const rest = pickOffers('post-portrait', activeBrand(), new Set(['studio-quote'])).templates;
-    // The offer is capped, so a hidden template lets the next one move up.
-    expect(rest.map((t) => t.id).slice(0, all.length - 1)).toEqual(
-      all.filter((id) => id !== 'studio-quote')
-    );
+    expect(rest.map((t) => t.id)).toEqual(all.filter((id) => id !== 'studio-quote'));
   });
 });
 
@@ -62,39 +64,16 @@ const LEGACY_IDS = ['studio-headline', 'studio-quote', 'studio-number'];
 describe('pickOffers', () => {
   const { templates, schemes } = pickOffers('post-portrait');
 
-  it('offers every template but the blank one', () => {
-    expect(templates.map((t) => t.id)).toEqual([
-      'studio-headline',
-      'studio-quote',
-      'studio-number',
-      'studio-event-giant-date',
-      'studio-event-photo-date',
-      'studio-event-programme',
-      'studio-event-date-bands',
-      'studio-event-countdown',
-      'studio-event-panel',
-      'studio-photo-quote',
-      'studio-photo-number',
-      'studio-call-demo',
-    ]);
+  it('offers every template of the format but the blank one, in catalogue order', () => {
+    const catalogue = templatesFor('post-portrait')
+      .map((e) => e.id)
+      .filter((id) => id !== BLANK_TEMPLATE_ID);
+    expect(catalogue.length).toBeGreaterThan(12);
+    expect(templates.map((t) => t.id)).toEqual(catalogue);
     expect(templates.some((t) => t.id === BLANK_TEMPLATE_ID)).toBe(false);
   });
 
-  it('builds the offers from the catalogue: ids, labels and budgets of the quote', () => {
-    expect(templates.map((t) => t.id)).toEqual([
-      'studio-headline',
-      'studio-quote',
-      'studio-number',
-      'studio-event-giant-date',
-      'studio-event-photo-date',
-      'studio-event-programme',
-      'studio-event-date-bands',
-      'studio-event-countdown',
-      'studio-event-panel',
-      'studio-photo-quote',
-      'studio-photo-number',
-      'studio-call-demo',
-    ]);
+  it('builds the offers from the catalogue: labels and budgets of the quote', () => {
     expect(templates.find((t) => t.id === 'studio-quote')!.slots).toEqual([
       { id: 'headline', label: 'The quotation', maxChars: 160 },
       { id: 'subline', label: 'Who said it', maxChars: 50 },
@@ -172,12 +151,12 @@ describe('pickOffers from a stub catalogue', () => {
     expect(t[0]!.slots).toEqual([{ id: 'a', label: 'Body text', maxChars: 10 }]);
   });
 
-  it('takes at most 12 templates and 8 slots, in order', () => {
+  it('takes every template and at most 8 slots each, in order', () => {
     const ids = Array.from({ length: 10 }, (_, i) => `s${i}`);
     const slots = Object.fromEntries(ids.map((i) => [i, text(5)]));
     mocks.stub = Array.from({ length: 14 }, (_, i) => entry(`t${i}`, ['4:5'], slots, ids));
     const t = pickOffers('post-portrait').templates;
-    expect(t).toHaveLength(12);
+    expect(t.map((x) => x.id)).toEqual(Array.from({ length: 14 }, (_, i) => `t${i}`));
     expect(t[0]!.slots.map((s) => s.id)).toEqual(ids.slice(0, 8));
   });
 });
@@ -223,7 +202,7 @@ describe('the offers fit the server contract', () => {
     (formatId) => {
       const { templates } = pickOffers(formatId);
       expect(templates.length).toBeGreaterThan(0);
-      expect(templates.length).toBeLessThanOrEqual(12);
+      expect(templates.length).toBeLessThanOrEqual(200);
       for (const t of templates) {
         expect(t.id).toMatch(OFFER_ID_PATTERN);
         expect(t.label.length).toBeLessThanOrEqual(200);
