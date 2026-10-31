@@ -71,7 +71,8 @@ export function BrandPreview({
           aria-hidden
           style={{
             position: 'absolute',
-            left: `calc(${margin} + ${px(60)})`,
+            // Flush with the headline, as in the template and its gallery preview.
+            left: margin,
             top: '24%',
             width: px(120),
             height: px(14),
