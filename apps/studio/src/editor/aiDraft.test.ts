@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { minTextSizePx } from '@ggraphic/core';
 import { PLAIN_STYLE, wrapLines } from '@ggraphic/schema';
+import type { AdditionalText } from '@ggraphic/editor/configs/types';
 import { runMeasurer } from '@ggraphic/editor/utils/textUtils';
 import { describe, expect, it } from 'vitest';
 
@@ -32,6 +33,37 @@ describe('draftTexts', () => {
   it('maps the draft fields onto the role ids and leaves out empty ones', () => {
     const texts = draftTexts({ headline: ' Hello ', subline: '', body: undefined });
     expect([...texts]).toEqual([['headline', 'Hello']]);
+  });
+});
+
+describe('decorative text (a ghost numeral)', () => {
+  const texts = (): AdditionalText[] => {
+    const seeded = seedFor(HEADLINE_TEMPLATE_ID, SIZE.width, SIZE.height).additionalTexts ?? [];
+    const ghost = {
+      ...seeded[0]!,
+      id: 'ghost',
+      text: '5',
+      decorative: true as const,
+      y: 0.95 * SIZE.height,
+    };
+    return [...seeded, ghost];
+  };
+
+  it('is never filled, even when the id is asked for', () => {
+    const filled = fillById(texts(), new Map([['ghost', 'overwritten']]));
+    expect(filled.find((t) => t.id === 'ghost')?.text).toBe('5');
+  });
+
+  it('is no neighbour that the text above it must shrink for', () => {
+    const long = { ...draft, headline: 'Gemeinschaftsgarten Stadtrand wächst und wächst weiter' };
+    const without = fillTexts(
+      texts().filter((t) => t.id !== 'ghost'),
+      long
+    )!;
+    const withGhost = fillTexts(texts(), long)!;
+    expect(withGhost.find((t) => t.id === 'headline')?.fontSize).toBe(
+      without.find((t) => t.id === 'headline')?.fontSize
+    );
   });
 });
 

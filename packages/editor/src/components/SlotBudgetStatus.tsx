@@ -35,7 +35,7 @@ export function SlotBudgetStatus({
   const texts = state['additionalTexts'];
   const text =
     slotBudgets && selected && Array.isArray(texts)
-      ? (texts as AdditionalText[]).find((item) => item.id === selected)
+      ? (texts as AdditionalText[]).find((item) => item.id === selected && !item.decorative)
       : undefined;
   const found = text && selected ? slotBudgets?.budgetFor(state, selected) : null;
 

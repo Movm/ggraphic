@@ -255,6 +255,11 @@ function crossReferences(file: TemplateFile): string | null {
     if (weight !== undefined && !FONT_WEIGHTS.includes(weight as number)) {
       return `${id}.fontWeight: must be one of ${FONT_WEIGHTS.join(', ')}`;
     }
+    // Only `true` means anything; a ghost numeral is a picture and has no slot of its own.
+    const decorative = isRecord(item) ? item['decorative'] : undefined;
+    if (decorative !== undefined && decorative !== true) {
+      return `${id}.decorative: must be true when present`;
+    }
     // The prototype's size: the fit never goes above it, so it cannot lie under the plain size.
     const maxFontSize = isRecord(item) ? item['maxFontSize'] : undefined;
     if (maxFontSize !== undefined) {
@@ -274,6 +279,10 @@ function crossReferences(file: TemplateFile): string | null {
     // Slots are what the AI is offered by id; a record key is not held to the pattern above.
     if (!OFFER_ID_PATTERN.test(id)) {
       return `slots.${id}: slot key must be 1-64 of a-z, 0-9 and "-"`;
+    }
+    const slotted = elements.find(([elementId]) => elementId === id)?.[1];
+    if (isRecord(slotted) && slotted['decorative'] === true) {
+      return `slots.${id}: a decorative text is no content and cannot be a slot`;
     }
   }
   const bound = new Map<string, Set<string>>();
