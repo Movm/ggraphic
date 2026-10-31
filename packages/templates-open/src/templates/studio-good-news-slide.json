@@ -72,7 +72,7 @@
             "x": 0,
             "y": 0.340741,
             "width": 1,
-            "height": 0.37037,
+            "height": 0.437037,
             "rotation": 0,
             "scale": 1,
             "opacity": 1
@@ -139,9 +139,9 @@
             "type": "body",
             "text": "The youth centre stays open. After 4,300 signatures the council secured the funding until 2029. Thank you all!",
             "x": 0,
-            "y": 0.806723,
-            "width": 0.565217,
-            "fontSize": 0.022222,
+            "y": 0.845378,
+            "width": 0.604348,
+            "fontSize": 0.027778,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -151,7 +151,7 @@
               "fill": "ink",
               "fontFamily": "font.body"
             },
-            "maxFontSize": 0.022222
+            "maxFontSize": 0.027778
           }
         ],
         "layerOrder": ["panel", "label", "headline", "photo", "dot", "text", "brand-logo"]
@@ -202,7 +202,7 @@
       },
       "budget": {
         "maxWords": 20,
-        "maxLines": 6,
+        "maxLines": 4,
         "maxChars": 140
       }
     }
