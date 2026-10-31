@@ -36,27 +36,30 @@ export function ProjectGrid() {
         <h2 id="projects-heading" className="studio-start__heading">
           Your projects
         </h2>
-        <a
-          className="ui-link studio-link"
-          href={TRASH_PATH}
-          onClick={(e) => {
-            if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
-            e.preventDefault();
-            navigate(TRASH_PATH);
-          }}
-        >
-          Trash
-        </a>
-        {all.length > 0 ? (
-          <TextField
-            type="search"
-            label="Search projects"
-            className="studio-search"
-            value={search}
-            maxLength={200}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        ) : null}
+        {/* One group at the right edge: three children of a space-between row put Trash mid-row. */}
+        <div className="studio-start__tools">
+          {all.length > 0 ? (
+            <TextField
+              type="search"
+              label="Search projects"
+              className="studio-search"
+              value={search}
+              maxLength={200}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          ) : null}
+          <a
+            className="ui-link studio-link"
+            href={TRASH_PATH}
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+              e.preventDefault();
+              navigate(TRASH_PATH);
+            }}
+          >
+            Trash
+          </a>
+        </div>
       </div>
       {projects.isPending ? <p className="studio-muted">Loading projects…</p> : null}
       {projects.isError ? (
