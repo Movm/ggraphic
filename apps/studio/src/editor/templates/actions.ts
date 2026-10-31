@@ -42,6 +42,9 @@ const withLayer = (order: readonly string[] | undefined, id: string) => [...(ord
 const withoutLayer = (order: readonly string[] | undefined, id: string) =>
   (order ?? []).filter((entry) => entry !== id);
 
+/** The shape fields a person sets by moving or resizing it on the canvas. */
+const HAND_GEOMETRY = ['x', 'y', 'width', 'height'] as const;
+
 /** A readable ink on the page's current background. */
 function inkFor(background: string): string {
   const match = activeBrand().backgrounds.find(
@@ -149,7 +152,15 @@ export function createStudioActions(
       commit(
         (prev) => ({
           ...prev,
-          shapeInstances: prev.shapeInstances.map((x) => (x.id === id ? { ...x, ...partial } : x)),
+          shapeInstances: prev.shapeInstances.map((x) => {
+            if (x.id !== id) return x;
+            const next = { ...x, ...partial };
+            // A plate placed or sized by hand stops hugging its text; otherwise the next text
+            // edit, rebind or AI fill would snap it back.
+            if (!('hug' in next) || !HAND_GEOMETRY.some((k) => k in partial)) return next;
+            const { hug: _hug, ...free } = next;
+            return free;
+          }),
         }),
         true
       ),
