@@ -120,6 +120,19 @@ const sample = (text: string, over: Partial<Sample> = {}): Sample => ({
 });
 
 describe('gate line count against the renderer layout (real fonts)', () => {
+  it('has the fonts loaded into the canvas (else both sides measure the fallback and prove nothing)', () => {
+    for (const family of Object.keys(FAMILIES)) {
+      expect(subsets[family]!.length, `${family} files registered`).toBeGreaterThan(0);
+    }
+    const probe = 'Klimaschutz jetzt';
+    const widths = ['Raleway', 'Fraunces'].map((f) => realWidth(probe, f, 'normal', 100));
+    expect(widths[0]).not.toBeCloseTo(widths[1]!, 0);
+    // Neither is the width of the canvas's fallback font.
+    ctx.font = '100px "no-such-font-registered"';
+    const fallback = ctx.measureText(probe).width;
+    for (const w of widths) expect(w).not.toBeCloseTo(fallback, 0);
+  });
+
   it.each([
     ['wide capitals', sample('WWWWW '.repeat(6).trim(), { size: 100, width: 900 })],
     ['wide lowercase', sample('mmmmm '.repeat(6).trim(), { size: 100, width: 900 })],
