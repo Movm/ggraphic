@@ -1,0 +1,224 @@
+{
+  "formatVersion": 1,
+  "id": "studio-person-new-face",
+  "version": 1,
+  "kind": "template",
+  "family": "person",
+  "title": {
+    "en": "New face with label",
+    "de": "Neues Gesicht mit Label"
+  },
+  "description": {
+    "en": "A photo inside the margins, a label plate on its lower edge, name and role below",
+    "de": "Ein Foto innerhalb des Rands, an dessen unterer Kante eine Label-Fläche, darunter Name und Rolle"
+  },
+  "tags": {
+    "tone": "warm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "light", "dark", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "label-plate",
+            "type": "rect",
+            "x": 0.271739,
+            "y": 0.60084,
+            "width": 0.543478,
+            "height": 0.092437,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 0.588235,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "label",
+            "type": "body",
+            "text": "New face",
+            "x": 0.030435,
+            "y": 0.578151,
+            "width": 0.48913,
+            "fontSize": 0.051852,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontWeight": 700,
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.051852
+          },
+          {
+            "id": "name",
+            "type": "header",
+            "text": "Pat Example",
+            "x": 0,
+            "y": 0.689076,
+            "width": 1,
+            "fontSize": 0.107407,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.107407
+          },
+          {
+            "id": "role",
+            "type": "body",
+            "text": "Head of care, south site",
+            "x": 0,
+            "y": 0.815126,
+            "width": 0.826087,
+            "fontSize": 0.046296,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontWeight": 500,
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.046296
+          }
+        ],
+        "layerOrder": ["photo", "label-plate", "label", "name", "role", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "label": {
+      "role": "subline",
+      "label": {
+        "en": "Label",
+        "de": "Label"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 20
+      }
+    },
+    "name": {
+      "role": "name",
+      "label": {
+        "en": "Name",
+        "de": "Name"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 24
+      }
+    },
+    "role": {
+      "role": "body",
+      "label": {
+        "en": "Role",
+        "de": "Rolle"
+      },
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 2,
+        "maxChars": 40
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "person-with-role",
+      "title": {
+        "en": "Person with role",
+        "de": "Person mit Rolle"
+      },
+      "elementIds": ["name", "role"]
+    },
+    {
+      "id": "label-with-plate",
+      "title": {
+        "en": "Label with plate",
+        "de": "Label mit Fläche"
+      },
+      "elementIds": ["label-plate", "label"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "label": "New face",
+      "name": "Pat Example",
+      "role": "Head of care, south site"
+    },
+    "de": {
+      "label": "Neu im Team",
+      "name": "Pat Beispiel",
+      "role": "Pflegedienstleitung, Standort Süd"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
