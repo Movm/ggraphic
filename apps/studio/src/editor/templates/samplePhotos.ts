@@ -10,33 +10,46 @@ type Obj = Record<string, unknown>;
 
 /**
  * Which roles suit a slot, by its shape (the template file declares no per-slot photo hint):
- * tall slots take a portrait first, then a scene; wide slots a crowd, then a scene; square-ish
- * ones a scene, then a detail. The n-th empty slot of a page takes the (n mod pool size)-th
- * photo of that pool, so the choice is deterministic and a page with two empty slots shows two
- * different photos.
+ * tall slots take portraits (a scene only if there is none); wide slots crowds (then scenes);
+ * square-ish ones scenes and details together. The first group that has any photo is the pool.
  */
-function rolesFor(width: number, height: number): readonly SamplePhotoRole[] {
+function roleGroupsFor(width: number, height: number): readonly (readonly SamplePhotoRole[])[] {
   const ratio = height > 0 ? width / height : 1;
-  if (ratio < 0.85) return ['portrait', 'scene'];
-  if (ratio > 1.3) return ['crowd', 'scene'];
-  return ['scene', 'detail'];
+  if (ratio < 0.85) return [['portrait'], ['scene']];
+  if (ratio > 1.3) return [['crowd'], ['scene']];
+  return [['scene', 'detail']];
+}
+
+/** FNV-1a; an empty seed hashes to 0 so a call without a template id starts at the first photo. */
+function hashSeed(seed: string): number {
+  if (seed === '') return 0;
+  let h = 0x811c9dc5;
+  for (let i = 0; i < seed.length; i += 1) h = Math.imul(h ^ seed.charCodeAt(i), 0x01000193);
+  return h >>> 0;
 }
 
 const num = (v: unknown, fallback: number): number => (typeof v === 'number' ? v : fallback);
 
-/** `state` with every empty photo (`src === ''`) filled from `samples`; a non-empty `src` and every other instance stay the same object. */
-export function withSamplePhotos(state: Obj, samples: readonly SamplePhoto[]): Obj {
+/**
+ * `state` with every empty photo (`src === ''`) filled from `samples`; a non-empty `src` and every
+ * other instance stay the same object. The n-th empty slot takes the ((hash of `seed`) + n)-th
+ * photo of its pool: with the template id as `seed`, different templates start at different
+ * photos and the slots of one template get consecutive, hence different, ones.
+ */
+export function withSamplePhotos(state: Obj, samples: readonly SamplePhoto[], seed = ''): Obj {
   const list = state['userImageInstances'];
   if (!Array.isArray(list) || samples.length === 0) return state;
+  const offset = hashSeed(seed);
   let empties = 0;
   let changed = false;
   const next = list.map((item: unknown) => {
     if (typeof item !== 'object' || item === null) return item;
     const image = item as Obj;
     if (image['src'] !== '') return item;
-    const roles = rolesFor(num(image['width'], 1), num(image['height'], 1));
-    const pool = roles.flatMap((role) => samples.filter((s) => s.role === role));
-    const pick = (pool.length > 0 ? pool : samples)[empties % (pool.length || samples.length)];
+    const groups = roleGroupsFor(num(image['width'], 1), num(image['height'], 1));
+    const pools = groups.map((roles) => samples.filter((s) => roles.includes(s.role)));
+    const pool = pools.find((p) => p.length > 0) ?? samples;
+    const pick = pool[(offset + empties) % pool.length];
     empties += 1;
     if (!pick) return item;
     changed = true;

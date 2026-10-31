@@ -2,7 +2,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { type SamplePhoto } from '@ggraphic/templates-open';
+import { SAMPLE_PHOTOS, type SamplePhoto } from '@ggraphic/templates-open';
 import { describe, expect, it } from 'vitest';
 
 import { withSamplePhotos } from './samplePhotos';
@@ -60,6 +60,52 @@ describe('withSamplePhotos', () => {
     const out = withSamplePhotos(state, SAMPLES);
     expect(srcs(out)).toEqual(['/s/p1.jpg', '/s/p2.jpg', '/s/c1.jpg', '/s/d1.jpg']);
     expect(srcs(withSamplePhotos(state, SAMPLES))).toEqual(srcs(out));
+  });
+});
+
+describe('withSamplePhotos variety across templates', () => {
+  const srcsFor = (seed: string, slots: [number, number][]) => {
+    const state = { userImageInstances: slots.map(([w, h], i) => img(`s${i}`, '', w, h)) };
+    const out = withSamplePhotos(state, SAMPLE_PHOTOS, seed);
+    return (out['userImageInstances'] as { src: string }[]).map((i) => i.src);
+  };
+  const ids = Array.from({ length: 24 }, (_, i) => `template-${i}`);
+
+  it('gives templates with a portrait slot different portraits', () => {
+    const portraits = new Set(ids.map((id) => srcsFor(id, [[100, 200]])[0]));
+    expect(portraits.size).toBeGreaterThanOrEqual(4);
+    expect(srcsFor('template-0', [[100, 200]])).not.toEqual(srcsFor('template-1', [[100, 200]]));
+  });
+
+  it('gives two slots of one template two different photos', () => {
+    for (const id of ids) {
+      const [a, b] = srcsFor(id, [
+        [100, 200],
+        [100, 200],
+      ]);
+      expect(a).not.toBe(b);
+    }
+  });
+
+  it('is deterministic for the same template id', () => {
+    expect(
+      srcsFor('template-7', [
+        [100, 200],
+        [300, 100],
+      ])
+    ).toEqual(
+      srcsFor('template-7', [
+        [100, 200],
+        [300, 100],
+      ])
+    );
+  });
+
+  it('only picks photos of a fitting role', () => {
+    const portraitSrcs = new Set(
+      SAMPLE_PHOTOS.filter((p) => p.role === 'portrait').map((p) => p.src)
+    );
+    for (const id of ids) expect(portraitSrcs.has(srcsFor(id, [[100, 200]])[0] ?? '')).toBe(true);
   });
 });
 

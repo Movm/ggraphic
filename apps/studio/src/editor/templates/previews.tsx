@@ -224,7 +224,7 @@ function PreviewJobView({ job, config }: { job: PreviewJob; config: FullCanvasCo
     brand: job.brand,
   });
   // Sample photos fill empty slots in the preview only; this state is drawn and dropped.
-  const state = placed && withSamplePhotos(placed, SAMPLE_PHOTOS);
+  const state = placed && withSamplePhotos(placed, SAMPLE_PHOTOS, job.entry.id);
   const key = job.key;
   const unplaceable = state === null;
   useEffect(() => {
