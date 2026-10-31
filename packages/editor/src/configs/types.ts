@@ -108,6 +108,13 @@ export interface AdditionalText {
   markerColor?: string;
   /** Flat accent colour; wins over `accent.fill`. */
   accentFill?: string;
+  /**
+   * A picture made of type (a ghost numeral): huge, translucent, allowed to bleed off the page.
+   * Exempt from the gate's bounds, contrast and size rules, never filled by the AI, never a
+   * neighbour that other text must make room for, never listed as content. Still selectable
+   * and editable like any text. Absent = ordinary text.
+   */
+  decorative?: true;
 }
 
 /** Text element configuration */

@@ -209,6 +209,27 @@
         ],
         "additionalTexts": [
           {
+            "id": "ghost",
+            "type": "header",
+            "text": "5",
+            "x": 0,
+            "y": 0.02963,
+            "width": 0.981481,
+            "fontSize": 0.833333,
+            "align": "right",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "opacity": 0.13,
+            "lineHeight": 0.8,
+            "fontWeight": 800,
+            "letterSpacing": -0.06,
+            "decorative": true,
+            "bind": {
+              "fill": "accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
             "id": "label",
             "type": "body",
             "text": "KNOW-HOW",
@@ -274,6 +295,7 @@
           "photo",
           "veil",
           "scrim-top",
+          "ghost",
           "scrim-bottom",
           "label-plate",
           "label",
@@ -290,6 +312,7 @@
     }
   ],
   "frames": {
+    "ghost": "canvas",
     "photo": "canvas",
     "veil": "canvas",
     "scrim-top": "canvas",

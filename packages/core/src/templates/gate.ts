@@ -15,6 +15,7 @@ import { SHADE_STOPS, shadeAlphaAt, type ShadeDirection } from '../color/shade.j
 import {
   forEachElement,
   instantiateTemplatePage,
+  isDecorativeText,
   roomBelow,
   type FitText,
   offeredSchemes,
@@ -289,7 +290,21 @@ function shadeInterval(base: string, overlays: Overlay[]): [Ground, Ground] | nu
  * alpha; compositing moves the colour towards the fill. Null when a colour cannot be composited.
  */
 function groundInterval(base: string, overlays: Overlay[]): [Ground, Ground] | null {
-  if (overlays.some((o) => o.shade)) return shadeInterval(base, overlays);
+  if (overlays.some((o) => o.shade)) {
+    // A non-shade overlay with a range (a ghost) is present or absent, never in between: the
+    // shade's interval is taken once per choice and the intervals are merged.
+    const branch = overlays.findIndex((o) => !o.shade && o.alpha[0] !== o.alpha[1]);
+    if (branch === -1) return shadeInterval(base, overlays);
+    const parts = overlays[branch]!.alpha.map((a) =>
+      groundInterval(
+        base,
+        overlays.map((o, i) => (i === branch ? { ...o, alpha: [a, a] as [number, number] } : o))
+      )
+    );
+    if (parts.some((p) => p === null)) return null;
+    const all = parts.flatMap((p) => p!).sort((x, y) => x.lum - y.lum);
+    return [all[0]!, all[all.length - 1]!];
+  }
   let colours = [base];
   for (const o of overlays) {
     const alphas = o.alpha[0] === o.alpha[1] ? [o.alpha[0]] : o.alpha;
@@ -594,6 +609,10 @@ function checkPlaced(
 
   for (const [id, { el, key }] of placed) {
     const box = ctx.adapter.box(key, el, lines(id, key, el));
+    // A decorative text (a ghost numeral) is a picture: translucent, huge, bleeding off the page on
+    // purpose. It is judged by nobody (no bounds, logo, contrast or fit); it only counts as a
+    // translucent layer under the real text it lies beneath (below).
+    if (isDecorativeText(key, el)) continue;
     const text = ctx.adapter.text(key, el);
     const placement = ctx.adapter.boundsProblem?.(key, el) ?? null;
     // A text of unknown width cannot be placed against any frame: fail closed.
@@ -669,6 +688,24 @@ function checkPlaced(
       grounds = [typeof state['backgroundColor'] === 'string' ? state['backgroundColor'] : ''];
       for (const belowId of order.slice(0, at).reverse()) {
         const below = placed.get(belowId);
+        if (below && isDecorativeText(below.key, below.el)) {
+          // Each pixel under the real text is either bare or has the ghost's glyph on it, so the
+          // ground is either of the two: an alpha range of the ghost's colour that is not a shade
+          // (it is tried at both ends, never between). Where the ghost cannot be read, fail closed.
+          const area = ctx.adapter.box(below.key, below.el, lines(belowId, below.key, below.el));
+          const ghost = ctx.adapter.text(below.key, below.el);
+          if (!area || !ghost) {
+            grounds = null;
+            break;
+          }
+          if (!overlaps(box, area)) continue;
+          if (parseColor(ghost.fill)?.a !== 1 || !(ghost.opacity >= 0 && ghost.opacity <= 1)) {
+            grounds = null;
+            break;
+          }
+          if (ghost.opacity > 0) overlays.push({ fill: ghost.fill, alpha: [0, ghost.opacity] });
+          continue;
+        }
         // The logo is owned by logo-overlap; a text on it is reported there.
         if (below && below.key === 'userImageInstances' && isLogo(below.el)) continue;
         const cover = below && ctx.adapter.cover(below.key, below.el, canvas.width);
