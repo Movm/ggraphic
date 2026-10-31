@@ -661,7 +661,13 @@ function checkPlaced(
     // luminance interval.
     let grounds: string[] | null = text.ground === undefined ? null : [text.ground];
     const overlays: Overlay[] = [];
+    // The same stack where stripe bands over a translucent fill are painted as well; judged too.
+    const striped: Overlay[] = [];
     let stackedShades = false;
+    const lay = (o: Overlay) => {
+      overlays.push(o);
+      striped.push(o);
+    };
     if (grounds === null) {
       const at = order.indexOf(id);
       if (!box || at === -1) {
@@ -695,8 +701,8 @@ function checkPlaced(
           grounds = null;
           break;
         }
-        // Stripes only have a known pair of grounds over a flat fill.
-        if (cover.stripes && cover.kind !== 'solid') {
+        // Stripes only have known grounds over a flat or translucent fill.
+        if (cover.stripes && cover.kind !== 'solid' && cover.kind !== 'veil') {
           grounds = null;
           break;
         }
@@ -709,12 +715,15 @@ function checkPlaced(
           break;
         }
         if (cover.grain) {
-          overlays.push({ shade: true, fill: cover.grain.fill, alpha: cover.grain.alpha });
+          lay({ shade: true, fill: cover.grain.fill, alpha: cover.grain.alpha });
         }
         if (cover.kind === 'veil') {
-          overlays.push({ fill: cover.fill, alpha: [cover.alpha, cover.alpha] });
+          const alpha: [number, number] = [cover.alpha, cover.alpha];
+          // A band is the fill, then the stripe colour at the same strength on top of it.
+          if (cover.stripes) striped.push({ fill: cover.stripes, alpha });
+          lay({ fill: cover.fill, alpha });
         } else if (cover.kind === 'shade' || cover.kind === 'range') {
-          overlays.push({
+          lay({
             shade: true,
             fill: cover.fill,
             alpha:
@@ -731,8 +740,15 @@ function checkPlaced(
     }
     // Bottom-up: the overlay nearest the ground goes on first.
     overlays.reverse();
-    const bad = overlays.some((o) => !opaque(o.fill) || !(o.alpha[0] >= 0 && o.alpha[1] <= 1));
-    const intervals = grounds && !bad ? grounds.map((g) => groundInterval(g, overlays)) : [];
+    striped.reverse();
+    const stacks = striped.length > overlays.length ? [overlays, striped] : [overlays];
+    const bad = stacks.some((stack) =>
+      stack.some((o) => !opaque(o.fill) || !(o.alpha[0] >= 0 && o.alpha[1] <= 1))
+    );
+    const intervals =
+      grounds && !bad
+        ? stacks.flatMap((stack) => grounds.map((g) => groundInterval(g, stack)))
+        : [];
     if (intervals.length === 0 || intervals.some((i) => i === null)) {
       fail(`${NOT_DETERMINABLE}${stackedShades ? ' (stacked shades)' : ''} under ${text.fill}`);
       continue;
