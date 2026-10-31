@@ -236,6 +236,11 @@ export function TemplateGallery({
           />
         ))}
       </TileList>
+      {shown.length === 0 && listed.length > 0 ? (
+        <p className="studio-muted" role="status">
+          No template matches these filters.
+        </p>
+      ) : null}
     </div>
   );
 }
