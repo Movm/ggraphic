@@ -39,7 +39,7 @@
             "rotation": 0,
             "scaleX": 1,
             "scaleY": 1,
-            "opacity": 0.6,
+            "opacity": 0.68,
             "bind": {
               "fill": "deep"
             }
@@ -88,7 +88,7 @@
             "rotation": 0,
             "scaleX": 1,
             "scaleY": 1,
-            "opacity": 0.3,
+            "opacity": 0.4,
             "bind": {
               "fill": "deep"
             }
@@ -161,7 +161,7 @@
             "type": "body",
             "text": "BEFORE · 2021",
             "x": 0,
-            "y": 0.10084,
+            "y": 0.142857,
             "width": 0.456522,
             "fontSize": 0.024074,
             "align": "left",
@@ -181,8 +181,8 @@
             "type": "header",
             "text": "The empty corner shop",
             "x": 0,
-            "y": 0.137815,
-            "width": 0.521739,
+            "y": 0.179832,
+            "width": 0.843478,
             "fontSize": 0.07037,
             "align": "left",
             "fontFamily": "",
@@ -201,7 +201,7 @@
             "type": "body",
             "text": "AFTER · 2026",
             "x": 0,
-            "y": 0.823529,
+            "y": 0.781513,
             "width": 0.586957,
             "fontSize": 0.024074,
             "align": "left",
@@ -221,7 +221,7 @@
             "type": "header",
             "text": "A café for everyone",
             "x": 0,
-            "y": 0.860504,
+            "y": 0.818487,
             "width": 0.76087,
             "fontSize": 0.07037,
             "align": "left",
