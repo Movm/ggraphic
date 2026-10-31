@@ -4,6 +4,7 @@ import { messages } from '@ggraphic/editor/i18n/messages';
 
 import { type CornerRadius } from './cornerRadius.js';
 import { defaultMarkerFill } from './markerColors.js';
+import { type TailSide } from './shapeDevices.js';
 
 import type { GradientFill } from '@ggraphic/editor/utils/gradientFill';
 
@@ -861,6 +862,24 @@ export interface ShapeInstance {
   patternSpacing?: number;
   /** `rect` only: the plate follows a text's lines (see `hugPlates`); padding in px. Not drawn. Stored, so never renamed. */
   hug?: PlateHug;
+  /**
+   * `ring`: stroke thickness in px, measured inwards from the outer edge. Without it (and
+   * without `arc`) the ring keeps its old fixed inner radius. Stored, so never renamed.
+   */
+  ringWidth?: number;
+  /** `ring`: the share (0..1) of the circle drawn, from 12 o'clock clockwise; absent or 1 is the whole ring. */
+  arc?: number;
+  /** `line-arrow`: the shaft's middle sags by this share of its length (positive: down); absent is straight. */
+  bend?: number;
+  /**
+   * `rounded-rect`: a speech-bubble tail drawn into the same outline. `tailSide` turns it on;
+   * `tailAt` (0..1, default 0.5) is where its base is centred along that edge, from the left or
+   * the top; `tailSize` (px, default 40) is how far it reaches out of the box, and how wide its
+   * base is. The tail lies outside `width` × `height`. Stored, so never renamed.
+   */
+  tailSide?: TailSide;
+  tailAt?: number;
+  tailSize?: number;
 }
 
 /**

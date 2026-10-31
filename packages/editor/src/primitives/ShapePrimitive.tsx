@@ -22,6 +22,8 @@ import { handDrawnPath } from '@ggraphic/editor/utils/handDrawn';
 import { sameCorners } from '../utils/cornerRadius.js';
 import { paintDots, paintGrain, paintStripes } from '../utils/grain.js';
 import { notchPx, traceNotch } from '../utils/notch.js';
+import { arrowPoints, ringGeometry, tailOf, traceBubble } from '../utils/shapeDevices.js';
+import { cornersOf } from '../utils/cornerRadius.js';
 import {
   ELEMENT_TRANSFORMER,
   MIRROR_X_ATTR,
@@ -198,6 +200,82 @@ function outlined(
   );
 }
 
+/** A ring drawn by hand: a stroke of `ringWidth`, or only the share `arc` of it. */
+function arcRing(
+  shape: ShapeInstance,
+  commonProps: CommonShapeProps,
+  shapeRef: React.RefObject<Konva.Shape | null>
+): React.ReactElement {
+  const { width } = shape;
+  const ring = ringGeometry(width, shape.ringWidth, shape.arc);
+  const trace = (ctx: Konva.Context) => {
+    ctx.beginPath();
+    if (ring.empty) return;
+    const c = width / 2;
+    if (ring.full) {
+      // Opposite directions: the non-zero fill leaves the inner circle bare.
+      ctx.arc(c, c, ring.outer, 0, Math.PI * 2, false);
+      ctx.moveTo(c + ring.inner, c);
+      ctx.arc(c, c, ring.inner, 0, Math.PI * 2, true);
+    } else {
+      ctx.arc(c, c, ring.outer, ring.start, ring.end, false);
+      ctx.arc(c, c, ring.inner, ring.end, ring.start, true);
+    }
+    ctx.closePath();
+  };
+  return (
+    <Shape
+      ref={shapeRef}
+      {...commonProps}
+      width={width}
+      height={width}
+      offsetX={width / 2}
+      offsetY={width / 2}
+      sceneFunc={(ctx, node) => {
+        trace(ctx);
+        ctx.fillStrokeShape(node);
+      }}
+      hitFunc={(ctx, node) => {
+        trace(ctx);
+        ctx.fillShape(node);
+      }}
+    />
+  );
+}
+
+/** A rounded rect with a speech-bubble tail in the same outline, so one fill (and shadow) covers both. */
+function bubble(
+  shape: ShapeInstance,
+  commonProps: CommonShapeProps,
+  shapeRef: React.RefObject<Konva.Shape | null>,
+  tail: NonNullable<ReturnType<typeof tailOf>>
+): React.ReactElement {
+  const { width, height } = shape;
+  const corners = cornersOf(shape.cornerRadius ?? 32, width, height);
+  const trace = (ctx: Konva.Context) => {
+    ctx.beginPath();
+    traceBubble(ctx, width, height, corners, tail);
+  };
+  return (
+    <Shape
+      ref={shapeRef}
+      {...commonProps}
+      width={width}
+      height={height}
+      offsetX={width / 2}
+      offsetY={height / 2}
+      sceneFunc={(ctx, node) => {
+        trace(ctx);
+        ctx.fillStrokeShape(node);
+      }}
+      hitFunc={(ctx, node) => {
+        trace(ctx);
+        ctx.fillShape(node);
+      }}
+    />
+  );
+}
+
 function renderShape(
   shape: ShapeInstance,
   commonProps: CommonShapeProps,
@@ -219,7 +297,9 @@ function renderShape(
           offsetY={shape.height / 2}
         />
       );
-    case 'rounded-rect':
+    case 'rounded-rect': {
+      const tail = tailOf(shape);
+      if (tail) return bubble(shape, commonProps, shapeRef, tail);
       return (
         <Rect
           ref={shapeRef as React.RefObject<Konva.Rect>}
@@ -231,6 +311,7 @@ function renderShape(
           cornerRadius={shape.cornerRadius ?? 32}
         />
       );
+    }
     case 'circle':
       return (
         <Circle
@@ -252,6 +333,9 @@ function renderShape(
         />
       );
     case 'ring':
+      if (shape.arc !== undefined || shape.ringWidth !== undefined) {
+        return arcRing(shape, commonProps, shapeRef);
+      }
       return (
         <Ring
           ref={shapeRef as React.RefObject<Konva.Ring>}
@@ -475,11 +559,13 @@ function renderShape(
       );
     case 'line-arrow': {
       const sw = shape.strokeWidth ?? 6;
+      const shaft = arrowPoints(shape.width, shape.bend);
       return (
         <Arrow
           ref={shapeRef as React.RefObject<Konva.Arrow>}
           {...commonProps}
-          points={[-shape.width / 2, 0, shape.width / 2, 0]}
+          points={shaft.points}
+          tension={shaft.tension}
           stroke={shape.fill}
           strokeWidth={sw}
           pointerLength={Math.max(16, sw * 2.5)}
