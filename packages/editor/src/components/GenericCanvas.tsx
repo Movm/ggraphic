@@ -410,6 +410,10 @@ function GenericCanvasWithRef<
   const configIdRef = useRef(config.id);
 
   const [state, setStateRaw] = useState<TState>(() => config.createInitialState(initialProps));
+  // The text edit in progress as it will look once committed (`TextPreview.overrides`). Kept apart
+  // from `state` on purpose: `state` reaches the page document, the history and the auto-save on
+  // every change, and a draft is none of their business until it is committed.
+  const [textPreview, setTextPreview] = useState<Record<string, unknown> | null>(null);
 
   // Only reset state when the config ID actually changes (different canvas type)
   // This prevents state reset when parent re-renders with same config but new object references
@@ -685,6 +689,7 @@ function GenericCanvasWithRef<
   const historyIndex = useCanvasStoreSelector((s) => s.historyIndex);
   const setAutoSaveDirty = useAutoSaveStore((s) => s.setDirty);
   const lastAutoSaveHistoryIndexRef = useRef(-1);
+  const textPreviewing = textPreview !== null;
 
   useEffect(() => {
     if (historyIndex < 0) return;
@@ -698,7 +703,10 @@ function GenericCanvasWithRef<
     }
     // The capture only feeds useCanvasAutoSave — without auto-save it is a
     // wasted pixelRatio-2 PNG encode on the main thread after every edit.
-    if (!autoSaveEnabled || lastAutoSaveHistoryIndexRef.current === historyIndex) return;
+    // A text being typed is drawn on the stage but not part of the page yet: the shot waits for
+    // the edit to end (the effect runs again then) instead of keeping the draft's plates.
+    if (!autoSaveEnabled || textPreviewing || lastAutoSaveHistoryIndexRef.current === historyIndex)
+      return;
 
     // Debounce screenshot capture — toDataURL at pixelRatio:2 is expensive (~100-200ms).
     // 1500ms ensures we only capture after the user stops editing. Transformer
@@ -716,7 +724,7 @@ function GenericCanvasWithRef<
     }, 1500);
 
     return () => clearTimeout(timer);
-  }, [historyIndex, autoSaveEnabled, setAutoSaveDirty]);
+  }, [historyIndex, autoSaveEnabled, setAutoSaveDirty, textPreviewing]);
 
   // Push live state/actions/selection up to the shared sidebar. Replaces the
   // old 200ms poll in PageWrapper: updates land synchronously with edits.
@@ -778,9 +786,16 @@ function GenericCanvasWithRef<
     updateElementPosition,
     saveToHistory,
     debouncedSaveToHistory,
+    setTextPreview,
   });
 
-  const canvasItems = useMemo(() => buildCanvasItems(config, state), [config, state]);
+  // The page as the canvas draws it: the text edit in progress laid over `state`. Only drawing
+  // reads this; everything that persists, emits, records or measures the page reads `state`.
+  const drawnState = useMemo(
+    () => (textPreview ? ({ ...state, ...textPreview } as TState) : state),
+    [state, textPreview]
+  );
+  const canvasItems = useMemo(() => buildCanvasItems(config, drawnState), [config, drawnState]);
 
   const sortedRenderList = useMemo(
     () => buildSortedRenderList(canvasItems, state.layerOrder ?? []),
@@ -1187,7 +1202,7 @@ function GenericCanvasWithRef<
           sortedRenderList={sortedRenderList}
           canRotateSelection={canRotateSelection}
           config={config}
-          state={state}
+          state={drawnState}
           layout={layout}
           handlers={elementHandlers}
           getSnapTargets={getSnapTargets}

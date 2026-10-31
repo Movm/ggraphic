@@ -38,6 +38,18 @@ import type { StickerRef } from '@ggraphic/schema';
 export interface HostCanvasActions {}
 
 /**
+ * A text edit as it will look once committed, drawn over the page while the text is typed.
+ * Nothing in it is written: the canvas draws `overrides` in place of the page's own values for
+ * the same keys until the edit ends, and the page, the document and the history never see it.
+ */
+export interface TextPreview {
+  /** The size the draft fits at; null for a text that is not fitted. */
+  fontSize: number | null;
+  /** State keys (whole values, e.g. the `shapeInstances` that hug the draft) to draw instead. */
+  overrides: Record<string, unknown>;
+}
+
+/**
  * Optional canvas action methods that may be present in specific configs
  */
 export interface OptionalCanvasActions extends HostCanvasActions {
@@ -82,10 +94,10 @@ export interface OptionalCanvasActions extends HostCanvasActions {
   ) => void;
   updateAdditionalText?: (id: string, attrs: Partial<AdditionalText>) => void;
   /**
-   * Shows a text as an edit in progress will leave it (fitted size, hugging plates) without
-   * recording anything; returns the fitted size. `null` takes the preview back.
+   * How a text edit in progress will leave the page (fitted size, hugging plates). A pure
+   * function of the committed page: it changes and records nothing.
    */
-  previewAdditionalText?: (id: string, draft: string | null) => number | null;
+  previewAdditionalText?: (id: string, draft: string) => TextPreview | null;
   updateCircleBadge?: (id: string, attrs: Partial<CircleBadgeInstance>) => void;
   updatePillBadge?: (id: string, attrs: Partial<PillBadgeInstance>) => void;
   updateFrame?: (id: string, attrs: Partial<FrameInstance>) => void;
@@ -139,6 +151,11 @@ export interface UseCanvasElementHandlersOptions<
   /** Snapshots the committed state; the argument is ignored (`useCanvasHistorySetup`). */
   saveToHistory: (state?: TState) => void;
   debouncedSaveToHistory: (state?: TState) => void;
+  /**
+   * Hands the canvas the preview of a text edit in progress (`TextPreview.overrides`), or takes it
+   * back with `null`. Without it a text edit is not previewed.
+   */
+  setTextPreview?: (overrides: Record<string, unknown> | null) => void;
 }
 
 export interface UseCanvasElementHandlersResult {
@@ -169,6 +186,12 @@ export interface UseCanvasElementHandlersResult {
   ) => void;
   handleShapeChange: (id: string, newAttrs: Partial<ShapeInstance>) => void;
   handleAdditionalTextChange: (id: string, newAttrs: Partial<AdditionalText>) => void;
+  /**
+   * Shows a text as its edit in progress will leave the page and returns the size it fits at
+   * (`null`: unchanged). `null` as the draft takes the preview back. Absent when the config has
+   * no preview.
+   */
+  handleAdditionalTextPreview?: (id: string, draft: string | null) => number | null;
   handleCircleBadgeSelect: (id: string) => void;
   handleCircleBadgeDragEnd: (id: string, x: number, y: number) => void;
   handleCircleBadgeTransformEnd: (
@@ -254,6 +277,7 @@ export function useCanvasElementHandlers<
     updateElementPosition,
     saveToHistory,
     debouncedSaveToHistory,
+    setTextPreview,
   } = options;
 
   const handleElementSelect = useCallback(
@@ -431,11 +455,23 @@ export function useCanvasElementHandlers<
   const handleAdditionalTextChange = useCallback(
     (id: string, newAttrs: Partial<AdditionalText>) => {
       if (actions.updateAdditionalText) {
+        // The commit replaces the preview in the same render, so the page does not jump back.
+        setTextPreview?.(null);
         actions.updateAdditionalText(id, newAttrs);
       }
     },
-    [actions]
+    [actions, setTextPreview]
   );
+
+  const previewAdditionalText = actions.previewAdditionalText;
+  const handleAdditionalTextPreview = useMemo(() => {
+    if (!previewAdditionalText || !setTextPreview) return undefined;
+    return (id: string, draft: string | null): number | null => {
+      const preview = draft === null ? null : previewAdditionalText(id, draft);
+      setTextPreview(preview?.overrides ?? null);
+      return preview?.fontSize ?? null;
+    };
+  }, [previewAdditionalText, setTextPreview]);
 
   const handleCircleBadgeSelect = useCallback(
     (id: string) => {
@@ -625,6 +661,7 @@ export function useCanvasElementHandlers<
       handleIconTransformEnd,
       handleShapeChange,
       handleAdditionalTextChange,
+      handleAdditionalTextPreview,
       handleCircleBadgeSelect,
       handleCircleBadgeDragEnd,
       handleCircleBadgeTransformEnd,
@@ -658,6 +695,7 @@ export function useCanvasElementHandlers<
       handleIconTransformEnd,
       handleShapeChange,
       handleAdditionalTextChange,
+      handleAdditionalTextPreview,
       handleCircleBadgeSelect,
       handleCircleBadgeDragEnd,
       handleCircleBadgeTransformEnd,

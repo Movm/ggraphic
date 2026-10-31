@@ -141,28 +141,26 @@ describe('previewing a text edit while it is typed', () => {
     };
   }
 
-  it('moves the plate to the draft without a history entry, and the commit lands on the same plate', () => {
+  it('offers the plate that hugs the draft, writes nothing, and the commit lands on the same plate', () => {
     const { actions, state, history, plate } = setup();
-    const before = plate().width;
-    actions.previewAdditionalText!('line-1', 'Hallo');
-    const previewed = plate().width;
-    expect(previewed).toBeLessThan(before / 2);
+    const before = state();
+    const width = plate().width;
+    const preview = actions.previewAdditionalText!('line-1', 'Hallo')!;
+    const offered = TEMPLATE_GATE_ADAPTER.box(
+      'shapeInstances',
+      byId(preview.overrides, 'shapeInstances', 'plate-1'),
+      1
+    )!;
+    expect(offered.width).toBeLessThan(width / 2);
+    // The page is as it was, record and all: only the canvas draws the preview.
+    expect(state()).toBe(before);
+    expect(plate().width).toBe(width);
     expect(history()).toBe(0);
-    // The draft stays out of the page: only the commit writes the text.
-    expect(byId(state() as never, 'additionalTexts', 'line-1')['text']).not.toBe('Hallo');
+    expect(byId(preview.overrides, 'additionalTexts', 'line-1')['text']).not.toBe('Hallo');
 
     actions.updateAdditionalText('line-1', { text: 'Hallo' });
-    expect(plate().width).toBe(previewed);
+    expect(plate().width).toBe(offered.width);
     expect(history()).toBe(1);
-  });
-
-  it('reverts to the page as it was when the edit ends unchanged', () => {
-    const { actions, state } = setup();
-    const before = state();
-    actions.previewAdditionalText!('line-1', 'Hallo');
-    actions.previewAdditionalText!('line-1', null);
-    expect(state().shapeInstances).toEqual(before.shapeInstances);
-    expect(state().additionalTexts).toEqual(before.additionalTexts);
   });
 });
 

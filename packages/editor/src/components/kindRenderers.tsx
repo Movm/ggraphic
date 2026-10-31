@@ -89,6 +89,8 @@ export interface CanvasRenderHandlers {
   ) => void;
   handleShapeChange: (id: string, newAttrs: Partial<ShapeInstance>) => void;
   handleAdditionalTextChange: (id: string, newAttrs: AdditionalTextAttrs) => void;
+  /** The size a text edit in progress fits at, shown on the page; see `UseCanvasElementHandlersResult`. */
+  handleAdditionalTextPreview?: (id: string, draft: string | null) => number | null;
   handleCircleBadgeSelect: (id: string) => void;
   handleCircleBadgeDragEnd: (id: string, x: number, y: number) => void;
   handleCircleBadgeTransformEnd: (
@@ -611,8 +613,8 @@ export const KIND_RENDERERS: KindRenderers = {
         onSelect={() => handlers.handleElementSelect(textItem.id)}
         onTextChange={(val) => handlers.handleAdditionalTextChange(textItem.id, { text: val })}
         onTextPreview={
-          handlers.actions.previewAdditionalText
-            ? (draft) => handlers.actions.previewAdditionalText?.(textItem.id, draft) ?? null
+          handlers.handleAdditionalTextPreview
+            ? (draft) => handlers.handleAdditionalTextPreview?.(textItem.id, draft) ?? null
             : undefined
         }
         onDragEnd={(x, y) => {
