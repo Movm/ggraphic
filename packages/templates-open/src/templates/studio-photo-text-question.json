@@ -1,0 +1,199 @@
+{
+  "formatVersion": 1,
+  "id": "studio-photo-text-question",
+  "version": 1,
+  "kind": "template",
+  "family": "photo-text",
+  "title": {
+    "en": "Question and answer",
+    "de": "Frage und Antwort"
+  },
+  "description": {
+    "en": "A full photo with a question on a fade at the top and the answer on a fade at the bottom",
+    "de": "Ein Vollfoto mit einer Frage auf einem Verlauf oben und der Antwort auf einem Verlauf unten"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["photo", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "shade-top",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.324815,
+            "width": 1,
+            "height": 0.64963,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "shade": "top",
+            "bind": {
+              "fill": "shade"
+            }
+          },
+          {
+            "id": "shade-bottom",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.737037,
+            "width": 1,
+            "height": 0.525926,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "shade": "bottom",
+            "bind": {
+              "fill": "shade"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "question",
+            "type": "header",
+            "text": "One more library gone?",
+            "x": 0,
+            "y": 0.02521,
+            "width": 0.586957,
+            "fontSize": 0.092593,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.092593
+          },
+          {
+            "id": "answer",
+            "type": "header",
+            "text": "Or we ==invest==.",
+            "x": 0,
+            "y": 0.781513,
+            "width": 1,
+            "fontSize": 0.092593,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "accentFill": "#ffffff",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline",
+              "accentFill": "accent"
+            },
+            "maxFontSize": 0.092593
+          }
+        ],
+        "layerOrder": ["photo", "shade-top", "shade-bottom", "question", "answer", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas",
+    "shade-top": "canvas",
+    "shade-bottom": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "question": {
+      "role": "headline",
+      "label": {
+        "en": "Question",
+        "de": "Frage"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 3,
+        "maxChars": 36
+      }
+    },
+    "answer": {
+      "role": "headline",
+      "label": {
+        "en": "Answer",
+        "de": "Antwort"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 2,
+        "maxChars": 24
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "question": "One more library gone?",
+      "answer": "Or we ==invest==."
+    },
+    "de": {
+      "question": "Noch eine Bibliothek weniger?",
+      "answer": "Wir ==investieren==."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
