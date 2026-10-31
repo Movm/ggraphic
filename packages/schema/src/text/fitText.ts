@@ -75,10 +75,15 @@ export function slotFits(text: string, slot: SlotFit, measureAt: MeasureAt, size
  */
 export function fitFontSizeToSlot(text: string, slot: SlotFit, measureAt: MeasureAt): number {
   const min = slot.minSize ?? 12;
-  let size = Math.max(slot.fontSize, slot.maxSize ?? slot.fontSize);
-  while (size > min) {
-    if (slotFits(text, slot, measureAt, size)) return size;
-    size -= 1;
+  const start = Math.max(slot.fontSize, slot.maxSize ?? slot.fontSize);
+  // Sizes start, start - 1, ... above `min`; if s fits, every smaller s fits, so the first
+  // fitting step is found by bisection (the result equals a 1 px linear scan).
+  let low = 0;
+  let high = Math.max(0, Math.ceil(start - min)); // high = "none fits, take min"
+  while (low < high) {
+    const mid = (low + high) >>> 1;
+    if (slotFits(text, slot, measureAt, start - mid)) high = mid;
+    else low = mid + 1;
   }
-  return min;
+  return low >= Math.ceil(start - min) ? min : start - low;
 }
