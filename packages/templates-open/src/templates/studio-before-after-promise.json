@@ -50,6 +50,23 @@
             }
           },
           {
+            "id": "arrow",
+            "type": "line-arrow",
+            "x": 0.108696,
+            "y": 0.466387,
+            "width": 0.228261,
+            "height": 0,
+            "fill": "#ffffff",
+            "rotation": 90,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "strokeWidth": 0.025926,
+            "bind": {
+              "fill": "accent"
+            }
+          },
+          {
             "id": "label-now",
             "type": "rect",
             "x": 0.13587,
@@ -172,6 +189,7 @@
           "label-promise",
           "date",
           "promise",
+          "arrow",
           "label-now",
           "now",
           "result",
