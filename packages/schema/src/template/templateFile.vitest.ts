@@ -158,6 +158,29 @@ describe('readTemplateFile', () => {
     if (result.status === 'invalid') expect(result.reason).toContain('maxFontSize');
   });
 
+  it('accepts a decorative text, and one that is not decorative', () => {
+    for (const decorative of [true, undefined]) {
+      const state = { texts: [{ id: 'ghost', text: '5', opacity: 0.15, decorative }] };
+      expect(readTemplateFile(with_({ pages: [{ state }] })).status).toBe('ok');
+    }
+  });
+
+  it.each([false, 1, 'true', null])('rejects decorative %j', (decorative) => {
+    const state = { texts: [{ id: 'ghost', text: '5', decorative }] };
+    const result = readTemplateFile(with_({ pages: [{ state }] }));
+    expect(result.status).toBe('invalid');
+    if (result.status === 'invalid') expect(result.reason).toContain('decorative');
+  });
+
+  it('rejects a slot on a decorative text: the AI fills slots, a ghost is no content', () => {
+    const state = { texts: [{ id: 'ghost', text: '5', decorative: true }] };
+    const result = readTemplateFile(
+      with_({ pages: [{ state }], slots: { ghost: { role: 'headline', budget: { maxWords: 1 } } } })
+    );
+    expect(result.status).toBe('invalid');
+    if (result.status === 'invalid') expect(result.reason).toContain('slots.ghost');
+  });
+
   it('a block naming a missing element is invalid', () => {
     const result = readTemplateFile(
       with_({ blocks: [{ id: 'b', title: { en: 'B' }, elementIds: ['nope'] }] })

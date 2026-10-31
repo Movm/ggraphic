@@ -896,6 +896,105 @@ describe('contrast over photos, veils and shades', () => {
   });
 });
 
+describe('decorative text (a ghost numeral)', () => {
+  /** A huge, translucent numeral that bleeds off the page. */
+  const ghost = (over: Obj = {}) => ({
+    id: 'ghost',
+    text: '5',
+    x: -0.2,
+    y: 0.1,
+    width: 1.4,
+    fontSize: 0.8,
+    fill: '#ffffff',
+    opacity: 0.15,
+    bind: { fill: 'ink' },
+    ...over,
+  });
+  const withGhost = (g: Obj, headlineOver: Obj = {}, state: Obj = {}) =>
+    template(
+      { fixed: { headline: ['fill'], ghost: ['fill'], page: ['backgroundColor'] } },
+      {
+        backgroundColor: '#000000',
+        bind: undefined,
+        additionalTexts: [g, { ...headline, bind: undefined, ...headlineOver }],
+        layerOrder: ['ghost', 'logo', 'headline'],
+        ...state,
+      }
+    );
+
+  it('passes with opacity 0.15, a bleed off the page and no contrast of its own', () => {
+    expect(checkTemplate(withGhost(ghost({ decorative: true })), context())).toEqual([]);
+  });
+
+  it('fails the same text without the flag', () => {
+    // Within 0..1 so that it is placed at all: a bleed beyond the page is refused without the flag.
+    const inPage = { x: 0, width: 1 };
+    const found = rules(withGhost(ghost(inPage)));
+    expect(found).toContain('contrast');
+    expect(found).toContain('bounds');
+    expect(rules(withGhost(ghost({ ...inPage, decorative: true })))).toEqual([]);
+    expect(rules(withGhost(ghost()))).toEqual(['schema']);
+  });
+
+  it('is judged as a translucent layer under a real headline: a faint ghost passes', () => {
+    // White at 0.15 on black is #262626; white text on it still reads.
+    expect(checkTemplate(withGhost(ghost({ decorative: true })), context())).toEqual([]);
+  });
+
+  it('is judged as a translucent layer under a real headline: a strong ghost fails', () => {
+    // White at 0.6 on black is #999999; white text on that is 2.8, large text needs 3.
+    const found = checkTemplate(withGhost(ghost({ decorative: true, opacity: 0.6 })), context());
+    expect(found.map((p) => p.rule)).toEqual(['contrast']);
+    expect(found[0]?.detail).toMatch(/^headline: #ffffff on #999999 is 2\.8/);
+  });
+
+  it('only counts where its box meets the headline', () => {
+    const away = ghost({ decorative: true, opacity: 0.6, y: 0.6, fontSize: 0.2 });
+    expect(checkTemplate(withGhost(away), context())).toEqual([]);
+  });
+
+  it('a ghost of unknown extent or colour fails the headline closed', () => {
+    const found = checkTemplate(
+      withGhost(ghost({ decorative: true, fill: '#ffffff80', bind: undefined }), {}, {}),
+      context({})
+    );
+    expect(found.map((p) => p.rule)).toContain('contrast');
+  });
+
+  it('stacks with a shade: the ghost is a choice of present or absent, not a shade alpha', () => {
+    const grounds: GateAdapter = {
+      ...adapter,
+      cover: (key, el, width) =>
+        key === 'shapeInstances'
+          ? { kind: 'shade', fill: String(el['fill']), direction: 'bottom' }
+          : adapter.cover(key, el, width),
+    };
+    const build = (g: Obj) =>
+      template(
+        { fixed: { headline: ['fill'], veil: ['fill'], page: ['backgroundColor'] } },
+        {
+          backgroundColor: '#ffffff',
+          bind: undefined,
+          shapeInstances: [{ id: 'veil', fill: '#000000', x: 0, y: 0, width: 1, height: 1 }],
+          additionalTexts: [g, { ...headline, y: 0.8, bind: undefined }],
+          layerOrder: ['veil', 'ghost', 'logo', 'headline'],
+        }
+      );
+    const details = (t: TemplateInput) =>
+      checkTemplate(t, context({ adapter: grounds })).map((p) => `${p.rule}: ${p.detail}`);
+    expect(details(build(ghost({ decorative: true, opacity: 0.1, fill: '#000000' })))).toEqual([]);
+    expect(details(build(ghost({ decorative: true, opacity: 0.9 })))[0]).toMatch(
+      /^contrast: headline: #ffffff on #/
+    );
+  });
+
+  it('is not limited by the slot checks: it has no slot and is no budget', () => {
+    expect(checkTemplate(withGhost(ghost({ decorative: true })), context({ slots: {} }))).toEqual(
+      []
+    );
+  });
+});
+
 describe('contrast over notched, glow and grain grounds', () => {
   /** The stand-in adapter, plus the covers an editor reports for a notch, glow, grain and dots. */
   const devices: GateAdapter = {

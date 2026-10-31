@@ -63,7 +63,7 @@ export function fillById(
   room?: ReadonlyMap<string, number>
 ): AdditionalText[] {
   return texts.map((t) => {
-    const value = byId.get(t.id);
+    const value = t.decorative ? undefined : byId.get(t.id);
     return value === undefined
       ? t
       : fitToSlot({ ...t, text: value }, texts, canvasHeight, room?.get(t.id));
@@ -87,7 +87,9 @@ function fitToSlot(
   room?: number
 ): AdditionalText {
   const { fontSize, width, fontFamily, maxFontSize } = text;
-  const below = texts.filter((other) => other.y > text.y).map((other) => other.y);
+  const below = texts
+    .filter((other) => !other.decorative && other.y > text.y)
+    .map((other) => other.y);
   const prototype = maxFontSize !== undefined && maxFontSize >= (fontSize ?? 0);
   const textRoom = below.length === 0 ? undefined : Math.min(...below) - text.y;
   const limit = Math.min(textRoom ?? Infinity, room ?? Infinity);
