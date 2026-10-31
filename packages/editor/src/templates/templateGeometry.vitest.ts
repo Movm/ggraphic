@@ -428,6 +428,13 @@ describe('template gate adapter: line count of a text', () => {
     expect(lines('additionalTexts', text({ text: 'W'.repeat(30), width: 1000 }))).toBe(4);
   });
 
+  it('counts letter spacing on the rich path too (a bold marker routes there)', () => {
+    const rich = 'aaaa **aaaa** aaaa';
+    const tight = lines('additionalTexts', text({ text: rich, width: 700 }));
+    const spaced = lines('additionalTexts', text({ text: rich, width: 700, letterSpacing: 0.3 }));
+    expect(spaced).toBeGreaterThan(tight);
+  });
+
   it('measures with the table of the text font and its weight', () => {
     expect(check({})).toBeNull();
     expect(check({ fontFamily: 'Raleway, Arial, sans-serif' })).toBeNull();
