@@ -741,6 +741,139 @@ describe('template gate adapter: what the renderer scales, turns and draws', () 
       expect(cover({ ...rect, pattern: 'dots' })).toMatchObject({ kind: 'solid', dots: true });
     });
   });
+
+  describe('cover() and box() of ring, arrow and speech-bubble devices', () => {
+    const A = TEMPLATE_GATE_ADAPTER;
+    const cover = (el: Fields) => A.cover('shapeInstances', el, 1000);
+    const box = (el: Fields) => A.box('shapeInstances', el, 1)!;
+
+    // Centre (300, 200), 200 across: the box runs 200..400 × 100..300, outer radius 100.
+    const ring = { type: 'ring', fill: '#005538', x: 300, y: 200, width: 200, height: 200 };
+
+    it('judges a ring as its colour at any strength over what lies beneath, with the hole left bare', () => {
+      // Old fixed inner radius 0.3 × 200 = 60: the hole holds a square of 60·√2 across.
+      const c = cover(ring) as { kind: string; fill: string; alpha: number[]; cut: object };
+      expect(c.kind).toBe('range');
+      expect(c.fill).toBe('#005538');
+      expect(c.alpha).toEqual([0, 1]);
+      const side = c.cut as { x: number; y: number; width: number; height: number };
+      expect(side.width).toBeCloseTo(60 * Math.SQRT2 * 0.98, 5);
+      expect(side.x + side.width / 2).toBeCloseTo(300);
+      expect(side.y + side.height / 2).toBeCloseTo(200);
+    });
+
+    it('takes the hole from ringWidth and keeps the opacity as the top of the range', () => {
+      const thin = cover({ ...ring, ringWidth: 20, opacity: 0.5 }) as {
+        alpha: number[];
+        cut: { width: number };
+      };
+      expect(thin.alpha).toEqual([0, 0.5]);
+      expect(thin.cut.width).toBeCloseTo(80 * Math.SQRT2 * 0.98, 5);
+    });
+
+    it('does not prove a ring that is not round, rotated or blended', () => {
+      expect(cover({ ...ring, height: 120 })).toEqual({ kind: 'unknown' });
+      expect(cover({ ...ring, rotation: 30 })).toEqual({ kind: 'unknown' });
+      expect(cover({ ...ring, blendMode: 'multiply' })).toEqual({ kind: 'unknown' });
+    });
+
+    it('judges a stroked arrow as its colour at any strength', () => {
+      const arrow = { type: 'line-arrow', fill: '#005538', x: 300, y: 200, width: 200, height: 0 };
+      expect(cover(arrow)).toEqual({ kind: 'range', fill: '#005538', alpha: [0, 1] });
+      expect(cover({ ...arrow, rotation: 10 })).toEqual({ kind: 'unknown' });
+    });
+
+    it('grows the box of a bent arrow to hold the curve', () => {
+      const arrow = { type: 'line-arrow', x: 300, y: 200, width: 200, height: 0, strokeWidth: 6 };
+      expect(box(arrow)).toEqual({ x: 200, y: 200, width: 200, height: 0 });
+      const bent = box({ ...arrow, bend: 0.25 });
+      expect(bent.x).toBe(200);
+      expect(bent.width).toBe(200);
+      expect(bent.y).toBeLessThanOrEqual(200);
+      expect(bent.y + bent.height).toBeGreaterThanOrEqual(200 + 50);
+      const up = box({ ...arrow, bend: -0.25 });
+      expect(up.y).toBeLessThanOrEqual(200 - 50);
+      expect(up.y + up.height).toBeGreaterThanOrEqual(200);
+    });
+
+    // Box 200..400 × 150..250 (200 × 100 centred on 300, 200).
+    const bubble = {
+      type: 'rounded-rect',
+      fill: '#005538',
+      cornerRadius: 20,
+      x: 300,
+      y: 200,
+      width: 200,
+      height: 100,
+    };
+
+    it('judges a rounded rect as a solid ground inside its corner arcs', () => {
+      const c = cover(bubble) as { kind: string; fill: string; inner: object };
+      expect(c.kind).toBe('solid');
+      expect(c.fill).toBe('#005538');
+      const inner = c.inner as { x: number; y: number; width: number; height: number };
+      // The corner arc leaves r(1 − 1/√2) ≈ 0.293 r bare on both axes; the inset is a hair more.
+      expect(inner.x).toBeGreaterThanOrEqual(200 + 20 * 0.2929);
+      expect(inner.x).toBeLessThan(200 + 20 * 0.35);
+      expect(inner.x + inner.width / 2).toBeCloseTo(300);
+      expect(inner.y + inner.height / 2).toBeCloseTo(200);
+    });
+
+    it('has the same ground and the same inner box with a tail as without', () => {
+      const plain = cover(bubble);
+      const tailed = cover({ ...bubble, tailSide: 'bottom', tailAt: 0.3, tailSize: 40 });
+      expect(tailed).toEqual(plain);
+    });
+
+    it('includes the tail in the box, on its own side only', () => {
+      expect(box(bubble)).toEqual({ x: 200, y: 150, width: 200, height: 100 });
+      expect(box({ ...bubble, tailSide: 'bottom', tailSize: 40 })).toEqual({
+        x: 200,
+        y: 150,
+        width: 200,
+        height: 140,
+      });
+      expect(box({ ...bubble, tailSide: 'top', tailSize: 40 })).toEqual({
+        x: 200,
+        y: 110,
+        width: 200,
+        height: 140,
+      });
+      expect(box({ ...bubble, tailSide: 'left', tailSize: 40 })).toEqual({
+        x: 160,
+        y: 150,
+        width: 240,
+        height: 100,
+      });
+      expect(box({ ...bubble, tailSide: 'right', tailSize: 40 })).toEqual({
+        x: 200,
+        y: 150,
+        width: 240,
+        height: 100,
+      });
+    });
+
+    it('scales the tail with the shape', () => {
+      expect(box({ ...bubble, scaleY: 2, tailSide: 'bottom', tailSize: 40 }).height).toBe(280);
+    });
+
+    it('does not prove a rounded rect with gradient, shade, glow, pattern, grain or rotation', () => {
+      for (const extra of [
+        { shade: 'top' },
+        { glow: true },
+        { pattern: 'dots' },
+        { grain: 0.4 },
+        { rotation: 15 },
+        { fillGradient: { angle: 0, stops: [] } },
+      ]) {
+        expect(cover({ ...bubble, ...extra })).toEqual({ kind: 'unknown' });
+      }
+    });
+
+    it('reports a translucent bubble as a veil with the same inner box', () => {
+      expect(cover({ ...bubble, opacity: 0.5 })).toMatchObject({ kind: 'veil', alpha: 0.5 });
+    });
+  });
 });
 
 describe('template gate adapter: a page counter', () => {
