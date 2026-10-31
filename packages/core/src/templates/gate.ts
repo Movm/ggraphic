@@ -105,7 +105,8 @@ export interface GateAdapter extends Partial<Pick<HugAdapter, 'textExtent' | 'pl
  * What an element paints (see `GateAdapter.cover`). `range` is `fill` at an alpha anywhere in
  * `alpha` (a glow: full in the middle, nothing at the edge). Any kind may carry: `cut`, a box the
  * element leaves bare (a notch), so a text lying wholly inside it is not on this element; `dots`,
- * a dot pattern over the element, which no text lying on it can be judged against; `grain`, a
+ * a dot pattern over the element, which no text lying on it can be judged against; `stripes`, the
+ * colour of stripe bands over a solid element, so a text on it is judged against fill and stripe; `grain`, a
  * layer of `fill` at any alpha in `alpha` over it.
  */
 export type GateCover = (
@@ -118,6 +119,7 @@ export type GateCover = (
 ) & {
   cut?: Box;
   dots?: true;
+  stripes?: string;
   grain?: { fill: string; alpha: [number, number] };
 };
 
@@ -693,7 +695,13 @@ function checkPlaced(
     // luminance interval.
     let grounds: string[] | null = text.ground === undefined ? null : [text.ground];
     const overlays: Overlay[] = [];
+    // The same stack where stripe bands over a translucent fill are painted as well; judged too.
+    const striped: Overlay[] = [];
     let stackedShades = false;
+    const lay = (o: Overlay) => {
+      overlays.push(o);
+      striped.push(o);
+    };
     if (grounds === null) {
       const at = order.indexOf(id);
       if (!box || at === -1) {
@@ -745,6 +753,11 @@ function checkPlaced(
           grounds = null;
           break;
         }
+        // Stripes only have known grounds over a flat or translucent fill.
+        if (cover.stripes && cover.kind !== 'solid' && cover.kind !== 'veil') {
+          grounds = null;
+          break;
+        }
         // Two alpha ranges over one text: the alphas move together, not independently. Not judged.
         const ranges =
           (cover.grain ? 1 : 0) + (cover.kind === 'shade' || cover.kind === 'range' ? 1 : 0);
@@ -754,27 +767,40 @@ function checkPlaced(
           break;
         }
         if (cover.grain) {
-          overlays.push({ shade: true, fill: cover.grain.fill, alpha: cover.grain.alpha });
+          lay({ shade: true, fill: cover.grain.fill, alpha: cover.grain.alpha });
         }
         if (cover.kind === 'veil') {
-          overlays.push({ fill: cover.fill, alpha: [cover.alpha, cover.alpha] });
+          const alpha: [number, number] = [cover.alpha, cover.alpha];
+          // A band is the fill, then the stripe colour at the same strength on top of it.
+          if (cover.stripes) striped.push({ fill: cover.stripes, alpha });
+          lay({ fill: cover.fill, alpha });
         } else if (cover.kind === 'shade' || cover.kind === 'range') {
-          overlays.push({
+          lay({
             shade: true,
             fill: cover.fill,
             alpha:
               cover.kind === 'shade' ? shadeAlphaRange(cover.direction, box, area) : cover.alpha,
           });
         } else {
-          grounds = cover.kind === 'solid' ? [cover.fill] : photoColours(cover.low, cover.high);
+          grounds =
+            cover.kind === 'solid'
+              ? [cover.fill, ...(cover.stripes ? [cover.stripes] : [])]
+              : photoColours(cover.low, cover.high);
           break;
         }
       }
     }
     // Bottom-up: the overlay nearest the ground goes on first.
     overlays.reverse();
-    const bad = overlays.some((o) => !opaque(o.fill) || !(o.alpha[0] >= 0 && o.alpha[1] <= 1));
-    const intervals = grounds && !bad ? grounds.map((g) => groundInterval(g, overlays)) : [];
+    striped.reverse();
+    const stacks = striped.length > overlays.length ? [overlays, striped] : [overlays];
+    const bad = stacks.some((stack) =>
+      stack.some((o) => !opaque(o.fill) || !(o.alpha[0] >= 0 && o.alpha[1] <= 1))
+    );
+    const intervals =
+      grounds && !bad
+        ? stacks.flatMap((stack) => grounds.map((g) => groundInterval(g, stack)))
+        : [];
     if (intervals.length === 0 || intervals.some((i) => i === null)) {
       fail(`${NOT_DETERMINABLE}${stackedShades ? ' (stacked shades)' : ''} under ${text.fill}`);
       continue;

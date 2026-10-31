@@ -310,6 +310,7 @@
     "./utils/colorLuminance": "./src/utils/colorLuminance.ts",
     "./utils/colorNames": "./src/utils/colorNames.ts",
     "./utils/colorOptions": "./src/utils/colorOptions.ts",
+    "./utils/cornerRadius": "./src/utils/cornerRadius.ts",
     "./utils/cornerReservation": "./src/utils/cornerReservation.ts",
     "./utils/coverFit": "./src/utils/coverFit.ts",
     "./utils/cropAspect": "./src/utils/cropAspect.ts",

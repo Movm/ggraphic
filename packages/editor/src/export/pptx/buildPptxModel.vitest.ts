@@ -114,10 +114,27 @@ describe('buildPptxModel glow', () => {
   });
 });
 
+describe('buildPptxModel per-corner radius', () => {
+  it('rasterises a rounded-rect whose corners differ: roundRect rounds all four alike', () => {
+    expect(items(shape({ type: 'rounded-rect', cornerRadius: [40, 0, 0, 0] }))[0]).toMatchObject({
+      kind: 'raster',
+      reason: 'shape-styled',
+    });
+  });
+
+  it('keeps a rounded-rect with one radius native', () => {
+    expect(items(shape({ type: 'rounded-rect', cornerRadius: 12 }))[0]).toMatchObject({
+      kind: 'shape',
+      rectRadius: 12,
+    });
+  });
+});
+
 describe('buildPptxModel texture', () => {
   it.each([
     ['grain', { grain: 0.3 }],
     ['dots', { pattern: 'dots' as const }],
+    ['stripes', { pattern: 'stripes' as const }],
   ])('rasterises a rect with %s', (_name, extra) => {
     expect(items(shape(extra))[0]).toMatchObject({ kind: 'raster', reason: 'shape-styled' });
   });

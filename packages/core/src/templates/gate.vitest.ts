@@ -1014,6 +1014,7 @@ describe('contrast over notched, glow and grain grounds', () => {
             }
           : {}),
         ...(el['pattern'] === 'dots' ? { dots: true as const } : {}),
+        ...(el['stripeFill'] ? { stripes: String(el['stripeFill']) } : {}),
         ...(el['grainFill']
           ? {
               grain: {
@@ -1024,6 +1025,9 @@ describe('contrast over notched, glow and grain grounds', () => {
           : {}),
       };
       const fill = String(el['fill']);
+      if (el['veilAlpha'] !== undefined) {
+        return { kind: 'veil', fill, alpha: num(el, 'veilAlpha'), ...mods };
+      }
       return el['glowMax'] !== undefined
         ? { kind: 'range', fill, alpha: [0, num(el, 'glowMax')], ...mods }
         : { kind: 'solid', fill, ...mods };
@@ -1091,6 +1095,25 @@ describe('contrast over notched, glow and grain grounds', () => {
   it('fails closed on a grain layer under a second alpha range', () => {
     const t = build(panel({ grainFill: '#ffffff', grainMax: 0.2, glowMax: 0.5 }));
     expect(details(t)[0]).toContain('stacked shades');
+  });
+
+  it('judges a text on stripes against the stripe colour as well as the ground', () => {
+    // White text: the black ground passes, a white stripe fails it, a dark one passes.
+    expect(details(build(panel({ stripeFill: '#222222' })))).toEqual([]);
+    const bad = details(build(panel({ stripeFill: '#ffffff' })));
+    expect(bad).toHaveLength(1);
+    expect(bad[0]).toMatch(/^contrast: headline: #ffffff on #/);
+    expect(details(build(panel({ stripeFill: '#ffffff', height: 0.3 })))).toEqual([]);
+  });
+
+  it('judges stripes over a translucent fill: the band is the fill, then the stripe colour', () => {
+    // Mostly opaque black over a black page, a white stripe on top: the band is near white.
+    const veil = panel({ veilAlpha: 0.9 });
+    expect(details(build(veil))).toEqual([]);
+    expect(details(build({ ...veil, stripeFill: '#222222' }))).toEqual([]);
+    const bad = details(build({ ...veil, stripeFill: '#ffffff' }));
+    expect(bad).toHaveLength(1);
+    expect(bad[0]).toMatch(/^contrast: headline: #ffffff on #/);
   });
 
   it('a dot pattern fails a text lying on it and leaves a text off it alone', () => {
