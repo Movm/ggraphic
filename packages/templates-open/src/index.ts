@@ -11,6 +11,9 @@ import studioNumber from './templates/studio-number.json' with { type: 'json' };
 import studioPhotoNumber from './templates/studio-photo-number.json' with { type: 'json' };
 import studioPhotoQuote from './templates/studio-photo-quote.json' with { type: 'json' };
 import studioQuote from './templates/studio-quote.json' with { type: 'json' };
+import studioDataBarRanking from './templates/studio-data-bar-ranking.json' with { type: 'json' };
+import studioDataShareBar from './templates/studio-data-share-bar.json' with { type: 'json' };
+import studioDataThreeColumns from './templates/studio-data-three-columns.json' with { type: 'json' };
 
 import studioAnnotatedHeadline from './templates/studio-annotated-headline.json' with { type: 'json' };
 import studioCarouselCover from './templates/studio-carousel-cover.json' with { type: 'json' };
@@ -43,6 +46,9 @@ export const OPEN_TEMPLATES: readonly unknown[] = [
   studioEventPanel,
   studioPhotoQuote,
   studioPhotoNumber,
+  studioDataBarRanking,
+  studioDataShareBar,
+  studioDataThreeColumns,
 
   studioAnnotatedHeadline,
   studioCarouselCover,
