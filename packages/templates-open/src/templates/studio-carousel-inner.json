@@ -1,0 +1,322 @@
+{
+  "formatVersion": 1,
+  "id": "studio-carousel-inner",
+  "version": 1,
+  "kind": "template",
+  "family": "carousel",
+  "title": {
+    "en": "Carousel inner slide",
+    "de": "Karussell-Innenfolie"
+  },
+  "description": {
+    "en": "An inner slide with a tinted photo, a progress strip, a fact headline and a paragraph",
+    "de": "Eine Innenfolie mit getöntem Foto, Fortschrittsleiste, Fakt-Headline und Absatz"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["dark", "primary", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "deep"
+        },
+        "shapeInstances": [
+          {
+            "id": "veil",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.5,
+            "width": 1,
+            "height": 1,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.65,
+            "notch": 0.051852,
+            "bind": {
+              "fill": "deep"
+            }
+          },
+          {
+            "id": "scrim",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.718519,
+            "width": 1,
+            "height": 0.562963,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "shade": "bottom",
+            "bind": {
+              "fill": "deep"
+            }
+          },
+          {
+            "id": "dot-1",
+            "type": "rect",
+            "x": 0.030435,
+            "y": 0.016807,
+            "width": 0.06087,
+            "height": 0.006723,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.35,
+            "bind": {
+              "fill": "ink"
+            }
+          },
+          {
+            "id": "dot-2",
+            "type": "rect",
+            "x": 0.104348,
+            "y": 0.016807,
+            "width": 0.06087,
+            "height": 0.006723,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          },
+          {
+            "id": "dot-3",
+            "type": "rect",
+            "x": 0.178261,
+            "y": 0.016807,
+            "width": 0.06087,
+            "height": 0.006723,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.35,
+            "bind": {
+              "fill": "ink"
+            }
+          },
+          {
+            "id": "dot-4",
+            "type": "rect",
+            "x": 0.252174,
+            "y": 0.016807,
+            "width": 0.06087,
+            "height": 0.006723,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.35,
+            "bind": {
+              "fill": "ink"
+            }
+          },
+          {
+            "id": "dot-5",
+            "type": "rect",
+            "x": 0.326087,
+            "y": 0.016807,
+            "width": 0.06087,
+            "height": 0.006723,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.35,
+            "bind": {
+              "fill": "ink"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "notch": 0.051852,
+            "grayscale": true,
+            "contrast": 7,
+            "brightness": 0.05,
+            "duotoneLow": "#000000",
+            "duotoneHigh": "#ffffff",
+            "bind": {
+              "duotoneLow": "duo-low",
+              "duotoneHigh": "duo-high"
+            }
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "ghost",
+            "type": "header",
+            "text": "2",
+            "x": 0,
+            "y": 0.414815,
+            "width": 1.027778,
+            "fontSize": 0.574074,
+            "align": "right",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "opacity": 0.1,
+            "lineHeight": 0.8,
+            "fontWeight": 800,
+            "letterSpacing": -0.06,
+            "decorative": true,
+            "counter": "page",
+            "bind": {
+              "fill": "accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "Fact 2: every second group looks for help",
+            "x": 0,
+            "y": 0.596639,
+            "width": 0.978261,
+            "fontSize": 0.07037,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 800,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.07037
+          },
+          {
+            "id": "text",
+            "type": "body",
+            "text": "In our survey, 52 % of initiatives said they lack helpers, especially at weekends and for digital tasks.",
+            "x": 0,
+            "y": 0.764706,
+            "width": 0.956522,
+            "fontSize": 0.033333,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.42,
+            "fontWeight": 400,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.033333
+          }
+        ],
+        "layerOrder": [
+          "photo",
+          "veil",
+          "scrim",
+          "ghost",
+          "dot-1",
+          "dot-2",
+          "dot-3",
+          "dot-4",
+          "dot-5",
+          "headline",
+          "text",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {
+    "ghost": "canvas",
+    "photo": "canvas",
+    "veil": "canvas",
+    "scrim": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "headline": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Headline"
+      },
+      "budget": {
+        "maxWords": 8,
+        "maxLines": 3,
+        "maxChars": 56
+      }
+    },
+    "text": {
+      "role": "body",
+      "label": {
+        "en": "Paragraph",
+        "de": "Absatz"
+      },
+      "budget": {
+        "maxWords": 22,
+        "maxLines": 4,
+        "maxChars": 130
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "headline": "Fact 2: every second group looks for help",
+      "text": "In our survey, 52 % of initiatives said they lack helpers, especially at weekends and for digital tasks."
+    },
+    "de": {
+      "headline": "Fakt 2: Jede zweite Gruppe sucht Verstärkung",
+      "text": "In unserer Umfrage gaben 52 % der Initiativen an, dass ihnen Helfende fehlen, besonders am Wochenende und bei digitalen Aufgaben."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

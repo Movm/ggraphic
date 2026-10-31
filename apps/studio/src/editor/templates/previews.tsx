@@ -15,6 +15,7 @@ import { PagePreview } from '@ggraphic/editor/components/PagePreview';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { loadCanvasConfig } from '@ggraphic/editor/configs/configLoader';
 import { type FullCanvasConfig } from '@ggraphic/editor/configs/types';
+import { SAMPLE_PHOTOS } from '@ggraphic/templates-open';
 import {
   Component,
   type ReactNode,
@@ -26,9 +27,12 @@ import {
 
 import { prepareBrandPack } from '../../brandLoader';
 
+import { formatSize } from '../document';
+
 import { FREE_PAGE_CONFIG_ID } from './ids';
 import { type CatalogEntry } from './catalog';
 import { templatePageState } from './instantiate';
+import { withSamplePhotos } from './samplePhotos';
 
 /** Width of a rendered preview in px; a gallery tile shows it at most this wide. */
 const PREVIEW_WIDTH = 480;
@@ -217,10 +221,13 @@ class PreviewBoundary extends Component<{ onError: () => void; children: ReactNo
 
 /** Builds the page state during render, so a throw reaches the boundary. */
 function PreviewJobView({ job, config }: { job: PreviewJob; config: FullCanvasConfig }) {
-  const state = templatePageState(job.entry, job.formatId, {
+  const placed = templatePageState(job.entry, job.formatId, {
     schemeId: job.schemeId,
     brand: job.brand,
   });
+  // Sample photos fill empty slots in the preview only; this state is drawn and dropped.
+  const state =
+    placed && withSamplePhotos(placed, SAMPLE_PHOTOS, job.entry.id, formatSize(job.formatId));
   const key = job.key;
   const unplaceable = state === null;
   useEffect(() => {

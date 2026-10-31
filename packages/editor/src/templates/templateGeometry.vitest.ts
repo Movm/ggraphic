@@ -16,10 +16,7 @@ import type { IllustrationDef } from '../utils/illustrations/types.js';
 import { CATALOG, defaults, populated, registerAssetCatalog, type Fields } from './testKinds.js';
 
 /** Numbers a type declares that no factory sets and nothing yet reads. */
-// `letterSpacing` is a planned field of text; listed now so templates can carry it.
-const NOT_ON_THE_TYPE: Record<string, readonly string[]> = {
-  additionalTexts: ['letterSpacing'],
-};
+const NOT_ON_THE_TYPE: Record<string, readonly string[]> = {};
 
 const isNumeric = (value: unknown): boolean =>
   (typeof value === 'number' && Number.isFinite(value)) ||
@@ -109,6 +106,33 @@ describe('template geometry', () => {
     });
   });
 
+  it("the adapter measures a text's lines and longest line, and places a plate by its box", () => {
+    const text = { text: 'Hello world again', fontFamily: 'Raleway', fontSize: 40, width: 1000 };
+    const one = TEMPLATE_GATE_ADAPTER.textExtent!(text)!;
+    expect(one.lines).toBe(1);
+    expect(one.width).toBeGreaterThan(100);
+    expect(one.width).toBeLessThan(1000);
+    const wrapped = TEMPLATE_GATE_ADAPTER.textExtent!({ ...text, width: one.width - 20 })!;
+    expect(wrapped.lines).toBe(2);
+    expect(wrapped.width).toBeLessThanOrEqual(one.width - 20);
+    expect(TEMPLATE_GATE_ADAPTER.textExtent!({ ...text, scale: 2 })!.width).toBeCloseTo(
+      one.width * 2
+    );
+    // The same plate, upright: x/y are the centre, the size is the box over the scale.
+    const placed = TEMPLATE_GATE_ADAPTER.placeBox!(
+      'shapeInstances',
+      { x: 0, y: 0, width: 1, height: 1, scaleX: 2, scaleY: 1, rotation: 0 },
+      { x: 10, y: 20, width: 100, height: 40 }
+    );
+    expect(placed).toMatchObject({ x: 60, y: 40, width: 50, height: 40 });
+    expect(TEMPLATE_GATE_ADAPTER.box('shapeInstances', placed, 1)).toEqual({
+      x: 10,
+      y: 20,
+      width: 100,
+      height: 40,
+    });
+  });
+
   it('the adapter reads text only from the kinds that have it', () => {
     const text = { fill: '#fff', fontSize: 30, fontStyle: 'bold' };
     expect(TEMPLATE_GATE_ADAPTER.text('additionalTexts', text)).toEqual({
@@ -146,7 +170,7 @@ describe('template geometry', () => {
   });
 
   it('only a flat, opaque shape is a ground', () => {
-    const cover = (key: string, el: Fields) => TEMPLATE_GATE_ADAPTER.cover(key, el);
+    const cover = (key: string, el: Fields) => TEMPLATE_GATE_ADAPTER.cover(key, el, 1000);
     expect(cover('shapeInstances', { fill: '#000', opacity: 1 })).toEqual({
       kind: 'solid',
       fill: '#000',
@@ -169,7 +193,7 @@ describe('template geometry', () => {
   });
 
   it('cover() maps photo, duotone photo, shade shape, veil shape and keeps unknown for tint, blend and rotation', () => {
-    const cover = (key: string, el: Fields) => TEMPLATE_GATE_ADAPTER.cover(key, el);
+    const cover = (key: string, el: Fields) => TEMPLATE_GATE_ADAPTER.cover(key, el, 1000);
     const unknown = { kind: 'unknown' };
     const image = 'userImageInstances';
     expect(cover(image, { src: '/p.png' })).toEqual({
@@ -398,7 +422,7 @@ describe('template gate adapter: line count of a text', () => {
     const tight = lines('additionalTexts', text({ text: 'aaaaaaaaaaaaaaaa', width: 1300 }));
     const spaced = lines(
       'additionalTexts',
-      text({ text: 'aaaaaaaaaaaaaaaa', width: 1300, letterSpacing: 30 })
+      text({ text: 'aaaaaaaaaaaaaaaa', width: 1300, letterSpacing: 0.3 })
     );
     expect(spaced).toBeGreaterThan(tight);
     expect(lines('additionalTexts', text({ text: 'W'.repeat(30), width: 1000 }))).toBe(4);
@@ -425,8 +449,8 @@ describe('template gate adapter: line count of a text', () => {
 
   it('treats a rotated shape as a ground of unknown paint', () => {
     const shape = { fill: '#ffffff', opacity: 1, rotation: 45 };
-    expect(TEMPLATE_GATE_ADAPTER.cover('shapeInstances', shape)).toEqual({ kind: 'unknown' });
-    expect(TEMPLATE_GATE_ADAPTER.cover('shapeInstances', { ...shape, rotation: 0 })).toEqual({
+    expect(TEMPLATE_GATE_ADAPTER.cover('shapeInstances', shape, 1000)).toEqual({ kind: 'unknown' });
+    expect(TEMPLATE_GATE_ADAPTER.cover('shapeInstances', { ...shape, rotation: 0 }, 1000)).toEqual({
       kind: 'solid',
       fill: '#ffffff',
     });
@@ -636,5 +660,241 @@ describe('template gate adapter: what the renderer scales, turns and draws', () 
     // Combining marks of Instrument Sans lie outside every CSS unicode-range of the Studio.
     expect(check({ text: 'é', fontFamily: 'Instrument Sans' })).toContain('not checkable');
     expect(check({ text: 'Fußball', fontFamily: 'Instrument Sans' })).toBeNull();
+  });
+
+  describe('cover() of notch, glow, grain and dots', () => {
+    const cover = (el: Fields, key = 'shapeInstances') =>
+      TEMPLATE_GATE_ADAPTER.cover(key, el, 1000);
+    // A shape's x, y is its centre: the box runs 100..500 × 50..350.
+    const rect = { type: 'rect', fill: '#005538', x: 300, y: 200, width: 400, height: 300 };
+
+    it('reports the notch as a cut box in the top-right corner, clamped to half the short side', () => {
+      expect(cover({ ...rect, notch: 0.05 })).toEqual({
+        kind: 'solid',
+        fill: '#005538',
+        cut: { x: 450, y: 50, width: 50, height: 50 },
+      });
+      expect(cover({ ...rect, notch: 0.5 })).toMatchObject({
+        cut: { x: 350, y: 50, width: 150, height: 150 },
+      });
+    });
+
+    it('reports a notched photo as the photo with a cut', () => {
+      const photo = { src: '/p.png', x: 0, y: 0, width: 600, height: 400, notch: 0.1 };
+      expect(cover(photo, 'userImageInstances')).toEqual({
+        kind: 'photo',
+        low: '#000000',
+        high: '#ffffff',
+        cut: { x: 500, y: 0, width: 100, height: 100 },
+      });
+    });
+
+    it('reports a glow as an alpha range [0, opacity] of its fill, on a rect and an ellipse', () => {
+      expect(cover({ ...rect, glow: true, opacity: 0.6 })).toEqual({
+        kind: 'range',
+        fill: '#005538',
+        alpha: [0, 0.6],
+      });
+      expect(cover({ ...rect, type: 'ellipse', glow: true })).toMatchObject({ kind: 'range' });
+      expect(cover({ ...rect, type: 'ellipse' })).toEqual({ kind: 'unknown' });
+    });
+
+    it('a shade wins over a glow, as it does in the renderer', () => {
+      expect(cover({ ...rect, glow: true, shade: 'top' })).toMatchObject({ kind: 'shade' });
+    });
+
+    it('reports grain as black or white over [0, grain × 140/255]', () => {
+      const dark = cover({ ...rect, grain: 1 }) as { grain: { fill: string; alpha: number[] } };
+      expect(dark.grain.fill).toBe('#000000');
+      expect(dark.grain.alpha[0]).toBe(0);
+      expect(dark.grain.alpha[1]).toBeCloseTo(140 / 255);
+      const light = cover({ ...rect, grain: 0.5, grainTone: 'light' }) as typeof dark;
+      expect(light.grain.fill).toBe('#ffffff');
+      expect(light.grain.alpha[1]).toBeCloseTo(70 / 255);
+    });
+
+    it('reports a stripe pattern as the stripe colour over the fill', () => {
+      expect(cover({ ...rect, pattern: 'stripes', patternColor: '#fbe1ec' })).toMatchObject({
+        kind: 'solid',
+        fill: '#005538',
+        stripes: '#fbe1ec',
+      });
+      // No stripe colour to judge against: not provable.
+      expect(cover({ ...rect, pattern: 'stripes' })).toEqual({ kind: 'unknown' });
+    });
+
+    it('does not prove a photo with rounded corners fills its box', () => {
+      const photo = { src: '/p.png', x: 0, y: 0, width: 600, height: 400 };
+      expect(cover(photo, 'userImageInstances')).toMatchObject({ kind: 'photo' });
+      expect(cover({ ...photo, cornerRadius: [0, 0, 0, 64] }, 'userImageInstances')).toEqual({
+        kind: 'unknown',
+      });
+      expect(cover({ ...photo, cornerRadius: 32 }, 'userImageInstances')).toEqual({
+        kind: 'unknown',
+      });
+      expect(cover({ ...photo, cornerRadius: [0, 0, 0, 0] }, 'userImageInstances')).toMatchObject({
+        kind: 'photo',
+      });
+    });
+
+    it('flags a dot pattern', () => {
+      expect(cover({ ...rect, pattern: 'dots' })).toMatchObject({ kind: 'solid', dots: true });
+    });
+  });
+
+  describe('cover() and box() of ring, arrow and speech-bubble devices', () => {
+    const A = TEMPLATE_GATE_ADAPTER;
+    const cover = (el: Fields) => A.cover('shapeInstances', el, 1000);
+    const box = (el: Fields) => A.box('shapeInstances', el, 1)!;
+
+    // Centre (300, 200), 200 across: the box runs 200..400 × 100..300, outer radius 100.
+    const ring = { type: 'ring', fill: '#005538', x: 300, y: 200, width: 200, height: 200 };
+
+    it('judges a ring as its colour at any strength over what lies beneath, with the hole left bare', () => {
+      // Old fixed inner radius 0.3 × 200 = 60: the hole holds a square of 60·√2 across.
+      const c = cover(ring) as { kind: string; fill: string; alpha: number[]; cut: object };
+      expect(c.kind).toBe('range');
+      expect(c.fill).toBe('#005538');
+      expect(c.alpha).toEqual([0, 1]);
+      const side = c.cut as { x: number; y: number; width: number; height: number };
+      expect(side.width).toBeCloseTo(60 * Math.SQRT2 * 0.98, 5);
+      expect(side.x + side.width / 2).toBeCloseTo(300);
+      expect(side.y + side.height / 2).toBeCloseTo(200);
+    });
+
+    it('takes the hole from ringWidth and keeps the opacity as the top of the range', () => {
+      const thin = cover({ ...ring, ringWidth: 20, opacity: 0.5 }) as {
+        alpha: number[];
+        cut: { width: number };
+      };
+      expect(thin.alpha).toEqual([0, 0.5]);
+      expect(thin.cut.width).toBeCloseTo(80 * Math.SQRT2 * 0.98, 5);
+    });
+
+    it('does not prove a ring that is not round, rotated or blended', () => {
+      expect(cover({ ...ring, height: 120 })).toEqual({ kind: 'unknown' });
+      expect(cover({ ...ring, rotation: 30 })).toEqual({ kind: 'unknown' });
+      expect(cover({ ...ring, blendMode: 'multiply' })).toEqual({ kind: 'unknown' });
+    });
+
+    it('judges a stroked arrow as its colour at any strength', () => {
+      const arrow = { type: 'line-arrow', fill: '#005538', x: 300, y: 200, width: 200, height: 0 };
+      expect(cover(arrow)).toEqual({ kind: 'range', fill: '#005538', alpha: [0, 1] });
+      expect(cover({ ...arrow, rotation: 10 })).toEqual({ kind: 'unknown' });
+    });
+
+    it('grows the box of a bent arrow to hold the curve', () => {
+      const arrow = { type: 'line-arrow', x: 300, y: 200, width: 200, height: 0, strokeWidth: 6 };
+      expect(box(arrow)).toEqual({ x: 200, y: 200, width: 200, height: 0 });
+      const bent = box({ ...arrow, bend: 0.25 });
+      expect(bent.x).toBe(200);
+      expect(bent.width).toBe(200);
+      expect(bent.y).toBeLessThanOrEqual(200);
+      expect(bent.y + bent.height).toBeGreaterThanOrEqual(200 + 50);
+      const up = box({ ...arrow, bend: -0.25 });
+      expect(up.y).toBeLessThanOrEqual(200 - 50);
+      expect(up.y + up.height).toBeGreaterThanOrEqual(200);
+    });
+
+    // Box 200..400 × 150..250 (200 × 100 centred on 300, 200).
+    const bubble = {
+      type: 'rounded-rect',
+      fill: '#005538',
+      cornerRadius: 20,
+      x: 300,
+      y: 200,
+      width: 200,
+      height: 100,
+    };
+
+    it('judges a rounded rect as a solid ground inside its corner arcs', () => {
+      const c = cover(bubble) as { kind: string; fill: string; inner: object };
+      expect(c.kind).toBe('solid');
+      expect(c.fill).toBe('#005538');
+      const inner = c.inner as { x: number; y: number; width: number; height: number };
+      // The corner arc leaves r(1 − 1/√2) ≈ 0.293 r bare on both axes; the inset is a hair more.
+      expect(inner.x).toBeGreaterThanOrEqual(200 + 20 * 0.2929);
+      expect(inner.x).toBeLessThan(200 + 20 * 0.35);
+      expect(inner.x + inner.width / 2).toBeCloseTo(300);
+      expect(inner.y + inner.height / 2).toBeCloseTo(200);
+    });
+
+    it('has the same ground and the same inner box with a tail as without', () => {
+      const plain = cover(bubble);
+      const tailed = cover({ ...bubble, tailSide: 'bottom', tailAt: 0.3, tailSize: 40 });
+      expect(tailed).toEqual(plain);
+    });
+
+    it('includes the tail in the box, on its own side only', () => {
+      expect(box(bubble)).toEqual({ x: 200, y: 150, width: 200, height: 100 });
+      expect(box({ ...bubble, tailSide: 'bottom', tailSize: 40 })).toEqual({
+        x: 200,
+        y: 150,
+        width: 200,
+        height: 140,
+      });
+      expect(box({ ...bubble, tailSide: 'top', tailSize: 40 })).toEqual({
+        x: 200,
+        y: 110,
+        width: 200,
+        height: 140,
+      });
+      expect(box({ ...bubble, tailSide: 'left', tailSize: 40 })).toEqual({
+        x: 160,
+        y: 150,
+        width: 240,
+        height: 100,
+      });
+      expect(box({ ...bubble, tailSide: 'right', tailSize: 40 })).toEqual({
+        x: 200,
+        y: 150,
+        width: 240,
+        height: 100,
+      });
+    });
+
+    it('scales the tail with the shape', () => {
+      expect(box({ ...bubble, scaleY: 2, tailSide: 'bottom', tailSize: 40 }).height).toBe(280);
+    });
+
+    it('does not prove a rounded rect with gradient, shade, glow, pattern, grain or rotation', () => {
+      for (const extra of [
+        { shade: 'top' },
+        { glow: true },
+        { pattern: 'dots' },
+        { grain: 0.4 },
+        { rotation: 15 },
+        { fillGradient: { angle: 0, stops: [] } },
+      ]) {
+        expect(cover({ ...bubble, ...extra })).toEqual({ kind: 'unknown' });
+      }
+    });
+
+    it('reports a translucent bubble as a veil with the same inner box', () => {
+      expect(cover({ ...bubble, opacity: 0.5 })).toMatchObject({ kind: 'veil', alpha: 0.5 });
+    });
+  });
+});
+
+describe('template gate adapter: a page counter', () => {
+  const counter = (over: Record<string, unknown> = {}) => ({
+    text: '1',
+    width: 100,
+    fontSize: 100,
+    fontFamily: 'Raleway',
+    fontStyle: 'bold',
+    counter: 'page',
+    ...over,
+  });
+  const lines = TEMPLATE_GATE_ADAPTER.lineCount;
+
+  it('is judged at the widest numeral a deck can show, not at its stored text', () => {
+    // One bold digit at 100 px is about 60 px, two are about 120: past a 100 px box.
+    expect(lines('additionalTexts', counter({ counter: undefined }))).toBe(1);
+    expect(lines('additionalTexts', counter())).toBeGreaterThan(1);
+  });
+
+  it('is judged as before when the box takes two digits', () => {
+    expect(lines('additionalTexts', counter({ width: 400 }))).toBe(1);
   });
 });

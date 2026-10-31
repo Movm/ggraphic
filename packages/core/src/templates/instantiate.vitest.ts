@@ -240,6 +240,21 @@ describe('instantiateTemplatePage', () => {
     expect(instantiateTemplatePage(t, ctx())).toEqual({ ok: false, reason: 'geometry' });
   });
 
+  it('lets a decorative text start and end beyond the page, and nothing else', () => {
+    const page = (el: Record<string, unknown>) =>
+      template({ pages: [{ state: { additionalTexts: [{ id: 'g', ...el }] } }] });
+    const bleed = { x: -0.2, width: 1.4, decorative: true };
+    expect(instantiateTemplatePage(page(bleed), ctx()).ok).toBe(true);
+    expect(instantiateTemplatePage(page({ ...bleed, x: -3 }), ctx())).toEqual({
+      ok: false,
+      reason: 'geometry',
+    });
+    expect(instantiateTemplatePage(page({ ...bleed, fontSize: 1.4 }), ctx())).toEqual({
+      ok: false,
+      reason: 'geometry',
+    });
+  });
+
   describe('number arrays', () => {
     const dashed = (dash: unknown, axis: 's' | 'x' = 's') => ({
       t: template({
@@ -511,5 +526,80 @@ describe('instantiateTemplatePage', () => {
     });
     const r = instantiateTemplatePage(t, ctx({ geometry: { ...G, groups: { x: 'x' } } }));
     expect(r.ok).toBe(true);
+  });
+});
+
+describe('fitted text sizes', () => {
+  const withMax = (extra: Record<string, unknown> = {}, over: Partial<TemplateInput> = {}) =>
+    template({
+      pages: [
+        {
+          state: {
+            additionalTexts: [
+              {
+                id: 'h',
+                text: 'x',
+                x: 0,
+                y: 0.5,
+                width: 1,
+                fontSize: 0.05,
+                maxFontSize: 0.0777778,
+                ...extra,
+              },
+              { id: 'plain', text: 'y', x: 0, y: 0.1, width: 1, fontSize: 0.05 },
+            ],
+          },
+        },
+      ],
+      ...over,
+    });
+  const G2: GeometryTable = {
+    ...G,
+    additionalTexts: { ...G['additionalTexts']!, maxFontSize: 's' },
+  };
+
+  it('scales maxFontSize like fontSize and sets the size the fitter returns, for that text only', () => {
+    const calls: unknown[] = [];
+    const r = ok(
+      withMax({}, { slots: { h: { budget: { maxLines: 2 } } } }),
+      ctx({
+        geometry: G2,
+        fitText: (el, req) => {
+          calls.push([el['id'], el['maxFontSize'], req]);
+          return { fontSize: 70, fits: true };
+        },
+      })
+    );
+    const texts = r.state['additionalTexts'] as { id: string; fontSize: number }[];
+    expect(texts.find((t) => t.id === 'h')!.fontSize).toBe(70);
+    expect(texts.find((t) => t.id === 'plain')!.fontSize).toBe(54);
+    expect(calls).toEqual([['h', 84, { maxLines: 2, canvasHeight: 1350 }]]);
+  });
+
+  it('fits after the brand font and the placeholder are in', () => {
+    let seen: { fontFamily?: unknown; text?: unknown } = {};
+    ok(
+      withMax(
+        { bind: { fontFamily: 'font.headline' } },
+        { placeholders: { en: { h: 'Gute Nachrichten' } } }
+      ),
+      ctx({
+        geometry: G2,
+        fitText: (el) => {
+          seen = { fontFamily: el['fontFamily'], text: el['text'] };
+          return null;
+        },
+      })
+    );
+    expect(seen.text).toBe('Gute Nachrichten');
+    expect(String(seen.fontFamily)).toContain(logoBrand.fonts.headline);
+  });
+
+  it('leaves the size alone without a fitter or when the fitter declines', () => {
+    const none = ok(withMax(), ctx({ geometry: G2 }));
+    const declined = ok(withMax(), ctx({ geometry: G2, fitText: () => null }));
+    for (const r of [none, declined]) {
+      expect((r.state['additionalTexts'] as { fontSize: number }[])[0]!.fontSize).toBe(54);
+    }
   });
 });

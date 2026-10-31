@@ -1,0 +1,560 @@
+{
+  "formatVersion": 1,
+  "id": "studio-fact-bar-chart",
+  "version": 1,
+  "kind": "template",
+  "family": "chart",
+  "title": {
+    "en": "Fact card with bars",
+    "de": "Faktenkarte mit Balken"
+  },
+  "description": {
+    "en": "A headline, a one-line question and four bars with values and labels",
+    "de": "Eine Headline, eine Fragezeile und vier Balken mit Werten und Beschriftungen"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["light", "primary", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "glow",
+            "type": "ellipse",
+            "x": 0.5,
+            "y": 0.5,
+            "width": 1,
+            "height": 1,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.08,
+            "glow": true,
+            "bind": {
+              "fill": "accent"
+            }
+          },
+          {
+            "id": "square",
+            "type": "rect",
+            "x": 0.974074,
+            "y": 0.020741,
+            "width": 0.051852,
+            "height": 0.041481,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          },
+          {
+            "id": "bar-1",
+            "type": "rect",
+            "x": 0.195652,
+            "y": 0.692437,
+            "width": 0.173913,
+            "height": 0.312605,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink2"
+            }
+          },
+          {
+            "id": "bar-2",
+            "type": "rect",
+            "x": 0.423913,
+            "y": 0.677311,
+            "width": 0.173913,
+            "height": 0.342857,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink2"
+            }
+          },
+          {
+            "id": "bar-3",
+            "type": "rect",
+            "x": 0.652174,
+            "y": 0.657143,
+            "width": 0.173913,
+            "height": 0.383193,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink2"
+            }
+          },
+          {
+            "id": "bar-4",
+            "type": "rect",
+            "x": 0.880435,
+            "y": 0.636975,
+            "width": 0.173913,
+            "height": 0.423529,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "Volunteering is growing again",
+            "x": 0,
+            "y": 0,
+            "width": 0.543478,
+            "fontSize": 0.077778,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 800,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.077778
+          },
+          {
+            "id": "subline",
+            "type": "body",
+            "text": "Share of members who volunteer at least once a month",
+            "x": 0,
+            "y": 0.159664,
+            "width": 0.5,
+            "fontSize": 0.031481,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.35,
+            "fontWeight": 400,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.031481
+          },
+          {
+            "id": "value-1",
+            "type": "header",
+            "text": "31 %",
+            "x": 0.108696,
+            "y": 0.472269,
+            "width": 0.173913,
+            "fontSize": 0.051852,
+            "align": "center",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 800,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.051852
+          },
+          {
+            "id": "label-1",
+            "type": "body",
+            "text": "2023",
+            "x": 0.108696,
+            "y": 0.867227,
+            "width": 0.173913,
+            "fontSize": 0.027778,
+            "align": "center",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.2,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.027778
+          },
+          {
+            "id": "value-2",
+            "type": "header",
+            "text": "34 %",
+            "x": 0.336957,
+            "y": 0.442017,
+            "width": 0.173913,
+            "fontSize": 0.051852,
+            "align": "center",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 800,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.051852
+          },
+          {
+            "id": "label-2",
+            "type": "body",
+            "text": "2024",
+            "x": 0.336957,
+            "y": 0.867227,
+            "width": 0.173913,
+            "fontSize": 0.027778,
+            "align": "center",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.2,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.027778
+          },
+          {
+            "id": "value-3",
+            "type": "header",
+            "text": "38 %",
+            "x": 0.565217,
+            "y": 0.401681,
+            "width": 0.173913,
+            "fontSize": 0.051852,
+            "align": "center",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 800,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.051852
+          },
+          {
+            "id": "label-3",
+            "type": "body",
+            "text": "2025",
+            "x": 0.565217,
+            "y": 0.867227,
+            "width": 0.173913,
+            "fontSize": 0.027778,
+            "align": "center",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.2,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.027778
+          },
+          {
+            "id": "value-4",
+            "type": "header",
+            "text": "42 %",
+            "x": 0.793478,
+            "y": 0.361345,
+            "width": 0.173913,
+            "fontSize": 0.051852,
+            "align": "center",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 800,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.051852
+          },
+          {
+            "id": "label-4",
+            "type": "body",
+            "text": "2026",
+            "x": 0.793478,
+            "y": 0.867227,
+            "width": 0.173913,
+            "fontSize": 0.027778,
+            "align": "center",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.2,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.027778
+          },
+          {
+            "id": "source",
+            "type": "body",
+            "text": "Source: example report 2026 (invented data)",
+            "x": 0,
+            "y": 0.936975,
+            "width": 0.652174,
+            "fontSize": 0.02037,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.3,
+            "fontWeight": 400,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.02037
+          }
+        ],
+        "layerOrder": [
+          "glow",
+          "square",
+          "headline",
+          "subline",
+          "bar-1",
+          "value-1",
+          "label-1",
+          "bar-2",
+          "value-2",
+          "label-2",
+          "bar-3",
+          "value-3",
+          "label-3",
+          "bar-4",
+          "value-4",
+          "label-4",
+          "source",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {
+    "glow": "canvas",
+    "square": "canvas"
+  },
+  "slots": {
+    "headline": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 3,
+        "maxChars": 32
+      }
+    },
+    "subline": {
+      "role": "subline",
+      "label": {
+        "en": "Question",
+        "de": "Fragezeile"
+      },
+      "budget": {
+        "maxWords": 10,
+        "maxLines": 4,
+        "maxChars": 70
+      }
+    },
+    "value-1": {
+      "role": "number",
+      "label": {
+        "en": "Value 1",
+        "de": "Wert 1"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 6
+      }
+    },
+    "label-1": {
+      "role": "body",
+      "label": {
+        "en": "Label 1",
+        "de": "Beschriftung 1"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 10
+      }
+    },
+    "value-2": {
+      "role": "number",
+      "label": {
+        "en": "Value 2",
+        "de": "Wert 2"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 6
+      }
+    },
+    "label-2": {
+      "role": "body",
+      "label": {
+        "en": "Label 2",
+        "de": "Beschriftung 2"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 10
+      }
+    },
+    "value-3": {
+      "role": "number",
+      "label": {
+        "en": "Value 3",
+        "de": "Wert 3"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 6
+      }
+    },
+    "label-3": {
+      "role": "body",
+      "label": {
+        "en": "Label 3",
+        "de": "Beschriftung 3"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 10
+      }
+    },
+    "value-4": {
+      "role": "number",
+      "label": {
+        "en": "Value 4",
+        "de": "Wert 4"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 6
+      }
+    },
+    "label-4": {
+      "role": "body",
+      "label": {
+        "en": "Label 4",
+        "de": "Beschriftung 4"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 10
+      }
+    },
+    "source": {
+      "role": "body",
+      "label": {
+        "en": "Source",
+        "de": "Quelle"
+      },
+      "budget": {
+        "maxWords": 8,
+        "maxLines": 2,
+        "maxChars": 56
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "headline": "Volunteering is growing again",
+      "subline": "Share of members who volunteer at least once a month",
+      "value-1": "31 %",
+      "label-1": "2023",
+      "value-2": "34 %",
+      "label-2": "2024",
+      "value-3": "38 %",
+      "label-3": "2025",
+      "value-4": "42 %",
+      "label-4": "2026",
+      "source": "Source: example report 2026 (invented data)"
+    },
+    "de": {
+      "headline": "Ehrenamt wächst wieder",
+      "subline": "Anteil der Mitglieder, die sich mindestens einmal im Monat engagieren",
+      "value-1": "31 %",
+      "label-1": "2023",
+      "value-2": "34 %",
+      "label-2": "2024",
+      "value-3": "38 %",
+      "label-3": "2025",
+      "value-4": "42 %",
+      "label-4": "2026",
+      "source": "Quelle: Beispielbericht 2026 (erfundene Daten)"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

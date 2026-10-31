@@ -24,6 +24,8 @@ import {
   type UserImagePlacement,
 } from '@ggraphic/editor/utils/userImageUtils';
 
+import { fittedFontSize } from './fitting';
+import { withHuggedPlates } from './hug';
 import { type PageGroup, type StudioPageState } from './pageState';
 import { headlineFont, bodyFont, scaleFor } from './typography';
 
@@ -39,6 +41,9 @@ const newId = (prefix: string) =>
 const withLayer = (order: readonly string[] | undefined, id: string) => [...(order ?? []), id];
 const withoutLayer = (order: readonly string[] | undefined, id: string) =>
   (order ?? []).filter((entry) => entry !== id);
+
+/** The shape fields a person sets by moving or resizing it on the canvas. */
+const HAND_GEOMETRY = ['x', 'y', 'width', 'height'] as const;
 
 /** A readable ink on the page's current background. */
 function inkFor(background: string): string {
@@ -107,12 +112,22 @@ export function createStudioActions(
     addBodyTextWithContent: (content: string) => addText('body', content),
     updateAdditionalText: (id: string, partial: Partial<AdditionalText>) =>
       commit(
-        (prev) => ({
-          ...prev,
-          additionalTexts: prev.additionalTexts.map((t) =>
-            t.id === id ? { ...t, ...partial } : t
-          ),
-        }),
+        (prev) =>
+          // The plates that hug a text follow its new lines, width or size.
+          withHuggedPlates({
+            ...prev,
+            additionalTexts: prev.additionalTexts.map((t) => {
+              if (t.id !== id) return t;
+              const next = { ...t, ...partial };
+              // A committed text change refits a text with a prototype size: shrink as it grows,
+              // grow back as it shrinks. A size set by hand in the same change stands.
+              if (!('text' in partial) || 'fontSize' in partial) return next;
+              const fitted = fittedFontSize(next, prev, height);
+              return fitted === null || fitted === next.fontSize
+                ? next
+                : { ...next, fontSize: fitted };
+            }),
+          }),
         true
       ),
     removeAdditionalText: (id: string) =>
@@ -137,7 +152,15 @@ export function createStudioActions(
       commit(
         (prev) => ({
           ...prev,
-          shapeInstances: prev.shapeInstances.map((x) => (x.id === id ? { ...x, ...partial } : x)),
+          shapeInstances: prev.shapeInstances.map((x) => {
+            if (x.id !== id) return x;
+            const next = { ...x, ...partial };
+            // A plate placed or sized by hand stops hugging its text; otherwise the next text
+            // edit, rebind or AI fill would snap it back.
+            if (!('hug' in next) || !HAND_GEOMETRY.some((k) => k in partial)) return next;
+            const { hug: _hug, ...free } = next;
+            return free;
+          }),
         }),
         true
       ),

@@ -1,0 +1,290 @@
+{
+  "formatVersion": 1,
+  "id": "studio-community-question",
+  "version": 1,
+  "kind": "template",
+  "family": "community",
+  "title": {
+    "en": "Community question collage",
+    "de": "Frage an die Community"
+  },
+  "description": {
+    "en": "Four photos around a central question card on a dotted ground",
+    "de": "Vier Fotos um eine zentrale Fragekarte auf punktiertem Grund"
+  },
+  "tags": {
+    "tone": "warm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["accent", "primary", "light"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "dots",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.5,
+            "width": 1,
+            "height": 1,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "pattern": "dots",
+            "patternSpacing": 0.037037,
+            "bind": {
+              "fill": "ground",
+              "patternColor": "ink2"
+            },
+            "patternColor": "#ffffff"
+          },
+          {
+            "id": "card",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.568908,
+            "width": 0.804348,
+            "height": 0.431933,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "notch": 0.051852,
+            "bind": {
+              "fill": "ink"
+            },
+            "hug": {
+              "text": ["question", "text"],
+              "padX": 0.066667,
+              "padY": 0.057407
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo-1",
+            "cornerRadius": 0.02963,
+            "src": "",
+            "fileName": "",
+            "x": 0.044444,
+            "y": 0.035556,
+            "width": 0.259259,
+            "height": 0.222222,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "photo-2",
+            "cornerRadius": 0.02963,
+            "src": "",
+            "fileName": "",
+            "x": 0.714815,
+            "y": 0.066667,
+            "width": 0.240741,
+            "height": 0.222222,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "photo-3",
+            "cornerRadius": 0.02963,
+            "src": "",
+            "fileName": "",
+            "x": 0.044444,
+            "y": 0.721481,
+            "width": 0.240741,
+            "height": 0.237037,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "photo-4",
+            "cornerRadius": 0.02963,
+            "src": "",
+            "fileName": "",
+            "x": 0.687037,
+            "y": 0.742222,
+            "width": 0.268519,
+            "height": 0.222222,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "question",
+            "type": "header",
+            "text": "What makes your area lovely?",
+            "x": 0.176087,
+            "y": 0.406723,
+            "width": 0.647826,
+            "fontSize": 0.07037,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 800,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.07037
+          },
+          {
+            "id": "text",
+            "type": "body",
+            "text": "Tell us in the comments. We collect your ideas for the next street party.",
+            "x": 0.176087,
+            "y": 0.621849,
+            "width": 0.647826,
+            "fontSize": 0.02963,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.4,
+            "fontWeight": 400,
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.02963
+          }
+        ],
+        "layerOrder": [
+          "dots",
+          "photo-1",
+          "photo-2",
+          "photo-3",
+          "photo-4",
+          "card",
+          "question",
+          "text",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {
+    "dots": "canvas",
+    "photo-1": "canvas",
+    "photo-2": "canvas",
+    "photo-3": "canvas",
+    "photo-4": "canvas"
+  },
+  "slots": {
+    "photo-1": {
+      "role": "photo",
+      "label": {
+        "en": "Photo 1",
+        "de": "Foto 1"
+      },
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "photo-2": {
+      "role": "photo",
+      "label": {
+        "en": "Photo 2",
+        "de": "Foto 2"
+      },
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "photo-3": {
+      "role": "photo",
+      "label": {
+        "en": "Photo 3",
+        "de": "Foto 3"
+      },
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "photo-4": {
+      "role": "photo",
+      "label": {
+        "en": "Photo 4",
+        "de": "Foto 4"
+      },
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "question": {
+      "role": "headline",
+      "label": {
+        "en": "Question",
+        "de": "Frage"
+      },
+      "budget": {
+        "maxWords": 7,
+        "maxLines": 3,
+        "maxChars": 50
+      }
+    },
+    "text": {
+      "role": "body",
+      "label": {
+        "en": "Call",
+        "de": "Aufforderung"
+      },
+      "budget": {
+        "maxWords": 14,
+        "maxLines": 3,
+        "maxChars": 90
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right"],
+  "placeholders": {
+    "en": {
+      "question": "What makes your area lovely?",
+      "text": "Tell us in the comments. We collect your ideas for the next street party."
+    },
+    "de": {
+      "question": "Was macht dein Viertel lebenswert?",
+      "text": "Schreib es in die Kommentare. Wir sammeln eure Ideen für das nächste Stadtteilfest."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

@@ -1,0 +1,147 @@
+{
+  "formatVersion": 1,
+  "id": "studio-statement-photo",
+  "version": 1,
+  "kind": "template",
+  "family": "statement",
+  "title": {
+    "en": "Two lines over photo",
+    "de": "Zwei Zeilen über Foto"
+  },
+  "description": {
+    "en": "Two heavy lines on a fade at the bottom of a full photo",
+    "de": "Zwei schwere Zeilen auf einem Verlauf am unteren Rand eines Vollfotos"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["photo", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "shade",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.592593,
+            "width": 1,
+            "height": 0.814815,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "shade": "bottom",
+            "bind": {
+              "fill": "shade"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "Forests are not ==car parks.==",
+            "x": 0,
+            "y": 0.571429,
+            "width": 1,
+            "fontSize": 0.146296,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.94,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "accentFill": "#ffffff",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline",
+              "accentFill": "accent"
+            },
+            "maxFontSize": 0.146296
+          }
+        ],
+        "layerOrder": ["photo", "shade", "headline", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas",
+    "shade": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "headline": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 2,
+        "maxChars": 34
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "headline": "Forests are not ==car parks.=="
+    },
+    "de": {
+      "headline": "Wald ist kein ==Parkplatz.=="
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

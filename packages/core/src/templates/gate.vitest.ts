@@ -6,6 +6,7 @@ import {
   checkTemplate,
   GATE_RULES,
   type GateAdapter,
+  type GateCover,
   type GateContext,
   type GateRule,
 } from './gate.js';
@@ -53,6 +54,8 @@ const adapter: GateAdapter = {
         : [],
   lineCount: (key, el) =>
     key === 'additionalTexts' && typeof el['text'] === 'string' ? el['text'].split('\n').length : 1,
+  textExtent: (el) => ({ lines: 1, width: String(el['text']).length * 10 }),
+  placeBox: (_key, el, box) => ({ ...el, ...box }),
   box: (key, el, lines) =>
     key === 'additionalTexts'
       ? {
@@ -624,11 +627,54 @@ describe('render gate stage 1', () => {
   });
 });
 
+describe('fitted text sizes', () => {
+  // A stand-in fitter: the text fits at 100 px or less; the floor is passed in with the request.
+  const fitText: GateAdapter['fitText'] = (el, req) => {
+    const max = num(el, 'maxFontSize');
+    const floor = Math.min((3.5 * req.canvasHeight) / 100, max);
+    const size = Math.max(floor, Math.min(max, 100));
+    return { fontSize: size, fits: size <= 100 };
+  };
+  const fitting = (): GateContext => context({ adapter: { ...adapter, fitText } });
+  const big = (extra: Obj) => ({
+    additionalTexts: [{ ...headline, fontSize: 0.05, maxFontSize: 0.4, ...extra }],
+  });
+
+  it('judges a text at its fitted size: the same text fails at its fixed prototype size', () => {
+    const fixed = template({}, { additionalTexts: [{ ...headline, fontSize: 0.4 }] });
+    expect(rules(fixed, fitting())).toContain('bounds');
+    expect(checkTemplate(template({}, big({})), fitting())).toEqual([]);
+  });
+
+  it('fails a text that does not fit even at the floor', () => {
+    const never: GateAdapter['fitText'] = (el, req) => ({
+      fontSize: Math.min((3.5 * req.canvasHeight) / 100, num(el, 'maxFontSize')),
+      fits: false,
+    });
+    const problems = checkTemplate(
+      template({}, big({})),
+      context({ adapter: { ...adapter, fitText: never } })
+    );
+    expect(problems.map((p) => p.rule)).toContain('bounds');
+    expect(problems.map((p) => p.detail).join()).toContain('minimum size');
+  });
+
+  it('asks the fitter with the slot budget and the canvas height', () => {
+    const seen: unknown[] = [];
+    const spy: GateAdapter['fitText'] = (el, req) => {
+      seen.push(req);
+      return fitText(el, req);
+    };
+    checkTemplate(template({}, big({})), context({ adapter: { ...adapter, fitText: spy } }));
+    expect(seen[0]).toMatchObject({ maxLines: 2, canvasHeight: 1080 });
+  });
+});
+
 describe('contrast over photos, veils and shades', () => {
   /** The stand-in adapter, plus the photo, veil and shade grounds an editor reports. */
   const grounds: GateAdapter = {
     ...adapter,
-    cover: (key, el) => {
+    cover: (key, el, width) => {
       if (key === 'userImageInstances') {
         return {
           kind: 'photo',
@@ -644,7 +690,7 @@ describe('contrast over photos, veils and shades', () => {
           return { kind: 'veil', fill: String(el['fill']), alpha: num(el, 'opacity', 1) };
         }
       }
-      return adapter.cover(key, el);
+      return adapter.cover(key, el, width);
     },
   };
   const ctx = () => context({ adapter: grounds, manifestPaths: new Set(['/p.png']) });
@@ -847,5 +893,339 @@ describe('contrast over photos, veils and shades', () => {
       }
     );
     expect(details(t)).toEqual([]);
+  });
+});
+
+describe('decorative text (a ghost numeral)', () => {
+  /** A huge, translucent numeral that bleeds off the page. */
+  const ghost = (over: Obj = {}) => ({
+    id: 'ghost',
+    text: '5',
+    x: -0.2,
+    y: 0.1,
+    width: 1.4,
+    fontSize: 0.8,
+    fill: '#ffffff',
+    opacity: 0.15,
+    bind: { fill: 'ink' },
+    ...over,
+  });
+  const withGhost = (g: Obj, headlineOver: Obj = {}, state: Obj = {}) =>
+    template(
+      { fixed: { headline: ['fill'], ghost: ['fill'], page: ['backgroundColor'] } },
+      {
+        backgroundColor: '#000000',
+        bind: undefined,
+        additionalTexts: [g, { ...headline, bind: undefined, ...headlineOver }],
+        layerOrder: ['ghost', 'logo', 'headline'],
+        ...state,
+      }
+    );
+
+  it('passes with opacity 0.15, a bleed off the page and no contrast of its own', () => {
+    expect(checkTemplate(withGhost(ghost({ decorative: true })), context())).toEqual([]);
+  });
+
+  it('fails the same text without the flag', () => {
+    // Within 0..1 so that it is placed at all: a bleed beyond the page is refused without the flag.
+    const inPage = { x: 0, width: 1 };
+    const found = rules(withGhost(ghost(inPage)));
+    expect(found).toContain('contrast');
+    expect(found).toContain('bounds');
+    expect(rules(withGhost(ghost({ ...inPage, decorative: true })))).toEqual([]);
+    expect(rules(withGhost(ghost()))).toEqual(['schema']);
+  });
+
+  it('is judged as a translucent layer under a real headline: a faint ghost passes', () => {
+    // White at 0.15 on black is #262626; white text on it still reads.
+    expect(checkTemplate(withGhost(ghost({ decorative: true })), context())).toEqual([]);
+  });
+
+  it('is judged as a translucent layer under a real headline: a strong ghost fails', () => {
+    // White at 0.6 on black is #999999; white text on that is 2.8, large text needs 3.
+    const found = checkTemplate(withGhost(ghost({ decorative: true, opacity: 0.6 })), context());
+    expect(found.map((p) => p.rule)).toEqual(['contrast']);
+    expect(found[0]?.detail).toMatch(/^headline: #ffffff on #999999 is 2\.8/);
+  });
+
+  it('only counts where its box meets the headline', () => {
+    const away = ghost({ decorative: true, opacity: 0.6, y: 0.6, fontSize: 0.2 });
+    expect(checkTemplate(withGhost(away), context())).toEqual([]);
+  });
+
+  it('a ghost of unknown extent or colour fails the headline closed', () => {
+    const found = checkTemplate(
+      withGhost(ghost({ decorative: true, fill: '#ffffff80', bind: undefined }), {}, {}),
+      context({})
+    );
+    expect(found.map((p) => p.rule)).toContain('contrast');
+  });
+
+  it('stacks with a shade: the ghost is a choice of present or absent, not a shade alpha', () => {
+    const grounds: GateAdapter = {
+      ...adapter,
+      cover: (key, el, width) =>
+        key === 'shapeInstances'
+          ? { kind: 'shade', fill: String(el['fill']), direction: 'bottom' }
+          : adapter.cover(key, el, width),
+    };
+    const build = (g: Obj) =>
+      template(
+        { fixed: { headline: ['fill'], veil: ['fill'], page: ['backgroundColor'] } },
+        {
+          backgroundColor: '#ffffff',
+          bind: undefined,
+          shapeInstances: [{ id: 'veil', fill: '#000000', x: 0, y: 0, width: 1, height: 1 }],
+          additionalTexts: [g, { ...headline, y: 0.8, bind: undefined }],
+          layerOrder: ['veil', 'ghost', 'logo', 'headline'],
+        }
+      );
+    const details = (t: TemplateInput) =>
+      checkTemplate(t, context({ adapter: grounds })).map((p) => `${p.rule}: ${p.detail}`);
+    expect(details(build(ghost({ decorative: true, opacity: 0.1, fill: '#000000' })))).toEqual([]);
+    expect(details(build(ghost({ decorative: true, opacity: 0.9 })))[0]).toMatch(
+      /^contrast: headline: #ffffff on #/
+    );
+  });
+
+  it('is not limited by the slot checks: it has no slot and is no budget', () => {
+    expect(checkTemplate(withGhost(ghost({ decorative: true })), context({ slots: {} }))).toEqual(
+      []
+    );
+  });
+});
+
+describe('contrast over notched, glow and grain grounds', () => {
+  /** The stand-in adapter, plus the covers an editor reports for a notch, glow, grain and dots. */
+  const devices: GateAdapter = {
+    ...adapter,
+    cover: (key, el, canvasWidth) => {
+      if (key !== 'shapeInstances') return adapter.cover(key, el, canvasWidth);
+      const n = num(el, 'notch') * canvasWidth;
+      const mods: Omit<GateCover, 'kind'> = {
+        ...(n > 0
+          ? {
+              cut: {
+                x: num(el, 'x') + num(el, 'width') - n,
+                y: num(el, 'y'),
+                width: n,
+                height: n,
+              },
+            }
+          : {}),
+        ...(el['pattern'] === 'dots' ? { dots: true as const } : {}),
+        ...(el['stripeFill'] ? { stripes: String(el['stripeFill']) } : {}),
+        ...(el['grainFill']
+          ? {
+              grain: {
+                fill: String(el['grainFill']),
+                alpha: [0, num(el, 'grainMax')] as [number, number],
+              },
+            }
+          : {}),
+      };
+      const fill = String(el['fill']);
+      if (el['veilAlpha'] !== undefined) {
+        return { kind: 'veil', fill, alpha: num(el, 'veilAlpha'), ...mods };
+      }
+      return el['glowMax'] !== undefined
+        ? { kind: 'range', fill, alpha: [0, num(el, 'glowMax')], ...mods }
+        : { kind: 'solid', fill, ...mods };
+    },
+  };
+  const panel = (over: Obj = {}) => ({
+    id: 'panel',
+    fill: '#000000',
+    x: 0,
+    y: 0,
+    width: 1,
+    height: 1,
+    ...over,
+  });
+  const build = (shape: Obj, text: Obj = {}) =>
+    template(
+      { fixed: { headline: ['fill'], panel: ['fill'] } },
+      {
+        shapeInstances: [shape],
+        additionalTexts: [{ ...headline, y: 0.5, fontSize: 0.03, bind: undefined, ...text }],
+        layerOrder: ['panel', 'logo', 'headline'],
+      }
+    );
+  const details = (t: TemplateInput) =>
+    checkTemplate(t, context({ adapter: devices })).map((p) => `${p.rule}: ${p.detail}`);
+  // A narrow text high up at the right edge: wholly inside a 0.1 notch (108 px of 1080).
+  const inCut = { x: 0.9, y: 0.01, width: 0.08, fontSize: 0.02 };
+
+  it('text on a notched panel away from the notch passes like on an un-notched one', () => {
+    expect(details(build(panel({ notch: 0.1 })))).toEqual([]);
+    expect(details(build(panel()))).toEqual([]);
+  });
+
+  it('text on a notched light panel away from the notch fails like on an un-notched one', () => {
+    const light = panel({ fill: '#ffffff', notch: 0.1 });
+    expect(details(build(light))[0]).toContain('#ffffff on #ffffff');
+  });
+
+  it('text wholly inside the cut is judged against what lies beneath the panel', () => {
+    // The page is black: white text in the cut passes, though the panel is white.
+    const t = build(panel({ fill: '#ffffff', notch: 0.1 }), inCut);
+    expect(details(t)).toEqual([]);
+    expect(details(build(panel({ fill: '#ffffff' }), inCut))[0]).toContain('#ffffff on #ffffff');
+  });
+
+  it('text half in the cut fails closed', () => {
+    const t = build(panel({ fill: '#ffffff', notch: 0.1 }), { ...inCut, x: 0.8, width: 0.15 });
+    expect(details(t)[0]).toContain('ground not determinable');
+  });
+
+  it('judges a glow as an alpha range of its fill: dark glow passes, light glow fails', () => {
+    expect(details(build(panel({ glowMax: 0.9 })))).toEqual([]);
+    const light = details(build(panel({ fill: '#ffffff', glowMax: 0.9 })));
+    expect(light).toHaveLength(1);
+    expect(light[0]).toMatch(/^contrast: headline: #ffffff on #/);
+  });
+
+  it('judges grain as an alpha range of black or white over the ground', () => {
+    const ok = panel({ fill: '#000000', grainFill: '#ffffff', grainMax: 0.2 });
+    expect(details(build(ok))).toEqual([]);
+    const bad = panel({ fill: '#000000', grainFill: '#ffffff', grainMax: 0.8 });
+    expect(details(build(bad))[0]).toMatch(/^contrast: headline: #ffffff on #/);
+  });
+
+  it('fails closed on a grain layer under a second alpha range', () => {
+    const t = build(panel({ grainFill: '#ffffff', grainMax: 0.2, glowMax: 0.5 }));
+    expect(details(t)[0]).toContain('stacked shades');
+  });
+
+  it('judges a text on stripes against the stripe colour as well as the ground', () => {
+    // White text: the black ground passes, a white stripe fails it, a dark one passes.
+    expect(details(build(panel({ stripeFill: '#222222' })))).toEqual([]);
+    const bad = details(build(panel({ stripeFill: '#ffffff' })));
+    expect(bad).toHaveLength(1);
+    expect(bad[0]).toMatch(/^contrast: headline: #ffffff on #/);
+    expect(details(build(panel({ stripeFill: '#ffffff', height: 0.3 })))).toEqual([]);
+  });
+
+  it('judges stripes over a translucent fill: the band is the fill, then the stripe colour', () => {
+    // Mostly opaque black over a black page, a white stripe on top: the band is near white.
+    const veil = panel({ veilAlpha: 0.9 });
+    expect(details(build(veil))).toEqual([]);
+    expect(details(build({ ...veil, stripeFill: '#222222' }))).toEqual([]);
+    const bad = details(build({ ...veil, stripeFill: '#ffffff' }));
+    expect(bad).toHaveLength(1);
+    expect(bad[0]).toMatch(/^contrast: headline: #ffffff on #/);
+  });
+
+  it('a dot pattern fails a text lying on it and leaves a text off it alone', () => {
+    expect(details(build(panel({ pattern: 'dots' })))[0]).toContain('ground not determinable');
+    expect(details(build(panel({ pattern: 'dots', height: 0.3 })))).toEqual([]);
+  });
+});
+
+describe('contrast over a ground with bare edges (inner box)', () => {
+  /** The stand-in adapter, plus a cover whose sure ground is the panel shrunk by `inset` px. */
+  const rounded: GateAdapter = {
+    ...adapter,
+    cover: (key, el, canvasWidth) => {
+      if (key !== 'shapeInstances') return adapter.cover(key, el, canvasWidth);
+      const inset = num(el, 'inset');
+      return {
+        kind: 'solid',
+        fill: String(el['fill']),
+        inner: {
+          x: num(el, 'x') + inset,
+          y: num(el, 'y') + inset,
+          width: num(el, 'width') - 2 * inset,
+          height: num(el, 'height') - 2 * inset,
+        },
+      };
+    },
+  };
+  const build = (panel: Obj, text: Obj) =>
+    template(
+      { fixed: { headline: ['fill'], panel: ['fill'] } },
+      {
+        shapeInstances: [
+          { id: 'panel', fill: '#000000', x: 0, y: 0, width: 1, height: 1, ...panel },
+        ],
+        additionalTexts: [{ ...headline, y: 0.5, fontSize: 0.03, bind: undefined, ...text }],
+        layerOrder: ['panel', 'logo', 'headline'],
+      }
+    );
+  const details = (t: TemplateInput) =>
+    checkTemplate(t, context({ adapter: rounded })).map((p) => `${p.rule}: ${p.detail}`);
+
+  it('judges a text wholly inside the inner box against the ground', () => {
+    expect(details(build({ inset: 100 }, { x: 0.4, width: 0.2 }))).toEqual([]);
+    const light = details(build({ inset: 100, fill: '#ffffff' }, { x: 0.4, width: 0.2 }));
+    expect(light[0]).toContain('#ffffff on #ffffff');
+  });
+
+  it('fails closed on a text in the panel but outside the inner box', () => {
+    // On the bare edge the text sits on whatever lies beneath, so even a passing ground is not enough.
+    const edge = details(build({ inset: 100 }, { x: 0.01, width: 0.05 }));
+    expect(edge[0]).toContain('ground not determinable');
+  });
+
+  it('leaves a cover without an inner box judged by the whole panel as before', () => {
+    expect(details(build({ inset: 0 }, { x: 0.01, width: 0.05 }))).toEqual([]);
+  });
+});
+
+describe('plates that hug their text', () => {
+  const hugged = (plateY: number, hug: boolean) =>
+    template(
+      {
+        frames: { headline: 'canvas', plate: 'canvas' },
+        fixed: { headline: ['fill'], plate: ['fill'] },
+      },
+      {
+        backgroundColor: '#ffffff',
+        bind: undefined,
+        additionalTexts: [
+          {
+            ...headline,
+            x: 0.1,
+            y: plateY,
+            width: 0.5,
+            fontSize: 0.03,
+            fill: '#ffffff',
+            bind: undefined,
+          },
+        ],
+        shapeInstances: [
+          {
+            id: 'plate',
+            type: 'rect',
+            x: 0.05,
+            y: plateY - 0.01,
+            width: 0.6,
+            height: 0.04,
+            fill: '#000000',
+            rotation: 0,
+            ...(hug ? { hug: { text: 'headline', padX: 0.01, padY: 0.01 } } : {}),
+          },
+        ],
+      }
+    );
+  const threeLines = () =>
+    context({
+      slots: { headline: { role: 'headline', budget: { maxWords: 8, maxLines: 3, maxChars: 60 } } },
+    });
+  const only = (t: TemplateInput, ctx: GateContext, rule: GateRule) =>
+    checkTemplate(t, ctx).filter((p) => p.rule === rule);
+
+  it('judges the text against the plate hugged to the lines the slot allows', () => {
+    // The text box is three lines tall; the fixed plate is one line tall and holds only part of it.
+    expect(only(hugged(0.5, false), threeLines(), 'contrast')).not.toEqual([]);
+    expect(only(hugged(0.5, true), threeLines(), 'contrast')).toEqual([]);
+  });
+
+  it('fails bounds for a plate that would leave the canvas once hugged', () => {
+    // Three lines (about 117 px) plus padding from y = 0.93 of 1080 run past the bottom edge.
+    expect(only(hugged(0.5, true), threeLines(), 'bounds')).toEqual([]);
+    expect(only(hugged(0.93, true), threeLines(), 'bounds').map((p) => p.detail)).toEqual(
+      expect.arrayContaining([expect.stringContaining('plate leaves')])
+    );
   });
 });

@@ -31,6 +31,8 @@ const OPEN_FONTS: Record<string, PptxFontMapper> = {
   'Instrument Sans': pptxFamily('Instrument Sans'),
   Fraunces: pptxFamily('Fraunces'),
   Raleway: pptxFamily('Raleway'),
+  'Bricolage Grotesque': pptxFamily('Bricolage Grotesque'),
+  Anton: pptxFamily('Anton'),
 };
 
 let hostFonts: Record<string, PptxFontMapper> = {};

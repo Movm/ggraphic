@@ -53,6 +53,9 @@ export interface BaseElementConfig<TState = Record<string, unknown>> {
   order?: number;
 }
 
+/** Numeric font weight; the nine CSS steps. */
+export type FontWeight = 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900;
+
 /** Dynamic additional text element */
 export interface AdditionalText {
   id: string;
@@ -64,8 +67,24 @@ export interface AdditionalText {
   y: number;
   width: number;
   fontSize: number;
+  /**
+   * The prototype's size of a template text. A text with it has its `fontSize` fitted to the
+   * brand's font, never above this; omit for a text whose size is fixed.
+   */
+  maxFontSize?: number;
   fontFamily: string;
   fontStyle?: 'normal' | 'italic' | 'bold' | 'bold italic';
+  /** Numeric weight; wins over the bold part of `fontStyle`. Absent = `fontStyle` alone. */
+  fontWeight?: FontWeight;
+  /** Spacing after every glyph, in em (-0.1 to 0.3); the pixel value is `letterSpacing * fontSize`. */
+  letterSpacing?: number;
+  /** A line through the whole text (a struck-out myth). Only `true` means anything. */
+  strikethrough?: boolean;
+  /**
+   * `'page'`: the text shows the number of its page (from 1) instead of `text`, which is only
+   * drawn where no page is known. Not editable; never a slot.
+   */
+  counter?: 'page';
   fill: string;
   rotation?: number;
   scale?: number;
@@ -90,6 +109,19 @@ export interface AdditionalText {
   accent?: TextAccent | null;
   /** How `++marker++` runs look (a box behind the run); omit and they render like the rest. */
   marker?: TextMarker | null;
+  /** Flat plate fill; wins over `marker.fill`, so a template can bind it. */
+  markerFill?: string;
+  /** Flat ink on the plate; wins over `marker.color`. */
+  markerColor?: string;
+  /** Flat accent colour; wins over `accent.fill`. */
+  accentFill?: string;
+  /**
+   * A picture made of type (a ghost numeral): huge, translucent, allowed to bleed off the page.
+   * Exempt from the gate's bounds, contrast and size rules, never filled by the AI, never a
+   * neighbour that other text must make room for, never listed as content. Still selectable
+   * and editable like any text. Absent = ordinary text.
+   */
+  decorative?: true;
 }
 
 /** Text element configuration */

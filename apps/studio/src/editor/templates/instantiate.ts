@@ -7,13 +7,17 @@ import {
   type TemplateInput,
 } from '@ggraphic/core';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { TEMPLATE_GEOMETRY } from '@ggraphic/editor/templates/templateGeometry';
+import {
+  TEMPLATE_GATE_ADAPTER,
+  TEMPLATE_GEOMETRY,
+} from '@ggraphic/editor/templates/templateGeometry';
 import { type TemplateFile, type TemplateFormat } from '@ggraphic/schema';
 
 import { logoSizeOf } from '../../logoSize';
 import { formatSize } from '../document';
 
 import { formatAspect, type CatalogEntry } from './catalog';
+import { HUG_ADAPTER } from './hug';
 import { fontFallbackFor } from './typography';
 
 // A parsed template file is what placing takes; if the schema drifts from core's input, this stops compiling.
@@ -36,6 +40,9 @@ export function placeTemplate(
     geometry: TEMPLATE_GEOMETRY,
     locale: 'en',
     fontFallback: fontFallbackFor,
+    fitText: TEMPLATE_GATE_ADAPTER.fitText,
+    boxOf: (key, el) => TEMPLATE_GATE_ADAPTER.box(key, el, 1),
+    hug: HUG_ADAPTER,
     schemeId,
     logoSizeOf,
   });

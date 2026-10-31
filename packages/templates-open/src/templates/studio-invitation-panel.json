@@ -1,0 +1,337 @@
+{
+  "formatVersion": 1,
+  "id": "studio-invitation-panel",
+  "version": 1,
+  "kind": "template",
+  "family": "invitation",
+  "title": {
+    "en": "Invitation with photo",
+    "de": "Einladung mit Foto"
+  },
+  "description": {
+    "en": "A colour panel with a label, title, date and a sign-up button, a photo below and a note strip",
+    "de": "Eine Farbfläche mit Label, Titel, Termin und Anmelde-Knopf, darunter ein Foto und eine Hinweisleiste"
+  },
+  "tags": {
+    "tone": "warm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["dark", "primary"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "deep"
+        },
+        "shapeInstances": [
+          {
+            "id": "panel",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.225926,
+            "width": 1,
+            "height": 0.451852,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "notch": 0.051852,
+            "bind": {
+              "fill": "ground"
+            }
+          },
+          {
+            "id": "button",
+            "type": "rect",
+            "x": 0.338043,
+            "y": 0.368068,
+            "width": 0.669565,
+            "height": 0.053782,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "deep"
+            },
+            "hug": {
+              "text": "button-text",
+              "padX": 0.024074,
+              "padY": 0.016667,
+              "width": "text"
+            }
+          },
+          {
+            "id": "strip",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.933333,
+            "width": 1,
+            "height": 0.133333,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "deep"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0.451852,
+            "width": 1,
+            "height": 0.414815,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "label",
+            "type": "body",
+            "text": "INVITATION",
+            "x": 0,
+            "y": 0,
+            "width": 0.543478,
+            "fontSize": 0.024074,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 600,
+            "letterSpacing": 0.08,
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.024074
+          },
+          {
+            "id": "title",
+            "type": "header",
+            "text": "Open neighbourhood forum",
+            "x": 0,
+            "y": 0.05042,
+            "width": 0.956522,
+            "fontSize": 0.081481,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 800,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.081481
+          },
+          {
+            "id": "when",
+            "type": "body",
+            "text": "Thursday, 19 November 2026, 6.30 pm, community hall",
+            "x": 0,
+            "y": 0.223529,
+            "width": 0.826087,
+            "fontSize": 0.031481,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.4,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.031481
+          },
+          {
+            "id": "button-text",
+            "type": "body",
+            "text": "Sign up: example.org/forum",
+            "x": 0.031522,
+            "y": 0.356303,
+            "width": 0.613043,
+            "fontSize": 0.025926,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.025926
+          },
+          {
+            "id": "note",
+            "type": "body",
+            "text": "Free entry · childcare on site",
+            "x": 0,
+            "y": 0.961345,
+            "width": 0.597826,
+            "fontSize": 0.027778,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.2,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.027778
+          }
+        ],
+        "layerOrder": [
+          "panel",
+          "label",
+          "title",
+          "when",
+          "button",
+          "button-text",
+          "photo",
+          "strip",
+          "note",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {
+    "panel": "canvas",
+    "photo": "canvas",
+    "strip": "canvas"
+  },
+  "slots": {
+    "label": {
+      "role": "subline",
+      "label": {
+        "en": "Label",
+        "de": "Label"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 16
+      }
+    },
+    "title": {
+      "role": "headline",
+      "label": {
+        "en": "Title",
+        "de": "Titel"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 3,
+        "maxChars": 30
+      }
+    },
+    "when": {
+      "role": "date",
+      "label": {
+        "en": "Date and place",
+        "de": "Termin und Ort"
+      },
+      "budget": {
+        "maxWords": 9,
+        "maxLines": 2,
+        "maxChars": 70
+      }
+    },
+    "button-text": {
+      "role": "cta",
+      "label": {
+        "en": "Sign-up line",
+        "de": "Anmeldezeile"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 1,
+        "maxChars": 34
+      }
+    },
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "note": {
+      "role": "body",
+      "label": {
+        "en": "Note",
+        "de": "Hinweis"
+      },
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 1,
+        "maxChars": 44
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "date-with-place",
+      "title": {
+        "en": "Date with place",
+        "de": "Datum mit Ort"
+      },
+      "elementIds": ["when"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right"],
+  "placeholders": {
+    "en": {
+      "label": "INVITATION",
+      "title": "Open neighbourhood forum",
+      "when": "Thursday, 19 November 2026, 6.30 pm, community hall",
+      "button-text": "Sign up: example.org/forum",
+      "note": "Free entry · childcare on site"
+    },
+    "de": {
+      "label": "EINLADUNG",
+      "title": "Offenes Nachbarschaftsforum",
+      "when": "Donnerstag, 19. November 2026, 18:30 Uhr, Gemeindesaal",
+      "button-text": "Anmelden: beispiel.org/forum",
+      "note": "Eintritt frei · Kinderbetreuung vor Ort"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

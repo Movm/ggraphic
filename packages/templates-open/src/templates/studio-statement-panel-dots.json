@@ -1,0 +1,204 @@
+{
+  "formatVersion": 1,
+  "id": "studio-statement-panel-dots",
+  "version": 1,
+  "kind": "template",
+  "family": "statement",
+  "title": {
+    "en": "Statement on a deep panel",
+    "de": "Aussage auf tiefer Fläche"
+  },
+  "description": {
+    "en": "A short headline and a paragraph on a deep ground with a rose rule and a dotted band",
+    "de": "Eine kurze Headline und ein Absatz auf tiefem Grund mit rosa Linie und Punktband"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["dark", "primary"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "deep"
+        },
+        "shapeInstances": [
+          {
+            "id": "dots",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.874074,
+            "width": 1,
+            "height": 0.251852,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "pattern": "dots",
+            "patternSpacing": 0.037037,
+            "bind": {
+              "fill": "ground",
+              "patternColor": "accent"
+            },
+            "patternColor": "#ffffff"
+          },
+          {
+            "id": "square",
+            "type": "rect",
+            "x": 0.974074,
+            "y": 0.020741,
+            "width": 0.051852,
+            "height": 0.041481,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          },
+          {
+            "id": "rule",
+            "type": "rect",
+            "x": 0.047826,
+            "y": 0.086555,
+            "width": 0.078261,
+            "height": 0.005042,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "Democracy lives from people who join in.",
+            "x": 0.008696,
+            "y": 0.12605,
+            "width": 0.956522,
+            "fontSize": 0.077778,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 800,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.077778
+          },
+          {
+            "id": "text",
+            "type": "body",
+            "text": "Whether in the parents council, the sports club or the street: commitment holds us together. No one has to do it alone.",
+            "x": 0.008696,
+            "y": 0.470588,
+            "width": 0.934783,
+            "fontSize": 0.037037,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.45,
+            "fontWeight": 400,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.037037
+          }
+        ],
+        "layerOrder": ["dots", "square", "rule", "headline", "text", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "dots": "canvas",
+    "square": "canvas"
+  },
+  "slots": {
+    "headline": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Headline"
+      },
+      "budget": {
+        "maxWords": 7,
+        "maxLines": 3,
+        "maxChars": 48
+      }
+    },
+    "text": {
+      "role": "body",
+      "label": {
+        "en": "Paragraph",
+        "de": "Absatz"
+      },
+      "budget": {
+        "maxWords": 24,
+        "maxLines": 6,
+        "maxChars": 150
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "statement-with-text",
+      "title": {
+        "en": "Statement with text",
+        "de": "Aussage mit Text"
+      },
+      "elementIds": ["headline", "text"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right"],
+  "placeholders": {
+    "en": {
+      "headline": "Democracy lives from people who join in.",
+      "text": "Whether in the parents council, the sports club or the street: commitment holds us together. No one has to do it alone."
+    },
+    "de": {
+      "headline": "Demokratie lebt von Menschen, die mitmachen.",
+      "text": "Ob im Elternbeirat, im Sportverein oder in der Nachbarschaft: Engagement hält uns zusammen. Niemand muss es allein schaffen."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

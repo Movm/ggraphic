@@ -3,6 +3,7 @@ import { type Bindings } from '@ggraphic/core';
 import { messages } from '@ggraphic/editor/i18n/messages';
 
 import { type StockImageAttribution } from '../common/imageSourceTypes.js';
+import { type CornerRadius } from './cornerRadius.js';
 
 export interface UserImageInstance {
   id: string;
@@ -70,6 +71,10 @@ export interface UserImageInstance {
   cropRotation?: number;
   /** `kreis`: clipped to the circle inside width × height. */
   mask?: 'kreis';
+  /** Rounded corners in px: one radius for all, or one per corner (tl, tr, br, bl). `mask` and `notch` win. */
+  cornerRadius?: CornerRadius;
+  /** Side of the square cut from the top-right corner, a share of the canvas width; wins over `mask`. */
+  notch?: number;
   /** Stock credit (Unsplash): the photo is hotlinked, so the credit travels with it. */
   attribution?: StockImageAttribution;
 }

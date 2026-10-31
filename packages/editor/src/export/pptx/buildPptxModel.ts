@@ -22,8 +22,12 @@ import {
   type ChartType,
 } from '@ggraphic/editor/utils/chartUtils';
 import { ICON_TARGET_SIZE, ILLUSTRATION_TARGET_SIZE } from '@ggraphic/editor/utils/motifSizes';
+import { shownText } from '../../utils/pageCounter.js';
 import { photoStripBeside, type ShapeInstance } from '@ggraphic/editor/utils/shapes';
+import { hasCorners } from '@ggraphic/editor/utils/cornerRadius';
+import { bubbleExtent, tailOf } from '../../utils/shapeDevices.js';
 import { backgroundStraighten } from '@ggraphic/editor/utils/straighten';
+import { konvaFontStyle } from '@ggraphic/editor/utils/textUtils';
 
 import {
   estimateMeasure,
@@ -220,13 +224,29 @@ function shapeLocalBox(shape: ShapeInstance): PptxBox {
       const half = r * Math.sin((72 * Math.PI) / 180);
       return { x: -half, y: -r, width: 2 * half, height: r + r * Math.cos((36 * Math.PI) / 180) };
     }
-    default:
-      return {
+    default: {
+      const flat = {
         x: -shape.width / 2,
         y: -shape.height / 2,
         width: shape.width,
         height: shape.height,
       };
+      // A speech bubble's tail lies outside width × height; a bent arrow's curve off its flat box.
+      const tail = tailOf(shape);
+      if (tail) {
+        const out = bubbleExtent(shape.width, shape.height, tail);
+        return { x: flat.x + out.x, y: flat.y + out.y, width: out.width, height: out.height };
+      }
+      if (shape.type === 'line-arrow' && shape.bend) {
+        const stroke = shape.strokeWidth ?? 6;
+        const sag = shape.bend * shape.width * 1.1;
+        const pad = Math.max(16, stroke * 2.5) / 2 + stroke / 2;
+        const top = Math.min(flat.y, Math.min(0, sag) - pad);
+        const bottom = Math.max(flat.y + flat.height, Math.max(0, sag) + pad);
+        return { ...flat, y: top, height: bottom - top };
+      }
+      return flat;
+    }
   }
 }
 
@@ -242,7 +262,19 @@ function mapShape(shape: ShapeInstance): PptxItem {
   if (!native) return raster(shape.id, placement, 'shape-path');
   // A native pptx shape can't carry the mirror the stage draws; the raster does.
   if (shape.flipX || shape.flipY) return raster(shape.id, placement, 'shape-flipped');
-  if (shape.fillGradient || shape.shade || shape.blendMode) {
+  if (
+    shape.fillGradient ||
+    shape.shade ||
+    shape.blendMode ||
+    shape.notch ||
+    shape.glow ||
+    (shape.grain ?? 0) > 0 ||
+    shape.pattern ||
+    // The tail is part of the outline, which a native roundRect cannot carry.
+    tailOf(shape) ||
+    // pptx rounds every corner of a roundRect the same.
+    Array.isArray(shape.cornerRadius)
+  ) {
     return raster(shape.id, placement, 'shape-styled');
   }
   return {
@@ -254,23 +286,30 @@ function mapShape(shape: ShapeInstance): PptxItem {
     fill: shape.fill,
     rectRadius:
       native === 'roundRect'
-        ? Math.min(shape.cornerRadius ?? 32, placement.box.width / 2, placement.box.height / 2)
+        ? Math.min(
+            typeof shape.cornerRadius === 'number' ? shape.cornerRadius : 32,
+            placement.box.width / 2,
+            placement.box.height / 2
+          )
         : null,
     shadow: shadowOf(shape),
   };
 }
 
-function mapText(text: AdditionalText, measure: PptxMeasureText): PptxItem {
+function mapText(authored: AdditionalText, measure: PptxMeasureText, pageNumber: number): PptxItem {
+  // A page counter is the number of its slide.
+  const text = { ...authored, text: shownText(authored, pageNumber) };
   const scale = text.scale || 1;
   const lineHeight = text.lineHeight ?? 1.2;
   const paragraphs = textParagraphs(text);
   const style = text.fontStyle ?? 'normal';
+  const bold = text.fontWeight !== undefined ? text.fontWeight >= 600 : style.includes('bold');
   const lines = wrappedLineCount(
     paragraphs,
     text.width,
     text.fontSize,
     text.fontFamily,
-    style,
+    konvaFontStyle(style, text.fontWeight),
     measure
   );
   const local = { x: 0, y: 0, width: text.width, height: lines * text.fontSize * lineHeight };
@@ -285,8 +324,10 @@ function mapText(text: AdditionalText, measure: PptxMeasureText): PptxItem {
     fontFace: text.fontFamily,
     fontSize: text.fontSize * scale,
     color: text.fill,
-    bold: style.includes('bold'),
+    bold,
     italic: style.includes('italic'),
+    letterSpacing: text.letterSpacing ?? 0,
+    strikethrough: text.strikethrough === true,
     align: text.align ?? 'left',
     valign: 'top',
     lineHeight,
@@ -352,6 +393,8 @@ function mapPill(pill: PillBadgeInstance, measure: PptxMeasureText): PptxItem[] 
       color: pill.textColor,
       bold: style.includes('bold'),
       italic: style.includes('italic'),
+      letterSpacing: 0,
+      strikethrough: false,
       align: 'center',
       valign: 'middle',
       lineHeight: 1,
@@ -412,6 +455,8 @@ function mapCircleBadge(badge: CircleBadgeInstance): PptxItem[] {
       color: badge.textColor,
       bold: line.fontWeight === 'bold',
       italic: false,
+      letterSpacing: 0,
+      strikethrough: false,
       align: 'center',
       valign: 'top',
       lineHeight: 1,
@@ -455,7 +500,14 @@ function mapUserImage(image: UserImageInstance): PptxItem {
     image.fit === 'cover' &&
     ((image.cropZoom ?? 1) !== 1 || !!image.panX || !!image.panY || !!image.cropRotation);
   const ovalMask = image.mask === 'kreis' && Math.abs(image.width - image.height) > 0.5;
-  if (isAdjusted(image) || image.shadowColor || movedCrop || ovalMask) {
+  if (
+    isAdjusted(image) ||
+    image.shadowColor ||
+    movedCrop ||
+    ovalMask ||
+    image.notch ||
+    hasCorners(image.cornerRadius)
+  ) {
     return raster(image.id, placement, 'image-adjusted');
   }
   return {
@@ -577,7 +629,8 @@ function mapBackgroundPhoto(state: PptxPageState, page: PptxBox): PptxItem | nul
 function buildSlide(
   state: PptxPageState,
   format: CanvasFormat,
-  measure: PptxMeasureText
+  measure: PptxMeasureText,
+  pageNumber: number
 ): PptxSlideModel {
   const page: PptxBox = { x: 0, y: 0, width: format.width, height: format.height };
   const carried = carryInstanceState(state as Record<string, unknown>);
@@ -615,7 +668,8 @@ function buildSlide(
       )
     );
   }
-  for (const text of carried.additionalTexts) add(text.id, () => mapText(text, measure));
+  for (const text of carried.additionalTexts)
+    add(text.id, () => mapText(text, measure, pageNumber));
   for (const illustration of carried.illustrationInstances) {
     add(illustration.id, () =>
       raster(
@@ -701,6 +755,6 @@ export function buildPptxModel(
   const measure = options.measure ?? estimateMeasure;
   return {
     page: { width: format.width, height: format.height },
-    slides: pages.map((state) => buildSlide(state, format, measure)),
+    slides: pages.map((state, index) => buildSlide(state, format, measure, index + 1)),
   };
 }

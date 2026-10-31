@@ -1,0 +1,147 @@
+{
+  "formatVersion": 1,
+  "id": "studio-framed-photo",
+  "version": 1,
+  "kind": "template",
+  "family": "frame",
+  "title": {
+    "en": "Photo in a colour frame",
+    "de": "Foto im Farbrahmen"
+  },
+  "description": {
+    "en": "A large photo cut off at the right edge inside a mesh colour frame, with a small caption",
+    "de": "Ein großes, rechts angeschnittenes Foto in einem Mesh-Farbrahmen mit kleiner Bildzeile"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "dark", "secondary"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "glow-1",
+            "type": "ellipse",
+            "x": 0.5,
+            "y": 0.5,
+            "width": 1,
+            "height": 1,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.12,
+            "glow": true,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "cornerRadius": [0, 0, 0, 0.059259],
+            "src": "",
+            "fileName": "",
+            "x": 0.074074,
+            "y": 0.059259,
+            "width": 0.925926,
+            "height": 0.822222,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "notch": 0.051852
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "caption",
+            "type": "body",
+            "text": "Caption: who and where",
+            "x": 0.074074,
+            "y": 0.905185,
+            "width": 0.481481,
+            "fontSize": 0.027778,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.3,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.027778
+          }
+        ],
+        "layerOrder": ["glow-1", "photo", "caption", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "glow-1": "canvas",
+    "photo": "canvas",
+    "caption": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "caption": {
+      "role": "body",
+      "label": {
+        "en": "Caption",
+        "de": "Bildzeile"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 1,
+        "maxChars": 36
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right"],
+  "placeholders": {
+    "en": {
+      "caption": "Caption: who and where"
+    },
+    "de": {
+      "caption": "Bildzeile: wer und wo"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

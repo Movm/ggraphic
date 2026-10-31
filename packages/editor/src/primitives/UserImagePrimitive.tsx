@@ -7,7 +7,7 @@
  * width/height directly (already scaled during creation).
  */
 
-import { useState, useEffect, useRef, useMemo, memo } from 'react';
+import { useState, useEffect, useRef, useMemo, memo, type ReactNode } from 'react';
 import { Image, Group, Rect, Transformer, Circle, Line } from 'react-konva';
 
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
@@ -28,6 +28,7 @@ import {
   frameForAspect,
   type CropAspectId,
 } from '@ggraphic/editor/utils/cropAspect';
+import { notchPx, traceNotch } from '../utils/notch.js';
 import { ELEMENT_TRANSFORMER } from '@ggraphic/editor/utils/orientation';
 import { useTrackPendingImage } from '@ggraphic/editor/utils/pendingImages';
 import { recacheNextFrame } from '@ggraphic/editor/utils/recacheNextFrame';
@@ -58,6 +59,7 @@ import {
   imageFilterAttrs,
 } from '../utils/imageFilters.js';
 import { cropKeyOf, userImageKeyCrop } from '../utils/keyboardCrop.js';
+import { hasCorners, sameCorners, type CornerRadius } from '../utils/cornerRadius.js';
 import { photoPlaceholderLook } from '../utils/photoPlaceholder.js';
 import { userImageBox } from '../utils/renderedBoxes.js';
 import { userImageCropUpdate } from '../utils/userImageCrop.js';
@@ -307,6 +309,20 @@ function UserImagePrimitiveInner({
     },
   };
 
+  // The notch is a share of the canvas width; the group's scale is already in the node.
+  const notchSize = notchPx(userImage.notch, snapProps.stageWidth) / (userImage.scale || 1);
+  const notchClipped = (node: ReactNode) =>
+    notchSize > 0 ? (
+      <Group
+        name="notch-clip"
+        clipFunc={(ctx) => traceNotch(ctx, userImage.width, userImage.height, notchSize)}
+      >
+        {node}
+      </Group>
+    ) : (
+      node
+    );
+
   const noPhoto = !userImage.src || (settled?.src === userImage.src && !settled.ok);
   if (!image && !noPhoto) return null;
 
@@ -317,12 +333,18 @@ function UserImagePrimitiveInner({
       <>
         <Group ref={groupRef} {...groupProps} draggable={draggable && !locked}>
           <Group name={EXPORT_HIDDEN_NAME}>
-            <Rect
-              width={userImage.width}
-              height={userImage.height}
-              fill={look.fill}
-              cornerRadius={userImage.mask === 'kreis' ? look.circleRadius : 0}
-            />
+            {notchClipped(
+              <Rect
+                width={userImage.width}
+                height={userImage.height}
+                fill={look.fill}
+                cornerRadius={
+                  userImage.mask === 'kreis' && !notchSize
+                    ? look.circleRadius
+                    : (userImage.cornerRadius ?? 0)
+                }
+              />
+            )}
             <Group
               name="placeholder-icon"
               x={look.icon.x}
@@ -393,12 +415,14 @@ function UserImagePrimitiveInner({
     : undefined;
   const draw = turned ? straightDrawOf(photo, deg, frame, mirror) : null;
   // Gedreht mit Schatten: ein Radius > 0 lässt Konva über einen Puffer zeichnen, sonst schnitte der Rahmen den Schatten ab.
-  const cornerRadius =
-    userImage.mask === 'kreis'
+  const cornerRadius: CornerRadius | undefined =
+    userImage.mask === 'kreis' && !notchSize
       ? Math.min(width, height) / 2
-      : turned && userImage.shadowColor
-        ? 0.01
-        : 0;
+      : hasCorners(userImage.cornerRadius)
+        ? userImage.cornerRadius
+        : turned && userImage.shadowColor
+          ? 0.01
+          : 0;
   const isCropping = aspectActive;
   const lockedRatio = cropAspectRatio(cropAspect, natural) !== null;
   // The dimmed whole photo mirrors by a negative scale, so its node origin
@@ -487,24 +511,26 @@ function UserImagePrimitiveInner({
             }}
           />
         )}
-        <Image
-          ref={imageRef}
-          name={USER_PHOTO_NODE_NAME}
-          listening={!isCropping}
-          image={image}
-          width={width}
-          height={height}
-          crop={crop}
-          cornerRadius={cornerRadius}
-          filters={getActiveImageFilters(userImage)}
-          {...imageFilterAttrs(userImage)}
-          shadowColor={userImage.shadowColor}
-          shadowBlur={userImage.shadowBlur}
-          shadowOffsetX={userImage.shadowOffsetX}
-          shadowOffsetY={userImage.shadowOffsetY}
-          shadowOpacity={userImage.shadowOpacity}
-          {...(draw ? { sceneFunc: straightSceneFunc, [STRAIGHT_DRAW_ATTR]: draw } : {})}
-        />
+        {notchClipped(
+          <Image
+            ref={imageRef}
+            name={USER_PHOTO_NODE_NAME}
+            listening={!isCropping}
+            image={image}
+            width={width}
+            height={height}
+            crop={crop}
+            cornerRadius={cornerRadius}
+            filters={getActiveImageFilters(userImage)}
+            {...imageFilterAttrs(userImage)}
+            shadowColor={userImage.shadowColor}
+            shadowBlur={userImage.shadowBlur}
+            shadowOffsetX={userImage.shadowOffsetX}
+            shadowOffsetY={userImage.shadowOffsetY}
+            shadowOpacity={userImage.shadowOpacity}
+            {...(draw ? { sceneFunc: straightSceneFunc, [STRAIGHT_DRAW_ATTR]: draw } : {})}
+          />
+        )}
 
         {isCropping && (
           <>
@@ -665,6 +691,8 @@ export const UserImagePrimitive = memo(UserImagePrimitiveInner, (prevProps, next
   if (prev.panY !== next.panY) return false;
   if (prev.cropRotation !== next.cropRotation) return false;
   if (prev.mask !== next.mask) return false;
+  if (prev.notch !== next.notch) return false;
+  if (!sameCorners(prev.cornerRadius, next.cornerRadius)) return false;
   if (prev.shadowColor !== next.shadowColor) return false;
   if (prev.shadowBlur !== next.shadowBlur) return false;
   if (prev.shadowOffsetX !== next.shadowOffsetX) return false;

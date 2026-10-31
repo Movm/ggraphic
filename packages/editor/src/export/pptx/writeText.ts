@@ -50,7 +50,11 @@ function runOptions(
   const outline = item.outline ? parseColor(item.outline.color) : null;
   return {
     ...pptxFont(run.fontFace ?? item.fontFace, run.bold, run.italic),
+    ...(item.letterSpacing !== 0
+      ? { charSpacing: item.letterSpacing * units.pt(item.fontSize) }
+      : {}),
     ...(run.underline ? { underline: { style: 'sng' as const } } : {}),
+    ...(item.strikethrough ? { strike: 'sngStrike' as const } : {}),
     ...(color ? { color: color.hex } : {}),
     ...(alpha < 1 ? { transparency: transparencyOf(alpha) } : {}),
     ...(highlight ? { highlight: highlight.hex } : {}),

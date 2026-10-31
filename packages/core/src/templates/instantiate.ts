@@ -11,6 +11,7 @@ import { normalizeColor } from '../color/color.js';
 import { brandLayout, logoEnvelope, safeArea, type LogoCorner } from '../brand/layout.js';
 import { fitLogoBox, type Box } from '../brand/logoFit.js';
 import { deriveSchemes, type Scheme, type SchemeId } from '../brand/schemes.js';
+import { hugOf, hugPlates, type HugAdapter } from './hug.js';
 
 export type GeometryAxis = 'x' | 'y' | 'w' | 'h' | 's' | 'k';
 /** stateKey → field → axis. 'page' is the page's own fields. Unlisted numbers stay as they are. */
@@ -28,8 +29,35 @@ export interface TemplateInput {
   fixed?: Readonly<Record<string, readonly string[]>>;
   logoCorners?: readonly LogoCorner[];
   placeholders?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  /** Text budgets by element id; a fitted text takes its line limit from here. */
+  slots?: Readonly<Record<string, { budget: { maxLines?: number } }>>;
   blocks?: readonly { id: string; elementIds: readonly string[] }[];
 }
+
+/** What a text fit is asked: the slot's line limit and the canvas height (for the legibility floor). */
+export interface TextFitRequest {
+  maxLines?: number;
+  /** How far down the text may grow from its top (`roomBelow`); the fit keeps a gap of a quarter line below it. */
+  maxHeight?: number;
+  canvasHeight: number;
+}
+
+/** The size a text is fitted to; `fits` is false when it does not fit even at the floor. */
+export interface TextFit {
+  fontSize: number;
+  fits: boolean;
+}
+
+/**
+ * Fits a text that carries `maxFontSize` to its box in the font it now has: the largest size from
+ * the floor up to `maxFontSize` at which it fits. Null when the element cannot be fitted (no
+ * size or width to go by). The editor fills it in (`GateAdapter.fitText`), so that fitting, the
+ * render gate and the canvas measure alike.
+ */
+export type FitText = (
+  el: Readonly<Record<string, unknown>>,
+  req: TextFitRequest
+) => TextFit | null;
 
 export interface InstantiateContext {
   brand: BrandPack;
@@ -47,6 +75,44 @@ export interface InstantiateContext {
    * `<family>, <fallback>`; the binding's `value` stays the bare family.
    */
   fontFallback?: string | ((role: string) => string);
+  /** Fits every text with a numeric `maxFontSize` once it has its font, width and text. Without it the size stays as placed. */
+  fitText?: FitText;
+  /** The box an element covers (`GateAdapter.box` with one line); with `fitText`, bounds a fitted text by the element below it. */
+  boxOf?: ElementBox;
+  /** Brings plates that carry `hug` to their text's lines, after the fit. Without it they stay as placed. */
+  hug?: HugAdapter;
+}
+
+/** The box of an element in canvas px, or null if it has none. */
+export type ElementBox = (
+  stateKey: string,
+  el: Readonly<Record<string, unknown>>
+) => { x: number; y: number; width: number; height: number } | null;
+
+/**
+ * How far down the text `el` may grow before it meets the nearest element below it that overlaps
+ * it horizontally (any kind; its top must lie below the text's top, so the page and a plate the
+ * text sits on never limit it); undefined when nothing lies below. Positions are as placed:
+ * nothing is moved, so a stack of texts is limited by the original top of the next one.
+ */
+export function roomBelow(
+  state: Readonly<Record<string, unknown>>,
+  stateKey: string,
+  el: Readonly<Record<string, unknown>>,
+  boxOf: ElementBox
+): number | undefined {
+  const self = boxOf(stateKey, el);
+  if (!self) return undefined;
+  let top = Number.POSITIVE_INFINITY;
+  forEachElement(state as Record<string, unknown>, (other, key) => {
+    // A ghost behind the page is no neighbour: nothing grows into it.
+    if (other === el || isDecorativeText(key, other)) return;
+    const box = boxOf(key, other);
+    if (!box || !(box.y > self.y + 1)) return;
+    if (!(self.x + 1 < box.x + box.width && box.x + 1 < self.x + self.width)) return;
+    top = Math.min(top, box.y);
+  });
+  return Number.isFinite(top) ? top - self.y : undefined;
 }
 
 /**
@@ -64,13 +130,21 @@ const isObj = (v: unknown): v is Obj => v !== null && typeof v === 'object' && !
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
 /** Whether a value is out of reach of its axis: a fraction outside 0..1, or an array that can't scale. */
-const unplaceable = (v: unknown, axis: GeometryAxis): boolean => {
+const unplaceable = (v: unknown, axis: GeometryAxis, bleeds = false): boolean => {
   if (Array.isArray(v)) {
     // Only the s axis scales a list (a dash pattern is a list of px lengths).
     return axis !== 's' || !v.every((e) => isNum(e) && e >= 0 && e <= 1);
   }
+  // A decorative text bleeds off the page on purpose: its box may start and end beyond the edge.
+  if (bleeds && (axis === 'x' || axis === 'y' || axis === 'w')) {
+    return isNum(v) && (v < -1 || v > 2);
+  }
   return axis !== 'k' && isNum(v) && (v < 0 || v > 1);
 };
+
+/** A text that is only decoration (a ghost numeral): see `AdditionalText.decorative`. */
+export const isDecorativeText = (key: string, el: Readonly<Record<string, unknown>>): boolean =>
+  key === 'additionalTexts' && el['decorative'] === true;
 
 /** The template's worlds that the brand keeps, in the template's order. */
 export function offeredSchemes(t: Pick<TemplateInput, 'schemes'>, brand: BrandPack): SchemeId[] {
@@ -144,8 +218,11 @@ export function instantiateTemplatePage(
     if (!checkBinds(el)) bad ??= 'bind';
     for (const [field, axis] of Object.entries(ctx.geometry[key] ?? {})) {
       const v = el[field];
-      if (unplaceable(v, axis)) bad ??= 'geometry';
+      if (unplaceable(v, axis, isDecorativeText(key, el))) bad ??= 'geometry';
     }
+    // A hug's padding is a fraction of the short side, like the s axis.
+    const hug = key === 'shapeInstances' ? hugOf(el) : null;
+    if (hug && [hug.padX, hug.padY].some((v) => unplaceable(v, 's'))) bad ??= 'geometry';
   });
   for (const [field, axis] of Object.entries(ctx.geometry['page'] ?? {})) {
     const v = state[field];
@@ -162,6 +239,10 @@ export function instantiateTemplatePage(
   };
 
   const place = (el: Obj, table: Readonly<Record<string, GeometryAxis>> | undefined, F: Box) => {
+    const hug = hugOf(el);
+    if (hug) {
+      el['hug'] = { ...hug, padX: Math.round(hug.padX * S), padY: Math.round(hug.padY * S) };
+    }
     for (const [field, axis] of Object.entries(table ?? {})) {
       const v = el[field];
       if (Array.isArray(v)) {
@@ -231,6 +312,25 @@ export function instantiateTemplatePage(
     const text = texts?.[id];
     if (text !== undefined) el['text'] = text;
   });
+
+  // Sizes fitted to the brand's fonts, up to the prototype's size.
+  if (ctx.fitText) {
+    forEachElement(state, (el, key, id) => {
+      if (key !== 'additionalTexts' || !isNum(el['maxFontSize'])) return;
+      const maxLines = t.slots?.[id]?.budget.maxLines;
+      const maxHeight = ctx.boxOf ? roomBelow(state, key, el, ctx.boxOf) : undefined;
+      const fit = ctx.fitText!(el, {
+        ...(maxLines === undefined ? {} : { maxLines }),
+        ...(maxHeight === undefined ? {} : { maxHeight }),
+        canvasHeight: H,
+      });
+      if (fit) el['fontSize'] = fit.fontSize;
+    });
+  }
+
+  // Plates that hug their text, now that the text has its final size.
+  const hugged = ctx.hug ? hugPlates(state, ctx.hug) : state;
+  if (hugged !== state) Object.assign(state, hugged);
 
   // The logo.
   const layerIds = (key: string) =>
