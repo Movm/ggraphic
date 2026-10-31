@@ -138,6 +138,15 @@ describe('committing a text edit', () => {
     expect(size()).toBe(200);
   });
 
+  it('previews the fitted size while typing and reports it', () => {
+    const { actions, size } = setup();
+    const fitted = actions.previewAdditionalText!('h', 'Gemeinschaftsgarten');
+    expect(fitted).toBeLessThan(200);
+    expect(size()).toBe(fitted);
+    actions.previewAdditionalText!('h', null);
+    expect(size()).toBe(200);
+  });
+
   it('does not refit on a move, or when the size is set by hand', () => {
     const { actions, size } = setup();
     actions.updateAdditionalText('h', { text: 'Gemeinschaftsgarten' });

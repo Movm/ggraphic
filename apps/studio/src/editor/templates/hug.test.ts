@@ -115,6 +115,57 @@ describe('committing a text edit moves the plate', () => {
   });
 });
 
+describe('previewing a text edit while it is typed', () => {
+  function setup() {
+    let state = templatePageState(kicker(), 'post-portrait')! as unknown as StudioPageState;
+    let history = 0;
+    const actions = createStudioActions(
+      () => state,
+      (change) => {
+        state = typeof change === 'function' ? change(state) : { ...state, ...change };
+      },
+      () => {
+        history++;
+      },
+      () => {
+        history++;
+      },
+      1080,
+      1350
+    );
+    return {
+      actions,
+      state: () => state,
+      history: () => history,
+      plate: () => box(state as never, 'shapeInstances', 'plate-1'),
+    };
+  }
+
+  it('moves the plate to the draft without a history entry, and the commit lands on the same plate', () => {
+    const { actions, state, history, plate } = setup();
+    const before = plate().width;
+    actions.previewAdditionalText!('line-1', 'Hallo');
+    const previewed = plate().width;
+    expect(previewed).toBeLessThan(before / 2);
+    expect(history()).toBe(0);
+    // The draft stays out of the page: only the commit writes the text.
+    expect(byId(state() as never, 'additionalTexts', 'line-1')['text']).not.toBe('Hallo');
+
+    actions.updateAdditionalText('line-1', { text: 'Hallo' });
+    expect(plate().width).toBe(previewed);
+    expect(history()).toBe(1);
+  });
+
+  it('reverts to the page as it was when the edit ends unchanged', () => {
+    const { actions, state } = setup();
+    const before = state();
+    actions.previewAdditionalText!('line-1', 'Hallo');
+    actions.previewAdditionalText!('line-1', null);
+    expect(state().shapeInstances).toEqual(before.shapeInstances);
+    expect(state().additionalTexts).toEqual(before.additionalTexts);
+  });
+});
+
 describe('an AI fill moves the plate', () => {
   it('hugs the filled text', () => {
     const state = templatePageState(
