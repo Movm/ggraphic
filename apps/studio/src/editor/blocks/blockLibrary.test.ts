@@ -51,7 +51,11 @@ describe('blockLibrary', () => {
       'studio-quote-two-voices/voice-1',
       'studio-quote-two-voices/voice-2',
       'studio-quote-typographic/quote-with-person',
+      'studio-statement-bar/statement-lines',
       'studio-statement-panel-dots/statement-with-text',
+      'studio-statement-serif/statement-with-line',
+      'studio-statement-split-word/split-word',
+      'studio-statement-stack/statement-with-line',
       'studio-study-kicker-boxes/kicker-headline',
     ]);
     expect(find(QUOTE)).toMatchObject({

@@ -43,7 +43,13 @@ import studioQuotePortrait from './templates/studio-quote-portrait.json' with { 
 import studioQuoteSidePortrait from './templates/studio-quote-side-portrait.json' with { type: 'json' };
 import studioQuoteTwoVoices from './templates/studio-quote-two-voices.json' with { type: 'json' };
 import studioQuoteTypographic from './templates/studio-quote-typographic.json' with { type: 'json' };
+import studioStatementBar from './templates/studio-statement-bar.json' with { type: 'json' };
 import studioStatementPanelDots from './templates/studio-statement-panel-dots.json' with { type: 'json' };
+import studioStatementPhoto from './templates/studio-statement-photo.json' with { type: 'json' };
+import studioStatementSandwich from './templates/studio-statement-sandwich.json' with { type: 'json' };
+import studioStatementSerif from './templates/studio-statement-serif.json' with { type: 'json' };
+import studioStatementSplitWord from './templates/studio-statement-split-word.json' with { type: 'json' };
+import studioStatementStack from './templates/studio-statement-stack.json' with { type: 'json' };
 import studioStudyKickerBoxes from './templates/studio-study-kicker-boxes.json' with { type: 'json' };
 
 /** The pack's template files as parsed JSON; consumers read each through `readTemplateFile`. */
@@ -91,7 +97,13 @@ export const OPEN_TEMPLATES: readonly unknown[] = [
   studioQuoteTwoVoices,
   studioQuoteTypographic,
   studioSplitPhotosBand,
+  studioStatementBar,
   studioStatementPanelDots,
+  studioStatementPhoto,
+  studioStatementSandwich,
+  studioStatementSerif,
+  studioStatementSplitWord,
+  studioStatementStack,
   studioStudyKickerBoxes,
 ];
 
