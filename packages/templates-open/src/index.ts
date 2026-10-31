@@ -26,6 +26,11 @@ import studioPhotoTextPanel from './templates/studio-photo-text-panel.json' with
 import studioPhotoTextQuestion from './templates/studio-photo-text-question.json' with { type: 'json' };
 import studioPhotoTextQuiet from './templates/studio-photo-text-quiet.json' with { type: 'json' };
 
+import studioDayJubilee from './templates/studio-day-jubilee.json' with { type: 'json' };
+import studioDayPhotoGrid from './templates/studio-day-photo-grid.json' with { type: 'json' };
+import studioDayPhoto from './templates/studio-day-photo.json' with { type: 'json' };
+import studioDayThanks from './templates/studio-day-thanks.json' with { type: 'json' };
+
 import studioAnnotatedHeadline from './templates/studio-annotated-headline.json' with { type: 'json' };
 import studioCarouselCover from './templates/studio-carousel-cover.json' with { type: 'json' };
 import studioCarouselInner from './templates/studio-carousel-inner.json' with { type: 'json' };
@@ -93,6 +98,11 @@ export const OPEN_TEMPLATES: readonly unknown[] = [
   studioPhotoTextPanel,
   studioPhotoTextQuestion,
   studioPhotoTextQuiet,
+
+  studioDayJubilee,
+  studioDayPhotoGrid,
+  studioDayPhoto,
+  studioDayThanks,
 
   studioAnnotatedHeadline,
   studioCarouselCover,

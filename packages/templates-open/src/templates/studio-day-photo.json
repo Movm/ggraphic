@@ -1,0 +1,196 @@
+{
+  "formatVersion": 1,
+  "id": "studio-day-photo",
+  "version": 1,
+  "kind": "template",
+  "family": "day",
+  "title": {
+    "en": "Day on a photo",
+    "de": "Gedenktag auf Foto"
+  },
+  "description": {
+    "en": "A full photo with the date at the top on a fade and the title at the bottom on a fade",
+    "de": "Ein Vollfoto mit dem Datum oben auf einem Verlauf und dem Titel unten auf einem Verlauf"
+  },
+  "tags": {
+    "tone": "warm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["photo", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "shade-bottom",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.592593,
+            "width": 1,
+            "height": 0.814815,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "shade": "bottom",
+            "bind": {
+              "fill": "shade"
+            }
+          },
+          {
+            "id": "shade-top",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.133333,
+            "width": 1,
+            "height": 0.266667,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "shade": "top",
+            "bind": {
+              "fill": "shade"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "date",
+            "type": "body",
+            "text": "29 May",
+            "x": 0,
+            "y": 0,
+            "width": 0.478261,
+            "fontSize": 0.048148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontWeight": 700,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.048148
+          },
+          {
+            "id": "title",
+            "type": "header",
+            "text": "Neighbours' Day",
+            "x": 0,
+            "y": 0.605042,
+            "width": 1,
+            "fontSize": 0.148148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.94,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.148148
+          }
+        ],
+        "layerOrder": ["photo", "shade-bottom", "shade-top", "date", "title", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas",
+    "shade-bottom": "canvas",
+    "shade-top": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "date": {
+      "role": "date",
+      "label": {
+        "en": "Date",
+        "de": "Datum"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 12
+      }
+    },
+    "title": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 2,
+        "maxChars": 24
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "date": "29 May",
+      "title": "Neighbours' Day"
+    },
+    "de": {
+      "date": "29. Mai",
+      "title": "Nachbarschaftstag"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
