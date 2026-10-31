@@ -13,21 +13,24 @@ afterEach(() => vi.unstubAllGlobals());
 function Ids() {
   const api = useBlockInsert();
   return (
-    <p data-testid="ids">
+    <p data-testid="ids" data-loading={String(api?.isLoading ?? false)}>
       {(api?.bloecke as { id: string }[] | undefined)?.map((b) => b.id).join(',')}
     </p>
   );
 }
 
-function mount(hidden: string[]) {
+function mount(hidden: string[], gate: Promise<void> = Promise.resolve()) {
   vi.stubGlobal(
     'fetch',
     vi.fn(async (input: RequestInfo | URL) =>
       String(input) === `/api/orgs/${TEST_ORG}/hidden-templates`
-        ? new Response(JSON.stringify({ templateIds: hidden }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          })
+        ? await gate.then(
+            () =>
+              new Response(JSON.stringify({ templateIds: hidden }), {
+                status: 200,
+                headers: { 'Content-Type': 'application/json' },
+              })
+          )
         : new Response('{}', { status: 404 })
     )
   );
@@ -49,16 +52,29 @@ function mount(hidden: string[]) {
 }
 
 describe('BlockInsertProvider', () => {
-  it('offers the blocks of every template', () => {
+  it('offers the blocks of every template', async () => {
     mount([]);
-    expect(screen.getByTestId('ids').textContent).toContain('studio-quote/quote-with-name');
+    await waitFor(() =>
+      expect(screen.getByTestId('ids').textContent).toContain('studio-quote/quote-with-name')
+    );
+  });
+
+  it('offers no block until the hidden list has settled, so a hidden one never flashes', async () => {
+    let open: () => void = () => {};
+    mount(['studio-quote'], new Promise<void>((resolve) => (open = resolve)));
+    expect(screen.getByTestId('ids')).toHaveAttribute('data-loading', 'true');
+    expect(screen.getByTestId('ids').textContent).toBe('');
+    open();
+    await waitFor(() => expect(screen.getByTestId('ids')).toHaveAttribute('data-loading', 'false'));
+    expect(screen.getByTestId('ids').textContent).not.toContain('studio-quote/');
+    expect(screen.getByTestId('ids').textContent).toContain('studio-headline/');
   });
 
   it('leaves out the blocks of templates the organisation hid', async () => {
     mount(['studio-quote']);
     await waitFor(() =>
-      expect(screen.getByTestId('ids').textContent).not.toContain('studio-quote/')
+      expect(screen.getByTestId('ids').textContent).toContain('studio-headline/')
     );
-    expect(screen.getByTestId('ids').textContent).toContain('studio-headline/');
+    expect(screen.getByTestId('ids').textContent).not.toContain('studio-quote/');
   });
 });
