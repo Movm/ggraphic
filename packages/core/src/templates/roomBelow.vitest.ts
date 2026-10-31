@@ -30,6 +30,13 @@ describe('roomBelow', () => {
     expect(roomBelow(state, 'additionalTexts', state.additionalTexts[0]!, boxOf)).toBe(500);
   });
 
+  it('is not limited by a decorative text below it (a ghost numeral)', () => {
+    const state = {
+      additionalTexts: [text('h', 100), { ...text('ghost', 300), decorative: true }],
+    };
+    expect(roomBelow(state, 'additionalTexts', state.additionalTexts[0]!, boxOf)).toBeUndefined();
+  });
+
   it('is not limited by a plate or the page behind the text, nor by elements above', () => {
     const state = {
       shapeInstances: [{ id: 'plate', x: 0, y: 0, width: 1000, height: 1000 }],
