@@ -27,6 +27,8 @@ import {
 
 import { prepareBrandPack } from '../../brandLoader';
 
+import { formatSize } from '../document';
+
 import { FREE_PAGE_CONFIG_ID } from './ids';
 import { type CatalogEntry } from './catalog';
 import { templatePageState } from './instantiate';
@@ -224,7 +226,7 @@ function PreviewJobView({ job, config }: { job: PreviewJob; config: FullCanvasCo
     brand: job.brand,
   });
   // Sample photos fill empty slots in the preview only; this state is drawn and dropped.
-  const state = placed && withSamplePhotos(placed, SAMPLE_PHOTOS, job.entry.id);
+  const state = placed && withSamplePhotos(placed, SAMPLE_PHOTOS, job.entry.id, formatSize(job.formatId));
   const key = job.key;
   const unplaceable = state === null;
   useEffect(() => {
