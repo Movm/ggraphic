@@ -21,13 +21,14 @@ import {
   type GeometryTable,
   type TemplateInput,
 } from './instantiate.js';
+import { hugPlates, type HugAdapter } from './hug.js';
 import { countChars, countWords } from './slotBudget.js';
 
 /**
  * What the render gate needs to know of an editor's element kinds. The editor fills it
  * in (`TEMPLATE_GATE_ADAPTER`); the checks that use it are `checkTemplate`.
  */
-export interface GateAdapter {
+export interface GateAdapter extends Partial<Pick<HugAdapter, 'textExtent' | 'placeBox'>> {
   geometry: GeometryTable;
   /** stateKey → fields that hold a colour value and may carry a binding (no font or image fields). */
   colorFields: Readonly<Record<string, readonly string[]>>;
@@ -509,6 +510,7 @@ export function checkTemplate(t: TemplateInput, ctx: GateContext): GateProblem[]
               ...(ctx.adapter.fitText
                 ? { fitText: ctx.adapter.fitText, boxOf: (k, e) => ctx.adapter.box(k, e, 1) }
                 : {}),
+              ...(hugAdapter(ctx.adapter) ? { hug: hugAdapter(ctx.adapter)! } : {}),
               schemeId,
               logoSizeOf: () => GATE_LOGO_SIZE,
             }
@@ -556,6 +558,13 @@ function layoutsOf(brand: BrandPack, t: TemplateInput): BrandLayout[] {
 const layoutLabel = (l: BrandLayout): string =>
   `layout margin ${l.margin}, logo ${l.logoMaxWidth}×${l.logoMaxHeight} at ${l.logoCorner}`;
 
+/** The adapter's hug parts, when it has them all. */
+function hugAdapter(a: GateAdapter): HugAdapter | null {
+  return a.textExtent && a.placeBox
+    ? { box: a.box, textExtent: a.textExtent, placeBox: a.placeBox }
+    : null;
+}
+
 function checkPlaced(
   t: TemplateInput,
   ctx: GateContext,
@@ -569,6 +578,12 @@ function checkPlaced(
   problem: (rule: GateRule, detail: string, where?: Partial<GateProblem>) => void
 ): void {
   const { canvas, layout, where } = at;
+  // A plate that hugs its text is judged at the most the slot allows: the text may take its full
+  // budget in lines, and then the plate is that tall (and as wide as the text box).
+  const hugs = hugAdapter(ctx.adapter);
+  if (hugs) {
+    state = hugPlates(state, hugs, { minLines: (id) => ctx.slots[id]?.budget.maxLines ?? 1 });
+  }
   const short = Math.min(canvas.width, canvas.height);
   const frames = {
     canvas: { x: 0, y: 0, width: canvas.width, height: canvas.height },

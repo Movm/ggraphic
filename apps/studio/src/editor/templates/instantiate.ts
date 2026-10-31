@@ -17,6 +17,7 @@ import { logoSizeOf } from '../../logoSize';
 import { formatSize } from '../document';
 
 import { formatAspect, type CatalogEntry } from './catalog';
+import { HUG_ADAPTER } from './hug';
 import { fontFallbackFor } from './typography';
 
 // A parsed template file is what placing takes; if the schema drifts from core's input, this stops compiling.
@@ -41,6 +42,7 @@ export function placeTemplate(
     fontFallback: fontFallbackFor,
     fitText: TEMPLATE_GATE_ADAPTER.fitText,
     boxOf: (key, el) => TEMPLATE_GATE_ADAPTER.box(key, el, 1),
+    hug: HUG_ADAPTER,
     schemeId,
     logoSizeOf,
   });

@@ -25,6 +25,7 @@ import {
 } from '@ggraphic/editor/utils/userImageUtils';
 
 import { fittedFontSize } from './fitting';
+import { withHuggedPlates } from './hug';
 import { type PageGroup, type StudioPageState } from './pageState';
 import { headlineFont, bodyFont, scaleFor } from './typography';
 
@@ -108,20 +109,22 @@ export function createStudioActions(
     addBodyTextWithContent: (content: string) => addText('body', content),
     updateAdditionalText: (id: string, partial: Partial<AdditionalText>) =>
       commit(
-        (prev) => ({
-          ...prev,
-          additionalTexts: prev.additionalTexts.map((t) => {
-            if (t.id !== id) return t;
-            const next = { ...t, ...partial };
-            // A committed text change refits a text with a prototype size: shrink as it grows,
-            // grow back as it shrinks. A size set by hand in the same change stands.
-            if (!('text' in partial) || 'fontSize' in partial) return next;
-            const fitted = fittedFontSize(next, prev, height);
-            return fitted === null || fitted === next.fontSize
-              ? next
-              : { ...next, fontSize: fitted };
+        (prev) =>
+          // The plates that hug a text follow its new lines, width or size.
+          withHuggedPlates({
+            ...prev,
+            additionalTexts: prev.additionalTexts.map((t) => {
+              if (t.id !== id) return t;
+              const next = { ...t, ...partial };
+              // A committed text change refits a text with a prototype size: shrink as it grows,
+              // grow back as it shrinks. A size set by hand in the same change stands.
+              if (!('text' in partial) || 'fontSize' in partial) return next;
+              const fitted = fittedFontSize(next, prev, height);
+              return fitted === null || fitted === next.fontSize
+                ? next
+                : { ...next, fontSize: fitted };
+            }),
           }),
-        }),
         true
       ),
     removeAdditionalText: (id: string) =>

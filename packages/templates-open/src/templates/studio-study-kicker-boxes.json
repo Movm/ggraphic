@@ -59,6 +59,12 @@
             "opacity": 1,
             "bind": {
               "fill": "accent"
+            },
+            "hug": {
+              "text": "kicker",
+              "padX": 0.02037,
+              "padY": 0.007407,
+              "width": "text"
             }
           },
           {
@@ -75,6 +81,12 @@
             "opacity": 1,
             "bind": {
               "fill": "ink"
+            },
+            "hug": {
+              "text": "line-1",
+              "padX": 0.021296,
+              "padY": 0.005556,
+              "width": "text"
             }
           },
           {
@@ -91,6 +103,12 @@
             "opacity": 1,
             "bind": {
               "fill": "ink"
+            },
+            "hug": {
+              "text": "line-2",
+              "padX": 0.021296,
+              "padY": 0.005556,
+              "width": "text"
             }
           },
           {
@@ -107,6 +125,12 @@
             "opacity": 1,
             "bind": {
               "fill": "ink"
+            },
+            "hug": {
+              "text": "line-3",
+              "padX": 0.021296,
+              "padY": 0.005556,
+              "width": "text"
             }
           }
         ],

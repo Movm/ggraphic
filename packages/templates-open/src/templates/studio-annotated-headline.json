@@ -59,6 +59,11 @@
             "notch": 0.051852,
             "bind": {
               "fill": "ground"
+            },
+            "hug": {
+              "text": ["source", "headline"],
+              "padX": 0.044444,
+              "padY": 0.044444
             }
           },
           {

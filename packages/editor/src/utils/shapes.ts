@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { type Bindings } from '@ggraphic/core';
+import { type Bindings, type PlateHug } from '@ggraphic/core';
 import { messages } from '@ggraphic/editor/i18n/messages';
 
 import { defaultMarkerFill } from './markerColors.js';
@@ -854,6 +854,8 @@ export interface ShapeInstance {
   patternColor?: string;
   /** Distance between the dots, a share of the canvas width (0.037 = 40 px on 1080). */
   patternSpacing?: number;
+  /** `rect` only: the plate follows a text's lines (see `hugPlates`); padding in px. Not drawn. Stored, so never renamed. */
+  hug?: PlateHug;
 }
 
 /**

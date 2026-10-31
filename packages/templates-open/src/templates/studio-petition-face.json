@@ -74,6 +74,12 @@
             "opacity": 1,
             "bind": {
               "fill": "ink"
+            },
+            "hug": {
+              "text": "quote-1",
+              "padX": 0.02037,
+              "padY": 0.013889,
+              "width": "text"
             }
           },
           {
@@ -90,6 +96,12 @@
             "opacity": 1,
             "bind": {
               "fill": "ink"
+            },
+            "hug": {
+              "text": "quote-2",
+              "padX": 0.02037,
+              "padY": 0.013889,
+              "width": "text"
             }
           },
           {
@@ -106,6 +118,12 @@
             "opacity": 1,
             "bind": {
               "fill": "ground"
+            },
+            "hug": {
+              "text": "name",
+              "padX": 0.012037,
+              "padY": 0.011111,
+              "width": "text"
             }
           },
           {
