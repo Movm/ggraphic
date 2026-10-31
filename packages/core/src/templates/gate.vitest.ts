@@ -664,7 +664,7 @@ describe('fitted text sizes', () => {
       return fitText(el, req);
     };
     checkTemplate(template({}, big({})), context({ adapter: { ...adapter, fitText: spy } }));
-    expect(seen[0]).toEqual({ maxLines: 2, canvasHeight: 1080 });
+    expect(seen[0]).toMatchObject({ maxLines: 2, canvasHeight: 1080 });
   });
 });
 

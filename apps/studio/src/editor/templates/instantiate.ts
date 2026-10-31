@@ -40,6 +40,7 @@ export function placeTemplate(
     locale: 'en',
     fontFallback: fontFallbackFor,
     fitText: TEMPLATE_GATE_ADAPTER.fitText,
+    boxOf: (key, el) => TEMPLATE_GATE_ADAPTER.box(key, el, 1),
     schemeId,
     logoSizeOf,
   });

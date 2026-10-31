@@ -3,8 +3,9 @@
  * Text sizes fitted to the brand's fonts, up to the prototype's size (`maxFontSize`). The fit
  * itself is the gate adapter's (`TEMPLATE_GATE_ADAPTER.fitText`, the width tables the gate
  * measures with); this adds what a page knows beyond the element: the line limit of its
- * template slot.
+ * template slot and the room down to the element below it.
  */
+import { roomBelow } from '@ggraphic/core';
 import { TEMPLATE_GATE_ADAPTER } from '@ggraphic/editor/templates/templateGeometry';
 
 import { budgetFor } from './slotBudgets';
@@ -20,8 +21,12 @@ export function fittedFontSize(
 ): number | null {
   if (typeof el['maxFontSize'] !== 'number') return null;
   const maxLines = budgetFor(page, String(el['id']))?.budget.maxLines;
+  const maxHeight = roomBelow(page, 'additionalTexts', el, (k, e) =>
+    TEMPLATE_GATE_ADAPTER.box(k, e, 1)
+  );
   const fit = TEMPLATE_GATE_ADAPTER.fitText?.(el, {
     ...(maxLines === undefined ? {} : { maxLines }),
+    ...(maxHeight === undefined ? {} : { maxHeight }),
     canvasHeight,
   });
   return fit ? fit.fontSize : null;

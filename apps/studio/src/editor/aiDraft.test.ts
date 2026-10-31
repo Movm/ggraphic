@@ -79,7 +79,9 @@ describe('fillTexts', () => {
 
   it('keeps a text that is already below the floor and never grows it', () => {
     const texts = seedFor(HEADLINE_TEMPLATE_ID, SIZE.width, SIZE.height).additionalTexts ?? [];
-    const small = texts.map((t) => (t.id === 'headline' ? { ...t, fontSize: 20 } : t));
+    const small = texts.map((t) =>
+      t.id === 'headline' ? { ...t, fontSize: 20, maxFontSize: undefined } : t
+    );
     const out = fillById(small, new Map([['headline', 'x '.repeat(200)]]), SIZE.height).find(
       (t) => t.id === 'headline'
     )!;

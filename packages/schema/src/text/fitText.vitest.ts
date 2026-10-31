@@ -141,3 +141,16 @@ describe('binary search equals the linear scan', () => {
     }
   });
 });
+
+describe('room below', () => {
+  const slot = { ...base, width: 700, maxHeight: Infinity, gap: 0.25, room: 200 };
+  it('limits a multi-line text with a quarter line of air', () => {
+    const size = fitFontSizeToSlot(LONGER, slot, measureAt());
+    const lines = wrapLines(LONGER, 700, measureAt()(size)).length;
+    expect(lines).toBeGreaterThan(1);
+    expect((lines + 0.25) * size * 1.1).toBeLessThanOrEqual(200);
+  });
+  it('never shrinks a single line for it', () => {
+    expect(fitFontSizeToSlot('Gute', { ...slot, room: 10 }, measureAt())).toBe(84);
+  });
+});

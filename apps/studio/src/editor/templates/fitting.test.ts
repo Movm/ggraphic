@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { type BrandPack } from '@ggraphic/core';
+import { roomBelow, type BrandPack } from '@ggraphic/core';
+import { TEMPLATE_GATE_ADAPTER } from '@ggraphic/editor/templates/templateGeometry';
 import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -31,6 +32,8 @@ function fittedEntry(maxFontSize: number | null = 0.4): CatalogEntry {
   const file = structuredClone(catalogTemplate('studio-headline')!.template);
   const head = (file.pages[0].state['additionalTexts'] as Record<string, unknown>[])[0]!;
   if (maxFontSize !== null) head['maxFontSize'] = maxFontSize;
+  else delete head['maxFontSize'];
+  head['fontSize'] = 0.096296;
   file.placeholders['en']!['headline'] = 'Gute Nachrichten für alle Menschen';
   return buildCatalog([{ source: 'pack', files: [file] }]).entries[0]!;
 }
@@ -149,5 +152,29 @@ describe('committing a text edit', () => {
     const { actions, size } = setup({});
     actions.updateAdditionalText('h', { text: 'Gemeinschaftsgarten' });
     expect(size()).toBe(200);
+  });
+});
+
+describe('fitted text stops above the element below it', () => {
+  type Placed = Record<string, number | string>;
+  const factBars = (brand: BrandPack) =>
+    templatePageState(catalogTemplate('studio-fact-bar-chart')!, 'post-portrait', { brand })!;
+
+  it('headline and subline of the fact bar chart end above what lies below them', () => {
+    for (const brand of [studioBrand, ANTON, FRAUNCES]) {
+      const state = factBars(brand);
+      const texts = state['additionalTexts'] as Placed[];
+      for (const id of ['headline', 'subline']) {
+        const t = texts.find((x) => x['id'] === id)!;
+        const room = roomBelow(state, 'additionalTexts', t, (k, e) =>
+          TEMPLATE_GATE_ADAPTER.box(k, e, 1)
+        );
+        const lines = TEMPLATE_GATE_ADAPTER.lineCount('additionalTexts', t);
+        const size = t['fontSize'] as number;
+        const lh = (t['lineHeight'] as number) ?? 1.2;
+        expect(room).toBeDefined();
+        expect(lines * size * lh + 0.25 * lh * size).toBeLessThanOrEqual(room! + 0.5);
+      }
+    }
   });
 });

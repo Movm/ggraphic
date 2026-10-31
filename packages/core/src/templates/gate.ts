@@ -15,6 +15,7 @@ import { SHADE_STOPS, shadeAlphaAt, type ShadeDirection } from '../color/shade.j
 import {
   forEachElement,
   instantiateTemplatePage,
+  roomBelow,
   type FitText,
   offeredSchemes,
   type GeometryTable,
@@ -505,7 +506,9 @@ export function checkTemplate(t: TemplateInput, ctx: GateContext): GateProblem[]
               canvas,
               format,
               geometry: ctx.adapter.geometry,
-              ...(ctx.adapter.fitText ? { fitText: ctx.adapter.fitText } : {}),
+              ...(ctx.adapter.fitText
+                ? { fitText: ctx.adapter.fitText, boxOf: (k, e) => ctx.adapter.box(k, e, 1) }
+                : {}),
               schemeId,
               logoSizeOf: () => GATE_LOGO_SIZE,
             }
@@ -617,8 +620,10 @@ function checkPlaced(
     // fit even at the floor fails.
     if (key === 'additionalTexts' && typeof el['maxFontSize'] === 'number') {
       const maxLines = ctx.slots[id]?.budget.maxLines;
+      const maxHeight = roomBelow(state, key, el, (k, e) => ctx.adapter.box(k, e, 1));
       const fit = ctx.adapter.fitText?.(el, {
         ...(maxLines === undefined ? {} : { maxLines }),
+        ...(maxHeight === undefined ? {} : { maxHeight }),
         canvasHeight: canvas.height,
       });
       if (fit && !fit.fits) {
