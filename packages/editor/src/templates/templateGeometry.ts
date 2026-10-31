@@ -277,7 +277,11 @@ const ICON_SIZE = 120;
 /** Air kept between a fitted text and the element below it, in lines. */
 const TEXT_GAP = 0.25;
 const FLAT_EM = 1.2; // only to size a box that is flagged anyway
-/** The widest positive kerning pair of the shipped fonts is about 0.15 em; 0.06 em per pair covers every realistic pair. */
+/**
+ * Kerning margin added for every glyph pair. The widest positive pair of the shipped fonts is
+ * about 0.15 em (Raleway `qj` is 0.08 em), so 0.06 em is not an upper bound per pair: it is an
+ * average margin, and the textLayoutReference fuzz against the real fonts is what holds it.
+ */
 const KERN_EM = 0.06;
 
 const tables = new Map<string, Map<number, number>>();
