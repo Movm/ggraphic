@@ -240,6 +240,21 @@ describe('instantiateTemplatePage', () => {
     expect(instantiateTemplatePage(t, ctx())).toEqual({ ok: false, reason: 'geometry' });
   });
 
+  it('lets a decorative text start and end beyond the page, and nothing else', () => {
+    const page = (el: Record<string, unknown>) =>
+      template({ pages: [{ state: { additionalTexts: [{ id: 'g', ...el }] } }] });
+    const bleed = { x: -0.2, width: 1.4, decorative: true };
+    expect(instantiateTemplatePage(page(bleed), ctx()).ok).toBe(true);
+    expect(instantiateTemplatePage(page({ ...bleed, x: -3 }), ctx())).toEqual({
+      ok: false,
+      reason: 'geometry',
+    });
+    expect(instantiateTemplatePage(page({ ...bleed, fontSize: 1.4 }), ctx())).toEqual({
+      ok: false,
+      reason: 'geometry',
+    });
+  });
+
   describe('number arrays', () => {
     const dashed = (dash: unknown, axis: 's' | 'x' = 's') => ({
       t: template({

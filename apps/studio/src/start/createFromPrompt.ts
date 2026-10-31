@@ -12,6 +12,7 @@ import { applyBrandPack } from '../brandLoader';
 import { fillById, fillTexts } from '../editor/aiDraft';
 import { formatSize, newDocument, type StudioDocument } from '../editor/document';
 import { templatesFor } from '../editor/templates/catalog';
+import { withHuggedPlates } from '../editor/templates/hug';
 import {
   BLANK_TEMPLATE_ID,
   FREE_PAGE_CONFIG_ID,
@@ -92,14 +93,14 @@ export function pickedDocument(formatId: string, picked: Pick): StudioDocument |
   const placed = templatePageState(entry, formatId, { schemeId: world as SchemeId | null });
   if (!placed) return null;
   const texts = placed['additionalTexts'] as AdditionalText[];
-  const state = {
+  const state = withHuggedPlates({
     ...placed,
     additionalTexts: fillById(
       texts,
       new Map(Object.entries(picked.fills)),
       formatSize(formatId).height
     ),
-  };
+  });
   return { formatId, pages: [{ configId: FREE_PAGE_CONFIG_ID, state }] };
 }
 

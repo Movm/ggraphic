@@ -14,6 +14,7 @@ import { fitFontSizeToSlot, PLAIN_STYLE } from '@ggraphic/schema';
 
 import { type Draft } from '../api/client';
 
+import { withHuggedPlates } from './templates/hug';
 import { FREE_PAGE_CONFIG_ID, HEADLINE_TEMPLATE_ID } from './templates/ids';
 import { seedPageState, TEXT_ROLES } from './templates/seeds';
 
@@ -62,7 +63,7 @@ export function fillById(
   room?: ReadonlyMap<string, number>
 ): AdditionalText[] {
   return texts.map((t) => {
-    const value = byId.get(t.id);
+    const value = t.decorative ? undefined : byId.get(t.id);
     return value === undefined
       ? t
       : fitToSlot({ ...t, text: value }, texts, canvasHeight, room?.get(t.id));
@@ -86,7 +87,9 @@ function fitToSlot(
   room?: number
 ): AdditionalText {
   const { fontSize, width, fontFamily, maxFontSize } = text;
-  const below = texts.filter((other) => other.y > text.y).map((other) => other.y);
+  const below = texts
+    .filter((other) => !other.decorative && other.y > text.y)
+    .map((other) => other.y);
   const prototype = maxFontSize !== undefined && maxFontSize >= (fontSize ?? 0);
   const textRoom = below.length === 0 ? undefined : Math.min(...below) - text.y;
   const limit = Math.min(textRoom ?? Infinity, room ?? Infinity);
@@ -144,7 +147,13 @@ export function draftDeckOps(
     const filled = fillTexts(textsOf(active.state), draft, size.height, room);
     if (filled) {
       return {
-        updates: [{ pageId: active.id, state: { ...active.state, additionalTexts: filled } }],
+        updates: [
+          {
+            pageId: active.id,
+            // The plates that hug the filled texts follow their new lines.
+            state: withHuggedPlates({ ...active.state, additionalTexts: filled }),
+          },
+        ],
         inserts: [],
         removes: [],
       };

@@ -67,6 +67,8 @@ export const TEMPLATE_GEOMETRY: GeometryTable = {
     y: 'y',
     width: 'w',
     height: 'h',
+    // A number or a list of four: px, scaled like the shapes' `cornerRadius`.
+    cornerRadius: 's',
     blur: 's',
     shadowBlur: 's',
     shadowOffsetX: 's',
@@ -185,7 +187,11 @@ function notchCut(box: Box | null, side: number): Box | null {
  */
 function photoCover(el: El): ReturnType<GateAdapter['cover']> {
   const hasTint = str(el, 'tint') !== '' || num(el, 'tintStrength') !== 0;
-  if (hasTint || str(el, 'mask') !== '' || num(el, 'opacity', 1) < 1) return UNKNOWN;
+  // Rounded corners leave the box's corners bare, like a mask.
+  const rounded = Array.isArray(el['cornerRadius'])
+    ? el['cornerRadius'].some((r) => typeof r === 'number' && r > 0)
+    : num(el, 'cornerRadius') > 0;
+  if (hasTint || rounded || str(el, 'mask') !== '' || num(el, 'opacity', 1) < 1) return UNKNOWN;
   const low = str(el, 'duotoneLow');
   const high = str(el, 'duotoneHigh');
   if (low === '' || high === '') return { kind: 'photo', low: '#000000', high: '#ffffff' };
@@ -377,6 +383,8 @@ function tableRunMeasure(p: TextProps, note: Note): MeasureRun {
 
 interface TextLayout {
   lines: number;
+  /** Width of the longest line in px, at the text's own size. */
+  widest: number;
   unmeasurable: string | null;
 }
 
@@ -385,10 +393,22 @@ function layoutText(p: TextProps): TextLayout {
   const note: Note = { reason: null };
   const run = tableRunMeasure(p, note);
   const inner = p.width > 0 ? p.width : Number.POSITIVE_INFINITY;
-  const lines = usesRichText({ text: p.text, width: p.width }, run)
-    ? layoutRichTextBlock(p.text, inner, run).length
-    : plainTextLines(p.text, inner, (text) => run(text, PLAIN_STYLE)).length;
-  return { lines: Math.max(1, lines), unmeasurable: note.reason };
+  let widths: number[];
+  if (usesRichText({ text: p.text, width: p.width }, run)) {
+    widths = layoutRichTextBlock(p.text, inner, run).map((line) => {
+      const last = line.runs.at(-1);
+      return last ? line.indent + last.x + run(last.text, last) : line.indent;
+    });
+  } else {
+    widths = plainTextLines(p.text, inner, (text) => run(text, PLAIN_STYLE)).map((line) =>
+      run(line, PLAIN_STYLE)
+    );
+  }
+  return {
+    lines: Math.max(1, widths.length),
+    widest: Math.max(0, ...widths),
+    unmeasurable: note.reason,
+  };
 }
 
 /**
@@ -556,6 +576,25 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
       return [];
     },
     fitText: fitTextToBox,
+    textExtent(el) {
+      const p = textPropsOf(el);
+      if (!(p.width > 0) || !(p.fontSize > 0)) return null;
+      const { lines, widest, unmeasurable } = layoutText(p);
+      if (unmeasurable) return null;
+      const scale = num(el, 'scale', 1) || 1;
+      return { lines, width: widest * scale };
+    },
+    placeBox(stateKey, el, box) {
+      // Only an upright plate: a shape is positioned by its centre, its size is the box over its scale.
+      if (stateKey !== 'shapeInstances' || isRotated(el)) return { ...el };
+      return {
+        ...el,
+        x: box.x + box.width / 2,
+        y: box.y + box.height / 2,
+        width: box.width / (num(el, 'scaleX', 1) || 1),
+        height: box.height / (num(el, 'scaleY', 1) || 1),
+      };
+    },
     lineCount(stateKey, el) {
       if (stateKey !== 'additionalTexts' || typeof el['text'] !== 'string') return 1;
       return layoutText(textPropsOf(el)).lines;
@@ -731,10 +770,15 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
       const gradient = el['fillGradient'];
       const fill = parseColor(str(el, 'fill'));
       if (!untransformed || !fill) return UNKNOWN;
+      // Stripes are judged by their colour as well as the fill; one that cannot be read is not provable.
+      const stripeColor = parseColor(str(el, 'patternColor'));
+      if (el['pattern'] === 'stripes' && (!stripeColor || stripeColor.a !== 1)) return UNKNOWN;
+      const stripes = el['pattern'] === 'stripes' ? str(el, 'patternColor') : null;
       const grainAmount = Math.min(1, num(el, 'grain'));
       const mods = {
         ...(cut ? { cut } : {}),
         ...(el['pattern'] === 'dots' ? { dots: true as const } : {}),
+        ...(stripes ? { stripes } : {}),
         ...(grainAmount > 0
           ? {
               grain: {

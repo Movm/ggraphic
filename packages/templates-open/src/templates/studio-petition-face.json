@@ -63,10 +63,10 @@
           {
             "id": "quote-plate-1",
             "type": "rect",
-            "x": 0.380435,
-            "y": 0.609244,
-            "width": 0.76087,
-            "height": 0.07563,
+            "x": 0.401631,
+            "y": 0.710924,
+            "width": 0.796738,
+            "height": 0.077311,
             "fill": "#ffffff",
             "rotation": 0,
             "scaleX": 1,
@@ -74,15 +74,21 @@
             "opacity": 1,
             "bind": {
               "fill": "ink"
+            },
+            "hug": {
+              "text": "quote-1",
+              "padX": 0.022222,
+              "padY": 0.013889,
+              "width": "text"
             }
           },
           {
             "id": "quote-plate-2",
             "type": "rect",
-            "x": 0.413043,
-            "y": 0.693277,
-            "width": 0.826087,
-            "height": 0.07563,
+            "x": 0.432609,
+            "y": 0.794958,
+            "width": 0.858695,
+            "height": 0.077311,
             "fill": "#ffffff",
             "rotation": 0,
             "scaleX": 1,
@@ -90,14 +96,20 @@
             "opacity": 1,
             "bind": {
               "fill": "ink"
+            },
+            "hug": {
+              "text": "quote-2",
+              "padX": 0.022222,
+              "padY": 0.013889,
+              "width": "text"
             }
           },
           {
             "id": "name-plate",
             "type": "rect",
-            "x": 0.304348,
-            "y": 0.760504,
-            "width": 0.608696,
+            "x": 0.240217,
+            "y": 0.861344,
+            "width": 0.473914,
             "height": 0.042017,
             "fill": "#ffffff",
             "rotation": 0,
@@ -106,15 +118,21 @@
             "opacity": 1,
             "bind": {
               "fill": "ground"
+            },
+            "hug": {
+              "text": "name",
+              "padX": 0.016667,
+              "padY": 0.011111,
+              "width": "text"
             }
           },
           {
             "id": "cta-band",
             "type": "rect",
             "x": 0.5,
-            "y": 0.888889,
+            "y": 0.933333,
             "width": 1,
-            "height": 0.222222,
+            "height": 0.133333,
             "fill": "#ffffff",
             "rotation": 0,
             "scaleX": 1,
@@ -128,12 +146,13 @@
         "userImageInstances": [
           {
             "id": "photo",
+            "cornerRadius": [0.037037, 0, 0, 0],
             "src": "",
             "fileName": "",
             "x": 0.184783,
             "y": 0.067227,
             "width": 0.630435,
-            "height": 0.747899,
+            "height": 0.848739,
             "rotation": 0,
             "scale": 1,
             "opacity": 1,
@@ -199,9 +218,9 @@
             "id": "quote-1",
             "type": "header",
             "text": "“I want my child",
-            "x": 0.028261,
-            "y": 0.583193,
-            "width": 0.706522,
+            "x": 0.029348,
+            "y": 0.684874,
+            "width": 0.744565,
             "fontSize": 0.057407,
             "align": "left",
             "fontFamily": "",
@@ -219,9 +238,9 @@
             "id": "quote-2",
             "type": "header",
             "text": "to get to school safely.”",
-            "x": 0.028261,
-            "y": 0.667227,
-            "width": 0.771739,
+            "x": 0.029348,
+            "y": 0.768908,
+            "width": 0.806522,
             "fontSize": 0.057407,
             "align": "left",
             "fontFamily": "",
@@ -239,9 +258,9 @@
             "id": "name",
             "type": "body",
             "text": "Aylin, mother of two",
-            "x": 0.017391,
-            "y": 0.74958,
-            "width": 0.576087,
+            "x": 0.022826,
+            "y": 0.85042,
+            "width": 0.434783,
             "fontSize": 0.024074,
             "align": "left",
             "fontFamily": "",
@@ -258,9 +277,9 @@
             "id": "cta",
             "type": "header",
             "text": "Sign now",
-            "x": 0,
-            "y": 0.946218,
-            "width": 0.543478,
+            "x": 0.074074,
+            "y": 0.893333,
+            "width": 0.462963,
             "fontSize": 0.048148,
             "align": "left",
             "fontFamily": "",
@@ -318,7 +337,8 @@
     "label": "canvas",
     "count": "canvas",
     "cta-band": "canvas",
-    "link": "canvas"
+    "link": "canvas",
+    "cta": "canvas"
   },
   "slots": {
     "label": {

@@ -70,6 +70,8 @@ function describeItem(item: CanvasItem, state: BaseCanvasState): SummaryEntry | 
   switch (item.type) {
     case 'additional-text': {
       const t = item.data;
+      // A ghost numeral is a picture, not content the model should quote or rewrite.
+      if (t.decorative) return null;
       return {
         id: t.id,
         kind: 'text',

@@ -184,6 +184,27 @@
         ],
         "additionalTexts": [
           {
+            "id": "ghost",
+            "type": "header",
+            "text": "2",
+            "x": 0,
+            "y": 0.414815,
+            "width": 1.027778,
+            "fontSize": 0.574074,
+            "align": "right",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "opacity": 0.1,
+            "lineHeight": 0.8,
+            "fontWeight": 800,
+            "letterSpacing": -0.06,
+            "decorative": true,
+            "bind": {
+              "fill": "accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
             "id": "headline",
             "type": "header",
             "text": "Fact 2: every second group looks for help",
@@ -227,6 +248,7 @@
           "photo",
           "veil",
           "scrim",
+          "ghost",
           "dot-1",
           "dot-2",
           "dot-3",
@@ -240,6 +262,7 @@
     }
   ],
   "frames": {
+    "ghost": "canvas",
     "photo": "canvas",
     "veil": "canvas",
     "scrim": "canvas"

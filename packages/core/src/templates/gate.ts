@@ -15,19 +15,21 @@ import { SHADE_STOPS, shadeAlphaAt, type ShadeDirection } from '../color/shade.j
 import {
   forEachElement,
   instantiateTemplatePage,
+  isDecorativeText,
   roomBelow,
   type FitText,
   offeredSchemes,
   type GeometryTable,
   type TemplateInput,
 } from './instantiate.js';
+import { hugPlates, type HugAdapter } from './hug.js';
 import { countChars, countWords } from './slotBudget.js';
 
 /**
  * What the render gate needs to know of an editor's element kinds. The editor fills it
  * in (`TEMPLATE_GATE_ADAPTER`); the checks that use it are `checkTemplate`.
  */
-export interface GateAdapter {
+export interface GateAdapter extends Partial<Pick<HugAdapter, 'textExtent' | 'placeBox'>> {
   geometry: GeometryTable;
   /** stateKey → fields that hold a colour value and may carry a binding (no font or image fields). */
   colorFields: Readonly<Record<string, readonly string[]>>;
@@ -103,7 +105,8 @@ export interface GateAdapter {
  * What an element paints (see `GateAdapter.cover`). `range` is `fill` at an alpha anywhere in
  * `alpha` (a glow: full in the middle, nothing at the edge). Any kind may carry: `cut`, a box the
  * element leaves bare (a notch), so a text lying wholly inside it is not on this element; `dots`,
- * a dot pattern over the element, which no text lying on it can be judged against; `grain`, a
+ * a dot pattern over the element, which no text lying on it can be judged against; `stripes`, the
+ * colour of stripe bands over a solid element, so a text on it is judged against fill and stripe; `grain`, a
  * layer of `fill` at any alpha in `alpha` over it.
  */
 export type GateCover = (
@@ -116,6 +119,7 @@ export type GateCover = (
 ) & {
   cut?: Box;
   dots?: true;
+  stripes?: string;
   grain?: { fill: string; alpha: [number, number] };
 };
 
@@ -289,7 +293,21 @@ function shadeInterval(base: string, overlays: Overlay[]): [Ground, Ground] | nu
  * alpha; compositing moves the colour towards the fill. Null when a colour cannot be composited.
  */
 function groundInterval(base: string, overlays: Overlay[]): [Ground, Ground] | null {
-  if (overlays.some((o) => o.shade)) return shadeInterval(base, overlays);
+  if (overlays.some((o) => o.shade)) {
+    // A non-shade overlay with a range (a ghost) is present or absent, never in between: the
+    // shade's interval is taken once per choice and the intervals are merged.
+    const branch = overlays.findIndex((o) => !o.shade && o.alpha[0] !== o.alpha[1]);
+    if (branch === -1) return shadeInterval(base, overlays);
+    const parts = overlays[branch]!.alpha.map((a) =>
+      groundInterval(
+        base,
+        overlays.map((o, i) => (i === branch ? { ...o, alpha: [a, a] as [number, number] } : o))
+      )
+    );
+    if (parts.some((p) => p === null)) return null;
+    const all = parts.flatMap((p) => p!).sort((x, y) => x.lum - y.lum);
+    return [all[0]!, all[all.length - 1]!];
+  }
   let colours = [base];
   for (const o of overlays) {
     const alphas = o.alpha[0] === o.alpha[1] ? [o.alpha[0]] : o.alpha;
@@ -509,6 +527,7 @@ export function checkTemplate(t: TemplateInput, ctx: GateContext): GateProblem[]
               ...(ctx.adapter.fitText
                 ? { fitText: ctx.adapter.fitText, boxOf: (k, e) => ctx.adapter.box(k, e, 1) }
                 : {}),
+              ...(hugAdapter(ctx.adapter) ? { hug: hugAdapter(ctx.adapter)! } : {}),
               schemeId,
               logoSizeOf: () => GATE_LOGO_SIZE,
             }
@@ -556,6 +575,13 @@ function layoutsOf(brand: BrandPack, t: TemplateInput): BrandLayout[] {
 const layoutLabel = (l: BrandLayout): string =>
   `layout margin ${l.margin}, logo ${l.logoMaxWidth}×${l.logoMaxHeight} at ${l.logoCorner}`;
 
+/** The adapter's hug parts, when it has them all. */
+function hugAdapter(a: GateAdapter): HugAdapter | null {
+  return a.textExtent && a.placeBox
+    ? { box: a.box, textExtent: a.textExtent, placeBox: a.placeBox }
+    : null;
+}
+
 function checkPlaced(
   t: TemplateInput,
   ctx: GateContext,
@@ -569,6 +595,12 @@ function checkPlaced(
   problem: (rule: GateRule, detail: string, where?: Partial<GateProblem>) => void
 ): void {
   const { canvas, layout, where } = at;
+  // A plate that hugs its text is judged at the most the slot allows: the text may take its full
+  // budget in lines, and then the plate is that tall (and as wide as the text box).
+  const hugs = hugAdapter(ctx.adapter);
+  if (hugs) {
+    state = hugPlates(state, hugs, { minLines: (id) => ctx.slots[id]?.budget.maxLines ?? 1 });
+  }
   const short = Math.min(canvas.width, canvas.height);
   const frames = {
     canvas: { x: 0, y: 0, width: canvas.width, height: canvas.height },
@@ -594,6 +626,10 @@ function checkPlaced(
 
   for (const [id, { el, key }] of placed) {
     const box = ctx.adapter.box(key, el, lines(id, key, el));
+    // A decorative text (a ghost numeral) is a picture: translucent, huge, bleeding off the page on
+    // purpose. It is judged by nobody (no bounds, logo, contrast or fit); it only counts as a
+    // translucent layer under the real text it lies beneath (below).
+    if (isDecorativeText(key, el)) continue;
     const text = ctx.adapter.text(key, el);
     const placement = ctx.adapter.boundsProblem?.(key, el) ?? null;
     // A text of unknown width cannot be placed against any frame: fail closed.
@@ -659,7 +695,13 @@ function checkPlaced(
     // luminance interval.
     let grounds: string[] | null = text.ground === undefined ? null : [text.ground];
     const overlays: Overlay[] = [];
+    // The same stack where stripe bands over a translucent fill are painted as well; judged too.
+    const striped: Overlay[] = [];
     let stackedShades = false;
+    const lay = (o: Overlay) => {
+      overlays.push(o);
+      striped.push(o);
+    };
     if (grounds === null) {
       const at = order.indexOf(id);
       if (!box || at === -1) {
@@ -669,6 +711,24 @@ function checkPlaced(
       grounds = [typeof state['backgroundColor'] === 'string' ? state['backgroundColor'] : ''];
       for (const belowId of order.slice(0, at).reverse()) {
         const below = placed.get(belowId);
+        if (below && isDecorativeText(below.key, below.el)) {
+          // Each pixel under the real text is either bare or has the ghost's glyph on it, so the
+          // ground is either of the two: an alpha range of the ghost's colour that is not a shade
+          // (it is tried at both ends, never between). Where the ghost cannot be read, fail closed.
+          const area = ctx.adapter.box(below.key, below.el, lines(belowId, below.key, below.el));
+          const ghost = ctx.adapter.text(below.key, below.el);
+          if (!area || !ghost) {
+            grounds = null;
+            break;
+          }
+          if (!overlaps(box, area)) continue;
+          if (parseColor(ghost.fill)?.a !== 1 || !(ghost.opacity >= 0 && ghost.opacity <= 1)) {
+            grounds = null;
+            break;
+          }
+          if (ghost.opacity > 0) overlays.push({ fill: ghost.fill, alpha: [0, ghost.opacity] });
+          continue;
+        }
         // The logo is owned by logo-overlap; a text on it is reported there.
         if (below && below.key === 'userImageInstances' && isLogo(below.el)) continue;
         const cover = below && ctx.adapter.cover(below.key, below.el, canvas.width);
@@ -693,6 +753,11 @@ function checkPlaced(
           grounds = null;
           break;
         }
+        // Stripes only have known grounds over a flat or translucent fill.
+        if (cover.stripes && cover.kind !== 'solid' && cover.kind !== 'veil') {
+          grounds = null;
+          break;
+        }
         // Two alpha ranges over one text: the alphas move together, not independently. Not judged.
         const ranges =
           (cover.grain ? 1 : 0) + (cover.kind === 'shade' || cover.kind === 'range' ? 1 : 0);
@@ -702,27 +767,40 @@ function checkPlaced(
           break;
         }
         if (cover.grain) {
-          overlays.push({ shade: true, fill: cover.grain.fill, alpha: cover.grain.alpha });
+          lay({ shade: true, fill: cover.grain.fill, alpha: cover.grain.alpha });
         }
         if (cover.kind === 'veil') {
-          overlays.push({ fill: cover.fill, alpha: [cover.alpha, cover.alpha] });
+          const alpha: [number, number] = [cover.alpha, cover.alpha];
+          // A band is the fill, then the stripe colour at the same strength on top of it.
+          if (cover.stripes) striped.push({ fill: cover.stripes, alpha });
+          lay({ fill: cover.fill, alpha });
         } else if (cover.kind === 'shade' || cover.kind === 'range') {
-          overlays.push({
+          lay({
             shade: true,
             fill: cover.fill,
             alpha:
               cover.kind === 'shade' ? shadeAlphaRange(cover.direction, box, area) : cover.alpha,
           });
         } else {
-          grounds = cover.kind === 'solid' ? [cover.fill] : photoColours(cover.low, cover.high);
+          grounds =
+            cover.kind === 'solid'
+              ? [cover.fill, ...(cover.stripes ? [cover.stripes] : [])]
+              : photoColours(cover.low, cover.high);
           break;
         }
       }
     }
     // Bottom-up: the overlay nearest the ground goes on first.
     overlays.reverse();
-    const bad = overlays.some((o) => !opaque(o.fill) || !(o.alpha[0] >= 0 && o.alpha[1] <= 1));
-    const intervals = grounds && !bad ? grounds.map((g) => groundInterval(g, overlays)) : [];
+    striped.reverse();
+    const stacks = striped.length > overlays.length ? [overlays, striped] : [overlays];
+    const bad = stacks.some((stack) =>
+      stack.some((o) => !opaque(o.fill) || !(o.alpha[0] >= 0 && o.alpha[1] <= 1))
+    );
+    const intervals =
+      grounds && !bad
+        ? stacks.flatMap((stack) => grounds.map((g) => groundInterval(g, stack)))
+        : [];
     if (intervals.length === 0 || intervals.some((i) => i === null)) {
       fail(`${NOT_DETERMINABLE}${stackedShades ? ' (stacked shades)' : ''} under ${text.fill}`);
       continue;

@@ -41,3 +41,36 @@ describe('BrandPreview logos', () => {
     expect(srcOf()).toBe('/main.png');
   });
 });
+
+describe('BrandPreview accent ground', () => {
+  const accent = { color: '#FF7AB6', ink: '#4A0E22', accent: '#4A0E22' };
+  const page = (container: HTMLElement) =>
+    container.querySelector('.studio-brand-preview__page') as HTMLElement;
+
+  it("draws the accent bar and the highlighted lines in the ground's own accent", () => {
+    const { container } = render(
+      <BrandPreview settings={settings} logoUrl={null} ground={accent} />
+    );
+    expect(page(container).style.background).toBe('rgb(255, 122, 182)');
+    // Rose on rose would vanish: the bar and the two accent lines take the ground's accent.
+    const bar = page(container).querySelector(
+      'span[aria-hidden]:not([data-outline])'
+    ) as HTMLElement;
+    expect(bar.style.background).toBe('rgb(74, 14, 34)');
+    expect(screen.getByText('Find out more').style.color).toBe('rgb(74, 14, 34)');
+  });
+
+  it('keeps the brand accent on a ground that names none', () => {
+    const { container } = render(
+      <BrandPreview
+        settings={settings}
+        logoUrl={null}
+        ground={{ color: '#6B1632', ink: '#ffffff' }}
+      />
+    );
+    const bar = page(container).querySelector(
+      'span[aria-hidden]:not([data-outline])'
+    ) as HTMLElement;
+    expect(bar.style.background).toBe('rgb(255, 122, 182)');
+  });
+});
