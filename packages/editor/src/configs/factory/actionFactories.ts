@@ -16,9 +16,9 @@ import {
 } from '@ggraphic/editor/utils/chartUtils';
 import { createCircleBadgeInstance } from '@ggraphic/editor/utils/circleBadgeUtils';
 import { brandColors } from '@ggraphic/editor/utils/colorOptions';
-import { duplicateElementInState } from '@ggraphic/editor/utils/duplicateElement';
+import { createInstanceId, duplicateElementInState } from '@ggraphic/editor/utils/duplicateElement';
 import { createFrameInstance } from '@ggraphic/editor/utils/frameUtils';
-import { iconInstanceIdsFor } from '@ggraphic/editor/utils/iconInstances';
+import { iconInstanceIdsFor, placedIconId } from '@ggraphic/editor/utils/iconInstances';
 import { createIllustration } from '@ggraphic/editor/utils/illustrations/registry';
 import { createPillBadgeInstance } from '@ggraphic/editor/utils/pillBadgeUtils';
 import { createShape } from '@ggraphic/editor/utils/shapes';
@@ -156,6 +156,7 @@ export function createIconActions<
       external?: ExternalIconPayload
     ) => {
       if (selected) {
+        const placed = placedIconId(id, getState().selectedIcons, () => createInstanceId('icon'));
         const newIconState: IconState = {
           x: options?.center?.x ?? canvasWidth / 2,
           y: options?.center?.y ?? canvasHeight / 2,
@@ -163,12 +164,13 @@ export function createIconActions<
           rotation: 0,
           ...(defaultColor ? { color: defaultColor } : {}),
           opacity: defaultOpacity,
+          ...(placed.iconId ? { iconId: placed.iconId } : {}),
           ...(external ? { svg: external.svg, source: external.source } : {}),
         };
         setState((prev) => ({
           ...prev,
-          selectedIcons: [...prev.selectedIcons, id],
-          iconStates: { ...prev.iconStates, [id]: newIconState },
+          selectedIcons: [...prev.selectedIcons, placed.id],
+          iconStates: { ...prev.iconStates, [placed.id]: newIconState },
         }));
       } else {
         setState((prev) => {
