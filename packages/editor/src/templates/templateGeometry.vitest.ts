@@ -636,6 +636,34 @@ describe('template gate adapter: what the renderer scales, turns and draws', () 
     expect(turned.x + turned.width / 2).toBeCloseTo(500);
   });
 
+  it('boxes an illustration, a sticker and a frame about their own centre', () => {
+    // Illustration: 160 px at scale 1; sticker: its longer side is 150 px at scale 1 (a square
+    // bound, as the image ratio is not known to the gate); frame: width x height times its scales.
+    const illustration = A.box(
+      'illustrationInstances',
+      { x: 500, y: 400, scale: 2, rotation: 0 },
+      1
+    )!;
+    expect(illustration).toEqual({ x: 340, y: 240, width: 320, height: 320 });
+    const sticker = A.box('assetInstances', { x: 500, y: 400, scale: 2, rotation: 0 }, 1)!;
+    expect(sticker).toEqual({ x: 350, y: 250, width: 300, height: 300 });
+    const frame = A.box(
+      'frameInstances',
+      { x: 500, y: 400, width: 200, height: 100, scaleX: 2, scaleY: 1, rotation: 0 },
+      1
+    )!;
+    expect(frame).toEqual({ x: 300, y: 350, width: 400, height: 100 });
+  });
+
+  it('boxes a rotated illustration or sticker by the extent of the turned square', () => {
+    for (const key of ['illustrationInstances', 'assetInstances']) {
+      const flat = A.box(key, { x: 500, y: 500, scale: 1, rotation: 0 }, 1)!;
+      const turned = A.box(key, { x: 500, y: 500, scale: 1, rotation: 45 }, 1)!;
+      expect(turned.width).toBeCloseTo(flat.width * Math.SQRT2);
+      expect(turned.x + turned.width / 2).toBeCloseTo(500);
+    }
+  });
+
   it('refuses to place a rotated image, frame or chart', () => {
     for (const key of ['userImageInstances', 'frameInstances', 'chartInstances']) {
       expect(A.boundsProblem?.(key, { rotation: 45 })).toBe('rotated, not checkable');
