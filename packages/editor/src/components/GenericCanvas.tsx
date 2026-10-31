@@ -1198,6 +1198,7 @@ function GenericCanvasWithRef<
           stageHeight={config.canvas.height}
           isFontAvailable={isFontAvailable}
           remoteSelections={remoteSelections}
+          {...(pageNumber === undefined ? {} : { pageNumber })}
         />
 
         <PrintGuides format={format} />

@@ -54,6 +54,8 @@ interface CanvasRenderLayerProps<
   isFontAvailable?: boolean;
   /** elementId → remote collaborator currently selecting it (collab mode only). */
   remoteSelections?: ReadonlyMap<string, RemoteSelector>;
+  /** The page being drawn, from 1; see `RenderCtx.pageNumber`. */
+  pageNumber?: number;
 }
 
 function CanvasRenderLayerInner<
@@ -74,6 +76,7 @@ function CanvasRenderLayerInner<
   stageHeight,
   isFontAvailable,
   remoteSelections,
+  pageNumber,
 }: CanvasRenderLayerProps<TState, TActions>) {
   const croppingElement = useCanvasStoreSelector((s) => s.croppingElement);
   const setCroppingElement = useCanvasStoreSelector((s) => s.setCroppingElement);
@@ -121,6 +124,7 @@ function CanvasRenderLayerInner<
       croppingElement,
       setCroppingElement,
       cropAspect,
+      ...(pageNumber === undefined ? {} : { pageNumber }),
     });
   };
 

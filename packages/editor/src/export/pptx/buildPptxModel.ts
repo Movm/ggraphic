@@ -22,8 +22,10 @@ import {
   type ChartType,
 } from '@ggraphic/editor/utils/chartUtils';
 import { ICON_TARGET_SIZE, ILLUSTRATION_TARGET_SIZE } from '@ggraphic/editor/utils/motifSizes';
+import { shownText } from '../../utils/pageCounter.js';
 import { photoStripBeside, type ShapeInstance } from '@ggraphic/editor/utils/shapes';
 import { hasCorners } from '@ggraphic/editor/utils/cornerRadius';
+import { bubbleExtent, tailOf } from '../../utils/shapeDevices.js';
 import { backgroundStraighten } from '@ggraphic/editor/utils/straighten';
 import { konvaFontStyle } from '@ggraphic/editor/utils/textUtils';
 
@@ -222,13 +224,29 @@ function shapeLocalBox(shape: ShapeInstance): PptxBox {
       const half = r * Math.sin((72 * Math.PI) / 180);
       return { x: -half, y: -r, width: 2 * half, height: r + r * Math.cos((36 * Math.PI) / 180) };
     }
-    default:
-      return {
+    default: {
+      const flat = {
         x: -shape.width / 2,
         y: -shape.height / 2,
         width: shape.width,
         height: shape.height,
       };
+      // A speech bubble's tail lies outside width × height; a bent arrow's curve off its flat box.
+      const tail = tailOf(shape);
+      if (tail) {
+        const out = bubbleExtent(shape.width, shape.height, tail);
+        return { x: flat.x + out.x, y: flat.y + out.y, width: out.width, height: out.height };
+      }
+      if (shape.type === 'line-arrow' && shape.bend) {
+        const stroke = shape.strokeWidth ?? 6;
+        const sag = shape.bend * shape.width * 1.1;
+        const pad = Math.max(16, stroke * 2.5) / 2 + stroke / 2;
+        const top = Math.min(flat.y, Math.min(0, sag) - pad);
+        const bottom = Math.max(flat.y + flat.height, Math.max(0, sag) + pad);
+        return { ...flat, y: top, height: bottom - top };
+      }
+      return flat;
+    }
   }
 }
 
@@ -252,6 +270,8 @@ function mapShape(shape: ShapeInstance): PptxItem {
     shape.glow ||
     (shape.grain ?? 0) > 0 ||
     shape.pattern ||
+    // The tail is part of the outline, which a native roundRect cannot carry.
+    tailOf(shape) ||
     // pptx rounds every corner of a roundRect the same.
     Array.isArray(shape.cornerRadius)
   ) {
@@ -276,7 +296,9 @@ function mapShape(shape: ShapeInstance): PptxItem {
   };
 }
 
-function mapText(text: AdditionalText, measure: PptxMeasureText): PptxItem {
+function mapText(authored: AdditionalText, measure: PptxMeasureText, pageNumber: number): PptxItem {
+  // A page counter is the number of its slide.
+  const text = { ...authored, text: shownText(authored, pageNumber) };
   const scale = text.scale || 1;
   const lineHeight = text.lineHeight ?? 1.2;
   const paragraphs = textParagraphs(text);
@@ -305,6 +327,7 @@ function mapText(text: AdditionalText, measure: PptxMeasureText): PptxItem {
     bold,
     italic: style.includes('italic'),
     letterSpacing: text.letterSpacing ?? 0,
+    strikethrough: text.strikethrough === true,
     align: text.align ?? 'left',
     valign: 'top',
     lineHeight,
@@ -371,6 +394,7 @@ function mapPill(pill: PillBadgeInstance, measure: PptxMeasureText): PptxItem[] 
       bold: style.includes('bold'),
       italic: style.includes('italic'),
       letterSpacing: 0,
+      strikethrough: false,
       align: 'center',
       valign: 'middle',
       lineHeight: 1,
@@ -432,6 +456,7 @@ function mapCircleBadge(badge: CircleBadgeInstance): PptxItem[] {
       bold: line.fontWeight === 'bold',
       italic: false,
       letterSpacing: 0,
+      strikethrough: false,
       align: 'center',
       valign: 'top',
       lineHeight: 1,
@@ -604,7 +629,8 @@ function mapBackgroundPhoto(state: PptxPageState, page: PptxBox): PptxItem | nul
 function buildSlide(
   state: PptxPageState,
   format: CanvasFormat,
-  measure: PptxMeasureText
+  measure: PptxMeasureText,
+  pageNumber: number
 ): PptxSlideModel {
   const page: PptxBox = { x: 0, y: 0, width: format.width, height: format.height };
   const carried = carryInstanceState(state as Record<string, unknown>);
@@ -642,7 +668,8 @@ function buildSlide(
       )
     );
   }
-  for (const text of carried.additionalTexts) add(text.id, () => mapText(text, measure));
+  for (const text of carried.additionalTexts)
+    add(text.id, () => mapText(text, measure, pageNumber));
   for (const illustration of carried.illustrationInstances) {
     add(illustration.id, () =>
       raster(
@@ -728,6 +755,6 @@ export function buildPptxModel(
   const measure = options.measure ?? estimateMeasure;
   return {
     page: { width: format.width, height: format.height },
-    slides: pages.map((state) => buildSlide(state, format, measure)),
+    slides: pages.map((state, index) => buildSlide(state, format, measure, index + 1)),
   };
 }
