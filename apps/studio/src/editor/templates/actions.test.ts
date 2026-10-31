@@ -136,3 +136,27 @@ describe('toggleIcon', () => {
     expect(state().iconStates['iconify:reicon:bicycle-filled']).toMatchObject({ svg, source });
   });
 });
+
+describe('toggleIcon for an icon already on the page', () => {
+  it('places a copy under its own instance id that shows the same icon', () => {
+    const svg = '<svg viewBox="0 0 24 24"><path d="M0 0h24"/></svg>';
+    const source = {
+      kind: 'iconify',
+      prefix: 'reicon',
+      name: 'bicycle-filled',
+      setTitle: 'Reicon',
+      licence: 'MIT',
+      author: 'REICON',
+    } as const;
+    const { actions, state } = setup({ selectedIcons: [], iconStates: {} } as never);
+    actions.toggleIcon('iconify:reicon:bicycle-filled', true, undefined, { svg, source });
+    actions.toggleIcon('iconify:reicon:bicycle-filled', true, undefined, { svg, source });
+    const ids = state().selectedIcons;
+    expect(new Set(ids).size).toBe(2);
+    expect(new Set(state().layerOrder).size).toBe(state().layerOrder!.length);
+    expect(state().iconStates[ids[1]!]).toMatchObject({
+      iconId: 'iconify:reicon:bicycle-filled',
+      svg,
+    });
+  });
+});

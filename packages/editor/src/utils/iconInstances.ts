@@ -50,6 +50,22 @@ export function catalogIconId(
   return LEGACY_CATALOG_IDS[id] ?? id;
 }
 
+/**
+ * Die ID eines neu gesetzten Icons: seine Katalog-ID, solange es nicht schon auf
+ * der Fläche liegt; sonst eine frische Instanz-ID mit `iconId`, wie bei einer Kopie.
+ * Zweimal dieselbe ID überschreibt den ersten Zustand und lässt beim Entfernen
+ * einen Knoten auf der Bühne stehen.
+ */
+export function placedIconId(
+  catalogId: string,
+  selectedIcons: readonly string[],
+  freshId: () => string
+): { id: string; iconId?: string } {
+  return selectedIcons.includes(catalogId)
+    ? { id: freshId(), iconId: catalogId }
+    : { id: catalogId };
+}
+
 /** Wie viele verschiedene Icons eine Seite höchstens trägt (Seitenleiste und Drop). */
 export const MAX_ICON_SELECTIONS = 3;
 
