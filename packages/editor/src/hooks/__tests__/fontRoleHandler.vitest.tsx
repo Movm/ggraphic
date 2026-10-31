@@ -1,0 +1,48 @@
+// SPDX-License-Identifier: MPL-2.0
+import { renderHook } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+
+import { useCanvasElementHandlers } from '@ggraphic/editor/hooks/useCanvasElementHandlers';
+
+import type { FullCanvasConfig, LayoutResult } from '@ggraphic/editor/configs/types';
+import type { OptionalCanvasActions } from '@ggraphic/editor/hooks/useCanvasElementHandlers';
+
+type State = Record<string, unknown>;
+
+function handlersWith(actions: OptionalCanvasActions) {
+  const { result } = renderHook(() =>
+    useCanvasElementHandlers({
+      config: {
+        elements: [{ id: 'headline', type: 'text', textKey: 'headline' }],
+      } as unknown as FullCanvasConfig<State, OptionalCanvasActions>,
+      state: { additionalTexts: [{ id: 'free-1' }] },
+      setState: () => {},
+      actions,
+      layout: {} as LayoutResult,
+      callbacks: {},
+      selectElement: () => {},
+      updateElementPosition: () => {},
+      saveToHistory: () => {},
+      debouncedSaveToHistory: () => {},
+    })
+  );
+  return result.current;
+}
+
+describe('handleFontRoleChange', () => {
+  it('hands a free text and its role to the host action', () => {
+    const setAdditionalTextFontRole = vi.fn();
+    handlersWith({ setAdditionalTextFontRole }).handleFontRoleChange('free-1', 'serif');
+    expect(setAdditionalTextFontRole).toHaveBeenCalledExactlyOnceWith('free-1', 'serif');
+  });
+
+  it('leaves a template text alone', () => {
+    const setAdditionalTextFontRole = vi.fn();
+    handlersWith({ setAdditionalTextFontRole }).handleFontRoleChange('headline', 'serif');
+    expect(setAdditionalTextFontRole).not.toHaveBeenCalled();
+  });
+
+  it('does nothing when the host has no such action', () => {
+    expect(() => handlersWith({}).handleFontRoleChange('free-1', 'serif')).not.toThrow();
+  });
+});

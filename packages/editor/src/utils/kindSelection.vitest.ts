@@ -64,6 +64,8 @@ function everyKindState(): Record<string, unknown> {
         y: 20,
         width: 300,
         fontSize: 40,
+        fontFamily: 'Anton, Arial, sans-serif',
+        bind: { fontFamily: { ref: 'font.condensed', value: 'Anton' } },
         fill: '#ffffff',
         opacity: 0.9,
         stroke: '#000000',

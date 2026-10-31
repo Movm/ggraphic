@@ -1407,6 +1407,7 @@ function CanvasEditorInner({
         lockState: toolbarState.lockState,
         canLock: toolbarState.canLock,
         canAlign: toolbarState.canAlign,
+        canChangeFontRole: toolbarState.canChangeFontRole,
         backgroundPickerRequest,
         handlers: {
           ...toolbarHandlers,

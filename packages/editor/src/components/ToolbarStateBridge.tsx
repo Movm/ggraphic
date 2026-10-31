@@ -358,6 +358,9 @@ export function ToolbarStateBridge<
     };
   });
 
+  // Ohne die Aktion des Hosts gibt es keine Schriftrolle, und die Leiste zeigt keine Auswahl.
+  const canChangeFontRole = !!actions.setAdditionalTextFontRole;
+
   // Report toolbar state to CanvasEditor
   useEffect(() => {
     onToolbarStateChange?.({
@@ -380,6 +383,7 @@ export function ToolbarStateBridge<
       canFlip: capabilities.canFlip,
       canAlign: capabilities.canAlign,
       canDistribute: capabilities.canDistribute,
+      canChangeFontRole,
       layers,
       selectedLayerIds,
     });
@@ -402,6 +406,7 @@ export function ToolbarStateBridge<
     capabilities.canFlip,
     capabilities.canAlign,
     capabilities.canDistribute,
+    canChangeFontRole,
     layers,
     selectedLayerIds,
     onToolbarStateChange,
