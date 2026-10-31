@@ -649,6 +649,22 @@ describe('P2 brand additions', () => {
     expect(other.bind).toBeUndefined();
   });
 
+  it('a free text switched to a font role follows a brand whose font for that role changes', () => {
+    const bebas: BrandPack = { ...brand, fonts: { ...brand.fonts, condensed: 'Bebas Neue' } };
+    // What `setAdditionalTextFontRole` writes: the stack and the binding together.
+    const state = {
+      additionalTexts: [
+        {
+          fontFamily: 'Anton, Arial, sans-serif',
+          bind: { fontFamily: { ref: 'font.condensed', value: 'Anton' } },
+        },
+      ],
+    };
+    const out = (rebindPageState(state, { brand: bebas }).state['additionalTexts'] as Item[])[0]!;
+    expect(out.fontFamily).toBe('Bebas Neue, Arial, sans-serif');
+    expect(out.bind?.fontFamily).toEqual({ ref: 'font.condensed', value: 'Bebas Neue' });
+  });
+
   it('groundClass', () => {
     expect(groundClass('#ffffff')).toBe('light');
     expect(groundClass('#1d3557')).toBe('dark');
