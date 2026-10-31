@@ -23,7 +23,8 @@ function roleGroupsFor(
   page: PageSize | null
 ): readonly (readonly SamplePhotoRole[])[] {
   // A slot that covers most of the page is a background: a scene, never a giant cropped face.
-  if (page && width * height >= COVER_SHARE * page.width * page.height) return [['scene', 'detail']];
+  if (page && width * height >= COVER_SHARE * page.width * page.height)
+    return [['scene', 'detail']];
   const ratio = height > 0 ? width / height : 1;
   if (ratio < 0.85) return [['portrait'], ['scene']];
   if (ratio > 1.3) return [['crowd'], ['scene']];
@@ -46,7 +47,12 @@ const num = (v: unknown, fallback: number): number => (typeof v === 'number' ? v
  * photo of its pool (`page` is the canvas size; slots covering most of it get scenes): with the template id as `seed`, different templates start at different
  * photos and the slots of one template get consecutive, hence different, ones.
  */
-export function withSamplePhotos(state: Obj, samples: readonly SamplePhoto[], seed = '', page: PageSize | null = null): Obj {
+export function withSamplePhotos(
+  state: Obj,
+  samples: readonly SamplePhoto[],
+  seed = '',
+  page: PageSize | null = null
+): Obj {
   const list = state['userImageInstances'];
   if (!Array.isArray(list) || samples.length === 0) return state;
   const offset = hashSeed(seed);
