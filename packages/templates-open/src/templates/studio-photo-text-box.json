@@ -1,0 +1,187 @@
+{
+  "formatVersion": 1,
+  "id": "studio-photo-text-box",
+  "version": 1,
+  "kind": "template",
+  "family": "photo-text",
+  "title": {
+    "en": "Box on the photo edge",
+    "de": "Kasten auf der Fotokante"
+  },
+  "description": {
+    "en": "A photo with a dark box over its lower edge holding the headline, a sentence below",
+    "de": "Ein Foto mit einem dunklen Kasten über der Unterkante, der die Headline trägt, darunter ein Satz"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "light", "dark", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "box",
+            "type": "rect",
+            "x": 0.48913,
+            "y": 0.609244,
+            "width": 0.978261,
+            "height": 0.277311,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 0.577778,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "On time is ==no accident==.",
+            "x": 0.043478,
+            "y": 0.50084,
+            "width": 0.891304,
+            "fontSize": 0.085185,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.96,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "accentFill": "#ffffff",
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.headline",
+              "accentFill": "accent"
+            },
+            "maxFontSize": 0.085185
+          },
+          {
+            "id": "subline",
+            "type": "body",
+            "text": "More staff for signal boxes and workshops.",
+            "x": 0,
+            "y": 0.798319,
+            "width": 1,
+            "fontSize": 0.048148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.048148
+          }
+        ],
+        "layerOrder": ["photo", "box", "headline", "subline", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "headline": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 3,
+        "maxChars": 32
+      }
+    },
+    "subline": {
+      "role": "subline",
+      "label": {
+        "en": "Subline",
+        "de": "Unterzeile"
+      },
+      "budget": {
+        "maxWords": 8,
+        "maxLines": 2,
+        "maxChars": 56
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "box-with-headline",
+      "title": {
+        "en": "Box with headline",
+        "de": "Kasten mit Headline"
+      },
+      "elementIds": ["box", "headline"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "headline": "On time is ==no accident==.",
+      "subline": "More staff for signal boxes and workshops."
+    },
+    "de": {
+      "headline": "Pünktlich ist ==kein Zufall==.",
+      "subline": "Mehr Personal für Stellwerke und Werkstätten."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
