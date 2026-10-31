@@ -76,6 +76,8 @@ export {
 export {
   instantiateTemplatePage,
   offeredSchemes,
+  roomBelow,
+  type ElementBox,
   type GeometryAxis,
   type GeometryTable,
   type InstantiateContext,

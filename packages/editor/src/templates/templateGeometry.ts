@@ -216,6 +216,8 @@ const ICON_SIZE = 120;
  * code point the tables do not cover (CJK, emoji, a code point the browser draws in a fallback
  * font), cannot be measured: the gate then fails `bounds` closed.
  */
+/** Air kept between a fitted text and the element below it, in lines. */
+const TEXT_GAP = 0.25;
 const FLAT_EM = 1.2; // only to size a box that is flagged anyway
 /** The widest positive kerning pair of the shipped fonts is about 0.15 em; 0.06 em per pair covers every realistic pair. */
 const KERN_EM = 0.06;
@@ -397,7 +399,7 @@ function layoutText(p: TextProps): TextLayout {
  */
 function fitTextToBox(
   el: Readonly<Record<string, unknown>>,
-  req: { maxLines?: number; canvasHeight: number }
+  req: { maxLines?: number; maxHeight?: number; canvasHeight: number }
 ): { fontSize: number; fits: boolean } | null {
   const props = textPropsOf(el);
   const max = num(el, 'maxFontSize');
@@ -406,6 +408,9 @@ function fitTextToBox(
   const slot: SlotFit = {
     width: props.width,
     maxHeight: height > 0 ? height : Number.POSITIVE_INFINITY,
+    ...(req.maxHeight === undefined ? {} : { room: req.maxHeight }),
+    // A quarter line of air above whatever lies below.
+    gap: req.maxHeight === undefined ? 0 : TEXT_GAP,
     fontSize: max,
     maxSize: max,
     minSize: Math.min(minTextSizePx(req.canvasHeight), max),
@@ -416,8 +421,19 @@ function fitTextToBox(
   };
   const measureAt = (size: number) => (text: string) =>
     tableRunMeasure({ ...props, fontSize: size }, { reason: null })(text, PLAIN_STYLE);
-  const fontSize = fitFontSizeToSlot(props.text, slot, measureAt);
-  return { fontSize, fits: slotFits(props.text, slot, measureAt, fontSize) };
+  // The room below is a preference, not a rule the template can always keep: its own stacks are
+  // sometimes tighter than a quarter line. Try room plus air, then room alone, then width and
+  // lines only; a later step never makes a text that fitted under an earlier one worse.
+  const { room: _room, ...unlimited } = slot;
+  const steps: SlotFit[] =
+    slot.room === undefined ? [slot] : [slot, { ...slot, gap: 0 }, { ...unlimited, gap: 0 }];
+  let last = { fontSize: max, fits: false };
+  for (const step of steps) {
+    const fontSize = fitFontSizeToSlot(props.text, step, measureAt);
+    last = { fontSize, fits: slotFits(props.text, step, measureAt, fontSize) };
+    if (last.fits) break;
+  }
+  return last;
 }
 
 /** The widest explicit line of a text that does not wrap (a badge), and how many lines it has. */

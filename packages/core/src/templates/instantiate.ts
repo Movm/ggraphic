@@ -36,6 +36,8 @@ export interface TemplateInput {
 /** What a text fit is asked: the slot's line limit and the canvas height (for the legibility floor). */
 export interface TextFitRequest {
   maxLines?: number;
+  /** How far down the text may grow from its top (`roomBelow`); the fit keeps a gap of a quarter line below it. */
+  maxHeight?: number;
   canvasHeight: number;
 }
 
@@ -74,6 +76,39 @@ export interface InstantiateContext {
   fontFallback?: string | ((role: string) => string);
   /** Fits every text with a numeric `maxFontSize` once it has its font, width and text. Without it the size stays as placed. */
   fitText?: FitText;
+  /** The box an element covers (`GateAdapter.box` with one line); with `fitText`, bounds a fitted text by the element below it. */
+  boxOf?: ElementBox;
+}
+
+/** The box of an element in canvas px, or null if it has none. */
+export type ElementBox = (
+  stateKey: string,
+  el: Readonly<Record<string, unknown>>
+) => { x: number; y: number; width: number; height: number } | null;
+
+/**
+ * How far down the text `el` may grow before it meets the nearest element below it that overlaps
+ * it horizontally (any kind; its top must lie below the text's top, so the page and a plate the
+ * text sits on never limit it); undefined when nothing lies below. Positions are as placed:
+ * nothing is moved, so a stack of texts is limited by the original top of the next one.
+ */
+export function roomBelow(
+  state: Readonly<Record<string, unknown>>,
+  stateKey: string,
+  el: Readonly<Record<string, unknown>>,
+  boxOf: ElementBox
+): number | undefined {
+  const self = boxOf(stateKey, el);
+  if (!self) return undefined;
+  let top = Number.POSITIVE_INFINITY;
+  forEachElement(state as Record<string, unknown>, (other, key) => {
+    if (other === el) return;
+    const box = boxOf(key, other);
+    if (!box || !(box.y > self.y + 1)) return;
+    if (!(self.x + 1 < box.x + box.width && box.x + 1 < self.x + self.width)) return;
+    top = Math.min(top, box.y);
+  });
+  return Number.isFinite(top) ? top - self.y : undefined;
 }
 
 /**
@@ -264,8 +299,10 @@ export function instantiateTemplatePage(
     forEachElement(state, (el, key, id) => {
       if (key !== 'additionalTexts' || !isNum(el['maxFontSize'])) return;
       const maxLines = t.slots?.[id]?.budget.maxLines;
+      const maxHeight = ctx.boxOf ? roomBelow(state, key, el, ctx.boxOf) : undefined;
       const fit = ctx.fitText!(el, {
         ...(maxLines === undefined ? {} : { maxLines }),
+        ...(maxHeight === undefined ? {} : { maxHeight }),
         canvasHeight: H,
       });
       if (fit) el['fontSize'] = fit.fontSize;

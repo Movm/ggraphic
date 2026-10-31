@@ -20,6 +20,13 @@ export interface SlotFit {
   minSize?: number;
   /** Obergrenze: begonnen wird bei `max(fontSize, maxSize)`, die Größe kann also wieder wachsen. */
   maxSize?: number;
+  /**
+   * Platz bis zum nächsten Element darunter: gilt erst ab der zweiten Zeile. Eine einzeilige
+   * Vorlage steht, wo sie gezeichnet wurde; verkleinern ändert dort nichts. `gap` kommt dazu.
+   */
+  room?: number;
+  /** Abstand unter dem Text als Anteil der Zeilenhöhe (`size * lineHeight`), der zu `maxHeight` dazukommt. */
+  gap?: number;
   /** Höchstens so viele Zeilen. */
   maxLines?: number;
   /** Kein Wort wird getrennt oder mitten im Wort umgebrochen: jedes Wort muss ganz in die Breite passen. */
@@ -63,7 +70,9 @@ export function slotFits(text: string, slot: SlotFit, measureAt: MeasureAt, size
   if (!wordsFit(text, slot.width, measure, slot.wholeWords)) return false;
   const lines = slot.countLines?.(size) ?? wrapLines(text, slot.width, measure).length;
   if (slot.maxLines !== undefined && lines > slot.maxLines) return false;
-  return lines * size * slot.lineHeight <= slot.maxHeight;
+  const high = (lines + (slot.gap ?? 0)) * size * slot.lineHeight;
+  if (high > slot.maxHeight) return false;
+  return slot.room === undefined || lines <= 1 || high <= slot.room;
 }
 
 /**
