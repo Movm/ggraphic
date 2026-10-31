@@ -66,9 +66,11 @@ describe('withSamplePhotos', () => {
 describe('withSamplePhotos page coverage', () => {
   const page = { width: 1080, height: 1350 };
   const srcOf = (w: number, h: number) =>
-    (withSamplePhotos({ userImageInstances: [img('a', '', w, h)] }, SAMPLES, '', page)[
-      'userImageInstances'
-    ] as { src: string }[])[0]?.src;
+    (
+      withSamplePhotos({ userImageInstances: [img('a', '', w, h)] }, SAMPLES, '', page)[
+        'userImageInstances'
+      ] as { src: string }[]
+    )[0]?.src;
 
   it('gives a tall slot that covers the page a scene, not a portrait', () => {
     expect(srcOf(1080, 1350)).toBe('/s/s1.jpg');

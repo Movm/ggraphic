@@ -37,13 +37,14 @@ describe('placing a template with hugging plates', () => {
     for (const n of [1, 2, 3]) {
       const text = byId(state, 'additionalTexts', `line-${n}`);
       const plate = box(state, 'shapeInstances', `plate-${n}`);
-      const pad = (
-        byId(state, 'shapeInstances', `plate-${n}`)['hug'] as unknown as { padX: number }
-      ).padX;
+      const hug = byId(state, 'shapeInstances', `plate-${n}`)['hug'] as unknown as {
+        padX: number;
+        padY: number;
+      };
+      const pad = hug.padX;
       const textBox = TEMPLATE_GATE_ADAPTER.box('additionalTexts', text, 1)!;
       const line = TEMPLATE_GATE_ADAPTER.textExtent!(text)!;
-      expect(plate.height).toBeGreaterThanOrEqual(textBox.height);
-      expect(plate.height).toBeLessThan(textBox.height + 20);
+      expect(plate.height).toBeCloseTo(textBox.height + 2 * hug.padY, 0);
       expect(plate.x).toBeCloseTo(textBox.x - pad, 0);
       // The plate ends where the measured line ends, not at the end of the text box.
       expect(plate.width).toBeCloseTo(line.width + 2 * pad, -1);
