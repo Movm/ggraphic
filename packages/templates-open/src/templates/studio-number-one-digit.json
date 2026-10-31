@@ -1,0 +1,248 @@
+{
+  "formatVersion": 1,
+  "id": "studio-number-one-digit",
+  "version": 1,
+  "kind": "template",
+  "family": "number",
+  "title": {
+    "en": "One digit as hero",
+    "de": "Eine Ziffer als Held"
+  },
+  "description": {
+    "en": "A single huge digit with a short \"almost … of\" line beside it and the sentence below",
+    "de": "Eine einzelne riesige Ziffer mit kurzer „Fast … von“-Zeile daneben und dem Satz darunter"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "number",
+            "type": "header",
+            "text": "3",
+            "x": 0,
+            "y": 0.02521,
+            "width": 0.521739,
+            "fontSize": 0.796296,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.82,
+            "fontWeight": 800,
+            "letterSpacing": -0.06,
+            "bind": {
+              "fill": "accent",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.796296
+          },
+          {
+            "id": "lead",
+            "type": "body",
+            "text": "Almost",
+            "x": 0.478261,
+            "y": 0.067227,
+            "width": 0.521739,
+            "fontSize": 0.059259,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontWeight": 700,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.059259
+          },
+          {
+            "id": "of",
+            "type": "header",
+            "text": "of 4",
+            "x": 0.478261,
+            "y": 0.12605,
+            "width": 0.521739,
+            "fontSize": 0.148148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.9,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.148148
+          },
+          {
+            "id": "text",
+            "type": "body",
+            "text": "rural GPs are over sixty years old.",
+            "x": 0,
+            "y": 0.596639,
+            "width": 1,
+            "fontSize": 0.061111,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.08,
+            "fontWeight": 700,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.061111
+          },
+          {
+            "id": "source",
+            "type": "body",
+            "text": "Source: example survey, 2026",
+            "x": 0,
+            "y": 0.739496,
+            "width": 0.76087,
+            "fontSize": 0.024074,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.2,
+            "fontWeight": 400,
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.024074
+          }
+        ],
+        "layerOrder": ["number", "lead", "of", "text", "source", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "number": {
+      "role": "number",
+      "label": {
+        "en": "Figure",
+        "de": "Zahl"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 2
+      }
+    },
+    "lead": {
+      "role": "subline",
+      "label": {
+        "en": "Lead word",
+        "de": "Einleitung"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 12
+      }
+    },
+    "of": {
+      "role": "subline",
+      "label": {
+        "en": "Fraction",
+        "de": "Bruch"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 8
+      }
+    },
+    "text": {
+      "role": "body",
+      "label": {
+        "en": "Explanation",
+        "de": "Erklärung"
+      },
+      "budget": {
+        "maxWords": 9,
+        "maxLines": 3,
+        "maxChars": 60
+      }
+    },
+    "source": {
+      "role": "body",
+      "label": {
+        "en": "Source",
+        "de": "Quelle"
+      },
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 1,
+        "maxChars": 40
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "number-with-explanation",
+      "title": {
+        "en": "Number with explanation",
+        "de": "Zahl mit Erklärung"
+      },
+      "elementIds": ["number", "lead", "of", "text", "source"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-left"],
+  "placeholders": {
+    "en": {
+      "number": "3",
+      "lead": "Almost",
+      "of": "of 4",
+      "text": "rural GPs are over sixty years old.",
+      "source": "Source: example survey, 2026"
+    },
+    "de": {
+      "number": "3",
+      "lead": "Fast",
+      "of": "von 4",
+      "text": "Hausärzte auf dem Land sind über sechzig.",
+      "source": "Quelle: Beispiel-Erhebung, 2026"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
