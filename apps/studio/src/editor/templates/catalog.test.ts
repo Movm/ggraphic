@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { studioBrand } from '../../brand';
 
 import {
+  FAMILY_LABELS,
   buildCatalog,
   catalogTemplate,
   formatAspect,
@@ -284,6 +285,17 @@ describe('the catalogue', () => {
     expect(ids(near)).not.toContain('light-only');
     // The quote also offers the primary world, so it stays.
     expect(templatesFor('post-portrait', near).map((e) => e.id)).toContain('studio-quote');
+  });
+});
+
+describe('family labels', () => {
+  it('names every family the catalogue offers, instead of showing its id', () => {
+    const families = new Set(studioCatalog().entries.map((e) => e.family));
+    expect([...families].filter((f) => !FAMILY_LABELS[f])).toEqual([]);
+  });
+
+  it('calls the date family something else than the "Event" occasion', () => {
+    expect(FAMILY_LABELS['event']).not.toBe('Event');
   });
 });
 
