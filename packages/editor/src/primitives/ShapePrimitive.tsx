@@ -19,6 +19,7 @@ import { useBoxSnap, type SnapProps } from '@ggraphic/editor/hooks/useBoxSnap';
 import { gradientFillProps } from '@ggraphic/editor/utils/gradientFill';
 import { translucentHitFunc } from '@ggraphic/editor/utils/gradientHitArea';
 import { handDrawnPath } from '@ggraphic/editor/utils/handDrawn';
+import { sameCorners } from '../utils/cornerRadius.js';
 import { paintDots, paintGrain, paintStripes } from '../utils/grain.js';
 import { notchPx, traceNotch } from '../utils/notch.js';
 import {
@@ -763,7 +764,7 @@ export const ShapePrimitive = memo(ShapePrimitiveInner, (prevProps, nextProps) =
   if (prevShape.scaleX !== nextShape.scaleX) return false;
   if (prevShape.scaleY !== nextShape.scaleY) return false;
   if (prevShape.opacity !== nextShape.opacity) return false;
-  if (prevShape.cornerRadius !== nextShape.cornerRadius) return false;
+  if (!sameCorners(prevShape.cornerRadius, nextShape.cornerRadius)) return false;
   if (prevShape.strokeWidth !== nextShape.strokeWidth) return false;
   if (prevShape.dash !== nextShape.dash) return false;
   if (prevShape.shadowColor !== nextShape.shadowColor) return false;

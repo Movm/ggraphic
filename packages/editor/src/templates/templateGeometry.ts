@@ -67,6 +67,8 @@ export const TEMPLATE_GEOMETRY: GeometryTable = {
     y: 'y',
     width: 'w',
     height: 'h',
+    // A number or a list of four: px, scaled like the shapes' `cornerRadius`.
+    cornerRadius: 's',
     blur: 's',
     shadowBlur: 's',
     shadowOffsetX: 's',
@@ -185,7 +187,11 @@ function notchCut(box: Box | null, side: number): Box | null {
  */
 function photoCover(el: El): ReturnType<GateAdapter['cover']> {
   const hasTint = str(el, 'tint') !== '' || num(el, 'tintStrength') !== 0;
-  if (hasTint || str(el, 'mask') !== '' || num(el, 'opacity', 1) < 1) return UNKNOWN;
+  // Rounded corners leave the box's corners bare, like a mask.
+  const rounded = Array.isArray(el['cornerRadius'])
+    ? el['cornerRadius'].some((r) => typeof r === 'number' && r > 0)
+    : num(el, 'cornerRadius') > 0;
+  if (hasTint || rounded || str(el, 'mask') !== '' || num(el, 'opacity', 1) < 1) return UNKNOWN;
   const low = str(el, 'duotoneLow');
   const high = str(el, 'duotoneHigh');
   if (low === '' || high === '') return { kind: 'photo', low: '#000000', high: '#ffffff' };

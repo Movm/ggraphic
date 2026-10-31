@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // Begradigen. Gedrehte Fotos sind Rechtecke ihrer ungedrehten Lage, gedreht um die Mitte (Grad, wie Konva).
 
+import { cornersOf, hasCorners, traceRoundedRect, type CornerRadius } from './cornerRadius.js';
 import {
   coverPhotoRect,
   framedPhotoRect,
@@ -304,16 +305,11 @@ export function straightSceneFunc(context: Konva.Context, shape: Konva.Shape): v
   if (!image || !draw) return;
   const width = shape.width();
   const height = shape.height();
-  const radius = Number(shape.getAttr('cornerRadius')) || 0;
+  const radius = shape.getAttr('cornerRadius') as CornerRadius | undefined;
   context.save();
   context.beginPath();
-  if (radius > 0) {
-    const r = Math.min(radius, width / 2, height / 2);
-    context.moveTo(r, 0);
-    context.arcTo(width, 0, width, height, r);
-    context.arcTo(width, height, 0, height, r);
-    context.arcTo(0, height, 0, 0, r);
-    context.arcTo(0, 0, width, 0, r);
+  if (hasCorners(radius)) {
+    traceRoundedRect(context, width, height, cornersOf(radius, width, height));
   } else {
     context.rect(0, 0, width, height);
   }

@@ -23,6 +23,7 @@ import {
 } from '@ggraphic/editor/utils/chartUtils';
 import { ICON_TARGET_SIZE, ILLUSTRATION_TARGET_SIZE } from '@ggraphic/editor/utils/motifSizes';
 import { photoStripBeside, type ShapeInstance } from '@ggraphic/editor/utils/shapes';
+import { hasCorners } from '@ggraphic/editor/utils/cornerRadius';
 import { backgroundStraighten } from '@ggraphic/editor/utils/straighten';
 import { konvaFontStyle } from '@ggraphic/editor/utils/textUtils';
 
@@ -250,7 +251,9 @@ function mapShape(shape: ShapeInstance): PptxItem {
     shape.notch ||
     shape.glow ||
     (shape.grain ?? 0) > 0 ||
-    shape.pattern
+    shape.pattern ||
+    // pptx rounds every corner of a roundRect the same.
+    Array.isArray(shape.cornerRadius)
   ) {
     return raster(shape.id, placement, 'shape-styled');
   }
@@ -263,7 +266,11 @@ function mapShape(shape: ShapeInstance): PptxItem {
     fill: shape.fill,
     rectRadius:
       native === 'roundRect'
-        ? Math.min(shape.cornerRadius ?? 32, placement.box.width / 2, placement.box.height / 2)
+        ? Math.min(
+            typeof shape.cornerRadius === 'number' ? shape.cornerRadius : 32,
+            placement.box.width / 2,
+            placement.box.height / 2
+          )
         : null,
     shadow: shadowOf(shape),
   };
@@ -468,7 +475,14 @@ function mapUserImage(image: UserImageInstance): PptxItem {
     image.fit === 'cover' &&
     ((image.cropZoom ?? 1) !== 1 || !!image.panX || !!image.panY || !!image.cropRotation);
   const ovalMask = image.mask === 'kreis' && Math.abs(image.width - image.height) > 0.5;
-  if (isAdjusted(image) || image.shadowColor || movedCrop || ovalMask || image.notch) {
+  if (
+    isAdjusted(image) ||
+    image.shadowColor ||
+    movedCrop ||
+    ovalMask ||
+    image.notch ||
+    hasCorners(image.cornerRadius)
+  ) {
     return raster(image.id, placement, 'image-adjusted');
   }
   return {
