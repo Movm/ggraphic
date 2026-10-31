@@ -1,0 +1,164 @@
+{
+  "formatVersion": 1,
+  "id": "studio-before-after-stacked",
+  "version": 1,
+  "kind": "template",
+  "family": "before-after",
+  "title": {
+    "en": "Two photos with centre box",
+    "de": "Zwei Fotos mit Mittelbox"
+  },
+  "description": {
+    "en": "Two photos one above the other with a dark box over the seam holding two short statements",
+    "de": "Zwei Fotos übereinander mit einem dunklen Kasten über der Naht, der zwei kurze Aussagen trägt"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "light", "dark", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "box",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.508403,
+            "width": 1,
+            "height": 0.277311,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo-top",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 0.518519,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "photo-bottom",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0.481481,
+            "width": 1,
+            "height": 0.518519,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "grayscale": true,
+            "contrast": 6
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "statement",
+            "type": "header",
+            "text": "Built: 40. Needed: 4,000.",
+            "x": 0.043478,
+            "y": 0.403361,
+            "width": 0.913043,
+            "fontSize": 0.077778,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.077778
+          }
+        ],
+        "layerOrder": ["photo-top", "photo-bottom", "box", "statement", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo-top": "canvas",
+    "photo-bottom": "canvas"
+  },
+  "slots": {
+    "photo-top": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "photo-bottom": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "statement": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 3,
+        "maxChars": 32
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right"],
+  "placeholders": {
+    "en": {
+      "statement": "Built: 40. Needed: 4,000."
+    },
+    "de": {
+      "statement": "Gebaut: 40. Gebraucht: 4.000."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

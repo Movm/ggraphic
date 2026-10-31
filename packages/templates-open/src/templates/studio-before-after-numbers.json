@@ -1,0 +1,232 @@
+{
+  "formatVersion": 1,
+  "id": "studio-before-after-numbers",
+  "version": 1,
+  "kind": "template",
+  "family": "before-after",
+  "title": {
+    "en": "Numbers on split page",
+    "de": "Zahlenduell auf geteilter Fläche"
+  },
+  "description": {
+    "en": "Two huge figures on two halves of different colour, each with a line of explanation",
+    "de": "Zwei riesige Zahlen auf zwei verschiedenfarbigen Hälften, jede mit einer Erklärung"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "half-bottom",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.75,
+            "width": 1,
+            "height": 0.5,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "number-top",
+            "type": "header",
+            "text": "14",
+            "x": 0,
+            "y": 0,
+            "width": 0.576087,
+            "fontSize": 0.555556,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontWeight": 400,
+            "letterSpacing": -0.005,
+            "bind": {
+              "fill": "accent",
+              "fontFamily": "font.condensed"
+            },
+            "maxFontSize": 0.555556
+          },
+          {
+            "id": "text-top",
+            "type": "body",
+            "text": "minutes to the next stop in the city",
+            "x": 0.608696,
+            "y": 0.184874,
+            "width": 0.391304,
+            "fontSize": 0.051852,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.051852
+          },
+          {
+            "id": "number-bottom",
+            "type": "header",
+            "text": "52",
+            "x": 0,
+            "y": 0.512605,
+            "width": 0.576087,
+            "fontSize": 0.462963,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontWeight": 400,
+            "letterSpacing": -0.005,
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.condensed"
+            },
+            "maxFontSize": 0.462963
+          },
+          {
+            "id": "text-bottom",
+            "type": "body",
+            "text": "minutes in the countryside",
+            "x": 0.608696,
+            "y": 0.605042,
+            "width": 0.391304,
+            "fontSize": 0.051852,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.051852
+          }
+        ],
+        "layerOrder": [
+          "half-bottom",
+          "number-top",
+          "text-top",
+          "number-bottom",
+          "text-bottom",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {
+    "half-bottom": "canvas"
+  },
+  "slots": {
+    "number-top": {
+      "role": "number",
+      "label": {
+        "en": "First figure",
+        "de": "Erste Zahl"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 4
+      }
+    },
+    "text-top": {
+      "role": "body",
+      "label": {
+        "en": "First explanation",
+        "de": "Erste Erklärung"
+      },
+      "budget": {
+        "maxWords": 8,
+        "maxLines": 4,
+        "maxChars": 64
+      }
+    },
+    "number-bottom": {
+      "role": "number",
+      "label": {
+        "en": "Second figure",
+        "de": "Zweite Zahl"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 4
+      }
+    },
+    "text-bottom": {
+      "role": "body",
+      "label": {
+        "en": "Second explanation",
+        "de": "Zweite Erklärung"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 6,
+        "maxChars": 48
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "number-top": "14",
+      "text-top": "minutes to the next stop in the city",
+      "number-bottom": "52",
+      "text-bottom": "minutes in the countryside"
+    },
+    "de": {
+      "number-top": "14",
+      "text-top": "Minuten bis zur nächsten Haltestelle in der Stadt",
+      "number-bottom": "52",
+      "text-bottom": "Minuten auf dem Land"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
