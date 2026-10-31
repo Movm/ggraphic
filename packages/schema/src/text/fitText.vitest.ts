@@ -72,3 +72,72 @@ describe('fitFontSizeToSlot with a ceiling (maxSize)', () => {
     expect(fitFontSizeToSlot(HEADLINE, slot, measureAt())).toBe(20);
   });
 });
+
+describe('binary search equals the linear scan', () => {
+  const linear = (
+    text: string,
+    slot: Parameters<typeof fitFontSizeToSlot>[1],
+    m: typeof measureAt extends (...a: infer _) => infer R ? R : never
+  ) => {
+    const min = slot.minSize ?? 12;
+    let size = Math.max(slot.fontSize, slot.maxSize ?? slot.fontSize);
+    while (size > min) {
+      if (slotFits(text, slot, m, size)) return size;
+      size -= 1;
+    }
+    return min;
+  };
+  const words = [
+    'Gute',
+    'Nachrichten',
+    'für',
+    'alle',
+    'Gemeinschaftsgarten',
+    'Land',
+    'im',
+    'Klimaschutz',
+  ];
+  let seed = 12345;
+  const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
+
+  it('fits(s) is monotone: a fitting size means every smaller size fits', () => {
+    for (let i = 0; i < 20; i++) {
+      const text = Array.from(
+        { length: 2 + Math.floor(rnd() * 7) },
+        () => words[Math.floor(rnd() * words.length)]
+      ).join(' ');
+      const slot = {
+        ...base,
+        width: 200 + rnd() * 600,
+        maxHeight: Infinity,
+        maxLines: 1 + Math.floor(rnd() * 3),
+      };
+      let fitted = false;
+      for (let s = 84; s >= 20; s--) {
+        const f = slotFits(text, slot, measureAt(), s);
+        if (fitted) expect(f).toBe(true);
+        fitted ||= f;
+      }
+    }
+  });
+
+  it('gives the same size as the linear scan on 50 random texts and boxes', () => {
+    for (let i = 0; i < 50; i++) {
+      const text = Array.from(
+        { length: 1 + Math.floor(rnd() * 9) },
+        () => words[Math.floor(rnd() * words.length)]
+      ).join(' ');
+      const slot = {
+        ...base,
+        width: 60 + rnd() * 900,
+        maxHeight: rnd() < 0.5 ? Infinity : 100 + rnd() * 500,
+        maxSize: 40 + Math.floor(rnd() * 300),
+        minSize: 12 + Math.floor(rnd() * 20),
+        wholeWords: rnd() < 0.7,
+        ...(rnd() < 0.5 ? { maxLines: 1 + Math.floor(rnd() * 4) } : {}),
+      };
+      const m = measureAt(rnd() * 0.05 - 0.02);
+      expect(fitFontSizeToSlot(text, slot, m)).toBe(linear(text, slot, m));
+    }
+  });
+});
