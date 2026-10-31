@@ -1,0 +1,158 @@
+{
+  "photos": [
+    {
+      "file": "portrait-1.jpg",
+      "role": "portrait",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "portrait-2.jpg",
+      "role": "portrait",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "group-1.jpg",
+      "role": "crowd",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "group-2.jpg",
+      "role": "crowd",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "trees.jpg",
+      "role": "scene",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "garden.jpg",
+      "role": "scene",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "bicycles.jpg",
+      "role": "scene",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "square.jpg",
+      "role": "scene",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "hands.jpg",
+      "role": "detail",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "portrait-3.jpg",
+      "role": "portrait",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "portrait-4.jpg",
+      "role": "portrait",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "portrait-5.jpg",
+      "role": "portrait",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "portrait-6.jpg",
+      "role": "portrait",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "group-3.jpg",
+      "role": "crowd",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "group-4.jpg",
+      "role": "crowd",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "river.jpg",
+      "role": "scene",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "solar.jpg",
+      "role": "scene",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "tram.jpg",
+      "role": "scene",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "seedlings.jpg",
+      "role": "detail",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "cup.jpg",
+      "role": "detail",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "facade.jpg",
+      "role": "scene",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "hills.jpg",
+      "role": "scene",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    }
+  ]
+}

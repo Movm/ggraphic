@@ -141,6 +141,8 @@ export interface TextEditSession {
   fill: string;
   align: CSSProperties['textAlign'];
   lineHeight: number;
+  /** Laufweite in em, wie am Textfeld; fehlt sie, setzt der Editor keine. */
+  letterSpacing?: number;
   /** Deckkraft des Feldes — die Kopfleiste stellt sie, also zeigt der Editor sie. */
   opacity: number;
   /** Stil der `==Akzent==`-Läufe; ohne ihn bietet der Editor keinen Akzent an. */
@@ -589,10 +591,15 @@ function TextEditorRoot({ children }: { children: ReactNode }) {
           pointerEvents: 'auto',
           fontFamily: resolveFontFamily(session.fontFamily),
           fontStyle: session.fontStyle.includes('italic') ? 'italic' : 'normal',
-          fontWeight: session.fontStyle.includes('bold') ? 'bold' : 'normal',
+          fontWeight:
+            /\d+/.exec(session.fontStyle)?.[0] ??
+            (session.fontStyle.includes('bold') ? 'bold' : 'normal'),
           color: session.fill,
           textAlign: session.align,
           lineHeight: String(session.lineHeight),
+          // Em wie am Knoten (Konva rechnet `letterSpacing * fontSize`); es folgt so auch
+          // der Verkleinerung des Editors. Konva wie CSS setzen den Abstand nach jedem Zeichen.
+          letterSpacing: session.letterSpacing ? `${session.letterSpacing}em` : undefined,
           // Nicht ganz bis 0: die Deckkraft gehört zum Feld und wird
           // in derselben Leiste gestellt, aber der Editor ist Werkzeug,
           // nicht Sujet — bei 0 tippte man ins Unsichtbare.

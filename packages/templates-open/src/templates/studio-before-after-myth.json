@@ -1,0 +1,260 @@
+{
+  "formatVersion": 1,
+  "id": "studio-before-after-myth",
+  "version": 1,
+  "kind": "template",
+  "family": "before-after",
+  "title": {
+    "en": "Myth and fact",
+    "de": "Mythos und Fakt"
+  },
+  "description": {
+    "en": "A struck-out claim under a myth label and the fact under a fact label",
+    "de": "Eine Behauptung unter einem Mythos-Label und darunter der Fakt unter einem Fakt-Label"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "label-myth",
+            "type": "rect",
+            "x": 0.168478,
+            "y": 0.063025,
+            "width": 0.336957,
+            "height": 0.07563,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            },
+            "hug": {
+              "text": "myth-label",
+              "padX": 0.022222,
+              "padY": 0.015741
+            }
+          },
+          {
+            "id": "label-fact",
+            "type": "rect",
+            "x": 0.168478,
+            "y": 0.508403,
+            "width": 0.336957,
+            "height": 0.07563,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            },
+            "hug": {
+              "text": "fact-label",
+              "padX": 0.022222,
+              "padY": 0.015741
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "myth-label",
+            "type": "body",
+            "text": "MYTH",
+            "x": 0.032609,
+            "y": 0.043697,
+            "width": 0.282609,
+            "fontSize": 0.046296,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontWeight": 700,
+            "letterSpacing": 0.04,
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.046296
+          },
+          {
+            "id": "myth",
+            "type": "header",
+            "text": "Cycle paths only cost money.",
+            "x": 0,
+            "y": 0.184874,
+            "width": 1,
+            "fontSize": 0.088889,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.98,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "strikethrough": true,
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.088889
+          },
+          {
+            "id": "fact-label",
+            "type": "body",
+            "text": "FACT",
+            "x": 0.032609,
+            "y": 0.489076,
+            "width": 0.282609,
+            "fontSize": 0.046296,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontWeight": 700,
+            "letterSpacing": 0.04,
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.046296
+          },
+          {
+            "id": "fact",
+            "type": "header",
+            "text": "Every euro saves four in follow-up costs.",
+            "x": 0,
+            "y": 0.588235,
+            "width": 1,
+            "fontSize": 0.085185,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.98,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.085185
+          }
+        ],
+        "layerOrder": [
+          "label-myth",
+          "myth-label",
+          "myth",
+          "label-fact",
+          "fact-label",
+          "fact",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "myth-label": {
+      "role": "subline",
+      "label": {
+        "en": "Myth label",
+        "de": "Mythos-Label"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 10
+      }
+    },
+    "myth": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 3,
+        "maxChars": 36
+      }
+    },
+    "fact-label": {
+      "role": "subline",
+      "label": {
+        "en": "Fact label",
+        "de": "Fakt-Label"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 10
+      }
+    },
+    "fact": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 7,
+        "maxLines": 4,
+        "maxChars": 48
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "myth-label": "MYTH",
+      "myth": "Cycle paths only cost money.",
+      "fact-label": "FACT",
+      "fact": "Every euro saves four in follow-up costs."
+    },
+    "de": {
+      "myth-label": "MYTHOS",
+      "myth": "Radwege kosten nur Geld.",
+      "fact-label": "FAKT",
+      "fact": "Jeder Euro spart vier Euro Folgekosten."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

@@ -1,0 +1,231 @@
+{
+  "formatVersion": 1,
+  "id": "studio-good-news-slide",
+  "version": 1,
+  "kind": "template",
+  "family": "news",
+  "title": {
+    "en": "Good news slide",
+    "de": "Gute-Nachricht-Folie"
+  },
+  "description": {
+    "en": "A deep panel with a giant exclamation, a photo band, a dot and a short report",
+    "de": "Eine tiefe Fläche mit riesigem Ausruf, ein Fotoband, ein Punkt und ein kurzer Bericht"
+  },
+  "tags": {
+    "tone": "warm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "panel",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.17037,
+            "width": 1,
+            "height": 0.340741,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "notch": 0.051852,
+            "grain": 0.5,
+            "grainTone": "light",
+            "bind": {
+              "fill": "deep"
+            }
+          },
+          {
+            "id": "dot",
+            "type": "ellipse",
+            "x": 0.875,
+            "y": 0.319328,
+            "width": 0.163043,
+            "height": 0.12605,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0.340741,
+            "width": 1,
+            "height": 0.437037,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "label",
+            "type": "body",
+            "text": "GOOD NEWS",
+            "x": 0,
+            "y": 0.013445,
+            "width": 0.543478,
+            "fontSize": 0.024074,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 600,
+            "letterSpacing": 0.08,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.024074
+          },
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "Done!",
+            "x": 0.066667,
+            "y": 0.125926,
+            "width": 0.833333,
+            "fontSize": 0.17037,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 800,
+            "letterSpacing": -0.045,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.17037
+          },
+          {
+            "id": "text",
+            "type": "body",
+            "text": "The youth centre stays open. After 4,300 signatures the council secured the funding until 2029. Thank you all!",
+            "x": 0,
+            "y": 0.845378,
+            "width": 0.604348,
+            "fontSize": 0.027778,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.4,
+            "fontWeight": 400,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.027778
+          }
+        ],
+        "layerOrder": ["panel", "label", "headline", "photo", "dot", "text", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "panel": "canvas",
+    "headline": "canvas",
+    "photo": "canvas"
+  },
+  "slots": {
+    "label": {
+      "role": "subline",
+      "label": {
+        "en": "Label",
+        "de": "Label"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 16
+      }
+    },
+    "headline": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Headline"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 12
+      }
+    },
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "text": {
+      "role": "body",
+      "label": {
+        "en": "Report",
+        "de": "Bericht"
+      },
+      "budget": {
+        "maxWords": 20,
+        "maxLines": 4,
+        "maxChars": 140
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right"],
+  "placeholders": {
+    "en": {
+      "label": "GOOD NEWS",
+      "headline": "Done!",
+      "text": "The youth centre stays open. After 4,300 signatures the council secured the funding until 2029. Thank you all!"
+    },
+    "de": {
+      "label": "GUTE NACHRICHT",
+      "headline": "Geschafft!",
+      "text": "Der Jugendtreff bleibt offen. Nach 4.300 Unterschriften hat der Gemeinderat die Finanzierung bis 2029 gesichert. Danke an alle!"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

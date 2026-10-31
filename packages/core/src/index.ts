@@ -67,14 +67,18 @@ export {
   GATE_RULES,
   checkTemplate,
   type GateAdapter,
+  type GateCover,
   type GateBudget,
   type GateContext,
   type GateProblem,
   type GateRule,
 } from './templates/gate.js';
+export { hugOf, hugPlates, type HugAdapter, type PlateHug } from './templates/hug.js';
 export {
   instantiateTemplatePage,
   offeredSchemes,
+  roomBelow,
+  type ElementBox,
   type GeometryAxis,
   type GeometryTable,
   type InstantiateContext,

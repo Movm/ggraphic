@@ -163,6 +163,44 @@ describe('rebindPageState', () => {
     expect(text.fontFamily).toBe('Lora');
   });
 
+  describe('fitted text sizes', () => {
+    const other: BrandPack = { ...brand, fonts: { ...brand.fonts, headline: 'Lora' } };
+    const fonted = (extra: Record<string, unknown>) => ({
+      id: 't',
+      fontFamily: 'Raleway',
+      fontSize: 60,
+      bind: { fontFamily: { ref: 'font.headline', value: 'Raleway' } },
+      ...extra,
+    });
+    const sizes = (state: Record<string, unknown>) =>
+      (state['additionalTexts'] as { fontSize: number }[]).map((t) => t.fontSize);
+
+    it('refits a text with maxFontSize when its font changes, with the page state at hand', () => {
+      const state = {
+        templateRef: { id: 'x', version: 1 },
+        additionalTexts: [fonted({ maxFontSize: 80 })],
+      };
+      const seen: unknown[] = [];
+      const out = rebindPageState(state, {
+        brand: other,
+        fitText: (el, page) => {
+          seen.push([el['fontFamily'], page['templateRef']]);
+          return 72;
+        },
+      });
+      expect(sizes(out.state)).toEqual([72]);
+      expect(seen).toEqual([['Lora', { id: 'x', version: 1 }]]);
+    });
+
+    it('does not touch a text without maxFontSize, or one whose font did not change', () => {
+      const plain = { additionalTexts: [fonted({})] };
+      const fit = () => 72;
+      expect(sizes(rebindPageState(plain, { brand: other, fitText: fit }).state)).toEqual([60]);
+      const same = { additionalTexts: [fonted({ maxFontSize: 80 })] };
+      expect(sizes(rebindPageState(same, { brand, fitText: fit }).state)).toEqual([60]);
+    });
+  });
+
   describe('font stacks', () => {
     const stacked = (family: string) => ({
       textInstances: [
@@ -483,13 +521,14 @@ describe('brandFingerprint', () => {
 });
 
 describe('P2 brand additions', () => {
-  it('fingerprint of brandDefault is unchanged by P2', () => {
-    expect(brandFingerprint(brandDefault)).toBe('6f060f15');
+  it('fingerprint of brandDefault (re-stamped when its fonts became Bricolage/Anton)', () => {
+    expect(brandFingerprint(brandDefault)).toBe('0df912b2');
   });
 
-  it('serif falls back to quoteEmphasis and condensed to headline', () => {
+  it('resolves the brand font roles', () => {
     expect(resolveRef('font.serif', brandDefault, null)).toBe('Fraunces');
-    expect(resolveRef('font.condensed', brandDefault, null)).toBe('Raleway');
+    expect(resolveRef('font.condensed', brandDefault, null)).toBe('Anton');
+    expect(resolveRef('font.headline', brandDefault, null)).toBe('Bricolage Grotesque');
     const lora = { ...brandDefault, fonts: { ...brandDefault.fonts, serif: 'Lora' } };
     expect(resolveRef('font.serif', lora, null)).toBe('Lora');
   });

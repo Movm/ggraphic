@@ -9,14 +9,25 @@
  */
 import {
   aliasFontFamily,
+  minTextSizePx,
   parseColor,
   toHex,
   type GateAdapter,
   type GeometryTable,
 } from '@ggraphic/core';
-import { layoutRichTextBlock, PLAIN_STYLE, type MeasureRun } from '@ggraphic/schema';
+import {
+  fitFontSizeToSlot,
+  layoutRichTextBlock,
+  PLAIN_STYLE,
+  slotFits,
+  type MeasureRun,
+  type SlotFit,
+} from '@ggraphic/schema';
 
+import { GRAIN_SPECK_ALPHA } from '../utils/grainSpec.js';
+import { PAGE_COUNTER_PROBE } from '../utils/pageCounter.js';
 import { plainTextLines } from '../utils/plainTextLayout.js';
+import { bubbleExtent, ringGeometry, tailOf, type Tail } from '../utils/shapeDevices.js';
 import { usesRichText } from '../utils/textRouting.js';
 import { createRunMeasurer, type MeasureWidth, type TextAccent } from '../utils/textUtils.js';
 import { FONT_WIDTHS } from './fontWidths.generated.js';
@@ -32,7 +43,8 @@ export const TEMPLATE_GEOMETRY: GeometryTable = {
     y: 'y',
     width: 'w',
     fontSize: 's',
-    letterSpacing: 's',
+    // The prototype's size, the ceiling of the fit: scaled like `fontSize`.
+    maxFontSize: 's',
     strokeWidth: 's',
     shadowBlur: 's',
     shadowOffsetX: 's',
@@ -51,12 +63,17 @@ export const TEMPLATE_GEOMETRY: GeometryTable = {
     shadowBlur: 's',
     shadowOffsetX: 's',
     shadowOffsetY: 's',
+    // Ring stroke thickness and speech-bubble tail length: px.
+    ringWidth: 's',
+    tailSize: 's',
   },
   userImageInstances: {
     x: 'x',
     y: 'y',
     width: 'w',
     height: 'h',
+    // A number or a list of four: px, scaled like the shapes' `cornerRadius`.
+    cornerRadius: 's',
     blur: 's',
     shadowBlur: 's',
     shadowOffsetX: 's',
@@ -98,6 +115,8 @@ const RATIO = 'ratio; independent of the page size';
 const ANGLE = 'angle; independent of the page size';
 const OPACITY = 'opacity; independent of the page size';
 const SHADOW_OPACITY = 'opacity; independent of the page size';
+const EM = 'em, relative to the font size; independent of the page size';
+const CANVAS_SHARE = 'a share of the canvas width; independent of the page size';
 const ADJUSTMENT = 'image adjustment (a filter strength or a share); independent of the page size';
 
 export const UNSCALED_FIELDS: Readonly<Record<string, Readonly<Record<string, string>>>> = {
@@ -107,6 +126,7 @@ export const UNSCALED_FIELDS: Readonly<Record<string, Readonly<Record<string, st
     scale: RATIO,
     opacity: OPACITY,
     lineHeight: RATIO,
+    letterSpacing: EM,
     shadowOpacity: SHADOW_OPACITY,
   },
   shapeInstances: {
@@ -115,6 +135,12 @@ export const UNSCALED_FIELDS: Readonly<Record<string, Readonly<Record<string, st
     scaleY: RATIO,
     opacity: OPACITY,
     shadowOpacity: SHADOW_OPACITY,
+    notch: CANVAS_SHARE,
+    grain: OPACITY,
+    patternSpacing: CANVAS_SHARE,
+    arc: 'a share of the circle; independent of the page size',
+    bend: 'a share of the arrow length; independent of the page size',
+    tailAt: 'a share of the edge; independent of the page size',
   },
   frameInstances: {
     rotation: ANGLE,
@@ -144,6 +170,7 @@ export const UNSCALED_FIELDS: Readonly<Record<string, Readonly<Record<string, st
     panX: ADJUSTMENT,
     panY: ADJUSTMENT,
     cropRotation: ANGLE,
+    notch: CANVAS_SHARE,
   },
   chartInstances: { scale: RATIO, rotation: ANGLE, opacity: OPACITY },
 };
@@ -152,6 +179,59 @@ type El = Readonly<Record<string, unknown>>;
 
 const UNKNOWN = { kind: 'unknown' } as const;
 
+type Box = NonNullable<ReturnType<GateAdapter['box']>>;
+
+/** The square a notch cuts from the top-right corner of `box`, clamped as the renderer clamps it. */
+function notchCut(box: Box | null, side: number): Box | null {
+  if (!box) return null;
+  const n = Math.min(side, Math.min(box.width, box.height) / 2);
+  return { x: box.x + box.width - n, y: box.y, width: n, height: n };
+}
+
+const ELLIPSE_INSET = 0.98;
+
+/** The tail a shape record asks for (see `tailOf`), or null. */
+function tailOfRecord(el: El): Tail | null {
+  const side = el['tailSide'];
+  if (side !== 'top' && side !== 'right' && side !== 'bottom' && side !== 'left') return null;
+  return tailOf({
+    type: str(el, 'type'),
+    tailSide: side,
+    ...(typeof el['tailAt'] === 'number' ? { tailAt: el['tailAt'] } : {}),
+    ...(typeof el['tailSize'] === 'number' ? { tailSize: el['tailSize'] } : {}),
+  });
+}
+
+/** A rounded rect's body box: the shape's centre x/y, its size times its scale. */
+function bodyBox(el: El): Box {
+  const width = num(el, 'width') * Math.abs(num(el, 'scaleX', 1));
+  const height = num(el, 'height') * Math.abs(num(el, 'scaleY', 1));
+  return { x: num(el, 'x') - width / 2, y: num(el, 'y') - height / 2, width, height };
+}
+
+/** The largest corner radius of a rounded rect (the renderer's default is 32), clamped to half the short side. */
+function maxRadius(el: El, body: Box): number {
+  const radius = el['cornerRadius'];
+  const r = Array.isArray(radius)
+    ? Math.max(0, ...radius.filter((v): v is number => typeof v === 'number'))
+    : typeof radius === 'number'
+      ? radius
+      : 32;
+  return Math.min(Math.max(0, r), Math.min(body.width, body.height) / 2);
+}
+
+/** What a stroke-drawn shape (ring, arrow) paints: its colour at any strength, over whatever lies beneath. */
+function strokeCover(el: El, cut?: Box): ReturnType<GateAdapter['cover']> {
+  const fill = parseColor(str(el, 'fill'));
+  if (!fill || fill.a !== 1) return UNKNOWN;
+  return {
+    kind: 'range',
+    fill: str(el, 'fill'),
+    alpha: [0, num(el, 'opacity', 1)],
+    ...(cut ? { cut } : {}),
+  };
+}
+
 /**
  * What an image paints: every pixel lies between black and white, or between the duotone's two
  * colours when both are set. Anything that can leave that range, or that does not fill the box
@@ -159,7 +239,11 @@ const UNKNOWN = { kind: 'unknown' } as const;
  */
 function photoCover(el: El): ReturnType<GateAdapter['cover']> {
   const hasTint = str(el, 'tint') !== '' || num(el, 'tintStrength') !== 0;
-  if (hasTint || str(el, 'mask') !== '' || num(el, 'opacity', 1) < 1) return UNKNOWN;
+  // Rounded corners leave the box's corners bare, like a mask.
+  const rounded = Array.isArray(el['cornerRadius'])
+    ? el['cornerRadius'].some((r) => typeof r === 'number' && r > 0)
+    : num(el, 'cornerRadius') > 0;
+  if (hasTint || rounded || str(el, 'mask') !== '' || num(el, 'opacity', 1) < 1) return UNKNOWN;
   const low = str(el, 'duotoneLow');
   const high = str(el, 'duotoneHigh');
   if (low === '' || high === '') return { kind: 'photo', low: '#000000', high: '#ffffff' };
@@ -190,13 +274,40 @@ const ICON_SIZE = 120;
  * code point the tables do not cover (CJK, emoji, a code point the browser draws in a fallback
  * font), cannot be measured: the gate then fails `bounds` closed.
  */
+/** Air kept between a fitted text and the element below it, in lines. */
+const TEXT_GAP = 0.25;
 const FLAT_EM = 1.2; // only to size a box that is flagged anyway
 /** The widest positive kerning pair of the shipped fonts is about 0.15 em; 0.06 em per pair covers every realistic pair. */
 const KERN_EM = 0.06;
 
 const tables = new Map<string, Map<number, number>>();
-function widthTable(family: string, bold: boolean): Map<number, number> | null {
-  const key = `${family}/${bold ? 'bold' : 'regular'}`;
+/** `regular` is 400 and `bold` is 700; the other classes carry their weight as the name. */
+const classWeight = (name: string): number =>
+  name === 'regular' ? 400 : name === 'bold' ? 700 : Number(name);
+
+/**
+ * The width class that measures `weight`: the class of that weight when the family ships one,
+ * else the next heavier one (never narrower than the face drawn), else the heaviest it has.
+ */
+const classes = new Map<string, string | null>();
+function widthClass(family: string, weight: number): string | null {
+  const memo = `${family}/${weight}`;
+  const known = classes.get(memo);
+  if (known !== undefined) return known;
+  const prefix = `${family}/`;
+  const shipped = Object.keys(FONT_WIDTHS)
+    .filter((key) => key.startsWith(prefix))
+    .map((key) => key.slice(prefix.length))
+    .sort((a, b) => classWeight(a) - classWeight(b));
+  const picked = shipped.find((name) => classWeight(name) >= weight) ?? shipped.at(-1) ?? null;
+  classes.set(memo, picked);
+  return picked;
+}
+
+function widthTable(family: string, weight: number): Map<number, number> | null {
+  const cls = widthClass(family, weight);
+  if (cls === null) return null;
+  const key = `${family}/${cls}`;
   const cached = tables.get(key);
   if (cached) return cached;
   const raw = FONT_WIDTHS[key];
@@ -220,6 +331,13 @@ function familyOf(fontFamily: string): string {
   return first === '' ? '' : aliasFontFamily(first);
 }
 
+/** The weight a style string asks for: a numeric token, else bold is 700 and the rest 400. */
+function weightOfStyle(style: string): number {
+  const numeric = /\b([1-9]00)\b/.exec(style);
+  if (numeric) return Number(numeric[1]);
+  return style.includes('bold') ? 700 : 400;
+}
+
 /** `normal`, `italic`, `bold` or `bold italic`: a weight of 600 or more, or the word bold, is bold. */
 function normalFontStyle(fontStyle: string): 'normal' | 'italic' | 'bold' | 'bold italic' {
   const tokens = fontStyle.toLowerCase().split(/\s+/);
@@ -239,11 +357,11 @@ function tableWidth(
   text: string,
   fontSize: number,
   family: string,
-  bold: boolean,
+  weight: number,
   note: Note
 ): number {
   if (text === '') return 0;
-  const table = widthTable(familyOf(family), bold);
+  const table = widthTable(familyOf(family), weight);
   if (!table) {
     note.reason ??= `text width not checkable (no width table for font "${family}")`;
   }
@@ -265,6 +383,8 @@ interface TextProps {
   fontSize: number;
   fontFamily: string;
   fontStyle: 'normal' | 'italic' | 'bold' | 'bold italic';
+  /** A numeric `fontWeight`; null when the text has none. */
+  fontWeight: number | null;
   width: number;
   letterSpacing: number;
   accent: TextAccent | null;
@@ -275,13 +395,15 @@ interface TextProps {
 const textPropsOf = (el: Readonly<Record<string, unknown>>): TextProps => {
   const accent = el['accent'];
   return {
-    text: str(el, 'text'),
+    // A page counter shows a different numeral on every page: the gate judges the widest one.
+    text: el['counter'] === 'page' ? PAGE_COUNTER_PROBE : str(el, 'text'),
     fontSize: num(el, 'fontSize'),
     fontFamily: str(el, 'fontFamily'),
     fontStyle: normalFontStyle(str(el, 'fontStyle')),
+    fontWeight: typeof el['fontWeight'] === 'number' ? el['fontWeight'] : null,
     width: num(el, 'width'),
-    // The plain path renders no letter spacing today; a positive value is counted anyway.
-    letterSpacing: Math.max(0, num(el, 'letterSpacing')),
+    // em, applied after every glyph by the run measure, as the renderer's Konva nodes do.
+    letterSpacing: num(el, 'letterSpacing'),
     accent: isRecord(accent) ? (accent as unknown as TextAccent) : null,
   };
 };
@@ -293,15 +415,29 @@ function tableRunMeasure(p: TextProps, note: Note): MeasureRun {
     : false;
   const measured: MeasureWidth = (text, size, family, style) => {
     // A bold request on an italic run draws the italic face (maybe synthetically emboldened):
-    // use the bold table whenever bold is asked anywhere.
-    const bold = style.includes('bold') || p.fontStyle.includes('bold') || accentBold;
-    return tableWidth(text, size, family, bold, note);
+    // use the bold table whenever bold is asked anywhere; a numeric weight is the base weight.
+    const weight = Math.max(
+      weightOfStyle(style),
+      p.fontWeight ?? (p.fontStyle.includes('bold') ? 700 : 400),
+      accentBold ? 700 : 400
+    );
+    return tableWidth(text, size, family, weight, note);
   };
-  return createRunMeasurer(measured, p.fontSize, p.fontFamily, p.fontStyle, p.accent);
+  return createRunMeasurer(
+    measured,
+    p.fontSize,
+    p.fontFamily,
+    p.fontStyle,
+    p.accent,
+    p.fontWeight,
+    p.letterSpacing
+  );
 }
 
 interface TextLayout {
   lines: number;
+  /** Width of the longest line in px, at the text's own size. */
+  widest: number;
   unmeasurable: string | null;
 }
 
@@ -310,14 +446,67 @@ function layoutText(p: TextProps): TextLayout {
   const note: Note = { reason: null };
   const run = tableRunMeasure(p, note);
   const inner = p.width > 0 ? p.width : Number.POSITIVE_INFINITY;
-  const lines = usesRichText({ text: p.text, width: p.width }, run)
-    ? layoutRichTextBlock(p.text, inner, run).length
-    : plainTextLines(
-        p.text,
-        inner,
-        (text, graphemes) => run(text, PLAIN_STYLE) + p.letterSpacing * graphemes
-      ).length;
-  return { lines: Math.max(1, lines), unmeasurable: note.reason };
+  let widths: number[];
+  if (usesRichText({ text: p.text, width: p.width }, run)) {
+    widths = layoutRichTextBlock(p.text, inner, run).map((line) => {
+      const last = line.runs.at(-1);
+      return last ? line.indent + last.x + run(last.text, last) : line.indent;
+    });
+  } else {
+    widths = plainTextLines(p.text, inner, (text) => run(text, PLAIN_STYLE)).map((line) =>
+      run(line, PLAIN_STYLE)
+    );
+  }
+  return {
+    lines: Math.max(1, widths.length),
+    widest: Math.max(0, ...widths),
+    unmeasurable: note.reason,
+  };
+}
+
+/**
+ * Fits a text to its box in its own font: the largest size from the legibility floor up to
+ * `maxFontSize` at which no word is wider than the box (words are never broken) and the lines,
+ * counted by the same layout as the gate, stay within `maxLines` (or the box `height`, when the
+ * element has one). Measured with the width tables like `layoutText`, so fitting and gate agree.
+ */
+function fitTextToBox(
+  el: Readonly<Record<string, unknown>>,
+  req: { maxLines?: number; maxHeight?: number; canvasHeight: number }
+): { fontSize: number; fits: boolean } | null {
+  const props = textPropsOf(el);
+  const max = num(el, 'maxFontSize');
+  if (!(max > 0) || !(props.width > 0)) return null;
+  const height = num(el, 'height');
+  const slot: SlotFit = {
+    width: props.width,
+    maxHeight: height > 0 ? height : Number.POSITIVE_INFINITY,
+    ...(req.maxHeight === undefined ? {} : { room: req.maxHeight }),
+    // A quarter line of air above whatever lies below.
+    gap: req.maxHeight === undefined ? 0 : TEXT_GAP,
+    fontSize: max,
+    maxSize: max,
+    minSize: Math.min(minTextSizePx(req.canvasHeight), max),
+    lineHeight: num(el, 'lineHeight', 1.2),
+    wholeWords: true,
+    ...(req.maxLines === undefined ? {} : { maxLines: req.maxLines }),
+    countLines: (size) => layoutText({ ...props, fontSize: size }).lines,
+  };
+  const measureAt = (size: number) => (text: string) =>
+    tableRunMeasure({ ...props, fontSize: size }, { reason: null })(text, PLAIN_STYLE);
+  // The room below is a preference, not a rule the template can always keep: its own stacks are
+  // sometimes tighter than a quarter line. Try room plus air, then room alone, then width and
+  // lines only; a later step never makes a text that fitted under an earlier one worse.
+  const { room: _room, ...unlimited } = slot;
+  const steps: SlotFit[] =
+    slot.room === undefined ? [slot] : [slot, { ...slot, gap: 0 }, { ...unlimited, gap: 0 }];
+  let last = { fontSize: max, fits: false };
+  for (const step of steps) {
+    const fontSize = fitFontSizeToSlot(props.text, step, measureAt);
+    last = { fontSize, fits: slotFits(props.text, step, measureAt, fontSize) };
+    if (last.fits) break;
+  }
+  return last;
 }
 
 /** The widest explicit line of a text that does not wrap (a badge), and how many lines it has. */
@@ -328,10 +517,10 @@ function widestLine(
   fontStyle: string
 ): { width: number; lines: number; unmeasurable: string | null } {
   const note: Note = { reason: null };
-  const bold = normalFontStyle(fontStyle).includes('bold');
+  const weight = normalFontStyle(fontStyle).includes('bold') ? 700 : 400;
   const parts = text.split('\n');
   const width = Math.max(
-    ...parts.map((line) => tableWidth(line, fontSize, fontFamily, bold, note))
+    ...parts.map((line) => tableWidth(line, fontSize, fontFamily, weight, note))
   );
   return { width, lines: parts.length, unmeasurable: note.reason };
 }
@@ -378,7 +567,7 @@ export async function loadIllustrationLookup(): Promise<IllustrationLookup> {
  * ignores an element's declared `source`, so the gate must not trust it either.
  */
 export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapter {
-  return {
+  const adapter: GateAdapter = {
     geometry: TEMPLATE_GEOMETRY,
     colorFields: COLOR_FIELDS,
     assetFields: ASSET_FIELDS,
@@ -439,6 +628,26 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
       }
       return [];
     },
+    fitText: fitTextToBox,
+    textExtent(el) {
+      const p = textPropsOf(el);
+      if (!(p.width > 0) || !(p.fontSize > 0)) return null;
+      const { lines, widest, unmeasurable } = layoutText(p);
+      if (unmeasurable) return null;
+      const scale = num(el, 'scale', 1) || 1;
+      return { lines, width: widest * scale };
+    },
+    placeBox(stateKey, el, box) {
+      // Only an upright plate: a shape is positioned by its centre, its size is the box over its scale.
+      if (stateKey !== 'shapeInstances' || isRotated(el)) return { ...el };
+      return {
+        ...el,
+        x: box.x + box.width / 2,
+        y: box.y + box.height / 2,
+        width: box.width / (num(el, 'scaleX', 1) || 1),
+        height: box.height / (num(el, 'scaleY', 1) || 1),
+      };
+    },
     lineCount(stateKey, el) {
       if (stateKey !== 'additionalTexts' || typeof el['text'] !== 'string') return 1;
       return layoutText(textPropsOf(el)).lines;
@@ -479,7 +688,53 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
           const sin = Math.abs(Math.sin(angle));
           const w = width * cos + height * sin;
           const h = width * sin + height * cos;
-          return { x: x - w / 2, y: y - h / 2, width: w, height: h };
+          const turned = { x: x - w / 2, y: y - h / 2, width: w, height: h };
+          const sx = Math.abs(num(el, 'scaleX', 1));
+          const sy = Math.abs(num(el, 'scaleY', 1));
+          const rotated = isRotated(el);
+          // A speech bubble's tail lies outside its width × height.
+          const tail = tailOfRecord(el);
+          if (tail) {
+            if (rotated) {
+              const reach = tail.size * Math.max(sx, sy);
+              return {
+                x: turned.x - reach,
+                y: turned.y - reach,
+                width: turned.width + 2 * reach,
+                height: turned.height + 2 * reach,
+              };
+            }
+            const out = bubbleExtent(width, height, {
+              side: tail.side,
+              size: tail.size * (tail.side === 'left' || tail.side === 'right' ? sx : sy),
+            });
+            return {
+              x: turned.x + out.x,
+              y: turned.y + out.y,
+              width: out.width,
+              height: out.height,
+            };
+          }
+          // A bent arrow's curve lies off its (flat) box; the margin covers the head and the spline.
+          const bend = num(el, 'bend');
+          if (el['type'] === 'line-arrow' && bend !== 0) {
+            const stroke = num(el, 'strokeWidth', 6);
+            const sag = bend * num(el, 'width') * sy * 1.1;
+            const pad = Math.max(16, stroke * 2.5) / 2 + stroke / 2;
+            if (rotated) {
+              const reach = Math.abs(sag) + pad;
+              return {
+                x: turned.x - reach,
+                y: turned.y - reach,
+                width: turned.width + 2 * reach,
+                height: turned.height + 2 * reach,
+              };
+            }
+            const top = Math.min(turned.y, y + Math.min(0, sag) - pad);
+            const bottom = Math.max(turned.y + turned.height, y + Math.max(0, sag) + pad);
+            return { x: turned.x, y: top, width: turned.width, height: bottom - top };
+          }
+          return turned;
         }
         case 'chartInstances': {
           const scale = num(el, 'scale', 1) || 1;
@@ -532,7 +787,8 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
         return {
           fill: typeof el['fill'] === 'string' ? el['fill'] : '',
           fontSize: props.fontSize * scale,
-          bold: props.fontStyle.includes('bold'),
+          bold:
+            props.fontWeight !== null ? props.fontWeight >= 700 : props.fontStyle.includes('bold'),
           opacity,
           ...(boundsProblem ? { boundsProblem } : {}),
           ...(el['fillGradient'] ? { notCheckable: 'text gradient not checkable' } : {}),
@@ -588,35 +844,124 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
       }
       return null;
     },
-    cover(stateKey, el) {
+    cover(stateKey, el, canvasWidth) {
       // Texts paint no ground. A flat opaque shape is one, a photo is a range of grounds, a
-      // translucent shape or a shade is an overlay; every other kind (frame, chart, badge,
-      // icon, sticker, illustration) is not provably any of them.
+      // translucent shape, a glow, grain or a shade is an overlay; every other kind (frame,
+      // chart, badge, icon, sticker, illustration) is not provably any of them.
       if (stateKey === 'additionalTexts') return null;
       const blend = el['blendMode'];
       const untransformed = (blend === undefined || blend === 'normal') && !isRotated(el);
-      if (stateKey === 'userImageInstances') return untransformed ? photoCover(el) : UNKNOWN;
-      if (stateKey !== 'shapeInstances') return UNKNOWN;
-      // Only a plain rectangle fills its box; any other shape (or rounded corners) leaves
-      // parts of the box bare, and a text there sits on whatever lies below.
-      if ((el['type'] !== undefined && el['type'] !== 'rect') || num(el, 'cornerRadius') !== 0) {
-        return UNKNOWN;
+      const notch = num(el, 'notch');
+      const cut = notch > 0 ? notchCut(adapter.box(stateKey, el, 1), notch * canvasWidth) : null;
+      if (stateKey === 'userImageInstances') {
+        const photo = untransformed ? photoCover(el) : UNKNOWN;
+        return cut && photo ? { ...photo, cut } : photo;
       }
+      if (stateKey !== 'shapeInstances') return UNKNOWN;
+      const type = el['type'];
+      const shade = el['shade'];
+      const gradientSet = el['fillGradient'] !== undefined && el['fillGradient'] !== null;
+      if (type === 'ring' || type === 'line-arrow') {
+        // A stroke is its colour at any strength over what lies beneath, wherever a text may meet it.
+        if (!untransformed || gradientSet || shade || el['glow'] === true) return UNKNOWN;
+        if (type === 'line-arrow') return strokeCover(el);
+        const width = num(el, 'width');
+        if (Math.abs(width - num(el, 'height')) > 0.5) return UNKNOWN;
+        // The hole is bare: a text wholly inside the largest rectangle the inner ellipse holds is
+        // not on the ring. One half in it lies on two grounds (the gate fails that closed).
+        const { inner } = ringGeometry(
+          width,
+          typeof el['ringWidth'] === 'number' ? el['ringWidth'] : undefined,
+          typeof el['arc'] === 'number' ? el['arc'] : undefined
+        );
+        const halfW = (inner * Math.abs(num(el, 'scaleX', 1)) * ELLIPSE_INSET) / Math.SQRT2;
+        const halfH = (inner * Math.abs(num(el, 'scaleY', 1)) * ELLIPSE_INSET) / Math.SQRT2;
+        const hole =
+          halfW > 0 && halfH > 0
+            ? {
+                x: num(el, 'x') - halfW,
+                y: num(el, 'y') - halfH,
+                width: 2 * halfW,
+                height: 2 * halfH,
+              }
+            : undefined;
+        return strokeCover(el, hole);
+      }
+      if (type === 'rounded-rect') {
+        // A flat opaque rounded box is a ground inside its corner arcs; a tail is part of the same
+        // fill but lies outside `inner`, so a text meeting it is not judged. Any further paint
+        // (gradient, shade, glow, texture) is not modelled here.
+        const paint = parseColor(str(el, 'fill'));
+        if (!untransformed || !paint || gradientSet || shade || el['glow'] === true) return UNKNOWN;
+        if (el['pattern'] !== undefined || num(el, 'grain') > 0 || num(el, 'notch') > 0) {
+          return UNKNOWN;
+        }
+        const body = bodyBox(el);
+        const r = maxRadius(el, body);
+        // An arc of radius r leaves r(1 − 1/√2) ≈ 0.293 r bare on each axis; 0.3 keeps a margin.
+        const dx = 0.3 * r * Math.abs(num(el, 'scaleX', 1));
+        const dy = 0.3 * r * Math.abs(num(el, 'scaleY', 1));
+        const inner = {
+          x: body.x + dx,
+          y: body.y + dy,
+          width: Math.max(0, body.width - 2 * dx),
+          height: Math.max(0, body.height - 2 * dy),
+        };
+        const alpha = num(el, 'opacity', 1) * paint.a;
+        return alpha < 1
+          ? { kind: 'veil', fill: toHex({ ...paint, a: 1 }), alpha, inner }
+          : { kind: 'solid', fill: str(el, 'fill'), inner };
+      }
+      const glow = el['glow'] === true && (shade === undefined || shade === null);
+      // Only a plain rectangle fills its box; any other shape (or rounded corners) leaves
+      // parts of the box bare, and a text there sits on whatever lies below. A glow ellipse
+      // is the exception: its bare corners are glow alpha 0, inside the range it judges.
+      const plain = type === undefined || type === 'rect' || (glow && type === 'ellipse');
+      if (!plain || num(el, 'cornerRadius') !== 0) return UNKNOWN;
       const gradient = el['fillGradient'];
       const fill = parseColor(str(el, 'fill'));
       if (!untransformed || !fill) return UNKNOWN;
-      const shade = el['shade'];
+      // Stripes are judged by their colour as well as the fill; one that cannot be read is not provable.
+      const stripeColor = parseColor(str(el, 'patternColor'));
+      if (el['pattern'] === 'stripes' && (!stripeColor || stripeColor.a !== 1)) return UNKNOWN;
+      const stripes = el['pattern'] === 'stripes' ? str(el, 'patternColor') : null;
+      const grainAmount = Math.min(1, num(el, 'grain'));
+      const mods = {
+        ...(cut ? { cut } : {}),
+        ...(el['pattern'] === 'dots' ? { dots: true as const } : {}),
+        ...(stripes ? { stripes } : {}),
+        ...(grainAmount > 0
+          ? {
+              grain: {
+                fill: el['grainTone'] === 'light' ? '#ffffff' : '#000000',
+                alpha: [0, (grainAmount * GRAIN_SPECK_ALPHA) / 255] as [number, number],
+              },
+            }
+          : {}),
+      };
       if (shade === 'bottom' || shade === 'top') {
         return fill.a === 1 && num(el, 'opacity', 1) === 1
-          ? { kind: 'shade', fill: str(el, 'fill'), direction: shade }
+          ? { kind: 'shade', fill: str(el, 'fill'), direction: shade, ...mods }
           : UNKNOWN;
       }
-      if (shade || (gradient !== undefined && gradient !== null)) return UNKNOWN;
+      if (shade || (!glow && gradient !== undefined && gradient !== null)) return UNKNOWN;
+      if (glow) {
+        // Full `fill` at the centre, nothing at the edge: an alpha anywhere in [0, opacity].
+        return fill.a === 1
+          ? {
+              kind: 'range',
+              fill: str(el, 'fill'),
+              alpha: [0, num(el, 'opacity', 1)],
+              ...mods,
+            }
+          : UNKNOWN;
+      }
       const alpha = num(el, 'opacity', 1) * fill.a;
-      if (alpha < 1) return { kind: 'veil', fill: toHex({ ...fill, a: 1 }), alpha };
-      return { kind: 'solid', fill: str(el, 'fill') };
+      if (alpha < 1) return { kind: 'veil', fill: toHex({ ...fill, a: 1 }), alpha, ...mods };
+      return { kind: 'solid', fill: str(el, 'fill'), ...mods };
     },
   };
+  return adapter;
 }
 
 export const TEMPLATE_GATE_ADAPTER: GateAdapter = createTemplateGateAdapter(() => undefined);

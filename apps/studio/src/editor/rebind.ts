@@ -2,6 +2,8 @@
 import { rebindPages, type RebindContext } from '@ggraphic/core';
 
 import { formatSize, type StudioDocument } from './document';
+import { fittedFontSize } from './templates/fitting';
+import { withHuggedPlates } from './templates/hug';
 
 /**
  * The document with every bound page field brought up to date with the brand.
@@ -11,6 +13,18 @@ export function rebindStudioDocument(
   doc: StudioDocument,
   ctx: RebindContext
 ): { doc: StudioDocument; changed: boolean } {
-  const { pages, changed } = rebindPages(doc.pages, { pageSize: formatSize(doc.formatId), ...ctx });
-  return changed ? { doc: { ...doc, pages }, changed } : { doc, changed };
+  const pageSize = formatSize(doc.formatId);
+  const { pages, changed } = rebindPages(doc.pages, {
+    pageSize,
+    // A new brand font can be wider: texts with a prototype size are fitted again.
+    fitText: (el, page) => fittedFontSize(el, page, ctx.pageSize?.height ?? pageSize.height),
+    ...ctx,
+  });
+  if (!changed) return { doc, changed };
+  // A new brand font changes how a text wraps and how wide it is: its plates follow.
+  const hugged = pages.map((page) => {
+    const state = withHuggedPlates(page.state);
+    return state === page.state ? page : { ...page, state };
+  });
+  return { doc: { ...doc, pages: hugged }, changed };
 }

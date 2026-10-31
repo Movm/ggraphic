@@ -32,11 +32,12 @@ import {
   snapByBounds,
 } from '@ggraphic/editor/utils/snapping';
 import { usesRichText } from '@ggraphic/editor/utils/textRouting';
-import { runMeasurer } from '@ggraphic/editor/utils/textUtils';
+import { konvaFontStyle, runMeasurer } from '@ggraphic/editor/utils/textUtils';
 
 import { resolveFontFamily } from '../utils/fontAliases.js';
 import { CanvasRichText } from './CanvasRichText.js';
 
+import type { FontWeight } from '@ggraphic/editor/configs/types';
 import type { TransformConfig, TransformAnchor } from '@ggraphic/editor/types/editorTypes';
 import type { SnapTarget, SnapLine } from '@ggraphic/editor/utils/snapping';
 import type { TextAccent, TextMarker } from '@ggraphic/editor/utils/textUtils';
@@ -54,6 +55,12 @@ export interface CanvasTextProps {
   fontSize?: number;
   fontFamily?: string;
   fontStyle?: 'normal' | 'italic' | 'bold' | 'bold italic';
+  /** Numeric weight; wins over the bold part of `fontStyle`. */
+  fontWeight?: FontWeight;
+  /** em; the px value is `letterSpacing * fontSize`. */
+  letterSpacing?: number;
+  /** A line through the whole text. */
+  strikethrough?: boolean;
   fill?: string;
   rotation?: number;
   scaleX?: number;
@@ -123,6 +130,9 @@ function CanvasTextInner({
   fontSize = 24,
   fontFamily = 'Arial',
   fontStyle = 'normal',
+  fontWeight,
+  letterSpacing,
+  strikethrough,
   fill = '#000000',
   rotation,
   scaleX,
@@ -175,7 +185,17 @@ function CanvasTextInner({
       const rect = textRef.current.getSelfRect();
       setMeasuredRect({ width: rect.width, height: rect.height });
     }
-  }, [fillGradient, text, fontSize, fontFamily, fontStyle, width, lineHeight]);
+  }, [
+    fillGradient,
+    text,
+    fontSize,
+    fontFamily,
+    fontStyle,
+    fontWeight,
+    letterSpacing,
+    width,
+    lineHeight,
+  ]);
 
   const gradientProps =
     fillGradient && measuredRect && measuredRect.height > 0
@@ -230,6 +250,8 @@ function CanvasTextInner({
     fontSize,
     fontFamily,
     fontStyle,
+    fontWeight,
+    letterSpacing,
     lineHeight,
     padding,
     scaleX,
@@ -361,10 +383,11 @@ function CanvasTextInner({
       text,
       fontFamily,
       fontSize,
-      fontStyle,
+      fontStyle: konvaFontStyle(fontStyle, fontWeight),
       fill,
       align,
       lineHeight,
+      letterSpacing,
       opacity,
       accent,
       marker,
@@ -379,9 +402,11 @@ function CanvasTextInner({
     fontFamily,
     fontSize,
     fontStyle,
+    fontWeight,
     fill,
     align,
     lineHeight,
+    letterSpacing,
     opacity,
     accent,
     marker,
@@ -401,7 +426,9 @@ function CanvasTextInner({
         width={width}
         fontSize={fontSize}
         fontFamily={resolveFontFamily(fontFamily)}
-        fontStyle={fontStyle}
+        fontStyle={konvaFontStyle(fontStyle, fontWeight)}
+        letterSpacing={(letterSpacing ?? 0) * fontSize}
+        textDecoration={strikethrough ? 'line-through' : ''}
         fill={fill}
         {...(gradientProps ?? { fillPriority: 'color' as const })}
         rotation={rotation}
@@ -465,9 +492,26 @@ function CanvasTextInner({
  */
 function CanvasTextSwitch(props: CanvasTextProps) {
   const fontGeneration = useFontGeneration();
-  const { fontSize = 24, fontFamily = 'Arial', fontStyle = 'normal' } = props;
+  const {
+    fontSize = 24,
+    fontFamily = 'Arial',
+    fontStyle = 'normal',
+    fontWeight,
+    letterSpacing,
+  } = props;
   // The routing is shared with the render gate (`textRouting.ts`); only the measure differs.
-  return usesRichText(props, runMeasurer(fontSize, fontFamily, fontStyle, fontGeneration)) ? (
+  return usesRichText(
+    props,
+    runMeasurer(
+      fontSize,
+      fontFamily,
+      fontStyle,
+      fontGeneration,
+      null,
+      fontWeight ?? null,
+      letterSpacing ?? null
+    )
+  ) ? (
     <CanvasRichText {...props} />
   ) : (
     <CanvasTextInner {...props} />
@@ -487,6 +531,9 @@ export const CanvasText = memo(CanvasTextSwitch, (prevProps, nextProps) => {
     'fontSize',
     'fontFamily',
     'fontStyle',
+    'fontWeight',
+    'letterSpacing',
+    'strikethrough',
     'fill',
     'stroke',
     'strokeWidth',

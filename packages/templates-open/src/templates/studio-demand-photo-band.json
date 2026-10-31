@@ -1,0 +1,222 @@
+{
+  "formatVersion": 1,
+  "id": "studio-demand-photo-band",
+  "version": 1,
+  "kind": "template",
+  "family": "demand",
+  "title": {
+    "en": "Demand on a band",
+    "de": "Forderung mit Band"
+  },
+  "description": {
+    "en": "A photo above a deep colour band that carries the demand and a line below it",
+    "de": "Ein Foto über einem tiefen Farbband mit der Forderung und einer Zeile darunter"
+  },
+  "tags": {
+    "tone": "calm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["dark", "primary", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "deep"
+        },
+        "shapeInstances": [
+          {
+            "id": "band",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.848148,
+            "width": 1,
+            "height": 0.303704,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "deep"
+            }
+          },
+          {
+            "id": "band-glow-1",
+            "type": "ellipse",
+            "x": 0.5,
+            "y": 0.848148,
+            "width": 1,
+            "height": 0.303704,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.1,
+            "glow": true,
+            "bind": {
+              "fill": "accent"
+            }
+          },
+          {
+            "id": "edge",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.698519,
+            "width": 1,
+            "height": 0.004444,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 0.696296,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "notch": 0.051852
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "Whoever cares needs more than applause.",
+            "x": 0,
+            "y": 0.773109,
+            "width": 0.934783,
+            "fontSize": 0.074074,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 800,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.074074
+          },
+          {
+            "id": "subline",
+            "type": "body",
+            "text": "Our five demands for fair care",
+            "x": 0,
+            "y": 0.92605,
+            "width": 0.934783,
+            "fontSize": 0.037037,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.2,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.037037
+          }
+        ],
+        "layerOrder": ["photo", "band", "band-glow-1", "edge", "headline", "subline", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas",
+    "band": "canvas",
+    "band-glow-1": "canvas",
+    "edge": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "headline": {
+      "role": "headline",
+      "label": {
+        "en": "Demand",
+        "de": "Forderung"
+      },
+      "budget": {
+        "maxWords": 8,
+        "maxLines": 2,
+        "maxChars": 56
+      }
+    },
+    "subline": {
+      "role": "subline",
+      "label": {
+        "en": "Line below",
+        "de": "Zeile darunter"
+      },
+      "budget": {
+        "maxWords": 8,
+        "maxLines": 1,
+        "maxChars": 48
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "demand-band",
+      "title": {
+        "en": "Demand with line",
+        "de": "Forderung mit Zeile"
+      },
+      "elementIds": ["headline", "subline"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "headline": "Whoever cares needs more than applause.",
+      "subline": "Our five demands for fair care"
+    },
+    "de": {
+      "headline": "Wer pflegt, braucht mehr als Applaus.",
+      "subline": "Unsere fünf Forderungen für faire Pflege"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

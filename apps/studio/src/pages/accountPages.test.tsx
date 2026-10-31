@@ -217,7 +217,12 @@ describe('BrandPage', () => {
         secondary: studioBrand.colors.secondary,
         accent: studioBrand.colors.accent,
       },
-      fonts: { headline: 'Raleway', body: 'Instrument Sans', serif: null, condensed: null },
+      fonts: {
+        headline: 'Bricolage Grotesque',
+        body: 'Instrument Sans',
+        serif: null,
+        condensed: null,
+      },
       logoAssetId: null,
       logoAlt: null,
       layout: DEFAULT_BRAND_LAYOUT,
@@ -277,6 +282,36 @@ describe('BrandPage', () => {
     );
     renderWith(<BrandPage />);
     expect(await screen.findByText(/hand-set colours/)).toBeInTheDocument();
+  });
+
+  it('previews the accent colour world as a ground of its own', async () => {
+    stubServer((method, url) =>
+      url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET' ? json(200, empty) : undefined
+    );
+    const user = userEvent.setup();
+    renderWith(<BrandPage />);
+    await screen.findByLabelText(/^Primary Main colour/);
+    await user.click(screen.getByRole('radio', { name: 'Accent' }));
+    const page = screen
+      .getByRole('figure', { name: /Preview/ })
+      .querySelector('.studio-brand-preview__page') as HTMLElement;
+    // The Studio accent is rose (#FF7AB6).
+    expect(page.style.background).toBe('rgb(255, 122, 182)');
+  });
+
+  it('leaves the stored grounds alone: the accent world is a preview, not a saved ground', async () => {
+    const calls = stubServer((method, url, body) => {
+      if (url !== `/api/orgs/${TEST_ORG}/brand-pack`) return undefined;
+      if (method === 'GET') return json(200, empty);
+      return json(200, { ...empty, settings: body });
+    });
+    const user = userEvent.setup();
+    renderWith(<BrandPage />);
+    await screen.findByLabelText(/^Primary Main colour/);
+    await user.click(screen.getByRole('button', { name: 'Save brand' }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT')).toBe(true));
+    const sent = calls.find((c) => c.method === 'PUT')!.body as { backgrounds?: unknown };
+    expect(sent.backgrounds).toBeUndefined();
   });
 
   it('shows no notice for a new pack or one that already matches the derivation', async () => {

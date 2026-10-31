@@ -1,0 +1,187 @@
+{
+  "formatVersion": 1,
+  "id": "studio-number-percent",
+  "version": 1,
+  "kind": "template",
+  "family": "number",
+  "title": {
+    "en": "Percentage",
+    "de": "Prozentzahl"
+  },
+  "description": {
+    "en": "A very large percentage with a short sentence below it",
+    "de": "Eine sehr große Prozentzahl mit einem kurzen Satz darunter"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "ring-track",
+            "type": "ring",
+            "x": 0.703704,
+            "y": 0.674074,
+            "width": 0.453704,
+            "height": 0.362963,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "ringWidth": 0.083333,
+            "bind": {
+              "fill": "deep"
+            }
+          },
+          {
+            "id": "ring-share",
+            "type": "ring",
+            "x": 0.703704,
+            "y": 0.674074,
+            "width": 0.453704,
+            "height": 0.362963,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "ringWidth": 0.083333,
+            "arc": 0.27,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "number",
+            "type": "header",
+            "text": "27 %",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "fontSize": 0.37037,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.9,
+            "fontWeight": 800,
+            "letterSpacing": -0.05,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.37037
+          },
+          {
+            "id": "text",
+            "type": "body",
+            "text": "of tenants pay more than half of their income in rent.",
+            "x": 0,
+            "y": 0.403361,
+            "width": 0.456522,
+            "fontSize": 0.051852,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.08,
+            "fontWeight": 700,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.051852
+          }
+        ],
+        "layerOrder": ["number", "text", "ring-track", "ring-share", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "ring-track": "canvas",
+    "ring-share": "canvas"
+  },
+  "slots": {
+    "number": {
+      "role": "number",
+      "label": {
+        "en": "Figure",
+        "de": "Zahl"
+      },
+      "budget": {
+        "maxWords": 2,
+        "maxLines": 1,
+        "maxChars": 5
+      }
+    },
+    "text": {
+      "role": "body",
+      "label": {
+        "en": "Explanation",
+        "de": "Erklärung"
+      },
+      "budget": {
+        "maxWords": 11,
+        "maxLines": 6,
+        "maxChars": 70
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "number-with-explanation",
+      "title": {
+        "en": "Number with explanation",
+        "de": "Zahl mit Erklärung"
+      },
+      "elementIds": ["number", "text"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-left"],
+  "placeholders": {
+    "en": {
+      "number": "27 %",
+      "text": "of tenants pay more than half of their income in rent."
+    },
+    "de": {
+      "number": "27 %",
+      "text": "der Mieter zahlen über die Hälfte ihres Einkommens für die Miete."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

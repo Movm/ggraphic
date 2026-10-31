@@ -137,6 +137,19 @@ export function fontStyleForRun(
 }
 
 /**
+ * The string handed to Konva (and the canvas `font` shorthand) for a text: `fontStyle` plus an
+ * optional numeric `fontWeight`. A `fontWeight` wins over the bold part of `fontStyle`; italic
+ * stays from `fontStyle`. Without a weight it is `fontStyle` as it was (`'normal'` when absent).
+ */
+export function konvaFontStyle(
+  fontStyle: string | null | undefined,
+  fontWeight: number | null | undefined
+): string {
+  if (fontWeight === undefined || fontWeight === null) return fontStyle || 'normal';
+  return fontStyle?.includes('italic') ? `italic ${fontWeight}` : String(fontWeight);
+}
+
+/**
  * Wie ein `==Akzent==`-Lauf aussieht. Die Marke entscheidet das, nicht der
  * Text: AT setzt das Wort gelb in Fraunces kursiv, DE nur in einer
  * anderen Farbe. Ohne `accent` am Text bleibt ein Akzentlauf unauffällig.
@@ -162,6 +175,33 @@ export interface TextMarker {
   padX?: number;
   /** Innenabstand oben/unten; Vorgabe 0.04. */
   padY?: number;
+}
+
+/** The plate a text draws: the flat `markerFill`/`markerColor` over the nested `marker`. */
+export function effectiveMarker(text: {
+  marker?: TextMarker | null;
+  markerFill?: string | null;
+  markerColor?: string | null;
+}): TextMarker | undefined {
+  const { marker, markerFill, markerColor } = text;
+  if (!markerFill && !markerColor) return marker ?? undefined;
+  return {
+    padX: 0.18,
+    padY: 0.04,
+    ...marker,
+    fill: markerFill ?? marker?.fill ?? '#FFFFFF',
+    color: markerColor ?? marker?.color ?? '#000000',
+  };
+}
+
+/** The accent a text draws: the flat `accentFill` over the nested `accent`. */
+export function effectiveAccent(text: {
+  accent?: TextAccent | null;
+  accentFill?: string | null;
+}): TextAccent | undefined {
+  const { accent, accentFill } = text;
+  if (!accentFill) return accent ?? undefined;
+  return { ...accent, fill: accentFill };
 }
 
 /**
@@ -191,8 +231,9 @@ export function runFont(
   fontFamily: string,
   baseStyle: string,
   style: RunStyle,
-  accent: TextAccent | null | undefined
-): { fontFamily: string; fontStyle: 'normal' | 'bold' | 'italic' | 'bold italic' } {
+  accent: TextAccent | null | undefined,
+  fontWeight?: number | null
+): { fontFamily: string; fontStyle: string } {
   // Eine eigene Passagenfarbe färbt nur: die Akzentschrift der Vorlage gehört
   // zur Vorlagenfarbe. Sonst verschöbe ein eingefärbter Buchstabe den Umbruch.
   const asAccent = !!style.accent && !!accent && !style.accentColor;
@@ -200,6 +241,16 @@ export function runFont(
   const requested = asAccent ? (accent?.fontStyle ?? baseStyle) : baseStyle;
   const bold = !!style.bold || requested.includes('bold');
   const italic = !!style.italic || requested.includes('italic');
+  if (fontWeight !== undefined && fontWeight !== null) {
+    // A numeric weight replaces the bold part of the style; a bold mark or accent never lightens it.
+    const weight =
+      style.bold || (asAccent && requested.includes('bold'))
+        ? Math.max(fontWeight, 700)
+        : fontWeight;
+    const weightBoldFamily = weight >= 600 && !italic ? boldFamilyOf(family) : null;
+    if (weightBoldFamily) return { fontFamily: weightBoldFamily, fontStyle: 'normal' };
+    return { fontFamily: family, fontStyle: konvaFontStyle(italic ? 'italic' : 'normal', weight) };
+  }
   if (bold && italic && REAL_BOLD_ITALIC.has(family)) {
     return { fontFamily: family, fontStyle: 'bold italic' };
   }
@@ -226,7 +277,9 @@ export function runMeasurer(
   fontFamily: string,
   fontStyle: string = 'normal',
   fontGeneration = 0,
-  accent: TextAccent | null = null
+  accent: TextAccent | null = null,
+  fontWeight: number | null = null,
+  letterSpacing: number | null = null
 ): MeasureRun {
   const cache = new Map<string, number>();
   const measured: MeasureWidth = (text, size, family, style) => {
@@ -238,7 +291,15 @@ export function runMeasurer(
     }
     return width;
   };
-  return createRunMeasurer(measured, fontSize, fontFamily, fontStyle, accent);
+  return createRunMeasurer(
+    measured,
+    fontSize,
+    fontFamily,
+    fontStyle,
+    accent,
+    fontWeight,
+    letterSpacing
+  );
 }
 
 /** Measures `text` in px under one concrete family and style (canvas in the browser). */
@@ -259,11 +320,16 @@ export function createRunMeasurer(
   fontSize: number,
   fontFamily: string,
   fontStyle: string = 'normal',
-  accent: TextAccent | null = null
+  accent: TextAccent | null = null,
+  fontWeight: number | null = null,
+  letterSpacing: number | null = null
 ): MeasureRun {
+  // Konva adds `letterSpacing` px after every code point, the last one included.
+  const spacing = (letterSpacing ?? 0) * fontSize;
   return (text, style) => {
-    const run = runFont(fontFamily, fontStyle, style, accent);
-    return measureWidth(text, fontSize, run.fontFamily, run.fontStyle);
+    const run = runFont(fontFamily, fontStyle, style, accent, fontWeight);
+    const width = measureWidth(text, fontSize, run.fontFamily, run.fontStyle);
+    return spacing === 0 ? width : width + spacing * [...text].length;
   };
 }
 
@@ -282,12 +348,13 @@ export function wrapTextAccurate(
   maxWidth: number,
   fontSize: number,
   fontFamily: string,
-  fontStyle: string = 'normal'
+  fontStyle: string = 'normal',
+  fontWeight: number | null = null,
+  letterSpacing: number | null = null
 ): string[] {
-  return layoutRichTextBlock(text, maxWidth, runMeasurer(fontSize, fontFamily, fontStyle)).map(
-    (line) => {
-      const body = line.runs.map((run) => run.text).join('');
-      return line.marker ? `${line.marker} ${body}` : body;
-    }
-  );
+  const measure = runMeasurer(fontSize, fontFamily, fontStyle, 0, null, fontWeight, letterSpacing);
+  return layoutRichTextBlock(text, maxWidth, measure).map((line) => {
+    const body = line.runs.map((run) => run.text).join('');
+    return line.marker ? `${line.marker} ${body}` : body;
+  });
 }
