@@ -244,6 +244,11 @@ function crossReferences(file: TemplateFile): string | null {
     if (style !== undefined && !FONT_STYLES.includes(style as string)) {
       return `${id}.fontStyle: must be one of ${FONT_STYLES.join(', ')}`;
     }
+    const accent = isRecord(item) ? item['accent'] : undefined;
+    const accentStyle = isRecord(accent) ? accent['fontStyle'] : undefined;
+    if (accentStyle !== undefined && !FONT_STYLES.includes(accentStyle as string)) {
+      return `${id}.accent.fontStyle: must be one of ${FONT_STYLES.join(', ')}`;
+    }
     const spacing = isRecord(item) ? item['letterSpacing'] : undefined;
     if (
       spacing !== undefined &&

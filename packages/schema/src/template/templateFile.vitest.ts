@@ -120,6 +120,18 @@ describe('readTemplateFile', () => {
     if (result.status === 'invalid') expect(result.reason).toContain('fontStyle');
   });
 
+  it('holds accent.fontStyle to the same four styles', () => {
+    const at = (fontStyle: unknown) => ({
+      texts: [
+        { id: 't1', text: 'Hello', accent: { fill: '#000', fontStyle }, bind: { fill: 'ink' } },
+      ],
+    });
+    expect(readTemplateFile(with_({ pages: [{ state: at('bold italic') }] })).status).toBe('ok');
+    const result = readTemplateFile(with_({ pages: [{ state: at('800') }] }));
+    expect(result.status).toBe('invalid');
+    if (result.status === 'invalid') expect(result.reason).toContain('accent.fontStyle');
+  });
+
   it.each([100, 400, 800, 900])('accepts fontWeight %d', (fontWeight) => {
     const state = { texts: [{ id: 't1', text: 'Hello', fontWeight, bind: { fill: 'ink' } }] };
     expect(readTemplateFile(with_({ pages: [{ state }] })).status).toBe('ok');
