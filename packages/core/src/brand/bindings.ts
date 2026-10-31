@@ -44,6 +44,15 @@ export interface RebindContext {
   logoSizeOf?: (src: string) => { width: number; height: number } | null;
   /** Size of the page, needed with `logoSize` to pick the corner a logo box keeps. */
   pageSize?: { width: number; height: number } | null;
+  /**
+   * Refits a text with a numeric `maxFontSize` after its font changed (the new font can be wider),
+   * given the element as rebound and the page it sits on; null leaves the size as it is. A text
+   * without `maxFontSize`, or one whose bound fields did not change, is never offered.
+   */
+  fitText?: (
+    el: Readonly<Record<string, unknown>>,
+    page: Readonly<Record<string, unknown>>
+  ) => number | null;
 }
 
 // Record types make a missing or extra key a compile error.
@@ -298,6 +307,14 @@ function rebindObject(obj: Obj, ctx: RebindContext, scheme: Scheme | null): Obj 
   return next;
 }
 
+/** A rebound text with `maxFontSize` refitted to its new font; `out` itself otherwise. */
+function refit(out: Obj, item: Obj, key: string, state: Obj, ctx: RebindContext): Obj {
+  if (out === item || key !== 'additionalTexts' || !ctx.fitText) return out;
+  if (typeof out['maxFontSize'] !== 'number') return out;
+  const size = ctx.fitText(out, state);
+  return size === null || size === out['fontSize'] ? out : { ...out, fontSize: size };
+}
+
 function schemeOf(state: Obj, brand: BrandPack): Scheme | null {
   const id = state['brandScheme'];
   if (typeof id !== 'string' || !(SCHEME_IDS as readonly string[]).includes(id)) return null;
@@ -341,7 +358,7 @@ export function rebindPageState(
       let items: unknown[] | null = null;
       value.forEach((item, i) => {
         if (!isPlainObject(item)) return;
-        const out = rebindObject(item, ctx, scheme);
+        const out = refit(rebindObject(item, ctx, scheme), item, key, state, ctx);
         if (out !== item) (items ??= [...value])[i] = out;
       });
       if (items) replaced = items;

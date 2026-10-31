@@ -26,6 +26,7 @@ import { getCanvasFormatOrDefault } from '@ggraphic/editor/formats/index';
 import { ensureFontsReady } from '@ggraphic/editor/utils/ensureFontsReady';
 import { runMeasurer } from '@ggraphic/editor/utils/textUtils';
 import { layoutRichTextBlock } from '@ggraphic/schema';
+import { SAMPLE_PHOTOS } from '@ggraphic/templates-open';
 import { testBrandPacks } from '@ggraphic/templates-open/test/testBrands';
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -35,6 +36,7 @@ import { formatSize } from '../editor/document';
 import { studioCatalog, type CatalogEntry } from '../editor/templates/catalog';
 import { FREE_PAGE_CONFIG_ID } from '../editor/templates/ids';
 import { templatePageState } from '../editor/templates/instantiate';
+import { withSamplePhotos } from '../editor/templates/samplePhotos';
 import { registerEditor } from '../registerEditor';
 import '../fonts';
 import { type GateOverflow, type GateResult } from './result';
@@ -189,7 +191,12 @@ async function run(): Promise<void> {
   const root = document.getElementById('root');
   if (!root) throw new Error('#root is missing in gate.html');
   createRoot(root).render(
-    <Stage config={config} state={state} formatId={formatId} overflow={overflow} />
+    <Stage
+      config={config}
+      state={withSamplePhotos(state, SAMPLE_PHOTOS)}
+      formatId={formatId}
+      overflow={overflow}
+    />
   );
 }
 

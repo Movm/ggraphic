@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 // Generates packages/editor/src/templates/fontWidths.generated.ts: the widest advance of every
-// code point the Studio's fonts (Raleway, Fraunces, Instrument Sans) draw, per family and per
+// code point the Studio's fonts (Raleway, Fraunces, Instrument Sans, Bricolage Grotesque, Anton) draw, per family and per
 // weight class, read from the installed @fontsource WOFF files and the @font-face rules the
 // Studio loads. A code point counts only when every face of the class has the glyph AND its
 // CSS unicode-range admits it; the browser draws any other in a fallback font. The render gate measures text
@@ -19,13 +19,42 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const OUTPUT = join(root, 'packages/editor/src/templates/fontWidths.generated.ts');
 
 /** Family name as the editor spells it → @fontsource package. */
-const FAMILIES = { Raleway: 'raleway', Fraunces: 'fraunces', 'Instrument Sans': 'instrument-sans' };
+const FAMILIES = {
+  Raleway: 'raleway',
+  Fraunces: 'fraunces',
+  'Instrument Sans': 'instrument-sans',
+  'Bricolage Grotesque': 'bricolage-grotesque',
+  Anton: 'anton',
+};
 /**
  * Weight class → the stylesheets the Studio loads for it (`apps/studio/src/fonts.ts`), both
  * styles: a text may be italic in either class, so a code point counts only when every face
  * of the class draws it.
  */
-const CLASSES = { regular: ['400.css', '400-italic.css'], bold: ['700.css', '700-italic.css'] };
+const UPRIGHT_AND_ITALIC = {
+  regular: ['400.css', '400-italic.css'],
+  bold: ['700.css', '700-italic.css'],
+};
+/**
+ * One class per shipped weight, per family. `regular` is 400 and `bold` is 700; the others carry
+ * their weight as the name. A weight without a class of its own measures with the next heavier
+ * one (`templateGeometry.ts`), and Anton, with its single face, with that for every weight.
+ * Bricolage Grotesque and Anton have no italic face: the browser slants the upright one, whose
+ * advances are the same.
+ */
+const CLASSES = {
+  Raleway: UPRIGHT_AND_ITALIC,
+  Fraunces: UPRIGHT_AND_ITALIC,
+  'Instrument Sans': UPRIGHT_AND_ITALIC,
+  'Bricolage Grotesque': {
+    regular: ['400.css'],
+    500: ['500.css'],
+    600: ['600.css'],
+    bold: ['700.css'],
+    800: ['800.css'],
+  },
+  Anton: { regular: ['400.css'] },
+};
 
 function tables(buf) {
   if (buf.toString('latin1', 0, 4) !== 'wOFF') throw new Error('not a WOFF 1 file');
@@ -128,7 +157,7 @@ export function buildFontWidthsSource() {
   const lines = [];
   for (const [family, pkg] of Object.entries(FAMILIES)) {
     const dir = dirname(require.resolve(`@fontsource/${pkg}/package.json`));
-    for (const [cls, sheets] of Object.entries(CLASSES)) {
+    for (const [cls, sheets] of Object.entries(CLASSES[family])) {
       const perStyle = sheets.map((sheet) => drawable(dir, sheet));
       const widest = new Map();
       for (const [cp, w] of perStyle[0]) {

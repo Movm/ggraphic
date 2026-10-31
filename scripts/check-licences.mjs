@@ -9,7 +9,8 @@
  * data carries a different licence (Remix Icon changed its licence at 4.9.0).
  *
  * Bundled files: every directory of graphics the Studio ships under
- * apps/studio/public (`/emoji`, `/illustrations/<set>`) needs a row in
+ * apps/studio/public (`/emoji`, `/illustrations/<set>`) and the sample photos of
+ * packages/templates-open/src/samples (whose samples.json rows are checked too) need a row in
  * THIRD_PARTY_NOTICES.md that names it in backticks and carries an allowed
  * licence. A set with no row, or one under a licence outside ALLOWED, fails.
  * This part reads files only and needs no node_modules.
@@ -213,13 +214,56 @@ export function bundledAssetDirs(root) {
     for (const thumbs of subdirs(join(pub, top, 'thumbs')))
       if (!sets.includes(thumbs)) dirs.push(`apps/studio/public/${top}/thumbs/${thumbs}`);
   }
+  if (existsSync(join(root, SAMPLES_DIR))) dirs.push(SAMPLES_DIR);
   return dirs;
+}
+
+/** The sample photos for previews and goldens; their rows live in `samples.json` next to them. */
+const SAMPLES_DIR = 'packages/templates-open/src/samples';
+
+/** Problems of the sample-photo manifest: a row without file, a file without row, a licence outside ALLOWED. */
+function checkSampleManifest(root) {
+  const dir = join(root, SAMPLES_DIR);
+  if (!existsSync(dir)) return [];
+  const manifest = readJson(join(dir, 'samples.json'));
+  if (!manifest || !Array.isArray(manifest.photos))
+    return [
+      { path: SAMPLES_DIR, message: `${SAMPLES_DIR}: samples.json is missing or has no "photos"` },
+    ];
+  const problems = [];
+  const listed = new Set();
+  for (const row of manifest.photos) {
+    listed.add(row.file);
+    if (!existsSync(join(dir, String(row.file))))
+      problems.push({
+        path: SAMPLES_DIR,
+        message: `${SAMPLES_DIR}: ${row.file} has a row but no file`,
+      });
+    if (!ALLOWED.has(row.licence))
+      problems.push({
+        path: SAMPLES_DIR,
+        message: `${SAMPLES_DIR}: ${row.file}: licence "${row.licence}" is not allowed`,
+      });
+    if (!row.source || !row.author)
+      problems.push({
+        path: SAMPLES_DIR,
+        message: `${SAMPLES_DIR}: ${row.file}: source and author are required`,
+      });
+  }
+  for (const f of readdirSync(dir).filter((n) => /\.(jpe?g|png|webp)$/i.test(n)))
+    if (!listed.has(f))
+      problems.push({
+        path: SAMPLES_DIR,
+        message: `${SAMPLES_DIR}: ${f} has no row in samples.json`,
+      });
+  return problems;
 }
 
 /** Problems of the bundled graphics against the notices file: a list of { path, message }. */
 export function checkBundledAssets(root) {
   const dirs = bundledAssetDirs(root);
   if (dirs.length === 0) return [];
+  const manifestProblems = checkSampleManifest(root);
   const notices = join(root, NOTICES_FILE);
   if (!existsSync(notices))
     return dirs.map((d) => ({ path: d, message: `${NOTICES_FILE} is missing` }));
@@ -227,7 +271,7 @@ export function checkBundledAssets(root) {
     .split('\n')
     .filter((line) => line.trimStart().startsWith('|'))
     .map((line) => line.split('|').map((cell) => cell.trim()));
-  const problems = [];
+  const problems = [...manifestProblems];
   for (const dir of dirs) {
     if (FORBIDDEN_SETS.some((name) => dir.toLowerCase().includes(name)))
       problems.push({ path: dir, message: `${dir}: this set must never be bundled` });
@@ -402,6 +446,38 @@ function selfTest() {
     );
     const undraw = 'apps/studio/public/illustrations/undraw';
     expectAssets('asset-undraw', assetRoot('a6', row(undraw, 'MIT'), [undraw]), true, 'never');
+
+    const samples = 'packages/templates-open/src/samples';
+    const sampleRoot = (name, manifest, files) => {
+      const root = assetRoot(name, row(samples, 'CC0-1.0'), [samples]);
+      writeFileSync(join(root, samples, 'samples.json'), JSON.stringify(manifest));
+      for (const f of files) writeFileSync(join(root, samples, f), 'x');
+      return root;
+    };
+    const photoRow = (file, licence) => ({ file, licence, source: 's', author: 'a' });
+    expectAssets(
+      'samples-ok',
+      sampleRoot('a7', { photos: [photoRow('a.jpg', 'CC0-1.0')] }, ['a.jpg']),
+      false
+    );
+    expectAssets(
+      'samples-bad-licence',
+      sampleRoot('a8', { photos: [photoRow('a.jpg', 'CC-BY-NC-4.0')] }, ['a.jpg']),
+      true,
+      'not allowed'
+    );
+    expectAssets(
+      'samples-no-row',
+      sampleRoot('a9', { photos: [] }, ['a.jpg']),
+      true,
+      'no row in samples.json'
+    );
+    expectAssets(
+      'samples-no-file',
+      sampleRoot('a10', { photos: [photoRow('a.jpg', 'CC0-1.0')] }, []),
+      true,
+      'no file'
+    );
 
     const sources = join(base, 'sources');
     mkdirSync(sources, { recursive: true });

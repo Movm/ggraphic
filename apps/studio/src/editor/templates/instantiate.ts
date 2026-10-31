@@ -7,7 +7,10 @@ import {
   type TemplateInput,
 } from '@ggraphic/core';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { TEMPLATE_GEOMETRY } from '@ggraphic/editor/templates/templateGeometry';
+import {
+  TEMPLATE_GATE_ADAPTER,
+  TEMPLATE_GEOMETRY,
+} from '@ggraphic/editor/templates/templateGeometry';
 import { type TemplateFile, type TemplateFormat } from '@ggraphic/schema';
 
 import { logoSizeOf } from '../../logoSize';
@@ -36,6 +39,8 @@ export function placeTemplate(
     geometry: TEMPLATE_GEOMETRY,
     locale: 'en',
     fontFallback: fontFallbackFor,
+    fitText: TEMPLATE_GATE_ADAPTER.fitText,
+    boxOf: (key, el) => TEMPLATE_GATE_ADAPTER.box(key, el, 1),
     schemeId,
     logoSizeOf,
   });

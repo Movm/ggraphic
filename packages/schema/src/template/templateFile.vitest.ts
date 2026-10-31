@@ -120,6 +120,44 @@ describe('readTemplateFile', () => {
     if (result.status === 'invalid') expect(result.reason).toContain('fontStyle');
   });
 
+  it.each([100, 400, 800, 900])('accepts fontWeight %d', (fontWeight) => {
+    const state = { texts: [{ id: 't1', text: 'Hello', fontWeight, bind: { fill: 'ink' } }] };
+    expect(readTemplateFile(with_({ pages: [{ state }] })).status).toBe('ok');
+  });
+
+  it.each([0, 450, 1000, '800'])('rejects fontWeight %j', (fontWeight) => {
+    const state = { texts: [{ id: 't1', text: 'Hello', fontWeight, bind: { fill: 'ink' } }] };
+    const result = readTemplateFile(with_({ pages: [{ state }] }));
+    expect(result.status).toBe('invalid');
+    if (result.status === 'invalid') expect(result.reason).toContain('fontWeight');
+  });
+
+  it.each([-0.1, 0, 0.08, 0.3])('accepts letterSpacing %d', (letterSpacing) => {
+    const state = { texts: [{ id: 't1', text: 'Hello', letterSpacing, bind: { fill: 'ink' } }] };
+    expect(readTemplateFile(with_({ pages: [{ state }] })).status).toBe('ok');
+  });
+
+  it.each([-0.2, 0.31, 12, '0.1', null])('rejects letterSpacing %j', (letterSpacing) => {
+    const state = { texts: [{ id: 't1', text: 'Hello', letterSpacing, bind: { fill: 'ink' } }] };
+    const result = readTemplateFile(with_({ pages: [{ state }] }));
+    expect(result.status).toBe('invalid');
+    if (result.status === 'invalid') expect(result.reason).toContain('letterSpacing');
+  });
+
+  it('accepts a maxFontSize at or above fontSize', () => {
+    for (const maxFontSize of [60, 84]) {
+      const state = { texts: [{ id: 't1', text: 'Hi', fontSize: 60, maxFontSize }] };
+      expect(readTemplateFile(with_({ pages: [{ state }] })).status).toBe('ok');
+    }
+  });
+
+  it.each([59, 0, -4, '84', null])('rejects maxFontSize %j (fontSize 60)', (maxFontSize) => {
+    const state = { texts: [{ id: 't1', text: 'Hi', fontSize: 60, maxFontSize }] };
+    const result = readTemplateFile(with_({ pages: [{ state }] }));
+    expect(result.status).toBe('invalid');
+    if (result.status === 'invalid') expect(result.reason).toContain('maxFontSize');
+  });
+
   it('a block naming a missing element is invalid', () => {
     const result = readTemplateFile(
       with_({ blocks: [{ id: 'b', title: { en: 'B' }, elementIds: ['nope'] }] })

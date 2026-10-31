@@ -18,7 +18,7 @@ import { layoutRichTextBlock, type MeasureRun } from '@ggraphic/schema';
 import { describe, expect, it } from 'vitest';
 
 import { usesRichText } from '../utils/textRouting.js';
-import { runFont } from '../utils/textUtils.js';
+import { konvaFontStyle, runFont } from '../utils/textUtils.js';
 import { TEMPLATE_GATE_ADAPTER as adapter } from './templateGeometry.js';
 
 const req = createRequire(import.meta.url);
@@ -32,7 +32,13 @@ Konva.Util.createCanvasElement = () => {
   return canvas;
 };
 
-const FAMILIES = { Raleway: 'raleway', Fraunces: 'fraunces', 'Instrument Sans': 'instrument-sans' };
+const FAMILIES = {
+  Raleway: 'raleway',
+  Fraunces: 'fraunces',
+  'Instrument Sans': 'instrument-sans',
+  'Bricolage Grotesque': 'bricolage-grotesque',
+  Anton: 'anton',
+};
 const studio = createRequire(
   join(dirname(fileURLToPath(import.meta.url)), '../../../../apps/studio/package.json')
 );
@@ -41,7 +47,9 @@ for (const [family, pkg] of Object.entries(FAMILIES)) {
   const dir = join(dirname(studio.resolve(`@fontsource/${pkg}/package.json`)), 'files');
   subsets[family] = [];
   for (const file of readdirSync(dir).filter((f) => f.endsWith('.woff2'))) {
-    const m = new RegExp(`^${pkg}-([a-z-]+)-(400|700)-(normal|italic)\\.woff2$`).exec(file);
+    const m = new RegExp(`^${pkg}-([a-z-]+)-(400|500|600|700|800)-(normal|italic)\\.woff2$`).exec(
+      file
+    );
     if (!m) continue;
     if (!subsets[family]!.includes(m[1]!)) subsets[family]!.push(m[1]!);
     GlobalFonts.registerFromPath(join(dir, file), `${family}__${m[1]}`);
@@ -58,16 +66,22 @@ interface Sample {
   text: string;
   family: string;
   fontStyle: string;
+  fontWeight?: number;
   size: number;
   width: number;
+  /** em, as the stored field. */
   letterSpacing: number;
 }
 
 /** What the canvas draws: Konva's `Text` or the rich layout, routed as `CanvasText` routes. */
 function referenceLines(s: Sample): number {
   const measure: MeasureRun = (text, style) => {
-    const run = runFont(s.family, s.fontStyle, style, null);
-    return realWidth(text, run.fontFamily, run.fontStyle, s.size);
+    const run = runFont(s.family, s.fontStyle, style, null, s.fontWeight);
+    // Konva adds the spacing after every code point; so does the rich layout's measure.
+    return (
+      realWidth(text, run.fontFamily, run.fontStyle, s.size) +
+      s.letterSpacing * s.size * [...text].length
+    );
   };
   if (usesRichText({ text: s.text, width: s.width }, measure)) {
     return layoutRichTextBlock(s.text, s.width, measure).length;
@@ -75,10 +89,10 @@ function referenceLines(s: Sample): number {
   const node = new Konva.Text({
     text: s.text,
     fontFamily: stack(s.family),
-    fontStyle: s.fontStyle,
+    fontStyle: konvaFontStyle(s.fontStyle, s.fontWeight),
     fontSize: s.size,
     width: s.width,
-    letterSpacing: s.letterSpacing,
+    letterSpacing: s.letterSpacing * s.size,
     wrap: 'word',
   });
   return node.textArr.length;
@@ -89,6 +103,7 @@ const gateLines = (s: Sample): number =>
     text: s.text,
     fontFamily: s.family,
     fontStyle: s.fontStyle,
+    ...(s.fontWeight === undefined ? {} : { fontWeight: s.fontWeight }),
     fontSize: s.size,
     width: s.width,
     letterSpacing: s.letterSpacing,
@@ -133,39 +148,76 @@ describe('gate line count against the renderer layout (real fonts)', () => {
       'a negative letter spacing on a list',
       sample(
         '1. Eins zwei drei vier fünf sechs sieben acht\n2. neun zehn elf zwölf dreizehn vierzehn',
-        { letterSpacing: -6 }
+        { letterSpacing: -0.1 }
       ),
     ],
     [
       'bold marks',
       sample('**FETT FETT FETT FETT FETT FETT FETT FETT FETT FETT FETT FETT**', {
         width: 900,
-        letterSpacing: -6,
+        letterSpacing: -0.1,
       }),
     ],
     [
       'accent marks',
       sample('==Akzent Akzent Akzent Akzent Akzent Akzent Akzent==', {
         width: 700,
-        letterSpacing: -6,
+        letterSpacing: -0.1,
       }),
     ],
     [
       'marker marks',
       sample('++Marker++ ++Marker++ ++Marker++ ++Marker++ ++Marker++', { width: 700 }),
     ],
-    ['leading spaces', sample('          X', { width: 200, letterSpacing: 8 })],
+    ['leading spaces', sample('          X', { width: 200, letterSpacing: 0.13 })],
     ['inner spaces', sample('A          B', { width: 200 })],
   ])('is not below the reference: %s', (_name, s) => {
     for (const family of Object.keys(FAMILIES)) {
       for (const fontStyle of ['normal', 'bold', 'italic', 'bold italic']) {
-        for (const letterSpacing of [0, 8, -6]) {
+        for (const letterSpacing of [0, 0.13, -0.1]) {
           const v = { ...s, family, fontStyle, letterSpacing: s.letterSpacing || letterSpacing };
           expect(gateLines(v), JSON.stringify(v)).toBeGreaterThanOrEqual(referenceLines(v));
         }
       }
     }
   });
+
+  it.each([
+    ['a headline at -0.03 em', 'Kein Platz für Hass', 'Bricolage Grotesque', 'bold', 80, -0.03],
+    ['an uppercase label at +0.08 em', 'JETZT MITMACHEN', 'Instrument Sans', 'bold', 40, 0.08],
+  ])(
+    'a box exactly as wide as the measured line (%s): the gate is not below the canvas',
+    (_name, text, family, fontStyle, size, letterSpacing) => {
+      const node = new Konva.Text({
+        text,
+        fontFamily: stack(family),
+        fontStyle,
+        fontSize: size,
+        letterSpacing: letterSpacing * size,
+      });
+      const lineWidth = node.getTextWidth() + letterSpacing * size * [...text].length;
+      for (const width of [lineWidth, lineWidth - 0.5, lineWidth * 0.8]) {
+        const v = { ...sample(text, { family, fontStyle, size, width, letterSpacing }) };
+        expect(gateLines(v), JSON.stringify(v)).toBeGreaterThanOrEqual(referenceLines(v));
+      }
+    }
+  );
+
+  it.each([100, 300, 400, 500, 600, 700, 800, 900])(
+    'is not below the reference at fontWeight %d (Bricolage Grotesque, Anton)',
+    (fontWeight) => {
+      for (const family of ['Bricolage Grotesque', 'Anton']) {
+        for (const text of [
+          'WWWWW '.repeat(6).trim(),
+          'Gemeinschaftsgartenverein Klimaschutzprogramm Bundesverfassungsgericht',
+          'Kein Platz für Hass und Hetze in unserer Stadt',
+        ]) {
+          const v = { ...sample(text, { size: 80, width: 600 }), family, fontWeight };
+          expect(gateLines(v), JSON.stringify(v)).toBeGreaterThanOrEqual(referenceLines(v));
+        }
+      }
+    }
+  );
 
   it('is not below the reference on 3000 seeded random texts', () => {
     let seed = 7;
@@ -189,9 +241,9 @@ describe('gate line count against the renderer layout (real fonts)', () => {
       else if (kind < 0.25) text = ` ${text}`;
       const s: Sample = {
         text,
-        family: families[Math.floor(rnd() * 3)]!,
+        family: families[Math.floor(rnd() * families.length)]!,
         fontStyle: styles[Math.floor(rnd() * 4)]!,
-        letterSpacing: [0, 0, 3, -3][Math.floor(rnd() * 4)]!,
+        letterSpacing: [0, 0, 0.04, -0.04][Math.floor(rnd() * 4)]!,
         width: 80 + Math.floor(rnd() * 900),
         size: 40 + Math.floor(rnd() * 60),
       };

@@ -1,7 +1,7 @@
 {
   "formatVersion": 1,
   "id": "studio-event-panel",
-  "version": 1,
+  "version": 2,
   "kind": "template",
   "family": "event",
   "title": {
@@ -18,7 +18,7 @@
     "topics": []
   },
   "formats": ["4:5"],
-  "schemes": ["primary", "secondary", "light", "dark", "photo"],
+  "schemes": ["secondary", "primary", "light", "dark", "photo", "accent"],
   "schemaVersion": 3,
   "pages": [
     {
@@ -94,11 +94,13 @@
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 0.95,
-            "fontStyle": "bold",
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.096296
           },
           {
             "id": "when",
@@ -112,11 +114,12 @@
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 1.1,
-            "fontStyle": "bold",
+            "fontWeight": 700,
             "bind": {
               "fill": "ink2",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.051852
           },
           {
             "id": "name-1",
@@ -130,11 +133,12 @@
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 1.1,
-            "fontStyle": "bold",
+            "fontWeight": 700,
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.044444
           },
           {
             "id": "name-2",
@@ -148,11 +152,12 @@
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 1.1,
-            "fontStyle": "bold",
+            "fontWeight": 700,
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.044444
           },
           {
             "id": "name-3",
@@ -166,11 +171,12 @@
             "fontFamily": "",
             "fill": "#ffffff",
             "lineHeight": 1.1,
-            "fontStyle": "bold",
+            "fontWeight": 700,
             "bind": {
               "fill": "ink",
               "fontFamily": "font.body"
-            }
+            },
+            "maxFontSize": 0.044444
           }
         ],
         "layerOrder": [

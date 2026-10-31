@@ -77,7 +77,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.headline"
-            }
+            },
+            "maxFontSize": 0.096296
           },
           {
             "id": "subline",

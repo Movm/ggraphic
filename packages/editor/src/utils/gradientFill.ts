@@ -19,6 +19,9 @@ export interface GradientFill {
   /** Angle in degrees; 0 = left→right, 90 = top→bottom. Unused by `radial`. */
   angle: number;
   stops: GradientStop[];
+  /** `radial` only (glow): centre and reach in the shape's own box, origin top-left. Absent: box centre to corner. */
+  centre?: { x: number; y: number };
+  radius?: number;
 }
 
 export interface KonvaLinearGradientProps {
@@ -76,12 +79,14 @@ export function gradientFillProps(
   | (KonvaLinearGradientProps & { fillPriority: 'linear-gradient' })
   | (KonvaRadialGradientProps & { fillPriority: 'radial-gradient' }) {
   if (gradient.type === 'radial') {
-    const centre = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+    const centre = gradient.centre
+      ? { x: rect.x + gradient.centre.x, y: rect.y + gradient.centre.y }
+      : { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
     return {
       fillRadialGradientStartPoint: centre,
       fillRadialGradientEndPoint: centre,
       fillRadialGradientStartRadius: 0,
-      fillRadialGradientEndRadius: Math.hypot(rect.width, rect.height) / 2,
+      fillRadialGradientEndRadius: gradient.radius ?? Math.hypot(rect.width, rect.height) / 2,
       fillRadialGradientColorStops: gradient.stops.flatMap((s) => [s.offset, s.color]),
       fillPriority: 'radial-gradient',
     };

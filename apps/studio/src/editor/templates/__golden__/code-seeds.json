@@ -9,7 +9,7 @@
         }
       },
       "brandScheme": "primary",
-      "brandStamp": "c5ea0ad9",
+      "brandStamp": "845b802a",
       "shapeInstances": [
         {
           "id": "accent-bar",
@@ -42,7 +42,7 @@
           "fontSize": 104,
           "align": "left",
           "lineHeight": 1.1,
-          "fontFamily": "Raleway, Arial, sans-serif",
+          "fontFamily": "Bricolage Grotesque, Arial, sans-serif",
           "fill": "#ffffff",
           "fontStyle": "bold",
           "bind": {
@@ -52,9 +52,10 @@
             },
             "fontFamily": {
               "ref": "font.headline",
-              "value": "Raleway"
+              "value": "Bricolage Grotesque"
             }
-          }
+          },
+          "maxFontSize": 104
         },
         {
           "id": "subline",
@@ -66,7 +67,7 @@
           "fontSize": 48,
           "align": "left",
           "lineHeight": 1.1,
-          "fontFamily": "Raleway, Arial, sans-serif",
+          "fontFamily": "Bricolage Grotesque, Arial, sans-serif",
           "fill": "#d3b9c2",
           "bind": {
             "fill": {
@@ -75,7 +76,7 @@
             },
             "fontFamily": {
               "ref": "font.headline",
-              "value": "Raleway"
+              "value": "Bricolage Grotesque"
             }
           }
         },
@@ -138,7 +139,7 @@
         }
       },
       "brandScheme": "light",
-      "brandStamp": "c5ea0ad9",
+      "brandStamp": "845b802a",
       "shapeInstances": [],
       "additionalTexts": [
         {
@@ -186,7 +187,8 @@
               "ref": "font.quoteEmphasis",
               "value": "Fraunces"
             }
-          }
+          },
+          "maxFontSize": 72
         },
         {
           "id": "subline",
@@ -224,7 +226,7 @@
         }
       },
       "brandScheme": "secondary",
-      "brandStamp": "c5ea0ad9",
+      "brandStamp": "845b802a",
       "shapeInstances": [],
       "additionalTexts": [
         {
@@ -237,7 +239,7 @@
           "fontSize": 300,
           "align": "left",
           "lineHeight": 1,
-          "fontFamily": "Raleway, Arial, sans-serif",
+          "fontFamily": "Bricolage Grotesque, Arial, sans-serif",
           "fill": "#ffffff",
           "fontStyle": "bold",
           "bind": {
@@ -247,9 +249,10 @@
             },
             "fontFamily": {
               "ref": "font.headline",
-              "value": "Raleway"
+              "value": "Bricolage Grotesque"
             }
-          }
+          },
+          "maxFontSize": 300
         },
         {
           "id": "headline",
@@ -261,7 +264,7 @@
           "fontSize": 64,
           "align": "left",
           "lineHeight": 1.1,
-          "fontFamily": "Raleway, Arial, sans-serif",
+          "fontFamily": "Bricolage Grotesque, Arial, sans-serif",
           "fill": "#ffffff",
           "fontStyle": "bold",
           "bind": {
@@ -271,9 +274,10 @@
             },
             "fontFamily": {
               "ref": "font.headline",
-              "value": "Raleway"
+              "value": "Bricolage Grotesque"
             }
-          }
+          },
+          "maxFontSize": 64
         },
         {
           "id": "subline",
@@ -312,7 +316,7 @@
         }
       },
       "brandScheme": "primary",
-      "brandStamp": "719af166",
+      "brandStamp": "daa38721",
       "shapeInstances": [
         {
           "id": "accent-bar",
@@ -377,7 +381,7 @@
           "fontSize": 104,
           "align": "left",
           "lineHeight": 1.1,
-          "fontFamily": "Raleway, Arial, sans-serif",
+          "fontFamily": "Bricolage Grotesque, Arial, sans-serif",
           "fill": "#ffffff",
           "fontStyle": "bold",
           "bind": {
@@ -387,9 +391,10 @@
             },
             "fontFamily": {
               "ref": "font.headline",
-              "value": "Raleway"
+              "value": "Bricolage Grotesque"
             }
-          }
+          },
+          "maxFontSize": 104
         },
         {
           "id": "subline",
@@ -401,7 +406,7 @@
           "fontSize": 48,
           "align": "left",
           "lineHeight": 1.1,
-          "fontFamily": "Raleway, Arial, sans-serif",
+          "fontFamily": "Bricolage Grotesque, Arial, sans-serif",
           "fill": "#d3b9c2",
           "bind": {
             "fill": {
@@ -410,7 +415,7 @@
             },
             "fontFamily": {
               "ref": "font.headline",
-              "value": "Raleway"
+              "value": "Bricolage Grotesque"
             }
           }
         },
@@ -473,7 +478,7 @@
         }
       },
       "brandScheme": "light",
-      "brandStamp": "719af166",
+      "brandStamp": "daa38721",
       "shapeInstances": [],
       "userImageInstances": [
         {
@@ -553,7 +558,8 @@
               "ref": "font.quoteEmphasis",
               "value": "Fraunces"
             }
-          }
+          },
+          "maxFontSize": 72
         },
         {
           "id": "subline",
@@ -591,7 +597,7 @@
         }
       },
       "brandScheme": "secondary",
-      "brandStamp": "719af166",
+      "brandStamp": "daa38721",
       "shapeInstances": [],
       "userImageInstances": [
         {
@@ -636,7 +642,7 @@
           "fontSize": 300,
           "align": "left",
           "lineHeight": 1,
-          "fontFamily": "Raleway, Arial, sans-serif",
+          "fontFamily": "Bricolage Grotesque, Arial, sans-serif",
           "fill": "#ffffff",
           "fontStyle": "bold",
           "bind": {
@@ -646,9 +652,10 @@
             },
             "fontFamily": {
               "ref": "font.headline",
-              "value": "Raleway"
+              "value": "Bricolage Grotesque"
             }
-          }
+          },
+          "maxFontSize": 300
         },
         {
           "id": "headline",
@@ -660,7 +667,7 @@
           "fontSize": 64,
           "align": "left",
           "lineHeight": 1.1,
-          "fontFamily": "Raleway, Arial, sans-serif",
+          "fontFamily": "Bricolage Grotesque, Arial, sans-serif",
           "fill": "#ffffff",
           "fontStyle": "bold",
           "bind": {
@@ -670,9 +677,10 @@
             },
             "fontFamily": {
               "ref": "font.headline",
-              "value": "Raleway"
+              "value": "Bricolage Grotesque"
             }
-          }
+          },
+          "maxFontSize": 64
         },
         {
           "id": "subline",

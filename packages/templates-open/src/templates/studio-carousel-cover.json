@@ -1,0 +1,363 @@
+{
+  "formatVersion": 1,
+  "id": "studio-carousel-cover",
+  "version": 1,
+  "kind": "template",
+  "family": "carousel",
+  "title": {
+    "en": "Carousel cover",
+    "de": "Karussell-Titelfolie"
+  },
+  "description": {
+    "en": "A cover slide with a label, a giant two-colour title, a progress strip and a swipe hint",
+    "de": "Eine Titelfolie mit Label, riesigem zweifarbigem Titel, Fortschrittsleiste und Wischhinweis"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["dark", "primary", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "deep"
+        },
+        "shapeInstances": [
+          {
+            "id": "veil",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.5,
+            "width": 1,
+            "height": 1,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.6,
+            "notch": 0.051852,
+            "bind": {
+              "fill": "deep"
+            }
+          },
+          {
+            "id": "scrim-top",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.318519,
+            "width": 1,
+            "height": 0.637037,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "shade": "top",
+            "notch": 0.051852,
+            "bind": {
+              "fill": "deep"
+            }
+          },
+          {
+            "id": "scrim-bottom",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.911111,
+            "width": 1,
+            "height": 0.177778,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "shade": "bottom",
+            "bind": {
+              "fill": "deep"
+            }
+          },
+          {
+            "id": "label-plate",
+            "type": "rect",
+            "x": 0.163043,
+            "y": 0.034034,
+            "width": 0.326087,
+            "height": 0.041176,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          },
+          {
+            "id": "dot-1",
+            "type": "rect",
+            "x": 0.030435,
+            "y": 0.982353,
+            "width": 0.06087,
+            "height": 0.006723,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          },
+          {
+            "id": "dot-2",
+            "type": "rect",
+            "x": 0.104348,
+            "y": 0.982353,
+            "width": 0.06087,
+            "height": 0.006723,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.35,
+            "bind": {
+              "fill": "ink"
+            }
+          },
+          {
+            "id": "dot-3",
+            "type": "rect",
+            "x": 0.178261,
+            "y": 0.982353,
+            "width": 0.06087,
+            "height": 0.006723,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.35,
+            "bind": {
+              "fill": "ink"
+            }
+          },
+          {
+            "id": "dot-4",
+            "type": "rect",
+            "x": 0.252174,
+            "y": 0.982353,
+            "width": 0.06087,
+            "height": 0.006723,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.35,
+            "bind": {
+              "fill": "ink"
+            }
+          },
+          {
+            "id": "dot-5",
+            "type": "rect",
+            "x": 0.326087,
+            "y": 0.982353,
+            "width": 0.06087,
+            "height": 0.006723,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.35,
+            "bind": {
+              "fill": "ink"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "notch": 0.051852
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "label",
+            "type": "body",
+            "text": "KNOW-HOW",
+            "x": 0.026087,
+            "y": 0.02437,
+            "width": 0.271739,
+            "fontSize": 0.022222,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 600,
+            "letterSpacing": 0.08,
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.022222
+          },
+          {
+            "id": "title",
+            "type": "header",
+            "text": "5 facts about ==volunteering==",
+            "x": 0,
+            "y": 0.092437,
+            "width": 1,
+            "fontSize": 0.155556,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.92,
+            "fontWeight": 800,
+            "letterSpacing": -0.04,
+            "accentFill": "#ffffff",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline",
+              "accentFill": "accent"
+            },
+            "maxFontSize": 0.155556
+          },
+          {
+            "id": "swipe",
+            "type": "body",
+            "text": "Swipe on",
+            "x": 0.673913,
+            "y": 0.971429,
+            "width": 0.326087,
+            "fontSize": 0.024074,
+            "align": "right",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.024074
+          }
+        ],
+        "layerOrder": [
+          "photo",
+          "veil",
+          "scrim-top",
+          "scrim-bottom",
+          "label-plate",
+          "label",
+          "title",
+          "dot-1",
+          "dot-2",
+          "dot-3",
+          "dot-4",
+          "dot-5",
+          "swipe",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas",
+    "veil": "canvas",
+    "scrim-top": "canvas",
+    "scrim-bottom": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "label": {
+      "role": "subline",
+      "label": {
+        "en": "Label",
+        "de": "Label"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 18
+      }
+    },
+    "title": {
+      "role": "headline",
+      "label": {
+        "en": "Title",
+        "de": "Titel"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 3,
+        "maxChars": 36
+      }
+    },
+    "swipe": {
+      "role": "cta",
+      "label": {
+        "en": "Swipe hint",
+        "de": "Wischhinweis"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 20
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-left"],
+  "placeholders": {
+    "en": {
+      "label": "KNOW-HOW",
+      "title": "5 facts about ==volunteering==",
+      "swipe": "Swipe on"
+    },
+    "de": {
+      "label": "WISSEN",
+      "title": "5 Fakten über ==Ehrenamt==",
+      "swipe": "Weiter wischen"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

@@ -10,6 +10,7 @@ import {
   Ring,
   Line,
   Arrow,
+  Shape,
   Transformer,
 } from 'react-konva';
 
@@ -18,13 +19,15 @@ import { useBoxSnap, type SnapProps } from '@ggraphic/editor/hooks/useBoxSnap';
 import { gradientFillProps } from '@ggraphic/editor/utils/gradientFill';
 import { translucentHitFunc } from '@ggraphic/editor/utils/gradientHitArea';
 import { handDrawnPath } from '@ggraphic/editor/utils/handDrawn';
+import { paintDots, paintGrain } from '../utils/grain.js';
+import { notchPx, traceNotch } from '../utils/notch.js';
 import {
   ELEMENT_TRANSFORMER,
   MIRROR_X_ATTR,
   nodeRotation,
   signedScale,
 } from '@ggraphic/editor/utils/orientation';
-import { shapeGradient } from '@ggraphic/editor/utils/shade';
+import { glowGradient, shapeGradient } from '@ggraphic/editor/utils/shade';
 import {
   assertNever,
   isComposerPlane,
@@ -121,6 +124,7 @@ interface CommonShapeProps {
   onDragMove: (e: Konva.KonvaEventObject<DragEvent>) => void;
   onDragEnd: (e: Konva.KonvaEventObject<DragEvent>) => void;
   onTransformEnd: () => void;
+  onTransform: () => void;
   name: string;
   shadowColor?: string;
   shadowBlur?: number;
@@ -139,13 +143,71 @@ interface CommonShapeProps {
   fillRadialGradientColorStops?: Array<number | string>;
 }
 
+/**
+ * A rect or ellipse drawn by hand: same box and origin as the Konva node it replaces, only the
+ * outline (the notch) or the fill (the glow) differs.
+ */
+function outlined(
+  shape: ShapeInstance,
+  commonProps: CommonShapeProps,
+  shapeRef: React.RefObject<Konva.Shape | null>,
+  notchSize: number
+): React.ReactElement {
+  const { width, height } = shape;
+  const trace = (ctx: Konva.Context) => {
+    if (shape.type === 'ellipse') {
+      ctx.beginPath();
+      ctx.ellipse(width / 2, height / 2, width / 2, height / 2, 0, 0, Math.PI * 2);
+      ctx.closePath();
+    } else {
+      traceNotch(ctx, width, height, notchSize);
+    }
+  };
+  return (
+    <Shape
+      ref={shapeRef}
+      {...commonProps}
+      width={width}
+      height={height}
+      offsetX={width / 2}
+      offsetY={height / 2}
+      sceneFunc={(ctx, node) => {
+        trace(ctx);
+        if (!shape.glow) {
+          ctx.fillStrokeShape(node);
+          return;
+        }
+        // The fade is elliptical: a circular gradient squeezed to the shape's height.
+        const glow = glowGradient(shape.fill, width, height);
+        ctx.save();
+        ctx.clip();
+        ctx.translate(width / 2, height / 2);
+        ctx.scale(1, height / width);
+        const paint = ctx.createRadialGradient(0, 0, 0, 0, 0, glow.radius ?? width / 2);
+        for (const stop of glow.stops) paint.addColorStop(stop.offset, stop.color);
+        ctx.setAttr('fillStyle', paint);
+        ctx.fillRect(-width, -width, width * 2, width * 2);
+        ctx.restore();
+      }}
+      hitFunc={(ctx, node) => {
+        trace(ctx);
+        ctx.fillShape(node);
+      }}
+    />
+  );
+}
+
 function renderShape(
   shape: ShapeInstance,
   commonProps: CommonShapeProps,
-  shapeRef: React.RefObject<Konva.Shape | null>
+  shapeRef: React.RefObject<Konva.Shape | null>,
+  notchSize: number
 ): React.ReactElement {
   switch (shape.type) {
     case 'rect':
+      if (notchSize > 0 || shape.glow) {
+        return outlined(shape, commonProps, shapeRef, notchSize);
+      }
       return (
         <Rect
           ref={shapeRef as React.RefObject<Konva.Rect>}
@@ -179,6 +241,7 @@ function renderShape(
         />
       );
     case 'ellipse':
+      if (shape.glow) return outlined(shape, commonProps, shapeRef, 0);
       return (
         <Ellipse
           ref={shapeRef as React.RefObject<Konva.Ellipse>}
@@ -466,6 +529,8 @@ const ShapePrimitiveInner: React.FC<ShapePrimitiveProps> = ({
   const snap = useBoxSnap({ id: shape.id, ...snapProps }, shapeBox(shape));
   const draggable = draggableProp && !locked;
   const shapeRef = useRef<Konva.Shape>(null);
+  const dotsRef = useRef<Konva.Shape>(null);
+  const grainRef = useRef<Konva.Shape>(null);
   const trRef = useRef<Konva.Transformer>(null);
 
   useEffect(() => {
@@ -485,13 +550,40 @@ const ShapePrimitiveInner: React.FC<ShapePrimitiveProps> = ({
       fill: shape.fill,
       shade: shape.shade,
       fillGradient: shape.fillGradient,
+      type: shape.type,
+      glow: shape.glow,
+      width: shape.width,
+      height: shape.height,
     });
     if (gradient && shapeRef.current) {
       setGradientProps(gradientFillProps(gradient, shapeRef.current.getSelfRect()));
     } else {
       setGradientProps(null);
     }
-  }, [shape.fillGradient, shape.shade, shape.fill, shape.type, shape.width, shape.height]);
+  }, [
+    shape.fillGradient,
+    shape.shade,
+    shape.glow,
+    shape.fill,
+    shape.type,
+    shape.width,
+    shape.height,
+  ]);
+
+  // The texture nodes are siblings of the shape, so a live drag or resize moves them by hand.
+  const followShape = () => {
+    const node = shapeRef.current;
+    if (!node) return;
+    for (const texture of [dotsRef.current, grainRef.current]) {
+      texture?.setAttrs({
+        x: node.x(),
+        y: node.y(),
+        rotation: node.rotation(),
+        scaleX: node.scaleX(),
+        scaleY: node.scaleY(),
+      });
+    }
+  };
 
   const handleDragEnd = (e: Konva.KonvaEventObject<DragEvent>) => {
     snap.onDragEnd();
@@ -530,6 +622,7 @@ const ShapePrimitiveInner: React.FC<ShapePrimitiveProps> = ({
   // slide: as with the background photo, the first touch selects it and only a
   // touch on the selected plane drags it.
   const touchDragNeedsSelection = isComposerPlane(shape.id) && !isSelected && draggable;
+  const notchSize = shape.type === 'rect' ? notchPx(shape.notch, snapProps.stageWidth) : 0;
   const fillsArea = !STROKE_ONLY_SHAPES.has(shape.type) && !shape.type.startsWith('hand-');
 
   const commonProps: CommonShapeProps = {
@@ -564,8 +657,12 @@ const ShapePrimitiveInner: React.FC<ShapePrimitiveProps> = ({
       onSelect(shape.id);
     },
     onDragStart: snap.onDragStart,
-    onDragMove: snap.onDragMove,
+    onDragMove: (e) => {
+      snap.onDragMove(e);
+      followShape();
+    },
     onDragEnd: handleDragEnd,
+    onTransform: followShape,
     onTransformEnd: handleTransformEnd,
     name: `shape-${shape.id}`,
     shadowColor: shape.shadowColor,
@@ -577,9 +674,59 @@ const ShapePrimitiveInner: React.FC<ShapePrimitiveProps> = ({
     ...(gradientProps ?? { fillPriority: 'color' as const }),
   };
 
+  const outline = (ctx: Konva.Context) => {
+    traceNotch(ctx, shape.width, shape.height, notchSize);
+    ctx.save();
+    ctx.clip();
+  };
+  const textureBox = {
+    x: commonProps.x,
+    y: commonProps.y,
+    rotation: commonProps.rotation,
+    scaleX: commonProps.scaleX,
+    scaleY: commonProps.scaleY,
+    width: shape.width,
+    height: shape.height,
+    offsetX: shape.width / 2,
+    offsetY: shape.height / 2,
+    listening: false,
+    perfectDrawEnabled: false,
+  };
+  const dots = shape.type === 'rect' && shape.pattern === 'dots';
+  const grain = shape.type === 'rect' ? Math.min(1, Math.max(0, shape.grain ?? 0)) : 0;
+
   return (
     <>
-      {renderShape(shape, commonProps, shapeRef)}
+      {renderShape(shape, commonProps, shapeRef, notchSize)}
+
+      {dots && (
+        <Shape
+          ref={dotsRef}
+          name={`shape-texture-${shape.id}-dots`}
+          {...textureBox}
+          opacity={shape.opacity ?? 1}
+          globalCompositeOperation={shape.blendMode}
+          sceneFunc={(ctx) => {
+            outline(ctx);
+            paintDots(ctx, shape, shape.width, shape.height, snapProps.stageWidth ?? 0);
+            ctx.restore();
+          }}
+        />
+      )}
+      {grain > 0 && (
+        <Shape
+          ref={grainRef}
+          name={`shape-texture-${shape.id}-grain`}
+          {...textureBox}
+          opacity={(shape.opacity ?? 1) * grain}
+          globalCompositeOperation={shape.blendMode}
+          sceneFunc={(ctx) => {
+            outline(ctx);
+            paintGrain(ctx, shape.grainTone ?? 'dark', shape.width, shape.height);
+            ctx.restore();
+          }}
+        />
+      )}
 
       {isSelected && (
         <Transformer
@@ -625,6 +772,13 @@ export const ShapePrimitive = memo(ShapePrimitiveInner, (prevProps, nextProps) =
   if (prevShape.fillGradient !== nextShape.fillGradient) return false;
   if (prevShape.shade !== nextShape.shade) return false;
   if (prevShape.blendMode !== nextShape.blendMode) return false;
+  if (prevShape.notch !== nextShape.notch) return false;
+  if (prevShape.glow !== nextShape.glow) return false;
+  if (prevShape.grain !== nextShape.grain) return false;
+  if (prevShape.grainTone !== nextShape.grainTone) return false;
+  if (prevShape.pattern !== nextShape.pattern) return false;
+  if (prevShape.patternColor !== nextShape.patternColor) return false;
+  if (prevShape.patternSpacing !== nextShape.patternSpacing) return false;
   if (prevShape.flipX !== nextShape.flipX) return false;
   if (prevShape.flipY !== nextShape.flipY) return false;
 

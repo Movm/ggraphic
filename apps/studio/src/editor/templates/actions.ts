@@ -24,6 +24,7 @@ import {
   type UserImagePlacement,
 } from '@ggraphic/editor/utils/userImageUtils';
 
+import { fittedFontSize } from './fitting';
 import { type PageGroup, type StudioPageState } from './pageState';
 import { headlineFont, bodyFont, scaleFor } from './typography';
 
@@ -109,9 +110,17 @@ export function createStudioActions(
       commit(
         (prev) => ({
           ...prev,
-          additionalTexts: prev.additionalTexts.map((t) =>
-            t.id === id ? { ...t, ...partial } : t
-          ),
+          additionalTexts: prev.additionalTexts.map((t) => {
+            if (t.id !== id) return t;
+            const next = { ...t, ...partial };
+            // A committed text change refits a text with a prototype size: shrink as it grows,
+            // grow back as it shrinks. A size set by hand in the same change stands.
+            if (!('text' in partial) || 'fontSize' in partial) return next;
+            const fitted = fittedFontSize(next, prev, height);
+            return fitted === null || fitted === next.fontSize
+              ? next
+              : { ...next, fontSize: fitted };
+          }),
         }),
         true
       ),

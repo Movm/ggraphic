@@ -70,6 +70,8 @@ export interface UserImageInstance {
   cropRotation?: number;
   /** `kreis`: clipped to the circle inside width × height. */
   mask?: 'kreis';
+  /** Side of the square cut from the top-right corner, a share of the canvas width; wins over `mask`. */
+  notch?: number;
   /** Stock credit (Unsplash): the photo is hotlinked, so the credit travels with it. */
   attribution?: StockImageAttribution;
 }

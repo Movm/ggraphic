@@ -24,6 +24,7 @@ import {
 import { ICON_TARGET_SIZE, ILLUSTRATION_TARGET_SIZE } from '@ggraphic/editor/utils/motifSizes';
 import { photoStripBeside, type ShapeInstance } from '@ggraphic/editor/utils/shapes';
 import { backgroundStraighten } from '@ggraphic/editor/utils/straighten';
+import { konvaFontStyle } from '@ggraphic/editor/utils/textUtils';
 
 import {
   estimateMeasure,
@@ -242,7 +243,15 @@ function mapShape(shape: ShapeInstance): PptxItem {
   if (!native) return raster(shape.id, placement, 'shape-path');
   // A native pptx shape can't carry the mirror the stage draws; the raster does.
   if (shape.flipX || shape.flipY) return raster(shape.id, placement, 'shape-flipped');
-  if (shape.fillGradient || shape.shade || shape.blendMode) {
+  if (
+    shape.fillGradient ||
+    shape.shade ||
+    shape.blendMode ||
+    shape.notch ||
+    shape.glow ||
+    (shape.grain ?? 0) > 0 ||
+    shape.pattern === 'dots'
+  ) {
     return raster(shape.id, placement, 'shape-styled');
   }
   return {
@@ -265,12 +274,13 @@ function mapText(text: AdditionalText, measure: PptxMeasureText): PptxItem {
   const lineHeight = text.lineHeight ?? 1.2;
   const paragraphs = textParagraphs(text);
   const style = text.fontStyle ?? 'normal';
+  const bold = text.fontWeight !== undefined ? text.fontWeight >= 600 : style.includes('bold');
   const lines = wrappedLineCount(
     paragraphs,
     text.width,
     text.fontSize,
     text.fontFamily,
-    style,
+    konvaFontStyle(style, text.fontWeight),
     measure
   );
   const local = { x: 0, y: 0, width: text.width, height: lines * text.fontSize * lineHeight };
@@ -285,8 +295,9 @@ function mapText(text: AdditionalText, measure: PptxMeasureText): PptxItem {
     fontFace: text.fontFamily,
     fontSize: text.fontSize * scale,
     color: text.fill,
-    bold: style.includes('bold'),
+    bold,
     italic: style.includes('italic'),
+    letterSpacing: text.letterSpacing ?? 0,
     align: text.align ?? 'left',
     valign: 'top',
     lineHeight,
@@ -352,6 +363,7 @@ function mapPill(pill: PillBadgeInstance, measure: PptxMeasureText): PptxItem[] 
       color: pill.textColor,
       bold: style.includes('bold'),
       italic: style.includes('italic'),
+      letterSpacing: 0,
       align: 'center',
       valign: 'middle',
       lineHeight: 1,
@@ -412,6 +424,7 @@ function mapCircleBadge(badge: CircleBadgeInstance): PptxItem[] {
       color: badge.textColor,
       bold: line.fontWeight === 'bold',
       italic: false,
+      letterSpacing: 0,
       align: 'center',
       valign: 'top',
       lineHeight: 1,
@@ -455,7 +468,7 @@ function mapUserImage(image: UserImageInstance): PptxItem {
     image.fit === 'cover' &&
     ((image.cropZoom ?? 1) !== 1 || !!image.panX || !!image.panY || !!image.cropRotation);
   const ovalMask = image.mask === 'kreis' && Math.abs(image.width - image.height) > 0.5;
-  if (isAdjusted(image) || image.shadowColor || movedCrop || ovalMask) {
+  if (isAdjusted(image) || image.shadowColor || movedCrop || ovalMask || image.notch) {
     return raster(image.id, placement, 'image-adjusted');
   }
   return {
