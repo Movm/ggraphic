@@ -23,6 +23,11 @@ import studioFigureOfTheMonth from './templates/studio-figure-of-the-month.json'
 import studioFramedPhoto from './templates/studio-framed-photo.json' with { type: 'json' };
 import studioGoodNewsSlide from './templates/studio-good-news-slide.json' with { type: 'json' };
 import studioInvitationPanel from './templates/studio-invitation-panel.json' with { type: 'json' };
+import studioNumberOneDigit from './templates/studio-number-one-digit.json' with { type: 'json' };
+import studioNumberPercent from './templates/studio-number-percent.json' with { type: 'json' };
+import studioNumberPhotoStrip from './templates/studio-number-photo-strip.json' with { type: 'json' };
+import studioNumberTwoColumns from './templates/studio-number-two-columns.json' with { type: 'json' };
+import studioNumberWordStack from './templates/studio-number-word-stack.json' with { type: 'json' };
 import studioPersonBroadcast from './templates/studio-person-broadcast.json' with { type: 'json' };
 import studioPersonNameBlock from './templates/studio-person-name-block.json' with { type: 'json' };
 import studioPersonNameBoxes from './templates/studio-person-name-boxes.json' with { type: 'json' };
@@ -33,6 +38,11 @@ import studioPetitionFace from './templates/studio-petition-face.json' with { ty
 import studioPosterType from './templates/studio-poster-type.json' with { type: 'json' };
 import studioQuoteCard from './templates/studio-quote-card.json' with { type: 'json' };
 import studioSplitPhotosBand from './templates/studio-split-photos-band.json' with { type: 'json' };
+import studioQuoteGiantMark from './templates/studio-quote-giant-mark.json' with { type: 'json' };
+import studioQuotePortrait from './templates/studio-quote-portrait.json' with { type: 'json' };
+import studioQuoteSidePortrait from './templates/studio-quote-side-portrait.json' with { type: 'json' };
+import studioQuoteTwoVoices from './templates/studio-quote-two-voices.json' with { type: 'json' };
+import studioQuoteTypographic from './templates/studio-quote-typographic.json' with { type: 'json' };
 import studioStatementPanelDots from './templates/studio-statement-panel-dots.json' with { type: 'json' };
 import studioStudyKickerBoxes from './templates/studio-study-kicker-boxes.json' with { type: 'json' };
 
@@ -61,6 +71,11 @@ export const OPEN_TEMPLATES: readonly unknown[] = [
   studioFramedPhoto,
   studioGoodNewsSlide,
   studioInvitationPanel,
+  studioNumberOneDigit,
+  studioNumberPercent,
+  studioNumberPhotoStrip,
+  studioNumberTwoColumns,
+  studioNumberWordStack,
   studioPersonBroadcast,
   studioPersonNameBlock,
   studioPersonNameBoxes,
@@ -70,6 +85,11 @@ export const OPEN_TEMPLATES: readonly unknown[] = [
   studioPetitionFace,
   studioPosterType,
   studioQuoteCard,
+  studioQuoteGiantMark,
+  studioQuotePortrait,
+  studioQuoteSidePortrait,
+  studioQuoteTwoVoices,
+  studioQuoteTypographic,
   studioSplitPhotosBand,
   studioStatementPanelDots,
   studioStudyKickerBoxes,
