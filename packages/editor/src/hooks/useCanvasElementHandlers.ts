@@ -81,6 +81,11 @@ export interface OptionalCanvasActions extends HostCanvasActions {
     }>
   ) => void;
   updateAdditionalText?: (id: string, attrs: Partial<AdditionalText>) => void;
+  /**
+   * Shows a text as an edit in progress will leave it (fitted size, hugging plates) without
+   * recording anything; returns the fitted size. `null` takes the preview back.
+   */
+  previewAdditionalText?: (id: string, draft: string | null) => number | null;
   updateCircleBadge?: (id: string, attrs: Partial<CircleBadgeInstance>) => void;
   updatePillBadge?: (id: string, attrs: Partial<PillBadgeInstance>) => void;
   updateFrame?: (id: string, attrs: Partial<FrameInstance>) => void;

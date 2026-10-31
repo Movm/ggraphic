@@ -93,6 +93,7 @@ export function CanvasRichText({
   transformConfig,
   onSelect,
   onTextChange,
+  onTextPreview,
   onDragEnd,
   onTransformEnd,
   onFontSizeChange,
@@ -346,6 +347,7 @@ export function CanvasRichText({
       accent,
       marker: templateMarker,
       onTextChange,
+      onTextPreview,
     });
   }, [
     editable,
@@ -366,6 +368,7 @@ export function CanvasRichText({
     accent,
     templateMarker,
     onTextChange,
+    onTextPreview,
   ]);
 
   const enabledAnchors = transformConfig?.enabledAnchors ?? DEFAULT_TEXT_ANCHORS;

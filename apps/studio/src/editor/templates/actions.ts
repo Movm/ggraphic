@@ -82,6 +82,13 @@ export function createStudioActions(
     (debounced ? debouncedSaveToHistory : saveToHistory)(change(getState()));
   };
 
+  /** The text and plates as they were before a draft was previewed; null when none is. */
+  let previewBase: {
+    id: string;
+    fontSize: number;
+    shapeInstances: StudioPageState['shapeInstances'];
+  } | null = null;
+
   const addText = (type: AdditionalText['type'], content?: string) => {
     const preset = TEXT_PRESETS[type];
     const textWidth = Math.round(width * 0.7);
@@ -112,8 +119,52 @@ export function createStudioActions(
     addSubheader: () => addText('subheader'),
     addText: () => addText('body'),
     addBodyTextWithContent: (content: string) => addText('body', content),
-    updateAdditionalText: (id: string, partial: Partial<AdditionalText>) =>
-      commit(
+    /**
+     * Shows the page as a text edit will leave it, while it is still being typed: the size the
+     * draft fits at and the plates that hug it. Nothing is recorded and the text stays as it
+     * was, because the commit writes it; `null` takes the preview back. Returns the fitted size,
+     * or null for a text that is not fitted.
+     */
+    previewAdditionalText: (id: string, draft: string | null): number | null => {
+      const prev = getState();
+      const current = prev.additionalTexts.find((t) => t.id === id);
+      if (!current) return null;
+      if (draft === null) {
+        const base = previewBase;
+        previewBase = null;
+        if (base?.id === id) {
+          setState((p) => ({
+            ...p,
+            additionalTexts: p.additionalTexts.map((t) =>
+              t.id === id ? { ...t, fontSize: base.fontSize } : t
+            ),
+            shapeInstances: base.shapeInstances,
+          }));
+        }
+        return null;
+      }
+      if (previewBase?.id !== id) {
+        previewBase = { id, fontSize: current.fontSize, shapeInstances: prev.shapeInstances };
+      }
+      const drafted = { ...current, text: draft };
+      const fitted = fittedFontSize(drafted, prev, height);
+      const size = fitted ?? current.fontSize;
+      const hugged = withHuggedPlates({
+        ...prev,
+        additionalTexts: prev.additionalTexts.map((t) =>
+          t.id === id ? { ...drafted, fontSize: size } : t
+        ),
+      });
+      setState((p) => ({
+        ...p,
+        additionalTexts: p.additionalTexts.map((t) => (t.id === id ? { ...t, fontSize: size } : t)),
+        shapeInstances: hugged.shapeInstances,
+      }));
+      return fitted;
+    },
+    updateAdditionalText: (id: string, partial: Partial<AdditionalText>) => {
+      previewBase = null;
+      return commit(
         (prev) =>
           // The plates that hug a text follow its new lines, width or size.
           withHuggedPlates({
@@ -131,7 +182,8 @@ export function createStudioActions(
             }),
           }),
         true
-      ),
+      );
+    },
     removeAdditionalText: (id: string) =>
       commit((prev) => ({
         ...prev,

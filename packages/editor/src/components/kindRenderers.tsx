@@ -610,6 +610,11 @@ export const KIND_RENDERERS: KindRenderers = {
         draggable={true}
         onSelect={() => handlers.handleElementSelect(textItem.id)}
         onTextChange={(val) => handlers.handleAdditionalTextChange(textItem.id, { text: val })}
+        onTextPreview={
+          handlers.actions.previewAdditionalText
+            ? (draft) => handlers.actions.previewAdditionalText?.(textItem.id, draft) ?? null
+            : undefined
+        }
         onDragEnd={(x, y) => {
           handlers.handleAdditionalTextChange(textItem.id, { x, y });
         }}

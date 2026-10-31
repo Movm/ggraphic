@@ -150,6 +150,13 @@ export interface TextEditSession {
   /** Stil der `++Marker++`-Läufe; ohne ihn bietet der Editor keinen Marker an. */
   marker?: TextMarker | null;
   onTextChange?: (value: string) => void;
+  /**
+   * Meldet den Entwurf bei jedem Tastendruck an den Wirt, der ihn vorab einpassen darf (Schrift,
+   * anliegende Platten), ohne etwas festzuhalten, und gibt die Schriftgröße zurück, die der
+   * Text beim Übernehmen bekommt (`null`: unverändert). `null` als Entwurf nimmt die Vorschau
+   * zurück — der Entwurf wurde ohne Änderung abgeschlossen.
+   */
+  onTextPreview?: (draft: string | null) => number | null;
 }
 
 interface TextEditorContextValue {
@@ -475,6 +482,19 @@ function TextEditorRoot({ children }: { children: ReactNode }) {
   const draftRef = useRef('');
   draftRef.current = draft;
 
+  // Die Schrift, auf die der Wirt den Entwurf eingepasst hat; die der Sitzung gilt, bis er eine nennt.
+  const [previewSize, setPreviewSize] = useState<number | null>(null);
+  const previewed = useRef(false);
+  const onDraftChange = useCallback(
+    (next: string) => {
+      setDraft(next);
+      if (!session?.onTextPreview) return;
+      previewed.current = true;
+      setPreviewSize(session.onTextPreview(next));
+    },
+    [session]
+  );
+
   // Woher die Bearbeitung kam: der Ebenen-Eintrag (Enter/F2 in der Liste) oder
   // die Seite. Nach Escape oder Übernehmen geht der Fokus dorthin zurück —
   // sonst fiele er mit dem abgeräumten Editor auf <body>.
@@ -485,6 +505,8 @@ function TextEditorRoot({ children }: { children: ReactNode }) {
     closed.current = false;
     originRef.current ??= captureFocusOrigin(next.anchor?.node.getStage()?.container() ?? null);
     setDraft(next.text);
+    setPreviewSize(null);
+    previewed.current = false;
     setSession(next);
   }, []);
 
@@ -493,6 +515,7 @@ function TextEditorRoot({ children }: { children: ReactNode }) {
     closed.current = true;
     setSession(null);
     if (draftRef.current !== session.text) session.onTextChange?.(draftRef.current);
+    else if (previewed.current) session.onTextPreview?.(null);
   }, [session]);
 
   useEffect(() => {
@@ -524,7 +547,8 @@ function TextEditorRoot({ children }: { children: ReactNode }) {
   }, [loadFailed]);
   const formatControls = modules?.TextFormatControls ?? null;
 
-  const realFontSize = session && box ? session.fontSize * box.scale : 0;
+  const fontSize = previewSize ?? session?.fontSize ?? 0;
+  const realFontSize = session && box ? fontSize * box.scale : 0;
   const renderFontSize = Math.max(MIN_EDITOR_FONT_PX, realFontSize);
   const shrink = realFontSize > 0 ? realFontSize / renderFontSize : 1;
 
@@ -558,11 +582,11 @@ function TextEditorRoot({ children }: { children: ReactNode }) {
     const style = fontStyleForRun(session.fontStyle, PLAIN_STYLE);
     const widest = Math.max(
       ...markers.map((marker) =>
-        measureTextWidthWithFont(`${marker} `, session.fontSize, session.fontFamily, style)
+        measureTextWidthWithFont(`${marker} `, fontSize, session.fontFamily, style)
       )
     );
     return (widest * (box?.scale ?? 1)) / shrink;
-  }, [draft, session, box?.scale, shrink]);
+  }, [draft, session, fontSize, box?.scale, shrink]);
 
   const claimHost = useCallback(() => {
     setHosts((count) => count + 1);
@@ -652,7 +676,7 @@ function TextEditorRoot({ children }: { children: ReactNode }) {
             {modules ? (
               <modules.RichTextField
                 value={draft}
-                onChange={setDraft}
+                onChange={onDraftChange}
                 marks={marks}
                 showToolbar={hosts === 0}
                 onEditorReady={setEditor}
