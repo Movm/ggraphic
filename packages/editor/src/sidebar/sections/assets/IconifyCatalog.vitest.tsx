@@ -86,6 +86,15 @@ describe('IconifyCatalog', () => {
     expect(screen.getByText('Icon: Lets Icons von Leonid Tsvetkov, CC-BY-4.0')).toBeTruthy();
   });
 
+  it('keeps credit and insert button in view below a long hit list', async () => {
+    renderCatalog(service());
+    fireEvent.click(await screen.findByRole('button', { name: /tree-fill/ }));
+    // Up to 60 tiles: below them the button sat out of view, and a tile click looked dead.
+    const bar = screen.getByRole('button', { name: 'Einfügen' }).parentElement!;
+    expect(bar.className).toContain('sticky');
+    expect(bar.className).toContain('bottom-0');
+  });
+
   it('places the selected icon as a copy of its svg, with source and licence', async () => {
     const iconSearch = service();
     const { onAdd } = renderCatalog(iconSearch);
