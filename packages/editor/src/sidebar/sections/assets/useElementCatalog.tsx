@@ -205,6 +205,18 @@ function cover(items: readonly ElementItem[]): ReactNode {
   );
 }
 
+/** The grinning face, when the host has its file. */
+function emojiStandInCover(): ReactNode {
+  const src = registeredAssetCatalog().emojiSrc?.(STAND_IN_EMOJI);
+  if (!src) return null;
+  return (
+    <span className="relative grid place-items-center size-14 [&_img]:size-full">
+      <ElementThumb thumb={{ t: 'img', src }} eager />
+    </span>
+  );
+}
+const STAND_IN_EMOJI = '1f600';
+
 function BackgroundCover() {
   const { useStudioAssets = useNoStudioAssets } = useCanvasEditorServices();
   const { items } = useStudioAssets({ kind: 'background', scope: 'shop', q: '', sort: 'new' });
@@ -349,7 +361,8 @@ export function useElementCatalog(
         isLoading: blocks.isLoading,
         searchable: true,
       });
-    if (hasAssets)
+    // An empty Sticker card is a dead end: only with stickers, or a gallery to bring some.
+    if (hasAssets && (stickerItems.length > 0 || props.onAddStickerAsset !== undefined))
       push({
         id: 'sticker',
         label: t.sidebar.elements.categories.sticker,
@@ -431,6 +444,8 @@ export function useElementCatalog(
         items: emojiItems,
         isLoading: emojiCatalog.isLoading,
         searchable: true,
+        // Without a curated set nothing is there before the catalogue loads: a smiley stands in.
+        ...(emojiItems.length === 0 ? { cover: emojiStandInCover() } : {}),
       });
     return categories;
   }, [
@@ -439,6 +454,7 @@ export function useElementCatalog(
     blocks,
     blockItems,
     stickerItems,
+    props.onAddStickerAsset,
     hasAssets,
     hasPhotos,
     photos.items,
