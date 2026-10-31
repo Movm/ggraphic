@@ -1,0 +1,202 @@
+{
+  "formatVersion": 1,
+  "id": "studio-quote-typographic",
+  "version": 1,
+  "kind": "template",
+  "family": "quote",
+  "title": {
+    "en": "Typographic quote",
+    "de": "Typografisches Zitat"
+  },
+  "description": {
+    "en": "A large quotation set as pure type, a rule, then name and role",
+    "de": "Ein großes Zitat als reine Typografie, eine Linie, dann Name und Rolle"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "rule",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.692437,
+            "width": 1,
+            "height": 0.006723,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "quote",
+            "type": "header",
+            "text": "“When the bus does not come, that is not a delay. It is a ++design flaw++.”",
+            "x": 0,
+            "y": 0.058824,
+            "width": 1,
+            "fontSize": 0.085185,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.02,
+            "fontWeight": 600,
+            "letterSpacing": -0.025,
+            "markerFill": "#ffffff",
+            "markerColor": "#000000",
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.serif",
+              "markerFill": "accent",
+              "markerColor": "on-accent"
+            },
+            "maxFontSize": 0.085185
+          },
+          {
+            "id": "name",
+            "type": "body",
+            "text": "Name Surname",
+            "x": 0,
+            "y": 0.726891,
+            "width": 1,
+            "fontSize": 0.048148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontWeight": 700,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.048148
+          },
+          {
+            "id": "role",
+            "type": "body",
+            "text": "Role or occupation",
+            "x": 0,
+            "y": 0.777311,
+            "width": 1,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontWeight": 500,
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.044444
+          }
+        ],
+        "layerOrder": ["quote", "rule", "name", "role", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "quote": {
+      "role": "quote",
+      "label": {
+        "en": "Quotation",
+        "de": "Zitat"
+      },
+      "budget": {
+        "maxWords": 16,
+        "maxLines": 7,
+        "maxChars": 100
+      }
+    },
+    "name": {
+      "role": "name",
+      "label": {
+        "en": "Name",
+        "de": "Name"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 28
+      }
+    },
+    "role": {
+      "role": "body",
+      "label": {
+        "en": "Text",
+        "de": "Text"
+      },
+      "budget": {
+        "maxWords": 6,
+        "maxLines": 1,
+        "maxChars": 40
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "quote-with-person",
+      "title": {
+        "en": "Quote with person",
+        "de": "Zitat mit Person"
+      },
+      "elementIds": ["quote", "name", "role"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-left"],
+  "placeholders": {
+    "en": {
+      "quote": "“When the bus does not come, that is not a delay. It is a ++design flaw++.”",
+      "name": "Name Surname",
+      "role": "Role or occupation"
+    },
+    "de": {
+      "quote": "„Wenn der Bus nicht kommt, ist das keine Verspätung, sondern ein ++Planungsfehler++.“",
+      "name": "Vorname Nachname",
+      "role": "Beruf oder Rolle"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

@@ -1,0 +1,201 @@
+{
+  "formatVersion": 1,
+  "id": "studio-number-photo-strip",
+  "version": 1,
+  "kind": "template",
+  "family": "number",
+  "title": {
+    "en": "Number over photo strip",
+    "de": "Zahl über Fotostreifen"
+  },
+  "description": {
+    "en": "A giant figure in the accent colour, a sentence below, a photo strip along the bottom edge",
+    "de": "Eine riesige Zahl in der Akzentfarbe, darunter ein Satz, unten ein Fotostreifen"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "light", "dark", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0.688889,
+            "width": 1,
+            "height": 0.311111,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "number",
+            "type": "header",
+            "text": "840",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "fontSize": 0.592593,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.85,
+            "fontWeight": 400,
+            "letterSpacing": -0.01,
+            "bind": {
+              "fill": "accent",
+              "fontFamily": "font.condensed"
+            },
+            "maxFontSize": 0.592593
+          },
+          {
+            "id": "text",
+            "type": "body",
+            "text": "euros more heating costs a year for a family in an old flat.",
+            "x": 0,
+            "y": 0.470588,
+            "width": 0.76087,
+            "fontSize": 0.051852,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.08,
+            "fontWeight": 700,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.051852
+          },
+          {
+            "id": "source",
+            "type": "body",
+            "text": "Example calculation, consumer advice, 2026",
+            "x": 0,
+            "y": 0.676471,
+            "width": 0.76087,
+            "fontSize": 0.024074,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.2,
+            "fontWeight": 400,
+            "bind": {
+              "fill": "ink2",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.024074
+          }
+        ],
+        "layerOrder": ["number", "text", "photo", "source", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas"
+  },
+  "slots": {
+    "number": {
+      "role": "number",
+      "label": {
+        "en": "Figure",
+        "de": "Zahl"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 4
+      }
+    },
+    "text": {
+      "role": "body",
+      "label": {
+        "en": "Explanation",
+        "de": "Erklärung"
+      },
+      "budget": {
+        "maxWords": 13,
+        "maxLines": 4,
+        "maxChars": 70
+      }
+    },
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "source": {
+      "role": "body",
+      "label": {
+        "en": "Source",
+        "de": "Quelle"
+      },
+      "budget": {
+        "maxWords": 8,
+        "maxLines": 1,
+        "maxChars": 50
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "number-with-explanation",
+      "title": {
+        "en": "Number with explanation",
+        "de": "Zahl mit Erklärung"
+      },
+      "elementIds": ["number", "text", "source"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-right"],
+  "placeholders": {
+    "en": {
+      "number": "840",
+      "text": "euros more heating costs a year for a family in an old flat.",
+      "source": "Example calculation, consumer advice, 2026"
+    },
+    "de": {
+      "number": "840",
+      "text": "Euro mehr Heizkosten im Jahr für eine Familie im Altbau.",
+      "source": "Beispielrechnung, Verbraucherberatung, 2026"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
