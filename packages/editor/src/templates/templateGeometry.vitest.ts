@@ -106,6 +106,33 @@ describe('template geometry', () => {
     });
   });
 
+  it("the adapter measures a text's lines and longest line, and places a plate by its box", () => {
+    const text = { text: 'Hello world again', fontFamily: 'Raleway', fontSize: 40, width: 1000 };
+    const one = TEMPLATE_GATE_ADAPTER.textExtent!(text)!;
+    expect(one.lines).toBe(1);
+    expect(one.width).toBeGreaterThan(100);
+    expect(one.width).toBeLessThan(1000);
+    const wrapped = TEMPLATE_GATE_ADAPTER.textExtent!({ ...text, width: one.width - 20 })!;
+    expect(wrapped.lines).toBe(2);
+    expect(wrapped.width).toBeLessThanOrEqual(one.width - 20);
+    expect(TEMPLATE_GATE_ADAPTER.textExtent!({ ...text, scale: 2 })!.width).toBeCloseTo(
+      one.width * 2
+    );
+    // The same plate, upright: x/y are the centre, the size is the box over the scale.
+    const placed = TEMPLATE_GATE_ADAPTER.placeBox!(
+      'shapeInstances',
+      { x: 0, y: 0, width: 1, height: 1, scaleX: 2, scaleY: 1, rotation: 0 },
+      { x: 10, y: 20, width: 100, height: 40 }
+    );
+    expect(placed).toMatchObject({ x: 60, y: 40, width: 50, height: 40 });
+    expect(TEMPLATE_GATE_ADAPTER.box('shapeInstances', placed, 1)).toEqual({
+      x: 10,
+      y: 20,
+      width: 100,
+      height: 40,
+    });
+  });
+
   it('the adapter reads text only from the kinds that have it', () => {
     const text = { fill: '#fff', fontSize: 30, fontStyle: 'bold' };
     expect(TEMPLATE_GATE_ADAPTER.text('additionalTexts', text)).toEqual({

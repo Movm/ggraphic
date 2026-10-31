@@ -54,6 +54,8 @@ const adapter: GateAdapter = {
         : [],
   lineCount: (key, el) =>
     key === 'additionalTexts' && typeof el['text'] === 'string' ? el['text'].split('\n').length : 1,
+  textExtent: (el) => ({ lines: 1, width: String(el['text']).length * 10 }),
+  placeBox: (_key, el, box) => ({ ...el, ...box }),
   box: (key, el, lines) =>
     key === 'additionalTexts'
       ? {
@@ -995,5 +997,63 @@ describe('contrast over notched, glow and grain grounds', () => {
   it('a dot pattern fails a text lying on it and leaves a text off it alone', () => {
     expect(details(build(panel({ pattern: 'dots' })))[0]).toContain('ground not determinable');
     expect(details(build(panel({ pattern: 'dots', height: 0.3 })))).toEqual([]);
+  });
+});
+
+describe('plates that hug their text', () => {
+  const hugged = (plateY: number, hug: boolean) =>
+    template(
+      {
+        frames: { headline: 'canvas', plate: 'canvas' },
+        fixed: { headline: ['fill'], plate: ['fill'] },
+      },
+      {
+        backgroundColor: '#ffffff',
+        bind: undefined,
+        additionalTexts: [
+          {
+            ...headline,
+            x: 0.1,
+            y: plateY,
+            width: 0.5,
+            fontSize: 0.03,
+            fill: '#ffffff',
+            bind: undefined,
+          },
+        ],
+        shapeInstances: [
+          {
+            id: 'plate',
+            type: 'rect',
+            x: 0.05,
+            y: plateY - 0.01,
+            width: 0.6,
+            height: 0.04,
+            fill: '#000000',
+            rotation: 0,
+            ...(hug ? { hug: { text: 'headline', padX: 0.01, padY: 0.01 } } : {}),
+          },
+        ],
+      }
+    );
+  const threeLines = () =>
+    context({
+      slots: { headline: { role: 'headline', budget: { maxWords: 8, maxLines: 3, maxChars: 60 } } },
+    });
+  const only = (t: TemplateInput, ctx: GateContext, rule: GateRule) =>
+    checkTemplate(t, ctx).filter((p) => p.rule === rule);
+
+  it('judges the text against the plate hugged to the lines the slot allows', () => {
+    // The text box is three lines tall; the fixed plate is one line tall and holds only part of it.
+    expect(only(hugged(0.5, false), threeLines(), 'contrast')).not.toEqual([]);
+    expect(only(hugged(0.5, true), threeLines(), 'contrast')).toEqual([]);
+  });
+
+  it('fails bounds for a plate that would leave the canvas once hugged', () => {
+    // Three lines (about 117 px) plus padding from y = 0.93 of 1080 run past the bottom edge.
+    expect(only(hugged(0.5, true), threeLines(), 'bounds')).toEqual([]);
+    expect(only(hugged(0.93, true), threeLines(), 'bounds').map((p) => p.detail)).toEqual(
+      expect.arrayContaining([expect.stringContaining('plate leaves')])
+    );
   });
 });

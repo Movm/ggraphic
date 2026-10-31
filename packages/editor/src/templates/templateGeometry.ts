@@ -377,6 +377,8 @@ function tableRunMeasure(p: TextProps, note: Note): MeasureRun {
 
 interface TextLayout {
   lines: number;
+  /** Width of the longest line in px, at the text's own size. */
+  widest: number;
   unmeasurable: string | null;
 }
 
@@ -385,10 +387,22 @@ function layoutText(p: TextProps): TextLayout {
   const note: Note = { reason: null };
   const run = tableRunMeasure(p, note);
   const inner = p.width > 0 ? p.width : Number.POSITIVE_INFINITY;
-  const lines = usesRichText({ text: p.text, width: p.width }, run)
-    ? layoutRichTextBlock(p.text, inner, run).length
-    : plainTextLines(p.text, inner, (text) => run(text, PLAIN_STYLE)).length;
-  return { lines: Math.max(1, lines), unmeasurable: note.reason };
+  let widths: number[];
+  if (usesRichText({ text: p.text, width: p.width }, run)) {
+    widths = layoutRichTextBlock(p.text, inner, run).map((line) => {
+      const last = line.runs.at(-1);
+      return last ? line.indent + last.x + run(last.text, last) : line.indent;
+    });
+  } else {
+    widths = plainTextLines(p.text, inner, (text) => run(text, PLAIN_STYLE)).map((line) =>
+      run(line, PLAIN_STYLE)
+    );
+  }
+  return {
+    lines: Math.max(1, widths.length),
+    widest: Math.max(0, ...widths),
+    unmeasurable: note.reason,
+  };
 }
 
 /**
@@ -556,6 +570,25 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
       return [];
     },
     fitText: fitTextToBox,
+    textExtent(el) {
+      const p = textPropsOf(el);
+      if (!(p.width > 0) || !(p.fontSize > 0)) return null;
+      const { lines, widest, unmeasurable } = layoutText(p);
+      if (unmeasurable) return null;
+      const scale = num(el, 'scale', 1) || 1;
+      return { lines, width: widest * scale };
+    },
+    placeBox(stateKey, el, box) {
+      // Only an upright plate: a shape is positioned by its centre, its size is the box over its scale.
+      if (stateKey !== 'shapeInstances' || isRotated(el)) return { ...el };
+      return {
+        ...el,
+        x: box.x + box.width / 2,
+        y: box.y + box.height / 2,
+        width: box.width / (num(el, 'scaleX', 1) || 1),
+        height: box.height / (num(el, 'scaleY', 1) || 1),
+      };
+    },
     lineCount(stateKey, el) {
       if (stateKey !== 'additionalTexts' || typeof el['text'] !== 'string') return 1;
       return layoutText(textPropsOf(el)).lines;

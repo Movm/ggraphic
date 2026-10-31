@@ -11,6 +11,7 @@ import { normalizeColor } from '../color/color.js';
 import { brandLayout, logoEnvelope, safeArea, type LogoCorner } from '../brand/layout.js';
 import { fitLogoBox, type Box } from '../brand/logoFit.js';
 import { deriveSchemes, type Scheme, type SchemeId } from '../brand/schemes.js';
+import { hugOf, hugPlates, type HugAdapter } from './hug.js';
 
 export type GeometryAxis = 'x' | 'y' | 'w' | 'h' | 's' | 'k';
 /** stateKey → field → axis. 'page' is the page's own fields. Unlisted numbers stay as they are. */
@@ -78,6 +79,8 @@ export interface InstantiateContext {
   fitText?: FitText;
   /** The box an element covers (`GateAdapter.box` with one line); with `fitText`, bounds a fitted text by the element below it. */
   boxOf?: ElementBox;
+  /** Brings plates that carry `hug` to their text's lines, after the fit. Without it they stay as placed. */
+  hug?: HugAdapter;
 }
 
 /** The box of an element in canvas px, or null if it has none. */
@@ -208,6 +211,9 @@ export function instantiateTemplatePage(
       const v = el[field];
       if (unplaceable(v, axis)) bad ??= 'geometry';
     }
+    // A hug's padding is a fraction of the short side, like the s axis.
+    const hug = key === 'shapeInstances' ? hugOf(el) : null;
+    if (hug && [hug.padX, hug.padY].some((v) => unplaceable(v, 's'))) bad ??= 'geometry';
   });
   for (const [field, axis] of Object.entries(ctx.geometry['page'] ?? {})) {
     const v = state[field];
@@ -224,6 +230,10 @@ export function instantiateTemplatePage(
   };
 
   const place = (el: Obj, table: Readonly<Record<string, GeometryAxis>> | undefined, F: Box) => {
+    const hug = hugOf(el);
+    if (hug) {
+      el['hug'] = { ...hug, padX: Math.round(hug.padX * S), padY: Math.round(hug.padY * S) };
+    }
     for (const [field, axis] of Object.entries(table ?? {})) {
       const v = el[field];
       if (Array.isArray(v)) {
@@ -308,6 +318,10 @@ export function instantiateTemplatePage(
       if (fit) el['fontSize'] = fit.fontSize;
     });
   }
+
+  // Plates that hug their text, now that the text has its final size.
+  const hugged = ctx.hug ? hugPlates(state, ctx.hug) : state;
+  if (hugged !== state) Object.assign(state, hugged);
 
   // The logo.
   const layerIds = (key: string) =>

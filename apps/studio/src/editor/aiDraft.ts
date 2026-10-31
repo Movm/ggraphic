@@ -14,6 +14,7 @@ import { fitFontSizeToSlot, PLAIN_STYLE } from '@ggraphic/schema';
 
 import { type Draft } from '../api/client';
 
+import { withHuggedPlates } from './templates/hug';
 import { FREE_PAGE_CONFIG_ID, HEADLINE_TEMPLATE_ID } from './templates/ids';
 import { seedPageState, TEXT_ROLES } from './templates/seeds';
 
@@ -144,7 +145,13 @@ export function draftDeckOps(
     const filled = fillTexts(textsOf(active.state), draft, size.height, room);
     if (filled) {
       return {
-        updates: [{ pageId: active.id, state: { ...active.state, additionalTexts: filled } }],
+        updates: [
+          {
+            pageId: active.id,
+            // The plates that hug the filled texts follow their new lines.
+            state: withHuggedPlates({ ...active.state, additionalTexts: filled }),
+          },
+        ],
         inserts: [],
         removes: [],
       };

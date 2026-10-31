@@ -59,6 +59,12 @@
             "opacity": 1,
             "bind": {
               "fill": "deep"
+            },
+            "hug": {
+              "text": "button-text",
+              "padX": 0.022222,
+              "padY": 0.016667,
+              "width": "text"
             }
           },
           {

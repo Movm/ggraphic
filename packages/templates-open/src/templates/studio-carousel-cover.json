@@ -94,6 +94,12 @@
             "opacity": 1,
             "bind": {
               "fill": "accent"
+            },
+            "hug": {
+              "text": "label",
+              "padX": 0.016667,
+              "padY": 0.011574,
+              "width": "text"
             }
           },
           {
