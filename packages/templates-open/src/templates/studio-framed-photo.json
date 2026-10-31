@@ -49,6 +49,7 @@
         "userImageInstances": [
           {
             "id": "photo",
+            "cornerRadius": [0, 0, 0, 0.059259],
             "src": "",
             "fileName": "",
             "x": 0.074074,

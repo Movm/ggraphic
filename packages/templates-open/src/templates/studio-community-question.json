@@ -69,6 +69,7 @@
         "userImageInstances": [
           {
             "id": "photo-1",
+            "cornerRadius": 0.02963,
             "src": "",
             "fileName": "",
             "x": 0.044444,
@@ -81,6 +82,7 @@
           },
           {
             "id": "photo-2",
+            "cornerRadius": 0.02963,
             "src": "",
             "fileName": "",
             "x": 0.714815,
@@ -93,6 +95,7 @@
           },
           {
             "id": "photo-3",
+            "cornerRadius": 0.02963,
             "src": "",
             "fileName": "",
             "x": 0.044444,
@@ -105,6 +108,7 @@
           },
           {
             "id": "photo-4",
+            "cornerRadius": 0.02963,
             "src": "",
             "fileName": "",
             "x": 0.687037,

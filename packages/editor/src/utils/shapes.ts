@@ -2,6 +2,7 @@
 import { type Bindings } from '@ggraphic/core';
 import { messages } from '@ggraphic/editor/i18n/messages';
 
+import { type CornerRadius } from './cornerRadius.js';
 import { defaultMarkerFill } from './markerColors.js';
 
 import type { GradientFill } from '@ggraphic/editor/utils/gradientFill';
@@ -811,7 +812,8 @@ export interface ShapeInstance {
   scaleX: number;
   scaleY: number;
   opacity: number;
-  cornerRadius?: number;
+  /** `rounded-rect`: one radius for all corners, or one per corner (tl, tr, br, bl). */
+  cornerRadius?: CornerRadius;
   /** Canvas px a composer card grew with its text (cardFollowsText); not a hand resize. */
   textGrowth?: number;
   strokeWidth?: number;
