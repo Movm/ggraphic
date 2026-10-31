@@ -5,9 +5,10 @@
  * headline or subline text (a blank page, say) gets a new "Headline + text"
  * page after it instead.
  */
-import { minTextSizePx } from '@ggraphic/core';
+import { minTextSizePx, roomBelow } from '@ggraphic/core';
 import { type ReplaceDeckOps } from '@ggraphic/editor/collab/pagesDoc';
 import { type AdditionalText } from '@ggraphic/editor/configs/types';
+import { TEMPLATE_GATE_ADAPTER } from '@ggraphic/editor/templates/templateGeometry';
 import { runMeasurer } from '@ggraphic/editor/utils/textUtils';
 import { fitFontSizeToSlot, PLAIN_STYLE } from '@ggraphic/schema';
 
@@ -41,12 +42,13 @@ function textsOf(state: Record<string, unknown>): AdditionalText[] {
 export function fillTexts(
   texts: readonly AdditionalText[],
   draft: Draft,
-  canvasHeight?: number
+  canvasHeight?: number,
+  room?: ReadonlyMap<string, number>
 ): AdditionalText[] | null {
   const byRole = draftTexts(draft);
   const fillable = texts.some((t) => t.id === TEXT_ROLES.headline || t.id === TEXT_ROLES.subline);
   if (!fillable) return null;
-  return fillById(texts, byRole, canvasHeight);
+  return fillById(texts, byRole, canvasHeight, room);
 }
 
 /**
@@ -56,11 +58,14 @@ export function fillTexts(
 export function fillById(
   texts: readonly AdditionalText[],
   byId: ReadonlyMap<string, string>,
-  canvasHeight?: number
+  canvasHeight?: number,
+  room?: ReadonlyMap<string, number>
 ): AdditionalText[] {
   return texts.map((t) => {
     const value = byId.get(t.id);
-    return value === undefined ? t : fitToSlot({ ...t, text: value }, texts, canvasHeight);
+    return value === undefined
+      ? t
+      : fitToSlot({ ...t, text: value }, texts, canvasHeight, room?.get(t.id));
   });
 }
 
@@ -69,27 +74,47 @@ export function fillById(
  * until it ends above that text; a word that does not fit even hyphenated shrinks too.
  * Not below the legibility floor of the canvas, unless the text itself is smaller already
  * (it is never grown); the status line then warns about the overflow instead.
+ *
+ * A text with a prototype size (`maxFontSize`) is fitted the way a placed template text is: from
+ * that size down, no word broken, and it grows back up to it when the new text is short. It is
+ * measured in the weight and letter spacing it is drawn with.
  */
 function fitToSlot(
   text: AdditionalText,
   texts: readonly AdditionalText[],
-  canvasHeight?: number
+  canvasHeight?: number,
+  room?: number
 ): AdditionalText {
-  const { fontSize, width, fontFamily } = text;
+  const { fontSize, width, fontFamily, maxFontSize } = text;
   const below = texts.filter((other) => other.y > text.y).map((other) => other.y);
-  if (!fontSize || !width || below.length === 0) return text;
+  const prototype = maxFontSize !== undefined && maxFontSize >= (fontSize ?? 0);
+  const textRoom = below.length === 0 ? undefined : Math.min(...below) - text.y;
+  const limit = Math.min(textRoom ?? Infinity, room ?? Infinity);
+  if (!fontSize || !width || (limit === Infinity && !prototype)) return text;
   const floor = canvasHeight === undefined ? undefined : minTextSizePx(canvasHeight);
+  const ceiling = prototype ? maxFontSize : fontSize;
   const fitted = fitFontSizeToSlot(
     text.text,
     {
       width,
-      maxHeight: Math.min(...below) - text.y,
-      fontSize,
+      maxHeight: limit,
+      // A prototype text keeps a quarter line of air above what lies below it.
+      ...(prototype && limit !== Infinity ? { gap: 0.25 } : {}),
+      fontSize: ceiling,
       lineHeight: text.lineHeight ?? 1,
-      ...(floor === undefined ? {} : { minSize: Math.min(floor, fontSize) }),
+      ...(prototype ? { wholeWords: true } : {}),
+      ...(floor === undefined ? {} : { minSize: Math.min(floor, ceiling) }),
     },
     (size) => (line) =>
-      runMeasurer(size, fontFamily ?? '', text.fontStyle ?? 'normal')(line, PLAIN_STYLE)
+      runMeasurer(
+        size,
+        fontFamily ?? '',
+        text.fontStyle ?? 'normal',
+        0,
+        null,
+        text.fontWeight ?? null,
+        text.letterSpacing ?? null
+      )(line, PLAIN_STYLE)
   );
   return fitted === fontSize ? text : { ...text, fontSize: fitted };
 }
@@ -106,7 +131,17 @@ export function draftDeckOps(
 ): ReplaceDeckOps {
   const active = pages.find((p) => p.id === activePageId) ?? pages[0] ?? null;
   if (active) {
-    const filled = fillTexts(textsOf(active.state), draft, size.height);
+    const room = new Map<string, number>();
+    for (const t of textsOf(active.state)) {
+      const r = roomBelow(
+        active.state,
+        'additionalTexts',
+        t as unknown as Record<string, unknown>,
+        (k, e) => TEMPLATE_GATE_ADAPTER.box(k, e, 1)
+      );
+      if (r !== undefined) room.set(t.id, r);
+    }
+    const filled = fillTexts(textsOf(active.state), draft, size.height, room);
     if (filled) {
       return {
         updates: [{ pageId: active.id, state: { ...active.state, additionalTexts: filled } }],

@@ -77,3 +77,52 @@ describe('buildPptxModel duotone images', () => {
     });
   });
 });
+
+describe('buildPptxModel notch', () => {
+  it('rasterises a notched shape instead of exporting it un-notched', () => {
+    expect(items(shape({ notch: 0.05 }))[0]).toMatchObject({
+      kind: 'raster',
+      reason: 'shape-styled',
+    });
+  });
+
+  it('rasterises a notched image', () => {
+    const image = {
+      id: 'i1',
+      src: 'https://assets.test/p.jpg',
+      fileName: '',
+      x: 0,
+      y: 0,
+      width: 600,
+      height: 400,
+      scale: 1,
+      rotation: 0,
+      opacity: 1,
+      notch: 0.05,
+    } as UserImageInstance;
+    const out = buildPptxModel([{ userImageInstances: [image] }], format).slides[0]!.items;
+    expect(out[0]).toMatchObject({ kind: 'raster' });
+  });
+});
+
+describe('buildPptxModel glow', () => {
+  it('rasterises a glow shape: pptx has no radial fade to alpha', () => {
+    expect(items(shape({ type: 'ellipse', glow: true }))[0]).toMatchObject({
+      kind: 'raster',
+      reason: 'shape-styled',
+    });
+  });
+});
+
+describe('buildPptxModel texture', () => {
+  it.each([
+    ['grain', { grain: 0.3 }],
+    ['dots', { pattern: 'dots' as const }],
+  ])('rasterises a rect with %s', (_name, extra) => {
+    expect(items(shape(extra))[0]).toMatchObject({ kind: 'raster', reason: 'shape-styled' });
+  });
+
+  it('leaves a rect with grain 0 native', () => {
+    expect(items(shape({ grain: 0 }))[0]).toMatchObject({ kind: 'shape' });
+  });
+});

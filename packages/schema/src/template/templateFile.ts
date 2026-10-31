@@ -10,7 +10,14 @@ import { migrateDocument } from '../document/migrations.js';
 export const TEMPLATE_FORMAT_VERSION = 1;
 export const TEMPLATE_FORMATS = ['1:1', '4:5', '16:9'] as const;
 /** Equals core's `SCHEME_IDS`; a cross-package test pins them equal. */
-export const TEMPLATE_SCHEME_IDS = ['primary', 'secondary', 'light', 'dark', 'photo'] as const;
+export const TEMPLATE_SCHEME_IDS = [
+  'primary',
+  'secondary',
+  'light',
+  'dark',
+  'accent',
+  'photo',
+] as const;
 /** Equals core's `LOGO_CORNERS`; a cross-package test pins them equal. */
 export const TEMPLATE_LOGO_CORNERS = [
   'top-left',
@@ -212,6 +219,7 @@ function elementsById(state: Readonly<Record<string, unknown>>): [string, unknow
 }
 
 const FONT_STYLES: readonly string[] = ['normal', 'italic', 'bold', 'bold italic'];
+const FONT_WEIGHTS: readonly number[] = [100, 200, 300, 400, 500, 600, 700, 800, 900];
 
 const invalid = (reason: string): TemplateReadResult => ({ status: 'invalid', reason });
 
@@ -235,6 +243,27 @@ function crossReferences(file: TemplateFile): string | null {
     const style = isRecord(item) ? item['fontStyle'] : undefined;
     if (style !== undefined && !FONT_STYLES.includes(style as string)) {
       return `${id}.fontStyle: must be one of ${FONT_STYLES.join(', ')}`;
+    }
+    const spacing = isRecord(item) ? item['letterSpacing'] : undefined;
+    if (
+      spacing !== undefined &&
+      !(typeof spacing === 'number' && spacing >= -0.1 && spacing <= 0.3)
+    ) {
+      return `${id}.letterSpacing: must be a number of em from -0.1 to 0.3`;
+    }
+    const weight = isRecord(item) ? item['fontWeight'] : undefined;
+    if (weight !== undefined && !FONT_WEIGHTS.includes(weight as number)) {
+      return `${id}.fontWeight: must be one of ${FONT_WEIGHTS.join(', ')}`;
+    }
+    // The prototype's size: the fit never goes above it, so it cannot lie under the plain size.
+    const maxFontSize = isRecord(item) ? item['maxFontSize'] : undefined;
+    if (maxFontSize !== undefined) {
+      const size = isRecord(item) ? item['fontSize'] : undefined;
+      const ok =
+        typeof maxFontSize === 'number' &&
+        maxFontSize > 0 &&
+        (typeof size !== 'number' || maxFontSize >= size);
+      if (!ok) return `${id}.maxFontSize: must be a positive number, not below fontSize`;
     }
   }
   if (known.has('page')) return 'pages.0.state: "page" is reserved and cannot be an element id';

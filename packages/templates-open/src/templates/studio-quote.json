@@ -78,7 +78,8 @@
             "bind": {
               "fill": "ink",
               "fontFamily": "font.quoteEmphasis"
-            }
+            },
+            "maxFontSize": 0.066667
           },
           {
             "id": "subline",

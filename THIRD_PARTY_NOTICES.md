@@ -10,14 +10,15 @@ that is not on its allow-list.
 
 ## Bundled graphics
 
-Served from `apps/studio/public`. Each row names the directory, so adding a
+Served from `apps/studio/public` (the sample photos: `packages/templates-open/src/samples`). Each row names the directory, so adding a
 set without an entry fails the check.
 
-| Directory                                      | Work                                                                                                      | Licence                      | Source                                    |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------- | ----------------------------------------- |
-| `apps/studio/public/emoji`                     | Noto Emoji, a subset: the emoji without flags and without skin-tone variants. Copyright 2013 Google, Inc. | Apache-2.0 (full text below) | https://github.com/googlefonts/noto-emoji |
-| `apps/studio/public/illustrations/openpeeps`   | Open Peeps, by Pablo Stanley                                                                              | CC0-1.0                      | https://www.openpeeps.com/                |
-| `apps/studio/public/illustrations/opendoodles` | Open Doodles, by Pablo Stanley                                                                            | CC0-1.0                      | https://www.opendoodles.com/              |
+| Directory                                      | Work                                                                                                                                                                                                                                                            | Licence                      | Source                                             |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | -------------------------------------------------- |
+| `apps/studio/public/emoji`                     | Noto Emoji, a subset: the emoji without flags and without skin-tone variants. Copyright 2013 Google, Inc.                                                                                                                                                       | Apache-2.0 (full text below) | https://github.com/googlefonts/noto-emoji          |
+| `apps/studio/public/illustrations/openpeeps`   | Open Peeps, by Pablo Stanley                                                                                                                                                                                                                                    | CC0-1.0                      | https://www.openpeeps.com/                         |
+| `apps/studio/public/illustrations/opendoodles` | Open Doodles, by Pablo Stanley                                                                                                                                                                                                                                  | CC0-1.0                      | https://www.opendoodles.com/                       |
+| `packages/templates-open/src/samples`          | Sample photos for previews and render-gate goldens, made for ggraphic with FLUX.2 [klein] 4B (weights Apache-2.0) via Melious; no real person is depicted. Dedicated to the public domain by the author, Moritz Wächter. Never part of a document or an export. | CC0-1.0                      | `packages/templates-open/src/samples/samples.json` |
 
 `apps/studio/public/illustrations/thumbs/<set>` holds the PNG thumbnails of
 the set of the same name and is covered by that set's row.
@@ -52,7 +53,7 @@ and are checked, including the licence in each set's `info.json`, by
 
 ## Fonts
 
-Fraunces, Instrument Sans, Raleway and Bricolage Grotesque are bundled from
+Fraunces, Instrument Sans, Raleway, Bricolage Grotesque and Anton are bundled from
 the Fontsource packages and licensed under the SIL Open Font License 1.1
 (full text below).
 
@@ -60,6 +61,7 @@ the Fontsource packages and licensed under the SIL Open Font License 1.1
 - Copyright 2022 The Instrument Sans Project Authors (https://github.com/Instrument/instrument-sans)
 - Copyright 2010 The Raleway Project Authors (impallari@gmail.com), with Reserved Font Name "Raleway"
 - Copyright 2022 The Bricolage Grotesque Project Authors (https://github.com/ateliertriay/bricolage)
+- Copyright 2020 The Anton Project Authors (https://github.com/googlefonts/AntonFont)
 
 ## Licence texts
 

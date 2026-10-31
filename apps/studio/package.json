@@ -16,6 +16,8 @@
     "gate:render:update": "playwright test --update-snapshots"
   },
   "dependencies": {
+    "@fontsource/anton": "^5.3.0",
+    "@fontsource/bricolage-grotesque": "^5.3.0",
     "@fontsource/fraunces": "^5.3.0",
     "@fontsource/instrument-sans": "^5.3.0",
     "@fontsource/raleway": "^5.3.0",

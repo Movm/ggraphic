@@ -589,7 +589,9 @@ function TextEditorRoot({ children }: { children: ReactNode }) {
           pointerEvents: 'auto',
           fontFamily: resolveFontFamily(session.fontFamily),
           fontStyle: session.fontStyle.includes('italic') ? 'italic' : 'normal',
-          fontWeight: session.fontStyle.includes('bold') ? 'bold' : 'normal',
+          fontWeight:
+            /\d+/.exec(session.fontStyle)?.[0] ??
+            (session.fontStyle.includes('bold') ? 'bold' : 'normal'),
           color: session.fill,
           textAlign: session.align,
           lineHeight: String(session.lineHeight),

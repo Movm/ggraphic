@@ -67,6 +67,7 @@ export {
   GATE_RULES,
   checkTemplate,
   type GateAdapter,
+  type GateCover,
   type GateBudget,
   type GateContext,
   type GateProblem,
@@ -75,6 +76,8 @@ export {
 export {
   instantiateTemplatePage,
   offeredSchemes,
+  roomBelow,
+  type ElementBox,
   type GeometryAxis,
   type GeometryTable,
   type InstantiateContext,

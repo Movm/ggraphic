@@ -37,6 +37,7 @@ describe('a shade shape in the floating toolbar', () => {
     expect(actions.updateShape).toHaveBeenCalledWith('s1', {
       fillGradient: gradient,
       shade: null,
+      glow: false,
     });
   });
 

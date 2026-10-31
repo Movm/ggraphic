@@ -16,6 +16,7 @@ import { CanvasText } from '../primitives/index.js';
 import { AssetPrimitive } from '../primitives/AssetPrimitive.js';
 import { IllustrationPrimitive } from '../primitives/IllustrationPrimitive.js';
 import { resolveIconDef } from '../utils/iconInstances.js';
+import { effectiveAccent, effectiveMarker } from '../utils/textUtils.js';
 
 import type { OptionalCanvasActions } from '../hooks/useCanvasElementHandlers.js';
 import type { CanvasItem } from '../utils/canvasLayerManager.js';
@@ -583,6 +584,8 @@ export const KIND_RENDERERS: KindRenderers = {
         fontSize={textItem.fontSize}
         fontFamily={textItem.fontFamily}
         fontStyle={textItem.fontStyle || 'normal'}
+        fontWeight={textItem.fontWeight}
+        letterSpacing={textItem.letterSpacing}
         fill={textItem.fill}
         stroke={textItem.stroke}
         strokeWidth={textItem.strokeWidth}
@@ -594,8 +597,8 @@ export const KIND_RENDERERS: KindRenderers = {
         fillGradient={textItem.fillGradient}
         align={textItem.align ?? 'left'}
         lineHeight={textItem.lineHeight}
-        accent={textItem.accent}
-        marker={textItem.marker}
+        accent={effectiveAccent(textItem)}
+        marker={effectiveMarker(textItem)}
         opacity={textItem.opacity ?? 1}
         rotation={textItem.rotation || 0}
         scaleX={textItem.scale || 1}

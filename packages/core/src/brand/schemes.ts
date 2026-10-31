@@ -19,7 +19,7 @@ export const SURFACE_ROLES = [
 export type SurfaceRole = (typeof SURFACE_ROLES)[number];
 
 /** The colour worlds a brand yields, in the order they are offered. */
-export const SCHEME_IDS = ['primary', 'secondary', 'light', 'dark', 'photo'] as const;
+export const SCHEME_IDS = ['primary', 'secondary', 'light', 'dark', 'accent', 'photo'] as const;
 export type SchemeId = (typeof SCHEME_IDS)[number];
 
 export interface Scheme {
@@ -159,6 +159,7 @@ function groundsOf(brand: BrandPack): Record<SchemeId, string | null> {
   return {
     primary: norm(brand.colors.primary),
     secondary: norm(brand.colors.secondary),
+    accent: norm(brand.colors.accent),
     light: norm(brand.colors.surface),
     dark: mixColors(brand.colors.primary, BLACK, 0.7),
     photo: BLACK,

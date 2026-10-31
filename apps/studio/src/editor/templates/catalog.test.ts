@@ -31,6 +31,23 @@ describe('the catalogue', () => {
       'studio-event-panel',
       'studio-photo-quote',
       'studio-photo-number',
+      'studio-annotated-headline',
+      'studio-carousel-cover',
+      'studio-carousel-inner',
+      'studio-community-question',
+      'studio-comparison-stacked',
+      'studio-demand-photo-band',
+      'studio-fact-bar-chart',
+      'studio-figure-of-the-month',
+      'studio-framed-photo',
+      'studio-good-news-slide',
+      'studio-invitation-panel',
+      'studio-petition-face',
+      'studio-poster-type',
+      'studio-quote-card',
+      'studio-split-photos-band',
+      'studio-statement-panel-dots',
+      'studio-study-kicker-boxes',
     ]);
     expect(entries.every((e) => e.source === 'pack')).toBe(true);
     expect(entries.filter((e) => e.needsPhoto).map((e) => e.id)).toEqual([
@@ -39,6 +56,18 @@ describe('the catalogue', () => {
       'studio-event-panel',
       'studio-photo-quote',
       'studio-photo-number',
+      'studio-annotated-headline',
+      'studio-carousel-cover',
+      'studio-carousel-inner',
+      'studio-community-question',
+      'studio-comparison-stacked',
+      'studio-demand-photo-band',
+      'studio-framed-photo',
+      'studio-good-news-slide',
+      'studio-invitation-panel',
+      'studio-petition-face',
+      'studio-split-photos-band',
+      'studio-study-kicker-boxes',
     ]);
     expect(catalogTemplate('studio-quote')?.family).toBe('quote');
     expect(catalogTemplate('nope')).toBeNull();

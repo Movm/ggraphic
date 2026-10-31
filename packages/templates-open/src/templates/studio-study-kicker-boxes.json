@@ -1,0 +1,342 @@
+{
+  "formatVersion": 1,
+  "id": "studio-study-kicker-boxes",
+  "version": 1,
+  "kind": "template",
+  "family": "study",
+  "title": {
+    "en": "Study with kicker boxes",
+    "de": "Studie mit Kicker-Boxen"
+  },
+  "description": {
+    "en": "A full photo with the headline set in flush white boxes and a rose kicker above it",
+    "de": "Ein Vollfoto mit der Headline in bündigen weißen Boxen und einem rosa Kicker darüber"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "dark", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "scrim",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.707407,
+            "width": 1,
+            "height": 0.585185,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "shade": "bottom",
+            "bind": {
+              "fill": "deep"
+            }
+          },
+          {
+            "id": "kicker-plate",
+            "type": "rect",
+            "x": 0.282609,
+            "y": 0.432773,
+            "width": 0.565217,
+            "height": 0.058824,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          },
+          {
+            "id": "plate-1",
+            "type": "rect",
+            "x": 0.423913,
+            "y": 0.507563,
+            "width": 0.847826,
+            "height": 0.07395,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          },
+          {
+            "id": "plate-2",
+            "type": "rect",
+            "x": 0.347826,
+            "y": 0.589916,
+            "width": 0.521739,
+            "height": 0.07395,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          },
+          {
+            "id": "plate-3",
+            "type": "rect",
+            "x": 0.380435,
+            "y": 0.672269,
+            "width": 0.76087,
+            "height": 0.07395,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "notch": 0.051852
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "kicker",
+            "type": "header",
+            "text": "New study 2026",
+            "x": 0.028261,
+            "y": 0.415126,
+            "width": 0.51087,
+            "fontSize": 0.053704,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 700,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.053704
+          },
+          {
+            "id": "line-1",
+            "type": "header",
+            "text": "One in four families",
+            "x": 0.030435,
+            "y": 0.482353,
+            "width": 0.786957,
+            "fontSize": 0.077778,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 800,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.077778
+          },
+          {
+            "id": "line-2",
+            "type": "header",
+            "text": "cannot find",
+            "x": 0.117391,
+            "y": 0.564706,
+            "width": 0.46087,
+            "fontSize": 0.077778,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 800,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.077778
+          },
+          {
+            "id": "line-3",
+            "type": "header",
+            "text": "an affordable flat",
+            "x": 0.030435,
+            "y": 0.647059,
+            "width": 0.7,
+            "fontSize": 0.077778,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1,
+            "fontWeight": 800,
+            "letterSpacing": -0.025,
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.077778
+          }
+        ],
+        "layerOrder": [
+          "photo",
+          "scrim",
+          "kicker-plate",
+          "kicker",
+          "plate-1",
+          "line-1",
+          "plate-2",
+          "line-2",
+          "plate-3",
+          "line-3",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas",
+    "scrim": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "kicker": {
+      "role": "subline",
+      "label": {
+        "en": "Kicker",
+        "de": "Kicker"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 1,
+        "maxChars": 22
+      }
+    },
+    "line-1": {
+      "role": "headline",
+      "label": {
+        "en": "Line 1",
+        "de": "Zeile 1"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 1,
+        "maxChars": 26
+      }
+    },
+    "line-2": {
+      "role": "headline",
+      "label": {
+        "en": "Line 2",
+        "de": "Zeile 2"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 1,
+        "maxChars": 14
+      }
+    },
+    "line-3": {
+      "role": "headline",
+      "label": {
+        "en": "Line 3",
+        "de": "Zeile 3"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 1,
+        "maxChars": 22
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "kicker-headline",
+      "title": {
+        "en": "Kicker with headline",
+        "de": "Kicker mit Headline"
+      },
+      "elementIds": [
+        "kicker-plate",
+        "kicker",
+        "plate-1",
+        "line-1",
+        "plate-2",
+        "line-2",
+        "plate-3",
+        "line-3"
+      ]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-left"],
+  "placeholders": {
+    "en": {
+      "kicker": "New study 2026",
+      "line-1": "One in four families",
+      "line-2": "cannot find",
+      "line-3": "an affordable flat"
+    },
+    "de": {
+      "kicker": "Neue Studie 2026",
+      "line-1": "Jede vierte Familie",
+      "line-2": "findet keine",
+      "line-3": "faire Mietwohnung"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

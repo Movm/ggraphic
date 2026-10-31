@@ -28,8 +28,35 @@ export interface TemplateInput {
   fixed?: Readonly<Record<string, readonly string[]>>;
   logoCorners?: readonly LogoCorner[];
   placeholders?: Readonly<Record<string, Readonly<Record<string, string>>>>;
+  /** Text budgets by element id; a fitted text takes its line limit from here. */
+  slots?: Readonly<Record<string, { budget: { maxLines?: number } }>>;
   blocks?: readonly { id: string; elementIds: readonly string[] }[];
 }
+
+/** What a text fit is asked: the slot's line limit and the canvas height (for the legibility floor). */
+export interface TextFitRequest {
+  maxLines?: number;
+  /** How far down the text may grow from its top (`roomBelow`); the fit keeps a gap of a quarter line below it. */
+  maxHeight?: number;
+  canvasHeight: number;
+}
+
+/** The size a text is fitted to; `fits` is false when it does not fit even at the floor. */
+export interface TextFit {
+  fontSize: number;
+  fits: boolean;
+}
+
+/**
+ * Fits a text that carries `maxFontSize` to its box in the font it now has: the largest size from
+ * the floor up to `maxFontSize` at which it fits. Null when the element cannot be fitted (no
+ * size or width to go by). The editor fills it in (`GateAdapter.fitText`), so that fitting, the
+ * render gate and the canvas measure alike.
+ */
+export type FitText = (
+  el: Readonly<Record<string, unknown>>,
+  req: TextFitRequest
+) => TextFit | null;
 
 export interface InstantiateContext {
   brand: BrandPack;
@@ -47,6 +74,41 @@ export interface InstantiateContext {
    * `<family>, <fallback>`; the binding's `value` stays the bare family.
    */
   fontFallback?: string | ((role: string) => string);
+  /** Fits every text with a numeric `maxFontSize` once it has its font, width and text. Without it the size stays as placed. */
+  fitText?: FitText;
+  /** The box an element covers (`GateAdapter.box` with one line); with `fitText`, bounds a fitted text by the element below it. */
+  boxOf?: ElementBox;
+}
+
+/** The box of an element in canvas px, or null if it has none. */
+export type ElementBox = (
+  stateKey: string,
+  el: Readonly<Record<string, unknown>>
+) => { x: number; y: number; width: number; height: number } | null;
+
+/**
+ * How far down the text `el` may grow before it meets the nearest element below it that overlaps
+ * it horizontally (any kind; its top must lie below the text's top, so the page and a plate the
+ * text sits on never limit it); undefined when nothing lies below. Positions are as placed:
+ * nothing is moved, so a stack of texts is limited by the original top of the next one.
+ */
+export function roomBelow(
+  state: Readonly<Record<string, unknown>>,
+  stateKey: string,
+  el: Readonly<Record<string, unknown>>,
+  boxOf: ElementBox
+): number | undefined {
+  const self = boxOf(stateKey, el);
+  if (!self) return undefined;
+  let top = Number.POSITIVE_INFINITY;
+  forEachElement(state as Record<string, unknown>, (other, key) => {
+    if (other === el) return;
+    const box = boxOf(key, other);
+    if (!box || !(box.y > self.y + 1)) return;
+    if (!(self.x + 1 < box.x + box.width && box.x + 1 < self.x + self.width)) return;
+    top = Math.min(top, box.y);
+  });
+  return Number.isFinite(top) ? top - self.y : undefined;
 }
 
 /**
@@ -231,6 +293,21 @@ export function instantiateTemplatePage(
     const text = texts?.[id];
     if (text !== undefined) el['text'] = text;
   });
+
+  // Sizes fitted to the brand's fonts, up to the prototype's size.
+  if (ctx.fitText) {
+    forEachElement(state, (el, key, id) => {
+      if (key !== 'additionalTexts' || !isNum(el['maxFontSize'])) return;
+      const maxLines = t.slots?.[id]?.budget.maxLines;
+      const maxHeight = ctx.boxOf ? roomBelow(state, key, el, ctx.boxOf) : undefined;
+      const fit = ctx.fitText!(el, {
+        ...(maxLines === undefined ? {} : { maxLines }),
+        ...(maxHeight === undefined ? {} : { maxHeight }),
+        canvasHeight: H,
+      });
+      if (fit) el['fontSize'] = fit.fontSize;
+    });
+  }
 
   // The logo.
   const layerIds = (key: string) =>

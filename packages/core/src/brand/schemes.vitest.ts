@@ -22,6 +22,21 @@ const brands: [string, BrandPack][] = [
   ['mid-grey primary', withColors({ primary: '#777777' })],
 ];
 
+describe('accent world', () => {
+  it('has the brand accent as ground and a readable ink', () => {
+    const ids = deriveSchemes(brandDefault).map((x) => x.id);
+    expect(ids).toEqual(['primary', 'secondary', 'light', 'dark', 'accent', 'photo']);
+    const accent = deriveSchemes(brandDefault).find((x) => x.id === 'accent')!;
+    expect(accent.roles.ground).toBe(brandDefault.colors.accent.toLowerCase());
+    expect(contrastRatio(accent.roles.ink, accent.roles.ground)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('is dropped when its ground sits within 1.2:1 of an earlier one', () => {
+    const brand = withColors({ accent: brandDefault.colors.primary });
+    expect(deriveSchemes(brand).map((x) => x.id)).not.toContain('accent');
+  });
+});
+
 describe('deriveSchemes', () => {
   it("the default brand reproduces today's seed colours", () => {
     const by = (id: SchemeId) => deriveSchemes(brandDefault).find((x) => x.id === id)!.roles;

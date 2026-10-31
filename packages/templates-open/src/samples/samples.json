@@ -1,0 +1,74 @@
+{
+  "photos": [
+    {
+      "file": "portrait-1.jpg",
+      "role": "portrait",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "portrait-2.jpg",
+      "role": "portrait",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "group-1.jpg",
+      "role": "crowd",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "group-2.jpg",
+      "role": "crowd",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "trees.jpg",
+      "role": "scene",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "garden.jpg",
+      "role": "scene",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "bicycles.jpg",
+      "role": "scene",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "square.jpg",
+      "role": "scene",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "hands.jpg",
+      "role": "detail",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    },
+    {
+      "file": "meeting.jpg",
+      "role": "scene",
+      "source": "made for ggraphic with FLUX.2 [klein] 4B via Melious",
+      "licence": "CC0-1.0",
+      "author": "Moritz Wächter"
+    }
+  ]
+}
