@@ -1,0 +1,166 @@
+{
+  "formatVersion": 1,
+  "id": "studio-question-giant-mark",
+  "version": 1,
+  "kind": "template",
+  "family": "question",
+  "title": {
+    "en": "Giant question mark on photo",
+    "de": "Riesiges Fragezeichen auf Foto"
+  },
+  "description": {
+    "en": "A giant question mark over a darkened photo with the question below",
+    "de": "Ein riesiges Fragezeichen über einem abgedunkelten Foto, darunter die Frage"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["photo", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "veil",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.5,
+            "width": 1,
+            "height": 1,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 0.62,
+            "bind": {
+              "fill": "shade"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "mark",
+            "type": "header",
+            "text": "?",
+            "x": 0.314815,
+            "y": -0.051852,
+            "width": 0.685185,
+            "fontSize": 0.925926,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "opacity": 0.13,
+            "lineHeight": 0.9,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "decorative": true,
+            "bind": {
+              "fill": "accent",
+              "fontFamily": "font.headline"
+            }
+          },
+          {
+            "id": "question",
+            "type": "header",
+            "text": "Who owns the street?",
+            "x": 0,
+            "y": 0.605042,
+            "width": 1,
+            "fontSize": 0.114815,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.114815
+          }
+        ],
+        "layerOrder": ["photo", "veil", "mark", "question", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "mark": "canvas",
+    "photo": "canvas",
+    "veil": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "question": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 3,
+        "maxChars": 32
+      }
+    }
+  },
+  "blocks": [],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "question": "Who owns the street?"
+    },
+    "de": {
+      "question": "Wem gehört die Straße?"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
