@@ -135,8 +135,8 @@
           {
             "id": "frame",
             "clipType": "rect",
-            "x": 0.0,
-            "y": 0.05,
+            "x": 0.05,
+            "y": 0.075,
             "width": 0.1,
             "height": 0.05,
             "rotation": 0,
