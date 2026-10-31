@@ -23,6 +23,12 @@ import studioFigureOfTheMonth from './templates/studio-figure-of-the-month.json'
 import studioFramedPhoto from './templates/studio-framed-photo.json' with { type: 'json' };
 import studioGoodNewsSlide from './templates/studio-good-news-slide.json' with { type: 'json' };
 import studioInvitationPanel from './templates/studio-invitation-panel.json' with { type: 'json' };
+import studioPersonBroadcast from './templates/studio-person-broadcast.json' with { type: 'json' };
+import studioPersonNameBlock from './templates/studio-person-name-block.json' with { type: 'json' };
+import studioPersonNameBoxes from './templates/studio-person-name-boxes.json' with { type: 'json' };
+import studioPersonNameTop from './templates/studio-person-name-top.json' with { type: 'json' };
+import studioPersonNewFace from './templates/studio-person-new-face.json' with { type: 'json' };
+import studioPersonPair from './templates/studio-person-pair.json' with { type: 'json' };
 import studioPetitionFace from './templates/studio-petition-face.json' with { type: 'json' };
 import studioPosterType from './templates/studio-poster-type.json' with { type: 'json' };
 import studioQuoteCard from './templates/studio-quote-card.json' with { type: 'json' };
@@ -55,6 +61,12 @@ export const OPEN_TEMPLATES: readonly unknown[] = [
   studioFramedPhoto,
   studioGoodNewsSlide,
   studioInvitationPanel,
+  studioPersonBroadcast,
+  studioPersonNameBlock,
+  studioPersonNameBoxes,
+  studioPersonNameTop,
+  studioPersonNewFace,
+  studioPersonPair,
   studioPetitionFace,
   studioPosterType,
   studioQuoteCard,
