@@ -640,10 +640,14 @@ body {
 }
 .studio-start__tools {
   display: flex;
-  flex-wrap: wrap;
+  /* The field has its label above it: Trash sits level with the input. */
   align-items: flex-end;
-  gap: var(--ui-space-2) var(--ui-space-4);
+  gap: var(--ui-space-4);
   margin-left: auto;
+}
+/* Side by side with the Trash link: the field alone would take the whole row. */
+.studio-start__tools .studio-search {
+  flex: 0 1 320px;
 }
 .studio-start__head .studio-muted {
   margin: 0;
