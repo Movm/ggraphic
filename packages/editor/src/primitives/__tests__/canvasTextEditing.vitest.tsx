@@ -272,6 +272,36 @@ describe('Der Editor zeigt, was die Leinwand zeigt', () => {
     expect(parseFloat(indent())).toBeCloseTo(einfach * 2, 5);
   });
 
+  it('setzt die Laufweite des Feldes in em, damit der Text beim Öffnen nicht springt', () => {
+    // Konva setzt den Abstand nach jedem Zeichen; CSS tut dasselbe. Em folgt der
+    // Schriftgröße des Editors, auch wenn er verkleinert wird.
+    dblClickOnCanvas({ text: 'Mehr Platz', fontFamily: INSTRUMENT_SANS, letterSpacing: -0.045 });
+
+    expect(styledFrame().style.letterSpacing).toBe('-0.045em');
+  });
+
+  it('setzt die Laufweite auch im Listenzweig, den CanvasRichText zeichnet', () => {
+    dblClickOnCanvas({
+      text: '• Erster Punkt\n• Zweiter Punkt',
+      fontFamily: INSTRUMENT_SANS,
+      letterSpacing: 0.05,
+    });
+
+    expect(styledFrame().style.letterSpacing).toBe('0.05em');
+  });
+
+  it('setzt keine Laufweite, wo das Feld keine hat', () => {
+    dblClickOnCanvas({ text: 'Klimaschutz', fontFamily: INSTRUMENT_SANS });
+
+    expect(styledFrame().style.letterSpacing).toBe('');
+  });
+
+  it('zeigt die numerische Schriftstärke des Feldes', () => {
+    dblClickOnCanvas({ text: 'Klimaschutz', fontFamily: INSTRUMENT_SANS, fontWeight: 800 });
+
+    expect(styledFrame().style.fontWeight).toBe('800');
+  });
+
   it('zeigt die Deckkraft des Feldes', () => {
     dblClickOnCanvas({ text: 'Klimaschutz', fontFamily: INSTRUMENT_SANS, opacity: 0.4 });
 

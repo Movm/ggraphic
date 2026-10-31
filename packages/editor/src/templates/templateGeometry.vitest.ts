@@ -106,6 +106,33 @@ describe('template geometry', () => {
     });
   });
 
+  it("the adapter measures a text's lines and longest line, and places a plate by its box", () => {
+    const text = { text: 'Hello world again', fontFamily: 'Raleway', fontSize: 40, width: 1000 };
+    const one = TEMPLATE_GATE_ADAPTER.textExtent!(text)!;
+    expect(one.lines).toBe(1);
+    expect(one.width).toBeGreaterThan(100);
+    expect(one.width).toBeLessThan(1000);
+    const wrapped = TEMPLATE_GATE_ADAPTER.textExtent!({ ...text, width: one.width - 20 })!;
+    expect(wrapped.lines).toBe(2);
+    expect(wrapped.width).toBeLessThanOrEqual(one.width - 20);
+    expect(TEMPLATE_GATE_ADAPTER.textExtent!({ ...text, scale: 2 })!.width).toBeCloseTo(
+      one.width * 2
+    );
+    // The same plate, upright: x/y are the centre, the size is the box over the scale.
+    const placed = TEMPLATE_GATE_ADAPTER.placeBox!(
+      'shapeInstances',
+      { x: 0, y: 0, width: 1, height: 1, scaleX: 2, scaleY: 1, rotation: 0 },
+      { x: 10, y: 20, width: 100, height: 40 }
+    );
+    expect(placed).toMatchObject({ x: 60, y: 40, width: 50, height: 40 });
+    expect(TEMPLATE_GATE_ADAPTER.box('shapeInstances', placed, 1)).toEqual({
+      x: 10,
+      y: 20,
+      width: 100,
+      height: 40,
+    });
+  });
+
   it('the adapter reads text only from the kinds that have it', () => {
     const text = { fill: '#fff', fontSize: 30, fontStyle: 'bold' };
     expect(TEMPLATE_GATE_ADAPTER.text('additionalTexts', text)).toEqual({
@@ -684,6 +711,30 @@ describe('template gate adapter: what the renderer scales, turns and draws', () 
       const light = cover({ ...rect, grain: 0.5, grainTone: 'light' }) as typeof dark;
       expect(light.grain.fill).toBe('#ffffff');
       expect(light.grain.alpha[1]).toBeCloseTo(70 / 255);
+    });
+
+    it('reports a stripe pattern as the stripe colour over the fill', () => {
+      expect(cover({ ...rect, pattern: 'stripes', patternColor: '#fbe1ec' })).toMatchObject({
+        kind: 'solid',
+        fill: '#005538',
+        stripes: '#fbe1ec',
+      });
+      // No stripe colour to judge against: not provable.
+      expect(cover({ ...rect, pattern: 'stripes' })).toEqual({ kind: 'unknown' });
+    });
+
+    it('does not prove a photo with rounded corners fills its box', () => {
+      const photo = { src: '/p.png', x: 0, y: 0, width: 600, height: 400 };
+      expect(cover(photo, 'userImageInstances')).toMatchObject({ kind: 'photo' });
+      expect(cover({ ...photo, cornerRadius: [0, 0, 0, 64] }, 'userImageInstances')).toEqual({
+        kind: 'unknown',
+      });
+      expect(cover({ ...photo, cornerRadius: 32 }, 'userImageInstances')).toEqual({
+        kind: 'unknown',
+      });
+      expect(cover({ ...photo, cornerRadius: [0, 0, 0, 0] }, 'userImageInstances')).toMatchObject({
+        kind: 'photo',
+      });
     });
 
     it('flags a dot pattern', () => {

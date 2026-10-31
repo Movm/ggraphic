@@ -114,6 +114,7 @@ describe('text contrast', () => {
               glow?: boolean;
               shade?: string;
               pattern?: string;
+              hug?: { text: string | string[] };
             }[];
             const order = page['layerOrder'] as string[];
             for (const t of page['additionalTexts'] as {
@@ -125,13 +126,17 @@ describe('text contrast', () => {
               fontSize: number;
             }[]) {
               checked += 1;
-              // A shape below the text that holds its whole first line is the text's ground.
-              const holder = shapes
-                // Only a flat, opaque shape is a ground: a glow, a fade, a veil or a pattern is not.
+              // Only a flat, opaque shape below the text is a ground: a glow, a fade, a veil or a
+              // pattern is not.
+              const grounds = shapes
                 .filter((sh) => !sh.glow && !sh.shade && !sh.pattern && (sh.opacity ?? 1) === 1)
                 .filter((sh) => order.indexOf(sh.id) < order.indexOf(t.id))
-                .reverse()
-                .find(
+                .reverse();
+              // A plate that hugs the text is its ground, even where it is narrower than the
+              // text's box; otherwise the shape that holds the text's whole first line.
+              const holder =
+                grounds.find((sh) => [sh.hug?.text ?? []].flat().includes(t.id)) ??
+                grounds.find(
                   (sh) =>
                     t.x >= sh.x - sh.width / 2 &&
                     t.x + t.width <= sh.x + sh.width / 2 &&

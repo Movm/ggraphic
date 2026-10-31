@@ -59,6 +59,7 @@ import {
   imageFilterAttrs,
 } from '../utils/imageFilters.js';
 import { cropKeyOf, userImageKeyCrop } from '../utils/keyboardCrop.js';
+import { hasCorners, sameCorners, type CornerRadius } from '../utils/cornerRadius.js';
 import { photoPlaceholderLook } from '../utils/photoPlaceholder.js';
 import { userImageBox } from '../utils/renderedBoxes.js';
 import { userImageCropUpdate } from '../utils/userImageCrop.js';
@@ -337,7 +338,11 @@ function UserImagePrimitiveInner({
                 width={userImage.width}
                 height={userImage.height}
                 fill={look.fill}
-                cornerRadius={userImage.mask === 'kreis' && !notchSize ? look.circleRadius : 0}
+                cornerRadius={
+                  userImage.mask === 'kreis' && !notchSize
+                    ? look.circleRadius
+                    : (userImage.cornerRadius ?? 0)
+                }
               />
             )}
             <Group
@@ -410,12 +415,14 @@ function UserImagePrimitiveInner({
     : undefined;
   const draw = turned ? straightDrawOf(photo, deg, frame, mirror) : null;
   // Gedreht mit Schatten: ein Radius > 0 lässt Konva über einen Puffer zeichnen, sonst schnitte der Rahmen den Schatten ab.
-  const cornerRadius =
+  const cornerRadius: CornerRadius | undefined =
     userImage.mask === 'kreis' && !notchSize
       ? Math.min(width, height) / 2
-      : turned && userImage.shadowColor
-        ? 0.01
-        : 0;
+      : hasCorners(userImage.cornerRadius)
+        ? userImage.cornerRadius
+        : turned && userImage.shadowColor
+          ? 0.01
+          : 0;
   const isCropping = aspectActive;
   const lockedRatio = cropAspectRatio(cropAspect, natural) !== null;
   // The dimmed whole photo mirrors by a negative scale, so its node origin
@@ -685,6 +692,7 @@ export const UserImagePrimitive = memo(UserImagePrimitiveInner, (prevProps, next
   if (prev.cropRotation !== next.cropRotation) return false;
   if (prev.mask !== next.mask) return false;
   if (prev.notch !== next.notch) return false;
+  if (!sameCorners(prev.cornerRadius, next.cornerRadius)) return false;
   if (prev.shadowColor !== next.shadowColor) return false;
   if (prev.shadowBlur !== next.shadowBlur) return false;
   if (prev.shadowOffsetX !== next.shadowOffsetX) return false;

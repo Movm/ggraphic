@@ -91,3 +91,30 @@ describe('insertBlock', () => {
     expect(state.layerOrder).toEqual(block.layerOrder);
   });
 });
+
+describe('updateShape on a hugging plate', () => {
+  const plate = {
+    id: 'plate',
+    type: 'rect',
+    x: 10,
+    y: 10,
+    width: 100,
+    height: 40,
+    rotation: 0,
+    hug: { text: 't', padX: 8, padY: 4 },
+  };
+
+  it('lets go of the text once the plate is moved or resized by hand', () => {
+    for (const partial of [{ width: 300 }, { height: 90 }, { x: 50 }, { y: 70 }]) {
+      const { actions, state } = setup({ shapeInstances: [plate] as never });
+      actions.updateShape('plate', partial);
+      expect(state().shapeInstances[0]).not.toHaveProperty('hug');
+    }
+  });
+
+  it('keeps hugging when only its colour changes', () => {
+    const { actions, state } = setup({ shapeInstances: [plate] as never });
+    actions.updateShape('plate', { color: '#ff0000' } as never);
+    expect(state().shapeInstances[0]).toHaveProperty('hug');
+  });
+});

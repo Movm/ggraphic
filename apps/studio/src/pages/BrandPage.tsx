@@ -28,7 +28,9 @@ import {
   clampBrandLayout,
   DEFAULT_BRAND_LAYOUT,
   deriveBrandColors,
+  brandDefault,
   deriveGrounds,
+  deriveSchemes,
   LOGO_CORNERS,
   type BrandLayout,
   type LogoCorner,
@@ -186,6 +188,25 @@ function BrandEditor({
     () => (invalid ? [] : deriveGrounds(input.colors)),
     [input.colors, invalid]
   );
+  // The preview also offers the accent colour world, which the stored grounds do not carry.
+  const previewGrounds = useMemo(() => {
+    if (!derived) return grounds;
+    const world = deriveSchemes({ ...brandDefault, colors: derived }).find(
+      (s) => s.id === 'accent'
+    );
+    return world
+      ? [
+          ...grounds,
+          {
+            id: world.id,
+            label: 'Accent',
+            color: world.roles.ground,
+            ink: world.roles.ink,
+            accent: world.roles.accent,
+          },
+        ]
+      : grounds;
+  }, [derived, grounds]);
   // The preview keeps the last good look while a colour is half typed.
   const previewColors = derived ?? data.settings?.colors ?? studioBrand.colors;
   const settings: BrandSettings = {
@@ -256,8 +277,8 @@ function BrandEditor({
   const setColor = (role: InputRole, color: string) =>
     setInput((s) => ({ ...s, colors: { ...s.colors, [role]: color } }));
 
-  const ground = grounds[groundIndex] ??
-    grounds[0] ?? {
+  const ground = previewGrounds[groundIndex] ??
+    previewGrounds[0] ?? {
       color: previewColors.primary,
       ink: previewColors.textOnDark,
     };
@@ -509,7 +530,7 @@ function BrandEditor({
         />
         <fieldset className="studio-chips">
           <legend className="studio-muted">Preview on</legend>
-          {grounds.map((b, i) => (
+          {previewGrounds.map((b, i) => (
             <label key={b.label} className="studio-chip">
               <input
                 type="radio"

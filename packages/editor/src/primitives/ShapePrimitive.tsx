@@ -19,7 +19,8 @@ import { useBoxSnap, type SnapProps } from '@ggraphic/editor/hooks/useBoxSnap';
 import { gradientFillProps } from '@ggraphic/editor/utils/gradientFill';
 import { translucentHitFunc } from '@ggraphic/editor/utils/gradientHitArea';
 import { handDrawnPath } from '@ggraphic/editor/utils/handDrawn';
-import { paintDots, paintGrain } from '../utils/grain.js';
+import { sameCorners } from '../utils/cornerRadius.js';
+import { paintDots, paintGrain, paintStripes } from '../utils/grain.js';
 import { notchPx, traceNotch } from '../utils/notch.js';
 import {
   ELEMENT_TRANSFORMER,
@@ -692,7 +693,8 @@ const ShapePrimitiveInner: React.FC<ShapePrimitiveProps> = ({
     listening: false,
     perfectDrawEnabled: false,
   };
-  const dots = shape.type === 'rect' && shape.pattern === 'dots';
+  const pattern = shape.type === 'rect' ? shape.pattern : undefined;
+  const dots = pattern === 'dots' || pattern === 'stripes';
   const grain = shape.type === 'rect' ? Math.min(1, Math.max(0, shape.grain ?? 0)) : 0;
 
   return (
@@ -708,7 +710,8 @@ const ShapePrimitiveInner: React.FC<ShapePrimitiveProps> = ({
           globalCompositeOperation={shape.blendMode}
           sceneFunc={(ctx) => {
             outline(ctx);
-            paintDots(ctx, shape, shape.width, shape.height, snapProps.stageWidth ?? 0);
+            const paint = pattern === 'stripes' ? paintStripes : paintDots;
+            paint(ctx, shape, shape.width, shape.height, snapProps.stageWidth ?? 0);
             ctx.restore();
           }}
         />
@@ -761,7 +764,7 @@ export const ShapePrimitive = memo(ShapePrimitiveInner, (prevProps, nextProps) =
   if (prevShape.scaleX !== nextShape.scaleX) return false;
   if (prevShape.scaleY !== nextShape.scaleY) return false;
   if (prevShape.opacity !== nextShape.opacity) return false;
-  if (prevShape.cornerRadius !== nextShape.cornerRadius) return false;
+  if (!sameCorners(prevShape.cornerRadius, nextShape.cornerRadius)) return false;
   if (prevShape.strokeWidth !== nextShape.strokeWidth) return false;
   if (prevShape.dash !== nextShape.dash) return false;
   if (prevShape.shadowColor !== nextShape.shadowColor) return false;

@@ -73,6 +73,7 @@ export {
   type GateProblem,
   type GateRule,
 } from './templates/gate.js';
+export { hugOf, hugPlates, type HugAdapter, type PlateHug } from './templates/hug.js';
 export {
   instantiateTemplatePage,
   offeredSchemes,

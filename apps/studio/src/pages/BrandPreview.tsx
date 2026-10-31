@@ -29,8 +29,8 @@ export function BrandPreview({
   layout = DEFAULT_BRAND_LAYOUT,
 }: {
   settings: BrandSettings;
-  /** The page colour; the seed starts on `primary`. */
-  ground: { color: string; ink: string };
+  /** The page colour; the seed starts on `primary`. `accent` is the emphasis colour the ground itself names (the accent world). */
+  ground: { color: string; ink: string; accent?: string };
   logoUrl: string | null;
   /** The second logo and the class of ground it is for; it replaces the main logo there. */
   logoAlt?: { url: string; ground: 'dark' | 'light' } | null;
@@ -62,7 +62,8 @@ export function BrandPreview({
     margin: 0,
     ...style,
   });
-  const accent = ground.color === colors.primary ? colors.accent : colors.accentOnLight;
+  const accent =
+    ground.accent ?? (ground.color === colors.primary ? colors.accent : colors.accentOnLight);
   return (
     <figure className="studio-brand-preview" aria-label="Preview of the Headline + text template">
       <div className="studio-brand-preview__page" style={{ background: ground.color }}>
@@ -74,7 +75,7 @@ export function BrandPreview({
             top: '24%',
             width: px(120),
             height: px(14),
-            background: colors.accent,
+            background: ground.accent ?? colors.accent,
           }}
         />
         <p

@@ -11,6 +11,7 @@ import { normalizeColor } from '../color/color.js';
 import { brandLayout, logoEnvelope, safeArea, type LogoCorner } from '../brand/layout.js';
 import { fitLogoBox, type Box } from '../brand/logoFit.js';
 import { deriveSchemes, type Scheme, type SchemeId } from '../brand/schemes.js';
+import { hugOf, hugPlates, type HugAdapter } from './hug.js';
 
 export type GeometryAxis = 'x' | 'y' | 'w' | 'h' | 's' | 'k';
 /** stateKey → field → axis. 'page' is the page's own fields. Unlisted numbers stay as they are. */
@@ -78,6 +79,8 @@ export interface InstantiateContext {
   fitText?: FitText;
   /** The box an element covers (`GateAdapter.box` with one line); with `fitText`, bounds a fitted text by the element below it. */
   boxOf?: ElementBox;
+  /** Brings plates that carry `hug` to their text's lines, after the fit. Without it they stay as placed. */
+  hug?: HugAdapter;
 }
 
 /** The box of an element in canvas px, or null if it has none. */
@@ -102,7 +105,8 @@ export function roomBelow(
   if (!self) return undefined;
   let top = Number.POSITIVE_INFINITY;
   forEachElement(state as Record<string, unknown>, (other, key) => {
-    if (other === el) return;
+    // A ghost behind the page is no neighbour: nothing grows into it.
+    if (other === el || isDecorativeText(key, other)) return;
     const box = boxOf(key, other);
     if (!box || !(box.y > self.y + 1)) return;
     if (!(self.x + 1 < box.x + box.width && box.x + 1 < self.x + self.width)) return;
@@ -126,13 +130,21 @@ const isObj = (v: unknown): v is Obj => v !== null && typeof v === 'object' && !
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
 /** Whether a value is out of reach of its axis: a fraction outside 0..1, or an array that can't scale. */
-const unplaceable = (v: unknown, axis: GeometryAxis): boolean => {
+const unplaceable = (v: unknown, axis: GeometryAxis, bleeds = false): boolean => {
   if (Array.isArray(v)) {
     // Only the s axis scales a list (a dash pattern is a list of px lengths).
     return axis !== 's' || !v.every((e) => isNum(e) && e >= 0 && e <= 1);
   }
+  // A decorative text bleeds off the page on purpose: its box may start and end beyond the edge.
+  if (bleeds && (axis === 'x' || axis === 'y' || axis === 'w')) {
+    return isNum(v) && (v < -1 || v > 2);
+  }
   return axis !== 'k' && isNum(v) && (v < 0 || v > 1);
 };
+
+/** A text that is only decoration (a ghost numeral): see `AdditionalText.decorative`. */
+export const isDecorativeText = (key: string, el: Readonly<Record<string, unknown>>): boolean =>
+  key === 'additionalTexts' && el['decorative'] === true;
 
 /** The template's worlds that the brand keeps, in the template's order. */
 export function offeredSchemes(t: Pick<TemplateInput, 'schemes'>, brand: BrandPack): SchemeId[] {
@@ -206,8 +218,11 @@ export function instantiateTemplatePage(
     if (!checkBinds(el)) bad ??= 'bind';
     for (const [field, axis] of Object.entries(ctx.geometry[key] ?? {})) {
       const v = el[field];
-      if (unplaceable(v, axis)) bad ??= 'geometry';
+      if (unplaceable(v, axis, isDecorativeText(key, el))) bad ??= 'geometry';
     }
+    // A hug's padding is a fraction of the short side, like the s axis.
+    const hug = key === 'shapeInstances' ? hugOf(el) : null;
+    if (hug && [hug.padX, hug.padY].some((v) => unplaceable(v, 's'))) bad ??= 'geometry';
   });
   for (const [field, axis] of Object.entries(ctx.geometry['page'] ?? {})) {
     const v = state[field];
@@ -224,6 +239,10 @@ export function instantiateTemplatePage(
   };
 
   const place = (el: Obj, table: Readonly<Record<string, GeometryAxis>> | undefined, F: Box) => {
+    const hug = hugOf(el);
+    if (hug) {
+      el['hug'] = { ...hug, padX: Math.round(hug.padX * S), padY: Math.round(hug.padY * S) };
+    }
     for (const [field, axis] of Object.entries(table ?? {})) {
       const v = el[field];
       if (Array.isArray(v)) {
@@ -308,6 +327,10 @@ export function instantiateTemplatePage(
       if (fit) el['fontSize'] = fit.fontSize;
     });
   }
+
+  // Plates that hug their text, now that the text has its final size.
+  const hugged = ctx.hug ? hugPlates(state, ctx.hug) : state;
+  if (hugged !== state) Object.assign(state, hugged);
 
   // The logo.
   const layerIds = (key: string) =>

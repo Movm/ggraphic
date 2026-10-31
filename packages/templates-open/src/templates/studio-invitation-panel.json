@@ -48,9 +48,9 @@
           {
             "id": "button",
             "type": "rect",
-            "x": 0.336957,
-            "y": 0.388235,
-            "width": 0.673913,
+            "x": 0.338043,
+            "y": 0.368068,
+            "width": 0.669565,
             "height": 0.053782,
             "fill": "#ffffff",
             "rotation": 0,
@@ -59,15 +59,21 @@
             "opacity": 1,
             "bind": {
               "fill": "deep"
+            },
+            "hug": {
+              "text": "button-text",
+              "padX": 0.024074,
+              "padY": 0.016667,
+              "width": "text"
             }
           },
           {
             "id": "strip",
             "type": "rect",
             "x": 0.5,
-            "y": 0.907407,
+            "y": 0.933333,
             "width": 1,
-            "height": 0.185185,
+            "height": 0.133333,
             "fill": "#ffffff",
             "rotation": 0,
             "scaleX": 1,
@@ -86,7 +92,7 @@
             "x": 0,
             "y": 0.451852,
             "width": 1,
-            "height": 0.362963,
+            "height": 0.414815,
             "rotation": 0,
             "scale": 1,
             "opacity": 1
@@ -153,7 +159,7 @@
             "type": "body",
             "text": "Thursday, 19 November 2026, 6.30 pm, community hall",
             "x": 0,
-            "y": 0.260504,
+            "y": 0.223529,
             "width": 0.826087,
             "fontSize": 0.031481,
             "align": "left",
@@ -171,8 +177,8 @@
             "id": "button-text",
             "type": "body",
             "text": "Sign up: example.org/forum",
-            "x": 0.030435,
-            "y": 0.376471,
+            "x": 0.031522,
+            "y": 0.356303,
             "width": 0.613043,
             "fontSize": 0.025926,
             "align": "left",
@@ -191,9 +197,9 @@
             "type": "body",
             "text": "Free entry · childcare on site",
             "x": 0,
-            "y": 0.941176,
-            "width": 0.565217,
-            "fontSize": 0.024074,
+            "y": 0.961345,
+            "width": 0.597826,
+            "fontSize": 0.027778,
             "align": "left",
             "fontFamily": "",
             "fill": "#ffffff",
@@ -203,7 +209,7 @@
               "fill": "ink",
               "fontFamily": "font.body"
             },
-            "maxFontSize": 0.024074
+            "maxFontSize": 0.027778
           }
         ],
         "layerOrder": [
@@ -289,7 +295,7 @@
       },
       "budget": {
         "maxWords": 6,
-        "maxLines": 2,
+        "maxLines": 1,
         "maxChars": 44
       }
     }
