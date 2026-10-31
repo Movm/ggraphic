@@ -1,0 +1,309 @@
+{
+  "formatVersion": 1,
+  "id": "studio-question-choice",
+  "version": 1,
+  "kind": "template",
+  "family": "question",
+  "title": {
+    "en": "Question with two answers",
+    "de": "Frage mit zwei Antworten"
+  },
+  "description": {
+    "en": "A big question above two answer fields marked A and B",
+    "de": "Eine große Frage über zwei Antwortfeldern A und B"
+  },
+  "tags": {
+    "tone": "warm",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "field-a",
+            "type": "rect",
+            "x": 0.23913,
+            "y": 0.647059,
+            "width": 0.478261,
+            "height": 0.352941,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            },
+            "hug": {
+              "text": ["letter-a", "answer-a"],
+              "padX": 0.022222,
+              "padY": 0.027778
+            }
+          },
+          {
+            "id": "field-b",
+            "type": "rect",
+            "x": 0.76087,
+            "y": 0.647059,
+            "width": 0.478261,
+            "height": 0.352941,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            },
+            "hug": {
+              "text": ["letter-b", "answer-b"],
+              "padX": 0.022222,
+              "padY": 0.027778
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "question",
+            "type": "header",
+            "text": "What matters more to you?",
+            "x": 0,
+            "y": 0.02521,
+            "width": 0.543478,
+            "fontSize": 0.12037,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.95,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.12037
+          },
+          {
+            "id": "letter-a",
+            "type": "header",
+            "text": "A",
+            "x": 0.032609,
+            "y": 0.495798,
+            "width": 0.413043,
+            "fontSize": 0.203704,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.9,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.203704
+          },
+          {
+            "id": "answer-a",
+            "type": "body",
+            "text": "More buses",
+            "x": 0.032609,
+            "y": 0.714286,
+            "width": 0.413043,
+            "fontSize": 0.051852,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontWeight": 700,
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.051852
+          },
+          {
+            "id": "letter-b",
+            "type": "header",
+            "text": "B",
+            "x": 0.554348,
+            "y": 0.495798,
+            "width": 0.413043,
+            "fontSize": 0.203704,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.9,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.203704
+          },
+          {
+            "id": "answer-b",
+            "type": "body",
+            "text": "More bike lanes",
+            "x": 0.554348,
+            "y": 0.714286,
+            "width": 0.413043,
+            "fontSize": 0.051852,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontWeight": 700,
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.051852
+          }
+        ],
+        "layerOrder": [
+          "question",
+          "field-a",
+          "letter-a",
+          "answer-a",
+          "field-b",
+          "letter-b",
+          "answer-b",
+          "brand-logo"
+        ]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "question": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 3,
+        "maxChars": 36
+      }
+    },
+    "letter-a": {
+      "role": "name",
+      "label": {
+        "en": "Letter A",
+        "de": "Buchstabe A"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 2
+      }
+    },
+    "answer-a": {
+      "role": "body",
+      "label": {
+        "en": "Answer A",
+        "de": "Antwort A"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 2,
+        "maxChars": 24
+      }
+    },
+    "letter-b": {
+      "role": "name",
+      "label": {
+        "en": "Letter B",
+        "de": "Buchstabe B"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 2
+      }
+    },
+    "answer-b": {
+      "role": "body",
+      "label": {
+        "en": "Answer B",
+        "de": "Antwort B"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 2,
+        "maxChars": 24
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "answer-a",
+      "title": {
+        "en": "Answer A",
+        "de": "Antwort A"
+      },
+      "elementIds": ["field-a", "letter-a", "answer-a"]
+    },
+    {
+      "id": "answer-b",
+      "title": {
+        "en": "Answer B",
+        "de": "Antwort B"
+      },
+      "elementIds": ["field-b", "letter-b", "answer-b"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "question": "What matters more to you?",
+      "letter-a": "A",
+      "answer-a": "More buses",
+      "letter-b": "B",
+      "answer-b": "More bike lanes"
+    },
+    "de": {
+      "question": "Was wäre dir wichtiger?",
+      "letter-a": "A",
+      "answer-a": "Mehr Busse",
+      "letter-b": "B",
+      "answer-b": "Mehr Radwege"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

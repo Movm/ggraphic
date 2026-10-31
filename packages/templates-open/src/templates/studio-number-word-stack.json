@@ -1,0 +1,199 @@
+{
+  "formatVersion": 1,
+  "id": "studio-number-word-stack",
+  "version": 1,
+  "kind": "template",
+  "family": "number",
+  "title": {
+    "en": "Number with word stack",
+    "de": "Zahl mit Wortstapel"
+  },
+  "description": {
+    "en": "A two-digit figure in the accent colour with a stack of capital words beside it, a rule and a closing line",
+    "de": "Eine zweistellige Zahl in der Akzentfarbe mit einem Wortstapel daneben, eine Linie und ein Schlusssatz"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "rule",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.62521,
+            "width": 1,
+            "height": 0.006723,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "number",
+            "type": "header",
+            "text": "12",
+            "x": 0,
+            "y": 0,
+            "width": 0.663043,
+            "fontSize": 0.703704,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.9,
+            "fontWeight": 400,
+            "letterSpacing": -0.005,
+            "bind": {
+              "fill": "accent",
+              "fontFamily": "font.condensed"
+            },
+            "maxFontSize": 0.703704
+          },
+          {
+            "id": "stack",
+            "type": "header",
+            "text": "WEEKS OF WAITING",
+            "x": 0.663043,
+            "y": 0.033613,
+            "width": 0.336957,
+            "fontSize": 0.092593,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.98,
+            "fontWeight": 400,
+            "letterSpacing": -0.005,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.condensed"
+            },
+            "maxFontSize": 0.092593
+          },
+          {
+            "id": "text",
+            "type": "body",
+            "text": "At least. Often longer in rural areas.",
+            "x": 0,
+            "y": 0.663866,
+            "width": 1,
+            "fontSize": 0.055556,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.1,
+            "fontWeight": 600,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.055556
+          }
+        ],
+        "layerOrder": ["number", "stack", "rule", "text", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {},
+  "slots": {
+    "number": {
+      "role": "number",
+      "label": {
+        "en": "Figure",
+        "de": "Zahl"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 3
+      }
+    },
+    "stack": {
+      "role": "subline",
+      "label": {
+        "en": "Word stack",
+        "de": "Wortstapel"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 5,
+        "maxChars": 20
+      }
+    },
+    "text": {
+      "role": "body",
+      "label": {
+        "en": "Explanation",
+        "de": "Erklärung"
+      },
+      "budget": {
+        "maxWords": 7,
+        "maxLines": 3,
+        "maxChars": 50
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "number-with-explanation",
+      "title": {
+        "en": "Number with explanation",
+        "de": "Zahl mit Erklärung"
+      },
+      "elementIds": ["number", "stack", "text"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["bottom-left"],
+  "placeholders": {
+    "en": {
+      "number": "12",
+      "stack": "WEEKS OF WAITING",
+      "text": "At least. Often longer in rural areas."
+    },
+    "de": {
+      "number": "12",
+      "stack": "WOCHEN WARTEN",
+      "text": "Mindestens. Auf dem Land oft länger."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}

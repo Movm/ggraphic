@@ -1,0 +1,200 @@
+{
+  "formatVersion": 1,
+  "id": "studio-call-imperative",
+  "version": 1,
+  "kind": "template",
+  "family": "call",
+  "title": {
+    "en": "Imperative with link bar",
+    "de": "Imperativ mit Linkleiste"
+  },
+  "description": {
+    "en": "A giant imperative in capitals and a dark bar at the bottom with the link and a counter",
+    "de": "Ein riesiger Imperativ in Versalien und unten eine dunkle Leiste mit Link und Zähler"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "secondary", "light", "dark"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "bar",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.87037,
+            "width": 1,
+            "height": 0.259259,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "ink"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "SIGN UP NOW.",
+            "x": 0,
+            "y": 0.008403,
+            "width": 0.565217,
+            "fontSize": 0.268519,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.9,
+            "fontWeight": 400,
+            "letterSpacing": -0.005,
+            "bind": {
+              "fill": "ink",
+              "fontFamily": "font.condensed"
+            },
+            "maxFontSize": 0.268519
+          },
+          {
+            "id": "link",
+            "type": "body",
+            "text": "example.org/petition",
+            "x": 0,
+            "y": 0.806723,
+            "width": 1,
+            "fontSize": 0.055556,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontWeight": 700,
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.055556
+          },
+          {
+            "id": "counter",
+            "type": "body",
+            "text": "Already 31,400 signed.",
+            "x": 0,
+            "y": 0.869748,
+            "width": 1,
+            "fontSize": 0.044444,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontWeight": 500,
+            "bind": {
+              "fill": "ground",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.044444
+          }
+        ],
+        "layerOrder": ["headline", "bar", "link", "counter", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "bar": "canvas"
+  },
+  "slots": {
+    "headline": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 3,
+        "maxLines": 3,
+        "maxChars": 24
+      }
+    },
+    "link": {
+      "role": "cta",
+      "label": {
+        "en": "Link",
+        "de": "Link"
+      },
+      "budget": {
+        "maxWords": 1,
+        "maxLines": 1,
+        "maxChars": 30
+      }
+    },
+    "counter": {
+      "role": "body",
+      "label": {
+        "en": "Counter",
+        "de": "Zähler"
+      },
+      "budget": {
+        "maxWords": 4,
+        "maxLines": 1,
+        "maxChars": 36
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "link-bar",
+      "title": {
+        "en": "Link bar",
+        "de": "Linkleiste"
+      },
+      "elementIds": ["bar", "link", "counter"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "headline": "SIGN UP NOW.",
+      "link": "example.org/petition",
+      "counter": "Already 31,400 signed."
+    },
+    "de": {
+      "headline": "JETZT DABEI SEIN.",
+      "link": "beispiel.org/petition",
+      "counter": "Schon 31.400 dabei."
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
