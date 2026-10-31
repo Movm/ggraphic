@@ -78,6 +78,13 @@ export interface AdditionalText {
   fontWeight?: FontWeight;
   /** Spacing after every glyph, in em (-0.1 to 0.3); the pixel value is `letterSpacing * fontSize`. */
   letterSpacing?: number;
+  /** A line through the whole text (a struck-out myth). Only `true` means anything. */
+  strikethrough?: boolean;
+  /**
+   * `'page'`: the text shows the number of its page (from 1) instead of `text`, which is only
+   * drawn where no page is known. Not editable; never a slot.
+   */
+  counter?: 'page';
   fill: string;
   rotation?: number;
   scale?: number;

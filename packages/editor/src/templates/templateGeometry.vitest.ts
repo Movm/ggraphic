@@ -742,3 +742,26 @@ describe('template gate adapter: what the renderer scales, turns and draws', () 
     });
   });
 });
+
+describe('template gate adapter: a page counter', () => {
+  const counter = (over: Record<string, unknown> = {}) => ({
+    text: '1',
+    width: 100,
+    fontSize: 100,
+    fontFamily: 'Raleway',
+    fontStyle: 'bold',
+    counter: 'page',
+    ...over,
+  });
+  const lines = TEMPLATE_GATE_ADAPTER.lineCount;
+
+  it('is judged at the widest numeral a deck can show, not at its stored text', () => {
+    // One bold digit at 100 px is about 60 px, two are about 120: past a 100 px box.
+    expect(lines('additionalTexts', counter({ counter: undefined }))).toBe(1);
+    expect(lines('additionalTexts', counter())).toBeGreaterThan(1);
+  });
+
+  it('is judged as before when the box takes two digits', () => {
+    expect(lines('additionalTexts', counter({ width: 400 }))).toBe(1);
+  });
+});

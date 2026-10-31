@@ -70,6 +70,7 @@ export function CanvasRichText({
   fontStyle = 'normal',
   fontWeight,
   letterSpacing,
+  strikethrough = false,
   fill = '#000000',
   rotation,
   opacity = 1,
@@ -465,7 +466,9 @@ export function CanvasRichText({
                   fontSize={fontSize}
                   {...runFont(fontFamily, fontStyle, run, accent, fontWeight)}
                   letterSpacing={(letterSpacing ?? 0) * fontSize}
-                  textDecoration={run.underline ? 'underline' : ''}
+                  textDecoration={[run.underline && 'underline', strikethrough && 'line-through']
+                    .filter(Boolean)
+                    .join(' ')}
                   {...(run.marker
                     ? // Ink chosen for the box: no halo or outline of the photo text.
                       {

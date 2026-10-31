@@ -59,6 +59,8 @@ export interface CanvasTextProps {
   fontWeight?: FontWeight;
   /** em; the px value is `letterSpacing * fontSize`. */
   letterSpacing?: number;
+  /** A line through the whole text. */
+  strikethrough?: boolean;
   fill?: string;
   rotation?: number;
   scaleX?: number;
@@ -130,6 +132,7 @@ function CanvasTextInner({
   fontStyle = 'normal',
   fontWeight,
   letterSpacing,
+  strikethrough,
   fill = '#000000',
   rotation,
   scaleX,
@@ -425,6 +428,7 @@ function CanvasTextInner({
         fontFamily={resolveFontFamily(fontFamily)}
         fontStyle={konvaFontStyle(fontStyle, fontWeight)}
         letterSpacing={(letterSpacing ?? 0) * fontSize}
+        textDecoration={strikethrough ? 'line-through' : ''}
         fill={fill}
         {...(gradientProps ?? { fillPriority: 'color' as const })}
         rotation={rotation}
@@ -529,6 +533,7 @@ export const CanvasText = memo(CanvasTextSwitch, (prevProps, nextProps) => {
     'fontStyle',
     'fontWeight',
     'letterSpacing',
+    'strikethrough',
     'fill',
     'stroke',
     'strokeWidth',
