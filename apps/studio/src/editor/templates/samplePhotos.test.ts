@@ -63,6 +63,28 @@ describe('withSamplePhotos', () => {
   });
 });
 
+describe('withSamplePhotos page coverage', () => {
+  const page = { width: 1080, height: 1350 };
+  const srcOf = (w: number, h: number) =>
+    (withSamplePhotos({ userImageInstances: [img('a', '', w, h)] }, SAMPLES, '', page)[
+      'userImageInstances'
+    ] as { src: string }[])[0]?.src;
+
+  it('gives a tall slot that covers the page a scene, not a portrait', () => {
+    expect(srcOf(1080, 1350)).toBe('/s/s1.jpg');
+    expect(srcOf(1080, 1500)).toBe('/s/s1.jpg');
+  });
+
+  it('gives a framed tall slot (40 % of the width) a portrait', () => {
+    expect(srcOf(432, 800)).toBe('/s/p1.jpg');
+  });
+
+  it('lets a wide slot that covers the page take a scene as well', () => {
+    expect(srcOf(1080, 820)).toBe('/s/s1.jpg');
+    expect(srcOf(500, 300)).toBe('/s/c1.jpg');
+  });
+});
+
 describe('withSamplePhotos variety across templates', () => {
   const srcsFor = (seed: string, slots: [number, number][]) => {
     const state = { userImageInstances: slots.map(([w, h], i) => img(`s${i}`, '', w, h)) };
