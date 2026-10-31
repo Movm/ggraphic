@@ -25,6 +25,7 @@ import {
 } from '@ggraphic/schema';
 
 import { GRAIN_SPECK_ALPHA } from '../utils/grainSpec.js';
+import { bubbleExtent, ringGeometry, tailOf, type Tail } from '../utils/shapeDevices.js';
 import { plainTextLines } from '../utils/plainTextLayout.js';
 import { usesRichText } from '../utils/textRouting.js';
 import { createRunMeasurer, type MeasureWidth, type TextAccent } from '../utils/textUtils.js';
@@ -61,6 +62,9 @@ export const TEMPLATE_GEOMETRY: GeometryTable = {
     shadowBlur: 's',
     shadowOffsetX: 's',
     shadowOffsetY: 's',
+    // Ring stroke thickness and speech-bubble tail length: px.
+    ringWidth: 's',
+    tailSize: 's',
   },
   userImageInstances: {
     x: 'x',
@@ -133,6 +137,9 @@ export const UNSCALED_FIELDS: Readonly<Record<string, Readonly<Record<string, st
     notch: CANVAS_SHARE,
     grain: OPACITY,
     patternSpacing: CANVAS_SHARE,
+    arc: 'a share of the circle; independent of the page size',
+    bend: 'a share of the arrow length; independent of the page size',
+    tailAt: 'a share of the edge; independent of the page size',
   },
   frameInstances: {
     rotation: ANGLE,
@@ -178,6 +185,50 @@ function notchCut(box: Box | null, side: number): Box | null {
   if (!box) return null;
   const n = Math.min(side, Math.min(box.width, box.height) / 2);
   return { x: box.x + box.width - n, y: box.y, width: n, height: n };
+}
+
+const ELLIPSE_INSET = 0.98;
+
+/** The tail a shape record asks for (see `tailOf`), or null. */
+function tailOfRecord(el: El): Tail | null {
+  const side = el['tailSide'];
+  if (side !== 'top' && side !== 'right' && side !== 'bottom' && side !== 'left') return null;
+  return tailOf({
+    type: str(el, 'type'),
+    tailSide: side,
+    ...(typeof el['tailAt'] === 'number' ? { tailAt: el['tailAt'] } : {}),
+    ...(typeof el['tailSize'] === 'number' ? { tailSize: el['tailSize'] } : {}),
+  });
+}
+
+/** A rounded rect's body box: the shape's centre x/y, its size times its scale. */
+function bodyBox(el: El): Box {
+  const width = num(el, 'width') * Math.abs(num(el, 'scaleX', 1));
+  const height = num(el, 'height') * Math.abs(num(el, 'scaleY', 1));
+  return { x: num(el, 'x') - width / 2, y: num(el, 'y') - height / 2, width, height };
+}
+
+/** The largest corner radius of a rounded rect (the renderer's default is 32), clamped to half the short side. */
+function maxRadius(el: El, body: Box): number {
+  const radius = el['cornerRadius'];
+  const r = Array.isArray(radius)
+    ? Math.max(0, ...radius.filter((v): v is number => typeof v === 'number'))
+    : typeof radius === 'number'
+      ? radius
+      : 32;
+  return Math.min(Math.max(0, r), Math.min(body.width, body.height) / 2);
+}
+
+/** What a stroke-drawn shape (ring, arrow) paints: its colour at any strength, over whatever lies beneath. */
+function strokeCover(el: El, cut?: Box): ReturnType<GateAdapter['cover']> {
+  const fill = parseColor(str(el, 'fill'));
+  if (!fill || fill.a !== 1) return UNKNOWN;
+  return {
+    kind: 'range',
+    fill: str(el, 'fill'),
+    alpha: [0, num(el, 'opacity', 1)],
+    ...(cut ? { cut } : {}),
+  };
 }
 
 /**
@@ -635,7 +686,53 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
           const sin = Math.abs(Math.sin(angle));
           const w = width * cos + height * sin;
           const h = width * sin + height * cos;
-          return { x: x - w / 2, y: y - h / 2, width: w, height: h };
+          const turned = { x: x - w / 2, y: y - h / 2, width: w, height: h };
+          const sx = Math.abs(num(el, 'scaleX', 1));
+          const sy = Math.abs(num(el, 'scaleY', 1));
+          const rotated = isRotated(el);
+          // A speech bubble's tail lies outside its width × height.
+          const tail = tailOfRecord(el);
+          if (tail) {
+            if (rotated) {
+              const reach = tail.size * Math.max(sx, sy);
+              return {
+                x: turned.x - reach,
+                y: turned.y - reach,
+                width: turned.width + 2 * reach,
+                height: turned.height + 2 * reach,
+              };
+            }
+            const out = bubbleExtent(width, height, {
+              side: tail.side,
+              size: tail.size * (tail.side === 'left' || tail.side === 'right' ? sx : sy),
+            });
+            return {
+              x: turned.x + out.x,
+              y: turned.y + out.y,
+              width: out.width,
+              height: out.height,
+            };
+          }
+          // A bent arrow's curve lies off its (flat) box; the margin covers the head and the spline.
+          const bend = num(el, 'bend');
+          if (el['type'] === 'line-arrow' && bend !== 0) {
+            const stroke = num(el, 'strokeWidth', 6);
+            const sag = bend * num(el, 'width') * sy * 1.1;
+            const pad = Math.max(16, stroke * 2.5) / 2 + stroke / 2;
+            if (rotated) {
+              const reach = Math.abs(sag) + pad;
+              return {
+                x: turned.x - reach,
+                y: turned.y - reach,
+                width: turned.width + 2 * reach,
+                height: turned.height + 2 * reach,
+              };
+            }
+            const top = Math.min(turned.y, y + Math.min(0, sag) - pad);
+            const bottom = Math.max(turned.y + turned.height, y + Math.max(0, sag) + pad);
+            return { x: turned.x, y: top, width: turned.width, height: bottom - top };
+          }
+          return turned;
         }
         case 'chartInstances': {
           const scale = num(el, 'scale', 1) || 1;
@@ -761,6 +858,58 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
       if (stateKey !== 'shapeInstances') return UNKNOWN;
       const type = el['type'];
       const shade = el['shade'];
+      const gradientSet = el['fillGradient'] !== undefined && el['fillGradient'] !== null;
+      if (type === 'ring' || type === 'line-arrow') {
+        // A stroke is its colour at any strength over what lies beneath, wherever a text may meet it.
+        if (!untransformed || gradientSet || shade || el['glow'] === true) return UNKNOWN;
+        if (type === 'line-arrow') return strokeCover(el);
+        const width = num(el, 'width');
+        if (Math.abs(width - num(el, 'height')) > 0.5) return UNKNOWN;
+        // The hole is bare: a text wholly inside the largest rectangle the inner ellipse holds is
+        // not on the ring. One half in it lies on two grounds (the gate fails that closed).
+        const { inner } = ringGeometry(
+          width,
+          typeof el['ringWidth'] === 'number' ? el['ringWidth'] : undefined,
+          typeof el['arc'] === 'number' ? el['arc'] : undefined
+        );
+        const halfW = (inner * Math.abs(num(el, 'scaleX', 1)) * ELLIPSE_INSET) / Math.SQRT2;
+        const halfH = (inner * Math.abs(num(el, 'scaleY', 1)) * ELLIPSE_INSET) / Math.SQRT2;
+        const hole =
+          halfW > 0 && halfH > 0
+            ? {
+                x: num(el, 'x') - halfW,
+                y: num(el, 'y') - halfH,
+                width: 2 * halfW,
+                height: 2 * halfH,
+              }
+            : undefined;
+        return strokeCover(el, hole);
+      }
+      if (type === 'rounded-rect') {
+        // A flat opaque rounded box is a ground inside its corner arcs; a tail is part of the same
+        // fill but lies outside `inner`, so a text meeting it is not judged. Any further paint
+        // (gradient, shade, glow, texture) is not modelled here.
+        const paint = parseColor(str(el, 'fill'));
+        if (!untransformed || !paint || gradientSet || shade || el['glow'] === true) return UNKNOWN;
+        if (el['pattern'] !== undefined || num(el, 'grain') > 0 || num(el, 'notch') > 0) {
+          return UNKNOWN;
+        }
+        const body = bodyBox(el);
+        const r = maxRadius(el, body);
+        // An arc of radius r leaves r(1 − 1/√2) ≈ 0.293 r bare on each axis; 0.3 keeps a margin.
+        const dx = 0.3 * r * Math.abs(num(el, 'scaleX', 1));
+        const dy = 0.3 * r * Math.abs(num(el, 'scaleY', 1));
+        const inner = {
+          x: body.x + dx,
+          y: body.y + dy,
+          width: Math.max(0, body.width - 2 * dx),
+          height: Math.max(0, body.height - 2 * dy),
+        };
+        const alpha = num(el, 'opacity', 1) * paint.a;
+        return alpha < 1
+          ? { kind: 'veil', fill: toHex({ ...paint, a: 1 }), alpha, inner }
+          : { kind: 'solid', fill: str(el, 'fill'), inner };
+      }
       const glow = el['glow'] === true && (shade === undefined || shade === null);
       // Only a plain rectangle fills its box; any other shape (or rounded corners) leaves
       // parts of the box bare, and a text there sits on whatever lies below. A glow ellipse

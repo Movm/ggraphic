@@ -1122,6 +1122,56 @@ describe('contrast over notched, glow and grain grounds', () => {
   });
 });
 
+describe('contrast over a ground with bare edges (inner box)', () => {
+  /** The stand-in adapter, plus a cover whose sure ground is the panel shrunk by `inset` px. */
+  const rounded: GateAdapter = {
+    ...adapter,
+    cover: (key, el, canvasWidth) => {
+      if (key !== 'shapeInstances') return adapter.cover(key, el, canvasWidth);
+      const inset = num(el, 'inset');
+      return {
+        kind: 'solid',
+        fill: String(el['fill']),
+        inner: {
+          x: num(el, 'x') + inset,
+          y: num(el, 'y') + inset,
+          width: num(el, 'width') - 2 * inset,
+          height: num(el, 'height') - 2 * inset,
+        },
+      };
+    },
+  };
+  const build = (panel: Obj, text: Obj) =>
+    template(
+      { fixed: { headline: ['fill'], panel: ['fill'] } },
+      {
+        shapeInstances: [
+          { id: 'panel', fill: '#000000', x: 0, y: 0, width: 1, height: 1, ...panel },
+        ],
+        additionalTexts: [{ ...headline, y: 0.5, fontSize: 0.03, bind: undefined, ...text }],
+        layerOrder: ['panel', 'logo', 'headline'],
+      }
+    );
+  const details = (t: TemplateInput) =>
+    checkTemplate(t, context({ adapter: rounded })).map((p) => `${p.rule}: ${p.detail}`);
+
+  it('judges a text wholly inside the inner box against the ground', () => {
+    expect(details(build({ inset: 100 }, { x: 0.4, width: 0.2 }))).toEqual([]);
+    const light = details(build({ inset: 100, fill: '#ffffff' }, { x: 0.4, width: 0.2 }));
+    expect(light[0]).toContain('#ffffff on #ffffff');
+  });
+
+  it('fails closed on a text in the panel but outside the inner box', () => {
+    // On the bare edge the text sits on whatever lies beneath, so even a passing ground is not enough.
+    const edge = details(build({ inset: 100 }, { x: 0.01, width: 0.05 }));
+    expect(edge[0]).toContain('ground not determinable');
+  });
+
+  it('leaves a cover without an inner box judged by the whole panel as before', () => {
+    expect(details(build({ inset: 0 }, { x: 0.01, width: 0.05 }))).toEqual([]);
+  });
+});
+
 describe('plates that hug their text', () => {
   const hugged = (plateY: number, hug: boolean) =>
     template(

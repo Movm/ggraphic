@@ -136,6 +136,11 @@ const POPULATED: Record<string, Fields> = {
     notch: 0.05,
     grain: 0.3,
     patternSpacing: 0.04,
+    ringWidth: 8,
+    arc: 0.5,
+    bend: 0.2,
+    tailAt: 0.4,
+    tailSize: 30,
   },
   frameInstances: {
     borderDash: [4, 2],

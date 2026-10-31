@@ -143,3 +143,53 @@ describe('buildPptxModel texture', () => {
     expect(items(shape({ grain: 0 }))[0]).toMatchObject({ kind: 'shape' });
   });
 });
+
+describe('buildPptxModel shape devices', () => {
+  const at = (extra: Partial<ShapeInstance>) => items(shape({ x: 500, y: 400, ...extra }))[0]!;
+
+  it('rasterises a ring with an arc, its box unchanged', () => {
+    expect(at({ type: 'ring', width: 200, height: 200, arc: 0.5, ringWidth: 20 })).toMatchObject({
+      kind: 'raster',
+      box: { x: 400, y: 300, width: 200, height: 200 },
+    });
+  });
+
+  it('rasterises a rounded rect with a tail, the raster box holding the tail', () => {
+    const item = at({
+      type: 'rounded-rect',
+      width: 200,
+      height: 100,
+      tailSide: 'bottom',
+      tailSize: 40,
+    });
+    expect(item).toMatchObject({
+      kind: 'raster',
+      reason: 'shape-styled',
+      box: { x: 400, y: 350, width: 200, height: 140 },
+    });
+  });
+
+  it('keeps a rounded rect without a tail a native shape', () => {
+    expect(at({ type: 'rounded-rect', width: 200, height: 100 })).toMatchObject({
+      kind: 'shape',
+      shape: 'roundRect',
+    });
+  });
+
+  it('puts a top or left tail above or left of the box', () => {
+    expect(
+      at({ type: 'rounded-rect', width: 200, height: 100, tailSide: 'top', tailSize: 40 })
+    ).toMatchObject({ box: { x: 400, y: 310, width: 200, height: 140 } });
+    expect(
+      at({ type: 'rounded-rect', width: 200, height: 100, tailSide: 'left', tailSize: 40 })
+    ).toMatchObject({ box: { x: 360, y: 350, width: 240, height: 100 } });
+  });
+
+  it('widens the raster box of a bent arrow to hold the curve', () => {
+    const flat = at({ type: 'line-arrow', width: 200, height: 0, strokeWidth: 6 });
+    const bent = at({ type: 'line-arrow', width: 200, height: 0, strokeWidth: 6, bend: 0.25 });
+    expect(flat).toMatchObject({ kind: 'raster', box: { height: 0 } });
+    expect((bent as { box: { y: number; height: number } }).box.y).toBeLessThan(400);
+    expect((bent as { box: { y: number; height: number } }).box.height).toBeGreaterThan(50);
+  });
+});
