@@ -1,0 +1,186 @@
+{
+  "formatVersion": 1,
+  "id": "studio-call-demo",
+  "version": 1,
+  "kind": "template",
+  "family": "call",
+  "title": {
+    "en": "Demo photo with date",
+    "de": "Demofoto mit Termin"
+  },
+  "description": {
+    "en": "A photo on top and a colour area below with a call and the date and place",
+    "de": "Oben ein Foto, darunter eine Farbfläche mit Aufruf sowie Datum und Ort"
+  },
+  "tags": {
+    "tone": "loud",
+    "occasions": [],
+    "topics": []
+  },
+  "formats": ["4:5"],
+  "schemes": ["primary", "light", "dark", "photo"],
+  "schemaVersion": 3,
+  "pages": [
+    {
+      "state": {
+        "backgroundColor": "#ffffff",
+        "bind": {
+          "backgroundColor": "ground"
+        },
+        "shapeInstances": [
+          {
+            "id": "area",
+            "type": "rect",
+            "x": 0.5,
+            "y": 0.759259,
+            "width": 1,
+            "height": 0.481481,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
+        "userImageInstances": [
+          {
+            "id": "photo",
+            "src": "",
+            "fileName": "",
+            "x": 0,
+            "y": 0,
+            "width": 1,
+            "height": 0.518519,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1
+          },
+          {
+            "id": "brand-logo",
+            "src": "",
+            "fileName": "",
+            "x": 0.75,
+            "y": 0.9,
+            "width": 0.25,
+            "height": 0.1,
+            "rotation": 0,
+            "scale": 1,
+            "opacity": 1,
+            "bind": {
+              "src": "brand.logo"
+            }
+          }
+        ],
+        "additionalTexts": [
+          {
+            "id": "headline",
+            "type": "header",
+            "text": "Everyone into the streets.",
+            "x": 0,
+            "y": 0.571429,
+            "width": 1,
+            "fontSize": 0.12037,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 0.94,
+            "fontWeight": 800,
+            "letterSpacing": -0.03,
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.headline"
+            },
+            "maxFontSize": 0.12037
+          },
+          {
+            "id": "when",
+            "type": "body",
+            "text": "Sat, 16 March, 2 pm, central station",
+            "x": 0,
+            "y": 0.857143,
+            "width": 1,
+            "fontSize": 0.048148,
+            "align": "left",
+            "fontFamily": "",
+            "fill": "#ffffff",
+            "lineHeight": 1.12,
+            "fontWeight": 700,
+            "bind": {
+              "fill": "on-accent",
+              "fontFamily": "font.body"
+            },
+            "maxFontSize": 0.048148
+          }
+        ],
+        "layerOrder": ["photo", "area", "headline", "when", "brand-logo"]
+      }
+    }
+  ],
+  "frames": {
+    "photo": "canvas",
+    "area": "canvas"
+  },
+  "slots": {
+    "photo": {
+      "role": "photo",
+      "budget": {
+        "maxChars": 1
+      }
+    },
+    "headline": {
+      "role": "headline",
+      "label": {
+        "en": "Headline",
+        "de": "Überschrift"
+      },
+      "budget": {
+        "maxWords": 5,
+        "maxLines": 2,
+        "maxChars": 30
+      }
+    },
+    "when": {
+      "role": "date",
+      "label": {
+        "en": "Date and place",
+        "de": "Datum und Ort"
+      },
+      "budget": {
+        "maxWords": 7,
+        "maxLines": 2,
+        "maxChars": 44
+      }
+    }
+  },
+  "blocks": [
+    {
+      "id": "date-with-place",
+      "title": {
+        "en": "Date with place",
+        "de": "Datum mit Ort"
+      },
+      "elementIds": ["when"]
+    }
+  ],
+  "locks": [],
+  "fixed": {},
+  "logoCorners": ["top-right"],
+  "placeholders": {
+    "en": {
+      "headline": "Everyone into the streets.",
+      "when": "Sat, 16 March, 2 pm, central station"
+    },
+    "de": {
+      "headline": "Alle auf die Straße.",
+      "when": "Sa, 16. März, 14 Uhr, Hauptbahnhof"
+    }
+  },
+  "provenance": {
+    "author": "ggraphic contributors",
+    "reviewed": "2026-10-30",
+    "licence": "CC0-1.0"
+  }
+}
