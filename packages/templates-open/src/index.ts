@@ -11,6 +11,11 @@ import studioNumber from './templates/studio-number.json' with { type: 'json' };
 import studioPhotoNumber from './templates/studio-photo-number.json' with { type: 'json' };
 import studioPhotoQuote from './templates/studio-photo-quote.json' with { type: 'json' };
 import studioQuote from './templates/studio-quote.json' with { type: 'json' };
+import studioCallDemo from './templates/studio-call-demo.json' with { type: 'json' };
+import studioCallImperative from './templates/studio-call-imperative.json' with { type: 'json' };
+import studioCallProgress from './templates/studio-call-progress.json' with { type: 'json' };
+import studioCallThreeSteps from './templates/studio-call-three-steps.json' with { type: 'json' };
+import studioCallTwoHalves from './templates/studio-call-two-halves.json' with { type: 'json' };
 
 import studioAnnotatedHeadline from './templates/studio-annotated-headline.json' with { type: 'json' };
 import studioCarouselCover from './templates/studio-carousel-cover.json' with { type: 'json' };
@@ -43,6 +48,11 @@ export const OPEN_TEMPLATES: readonly unknown[] = [
   studioEventPanel,
   studioPhotoQuote,
   studioPhotoNumber,
+  studioCallDemo,
+  studioCallImperative,
+  studioCallProgress,
+  studioCallThreeSteps,
+  studioCallTwoHalves,
 
   studioAnnotatedHeadline,
   studioCarouselCover,
