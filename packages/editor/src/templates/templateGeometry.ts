@@ -31,6 +31,8 @@ import { bubbleExtent, ringGeometry, tailOf, type Tail } from '../utils/shapeDev
 import { usesRichText } from '../utils/textRouting.js';
 import { createRunMeasurer, type MeasureWidth, type TextAccent } from '../utils/textUtils.js';
 import { FONT_WIDTHS } from './fontWidths.generated.js';
+import { ASSET_TARGET_SIZE } from '../utils/canvasAssets.js';
+import { ILLUSTRATION_TARGET_SIZE } from '../utils/motifSizes.js';
 import { getAllIllustrations } from '../utils/illustrations/registry.js';
 import type { IllustrationDef } from '../utils/illustrations/types.js';
 
@@ -262,6 +264,22 @@ const num = (el: El, field: string, fallback = 0): number => {
 const ROTATED = 'rotated, not checkable';
 const isRotated = (el: Readonly<Record<string, unknown>>): boolean =>
   num(el, 'rotation') % 360 !== 0;
+
+/** The extent of a `width` x `height` rectangle centred on (x, y) and turned by the element's rotation. */
+function turnedAboutCentre(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  el: Readonly<Record<string, unknown>>
+) {
+  const angle = (num(el, 'rotation') * Math.PI) / 180;
+  const cos = Math.abs(Math.cos(angle));
+  const sin = Math.abs(Math.sin(angle));
+  const w = width * cos + height * sin;
+  const h = width * sin + height * cos;
+  return { x: x - w / 2, y: y - h / 2, width: w, height: h };
+}
 
 /** Editor icons are drawn 120 px across at scale 1, centred on their x/y (as `boundsOf`). */
 const ICON_SIZE = 120;
@@ -756,6 +774,28 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
           const size = ICON_SIZE * num(el, 'scale', 1) * turn;
           return { x: x - size / 2, y: y - size / 2, width: size, height: size };
         }
+        case 'illustrationInstances':
+        case 'assetInstances': {
+          // Both turn about their centre. A sticker's image ratio is not known here: its longer
+          // side is ASSET_TARGET_SIZE, so the square of that side bounds it.
+          const target =
+            stateKey === 'assetInstances' ? ASSET_TARGET_SIZE : ILLUSTRATION_TARGET_SIZE;
+          return turnedAboutCentre(
+            x,
+            y,
+            target * num(el, 'scale', 1),
+            target * num(el, 'scale', 1),
+            el
+          );
+        }
+        case 'frameInstances':
+          return turnedAboutCentre(
+            x,
+            y,
+            num(el, 'width') * Math.abs(num(el, 'scaleX', 1)),
+            num(el, 'height') * Math.abs(num(el, 'scaleY', 1)),
+            el
+          );
         case 'pillBadgeInstances': {
           // Top-left anchored; the text is as wide as its widest line, one line per break.
           const scale = num(el, 'scale', 1);
