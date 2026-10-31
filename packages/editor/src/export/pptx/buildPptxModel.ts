@@ -250,7 +250,7 @@ function mapShape(shape: ShapeInstance): PptxItem {
     shape.notch ||
     shape.glow ||
     (shape.grain ?? 0) > 0 ||
-    shape.pattern === 'dots'
+    shape.pattern
   ) {
     return raster(shape.id, placement, 'shape-styled');
   }

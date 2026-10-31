@@ -686,6 +686,16 @@ describe('template gate adapter: what the renderer scales, turns and draws', () 
       expect(light.grain.alpha[1]).toBeCloseTo(70 / 255);
     });
 
+    it('reports a stripe pattern as the stripe colour over the fill', () => {
+      expect(cover({ ...rect, pattern: 'stripes', patternColor: '#fbe1ec' })).toMatchObject({
+        kind: 'solid',
+        fill: '#005538',
+        stripes: '#fbe1ec',
+      });
+      // No stripe colour to judge against: not provable.
+      expect(cover({ ...rect, pattern: 'stripes' })).toEqual({ kind: 'unknown' });
+    });
+
     it('flags a dot pattern', () => {
       expect(cover({ ...rect, pattern: 'dots' })).toMatchObject({ kind: 'solid', dots: true });
     });

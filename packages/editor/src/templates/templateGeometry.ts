@@ -731,10 +731,15 @@ export function createTemplateGateAdapter(lookup: IllustrationLookup): GateAdapt
       const gradient = el['fillGradient'];
       const fill = parseColor(str(el, 'fill'));
       if (!untransformed || !fill) return UNKNOWN;
+      // Stripes are judged by their colour as well as the fill; one that cannot be read is not provable.
+      const stripeColor = parseColor(str(el, 'patternColor'));
+      if (el['pattern'] === 'stripes' && (!stripeColor || stripeColor.a !== 1)) return UNKNOWN;
+      const stripes = el['pattern'] === 'stripes' ? str(el, 'patternColor') : null;
       const grainAmount = Math.min(1, num(el, 'grain'));
       const mods = {
         ...(cut ? { cut } : {}),
         ...(el['pattern'] === 'dots' ? { dots: true as const } : {}),
+        ...(stripes ? { stripes } : {}),
         ...(grainAmount > 0
           ? {
               grain: {

@@ -848,11 +848,14 @@ export interface ShapeInstance {
   grain?: number;
   /** `dark`: dark specks; `light`: soft white specks. Absent: `dark`. */
   grainTone?: 'dark' | 'light';
-  /** `rect` only: a grid of dots over the fill. */
-  pattern?: 'dots';
-  /** Colour of the dots (bindable). */
+  /** `rect` only: a grid of dots, or vertical stripes (every second band), over the fill. */
+  pattern?: 'dots' | 'stripes';
+  /** Colour of the dots or stripes (bindable). */
   patternColor?: string;
-  /** Distance between the dots, a share of the canvas width (0.037 = 40 px on 1080). */
+  /**
+   * Distance between the dots (0.037 = 40 px on 1080), or the width of one stripe band
+   * (0.0667 = 72 px on 1080), as a share of the canvas width.
+   */
   patternSpacing?: number;
 }
 
