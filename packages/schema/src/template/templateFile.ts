@@ -255,6 +255,16 @@ function crossReferences(file: TemplateFile): string | null {
     if (weight !== undefined && !FONT_WEIGHTS.includes(weight as number)) {
       return `${id}.fontWeight: must be one of ${FONT_WEIGHTS.join(', ')}`;
     }
+    // The prototype's size: the fit never goes above it, so it cannot lie under the plain size.
+    const maxFontSize = isRecord(item) ? item['maxFontSize'] : undefined;
+    if (maxFontSize !== undefined) {
+      const size = isRecord(item) ? item['fontSize'] : undefined;
+      const ok =
+        typeof maxFontSize === 'number' &&
+        maxFontSize > 0 &&
+        (typeof size !== 'number' || maxFontSize >= size);
+      if (!ok) return `${id}.maxFontSize: must be a positive number, not below fontSize`;
+    }
   }
   if (known.has('page')) return 'pages.0.state: "page" is reserved and cannot be an element id';
   const missing = (key: string, id: string) => `${key}: no element "${id}" in pages[0].state`;

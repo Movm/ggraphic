@@ -144,6 +144,20 @@ describe('readTemplateFile', () => {
     if (result.status === 'invalid') expect(result.reason).toContain('letterSpacing');
   });
 
+  it('accepts a maxFontSize at or above fontSize', () => {
+    for (const maxFontSize of [60, 84]) {
+      const state = { texts: [{ id: 't1', text: 'Hi', fontSize: 60, maxFontSize }] };
+      expect(readTemplateFile(with_({ pages: [{ state }] })).status).toBe('ok');
+    }
+  });
+
+  it.each([59, 0, -4, '84', null])('rejects maxFontSize %j (fontSize 60)', (maxFontSize) => {
+    const state = { texts: [{ id: 't1', text: 'Hi', fontSize: 60, maxFontSize }] };
+    const result = readTemplateFile(with_({ pages: [{ state }] }));
+    expect(result.status).toBe('invalid');
+    if (result.status === 'invalid') expect(result.reason).toContain('maxFontSize');
+  });
+
   it('a block naming a missing element is invalid', () => {
     const result = readTemplateFile(
       with_({ blocks: [{ id: 'b', title: { en: 'B' }, elementIds: ['nope'] }] })

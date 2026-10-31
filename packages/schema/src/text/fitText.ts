@@ -18,6 +18,14 @@ export interface SlotFit {
   lineHeight: number;
   /** Darunter wird nicht verkleinert; Vorgabe 12. */
   minSize?: number;
+  /** Obergrenze: begonnen wird bei `max(fontSize, maxSize)`, die Größe kann also wieder wachsen. */
+  maxSize?: number;
+  /** Höchstens so viele Zeilen. */
+  maxLines?: number;
+  /** Kein Wort wird getrennt oder mitten im Wort umgebrochen: jedes Wort muss ganz in die Breite passen. */
+  wholeWords?: boolean;
+  /** Zeilenzahl bei `size`, wenn der Aufrufer sie genauer kennt als `wrapLines` (der Renderer-Umbruch). */
+  countLines?: (size: number) => number;
 }
 
 /** Passt eine Messung für `fontSize` an: `measureAt(size)` misst Text in dieser Größe. */
@@ -27,7 +35,14 @@ export type MeasureAt = (fontSize: number) => MeasureText;
  * Passt jedes Wort, an allen erlaubten Stellen getrennt, in die Breite? Die feinsten
  * Stücke sind die schmalsten, die ein Umbruch je bilden kann.
  */
-function wordsFit(text: string, width: number, measure: MeasureText): boolean {
+function wordsFit(text: string, width: number, measure: MeasureText, whole = false): boolean {
+  if (whole) {
+    return text
+      .replace(/\*\*|==|\+\+/g, '')
+      .split(/\s+/)
+      .filter(Boolean)
+      .every((word) => measure(word) <= width);
+  }
   const hyphen = measure('-');
   for (const word of text.split(/\s+/).filter(Boolean)) {
     if (measure(word) <= width) continue;
@@ -42,21 +57,27 @@ function wordsFit(text: string, width: number, measure: MeasureText): boolean {
   return true;
 }
 
+/** Passt `text` bei genau `size` in das Feld? */
+export function slotFits(text: string, slot: SlotFit, measureAt: MeasureAt, size: number): boolean {
+  const measure = measureAt(size);
+  if (!wordsFit(text, slot.width, measure, slot.wholeWords)) return false;
+  const lines = slot.countLines?.(size) ?? wrapLines(text, slot.width, measure).length;
+  if (slot.maxLines !== undefined && lines > slot.maxLines) return false;
+  return lines * size * slot.lineHeight <= slot.maxHeight;
+}
+
 /**
- * Die größte Schriftgröße ≤ `fontSize`, bei der `text` in das Feld passt: kein
- * Wort braucht einen harten Bruch mitten in der Silbe, und die Zeilen bleiben
- * innerhalb von `maxHeight`. Ein Wort, das auch getrennt nicht passt, verkleinert
- * die Schrift, statt mitten im Wort umzubrechen.
+ * Die größte Schriftgröße von `max(fontSize, maxSize)` abwärts, bei der `text` in das Feld passt:
+ * kein Wort braucht einen harten Bruch mitten in der Silbe (mit `wholeWords` darf auch kein Wort
+ * getrennt werden), die Zeilen bleiben innerhalb von `maxLines` und `maxHeight`. Ein Wort, das auch
+ * getrennt nicht passt, verkleinert die Schrift, statt mitten im Wort umzubrechen. Passt es auch bei
+ * `minSize` nicht, ist das Ergebnis `minSize` (`slotFits` sagt, ob es dort passt).
  */
 export function fitFontSizeToSlot(text: string, slot: SlotFit, measureAt: MeasureAt): number {
   const min = slot.minSize ?? 12;
-  let size = slot.fontSize;
+  let size = Math.max(slot.fontSize, slot.maxSize ?? slot.fontSize);
   while (size > min) {
-    const measure = measureAt(size);
-    const fits =
-      wordsFit(text, slot.width, measure) &&
-      wrapLines(text, slot.width, measure).length * size * slot.lineHeight <= slot.maxHeight;
-    if (fits) return size;
+    if (slotFits(text, slot, measureAt, size)) return size;
     size -= 1;
   }
   return min;
