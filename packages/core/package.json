@@ -1,8 +1,12 @@
 {
   "name": "@ggraphic/core",
   "version": "0.0.0",
-  "private": true,
   "license": "MPL-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Movm/ggraphic.git",
+    "directory": "packages/core"
+  },
   "type": "module",
   "sideEffects": false,
   "main": "./src/index.ts",

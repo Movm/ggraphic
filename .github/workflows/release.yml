@@ -25,14 +25,13 @@ jobs:
         with:
           node-version: '22'
           cache: pnpm
-          registry-url: https://registry.npmjs.org
       - run: pnpm install --frozen-lockfile
       - uses: changesets/action@v1
         with:
           version: pnpm version-packages
           publish: pnpm release
+        # No npm token: pnpm publishes through npm trusted publishing (OIDC, `id-token: write`),
+        # which also attaches provenance. A token here, or `registry-url` on setup-node, would
+        # make it skip OIDC. Each package's trusted publisher is Movm/ggraphic, release.yml.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: 'true'
