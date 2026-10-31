@@ -145,7 +145,7 @@ export function StudioPagePicker({
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   // Hidden for everyone here: owners show them again on the start page.
-  const { hiddenIds } = useHiddenTemplates();
+  const { hiddenIds, settled: hiddenSettled } = useHiddenTemplates();
 
   useEffect(() => {
     if (!isOpen) return;
@@ -199,6 +199,7 @@ export function StudioPagePicker({
         <TemplateGallery
           formatId={targetFormat}
           hiddenIds={hiddenIds}
+          loading={!hiddenSettled}
           showBlank
           defaultSchemeId={pageScheme}
           currentTemplateId={heldTemplateId}

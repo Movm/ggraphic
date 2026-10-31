@@ -81,6 +81,8 @@ function fakeServer({
   pack = null,
   createFails = null,
   hidden = [],
+  hiddenGate = null,
+  hiddenFails = false,
 }: {
   ai: 'ok' | 'timeout';
   listed?: unknown[];
@@ -89,6 +91,10 @@ function fakeServer({
   createFails?: { status: number; error: string; message: string } | null;
   /** Template ids the organisation hid. */
   hidden?: string[];
+  /** The hidden list is not answered until this resolves. */
+  hiddenGate?: Promise<void> | null;
+  /** The hidden list cannot be read. */
+  hiddenFails?: boolean;
 }) {
   const calls: Call[] = [];
   const project = (document: unknown, version: number) => ({
@@ -121,8 +127,10 @@ function fakeServer({
       return json(201, project(body?.document, 1));
     if (url === `/api/orgs/${TEST_ORG}/brand-pack` && method === 'GET')
       return json(200, { settings: null, assets: [], pack, bundledFonts: [] });
-    if (url === `/api/orgs/${TEST_ORG}/hidden-templates` && method === 'GET')
-      return json(200, { templateIds: hidden });
+    if (url === `/api/orgs/${TEST_ORG}/hidden-templates` && method === 'GET') {
+      await hiddenGate;
+      return hiddenFails ? json(500, { error: 'internal' }) : json(200, { templateIds: hidden });
+    }
     if (url.startsWith(`/api/orgs/${TEST_ORG}/hidden-templates/`) && method === 'PUT')
       return new Response(null, { status: 204 });
     if (url === '/api/ai/pick') {
@@ -375,7 +383,7 @@ describe('StartPage sections', () => {
     vi.stubGlobal('fetch', fetchMock);
     const user = userEvent.setup();
     renderStart(true, 'editor');
-    const templates = screen.getByRole('list', { name: 'Templates' });
+    const templates = await screen.findByRole('list', { name: 'Templates' });
     await waitFor(() =>
       expect(within(templates).queryByRole('button', { name: /^Quote/ })).not.toBeInTheDocument()
     );
@@ -389,6 +397,32 @@ describe('StartPage sections', () => {
     ).templates.map((t) => t.id);
     expect(offered).toContain('studio-headline');
     expect(offered).not.toContain('studio-quote');
+  });
+
+  it('shows no templates until the hidden list has settled, so a hidden one never flashes', async () => {
+    let open: () => void = () => {};
+    const hiddenGate = new Promise<void>((resolve) => (open = resolve));
+    const { fetchMock, calls } = fakeServer({ ai: 'ok', hidden: ['studio-quote'], hiddenGate });
+    vi.stubGlobal('fetch', fetchMock);
+    renderStart(true, 'editor');
+    await waitFor(() => expect(calls.some((c) => c.url.endsWith('/hidden-templates'))).toBe(true));
+    expect(screen.queryByRole('list', { name: 'Templates' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Quote/ })).not.toBeInTheDocument();
+    expect(screen.getByText('Loading templates…')).toBeInTheDocument();
+
+    open();
+    const templates = await screen.findByRole('list', { name: 'Templates' });
+    expect(within(templates).getByRole('button', { name: /^Headline/ })).toBeInTheDocument();
+    expect(within(templates).queryByRole('button', { name: /^Quote/ })).not.toBeInTheDocument();
+  });
+
+  it('offers every template when the hidden list cannot be read', async () => {
+    const { fetchMock } = fakeServer({ ai: 'ok', hidden: ['studio-quote'], hiddenFails: true });
+    vi.stubGlobal('fetch', fetchMock);
+    renderStart(true, 'editor');
+    const templates = await screen.findByRole('list', { name: 'Templates' });
+    expect(within(templates).getByRole('button', { name: /^Quote/ })).toBeInTheDocument();
+    expect(within(templates).getByRole('button', { name: /^Headline/ })).toBeInTheDocument();
   });
 
   it('owners see the hide toggle and use it, editors do not see it', async () => {
@@ -423,7 +457,7 @@ describe('StartPage sections', () => {
     renderStart(true);
     const grid = await screen.findByRole('list', { name: 'Projects' });
     const prompt = screen.getByRole('textbox', { name: 'Describe your graphic' });
-    const templates = screen.getByRole('list', { name: 'Templates' });
+    const templates = await screen.findByRole('list', { name: 'Templates' });
     const before = Node.DOCUMENT_POSITION_FOLLOWING;
     expect(prompt.compareDocumentPosition(templates) & before).toBeTruthy();
     expect(templates.compareDocumentPosition(grid) & before).toBeTruthy();
@@ -439,7 +473,7 @@ describe('StartPage sections', () => {
     vi.stubGlobal('fetch', fetchMock);
     renderStart(true);
 
-    const templates = screen.getByRole('list', { name: 'Templates' });
+    const templates = await screen.findByRole('list', { name: 'Templates' });
     await waitFor(() =>
       expect(calls.some((c) => c.url === `/api/orgs/${TEST_ORG}/brand-pack`)).toBe(true)
     );
@@ -489,10 +523,22 @@ describe('StartPage sections', () => {
       </QueryClientProvider>
     );
     const user = userEvent.setup();
+    const landed = new Promise<void>((resolve) => {
+      const unsubscribe = client.getQueryCache().subscribe((event) => {
+        if (
+          event.type === 'updated' &&
+          event.action.type === 'success' &&
+          event.query.queryKey[1] === 'org-a'
+        ) {
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
     const view = render(as('org-a'));
     view.rerender(as('org-b'));
 
-    const templates = screen.getByRole('list', { name: 'Templates' });
+    const templates = await screen.findByRole('list', { name: 'Templates' });
     // B answered: its studio brand keeps the light-only template.
     expect(
       await within(templates).findByRole('button', { name: /^Light only/ })
@@ -500,10 +546,9 @@ describe('StartPage sections', () => {
     // A answers late with a brand that cannot place it; a new format redraws the tiles.
     releaseA();
     // Wait for the real condition: A's answer has landed in the query cache (and, before the fix,
-    // registered A's brand).
-    await waitFor(() =>
-      expect(client.getQueryState(['start-brand', 'org-a'])?.status).toBe('success')
-    );
+    // registered A's brand). The query has no observer and `gcTime: 0`, so it is gone a tick
+    // later: listen for the event instead of polling the state.
+    await landed;
     await user.click(screen.getByRole('radio', { name: /1080 × 1080/ }));
     expect(within(templates).getByRole('button', { name: /^Light only/ })).toBeInTheDocument();
   });
@@ -515,7 +560,7 @@ describe('StartPage sections', () => {
     renderStart(true);
 
     await user.click(screen.getByRole('radio', { name: /Landscape/ }));
-    const templates = screen.getByRole('list', { name: 'Templates' });
+    const templates = await screen.findByRole('list', { name: 'Templates' });
     await user.click(within(templates).getByRole('button', { name: /^Quote/ }));
 
     await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
@@ -537,9 +582,9 @@ describe('StartPage sections', () => {
     const user = userEvent.setup();
     renderStart(false);
 
+    const templates = await screen.findByRole('list', { name: 'Templates' });
     const worlds = screen.getByRole('group', { name: 'Headline + text colour world' });
     await user.click(within(worlds).getByRole('radio', { name: 'Dark' }));
-    const templates = screen.getByRole('list', { name: 'Templates' });
     await user.click(within(templates).getByRole('button', { name: /^Headline/ }));
 
     await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
@@ -585,7 +630,7 @@ describe('StartPage sections', () => {
     const user = userEvent.setup();
     renderStart(false);
 
-    const templates = screen.getByRole('list', { name: 'Templates' });
+    const templates = await screen.findByRole('list', { name: 'Templates' });
     await user.click(within(templates).getByRole('button', { name: /^Headline/ }));
     await waitFor(() => expect(window.location.pathname).toBe('/p/p1'));
 
