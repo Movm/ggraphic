@@ -27,7 +27,43 @@
         "bind": {
           "backgroundColor": "ground"
         },
-        "shapeInstances": [],
+        "shapeInstances": [
+          {
+            "id": "ring-track",
+            "type": "ring",
+            "x": 0.703704,
+            "y": 0.674074,
+            "width": 0.453704,
+            "height": 0.362963,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "ringWidth": 0.083333,
+            "bind": {
+              "fill": "deep"
+            }
+          },
+          {
+            "id": "ring-share",
+            "type": "ring",
+            "x": 0.703704,
+            "y": 0.674074,
+            "width": 0.453704,
+            "height": 0.362963,
+            "fill": "#ffffff",
+            "rotation": 0,
+            "scaleX": 1,
+            "scaleY": 1,
+            "opacity": 1,
+            "ringWidth": 0.083333,
+            "arc": 0.27,
+            "bind": {
+              "fill": "accent"
+            }
+          }
+        ],
         "userImageInstances": [
           {
             "id": "brand-logo",
@@ -86,11 +122,14 @@
             "maxFontSize": 0.051852
           }
         ],
-        "layerOrder": ["number", "text", "brand-logo"]
+        "layerOrder": ["number", "text", "ring-track", "ring-share", "brand-logo"]
       }
     }
   ],
-  "frames": {},
+  "frames": {
+    "ring-track": "canvas",
+    "ring-share": "canvas"
+  },
   "slots": {
     "number": {
       "role": "number",

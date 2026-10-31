@@ -199,6 +199,7 @@
             "fontWeight": 800,
             "letterSpacing": -0.06,
             "decorative": true,
+            "counter": "page",
             "bind": {
               "fill": "accent",
               "fontFamily": "font.headline"
