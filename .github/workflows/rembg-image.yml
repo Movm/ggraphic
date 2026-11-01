@@ -3,7 +3,8 @@ name: rembg image
 # The image of the rembg profile in docker-compose.yml, ghcr.io/movm/ggraphic-rembg
 # (docker/rembg/Dockerfile): rembg's server with the u2net model built in. Pull requests build it
 # and cut out a photo in it without network access; nothing is pushed. On main a rembg version
-# without an image is published, tagged with that version and latest; a manual run republishes it.
+# without an image is published, tagged with that version and latest; a manual run on main
+# republishes it. On any other branch a manual run is the smoke test only.
 on:
   pull_request:
     paths: ['docker/rembg/**', '.github/workflows/rembg-image.yml']
@@ -86,7 +87,7 @@ jobs:
 
   version:
     needs: smoke
-    if: github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -111,17 +112,22 @@ jobs:
         id: published
         env:
           VERSION: ${{ steps.version.outputs.version }}
+        # Only "not found" means unpublished. Any other error (auth, network) stops here instead of
+        # pushing over a tag that may exist.
         run: |
-          if [ "$GITHUB_EVENT_NAME" != workflow_dispatch ] \
-            && docker buildx imagetools inspect "$IMAGE:$VERSION" >/dev/null 2>&1; then
-            echo "$IMAGE:$VERSION exists"; echo "publish=false" >> "$GITHUB_OUTPUT"
-          else
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
             echo "publish=true" >> "$GITHUB_OUTPUT"
+          elif error=$(docker buildx imagetools inspect "$IMAGE:$VERSION" 2>&1 >/dev/null); then
+            echo "$IMAGE:$VERSION exists"; echo "publish=false" >> "$GITHUB_OUTPUT"
+          elif [[ "$error" == *": not found" ]]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::$error"; exit 1
           fi
 
   publish:
     needs: version
-    if: needs.version.outputs.publish == 'true'
+    if: github.ref == 'refs/heads/main' && needs.version.outputs.publish == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     permissions:

@@ -5,8 +5,8 @@ name: Studio image
 # browser; nothing is pushed. On main it is published when Studio has a version without an image:
 # the changesets release PR raises the version in apps/studio*/package.json. A tag pushed by the
 # release workflow could not start this one (pushes with GITHUB_TOKEN start no workflows), so the
-# trigger is the version change itself. A manual run republishes the current version and latest,
-# e.g. for an update of the base image.
+# trigger is the version change itself. A manual run on main republishes the current version and
+# latest, e.g. for an update of the base image; on any other branch it runs the smoke test only.
 on:
   pull_request:
     paths:
@@ -104,10 +104,11 @@ jobs:
           docker run --rm --platform linux/arm64 "$IMAGE:ci-arm64" \
             node -e "import('argon2').then((a) => a.hash('x')).then(() => console.log('argon2 ok'))"
 
-  # The version to publish, and whether it still needs publishing.
+  # The version to publish, and whether it still needs publishing. Only on main, so that a manual
+  # run from another branch cannot push its build under a release tag.
   version:
     needs: smoke
-    if: github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -136,17 +137,22 @@ jobs:
         id: published
         env:
           VERSION: ${{ steps.version.outputs.version }}
+        # Only "not found" means unpublished. Any other error (auth, network) stops here instead of
+        # pushing over a tag that may exist.
         run: |
-          if [ "$GITHUB_EVENT_NAME" != workflow_dispatch ] \
-            && docker buildx imagetools inspect "$IMAGE:$VERSION" >/dev/null 2>&1; then
-            echo "$IMAGE:$VERSION exists"; echo "publish=false" >> "$GITHUB_OUTPUT"
-          else
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
             echo "publish=true" >> "$GITHUB_OUTPUT"
+          elif error=$(docker buildx imagetools inspect "$IMAGE:$VERSION" 2>&1 >/dev/null); then
+            echo "$IMAGE:$VERSION exists"; echo "publish=false" >> "$GITHUB_OUTPUT"
+          elif [[ "$error" == *": not found" ]]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::$error"; exit 1
           fi
 
   publish:
     needs: version
-    if: needs.version.outputs.publish == 'true'
+    if: github.ref == 'refs/heads/main' && needs.version.outputs.publish == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 40
     permissions:
