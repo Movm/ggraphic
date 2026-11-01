@@ -41,13 +41,23 @@ describe('loadConfig', () => {
 
     it('turns a tool on when its URL is present', () => {
       expect(loadConfig({ ...base, REMBG_URL: 'http://rembg:7000/' }).features).toEqual({
-        removeBackground: { url: 'http://rembg:7000', timeoutMs: 60_000 },
+        removeBackground: { url: 'http://rembg:7000', model: 'u2net', timeoutMs: 60_000 },
         iconify: null,
       });
       expect(
         loadConfig({ ...base, REMBG_URL: 'http://rembg:7000', REMBG_TIMEOUT_MS: '5000' }).features
           .removeBackground?.timeoutMs
       ).toBe(5000);
+    });
+
+    it('asks rembg for REMBG_MODEL and refuses a model name that is no plain id', () => {
+      expect(
+        loadConfig({ ...base, REMBG_URL: 'http://rembg:7000', REMBG_MODEL: 'isnet-general-use' })
+          .features.removeBackground?.model
+      ).toBe('isnet-general-use');
+      expect(() =>
+        loadConfig({ ...base, REMBG_URL: 'http://rembg:7000', REMBG_MODEL: 'u2net&a=1' })
+      ).toThrow(/REMBG_MODEL/);
     });
 
     it('lets <TOOL>_ENABLED=false switch a configured tool off', () => {

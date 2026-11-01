@@ -22,6 +22,7 @@ export async function removeBackground(
 ): Promise<Buffer> {
   const form = new FormData();
   form.append('file', new Blob([new Uint8Array(image)]), 'image');
+  form.append('model', rembg.model);
   const timeout = (error: unknown) =>
     error instanceof DOMException && error.name === 'TimeoutError';
   const failed = (error: unknown) => {

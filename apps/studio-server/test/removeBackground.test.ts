@@ -7,15 +7,26 @@ import { FixedWindowLimiter } from '../src/auth/rateLimit.ts';
 import type { RembgConfig } from '../src/config.ts';
 import { createDb } from '../src/db/client.ts';
 import { runMigrations } from '../src/db/migrate.ts';
+import { removeBackground } from '../src/rembg.ts';
 import { createAuthLimiters } from '../src/routes/auth.ts';
 import { PASSWORD, PNG_1X1, resetDb, setupAdmin, testConfig } from './helpers.ts';
 
 const PATH = '/api/images/remove-background';
-const rembg: RembgConfig = { url: 'http://rembg.internal:7000', timeoutMs: 1000 };
+const rembg: RembgConfig = { url: 'http://rembg.internal:7000', model: 'u2net', timeoutMs: 1000 };
 const hasDb = Boolean(process.env['DATABASE_URL']);
 
 const cutOut = () =>
   new Response(new Uint8Array(PNG_1X1), { status: 200, headers: { 'content-type': 'image/png' } });
+
+describe('removeBackground', () => {
+  it('sends the image and the configured model', async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockImplementation(() => Promise.resolve(cutOut()));
+    await removeBackground(rembg, PNG_1X1, 1024 * 1024, fetchMock);
+    const body = fetchMock.mock.calls[0]![1]?.body as FormData;
+    expect(body.get('model')).toBe('u2net');
+    expect(body.get('file')).toBeInstanceOf(Blob);
+  });
+});
 
 describe('anonymous', () => {
   it('needs a session', async () => {
