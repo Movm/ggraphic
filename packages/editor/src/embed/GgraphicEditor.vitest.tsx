@@ -15,7 +15,7 @@ import { messages } from '../i18n/messages.js';
 
 import { GgraphicEditor, templatePackFromJson, type GgraphicDocument } from './index.js';
 
-vi.mock('@ggraphic/editor/sidebar/UserUploadsProvider', () => ({
+vi.mock('../sidebar/UserUploadsProvider.js', () => ({
   useOptionalUserUploads: () => null,
   UserUploadsProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useUserUploads: () => ({ uploads: [], refresh: () => {} }),
