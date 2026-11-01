@@ -54,6 +54,57 @@ A host supplies **data and services**, not editor code:
 - **After A–C (~25–40 h):** embedding takes about 20 lines, and the `ggraphic-embed` skill (#79) shrinks to a page. Rewrite it then.
 - **After D:** semver is possible, the path to 1.0.
 
+## Stage D in detail
+
+Measured on 2026-11-01 (main at e233f89, the Grünerator at origin/master). D1 (#93: `docs/public-api-proposal.md` with 41 domain entry points, `docs/public-api-inventory.md` as the per-subpath mapping, and a reporting-only `pnpm api:report`) decides the public list; this section plans the code changes after it.
+
+### Current state
+
+- **Export map:** `@ggraphic/editor` has 408 hand-written entries, each a bare string to `./src/…`. There is no generator, no root barrel, and the build is plain `tsc`, so `dist` mirrors `src` path for path.
+- **Published surface:** `publishConfig.exports` is a `"./*"` wildcard plus four CSS entries. On npm every file in `dist` is importable, not only the 408. The Grünerator already imports `utils/fontAliases`, which is not in the source map.
+- **The editor imports itself:** 463 of its source files import `@ggraphic/editor/<subpath>` instead of a relative path. The export map is therefore part of the editor's own wiring, and its `vi.mock` calls depend on those specifiers.
+- **Who uses what:**
+
+  | Consumer                   | Distinct editor subpaths                                             |
+  | -------------------------- | -------------------------------------------------------------------- |
+  | The Grünerator             | 239 (320 of its 339 importing files are in `packages/canvas-editor`) |
+  | Studio                     | 42 (38 shared with the Grünerator)                                   |
+  | `@ggraphic/templates-open` | 8                                                                    |
+  | **Together**               | **243**                                                              |
+
+  Of the 408 entries, 128 are used only by the editor itself and 28 by nobody. The other packages (schema, core, collab, ai, ui) are imported through their barrels, except schema, whose `./*` wildcard exposes `document/__fixtures__/v2Fixture` (used by 3 editor files).
+
+- **No guard reads the maps:** no publint, no attw, no API report, no `no-restricted-imports`. `check-esm-specifiers.mjs` checks relative specifiers only.
+- **Studio bypasses exports:** its Vite and Vitest configs alias schema, ui and templates-open to their sources. `@ggraphic/templates-open/test/testBrands` exists only through that alias.
+- **Hard-wired paths:** `sideEffects` names `**/hooks/useFontGeneration.*`; `editor.css` and `tailwind.css` `@import` `@ggraphic/editor/styles…`.
+
+### What this changes in the plan
+
+- **The Grünerator cannot move onto the public list alone.** Its `packages/canvas-editor` is a second editor host and needs 239 subpaths. It gets an explicit internal channel without stability promises instead of being forced onto the public list.
+- **Moving files under `internal/*` first would drag the 463 self-imports along.** Those are rewritten to relative paths before anything else, so the export map stops being part of the editor's wiring.
+- **The codemod in the Grünerator is smaller than estimated:** one package instead of ~330 files across the repository, plus a few hand-written spots (below).
+
+### Steps
+
+Each step is its own PR and can be released on its own.
+
+| Step                                      | Content                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          | Depends on                                                                      |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| **D2a: Relative self-imports**            | Codemod the 463 editor files from `@ggraphic/editor/<subpath>` to relative `.js` specifiers (the style the rest of the editor already uses, guarded by `check-esm-specifiers`). Rewrite the editor's own `vi.mock` targets with them. Remove the stray tracked `packages/editor/package.json.tmp`. No export-map change, no render change; the render gate proves it.                                                                                                                                                                                                                                                                                                                                            | #84, #86 and C2 (#92) merged: they touch the same files and the `exports` block |
+| **D2b: Facades and the internal channel** | Following #93: public entries are facade modules under `src/entries/<name>.ts` that re-export explicit names (no `export *`); files do not move. Add their export-map entries next to the existing ones and map `./internal/*` to the compiled files. The old deep paths keep working through the existing `./*` wildcard for one alpha; the changeset announces their removal. The package root `@ggraphic/editor` becomes an alias of `./embed`. New public `./kinds` with what a custom element renderer needs, plus one example kind. `createCanvasEditorStore` and `CanvasEditorState` stay internal; the provider and selector hooks are public. The Grünerator-specific `composer/*` parts get no facade. | D1, D2a                                                                         |
+| **D2c: Guards**                           | Make `pnpm api:check` from D1 blocking in CI, add publint and attw on the packed tarballs, and fail CI when an export key has no target file.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | D2b                                                                             |
+| **D2d: Studio on the public surface**     | Move Studio to the facades and add `no-restricted-imports` that allows only the public entries; the render gate harness (`src/gate/`) is exempt. Remove the src aliases from Studio's Vite and Vitest configs, or keep them only where a package has no build; export `testBrands` from templates-open under a test subpath or keep it local.                                                                                                                                                                                                                                                                                                                                                                    | D2b                                                                             |
+| **D2e: Grünerator codemod**               | In the Grünerator, rewrite the 239 subpaths from the D1 inventory (public where it exists, `internal/*` otherwise) after a release with D2b. By hand: `generate-ui-labels.mjs` and `check-tour-anchors.mjs` build paths from strings, 39 `vi.mock` calls, CSS `@source`/`@import`, 7 `declare module`. The Grünerator takes over its own composer code (Steckbrief, Störer, `buildSharepicText`, `VORLAGE_DRAG_TYPE`). Its tests that test ggraphic behaviour rather than its own configs move into this repository. Lives in both repositories.                                                                                                                                                                 | a release with D2b                                                              |
+| **D2f: Close the maps**                   | One alpha after D2b, drop the `./*` wildcards from `editor` and `schema` (`publishConfig.exports` becomes the closed list of facades, stylesheets and `./internal/*`; schema keeps its root, the fixture moves to a test-only path) and remove the Grünerator-specific composer code. The 28 unused entries disappear with the wildcard. Promote entries from `internal/*` to public only when a real host needs them.                                                                                                                                                                                                                                                                                           | D2e                                                                             |
+
+### Decisions taken here
+
+- **Decided by Moritz on 2026-11-01 (D1 open questions):** Grünerator-specific composer code moves back into the Grünerator, only neutral text fitting stays (public in `editor/text`); `editor/kinds` is public; the store factory and state type are internal; the root is an alias of `./embed`; Grünerator tests of ggraphic behaviour move into this repository.
+
+- **Relative imports instead of `#internal/*` (`package.json` `imports`):** relative specifiers already make up the rest of the editor, are checked by `check-esm-specifiers`, and need no resolver support in `tsc`, Vite, Vitest or the hosts' bundlers. Subpath imports would also have to point at `dist` in the published package, which `publishConfig` has to express; that path is not verified.
+- **`internal/*` is part of the published package, without semver:** first-party hosts may use it and accept breakage in any release. The public list carries the promise.
+- **No change in this stage to the other packages' barrels** (core, collab, ai, ui are already single-entry).
+
 ## Why this order
 
 - **A before everything:** while the host writes state and actions, embedding stays expensive however good the docs and CSS are.
