@@ -71,6 +71,17 @@ describe('fitFontSizeToSlot with a ceiling (maxSize)', () => {
     const slot = { ...base, width: 700, maxHeight: Infinity, maxLines: 1, countLines: () => 2 };
     expect(fitFontSizeToSlot(HEADLINE, slot, measureAt())).toBe(20);
   });
+
+  it('takes the widest word from the caller when given one (a bold word is wider)', () => {
+    // "Nachrichten" in bold, 1.2 times as wide: 300 / (5.5 * 1.2) = 45.4
+    const slot = {
+      ...base,
+      width: 300,
+      maxHeight: Infinity,
+      widestWord: (size: number) => 11 * size * 0.5 * 1.2,
+    };
+    expect(fitFontSizeToSlot('Gute **Nachrichten** heute', slot, measureAt())).toBe(45);
+  });
 });
 
 describe('binary search equals the linear scan', () => {

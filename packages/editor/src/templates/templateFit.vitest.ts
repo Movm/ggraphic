@@ -54,6 +54,29 @@ describe('the adapter fits a text to its brand font', () => {
     expect(sizeOf({ width: 400, letterSpacing: 0.1 }).fontSize).toBeLessThan(regular);
   });
 
+  it('measures a bold word in bold, typed inline or set on the whole text', () => {
+    const plain = sizeOf({ width: 400 }).fontSize;
+    const inline = sizeOf({ width: 400, text: 'Gute **Nachrichten** heute' });
+    expect(inline.fontSize).toBeLessThan(plain);
+    expect(sizeOf({ width: 400, text: '**Gute Nachrichten heute**' })).toEqual(inline);
+    expect(sizeOf({ width: 400, fontStyle: 'bold' })).toEqual(inline);
+    // At the fitted size the bold word stays on one line, one px more and it would not.
+    const word = (size: number) =>
+      TEMPLATE_GATE_ADAPTER.lineCount(
+        'additionalTexts',
+        text({ text: '**Nachrichten**', width: 400, fontSize: size })
+      );
+    expect(word(inline.fontSize)).toBe(1);
+    expect(word(inline.fontSize + 1)).toBeGreaterThan(1);
+  });
+
+  it('measures bold in a family without a bold table the way the gate lays it out', () => {
+    // Anton ships one width table; bold falls back to it, so inline and whole-text bold agree.
+    expect(sizeOf({ fontFamily: 'Anton', width: 400, text: 'Gute **Nachrichten** heute' })).toEqual(
+      sizeOf({ fontFamily: 'Anton', width: 400, fontStyle: 'bold' })
+    );
+  });
+
   it('keeps the text within the slot budget lines, as the gate counts them', () => {
     const longer = 'Gute Nachrichten heute für alle Menschen im ganzen Land';
     const one = sizeOf({ text: longer }, {});
