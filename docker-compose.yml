@@ -43,7 +43,9 @@ services:
       AI_TIMEOUT_MS: ${AI_TIMEOUT_MS:-}
       AI_ENABLED: ${AI_ENABLED:-}
       # With COMPOSE_PROFILES=rembg in .env, the rembg service below. Compose shows the profiles to
-      # this file only through that variable, not through `--profile` on the command line.
+      # this file only through that variable, not through `--profile` on the command line, and it
+      # cannot look for a word in it: any non-empty COMPOSE_PROFILES sets this. rembg is this file's
+      # only profile; if you add one of your own, set REMBG_URL (or REMBG_ENABLED=false) as well.
       REMBG_URL: ${REMBG_URL:-${COMPOSE_PROFILES:+http://rembg:7000}}
       REMBG_MODEL: ${REMBG_MODEL:-}
       REMBG_TIMEOUT_MS: ${REMBG_TIMEOUT_MS:-}
