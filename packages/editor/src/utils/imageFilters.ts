@@ -227,16 +227,16 @@ export const IMAGE_PRESETS: ImagePreset[] = [
     values: { ...EMPTY_ADJUSTMENTS },
   },
   {
-    id: 'gruen',
+    id: 'tinted',
     get label() {
-      return messages().imageLooks.gruen;
+      return messages().imageLooks.tinted;
     },
     values: { ...EMPTY_ADJUSTMENTS, tintStrength: 1 },
   },
   {
-    id: 'grau',
+    id: 'grayscale',
     get label() {
-      return messages().imageLooks.grau;
+      return messages().imageLooks.grayscale;
     },
     values: { ...EMPTY_ADJUSTMENTS, grayscale: true },
   },

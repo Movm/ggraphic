@@ -26,7 +26,7 @@ describe('preview colours follow the brand roles', () => {
   });
 
   it('cycles shape variants through the colour roles, not palette ids', async () => {
-    const { ALL_PALETTE_SHAPES, getShapeVariant } = await import('./FormenSection');
+    const { ALL_PALETTE_SHAPES, getShapeVariant } = await import('./ShapesSection');
     const colors = ALL_PALETTE_SHAPES.slice(0, 5)
       .map((shape) => getShapeVariant(shape.id))
       .map((variant) => variant.color);
@@ -34,7 +34,7 @@ describe('preview colours follow the brand roles', () => {
   });
 
   it('keeps the dark-surface preview token on the primary role only', async () => {
-    const { ALL_PALETTE_SHAPES, getShapeVariant } = await import('./FormenSection');
+    const { ALL_PALETTE_SHAPES, getShapeVariant } = await import('./ShapesSection');
     const first = getShapeVariant(ALL_PALETTE_SHAPES[0].id);
     const second = getShapeVariant(ALL_PALETTE_SHAPES[1].id);
     expect(first.darkPreviewClass).toBe('!text-editor-primary-preview');

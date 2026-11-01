@@ -5,15 +5,21 @@
  */
 import { brandDefault } from '@ggraphic/core';
 import { CANVAS_DOCUMENT_VERSION } from '@ggraphic/schema';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Konva from 'konva';
-import React from 'react';
+import React, { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { messages } from '../i18n/messages.js';
 
-import { GgraphicEditor, templatePackFromJson, type GgraphicDocument } from './index.js';
+import {
+  type CanvasEditorExportApi,
+  GgraphicEditor,
+  loadTemplatePack,
+  templatePackFromJson,
+  type GgraphicDocument,
+} from './index.js';
 
 vi.mock('../sidebar/UserUploadsProvider.js', () => ({
   useOptionalUserUploads: () => null,
@@ -43,7 +49,7 @@ vi.stubGlobal(
 vi.spyOn(Konva.Stage.prototype, 'toDataURL').mockReturnValue('data:,');
 Element.prototype.scrollIntoView ??= () => {};
 
-const pack = templatePackFromJson([
+const files = [
   {
     formatVersion: 1,
     id: 'embed-headline',
@@ -78,7 +84,8 @@ const pack = templatePackFromJson([
     ],
     provenance: { author: 'test', reviewed: '2026-11-01', licence: 'CC0-1.0' },
   },
-]);
+];
+const pack = templatePackFromJson(files);
 
 const textsOf = (doc: GgraphicDocument | undefined) =>
   (doc?.pages[0]?.state['additionalTexts'] as { id: string }[] | undefined) ?? [];
@@ -106,5 +113,34 @@ describe('GgraphicEditor', () => {
       expect(ids[0]).toBe('headline');
       expect(ids).toHaveLength(2);
     });
+  });
+
+  it('hands the host the export api once the editor has loaded, and takes it back on unmount', async () => {
+    const api = createRef<CanvasEditorExportApi>();
+    const { unmount } = render(
+      <GgraphicEditor brand={brandDefault} templates={pack} exportApiRef={api} />
+    );
+
+    await waitFor(() => expect(api.current).not.toBeNull(), { timeout: 10_000 });
+    expect(api.current?.getPages().map((p) => p.configId)).toEqual(['embed-headline']);
+    // jsdom cannot rasterise a stage, so the PNG itself is not checked here.
+    expect(typeof api.current?.captureActivePage).toBe('function');
+
+    unmount();
+    expect(api.current).toBeNull();
+  });
+
+  it('opens on a pack that is still loading (loadTemplatePack)', async () => {
+    const loading = loadTemplatePack(files);
+    const api = createRef<CanvasEditorExportApi>();
+    // Rendered and resolved inside act, so React's retry after the pack resolves is flushed.
+    await act(async () => {
+      render(<GgraphicEditor brand={brandDefault} templates={loading} exportApiRef={api} />);
+      await loading;
+    });
+
+    await expect(loading).resolves.toMatchObject({ problems: [] });
+    await waitFor(() => expect(api.current).not.toBeNull(), { timeout: 10_000 });
+    expect(api.current?.getPages().map((p) => p.configId)).toEqual(['embed-headline']);
   });
 });

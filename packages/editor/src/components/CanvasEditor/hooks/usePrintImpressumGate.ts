@@ -16,7 +16,7 @@ import { useMemo } from 'react';
 import { type PrintImpressumGate } from '../../TopBar/DownloadSection.js';
 
 import type { AdditionalText } from '../../../configs/types.js';
-import type { CanvasImpressumService } from '../../../hostServices.js';
+import type { CanvasImprintService } from '../../../hostServices.js';
 
 /** The freeform page actions the gate writes through. */
 interface FreeformImpressumActions {
@@ -41,18 +41,18 @@ export interface GatePage {
 
 /** Formats that carry a V.i.S.d.P. / Impressum: posters, flyers, the newspaper — not cards or letterheads. */
 export function needsImpressum(format: PrintCanvasFormat | null): format is PrintCanvasFormat {
-  return format !== null && format.print.impressum !== null;
+  return format !== null && format.print.imprint !== null;
 }
 
 /** The pages that must carry the line. */
 function impressumPages(format: PrintCanvasFormat, pages: GatePage[]): GatePage[] {
-  if (format.print.impressum === 'erste-seite') return pages.slice(0, 1);
-  if (format.print.impressum === 'letzte-seite') return pages.slice(-1);
+  if (format.print.imprint === 'first-page') return pages.slice(0, 1);
+  if (format.print.imprint === 'last-page') return pages.slice(-1);
   return pages;
 }
 
 function impressumElementOf(
-  impressum: CanvasImpressumService,
+  impressum: CanvasImprintService,
   observed: ObservedPageState
 ): AdditionalText | null {
   const texts = observed.state.additionalTexts;
@@ -61,7 +61,7 @@ function impressumElementOf(
 }
 
 function pageComplete(
-  impressum: CanvasImpressumService,
+  impressum: CanvasImprintService,
   page: GatePage,
   observed: ObservedPageState
 ): boolean {
@@ -74,7 +74,7 @@ export function usePrintImpressumGate(
   pages: GatePage[],
   observed: ObservedPages
 ): PrintImpressumGate | null {
-  const impressum = useCanvasEditorServices().print?.impressum;
+  const impressum = useCanvasEditorServices().print?.imprint;
   return useMemo(() => {
     if (!impressum || !needsImpressum(format)) return null;
     const locale = impressum.localeOf(pages[0] ?? null);

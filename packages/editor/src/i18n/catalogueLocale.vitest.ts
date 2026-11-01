@@ -31,9 +31,8 @@ describe('the catalogue decides the language of texts that end up in posts and m
     expect(photoCreditLine([credit])).toBe('Foto: Ann auf Unsplash');
     expect(attributionLine(icon)).toBe('Icon: Lets Icons von Leonid, CC-BY-4.0');
     expect(PLACEHOLDER_TEXT.headline).toBe('Ihre Überschrift hier');
-    expect(formatLabel(getCanvasFormatOrDefault('print-a3-hoch'))).toBe(
-      'Plakat A3 hoch · 297 × 420 mm'
-    );
+    expect(formatLabel(getCanvasFormatOrDefault('slide-16-9'))).toBe('Präsentation');
+    expect(formatDescription(getCanvasFormatOrDefault('slide-16-9'))).toContain('Folien');
   });
 
   it('speaks English on an English host', () => {
@@ -41,10 +40,8 @@ describe('the catalogue decides the language of texts that end up in posts and m
     expect(photoCreditLine([credit])).toBe('Photo: Ann on Unsplash');
     expect(attributionLine(icon)).toBe('Icon: Lets Icons by Leonid, CC-BY-4.0');
     expect(PLACEHOLDER_TEXT.headline).toBe('Your headline here');
-    expect(formatLabel(getCanvasFormatOrDefault('print-a3-hoch'))).toBe(
-      'Poster A3, portrait · 297 × 420 mm'
-    );
-    expect(formatDescription(getCanvasFormatOrDefault('print-a3-hoch'))).toContain('bleed');
+    expect(formatLabel(getCanvasFormatOrDefault('slide-16-9'))).toBe('Presentation');
+    expect(formatDescription(getCanvasFormatOrDefault('slide-16-9'))).toContain('Slides');
     expect(messages().common.elements(1)).toBe('1 element');
   });
 });

@@ -21,7 +21,7 @@ export const STROKE_ONLY_SHAPES: ReadonlySet<string> = new Set([
 
 /**
  * Display category for the Formen palette. Each shape belongs to exactly one
- * category — the FormenSection groups by this field at render time and emits
+ * category — the ShapesSection groups by this field at render time and emits
  * a German-labeled subheader per category.
  */
 export type ShapeCategory =
@@ -645,7 +645,7 @@ export const ALL_SHAPES: ReadonlyArray<ShapeDef> = Object.values(SHAPE_DEFS);
 export const getShapeDef = <T extends ShapeType>(type: T): ShapeDef<T> => SHAPE_DEFS[type];
 
 /**
- * German display labels for shape categories. Used for FormenSection subheaders.
+ * German display labels for shape categories. Used for ShapesSection subheaders.
  * Order is the display order (top-to-bottom in the panel).
  */
 export const CATEGORY_ORDER: readonly ShapeCategory[] = [

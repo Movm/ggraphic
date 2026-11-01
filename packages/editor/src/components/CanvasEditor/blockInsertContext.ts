@@ -10,11 +10,11 @@ export interface BlockTarget {
 /**
  * The host's blocks: ready-made groups of elements, inserted onto a page as one
  * undo step. The editor drops a dragged block (`readElementDrag`'s `blockId`)
- * through `insert`; the host's panels list `bloecke`.
+ * through `insert`; the host's panels list `blocks`.
  */
 export interface BlockInsertApi<TBlock = unknown> {
   /** The blocks the active page can take, in catalogue order. */
-  bloecke: TBlock[];
+  blocks: TBlock[];
   isLoading: boolean;
   insert: (blockId: string, target?: BlockTarget) => Promise<boolean>;
 }

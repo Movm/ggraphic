@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
-import { type CanvasStudioAssetItem, type CanvasStudioAssetScope } from '../../../hostServices.js';
+import {
+  type CanvasAssetLibraryItem,
+  type CanvasAssetLibraryScope,
+} from '../../../hostServices.js';
 import { useMessages } from '../../../i18n/messages.js';
 import { registeredAssetCatalog, studioStickerId } from '../../../utils/canvasAssets.js';
 import { type StickerRef } from '@ggraphic/schema';
@@ -9,17 +12,17 @@ import { HiPlus } from 'react-icons/hi2';
 
 import {
   GalleryTabs,
-  StudioGalleryGrid,
+  AssetGalleryGrid,
   useGalleryScopes,
   type GalleryTab,
-} from '../StudioGallery.js';
+} from '../AssetGallery.js';
 
 import { elementDragProps } from './ElementTile.js';
 import { galleryStickerItem } from './elementTypes.js';
 
-type StickerTab = 'catalog' | CanvasStudioAssetScope;
+type StickerTab = 'catalog' | CanvasAssetLibraryScope;
 
-const galleryRef = (item: CanvasStudioAssetItem): StickerRef => ({
+const galleryRef = (item: CanvasAssetLibraryItem): StickerRef => ({
   id: studioStickerId(item.id),
   src: item.src,
 });
@@ -92,7 +95,7 @@ export function StickerCatalog({
       {tab === 'catalog' ? (
         children
       ) : (
-        <StudioGalleryGrid
+        <AssetGalleryGrid
           kind="sticker"
           scope={tab}
           query={searchQuery}

@@ -14,16 +14,12 @@ A host supplies data and services; the component does the rest.
 ```tsx
 import { defaultBrand } from '@ggraphic/brand-default';
 import '@ggraphic/brand-default/fonts';
-import '@ggraphic/editor/styles/compiled';
-import {
-  GgraphicEditor,
-  templatePackFromJson,
-  type GgraphicDocument,
-} from '@ggraphic/editor/embed';
+import '@ggraphic/editor/styles/compiled.css';
+import { GgraphicEditor, loadTemplatePack, type GgraphicDocument } from '@ggraphic/editor/embed';
 
 import templateFiles from './templates.json'; // template files (`@ggraphic/schema` format)
 
-const templates = templatePackFromJson(templateFiles); // once, at module level
+const templates = loadTemplatePack(templateFiles); // once, at module level
 
 export function DesignEditor({
   doc,
@@ -48,23 +44,56 @@ What it does for you:
 
 Props:
 
-| Prop          | Default                                                      | Notes                                                                                                                                                                         |
-| ------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `brand`       | required                                                     | `defaultBrand` from `@ggraphic/brand-default`, or your own from `defineBrand` (below).                                                                                        |
-| `templates`   | required                                                     | `templatePackFromJson(files)`. Build it once, not per render. Check `templates.problems` for files that were skipped.                                                         |
-| `document`    | one page of the pack's first template on `post-portrait`     | `{ formatId, pages: [{ configId, state }] }`. Read when the editor mounts; give the component a new `key` to open another document.                                           |
-| `onChange`    | none                                                         | The whole document after every change (edits, added or moved pages, undo). Store it as it comes; debounce on your side if saving is expensive.                                |
-| `services`    | downloads through the browser, uploads as object URLs, no AI | `CanvasEditorServices` from `@ggraphic/editor/CanvasEditorProvider`. Pass only what you have: a `mediaLibrary` for durable uploads, `aiDraft`, `iconSearch`, `fileDelivery` … |
-| `locale`      | `'en'`                                                       | `'en'` or `'de'`.                                                                                                                                                             |
-| `queryClient` | own client                                                   | Pass yours to share a cache with the rest of the app.                                                                                                                         |
-| `title`       | none                                                         | The design's name, used for the PDF and slide-deck downloads.                                                                                                                 |
+| Prop           | Default                                                      | Notes                                                                                                                                                                                                         |
+| -------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `brand`        | required                                                     | `defaultBrand` from `@ggraphic/brand-default`, or your own from `defineBrand` (below).                                                                                                                        |
+| `templates`    | required                                                     | `loadTemplatePack(files)`, a promise the editor resolves while it loads. Create it once, not per render. Await it to read `problems` (files that were skipped). A pack from `templatePackFromJson` works too. |
+| `document`     | one page of the pack's first template on `post-portrait`     | `{ formatId, pages: [{ configId, state }] }`. Read when the editor mounts; give the component a new `key` to open another document.                                                                           |
+| `onChange`     | none                                                         | The whole document after every change (edits, added or moved pages, undo). Store it as it comes; debounce on your side if saving is expensive.                                                                |
+| `services`     | downloads through the browser, uploads as object URLs, no AI | `CanvasEditorServices` from `@ggraphic/editor/CanvasEditorProvider`. Pass only what you have: a `mediaLibrary` for durable uploads, `aiDraft`, `iconSearch`, `fileDelivery` …                                 |
+| `locale`       | `'en'`                                                       | `'en'` or `'de'`.                                                                                                                                                                                             |
+| `queryClient`  | own client                                                   | Pass yours to share a cache with the rest of the app.                                                                                                                                                         |
+| `title`        | none                                                         | The design's name, used for the PDF and slide-deck downloads.                                                                                                                                                 |
+| `exportApiRef` | none                                                         | A ref that receives `CanvasEditorExportApi` once the editor has loaded (see Export).                                                                                                                          |
 
 Things to know:
 
 - **Client only, SSR-safe import.** Importing `@ggraphic/editor/embed` touches no browser global, so a server-rendered page (Next.js app router, Remix …) can import it. It renders nothing on the server and loads the editor in the browser after hydration. No `dynamic(..., { ssr: false })` needed.
+- **React Server Components.** The entry (and the package root) is marked `'use client'`, so importing it from a server component gives a client reference instead of failing on `createContext`. Render the editor from your own `'use client'` component that builds the brand and the template pack: props passed from a server component must be serialisable, and a template pack holds functions. Rendering `<GgraphicEditor>` straight from a server component therefore only works if every prop you pass is plain data.
 - **Give it a box with a height.** The editor fills exactly the container it is rendered in (`height: 100%`): top bar, sidebar, panel and bottom bar sit inside it, and the pages scroll inside it, so your own header or sidebar can sit next to it. The container needs a definite height (`height: calc(100dvh - 56px)`, or a flex item that is stretched to one); a container that only has a `min-height` gives the editor nothing to fill.
 - **One brand and locale per page.** The registers are module-level: two `GgraphicEditor`s on one page share the brand and locale of the one rendered last. Template ids are stored in documents and never re-registered: a second pack that reuses an id keeps the first one's template.
 - **No collaboration** unless you use the low-level path below.
+
+### Export
+
+The editor's own Share menu downloads PNG, PDF and slide decks. To export from your own UI (a "Save PNG" button, a thumbnail on save), pass `exportApiRef`:
+
+```tsx
+import { type CanvasEditorExportApi } from '@ggraphic/editor/embed';
+
+const [api, setApi] = useState<CanvasEditorExportApi | null>(null);
+
+<GgraphicEditor brand={defaultBrand} templates={templates} exportApiRef={setApi} />;
+
+<button
+  disabled={!api}
+  onClick={async () => {
+    const png = await api?.captureActivePage({ pixelRatio: 2 });
+    if (png) download(png, 'design.png'); // a data URL
+  }}
+>
+  Save PNG
+</button>;
+```
+
+- The api arrives after the editor has loaded in the browser, and goes back to `null` when it unmounts. A callback ref (`setApi` above) tells you when; a `useRef` works too if you only read it on click.
+- `captureActivePage({ pixelRatio, transparent })`: the active page as a PNG data URL, or `null` while its canvas is not mounted.
+- `capturePages({ pixelRatio })`: every page as a PNG data URL, in order.
+- `exportPptx()`: the deck as an editable .pptx `Blob`.
+- `getPages()`: the document's pages as `onChange` reports them.
+- `undo()` / `redo()`.
+
+To hide the editor's own Share menu, use the low-level path (`showShare={false}` on `CanvasEditorShell`).
 
 ### A brand of your own: `defineBrand`
 
@@ -89,9 +118,11 @@ export const brand = defineBrand({
 
 The other five colour roles, the grounds and every picker are derived with WCAG contrast checks. It throws when a colour is not a colour. Load the fonts you name yourself (see Fonts).
 
-### Templates as data: `templatePackFromJson`
+### Templates as data: `loadTemplatePack`
 
-Takes an array of template files (or one file) in the `@ggraphic/schema` format. `@ggraphic/templates-open` is a CC0 pack to start from. Every template becomes a page the editor opens under the template's id. A file that does not read, was written by a newer version or repeats an id is skipped and listed in `problems`; blocks are left out (they are not pages).
+`loadTemplatePack(files)` returns a promise of the pack and loads the parser (the schema validators and the page config, several hundred kB) in a chunk of its own, next to the editor. `templatePackFromJson(files)` does the same work synchronously, but whatever imports it carries that code: called at module level, it more than doubles a host's entry chunk. Use it where you need the pack before rendering. Neither is a server API: both are exported from the `'use client'` entry, so a server component that imports them gets a client reference, not the function, and the pack they return holds functions that cannot cross to the client.
+
+Both take an array of template files (or one file) in the `@ggraphic/schema` format. `@ggraphic/templates-open` is a CC0 pack to start from. Every template becomes a page the editor opens under the template's id. A file that does not read, was written by a newer version or repeats an id is skipped and listed in `problems`; blocks are left out (they are not pages).
 
 ## Install
 
@@ -118,8 +149,10 @@ The components carry Tailwind v4 utility classes. Pick one of two ways to style 
 - **Any host (no Tailwind needed):** one import, everything compiled.
 
   ```ts
-  import '@ggraphic/editor/styles/compiled';
+  import '@ggraphic/editor/styles/compiled.css';
   ```
+
+  - Import the stylesheets from JavaScript with the `.css` key (`styles/compiled.css`, `styles/index.css`, `styles/editor.css`, `styles/tokens.css`, `styles/tailwind.css`). The bundler's `declare module '*.css'` matches only those; the keys without the extension fail TypeScript 6 with TS2882. Both resolve to the same file, and CSS `@import`s can use either.
 
   - Every rule sits in `@layer ggraphic`, so any unlayered host rule wins without `!important`. If your own CSS is layered, declare `ggraphic` first (`@layer ggraphic, base, …;`) to keep the same order.
   - The rules apply only inside `[data-ggraphic]`, Tailwind's reset included, so your page keeps its own reset and theme. `CanvasEditorShell` (and so `GgraphicEditor`) renders that root, and every dialog, menu and popover the editor portals onto `<body>` carries the attribute too. If you mount editor components outside the shell, wrap them in an element with `data-ggraphic` (`EDITOR_SCOPE` from `@ggraphic/editor/ui/editorScope`).
@@ -206,7 +239,7 @@ A template is a `FullCanvasConfig` (canvas size, sidebar tabs and sections, elem
 ```
 
 - The editor uses TanStack Query internally, so a `QueryClientProvider` must wrap it.
-- `formatId` is one of the editor's formats (`@ggraphic/editor/formats/index`), e.g. `post-portrait`, `post-portrait-tall`, `profile-square`, `slide-16-9`.
+- `formatId` is a built-in format (`post-portrait`, `profile-square`, `slide-16-9`) or one the host added with `registerCanvasFormatGroups` / `registerCanvasFormats` from `@ggraphic/editor/templates`. A format joins the `slides` group to become a slide deck; print formats go in `print`.
 - Pass `initialPages` to open a stored multi-page document; `onPagesChange` to hear every change; `exportApiRef` for programmatic export and `getPages()`; `readOnly` to lock it; `chromeLeft` / `chromeCenter` / `chromeRight` for your own top bar items.
 - `collaborative` connects a page to a Yjs room (`@ggraphic/collab`); without it the host saves the document itself.
 - `CanvasEditorShell` is as tall as the viewport (`--editor-height: 100dvh`), as a full-screen host expects. To make it fill a container of yours instead, set `--editor-height: 100%` on an element around it; the chrome is positioned inside the editor either way.

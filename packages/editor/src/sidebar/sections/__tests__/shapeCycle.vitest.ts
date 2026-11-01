@@ -2,7 +2,7 @@
 import { brandDefault, type BrandPack } from '@ggraphic/core';
 import { describe, expect, it } from 'vitest';
 
-import { ALL_PALETTE_SHAPES, getShapeVariant } from '../FormenSection.js';
+import { ALL_PALETTE_SHAPES, getShapeVariant } from '../ShapesSection.js';
 
 const SWATCHES = [
   { id: 'one', label: 'One', color: '#111111' },

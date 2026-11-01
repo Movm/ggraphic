@@ -4,13 +4,12 @@ import { messages } from '../i18n/messages.js';
 export type CanvasFormatCategory = 'digital' | 'print';
 
 /**
- * UI-level grouping shown as section headers on the /studio page. 3:4 is its
- * own group because only freeform lays out on it; the templates stay 4:5.
- * The square belongs to the profile picture alone. `print` is not one of the
- * studio groups (see canvasFormatGroupOrder).
+ * UI-level grouping a host's format picker shows as section headers. `slides`
+ * is what makes a format a slide deck (`isSlideFormat`). `print` holds no
+ * built-in format; it is there for a host's print formats and is not one of
+ * the picker groups (see canvasFormatGroupOrder).
  */
-export type BuiltInCanvasFormatGroup =
-  'sharepic' | 'sharepic-tall' | 'profilbild' | 'praesentation' | 'print';
+export type BuiltInCanvasFormatGroup = 'post' | 'square' | 'slides' | 'print';
 
 /** A built-in group, or the id of a host group (see `registerCanvasFormatGroups`). */
 export type CanvasFormatGroup = BuiltInCanvasFormatGroup | (string & {});
@@ -25,16 +24,17 @@ export interface CanvasPrintSpec {
   bleedMm: number;
   safeMm: number;
   exportDpi: number;
-  seiten: number;
+  /** Printed sides: 1 single-sided, 2 front and back, more for folded or bound sheets. */
+  pageCount: number;
   /**
-   * Where the V.i.S.d.P. / Impressum must stand: on every page (a poster set
-   * of separate sheets), on the first or last page only, or nowhere (cards,
-   * letterheads).
+   * Where the imprint (V.i.S.d.P. / Impressum) must stand: on every page (a
+   * poster set of separate sheets), on the first or last page only, or nowhere
+   * (cards, letterheads).
    */
-  impressum: PrintImpressumSeite | null;
+  imprint: PrintImprintPlacement | null;
 }
 
-export type PrintImpressumSeite = 'jede-seite' | 'erste-seite' | 'letzte-seite';
+export type PrintImprintPlacement = 'every-page' | 'first-page' | 'last-page';
 
 export interface CanvasFormat {
   id: string;
@@ -55,61 +55,34 @@ export interface CanvasFormat {
 export type PrintCanvasFormat = CanvasFormat & { category: 'print'; print: CanvasPrintSpec };
 
 const BUILT_IN_GROUPS: ReadonlyArray<BuiltInCanvasFormatGroup> = [
-  'sharepic',
-  'sharepic-tall',
-  'profilbild',
-  'praesentation',
+  'post',
+  'square',
+  'slides',
   'print',
 ];
 
-/** The studio groups. Print stays out until the studio picker can create print canvases. */
-const STUDIO_GROUPS: ReadonlyArray<BuiltInCanvasFormatGroup> = [
-  'sharepic',
-  'sharepic-tall',
-  'profilbild',
-  'praesentation',
-];
+/**
+ * Where the built-in picker groups sit, with gaps so a host group can go between them
+ * (`CanvasFormatGroupDef.order`, e.g. `CANVAS_FORMAT_GROUP_ORDER.post + 50` for right after posts).
+ * Print stays out: a host lists its print formats where it creates print canvases.
+ */
+export const CANVAS_FORMAT_GROUP_ORDER: Readonly<Record<'post' | 'square' | 'slides', number>> = {
+  post: 100,
+  square: 200,
+  slides: 300,
+};
 
-const PRINT_BLEED_MM = 3;
-const PRINT_EXPORT_DPI = 300;
-/** Large formats print from a distance: 150 dpi, the usual large-format rate. */
-const PRINT_LARGE_EXPORT_DPI = 150;
-/** Working resolution: the long side including bleed is 2000 px. */
-const PRINT_LONG_SIDE_PX = 2000;
-
-function printFormat(
-  id: string,
-  name: string,
-  trimMm: { w: number; h: number },
-  safeMm: number,
-  seiten: number,
-  exportDpi = PRINT_EXPORT_DPI,
-  impressum: PrintImpressumSeite | null = seiten === 1 ? 'jede-seite' : null
-): PrintCanvasFormat {
-  const pxPerMm = PRINT_LONG_SIDE_PX / (Math.max(trimMm.w, trimMm.h) + 2 * PRINT_BLEED_MM);
-  return {
-    id,
-    label: `${name} · ${trimMm.w} × ${trimMm.h} mm`,
-    description: `${trimMm.w} × ${trimMm.h} mm · ${PRINT_BLEED_MM} mm Beschnitt · ${seiten === 1 ? 'einseitig' : seiten === 2 ? 'Vorder- und Rückseite' : `${seiten} Seiten`}`,
-    group: 'print',
-    category: 'print',
-    width: Math.round((trimMm.w + 2 * PRINT_BLEED_MM) * pxPerMm),
-    height: Math.round((trimMm.h + 2 * PRINT_BLEED_MM) * pxPerMm),
-    dpi: exportDpi,
-    iconKey: trimMm.w > trimMm.h ? 'landscape' : 'portrait',
-    defaultExport: 'pdf',
-    exportable: ['pdf', 'png'],
-    print: { trimMm, bleedMm: PRINT_BLEED_MM, safeMm, exportDpi, seiten, impressum },
-  };
-}
-
+/**
+ * The built-in formats: a 4:5 post, a square and a 16:9 slide. Everything else
+ * (stories, print, …) is the host's, added with `registerCanvasFormats`. The
+ * formats built in up to 0.1.0-alpha.1 are in `./legacyCatalog`.
+ */
 export const CANVAS_FORMATS: ReadonlyArray<CanvasFormat> = [
-  // ── Sharepics ────────────────────────────────────────────────────────────
   {
     id: 'post-portrait',
-    label: 'Sharepic',
+    label: 'Beitrag 4:5',
     description: '1080 × 1350 · 4:5 · Instagram, Facebook',
-    group: 'sharepic',
+    group: 'post',
     category: 'digital',
     width: 1080,
     height: 1350,
@@ -120,25 +93,10 @@ export const CANVAS_FORMATS: ReadonlyArray<CanvasFormat> = [
     print: null,
   },
   {
-    id: 'post-portrait-tall',
-    label: 'Sharepic 3:4',
-    description: '1080 × 1440 · 3:4 · Instagram',
-    group: 'sharepic-tall',
-    category: 'digital',
-    width: 1080,
-    height: 1440,
-    dpi: 72,
-    iconKey: 'portrait',
-    defaultExport: 'png',
-    exportable: ['png', 'jpeg'],
-    print: null,
-  },
-  // ── Profilbild ───────────────────────────────────────────────────────────
-  {
     id: 'profile-square',
-    label: 'Profilbild',
+    label: 'Quadrat 1:1',
     description: '1080 × 1080 · 1:1',
-    group: 'profilbild',
+    group: 'square',
     category: 'digital',
     width: 1080,
     height: 1080,
@@ -148,12 +106,11 @@ export const CANVAS_FORMATS: ReadonlyArray<CanvasFormat> = [
     exportable: ['png', 'jpeg'],
     print: null,
   },
-  // ── Präsentation ─────────────────────────────────────────────────────────
   {
     id: 'slide-16-9',
     label: 'Präsentation',
     description: '1920 × 1080 · 16:9 · Folien',
-    group: 'praesentation',
+    group: 'slides',
     category: 'digital',
     width: 1920,
     height: 1080,
@@ -163,63 +120,6 @@ export const CANVAS_FORMATS: ReadonlyArray<CanvasFormat> = [
     exportable: ['pptx', 'pdf', 'png'],
     print: null,
   },
-  // ── Print ────────────────────────────────────────────────────────────────
-  printFormat('print-visitenkarte-quer', 'Visitenkarte quer', { w: 85, h: 55 }, 3, 2),
-  printFormat('print-visitenkarte-hoch', 'Visitenkarte hoch', { w: 55, h: 85 }, 3, 2),
-  printFormat('print-a3-hoch', 'Plakat A3 hoch', { w: 297, h: 420 }, 4, 1),
-  printFormat('print-a4-hoch', 'Plakat A4 hoch', { w: 210, h: 297 }, 4, 1),
-  printFormat('print-a3-quer', 'Plakat A3 quer', { w: 420, h: 297 }, 4, 1),
-  printFormat('print-a1-hoch', 'Plakat A1 hoch', { w: 594, h: 841 }, 10, 1, PRINT_LARGE_EXPORT_DPI),
-  printFormat('print-a1-quer', 'Plakat A1 quer', { w: 841, h: 594 }, 10, 1, PRINT_LARGE_EXPORT_DPI),
-  // 18/1 billboard: the artwork is supplied at A2 and enlarged (print spec).
-  printFormat(
-    'print-grossflaeche',
-    'Großfläche 18/1 (Vorlage A2)',
-    { w: 594, h: 420 },
-    10,
-    1,
-    PRINT_LARGE_EXPORT_DPI
-  ),
-  // Visible area 230 × 342 mm (print spec): the safe zone ends inside it.
-  printFormat('print-citylight', 'Citylight', { w: 237, h: 350 }, 8, 1, PRINT_LARGE_EXPORT_DPI),
-  // Roll fold to DIN lang: panels 100 / 100 / 97 mm, outside and inside (print spec).
-  printFormat(
-    'print-flyer-dinlang',
-    'Flyer DIN lang (A4 quer, Wickelfalz)',
-    { w: 297, h: 210 },
-    4,
-    2,
-    PRINT_EXPORT_DPI,
-    'erste-seite'
-  ),
-  printFormat(
-    'print-a6-hoch',
-    'Flyer A6 hoch',
-    { w: 105, h: 148 },
-    3,
-    2,
-    PRINT_EXPORT_DPI,
-    'letzte-seite'
-  ),
-  printFormat(
-    'print-a6-quer',
-    'Flyer A6 quer',
-    { w: 148, h: 105 },
-    3,
-    2,
-    PRINT_EXPORT_DPI,
-    'letzte-seite'
-  ),
-  printFormat('print-briefbogen-a4', 'Briefbogen A4', { w: 210, h: 297 }, 5, 2),
-  printFormat(
-    'print-zeitung-a4',
-    'Zeitung A4',
-    { w: 210, h: 297 },
-    5,
-    4,
-    PRINT_EXPORT_DPI,
-    'letzte-seite'
-  ),
 ];
 
 export const DEFAULT_FORMAT_ID = 'post-portrait';
@@ -248,6 +148,11 @@ export function registerCanvasFormats(formats: ReadonlyArray<CanvasFormat>): voi
 export interface CanvasFormatGroupDef {
   id: string;
   label: string;
+  /**
+   * Position in the picker, against `CANVAS_FORMAT_GROUP_ORDER`. Without it the group follows all
+   * positioned ones, in registration order. Equal positions keep registration order.
+   */
+  order?: number;
 }
 
 /** Host groups: module-level like the formats, read in non-React code. */
@@ -269,6 +174,9 @@ export function registerCanvasFormatGroups(groups: ReadonlyArray<CanvasFormatGro
   const seen = new Set<string>(BUILT_IN_GROUPS);
   for (const g of groups) {
     if (seen.has(g.id)) throw new Error(`Canvas format group id '${g.id}' is already taken`);
+    if (g.order !== undefined && !Number.isFinite(g.order)) {
+      throw new Error(`Canvas format group '${g.id}' has no finite order`);
+    }
     seen.add(g.id);
   }
   for (const f of hostFormats) {
@@ -281,9 +189,14 @@ export function registerCanvasFormatGroups(groups: ReadonlyArray<CanvasFormatGro
   hostGroups = [...groups];
 }
 
-/** The studio groups, host groups after the built-ins. Read lazily. */
+/** The picker groups by position: the built-ins, host groups where their `order` puts them, unpositioned ones last. Read lazily. */
 export function canvasFormatGroupOrder(): ReadonlyArray<CanvasFormatGroup> {
-  return [...STUDIO_GROUPS, ...hostGroups.map((g) => g.id)];
+  const builtIn = Object.entries(CANVAS_FORMAT_GROUP_ORDER).map(([id, order]) => ({ id, order }));
+  const host = hostGroups.map((g) => ({ id: g.id, order: g.order ?? Number.POSITIVE_INFINITY }));
+  // Array#sort is stable: equal positions keep built-ins first, then registration order.
+  return [...builtIn, ...host]
+    .sort((a, b) => (a.order === b.order ? 0 : a.order - b.order))
+    .map((g) => g.id);
 }
 
 /** Display label of a group: the active catalogue for built-ins, the host's label otherwise. */
@@ -299,20 +212,8 @@ export function canvasFormats(): ReadonlyArray<CanvasFormat> {
   return hostFormats.length === 0 ? CANVAS_FORMATS : [...CANVAS_FORMATS, ...hostFormats];
 }
 
-/**
- * Templates whose fixed sheet is not 4:5. A document of such a template must
- * carry exactly this format: the stage takes the document's format and scales
- * the sheet to it per axis, so the square profile picture on a 4:5 document
- * came out stretched by 1.25 (#4087).
- */
-const PINNED_TEMPLATE_FORMATS: Readonly<Record<string, string>> = {
-  profilbild: 'profile-square',
-  sticker: 'profile-square',
-};
-
-export function pinnedFormatId(templateId: string): string | null {
-  return PINNED_TEMPLATE_FORMATS[templateId] ?? null;
-}
+/** @deprecated Moved to `./legacyCatalog`: the template ids are the host's. Removed in the next alpha. */
+export { pinnedFormatId } from './legacyCatalog.js';
 
 /**
  * The digital format of exactly this size, for a template that comes without
@@ -330,9 +231,9 @@ export function getCanvasFormat(id: string): CanvasFormat | null {
   return canvasFormats().find((f) => f.id === id) ?? null;
 }
 
-/** Die eine Stelle, die beantwortet: ist das eine Präsentation? */
+/** The one place that answers: is this a slide deck? A host's slide format joins the `slides` group. */
 export function isSlideFormat(format: CanvasFormat): boolean {
-  return format.group === 'praesentation';
+  return format.group === 'slides';
 }
 
 /**
@@ -363,12 +264,25 @@ export class UnsupportedCanvasFormatError extends Error {
   }
 }
 
-/** Unknown digital ids fall back to the default; unknown print ids throw. */
+/** Unknown ids already warned about: a document resolves its format on every render. */
+const warnedUnknownIds = new Set<string>();
+
+/**
+ * Unknown digital ids fall back to the default, with a warning once per id:
+ * a host that forgot to register its formats would otherwise ship them as
+ * 4:5 without a trace. Unknown print ids throw.
+ */
 export function getCanvasFormatOrDefault(id: string | null | undefined): CanvasFormat {
   if (id) {
     const found = getCanvasFormat(id);
     if (found) return found;
     if (isUnsupportedFormatId(id)) throw new UnsupportedCanvasFormatError(id);
+    if (!warnedUnknownIds.has(id)) {
+      warnedUnknownIds.add(id);
+      console.warn(
+        `unknown canvas format '${id}', falling back to '${DEFAULT_FORMAT_ID}'; register it with registerCanvasFormats`
+      );
+    }
   }
   const fallback = getCanvasFormat(DEFAULT_FORMAT_ID);
   if (!fallback) {
@@ -422,8 +336,8 @@ export function formatLabel(format: CanvasFormat): string {
 export function formatDescription(format: CanvasFormat): string {
   const m = messages().formats;
   if (format.print) {
-    const { trimMm, bleedMm, seiten } = format.print;
-    return m.printDescription(`${trimMm.w} × ${trimMm.h} mm`, bleedMm, seiten);
+    const { trimMm, bleedMm, pageCount } = format.print;
+    return m.printDescription(`${trimMm.w} × ${trimMm.h} mm`, bleedMm, pageCount);
   }
   if (format.id === 'slide-16-9') return m.slidesDescription('1920 × 1080 · 16:9');
   return format.description;

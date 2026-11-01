@@ -4,10 +4,10 @@ import { plainAssetImageUrls, registeredAssetCatalog } from '../../../utils/canv
 import { cn } from '../../../utils/cn.js';
 import { Icon } from '@iconify/react';
 
-import { ChartTypePreview } from '../DiagrammeSection.js';
-import { ALL_PALETTE_SHAPES, getShapeVariant } from '../FormenSection.js';
+import { ChartTypePreview } from '../ChartsSection.js';
+import { ALL_PALETTE_SHAPES, getShapeVariant } from '../ShapesSection.js';
 import { IllustrationThumb } from '../IllustrationThumb.js';
-import { FramePresetPreview } from '../RahmenSection.js';
+import { FramePresetPreview } from '../FramesSection.js';
 
 import { PREVIEW_COMPONENTS } from './constants.js';
 

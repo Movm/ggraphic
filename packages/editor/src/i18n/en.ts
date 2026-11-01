@@ -189,33 +189,17 @@ export const en: Messages = {
 
   formats: {
     names: {
-      'post-portrait': 'Sharepic',
-      'post-portrait-tall': 'Sharepic 3:4',
-      'profile-square': 'Profile picture',
+      'post-portrait': 'Post 4:5',
+      'profile-square': 'Square 1:1',
       'slide-16-9': 'Presentation',
-      'print-visitenkarte-quer': 'Business card, landscape',
-      'print-visitenkarte-hoch': 'Business card, portrait',
-      'print-a3-hoch': 'Poster A3, portrait',
-      'print-a4-hoch': 'Poster A4, portrait',
-      'print-a3-quer': 'Poster A3, landscape',
-      'print-a1-hoch': 'Poster A1, portrait',
-      'print-a1-quer': 'Poster A1, landscape',
-      'print-grossflaeche': 'Billboard 18/1 (A2 template)',
-      'print-citylight': 'Citylight',
-      'print-flyer-dinlang': 'Flyer DL (A4 landscape, wrap fold)',
-      'print-a6-hoch': 'Flyer A6, portrait',
-      'print-a6-quer': 'Flyer A6, landscape',
-      'print-briefbogen-a4': 'Letterhead A4',
-      'print-zeitung-a4': 'Newspaper A4',
     } as Record<string, string>,
     slidesDescription: (size) => `${size} · Slides`,
     printDescription: (size, bleedMm, sides) =>
       `${size} · ${bleedMm} mm bleed · ${sides === 1 ? 'single-sided' : sides === 2 ? 'front and back' : `${sides} pages`}`,
     groups: {
-      sharepic: 'Sharepics',
-      'sharepic-tall': 'Sharepics 3:4',
-      profilbild: 'Profile picture',
-      praesentation: 'Presentations',
+      post: 'Posts',
+      square: 'Square',
+      slides: 'Presentations',
       print: 'Print',
     },
   },
@@ -273,7 +257,7 @@ export const en: Messages = {
     address: '1 Sample Street, 12345 Town',
   },
 
-  sharepicText: {
+  canvasText: {
     labels: {
       quote: 'Quote',
       name: 'Name',
@@ -435,8 +419,8 @@ export const en: Messages = {
 
   imageLooks: {
     original: 'Original',
-    gruen: 'Green tint',
-    grau: 'Grayscale',
+    tinted: 'Tinted',
+    grayscale: 'Grayscale',
     vivid: 'Vivid',
     warm: 'Warm',
     cool: 'Cool',
@@ -525,7 +509,7 @@ export const en: Messages = {
       hint: 'The frontmost element is at the top.',
       empty: 'There are no elements on this page.',
     },
-    studio: {
+    assetLibrary: {
       loadMore: 'Load more',
       loading: 'Loading …',
       noMatch: (noun: string, q: string) => `No ${noun} for “${q}”.`,
@@ -869,13 +853,13 @@ export const en: Messages = {
       currentPage: 'Current page',
       selectPages: 'Select pages',
       defaultMark: '(default)',
-      impressumMissingNotice: 'The imprint is not complete yet – you can still download.',
-      impressumHeading: 'Complete the imprint',
-      impressumNameRequired: (field) => `Please enter ${field}.`,
-      impressumAddress: 'Address',
-      impressumAddressPlaceholder: 'Street no., postcode city',
-      impressumAddressRequired: 'Please enter the address.',
-      impressumSubmit: 'Apply',
+      imprintMissingNotice: 'The imprint is not complete yet – you can still download.',
+      imprintHeading: 'Complete the imprint',
+      imprintNameRequired: (field) => `Please enter ${field}.`,
+      imprintAddress: 'Address',
+      imprintAddressPlaceholder: 'Street no., postcode city',
+      imprintAddressRequired: 'Please enter the address.',
+      imprintSubmit: 'Apply',
     },
   },
 

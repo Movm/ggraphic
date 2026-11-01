@@ -3,20 +3,20 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { CanvasEditorProvider } from '../../CanvasEditorProvider.js';
-import type { CanvasImpressumService } from '../../hostServices.js';
+import type { CanvasImprintService } from '../../hostServices.js';
 import { registerMessages } from '../../i18n/messages.js';
 import { DownloadSection } from './DownloadSection.js';
 
 afterEach(() => registerMessages('de'));
 
 const labels = { name: 'Name', namePlaceholder: 'Vorname Nachname', hint: 'Hinweis' };
-const impressum: CanvasImpressumService = {
+const impressum: CanvasImprintService = {
   elementId: 'impressum',
   localeOf: () => 'de-DE',
   line: () => '',
-  parse: () => ({ name: '', anschrift: '' }),
+  parse: () => ({ name: '', address: '' }),
   isFilled: (v) => v.trim() !== '',
-  isComplete: (p) => p.name.trim() !== '' && p.anschrift.trim() !== '',
+  isComplete: (p) => p.name.trim() !== '' && p.address.trim() !== '',
   labels: { 'de-DE': labels, 'de-AT': labels },
   composeElement: () => {
     throw new Error('unused');
@@ -25,7 +25,7 @@ const impressum: CanvasImpressumService = {
 
 function renderGate() {
   return render(
-    <CanvasEditorProvider services={{ print: { impressum } }}>
+    <CanvasEditorProvider services={{ print: { imprint: impressum } }}>
       <DownloadSection
         onDownload={vi.fn()}
         pageCount={1}

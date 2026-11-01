@@ -16,10 +16,15 @@
   "exports": {
     ".": "./src/entries/embed.ts",
     "./styles": "./src/styles/index.css",
+    "./styles/index.css": "./src/styles/index.css",
     "./styles/editor": "./src/styles/editor.css",
+    "./styles/editor.css": "./src/styles/editor.css",
     "./styles/tokens": "./src/styles/tokens.css",
+    "./styles/tokens.css": "./src/styles/tokens.css",
     "./styles/tailwind": "./src/styles/tailwind.css",
+    "./styles/tailwind.css": "./src/styles/tailwind.css",
     "./styles/compiled": "./dist/styles/compiled.css",
+    "./styles/compiled.css": "./dist/styles/compiled.css",
     "./embed": "./src/entries/embed.ts",
     "./page": "./src/entries/page.ts",
     "./config": "./src/entries/config.ts",
@@ -28,6 +33,7 @@
     "./kinds": "./src/entries/kinds.ts",
     "./store": "./src/entries/store.ts",
     "./services": "./src/entries/services.ts",
+    "./host": "./src/entries/host.ts",
     "./brand": "./src/entries/brand.ts",
     "./templates": "./src/entries/templates.ts",
     "./elements": "./src/entries/elements.ts",
@@ -549,10 +555,15 @@
         "default": "./dist/entries/embed.js"
       },
       "./styles": "./dist/styles/index.css",
+      "./styles/index.css": "./dist/styles/index.css",
       "./styles/editor": "./dist/styles/editor.css",
+      "./styles/editor.css": "./dist/styles/editor.css",
       "./styles/tokens": "./dist/styles/tokens.css",
+      "./styles/tokens.css": "./dist/styles/tokens.css",
       "./styles/tailwind": "./dist/styles/tailwind.css",
+      "./styles/tailwind.css": "./dist/styles/tailwind.css",
       "./styles/compiled": "./dist/styles/compiled.css",
+      "./styles/compiled.css": "./dist/styles/compiled.css",
       "./embed": {
         "types": "./dist/entries/embed.d.ts",
         "import": "./dist/entries/embed.js",
@@ -592,6 +603,11 @@
         "types": "./dist/entries/services.d.ts",
         "import": "./dist/entries/services.js",
         "default": "./dist/entries/services.js"
+      },
+      "./host": {
+        "types": "./dist/entries/host.d.ts",
+        "import": "./dist/entries/host.js",
+        "default": "./dist/entries/host.js"
       },
       "./brand": {
         "types": "./dist/entries/brand.d.ts",

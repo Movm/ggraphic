@@ -5,7 +5,7 @@
  */
 import { type BrandPack } from '@ggraphic/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { type CSSProperties, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, use, useMemo, useRef, useState } from 'react';
 
 import { registerBrandPacks } from '../brand/brandRegistry.js';
 import { type CanvasEditorServices, CanvasEditorProvider } from '../CanvasEditorProvider.js';
@@ -71,8 +71,11 @@ export default function EmbeddedEditor({
   locale = 'en',
   queryClient,
   title,
+  exportApiRef,
 }: GgraphicEditorProps) {
-  syncRegisters(brand, locale, templates);
+  // A pending pack suspends here, inside `GgraphicEditor`'s Suspense boundary.
+  const pack = templates instanceof Promise ? use(templates) : templates;
+  syncRegisters(brand, locale, pack);
 
   const [ownClient] = useState(() => new QueryClient());
   const client = queryClient ?? ownClient;
@@ -80,11 +83,11 @@ export default function EmbeddedEditor({
   const merged = useMemo<CanvasEditorServices>(
     () => ({
       slotBudgets: {
-        budgetFor: (page, id) => slotBudgetFor(page, id, templates.templateOf),
+        budgetFor: (page, id) => slotBudgetFor(page, id, pack.templateOf),
       },
       ...services,
     }),
-    [services, templates]
+    [services, pack]
   );
 
   // The document is read once: the editor owns it from here, and reports it through `onChange`.
@@ -92,7 +95,7 @@ export default function EmbeddedEditor({
     () =>
       document ?? {
         formatId: DEFAULT_FORMAT_ID,
-        pages: [{ configId: templates.definitions[0]?.id ?? BLANK_PAGE_ID, state: {} }],
+        pages: [{ configId: pack.definitions[0]?.id ?? BLANK_PAGE_ID, state: {} }],
       }
   );
   // The host may pass a new `onChange` every render: the editor reads it at call time.
@@ -116,6 +119,7 @@ export default function EmbeddedEditor({
             onExport={NOOP}
             onCancel={NOOP}
             galleryAutoSave={false}
+            {...(exportApiRef !== undefined && { exportApiRef })}
             {...(onChange !== undefined && { onPagesChange: report })}
           />
         </div>

@@ -9,6 +9,7 @@ import { describe, expect, it } from 'vitest';
 
 import { PrintGuides } from '../PrintGuides.js';
 import { CANVAS_FORMATS, printGeometry, type PrintCanvasFormat } from '../../formats/index.js';
+import { LEGACY_CANVAS_FORMATS } from '../../formats/legacyCatalog.js';
 import { CanvasStage, type CanvasStageRef } from '../../primitives/CanvasStage.js';
 import { withSelectionChromeHidden } from '../../utils/captureStage.js';
 
@@ -21,7 +22,7 @@ const guideNodes = (stage: Konva.Stage) =>
     .filter((n) => n.name() === 'selection-chrome' && n.getType() === 'Group');
 
 function mount(formatId: string) {
-  const format = CANVAS_FORMATS.find((f) => f.id === formatId)!;
+  const format = [...CANVAS_FORMATS, ...LEGACY_CANVAS_FORMATS].find((f) => f.id === formatId)!;
   const ref = createRef<CanvasStageRef>();
   render(
     <CanvasStage ref={ref} width={400} height={300} responsive={false}>

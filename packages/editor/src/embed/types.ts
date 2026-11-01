@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MPL-2.0
 import { type BrandPack } from '@ggraphic/core';
 import { type QueryClient } from '@tanstack/react-query';
+import { type Ref } from 'react';
 
 import { type CanvasEditorServices } from '../CanvasEditorProvider.js';
+import { type CanvasEditorExportApi } from '../components/CanvasEditor/types.js';
 import { type MessageLocale } from '../i18n/messages.js';
 import { type TemplatePack } from '../page/templatePack.js';
 
@@ -15,8 +17,11 @@ export interface GgraphicDocument {
 export interface GgraphicEditorProps {
   /** The brand pack (`defineBrand`, or `defaultBrand` from `@ggraphic/brand-default`). */
   brand: BrandPack;
-  /** The templates a document's pages come from (`templatePackFromJson`). */
-  templates: TemplatePack;
+  /**
+   * The templates a document's pages come from: `loadTemplatePack(files)`, which keeps the
+   * parser out of the host's entry chunk, or a pack from `templatePackFromJson`.
+   */
+  templates: TemplatePack | Promise<TemplatePack>;
   /**
    * The design to open, read when the editor mounts (give it a new `key` to open another).
    * Absent: one page of the pack's first template, or a blank page, on the default format.
@@ -32,4 +37,9 @@ export interface GgraphicEditorProps {
   queryClient?: QueryClient;
   /** The design's name, used for file names of downloads. */
   title?: string;
+  /**
+   * Filled once the editor has loaded in the browser, emptied when it unmounts: render pages as
+   * PNG, export the deck as .pptx, read the pages. A callback ref tells the host when it is ready.
+   */
+  exportApiRef?: Ref<CanvasEditorExportApi>;
 }

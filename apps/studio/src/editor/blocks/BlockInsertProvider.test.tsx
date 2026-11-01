@@ -14,7 +14,7 @@ function Ids() {
   const api = useBlockInsert();
   return (
     <p data-testid="ids" data-loading={String(api?.isLoading ?? false)}>
-      {(api?.bloecke as { id: string }[] | undefined)?.map((b) => b.id).join(',')}
+      {(api?.blocks as { id: string }[] | undefined)?.map((b) => b.id).join(',')}
     </p>
   );
 }
