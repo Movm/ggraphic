@@ -19,6 +19,7 @@ import { immer } from 'zustand/middleware/immer';
 import { createStore } from 'zustand/vanilla';
 
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { nextHistoryStamp } from '@ggraphic/editor/utils/historyStamp';
 
 import { DEFAULT_FORMAT_ID, getCanvasFormatOrDefault } from '../formats/index.js';
 
@@ -299,7 +300,7 @@ export function createCanvasEditorStore<
 
           const entry: CanvasHistoryEntry<TComponentState> = {
             selectedLayerIds: [...state.selectedLayerIds],
-            timestamp: Date.now(),
+            timestamp: nextHistoryStamp(),
             componentState: componentStateJson ? JSON.parse(componentStateJson) : undefined,
           };
 

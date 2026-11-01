@@ -17,9 +17,11 @@
 import { brandDefault, type BrandPack } from '@ggraphic/core';
 
 let registered: readonly [BrandPack, ...BrandPack[]] = [brandDefault];
+let declared: ReadonlySet<string> | null = null;
 
 export function registerBrandPacks(packs: readonly [BrandPack, ...BrandPack[]]): void {
   registered = packs;
+  declared = null;
 }
 
 /** The pack new elements take their defaults from. */
@@ -29,6 +31,21 @@ export function activeBrand(): BrandPack {
 
 export function registeredBrands(): readonly BrandPack[] {
   return registered;
+}
+
+/** Every family a registered pack names or ships a file for: the host provides these. */
+export function declaredFontFamilies(): ReadonlySet<string> {
+  declared ??= new Set(registered.flatMap(packFamilies));
+  return declared;
+}
+
+function packFamilies(pack: BrandPack): string[] {
+  const { boldFamilies, ...roles } = pack.fonts;
+  return [
+    ...Object.values(roles).filter((family): family is string => typeof family === 'string'),
+    ...Object.values(boldFamilies ?? {}),
+    ...pack.fontFaces.map((face) => face.family),
+  ];
 }
 
 /** A brand's headline family as a CSS stack, for canvas and SVG text a tool draws itself. */
