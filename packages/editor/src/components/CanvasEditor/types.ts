@@ -101,6 +101,12 @@ export interface CanvasEditorProps<TConfigId extends string = string> {
   /** Lets the host render the active page itself, e.g. to save it somewhere else. */
   exportApiRef?: React.Ref<CanvasEditorExportApi>;
   /**
+   * Called with every page (config and state, as `getPages` returns them) after each change to
+   * the deck: an edit, an added, moved or removed page, an undo. For a host that stores the
+   * document itself.
+   */
+  onPagesChange?: (pages: { configId: string; state: Record<string, unknown> }[]) => void;
+  /**
    * The host draws the menu bar itself (the mobile app's native header). The
    * editor then renders no bar of its own: undo/redo run through
    * `exportApiRef`, and the share menu opens on the host's request.

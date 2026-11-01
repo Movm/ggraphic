@@ -213,6 +213,7 @@ function CanvasEditorInner({
   galleryAutoSave = true,
   showShare = true,
   exportApiRef,
+  onPagesChange,
   hostChrome,
   readOnly = false,
 }: CanvasEditorProps) {
@@ -658,6 +659,20 @@ function CanvasEditorInner({
     },
     [pagesDoc, canvasRefsRef, formatId, documentTitle, loadedConfigs]
   );
+  // The host's callback at call time: it may pass a new function every render.
+  const onPagesChangeRef = useRef(onPagesChange);
+  onPagesChangeRef.current = onPagesChange;
+  const reportsPages = onPagesChange !== undefined;
+  useEffect(() => {
+    if (!reportsPages) return;
+    const report = () =>
+      onPagesChangeRef.current?.(
+        serializeDeck(pagesDoc).map(({ configId, state }) => ({ configId, state }))
+      );
+    pagesDoc.on('update', report);
+    return () => pagesDoc.off('update', report);
+  }, [pagesDoc, reportsPages]);
+
   useImperativeHandle(
     exportApiRef,
     () => ({
