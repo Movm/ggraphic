@@ -9,7 +9,7 @@
  */
 
 import { activeBrand } from '../brand/brandRegistry.js';
-import { messages } from '../i18n/messages.js';
+import { messages } from '../i18n/catalogue.js';
 import { contrastRatio, luminance } from './colorLuminance.js';
 
 import type {

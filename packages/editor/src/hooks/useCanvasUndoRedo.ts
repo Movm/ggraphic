@@ -4,7 +4,7 @@ import { flushSync } from 'react-dom';
 import { useStore } from 'zustand';
 
 import { useAnnounce } from './useAnnounce.js';
-import { messages } from '../i18n/messages.js';
+import { messages } from '../i18n/catalogue.js';
 import { editorSkipsKey } from '../utils/keyboardOwnership.js';
 
 import { useCanvasStore } from '../stores/CanvasStoreProvider.js';

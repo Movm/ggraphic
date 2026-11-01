@@ -20,7 +20,7 @@ import * as Y from 'yjs';
 
 import { readPages } from '../collab/pagesDoc.js';
 import { extractInheritablePageState } from '../configs/pageInheritance.js';
-import { messages } from '../i18n/messages.js';
+import { messages } from '../i18n/catalogue.js';
 import { getTemplate, type TemplateId } from '../templates/registry.js';
 
 import { hostEmittedStateKeys } from '../collab/pageElementStateKeys.js';

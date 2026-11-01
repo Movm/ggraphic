@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useDocumentBrand } from '../../../brand/documentBrand.js';
 import { plainAssetImageUrls, registeredAssetCatalog } from '../../../utils/canvasAssets.js';
+import { onIconSetLoaded } from '../../../utils/canvasIcons.js';
 import { cn } from '../../../utils/cn.js';
-import { Icon } from '@iconify/react';
+import { addCollection, Icon } from '@iconify/react';
 
 import { ChartTypePreview } from '../ChartsSection.js';
 import { ALL_PALETTE_SHAPES, getShapeVariant } from '../ShapesSection.js';
@@ -13,6 +14,9 @@ import { PREVIEW_COMPONENTS } from './constants.js';
 
 import type { ElementThumbSpec } from './elementTypes.js';
 import type { ShapeType } from '../../../utils/shapes.js';
+
+// `<Icon icon="prefix:…">` renders offline from the sets the catalogue has loaded.
+onIconSetLoaded(addCollection);
 
 const PALETTE_BY_TYPE = new Map(ALL_PALETTE_SHAPES.map((shape) => [shape.id, shape]));
 

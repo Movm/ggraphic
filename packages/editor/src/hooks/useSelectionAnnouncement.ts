@@ -2,7 +2,7 @@
 import { useEffect, useRef } from 'react';
 
 import { useAnnouncer } from './useAnnounce.js';
-import { messages } from '../i18n/messages.js';
+import { messages } from '../i18n/catalogue.js';
 
 import type { CanvasEditorStoreApi } from '../stores/createCanvasEditorStore.js';
 

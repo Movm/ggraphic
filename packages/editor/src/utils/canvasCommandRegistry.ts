@@ -9,7 +9,8 @@
  * Tastaturen hinter AltGr.
  */
 
-import { messages, type Messages } from '../i18n/messages.js';
+import { messages } from '../i18n/catalogue.js';
+import { type Messages } from '../i18n/messages.js';
 
 export interface CommandShortcut {
   /** `KeyboardEvent.key`; Buchstaben klein. */

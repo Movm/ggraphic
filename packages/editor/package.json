@@ -10,8 +10,8 @@
   "type": "module",
   "sideEffects": [
     "**/*.css",
-    "**/hooks/useFontGeneration.js",
-    "**/hooks/useFontGeneration.ts"
+    "**/utils/fontGeneration.js",
+    "**/utils/fontGeneration.ts"
   ],
   "exports": {
     ".": "./src/entries/embed.ts",

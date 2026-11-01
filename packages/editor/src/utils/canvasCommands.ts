@@ -9,7 +9,7 @@
  * Eine Mehrfach-Aktion ist ein Schritt im Verlauf.
  */
 
-import { messages } from '../i18n/messages.js';
+import { messages } from '../i18n/catalogue.js';
 import {
   alignDelta,
   distributeDeltas,

@@ -2,9 +2,9 @@
 import { useIconCatalog } from '../../hooks/useIconCatalog.js';
 import { usePaginatedIcons } from '../../hooks/usePaginatedIcons.js';
 import { Skeleton } from '../../ui/skeleton.js';
-import { type IconDef } from '../../utils/canvasIcons.js';
+import { type IconDef, onIconSetLoaded } from '../../utils/canvasIcons.js';
 import { cn } from '../../utils/cn.js';
-import { Icon } from '@iconify/react';
+import { addCollection, Icon } from '@iconify/react';
 import { useCallback, useMemo, useRef, useEffect } from 'react';
 import { PiCheck } from 'react-icons/pi';
 
@@ -16,6 +16,9 @@ import {
   SELECTABLE_CARD_DISABLED,
   SIDEBAR_SECTION,
 } from '../sidebarStyles.js';
+
+// `<Icon icon="prefix:…">` renders offline from the sets the catalogue has loaded.
+onIconSetLoaded(addCollection);
 
 export interface IconsSectionProps {
   selectedIcons: string[];

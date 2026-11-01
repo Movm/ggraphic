@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 import { type ElementPlacement, type UserImageInstance } from '@ggraphic/core';
-import { messages } from '../i18n/messages.js';
+import { messages } from '../i18n/catalogue.js';
 
 import { type StockImageAttribution } from '../common/imageSourceTypes.js';
 
@@ -246,3 +246,9 @@ export function createUserImageInstanceFromUrl(
 
 /** Konva node name of a user photo's Image; the print export finds photos by it. */
 export const USER_PHOTO_NODE_NAME = 'user-photo';
+
+/** The template background photo's look, stored on the page state; null when untouched. */
+export function backgroundAdjustments(state: Record<string, unknown>): ImageAdjustments | null {
+  const value = state.backgroundImageAdjustments;
+  return value && typeof value === 'object' ? (value as ImageAdjustments) : null;
+}

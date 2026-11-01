@@ -10,14 +10,8 @@ import { makeSectionDefiner } from '../configs/factory/defineSection.js';
 import { injectFeatureProps } from '../configs/featureInjector.js';
 import { type FullCanvasConfig } from '../configs/types.js';
 import { getCanvasFormatOrDefault } from '../formats/index.js';
-import { messages } from '../i18n/messages.js';
-import {
-  AssetsSection,
-  CombinedTextSection,
-  ToolsSection,
-  UploadsSection,
-} from '../sidebar/sections/index.js';
-import { PiSquaresFour, PiTextAa, PiToolbox, PiUploadSimple } from 'react-icons/pi';
+import { messages } from '../i18n/catalogue.js';
+import { coreSidebar } from '../sidebar/coreSidebar.js';
 
 import { createPageActions, type PageActions } from './actions.js';
 import { pageStateFrom, type PageSeed, type PageState } from './pageState.js';
@@ -61,16 +55,48 @@ export function createPageConfig({
     backgroundType: 'color',
     fonts: { primary: activeBrand().fonts.headline, fontSize: 60, requireFontLoad: true },
 
+    // Sections and icons by id (`coreSidebar`): read when the shell renders the sidebar, so this
+    // module, and the `page` entry with it, loads without React.
     tabs: [
-      { id: 'text', icon: PiTextAa, label: t.text, ariaLabel: t.textAriaLabel },
-      { id: 'elements', icon: PiSquaresFour, label: t.elements, ariaLabel: t.elementsAriaLabel },
-      { id: 'uploads', icon: PiUploadSimple, label: t.uploads, ariaLabel: t.uploadsAriaLabel },
-      { id: 'tools', icon: PiToolbox, label: t.tools, ariaLabel: t.toolsAriaLabel },
+      {
+        id: 'text',
+        get icon() {
+          return coreSidebar().icons.text;
+        },
+        label: t.text,
+        ariaLabel: t.textAriaLabel,
+      },
+      {
+        id: 'elements',
+        get icon() {
+          return coreSidebar().icons.elements;
+        },
+        label: t.elements,
+        ariaLabel: t.elementsAriaLabel,
+      },
+      {
+        id: 'uploads',
+        get icon() {
+          return coreSidebar().icons.uploads;
+        },
+        label: t.uploads,
+        ariaLabel: t.uploadsAriaLabel,
+      },
+      {
+        id: 'tools',
+        get icon() {
+          return coreSidebar().icons.tools;
+        },
+        label: t.tools,
+        ariaLabel: t.toolsAriaLabel,
+      },
     ],
 
     sections: {
       text: section({
-        component: CombinedTextSection,
+        get component() {
+          return coreSidebar().sections.text;
+        },
         propsFactory: (state, actions) => ({
           additionalTexts: state.additionalTexts,
           onAddHeader: actions.addHeader,
@@ -81,18 +107,24 @@ export function createPageConfig({
         }),
       }),
       elements: section({
-        component: AssetsSection,
+        get component() {
+          return coreSidebar().sections.elements;
+        },
         propsFactory: (state, actions, context) => ({
           onAddAsset: actions.addAsset,
           ...injectFeatureProps(state, actions, context),
         }),
       }),
       uploads: section({
-        component: UploadsSection,
+        get component() {
+          return coreSidebar().sections.uploads;
+        },
         propsFactory: (_state, actions) => ({ onPlaceFromUrl: actions.addUserImageFromUrl }),
       }),
       tools: section({
-        component: ToolsSection,
+        get component() {
+          return coreSidebar().sections.tools;
+        },
         propsFactory: (_state, actions) => ({ onPlaceImageUrl: actions.addUserImageFromUrl }),
       }),
     },

@@ -315,6 +315,9 @@ const DEVELOPER_ERRORS = [
   /^Template ".*" is already registered/,
   /^".*" is a core element kind/,
   /^Unexpected value: /,
+  // Thrown when a page or share config's section is read outside the editor shell, which provides
+  // them when its module loads: a host wiring mistake, not a state a person reaches.
+  /^coreSidebar: /,
   // smartcrop and the stock-photo / Iconify loaders catch these and fall back silently.
   /^smartcrop: /,
   /^no catalogue$/,
