@@ -115,6 +115,55 @@ describe('committing a text edit moves the plate', () => {
   });
 });
 
+describe('previewing a text edit while it is typed', () => {
+  function setup() {
+    let state = templatePageState(kicker(), 'post-portrait')! as unknown as StudioPageState;
+    let history = 0;
+    const actions = createStudioActions(
+      () => state,
+      (change) => {
+        state = typeof change === 'function' ? change(state) : { ...state, ...change };
+      },
+      () => {
+        history++;
+      },
+      () => {
+        history++;
+      },
+      1080,
+      1350
+    );
+    return {
+      actions,
+      state: () => state,
+      history: () => history,
+      plate: () => box(state as never, 'shapeInstances', 'plate-1'),
+    };
+  }
+
+  it('offers the plate that hugs the draft, writes nothing, and the commit lands on the same plate', () => {
+    const { actions, state, history, plate } = setup();
+    const before = state();
+    const width = plate().width;
+    const preview = actions.previewAdditionalText!('line-1', 'Hallo')!;
+    const offered = TEMPLATE_GATE_ADAPTER.box(
+      'shapeInstances',
+      byId(preview.overrides, 'shapeInstances', 'plate-1'),
+      1
+    )!;
+    expect(offered.width).toBeLessThan(width / 2);
+    // The page is as it was, record and all: only the canvas draws the preview.
+    expect(state()).toBe(before);
+    expect(plate().width).toBe(width);
+    expect(history()).toBe(0);
+    expect(byId(preview.overrides, 'additionalTexts', 'line-1')['text']).not.toBe('Hallo');
+
+    actions.updateAdditionalText('line-1', { text: 'Hallo' });
+    expect(plate().width).toBe(offered.width);
+    expect(history()).toBe(1);
+  });
+});
+
 describe('an AI fill moves the plate', () => {
   it('hugs the filled text', () => {
     const state = templatePageState(

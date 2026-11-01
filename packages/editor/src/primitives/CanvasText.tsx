@@ -95,6 +95,8 @@ export interface CanvasTextProps {
   onSelect?: () => void;
   onDeselect?: () => void;
   onTextChange?: (text: string) => void;
+  /** Vorschau des Entwurfs beim Tippen; siehe `TextEditSession.onTextPreview`. */
+  onTextPreview?: (draft: string | null) => number | null;
   onDragEnd?: (x: number, y: number) => void;
   onTransformEnd?: (
     x: number,
@@ -160,6 +162,7 @@ function CanvasTextInner({
   onSelect,
   onDeselect,
   onTextChange,
+  onTextPreview,
   onDragEnd,
   onTransformEnd,
   onFontSizeChange,
@@ -392,6 +395,7 @@ function CanvasTextInner({
       accent,
       marker,
       onTextChange,
+      onTextPreview,
     });
   }, [
     editable,
@@ -411,6 +415,7 @@ function CanvasTextInner({
     accent,
     marker,
     onTextChange,
+    onTextPreview,
   ]);
 
   const enabledAnchors = transformConfig?.enabledAnchors ?? DEFAULT_TEXT_ANCHORS;

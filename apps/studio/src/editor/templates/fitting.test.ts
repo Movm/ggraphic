@@ -115,18 +115,23 @@ describe('committing a text edit', () => {
       userImageInstances: [],
       layerOrder: [],
     } as unknown as StudioPageState;
+    let history = 0;
     const actions = createStudioActions(
       () => state,
       (change) => {
         state = typeof change === 'function' ? change(state) : { ...state, ...change };
       },
-      () => undefined,
-      () => undefined,
+      () => {
+        history++;
+      },
+      () => {
+        history++;
+      },
       1080,
       1350
     );
     const size = () => (state.additionalTexts[0] as unknown as Text).fontSize;
-    return { actions, size };
+    return { actions, size, history: () => history };
   }
 
   it('shrinks as the text grows and grows back as it shrinks, up to maxFontSize', () => {
@@ -136,6 +141,28 @@ describe('committing a text edit', () => {
     expect(size()).toBeLessThan(200);
     actions.updateAdditionalText('h', { text: 'Hi' });
     expect(size()).toBe(200);
+  });
+
+  it('previews the fitted size while typing, leaving the page and the history alone', () => {
+    const { actions, size, history } = setup();
+    const preview = actions.previewAdditionalText!('h', 'Gemeinschaftsgarten')!;
+    expect(preview.fontSize).toBeLessThan(200);
+    // The size is offered to the canvas, not written: the page still has the committed one.
+    expect(size()).toBe(200);
+    expect(history()).toBe(0);
+    const drawn = (preview.overrides['additionalTexts'] as Text[]).find((t) => t.id === 'h')!;
+    expect(drawn.fontSize).toBe(preview.fontSize);
+    // The text is not part of the preview: the commit writes it.
+    expect(drawn.text).toBe('Hi');
+
+    actions.updateAdditionalText('h', { text: 'Gemeinschaftsgarten' });
+    expect(size()).toBe(preview.fontSize);
+  });
+
+  it('previews no size for a text without maxFontSize, and nothing for a text that is gone', () => {
+    const { actions } = setup({});
+    expect(actions.previewAdditionalText!('h', 'Gemeinschaftsgarten')!.fontSize).toBeNull();
+    expect(actions.previewAdditionalText!('gone', 'Hi')).toBeNull();
   });
 
   it('does not refit on a move, or when the size is set by hand', () => {

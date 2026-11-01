@@ -74,7 +74,7 @@ describe('page counter', () => {
   const ctx = (pageNumber?: number) =>
     ({
       state: {},
-      handlers: {},
+      handlers: { actions: {} },
       getSnapTargets: () => [],
       registerGeometry: () => {},
       handleSnapChange: () => {},
