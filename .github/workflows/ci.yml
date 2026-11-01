@@ -101,7 +101,7 @@ jobs:
       - run: pnpm --filter @ggraphic/studio gate:render --shard=${{ matrix.shard }}/3
       - name: Upload the diff images of a failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: render-gate-results-${{ matrix.shard }}
           path: apps/studio/test-results
