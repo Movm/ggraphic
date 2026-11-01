@@ -1,0 +1,22 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
+<!-- Test entry: the editor in a page without Tailwind, styled only by @ggraphic/editor/styles/compiled
+     (e2e/compiledCss.spec.ts). Never in the production build: see vite.config.ts. -->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ggraphic editor, compiled CSS only</title>
+    <style>
+      /* A host rule: unlayered, so it beats the editor's layered utility of the same specificity. */
+      .canvas-editor-layout {
+        min-height: 321px;
+      }
+    </style>
+  </head>
+  <body style="margin: 0">
+    <!-- Host markup with editor class names, outside the editor: must stay unstyled. -->
+    <div id="outside" class="flex p-4 bg-editor-surface rounded-lg">outside</div>
+    <div id="root"></div>
+    <script type="module" src="/src/gate/compiledHost.tsx"></script>
+  </body>
+</html>

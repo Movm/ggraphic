@@ -18,6 +18,7 @@
     "./styles/editor": "./src/styles/editor.css",
     "./styles/tokens": "./src/styles/tokens.css",
     "./styles/tailwind": "./src/styles/tailwind.css",
+    "./styles/compiled": "./dist/styles/compiled.css",
     "./ai/applyOperation": "./src/ai/applyOperation.ts",
     "./ai/describeCanvasElements": "./src/ai/describeCanvasElements.ts",
     "./ai/illustrationCapability": "./src/ai/illustrationCapability.ts",
@@ -302,6 +303,7 @@
     "./ui/alert-dialog": "./src/ui/alert-dialog.tsx",
     "./ui/button": "./src/ui/button.tsx",
     "./ui/dialog": "./src/ui/dialog.tsx",
+    "./ui/editorScope": "./src/ui/editorScope.ts",
     "./ui/icon-button": "./src/ui/icon-button.tsx",
     "./ui/input": "./src/ui/input.tsx",
     "./ui/label": "./src/ui/label.tsx",
@@ -425,7 +427,8 @@
     "./utils/zipPageImages": "./src/utils/zipPageImages.ts"
   },
   "scripts": {
-    "build": "tsc --project tsconfig.build.json && node -e \"require('node:fs').cpSync('src', 'dist', { recursive: true, filter: (f) => !/\\.tsx?$/.test(f) })\"",
+    "build": "tsc --project tsconfig.build.json && node -e \"require('node:fs').cpSync('src', 'dist', { recursive: true, filter: (f) => !/\\.tsx?$/.test(f) })\" && node scripts/build-css.mjs",
+    "build:css": "node scripts/build-css.mjs",
     "lint": "eslint .",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
@@ -477,20 +480,24 @@
   "devDependencies": {
     "@napi-rs/canvas": "^1.0.13",
     "@rolldown/plugin-babel": "^0.2.4",
+    "@tailwindcss/node": "4.3.3",
+    "@tailwindcss/oxide": "4.3.3",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.8",
+    "@types/node": "^26.3.0",
     "@types/react": "19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
+    "babel-plugin-react-compiler": "^1.0.0",
     "jsdom": "30.1.3",
     "konva": "^10.9.0",
+    "lightningcss": "1.33.0",
     "react-konva": "^19.3.2",
+    "tailwindcss": "4.3.3",
     "typescript": "^6.0.3",
     "vitest": "^5.0.5",
-    "vitest-axe": "^0.1.0",
-    "@types/node": "^26.3.0",
-    "babel-plugin-react-compiler": "^1.0.0"
+    "vitest-axe": "^0.1.0"
   },
   "peerDependencies": {
     "konva": "^10.9.0",
@@ -503,6 +510,7 @@
     "LICENSE",
     "NOTICE",
     "README.md",
+    "skills",
     "THIRD_PARTY_NOTICES"
   ],
   "publishConfig": {
@@ -511,6 +519,7 @@
       "./styles/editor": "./dist/styles/editor.css",
       "./styles/tokens": "./dist/styles/tokens.css",
       "./styles/tailwind": "./dist/styles/tailwind.css",
+      "./styles/compiled": "./dist/styles/compiled.css",
       "./*": {
         "types": "./dist/*.d.ts",
         "import": "./dist/*.js",

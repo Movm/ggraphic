@@ -176,11 +176,16 @@ const DEFAULT_DECK_LOCALE = (): 'de-DE' | 'de-AT' => 'de-DE';
 /** Folien-PDF: 2× der 1920 × 1080-Folie, scharf auch im Vollbild. */
 const SLIDES_PDF_PIXEL_RATIO = 2;
 
+/** A box-less root that scopes `@ggraphic/editor/styles/compiled` to the editor (`EDITOR_SCOPE`). */
+const SCOPE_ROOT_STYLE = { display: 'contents' } as const;
+
 export function CanvasEditorShell(props: CanvasEditorProps) {
   return (
-    <AutoSaveStoreProvider initialShareToken={props.initialShareToken ?? null}>
-      <CanvasEditorInner {...props} />
-    </AutoSaveStoreProvider>
+    <div {...EDITOR_SCOPE} style={SCOPE_ROOT_STYLE}>
+      <AutoSaveStoreProvider initialShareToken={props.initialShareToken ?? null}>
+        <CanvasEditorInner {...props} />
+      </AutoSaveStoreProvider>
+    </div>
   );
 }
 
@@ -1835,5 +1840,6 @@ export type {
   CanvasEditorProps,
   PageWrapperProps,
 } from '@ggraphic/editor/components/CanvasEditor/types';
+import { EDITOR_SCOPE } from '../../ui/editorScope.js';
 
 export default CanvasEditorShell;
