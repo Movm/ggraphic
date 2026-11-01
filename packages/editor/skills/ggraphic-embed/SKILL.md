@@ -97,15 +97,21 @@ A document can carry its own brand: set `brand` on the template's `FullCanvasCon
 
 ## Styles
 
-```ts
-import '@ggraphic/editor/styles'; // neutral --editor-* token defaults + editor rules
-```
+The components carry Tailwind v4 utility classes. Pick one of two ways to style them:
 
-The components carry **Tailwind v4 utility classes** and no compiled Tailwind is shipped:
+- **Any host (no Tailwind needed):** one import, everything compiled.
 
-- Tailwind v4 host: in your CSS, `@import 'tailwindcss'; @import '@ggraphic/editor/styles'; @import '@ggraphic/editor/styles/tailwind';` (scans the package, maps the theme names onto the tokens).
-- Any other host: scan `node_modules/@ggraphic/editor/dist/**/*.js` with your own Tailwind v4 build and map the same theme names, or the editor renders unstyled.
-- Theme the editor by overriding the `--editor-*` custom properties after the import.
+  ```ts
+  import '@ggraphic/editor/styles/compiled';
+  ```
+
+  - Every rule sits in `@layer ggraphic`, so any unlayered host rule wins without `!important`. If your own CSS is layered, declare `ggraphic` first (`@layer ggraphic, base, …;`) to keep the same order.
+  - The rules apply only inside `[data-ggraphic]`, Tailwind's reset included, so your page keeps its own reset and theme. `CanvasEditorShell` renders that root, and every dialog, menu and popover the editor portals onto `<body>` carries the attribute too. If you mount editor components outside the shell, wrap them in an element with `data-ggraphic` (`EDITOR_SCOPE` from `@ggraphic/editor/ui/editorScope`).
+  - Do not combine it with `styles` or `styles/tailwind`.
+
+- **Tailwind v4 host:** in your CSS, `@import 'tailwindcss'; @import '@ggraphic/editor/styles'; @import '@ggraphic/editor/styles/tailwind';`. This scans the package and maps the theme names onto the tokens. The classes then live in your Tailwind build and follow your layers.
+
+Either way, theme the editor through the `--editor-*` custom properties. Set them on `:root` (light), on `[data-theme='dark']`, or inside `@media (prefers-color-scheme: dark)`. The defaults have zero specificity, so your values win. Dark mode follows `data-theme="dark"` on `<html>` or the system setting unless `data-theme="light"` is set.
 
 ## Fonts
 
