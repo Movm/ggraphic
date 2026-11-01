@@ -429,6 +429,7 @@ export const KIND_RENDERERS: KindRenderers = {
         scale={badge.scale}
         opacity={badge.opacity ?? 1}
         textLines={badge.textLines}
+        outline={badge.outline}
         onSelect={() => handlers.handleCircleBadgeSelect(badge.id)}
         onDragEnd={(x, y) => handlers.handleCircleBadgeDragEnd(badge.id, x, y)}
         onTransformEnd={(x, y, s, r) =>

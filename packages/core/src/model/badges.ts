@@ -25,6 +25,11 @@ export interface CircleBadgeInstance {
   scale: number;
   opacity?: number;
   textLines: CircleBadgeTextLine[];
+  /**
+   * The badge's outline: a circle (absent), a jagged burst inside `radius`,
+   * or an ellipse wider than `radius` and flatter. Stored, so never renamed.
+   */
+  outline?: 'circle' | 'burst' | 'ellipse';
 }
 
 export type PillBadgeFontStyle = 'normal' | 'italic' | 'bold' | 'bold italic';
