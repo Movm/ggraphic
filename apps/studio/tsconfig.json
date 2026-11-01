@@ -17,7 +17,9 @@
   "include": [
     "src/**/*",
     "e2e/**/*",
+    "e2e-selfhost/**/*",
     "playwright.config.ts",
+    "playwright.selfhost.config.ts",
     "vite.config.ts",
     "vitest.config.ts",
     "vitest.setup.ts"

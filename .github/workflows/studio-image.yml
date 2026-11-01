@@ -1,0 +1,196 @@
+name: Studio image
+
+# ggraphic Studio as a container image, ghcr.io/movm/ggraphic-studio, for self-hosting without a
+# clone (docs/self-hosting.md). Pull requests build it and run it through docker compose and a
+# browser; nothing is pushed. On main it is published when Studio has a version without an image:
+# the changesets release PR raises the version in apps/studio*/package.json. A tag pushed by the
+# release workflow could not start this one (pushes with GITHUB_TOKEN start no workflows), so the
+# trigger is the version change itself. A manual run republishes the current version and latest,
+# e.g. for an update of the base image.
+on:
+  pull_request:
+    paths:
+      - 'apps/studio/**'
+      - 'apps/studio-server/**'
+      - 'packages/**'
+      - 'pnpm-lock.yaml'
+      - '.dockerignore'
+      - 'docker-compose.yml'
+      - 'docker-compose.build.yml'
+      - '.github/workflows/studio-image.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/studio/package.json'
+      - 'apps/studio-server/package.json'
+      - '.github/workflows/studio-image.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: studio-image-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  IMAGE: ghcr.io/movm/ggraphic-studio
+
+jobs:
+  # The image as a self-hoster runs it: the compose file of this commit, a fresh database, the
+  # setup token from the log, then the first steps in a browser.
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+      - name: Build the image (amd64)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/studio-server/Dockerfile
+          load: true
+          tags: ${{ env.IMAGE }}:ci
+          cache-from: type=gha,scope=studio
+          cache-to: type=gha,scope=studio,mode=max
+      - name: Start it with docker compose
+        run: |
+          printf 'POSTGRES_PASSWORD=%s\nSTUDIO_VERSION=ci\n' "$(openssl rand -hex 24)" > .env
+          docker compose up -d --wait --wait-timeout 180
+          curl -fsS http://localhost:8080/healthz | tee /dev/stderr | grep -q '"status":"ok"'
+      - name: The rembg profile points Studio at its service
+        run: |
+          COMPOSE_PROFILES=rembg docker compose config --format json \
+            | jq -e '.services.studio.environment.REMBG_URL == "http://rembg:7000" and (.services | has("rembg"))'
+          docker compose config --format json | jq -e '.services.studio.environment.REMBG_URL == ""'
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: pnpm
+      - name: Install Playwright
+        run: |
+          pnpm install --frozen-lockfile --filter @ggraphic/studio
+          pnpm --filter @ggraphic/studio exec playwright install --with-deps chromium
+      - name: Admin account, project, text and PNG in the browser
+        run: pnpm --filter @ggraphic/studio exec playwright test -c playwright.selfhost.config.ts
+      - name: Logs
+        if: failure()
+        run: docker compose logs
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: selfhost-test-results
+          path: apps/studio/test-results/
+          retention-days: 7
+      - name: Remove the stack and its volumes
+        if: always()
+        run: docker compose down -v
+      # The arm64 image reuses the build stage above; only its last stage runs emulated. argon2 is
+      # the one native module: its prebuilt binary for the platform must load.
+      - name: Build the image (arm64)
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/studio-server/Dockerfile
+          platforms: linux/arm64
+          load: true
+          tags: ${{ env.IMAGE }}:ci-arm64
+          cache-from: type=gha,scope=studio
+      - name: argon2 loads on arm64
+        run: |
+          docker run --rm --platform linux/arm64 "$IMAGE:ci-arm64" \
+            node -e "import('argon2').then((a) => a.hash('x')).then(() => console.log('argon2 ok'))"
+
+  # The version to publish, and whether it still needs publishing.
+  version:
+    needs: smoke
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      publish: ${{ steps.published.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Studio version
+        id: version
+        run: |
+          server=$(node -p "require('./apps/studio-server/package.json').version")
+          web=$(node -p "require('./apps/studio/package.json').version")
+          # One image carries both; .changeset/config.json versions them together.
+          if [ "$server" != "$web" ]; then
+            echo "::error::@ggraphic/studio-server is $server, @ggraphic/studio is $web"; exit 1
+          fi
+          echo "version=$server" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Already published?
+        id: published
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != workflow_dispatch ] \
+            && docker buildx imagetools inspect "$IMAGE:$VERSION" >/dev/null 2>&1; then
+            echo "$IMAGE:$VERSION exists"; echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  publish:
+    needs: version
+    if: needs.version.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # The defaults would take title, description and licence from the repository, whose root
+      # licence is the packages' MPL-2.0; Studio is AGPL-3.0.
+      - id: meta
+        uses: docker/metadata-action@v6
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=raw,value=${{ needs.version.outputs.version }}
+            type=raw,value=latest
+          labels: |
+            org.opencontainers.image.title=ggraphic Studio
+            org.opencontainers.image.description=The hostable ggraphic design app: API server and web app
+            org.opencontainers.image.licenses=AGPL-3.0-only
+            org.opencontainers.image.version=${{ needs.version.outputs.version }}
+            org.opencontainers.image.documentation=https://github.com/Movm/ggraphic/blob/main/docs/self-hosting.md
+          annotations: |
+            org.opencontainers.image.title=ggraphic Studio
+            org.opencontainers.image.description=The hostable ggraphic design app: API server and web app
+            org.opencontainers.image.licenses=AGPL-3.0-only
+            org.opencontainers.image.version=${{ needs.version.outputs.version }}
+            org.opencontainers.image.documentation=https://github.com/Movm/ggraphic/blob/main/docs/self-hosting.md
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: apps/studio-server/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          cache-from: type=gha,scope=studio
