@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MPL-2.0
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createCanvasEditorStore } from '@ggraphic/editor/stores/createCanvasEditorStore';
-import { createCanvasCommands } from '@ggraphic/editor/utils/canvasCommands';
+import { createCanvasEditorStore } from '../stores/createCanvasEditorStore.js';
+import { createCanvasCommands } from './canvasCommands.js';
 
-import type { BaseCanvasState } from '@ggraphic/editor/configs/factory/baseTypes';
-import type { LayoutResult } from '@ggraphic/editor/configs/types';
-import type { CanvasItem } from '@ggraphic/editor/utils/canvasLayerManager';
+import type { BaseCanvasState } from '../configs/factory/baseTypes.js';
+import type { LayoutResult } from '../configs/types.js';
+import type { CanvasItem } from './canvasLayerManager.js';
 
 /**
  * Jeder Befehl sagt genau einmal an, was er getan hat (WCAG 4.1.3) — geprüft

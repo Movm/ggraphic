@@ -6,13 +6,13 @@
  */
 
 import { type BrandPack } from '@ggraphic/core';
-import { measureTextWidthWithFont } from '@ggraphic/editor/utils/textUtils';
+import { measureTextWidthWithFont } from '../../utils/textUtils.js';
 
-import { buildPptxModel, type PptxPageState } from '@ggraphic/editor/export/pptx/buildPptxModel';
+import { buildPptxModel, type PptxPageState } from './buildPptxModel.js';
 import { writePptx, type PptxLoadedImage, type PptxRasterImage } from './writePptx.js';
 
-import type { PptxRasterRequest } from '@ggraphic/editor/export/pptx/types';
-import type { CanvasFormat } from '@ggraphic/editor/formats/index';
+import type { PptxRasterRequest } from './types.js';
+import type { CanvasFormat } from '../../formats/index.js';
 
 const PPTX_IMAGE_TYPES = ['image/png', 'image/jpeg'];
 /** SVGs ohne Eigenmaße werden in dieser Breite gerastert. */

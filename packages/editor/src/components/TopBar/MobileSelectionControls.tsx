@@ -1,22 +1,19 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useMessages, type Messages } from '@ggraphic/editor/i18n/messages';
-import { useCanvasStoreSelector } from '@ggraphic/editor/stores/CanvasStoreProvider';
-import { cn } from '@ggraphic/editor/utils/cn';
+import { useMessages, type Messages } from '../../i18n/messages.js';
+import { useCanvasStoreSelector } from '../../stores/CanvasStoreProvider.js';
+import { cn } from '../../utils/cn.js';
 import React from 'react';
 
-import { HIDDEN_SCROLLBAR } from '@ggraphic/editor/sidebar/sidebarStyles';
+import { HIDDEN_SCROLLBAR } from '../../sidebar/sidebarStyles.js';
 
-import {
-  ContextControls,
-  type ContextControlsProps,
-} from '@ggraphic/editor/components/TopBar/ContextControls';
+import { ContextControls, type ContextControlsProps } from './ContextControls.js';
 
-import { hostElementKind } from '@ggraphic/editor/utils/elementKinds';
+import { hostElementKind } from '../../utils/elementKinds.js';
 
 import type {
   CoreFloatingModuleType,
   FloatingModuleState,
-} from '@ggraphic/editor/hooks/useFloatingModuleState';
+} from '../../hooks/useFloatingModuleState.js';
 
 const selectionLabels = (t: Messages): Record<CoreFloatingModuleType, string> => ({
   text: t.common.text,

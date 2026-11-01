@@ -3,9 +3,9 @@ import { useEffect, useCallback, useLayoutEffect, useRef, useState } from 'react
 import { flushSync } from 'react-dom';
 import { useStore } from 'zustand';
 
-import { useAnnounce } from '@ggraphic/editor/hooks/useAnnounce';
-import { messages } from '@ggraphic/editor/i18n/messages';
-import { editorSkipsKey } from '@ggraphic/editor/utils/keyboardOwnership';
+import { useAnnounce } from './useAnnounce.js';
+import { messages } from '../i18n/messages.js';
+import { editorSkipsKey } from '../utils/keyboardOwnership.js';
 
 import { useCanvasStore } from '../stores/CanvasStoreProvider.js';
 

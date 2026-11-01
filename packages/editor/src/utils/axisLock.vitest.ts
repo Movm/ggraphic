@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { lockToAxis } from '@ggraphic/editor/utils/axisLock';
+import { lockToAxis } from './axisLock.js';
 
 describe('lockToAxis', () => {
   const origin = { x: 100, y: 100 };

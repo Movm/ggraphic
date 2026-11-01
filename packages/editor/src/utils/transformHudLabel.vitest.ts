@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { type NodeFrame } from '@ggraphic/editor/utils/orientation';
-import { transformHudLabel } from '@ggraphic/editor/utils/transformHudLabel';
+import { type NodeFrame } from './orientation.js';
+import { transformHudLabel } from './transformHudLabel.js';
 
 const frame = (over: Partial<NodeFrame> = {}): NodeFrame => ({
   x: 0,

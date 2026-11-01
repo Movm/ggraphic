@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 import React, { useId } from 'react';
 
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import {
-  CONTROL_GROUP,
-  CONTROL_GROUP_HEADER,
-  CONTROL_GROUP_LABEL,
-} from '@ggraphic/editor/sidebar/sidebarStyles';
+import { useMessages } from '../../../i18n/messages.js';
+import { CONTROL_GROUP, CONTROL_GROUP_HEADER, CONTROL_GROUP_LABEL } from '../../sidebarStyles.js';
 
 /**
  * Ein Effekt im Bereich „Effekte“: Überschrift, Ein/Aus und — eingeschaltet —

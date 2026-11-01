@@ -12,11 +12,11 @@ import Konva from 'konva';
 import { createRef } from 'react';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
-import { DocumentBrandContext } from '@ggraphic/editor/brand/documentBrand';
-import { preloadRichText } from '@ggraphic/editor/components/CanvasTextOverlay';
-import { RichTextField } from '@ggraphic/editor/components/RichTextField';
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
-import { CanvasText } from '@ggraphic/editor/primitives/CanvasText';
+import { DocumentBrandContext } from '../../brand/documentBrand.js';
+import { preloadRichText } from '../../components/CanvasTextOverlay.js';
+import { RichTextField } from '../../components/RichTextField.js';
+import { CanvasStage, type CanvasStageRef } from '../CanvasStage.js';
+import { CanvasText } from '../CanvasText.js';
 
 /** A pack whose marker (box and ink) matches nothing the default pack has. */
 const OTHER_BRAND: BrandPack = {

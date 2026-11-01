@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useAnnounce } from '@ggraphic/editor/hooks/useAnnounce';
-import { messages, useMessages } from '@ggraphic/editor/i18n/messages';
-import { useAutoSaveStore, useAutoSaveStoreApi } from '@ggraphic/editor/stores/useAutoSaveStore';
+import { useAnnounce } from '../../hooks/useAnnounce.js';
+import { messages, useMessages } from '../../i18n/messages.js';
+import { useAutoSaveStore, useAutoSaveStoreApi } from '../../stores/useAutoSaveStore.js';
 import { useId } from 'react';
 
 import { MOBILE_INPUT_TEXT } from '../sidebarStyles.js';

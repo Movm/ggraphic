@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { cn } from '@ggraphic/editor/utils/cn';
-import {
-  CROP_ASPECT_PRESETS,
-  isCropAspectId,
-  type CropAspectId,
-} from '@ggraphic/editor/utils/cropAspect';
-import { clampStraighten, STRAIGHTEN_LIMIT } from '@ggraphic/editor/utils/straighten';
+import { useMessages } from '../../i18n/messages.js';
+import { cn } from '../../utils/cn.js';
+import { CROP_ASPECT_PRESETS, isCropAspectId, type CropAspectId } from '../../utils/cropAspect.js';
+import { clampStraighten, STRAIGHTEN_LIMIT } from '../../utils/straighten.js';
 import React, { useState } from 'react';
 
 import { HIDDEN_SCROLLBAR } from '../../sidebar/sidebarStyles.js';

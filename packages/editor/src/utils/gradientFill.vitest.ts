@@ -6,7 +6,7 @@ import {
   gradientFillProps,
   gradientToKonvaProps,
   type GradientFill,
-} from '@ggraphic/editor/utils/gradientFill';
+} from './gradientFill.js';
 
 describe('gradientToKonvaProps', () => {
   const rect = { x: 0, y: 0, width: 100, height: 200 };

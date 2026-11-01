@@ -4,7 +4,7 @@ import { createRef } from 'react';
 import { Rect, Transformer } from 'react-konva';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
+import { CanvasStage, type CanvasStageRef } from '../CanvasStage.js';
 
 import type Konva from 'konva';
 
@@ -78,7 +78,7 @@ describe('Transformer-Anker auf Touch-Geräten', () => {
   const hitStrokeFor = async (coarse: boolean) => {
     vi.resetModules();
     vi.stubGlobal('matchMedia', (q: string) => ({ matches: coarse && q === '(pointer: coarse)' }));
-    const { touchAnchorStyleFunc } = await import('@ggraphic/editor/utils/touchInput');
+    const { touchAnchorStyleFunc } = await import('../../utils/touchInput.js');
     const stageRef = createRef<CanvasStageRef>();
     const rectRef = createRef<Konva.Rect>();
     const trRef = createRef<Konva.Transformer>();

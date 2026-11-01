@@ -5,7 +5,7 @@ import { canCropBackgroundPhoto } from './backgroundPhotoCrop.js';
 import { BACKGROUND_IMAGE_NODE_ID } from './printImageInfo.js';
 
 import type { CanvasElementConfig, ImageElementConfig } from '../configs/types.js';
-import type { UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import type { UserImageInstance } from './userImageUtils.js';
 
 /** Was ein Zuschneide-Werkzeug schreibt: Seitenzustand der Vorlage oder ein Patch am eigenen Bild. */
 export type CropUpdate =

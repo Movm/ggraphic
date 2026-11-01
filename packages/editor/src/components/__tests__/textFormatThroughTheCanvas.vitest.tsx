@@ -8,9 +8,9 @@ import { act, cleanup, render } from '@testing-library/react';
 import { createRef } from 'react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { GenericCanvas, type GenericCanvasRef } from '@ggraphic/editor/components/GenericCanvas';
-import { loadCanvasConfig } from '@ggraphic/editor/configs/configLoader';
-import { AutoSaveStoreProvider } from '@ggraphic/editor/stores/AutoSaveStoreProvider';
+import { GenericCanvas, type GenericCanvasRef } from '../GenericCanvas.js';
+import { loadCanvasConfig } from '../../configs/configLoader.js';
+import { AutoSaveStoreProvider } from '../../stores/AutoSaveStoreProvider.js';
 
 import '../../testing/fixtureTemplates';
 

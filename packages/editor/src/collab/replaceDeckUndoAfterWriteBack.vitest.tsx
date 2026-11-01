@@ -10,9 +10,9 @@ import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import * as Y from 'yjs';
 
-import { getPagesMap } from '@ggraphic/editor/collab/pagesDoc';
-import { useYjsPages, type NormalizeEcho } from '@ggraphic/editor/collab/useYjsPages';
-import { YDOC_KEYS } from '@ggraphic/editor/collab/ydocKeys';
+import { getPagesMap } from './pagesDoc.js';
+import { useYjsPages, type NormalizeEcho } from './useYjsPages.js';
+import { YDOC_KEYS } from './ydocKeys.js';
 
 const PAGE_1 = {
   headline: 'Eins',

@@ -2,9 +2,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CombinedTextSection } from '@ggraphic/editor/sidebar/sections/CombinedTextSection';
+import { CombinedTextSection } from './CombinedTextSection.js';
 
-import type { AdditionalText } from '@ggraphic/editor/configs/types';
+import type { AdditionalText } from '../../configs/types.js';
 
 const text = (value: string) =>
   ({ id: 't1', type: 'text', text: value }) as unknown as AdditionalText;

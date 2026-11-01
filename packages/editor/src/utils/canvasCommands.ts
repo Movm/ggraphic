@@ -9,17 +9,17 @@
  * Eine Mehrfach-Aktion ist ein Schritt im Verlauf.
  */
 
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { messages } from '../i18n/messages.js';
 import {
   alignDelta,
   distributeDeltas,
   unionBox,
   type AlignDirection,
   type Delta,
-} from '@ggraphic/editor/utils/alignment';
-import { itemBodyRect } from '@ggraphic/editor/utils/deepSelect';
-import { locateDrop } from '@ggraphic/editor/utils/mediaDrop';
-import { findDragNodes, selectableItemIds } from '@ggraphic/editor/utils/multiSelect';
+} from './alignment.js';
+import { itemBodyRect } from './deepSelect.js';
+import { locateDrop } from './mediaDrop.js';
+import { findDragNodes, selectableItemIds } from './multiSelect.js';
 import {
   axisAlignedBounds,
   centreOf,
@@ -28,8 +28,8 @@ import {
   readNodeFrame,
   type Box,
   type NodeFrame,
-} from '@ggraphic/editor/utils/orientation';
-import { openTextEditor } from '@ggraphic/editor/utils/textEditorOpeners';
+} from './orientation.js';
+import { openTextEditor } from './textEditorOpeners.js';
 
 import {
   pruneGroups,
@@ -69,8 +69,8 @@ import {
 import type { BaseCanvasState } from '../configs/factory/baseTypes.js';
 import type { CanvasElementConfig, LayoutResult } from '../configs/types.js';
 import type { OptionalCanvasActions } from '../hooks/useCanvasElementHandlers.js';
-import type { CanvasEditorStoreApi } from '@ggraphic/editor/stores/createCanvasEditorStore';
-import type { PageCommandId } from '@ggraphic/editor/utils/canvasCommandRegistry';
+import type { CanvasEditorStoreApi } from '../stores/createCanvasEditorStore.js';
+import type { PageCommandId } from './canvasCommandRegistry.js';
 import type Konva from 'konva';
 
 export interface ClientPoint {

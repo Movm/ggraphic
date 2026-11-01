@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, it, expect } from 'vitest';
 
-import { canvasFontFamilies } from '@ggraphic/editor/utils/canvasFontFamilies';
+import { canvasFontFamilies } from '../canvasFontFamilies.js';
 
-import type { FullCanvasConfig } from '@ggraphic/editor/configs/types';
+import type { FullCanvasConfig } from '../../configs/types.js';
 
 type FontInput = Pick<FullCanvasConfig, 'fonts' | 'elements'>;
 

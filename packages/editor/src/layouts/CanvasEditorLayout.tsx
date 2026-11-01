@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { cn } from '@ggraphic/editor/utils/cn';
-import { useMeasuredCornerReservation } from '@ggraphic/editor/utils/cornerReservation';
-import { returnFocusToPage } from '@ggraphic/editor/utils/editorFocus';
+import { useMessages } from '../i18n/messages.js';
+import { cn } from '../utils/cn.js';
+import { useMeasuredCornerReservation } from '../utils/cornerReservation.js';
+import { returnFocusToPage } from '../utils/editorFocus.js';
 import React from 'react';
 import { HiLink } from 'react-icons/hi';
 

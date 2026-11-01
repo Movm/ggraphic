@@ -15,7 +15,7 @@ describe('measureTextWidthWithFont', () => {
   // Der frische Import des Hosts braucht kalt ein paar Sekunden.
   it('legt über viele Messungen höchstens ein <canvas> an', async () => {
     vi.resetModules();
-    const { measureTextWidthWithFont } = await import('@ggraphic/editor/utils/textUtils');
+    const { measureTextWidthWithFont } = await import('../textUtils.js');
     const createElement = vi.spyOn(document, 'createElement');
 
     for (let i = 0; i < 200; i++) {

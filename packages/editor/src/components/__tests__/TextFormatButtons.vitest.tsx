@@ -7,7 +7,7 @@ import {
   type TextFormatCommands,
   type TextFormatState,
 } from '../TextFormatButtons';
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { messages } from '../../i18n/messages.js';
 
 const state: TextFormatState = {
   bold: true,

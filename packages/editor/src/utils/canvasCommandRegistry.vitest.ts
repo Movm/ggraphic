@@ -9,7 +9,7 @@ import {
   formatShortcut,
   shortcutOf,
   type CommandShortcut,
-} from '@ggraphic/editor/utils/canvasCommandRegistry';
+} from './canvasCommandRegistry.js';
 
 const press = (key: string, mods: Partial<Record<'ctrl' | 'meta' | 'shift' | 'alt', boolean>>) => ({
   key,

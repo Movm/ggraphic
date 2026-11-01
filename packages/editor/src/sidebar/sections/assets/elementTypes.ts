@@ -4,13 +4,13 @@ import {
   MEDIA_DRAG_TYPE,
   type ElementDragPayload,
   type MediaDragPayload,
-} from '@ggraphic/editor/utils/mediaDrop';
+} from '../../../utils/mediaDrop.js';
 
-import type { HostElementKindName, HostElementPayload } from '@ggraphic/editor/utils/canvasItem';
-import type { ChartType } from '@ggraphic/editor/utils/chartUtils';
-import type { FrameClipType } from '@ggraphic/editor/utils/frameUtils';
-import type { KawaiiIllustrationType, SvgDef } from '@ggraphic/editor/utils/illustrations/types';
-import type { ShapeType } from '@ggraphic/editor/utils/shapes';
+import type { HostElementKindName, HostElementPayload } from '../../../utils/canvasItem.js';
+import type { ChartType } from '../../../utils/chartUtils.js';
+import type { FrameClipType } from '../../../utils/frameUtils.js';
+import type { KawaiiIllustrationType, SvgDef } from '../../../utils/illustrations/types.js';
+import type { ShapeType } from '../../../utils/shapes.js';
 import type { StickerRef } from '@ggraphic/schema';
 
 /** What a tile does: an element add (icons toggle) or a photo placed as image. */

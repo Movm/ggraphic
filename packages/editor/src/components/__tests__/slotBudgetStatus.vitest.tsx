@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
-import { CanvasEditorProvider } from '@ggraphic/editor/CanvasEditorProvider';
-import { SlotBudgetStatus } from '@ggraphic/editor/components/SlotBudgetStatus';
-import { registerMessages } from '@ggraphic/editor/i18n/messages';
-import { AnnouncerContext } from '@ggraphic/editor/hooks/useAnnounce';
-import { CanvasStoreProvider, useCanvasStore } from '@ggraphic/editor/stores/CanvasStoreProvider';
+import { CanvasEditorProvider } from '../../CanvasEditorProvider.js';
+import { SlotBudgetStatus } from '../SlotBudgetStatus.js';
+import { registerMessages } from '../../i18n/messages.js';
+import { AnnouncerContext } from '../../hooks/useAnnounce.js';
+import { CanvasStoreProvider, useCanvasStore } from '../../stores/CanvasStoreProvider.js';
 import { act, cleanup, render } from '@testing-library/react';
 import Konva from 'konva';
 import { useEffect, useState } from 'react';
@@ -11,7 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { axe } from '../../test-utils';
 
-import type { CanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
+import type { CanvasEditorServices } from '../../CanvasEditorProvider.js';
 
 const ELEVEN_WORDS = 'one two three four five six seven eight nine ten eleven';
 

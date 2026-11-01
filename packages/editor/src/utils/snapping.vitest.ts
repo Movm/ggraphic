@@ -11,7 +11,7 @@ import {
   snapByBounds,
   snapEdgesByBounds,
   type SnapTarget,
-} from '@ggraphic/editor/utils/snapping';
+} from './snapping.js';
 
 const STAGE_W = 1080;
 const STAGE_H = 1350;

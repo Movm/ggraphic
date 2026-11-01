@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { alignDelta, distributeDeltas } from '@ggraphic/editor/utils/alignment';
+import { alignDelta, distributeDeltas } from '../alignment.js';
 
 const page = { x: 0, y: 0, width: 1000, height: 500 };
 const box = { x: 100, y: 50, width: 200, height: 100 };

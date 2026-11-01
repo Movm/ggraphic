@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import React, { createContext, useContext } from 'react';
 
-import { cn } from '@ggraphic/editor/utils/cn';
+import { cn } from '../../utils/cn.js';
 
 /**
  * Kacheln statt Knöpfe: mobil steht unter jedem Werkzeug der Auswahl-Leiste

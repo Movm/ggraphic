@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { brandDefault, type BrandPack } from '@ggraphic/core';
-import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
+import { activeBrand, registerBrandPacks } from '../../brand/brandRegistry.js';
 
 import { createAdditionalTextActions } from './actionFactories.js';
 

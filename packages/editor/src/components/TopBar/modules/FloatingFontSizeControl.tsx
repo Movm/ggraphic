@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
-import { TileCaption, useBarTiles } from '@ggraphic/editor/components/TopBar/barTiles';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { TileCaption, useBarTiles } from '../barTiles.js';
+import { useMessages } from '../../../i18n/messages.js';
 import React from 'react';
 import { PiPlus, PiMinus } from 'react-icons/pi';
 

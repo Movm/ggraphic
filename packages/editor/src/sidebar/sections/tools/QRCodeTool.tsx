@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
+import { useMessages } from '../../../i18n/messages.js';
 import { QRCodeCanvas } from 'qrcode.react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { HiQrCode } from 'react-icons/hi2';
 
-import { MOBILE_INPUT_TEXT } from '@ggraphic/editor/sidebar/sidebarStyles';
+import { MOBILE_INPUT_TEXT } from '../../sidebarStyles.js';
 
-import {
-  ToolPanel,
-  type ToolPanelSuccess,
-} from '@ggraphic/editor/sidebar/sections/tools/ToolPanel';
-import { useToolImagePlacement } from '@ggraphic/editor/sidebar/sections/tools/useToolImagePlacement';
+import { ToolPanel, type ToolPanelSuccess } from './ToolPanel.js';
+import { useToolImagePlacement } from './useToolImagePlacement.js';
 
 export interface QRCodeToolProps {
   onJumpToUploads?: () => void;

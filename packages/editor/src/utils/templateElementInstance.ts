@@ -30,7 +30,7 @@
  * `lineHeight`, eine zentrierte Headline kaeme also linksbuendig heraus.
  */
 
-import { centreOf } from '@ggraphic/editor/utils/orientation';
+import { centreOf } from './orientation.js';
 
 import { ASSET_TARGET_SIZE, getAssetBySrc } from './canvasAssets.js';
 import { resolveImageElementBox } from './resolveElementValue.js';

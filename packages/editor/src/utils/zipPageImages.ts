@@ -2,7 +2,7 @@
 import { parseDataUrl } from '@ggraphic/schema';
 import { zipSync } from 'fflate';
 
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { messages } from '../i18n/messages.js';
 
 const EXTENSION_BY_TYPE: Record<string, string> = {
   'image/png': 'png',

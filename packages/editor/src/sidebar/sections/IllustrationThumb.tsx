@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
+import { useCanvasEditorServices } from '../../CanvasEditorProvider.js';
 import {
   getIllustrationPath,
   getIllustrationThumbPath,
-} from '@ggraphic/editor/utils/illustrations/registry';
+} from '../../utils/illustrations/registry.js';
 
-import type { SvgDef } from '@ggraphic/editor/utils/illustrations/types';
+import type { SvgDef } from '../../utils/illustrations/types.js';
 
 /** Illustration thumbnail that falls back to the full SVG when no pre-rendered thumb exists. */
 export function IllustrationThumb({

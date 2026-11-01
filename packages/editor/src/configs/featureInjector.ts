@@ -15,19 +15,19 @@
  * This eliminates 60+ lines of manual prop passing per config (83% code reduction).
  */
 
-import { canAddHostElement, hostElementKinds } from '@ggraphic/editor/utils/elementKinds';
-import { MAX_ICON_SELECTIONS, selectedCatalogIconIds } from '@ggraphic/editor/utils/iconInstances';
+import { canAddHostElement, hostElementKinds } from '../utils/elementKinds.js';
+import { MAX_ICON_SELECTIONS, selectedCatalogIconIds } from '../utils/iconInstances.js';
 
-import type { ExtendedAssetsSectionProps } from '@ggraphic/editor/sidebar/sections/assets/index';
-import type { BaseCanvasActions, IconState } from '@ggraphic/editor/configs/factory/baseTypes';
-import type { SectionContext } from '@ggraphic/editor/configs/types';
-import type { CircleBadgeInstance } from '@ggraphic/editor/primitives/CircleBadge';
-import type { ChartInstance } from '@ggraphic/editor/utils/chartUtils';
-import type { FrameInstance } from '@ggraphic/editor/utils/frameUtils';
-import type { IllustrationInstance } from '@ggraphic/editor/utils/illustrations/types';
-import type { PillBadgeInstance } from '@ggraphic/editor/utils/pillBadgeUtils';
-import type { ShapeInstance } from '@ggraphic/editor/utils/shapes';
-import type { UserImagePlacement } from '@ggraphic/editor/utils/userImageUtils';
+import type { ExtendedAssetsSectionProps } from '../sidebar/sections/assets/index.js';
+import type { BaseCanvasActions, IconState } from './factory/baseTypes.js';
+import type { SectionContext } from './types.js';
+import type { CircleBadgeInstance } from '../primitives/CircleBadge.js';
+import type { ChartInstance } from '../utils/chartUtils.js';
+import type { FrameInstance } from '../utils/frameUtils.js';
+import type { IllustrationInstance } from '../utils/illustrations/types.js';
+import type { PillBadgeInstance } from '../utils/pillBadgeUtils.js';
+import type { ShapeInstance } from '../utils/shapes.js';
+import type { UserImagePlacement } from '../utils/userImageUtils.js';
 
 interface FeatureStateWithIcons {
   selectedIcons?: string[];

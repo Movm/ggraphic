@@ -2,23 +2,15 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { Image, Group, Rect, Transformer } from 'react-konva';
 
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { LOCKED_TRANSFORMER, useIsItemLocked } from '@ggraphic/editor/components/canvasItemLock';
-import {
-  useGeometryReporter,
-  type GeometryReporter,
-} from '@ggraphic/editor/hooks/useGeometryReporter';
-import { useSnapScheduler } from '@ggraphic/editor/hooks/useSnapScheduler';
-import { isGroupDrag } from '@ggraphic/editor/utils/multiSelect';
-import { ELEMENT_TRANSFORMER, signedScale } from '@ggraphic/editor/utils/orientation';
-import { useTrackPendingImage } from '@ggraphic/editor/utils/pendingImages';
-import { applyPixelHitArea } from '@ggraphic/editor/utils/pixelHitArea';
-import {
-  boxFrame,
-  createBoxFrame,
-  frameBounds,
-  snapByBounds,
-} from '@ggraphic/editor/utils/snapping';
+import { activeBrand } from '../brand/brandRegistry.js';
+import { LOCKED_TRANSFORMER, useIsItemLocked } from '../components/canvasItemLock.js';
+import { useGeometryReporter, type GeometryReporter } from '../hooks/useGeometryReporter.js';
+import { useSnapScheduler } from '../hooks/useSnapScheduler.js';
+import { isGroupDrag } from '../utils/multiSelect.js';
+import { ELEMENT_TRANSFORMER, signedScale } from '../utils/orientation.js';
+import { useTrackPendingImage } from '../utils/pendingImages.js';
+import { applyPixelHitArea } from '../utils/pixelHitArea.js';
+import { boxFrame, createBoxFrame, frameBounds, snapByBounds } from '../utils/snapping.js';
 
 import {
   ASSET_TARGET_SIZE,
@@ -27,7 +19,7 @@ import {
 } from '../utils/canvasAssets.js';
 
 import type { AssetInstance } from '../utils/canvasAssets.js';
-import type { SnapLine, SnapTarget } from '@ggraphic/editor/utils/snapping';
+import type { SnapLine, SnapTarget } from '../utils/snapping.js';
 import type Konva from 'konva';
 
 // Rahmen für Snap und Geometrie-Meldung, pro Aufruf neu beschrieben (synchron, ohne Allokation).

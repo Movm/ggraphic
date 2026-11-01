@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
-import { messages } from '@ggraphic/editor/i18n/messages';
-import { type AltTextPage } from '@ggraphic/editor/CanvasEditorProvider';
-import { type GenericCanvasRef } from '@ggraphic/editor/components/GenericCanvas';
+import { messages } from '../i18n/messages.js';
+import { type AltTextPage } from '../CanvasEditorProvider.js';
+import { type GenericCanvasRef } from '../components/GenericCanvas.js';
 
 /** Check every requested page before reporting capture failures, as for multi-page export. */
 export async function collectAltTextPages(

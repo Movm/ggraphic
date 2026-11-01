@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { PiStack } from 'react-icons/pi';
 
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { messages } from '../../i18n/messages.js';
 
 import type { SidebarTab } from '../../sidebar/types.js';
 

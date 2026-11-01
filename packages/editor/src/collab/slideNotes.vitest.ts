@@ -9,7 +9,7 @@ import {
   seedPagesIfEmpty,
   serializeDeck,
   updatePageStateById,
-} from '@ggraphic/editor/collab/pagesDoc';
+} from './pagesDoc.js';
 
 function setup() {
   const doc = new Y.Doc();

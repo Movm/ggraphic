@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MPL-2.0
 import React, { memo } from 'react';
 
-import { type GeometryReporter } from '@ggraphic/editor/hooks/useGeometryReporter';
-import { ChartPrimitive } from '@ggraphic/editor/primitives/ChartPrimitive';
-import { CircleBadge } from '@ggraphic/editor/primitives/CircleBadge';
-import { FramePrimitive } from '@ggraphic/editor/primitives/FramePrimitive';
-import { IconPrimitive } from '@ggraphic/editor/primitives/IconPrimitive';
-import { PillBadge } from '@ggraphic/editor/primitives/PillBadge';
-import { ShapePrimitive } from '@ggraphic/editor/primitives/ShapePrimitive';
-import { UserImagePrimitive } from '@ggraphic/editor/primitives/UserImagePrimitive';
-import { useIsElementSelected } from '@ggraphic/editor/stores/CanvasStoreProvider';
-import { getIconMapSync } from '@ggraphic/editor/utils/canvasIcons';
+import { type GeometryReporter } from '../hooks/useGeometryReporter.js';
+import { ChartPrimitive } from '../primitives/ChartPrimitive.js';
+import { CircleBadge } from '../primitives/CircleBadge.js';
+import { FramePrimitive } from '../primitives/FramePrimitive.js';
+import { IconPrimitive } from '../primitives/IconPrimitive.js';
+import { PillBadge } from '../primitives/PillBadge.js';
+import { ShapePrimitive } from '../primitives/ShapePrimitive.js';
+import { UserImagePrimitive } from '../primitives/UserImagePrimitive.js';
+import { useIsElementSelected } from '../stores/CanvasStoreProvider.js';
+import { getIconMapSync } from '../utils/canvasIcons.js';
 
 import { CanvasText } from '../primitives/index.js';
 import { AssetPrimitive } from '../primitives/AssetPrimitive.js';
@@ -22,11 +22,11 @@ import { effectiveAccent, effectiveMarker } from '../utils/textUtils.js';
 import type { OptionalCanvasActions } from '../hooks/useCanvasElementHandlers.js';
 import type { CanvasItem } from '../utils/canvasLayerManager.js';
 import type { HostElementKindName } from '../utils/canvasItem.js';
-import type { CropAspectId } from '@ggraphic/editor/utils/cropAspect';
-import type { FrameInstance } from '@ggraphic/editor/utils/frameUtils';
-import type { ShapeInstance } from '@ggraphic/editor/utils/shapes';
-import type { SnapLine, SnapTarget } from '@ggraphic/editor/utils/snapping';
-import type { UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import type { CropAspectId } from '../utils/cropAspect.js';
+import type { FrameInstance } from '../utils/frameUtils.js';
+import type { ShapeInstance } from '../utils/shapes.js';
+import type { SnapLine, SnapTarget } from '../utils/snapping.js';
+import type { UserImageInstance } from '../utils/userImageUtils.js';
 
 type KindName = Exclude<CanvasItem['type'], 'element'>;
 

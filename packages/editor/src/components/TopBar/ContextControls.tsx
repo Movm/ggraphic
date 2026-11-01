@@ -1,48 +1,45 @@
 // SPDX-License-Identifier: MPL-2.0
 import { type BindingRef, type FontRole } from '@ggraphic/core';
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import {
-  useCanvasTextFormatting,
-  useIsCanvasTextEditing,
-} from '@ggraphic/editor/components/CanvasTextOverlay';
-import { type BackgroundControls } from '@ggraphic/editor/configs/types';
-import { type FloatingModuleState } from '@ggraphic/editor/hooks/useFloatingModuleState';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { hasEffects } from '@ggraphic/editor/sidebar/sections/effects/effectsFor';
-import { useOptionalUserUploads } from '@ggraphic/editor/sidebar/UserUploadsProvider';
-import { type SelectionGeometry } from '@ggraphic/editor/utils/canvasCommands';
-import { brandColors, fontColors } from '@ggraphic/editor/utils/colorOptions';
-import { type CropAspectId } from '@ggraphic/editor/utils/cropAspect';
-import { focusPage, isKeyboardModality } from '@ggraphic/editor/utils/editorFocus';
-import { type ImageLookId, type LookFields } from '@ggraphic/editor/utils/imageLook';
-import { type LockState } from '@ggraphic/editor/utils/layerLock';
-import { useUnsplashHome } from '@ggraphic/editor/utils/unsplashLinks';
-import { type TextAlign } from '@ggraphic/editor/utils/textAlign';
+import { useCanvasEditorServices } from '../../CanvasEditorProvider.js';
+import { useDocumentBrand } from '../../brand/documentBrand.js';
+import { useCanvasTextFormatting, useIsCanvasTextEditing } from '../CanvasTextOverlay.js';
+import { type BackgroundControls } from '../../configs/types.js';
+import { type FloatingModuleState } from '../../hooks/useFloatingModuleState.js';
+import { useMessages } from '../../i18n/messages.js';
+import { hasEffects } from '../../sidebar/sections/effects/effectsFor.js';
+import { useOptionalUserUploads } from '../../sidebar/UserUploadsProvider.js';
+import { type SelectionGeometry } from '../../utils/canvasCommands.js';
+import { brandColors, fontColors } from '../../utils/colorOptions.js';
+import { type CropAspectId } from '../../utils/cropAspect.js';
+import { focusPage, isKeyboardModality } from '../../utils/editorFocus.js';
+import { type ImageLookId, type LookFields } from '../../utils/imageLook.js';
+import { type LockState } from '../../utils/layerLock.js';
+import { useUnsplashHome } from '../../utils/unsplashLinks.js';
+import { type TextAlign } from '../../utils/textAlign.js';
 import React, { useState } from 'react';
 import { PiCopy, PiLockSimple, PiLockSimpleOpen, PiSparkle } from 'react-icons/pi';
 
 import { fontMarkSupport } from '../../utils/fontMarkSupport.js';
 import { WholeTextFormatControls } from '../WholeTextFormatControls.js';
-import { TILE, TileCaption, useBarTiles } from '@ggraphic/editor/components/TopBar/barTiles';
-import { CropModeControls } from '@ggraphic/editor/components/TopBar/CropModeControls';
+import { TILE, TileCaption, useBarTiles } from './barTiles.js';
+import { CropModeControls } from './CropModeControls.js';
 import {
   BackgroundImagePicker,
   BackgroundRemoveImageButton,
   BackgroundRestoreImageButton,
   BackgroundZoomControl,
   SetAsBackgroundButton,
-} from '@ggraphic/editor/components/TopBar/modules/FloatingBackgroundControls';
-import { FloatingColorPicker } from '@ggraphic/editor/components/TopBar/modules/FloatingColorPicker';
-import { FloatingFontRoleControl } from '@ggraphic/editor/components/TopBar/modules/FloatingFontRoleControl';
-import { FloatingFontSizeControl } from '@ggraphic/editor/components/TopBar/modules/FloatingFontSizeControl';
-import { FloatingOpacityControl } from '@ggraphic/editor/components/TopBar/modules/FloatingOpacityControl';
+} from './modules/FloatingBackgroundControls.js';
+import { FloatingColorPicker } from './modules/FloatingColorPicker.js';
+import { FloatingFontRoleControl } from './modules/FloatingFontRoleControl.js';
+import { FloatingFontSizeControl } from './modules/FloatingFontSizeControl.js';
+import { FloatingOpacityControl } from './modules/FloatingOpacityControl.js';
 import {
   FloatingPositionControl,
   type PositionCommandId,
-} from '@ggraphic/editor/components/TopBar/modules/FloatingPositionControl';
+} from './modules/FloatingPositionControl.js';
 import { FloatingImageLookControl } from './modules/FloatingImageLookControl.js';
-import { FloatingTextAlignControl } from '@ggraphic/editor/components/TopBar/modules/FloatingTextAlignControl';
+import { FloatingTextAlignControl } from './modules/FloatingTextAlignControl.js';
 
 export interface ContextControlsProps {
   selectedElement: string | null;

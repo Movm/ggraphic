@@ -9,17 +9,17 @@ import { act, render } from '@testing-library/react';
 import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { GenericCanvas, type GenericCanvasRef } from '@ggraphic/editor/components/GenericCanvas';
-import { loadCanvasConfig } from '@ggraphic/editor/configs/configLoader';
-import { AutoSaveStoreProvider } from '@ggraphic/editor/stores/AutoSaveStoreProvider';
+import { GenericCanvas, type GenericCanvasRef } from '../GenericCanvas.js';
+import { loadCanvasConfig } from '../../configs/configLoader.js';
+import { AutoSaveStoreProvider } from '../../stores/AutoSaveStoreProvider.js';
 
 import { FIXTURE_ASSET_ID } from '../../testing/fixtureTemplates';
 
-import type * as StoreModule from '@ggraphic/editor/stores/createCanvasEditorStore';
-import type { CanvasEditorStoreApi } from '@ggraphic/editor/stores/createCanvasEditorStore';
+import type * as StoreModule from '../../stores/createCanvasEditorStore.js';
+import type { CanvasEditorStoreApi } from '../../stores/createCanvasEditorStore.js';
 
 const stores = vi.hoisted(() => [] as unknown[]);
-vi.mock('@ggraphic/editor/stores/createCanvasEditorStore', async (importOriginal) => {
+vi.mock('../../stores/createCanvasEditorStore.js', async (importOriginal) => {
   const original = await importOriginal<typeof StoreModule>();
   return {
     ...original,

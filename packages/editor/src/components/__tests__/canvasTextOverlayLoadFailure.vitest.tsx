@@ -7,12 +7,12 @@ import { act, cleanup, render, screen } from '@testing-library/react';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
-import { CanvasText } from '@ggraphic/editor/primitives/CanvasText';
+import { CanvasStage, type CanvasStageRef } from '../../primitives/CanvasStage.js';
+import { CanvasText } from '../../primitives/CanvasText.js';
 
 const attempts = vi.hoisted(() => ({ count: 0 }));
 
-vi.mock('@ggraphic/editor/components/RichTextField', () => {
+vi.mock('../RichTextField.js', () => {
   attempts.count += 1;
   throw new Error('chunk load failed');
 });

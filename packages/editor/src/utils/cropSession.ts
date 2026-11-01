@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
-import {
-  BACKGROUND_STRAIGHTEN_KEY,
-  backgroundStraighten,
-  clampStraighten,
-} from '@ggraphic/editor/utils/straighten';
-import { type UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import { BACKGROUND_STRAIGHTEN_KEY, backgroundStraighten, clampStraighten } from './straighten.js';
+import { type UserImageInstance } from './userImageUtils.js';
 
 import { type CanvasElementConfig } from '../configs/types.js';
 

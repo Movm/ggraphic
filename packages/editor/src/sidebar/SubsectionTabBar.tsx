@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useRovingToolbar } from '@ggraphic/editor/hooks/useRovingToolbar';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { cn } from '@ggraphic/editor/utils/cn';
+import { useRovingToolbar } from '../hooks/useRovingToolbar.js';
+import { useMessages } from '../i18n/messages.js';
+import { cn } from '../utils/cn.js';
 import { useId, useState, type ReactNode } from 'react';
 
-import { useIsCanvasMobile } from '@ggraphic/editor/hooks/useIsCanvasMobile';
+import { useIsCanvasMobile } from '../hooks/useIsCanvasMobile.js';
 
-import { HIDDEN_SCROLLBAR } from '@ggraphic/editor/sidebar/sidebarStyles';
+import { HIDDEN_SCROLLBAR } from './sidebarStyles.js';
 
 import type { IconType } from 'react-icons';
 

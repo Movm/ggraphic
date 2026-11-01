@@ -4,8 +4,8 @@ import type Konva from 'konva';
 import { createRef } from 'react';
 import { describe, expect, it } from 'vitest';
 
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
-import { CircleBadge } from '@ggraphic/editor/primitives/CircleBadge';
+import { CanvasStage, type CanvasStageRef } from '../CanvasStage.js';
+import { CircleBadge } from '../CircleBadge.js';
 
 import type { CircleBadgeInstance } from '@ggraphic/core';
 

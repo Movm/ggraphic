@@ -8,13 +8,13 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { floatingModuleFor } from '@ggraphic/editor/hooks/useFloatingModuleState';
-import { duplicateElementInState } from '@ggraphic/editor/utils/duplicateElement';
-import { ELEMENT_KINDS } from '@ggraphic/editor/utils/elementKinds';
-import { findOrientationDoor } from '@ggraphic/editor/utils/orientElement';
+import { floatingModuleFor } from '../hooks/useFloatingModuleState.js';
+import { duplicateElementInState } from './duplicateElement.js';
+import { ELEMENT_KINDS } from './elementKinds.js';
+import { findOrientationDoor } from './orientElement.js';
 
-import type { BaseCanvasState } from '@ggraphic/editor/configs/factory/baseTypes';
-import type { FullCanvasConfig, LayoutResult } from '@ggraphic/editor/configs/types';
+import type { BaseCanvasState } from '../configs/factory/baseTypes.js';
+import type { FullCanvasConfig, LayoutResult } from '../configs/types.js';
 
 const layout = { centerX: 500, centerY: 500 } as unknown as LayoutResult;
 

@@ -8,7 +8,7 @@ import {
   snapByBounds,
   snapSpacing,
   type SnapTarget,
-} from '@ggraphic/editor/utils/snapping';
+} from './snapping.js';
 
 const t = (id: string, x: number, y: number, width: number, height: number): SnapTarget => ({
   id,

@@ -9,7 +9,7 @@ import Konva from 'konva';
 import React from 'react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { loadCanvasConfig } from '@ggraphic/editor/configs/configLoader';
+import { loadCanvasConfig } from '../../configs/configLoader.js';
 
 import '../../testing/fixtureTemplates';
 import { PagePreview } from '../PagePreview';

@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useMemo } from 'react';
 
-import { type HistoryStamps, routeHistory } from '@ggraphic/editor/utils/historyStamp';
+import { type HistoryStamps, routeHistory } from '../../../utils/historyStamp.js';
 
-import type { GenericCanvasRef } from '@ggraphic/editor/components/GenericCanvas';
+import type { GenericCanvasRef } from '../../GenericCanvas.js';
 import type { FontRole } from '@ggraphic/core';
-import type { ShadowPatch } from '@ggraphic/editor/hooks/useFloatingModuleHandlers';
-import type { PageCommandId } from '@ggraphic/editor/utils/canvasCommandRegistry';
-import { type SelectionGeometry } from '@ggraphic/editor/utils/canvasCommands';
-import type { CropAspectId } from '@ggraphic/editor/utils/cropAspect';
-import type { GradientFill } from '@ggraphic/editor/utils/gradientFill';
-import type { ImageLookId } from '@ggraphic/editor/utils/imageLook';
-import type { TextAlign } from '@ggraphic/editor/utils/textAlign';
+import type { ShadowPatch } from '../../../hooks/useFloatingModuleHandlers.js';
+import type { PageCommandId } from '../../../utils/canvasCommandRegistry.js';
+import { type SelectionGeometry } from '../../../utils/canvasCommands.js';
+import type { CropAspectId } from '../../../utils/cropAspect.js';
+import type { GradientFill } from '../../../utils/gradientFill.js';
+import type { ImageLookId } from '../../../utils/imageLook.js';
+import type { TextAlign } from '../../../utils/textAlign.js';
 import type React from 'react';
 
 interface UseToolbarHandlersParams {

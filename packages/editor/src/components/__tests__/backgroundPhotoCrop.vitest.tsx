@@ -4,11 +4,11 @@
  * Griffe und zieht nicht; erst der Ausschnitt-Modus (Doppelklick/Doppeltipp)
  * gibt Verschieben und Zoomen frei.
  */
-import { GenericCanvas, type GenericCanvasRef } from '@ggraphic/editor/components/GenericCanvas';
-import { loadCanvasConfig } from '@ggraphic/editor/configs/configLoader';
+import { GenericCanvas, type GenericCanvasRef } from '../GenericCanvas.js';
+import { loadCanvasConfig } from '../../configs/configLoader.js';
 import '../../testing/fixtureTemplates';
-import { AutoSaveStoreProvider } from '@ggraphic/editor/stores/AutoSaveStoreProvider';
-import { findDragNodes } from '@ggraphic/editor/utils/multiSelect';
+import { AutoSaveStoreProvider } from '../../stores/AutoSaveStoreProvider.js';
+import { findDragNodes } from '../../utils/multiSelect.js';
 
 import { act, cleanup, render } from '@testing-library/react';
 import Konva from 'konva';

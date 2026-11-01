@@ -6,18 +6,14 @@
  * Ein Fehlschlag ändert nichts. Dazu: „Automatisch" verwirft seinen Vorschlag,
  * wenn das Foto während der Analyse ersetzt wurde.
  */
-import { CanvasEditorProvider } from '@ggraphic/editor/CanvasEditorProvider';
-import {
-  GenericCanvas,
-  type GenericCanvasRef,
-  type ToolbarStateReport,
-} from '@ggraphic/editor/components/GenericCanvas';
-import { loadCanvasConfig } from '@ggraphic/editor/configs/configLoader';
+import { CanvasEditorProvider } from '../../CanvasEditorProvider.js';
+import { GenericCanvas, type GenericCanvasRef, type ToolbarStateReport } from '../GenericCanvas.js';
+import { loadCanvasConfig } from '../../configs/configLoader.js';
 import '../../testing/fixtureTemplates';
-import { plainImageUrls, type CanvasImageUrlService } from '@ggraphic/editor/hostServices';
-import { AutoSaveStoreProvider } from '@ggraphic/editor/stores/AutoSaveStoreProvider';
-import { registerToast } from '@ggraphic/editor/utils/editorToast';
-import { userFacingError } from '@ggraphic/editor/utils/userFacingError';
+import { plainImageUrls, type CanvasImageUrlService } from '../../hostServices.js';
+import { AutoSaveStoreProvider } from '../../stores/AutoSaveStoreProvider.js';
+import { registerToast } from '../../utils/editorToast.js';
+import { userFacingError } from '../../utils/userFacingError.js';
 
 import { createCanvas } from '@napi-rs/canvas';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
@@ -25,9 +21,9 @@ import Konva from 'konva';
 import { createRef } from 'react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type * as StoreModule from '@ggraphic/editor/stores/createCanvasEditorStore';
-import type { CanvasEditorStoreApi } from '@ggraphic/editor/stores/createCanvasEditorStore';
-import type { UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import type * as StoreModule from '../../stores/createCanvasEditorStore.js';
+import type { CanvasEditorStoreApi } from '../../stores/createCanvasEditorStore.js';
+import type { UserImageInstance } from '../../utils/userImageUtils.js';
 
 const mocks = vi.hoisted(() => ({
   stores: [] as unknown[],
@@ -43,16 +39,16 @@ vi.mock('smartcrop', () => ({ default: { crop: mocks.crop } }));
 // The editor reports through its toast seam; the host's registration is replaced by the spy.
 registerToast(Object.assign(vi.fn(), { error: mocks.toastError }));
 
-vi.mock('@ggraphic/editor/sidebar/UserUploadsProvider', () => ({
+vi.mock('../../sidebar/UserUploadsProvider.js', () => ({
   useOptionalUserUploads: () => ({ upload: mocks.upload }),
 }));
 
-vi.mock('@ggraphic/editor/utils/mediaPlacement', async (importOriginal) => {
+vi.mock('../../utils/mediaPlacement.js', async (importOriginal) => {
   const original = await importOriginal<Record<string, unknown>>();
   return { ...original, fetchShareImageFile: mocks.fetchFile };
 });
 
-vi.mock('@ggraphic/editor/stores/createCanvasEditorStore', async (importOriginal) => {
+vi.mock('../../stores/createCanvasEditorStore.js', async (importOriginal) => {
   const original = await importOriginal<typeof StoreModule>();
   return {
     ...original,

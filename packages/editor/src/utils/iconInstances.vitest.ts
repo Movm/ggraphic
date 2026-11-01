@@ -8,9 +8,9 @@ import {
   recolorIconInstances,
   resolveIconDef,
   selectedCatalogIconIds,
-} from '@ggraphic/editor/utils/iconInstances';
+} from './iconInstances.js';
 
-import type { IconState } from '@ggraphic/editor/configs/factory/baseTypes';
+import type { IconState } from '../configs/factory/baseTypes.js';
 
 const at = (x: number, extra: Partial<IconState> = {}): IconState => ({
   x,

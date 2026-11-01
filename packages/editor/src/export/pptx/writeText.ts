@@ -11,15 +11,10 @@
  * - Aufzählungszeichen gelten je Absatz und stehen am ersten Lauf.
  */
 
-import { pptxFont } from '@ggraphic/editor/export/pptx/pptxFonts';
-import {
-  parseColor,
-  pptxRotation,
-  transparencyOf,
-  type PptxUnits,
-} from '@ggraphic/editor/export/pptx/pptxUnits';
+import { pptxFont } from './pptxFonts.js';
+import { parseColor, pptxRotation, transparencyOf, type PptxUnits } from './pptxUnits.js';
 
-import type { PptxShadow, PptxTextItem, PptxTextRun } from '@ggraphic/editor/export/pptx/types';
+import type { PptxShadow, PptxTextItem, PptxTextRun } from './types.js';
 import type PptxGenJS from 'pptxgenjs';
 
 /** Hängender Einzug der Aufzählung, wie `BULLET_INDENT` in `textModel.ts`. */

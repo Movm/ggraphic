@@ -6,11 +6,11 @@ import Konva from 'konva';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
-import { UserImagePrimitive } from '@ggraphic/editor/primitives/UserImagePrimitive';
+import { activeBrand } from '../../brand/brandRegistry.js';
+import { CanvasStage, type CanvasStageRef } from '../CanvasStage.js';
+import { UserImagePrimitive } from '../UserImagePrimitive.js';
 
-import type { UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import type { UserImageInstance } from '../../utils/userImageUtils.js';
 
 function mockImages(outcome: 'load' | 'fail') {
   vi.spyOn(window, 'Image').mockImplementation(function () {

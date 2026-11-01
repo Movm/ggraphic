@@ -14,24 +14,24 @@ import {
   type BindingRef,
   type FontRole,
 } from '@ggraphic/core';
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { blockElementIds, type LiftedBlock } from '@ggraphic/editor/blocks/liftedBlock';
-import { type IconState } from '@ggraphic/editor/configs/factory/baseTypes';
-import { type AdditionalText } from '@ggraphic/editor/configs/types';
-import { type TextPreview } from '@ggraphic/editor/hooks/useCanvasElementHandlers';
-import { type AssetInstance, createAssetInstance } from '@ggraphic/editor/utils/canvasAssets';
-import { type ExternalIconPayload } from '@ggraphic/editor/utils/externalIcons';
-import { createInstanceId } from '@ggraphic/editor/utils/duplicateElement';
-import { iconInstanceIdsFor, placedIconId } from '@ggraphic/editor/utils/iconInstances';
-import { createIllustration } from '@ggraphic/editor/utils/illustrations/registry';
-import { type IllustrationInstance } from '@ggraphic/editor/utils/illustrations/types';
-import { createShape, type ShapeInstance, type ShapeType } from '@ggraphic/editor/utils/shapes';
+import { activeBrand } from '../brand/brandRegistry.js';
+import { blockElementIds, type LiftedBlock } from '../blocks/liftedBlock.js';
+import { type IconState } from '../configs/factory/baseTypes.js';
+import { type AdditionalText } from '../configs/types.js';
+import { type TextPreview } from '../hooks/useCanvasElementHandlers.js';
+import { type AssetInstance, createAssetInstance } from '../utils/canvasAssets.js';
+import { type ExternalIconPayload } from '../utils/externalIcons.js';
+import { createInstanceId } from '../utils/duplicateElement.js';
+import { iconInstanceIdsFor, placedIconId } from '../utils/iconInstances.js';
+import { createIllustration } from '../utils/illustrations/registry.js';
+import { type IllustrationInstance } from '../utils/illustrations/types.js';
+import { createShape, type ShapeInstance, type ShapeType } from '../utils/shapes.js';
 import {
   createUserImageInstanceFromUrl,
   type ElementPlacement,
   type UserImageInstance,
   type UserImagePlacement,
-} from '@ggraphic/editor/utils/userImageUtils';
+} from '../utils/userImageUtils.js';
 
 import { fittedFontSize } from './fitting.js';
 import { withHuggedPlates } from './hug.js';

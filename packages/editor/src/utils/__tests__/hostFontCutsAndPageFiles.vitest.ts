@@ -5,11 +5,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import type { RunStyle } from '@ggraphic/schema';
 
-import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
-import { registerMessages } from '@ggraphic/editor/i18n/messages';
-import { fontMarkSupport } from '@ggraphic/editor/utils/fontMarkSupport';
-import { runFont } from '@ggraphic/editor/utils/textUtils';
-import { zipPageImages } from '@ggraphic/editor/utils/zipPageImages';
+import { registerBrandPacks } from '../../brand/brandRegistry.js';
+import { registerMessages } from '../../i18n/messages.js';
+import { fontMarkSupport } from '../fontMarkSupport.js';
+import { runFont } from '../textUtils.js';
+import { zipPageImages } from '../zipPageImages.js';
 
 // A host whose emphasis family ships a real Black Italic and loads it itself.
 const BOLD_ITALIC: RunStyle = {

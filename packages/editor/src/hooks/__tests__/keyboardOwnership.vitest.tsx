@@ -3,12 +3,12 @@ import { renderHook } from '@testing-library/react';
 import { act } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { useCanvasKeyboardHandlers } from '@ggraphic/editor/hooks/useCanvasKeyboardHandlers';
-import { createCanvasEditorStore } from '@ggraphic/editor/stores/createCanvasEditorStore';
-import { isWidgetOwnedKey } from '@ggraphic/editor/utils/keyboardOwnership';
+import { useCanvasKeyboardHandlers } from '../useCanvasKeyboardHandlers.js';
+import { createCanvasEditorStore } from '../../stores/createCanvasEditorStore.js';
+import { isWidgetOwnedKey } from '../../utils/keyboardOwnership.js';
 
-import type { BaseCanvasState } from '@ggraphic/editor/configs/factory/baseTypes';
-import type { CanvasCommands } from '@ggraphic/editor/utils/canvasCommands';
+import type { BaseCanvasState } from '../../configs/factory/baseTypes.js';
+import type { CanvasCommands } from '../../utils/canvasCommands.js';
 
 /**
  * Tastenhoheit: was ein fokussiertes Widget selbst verbraucht (Pfeile am

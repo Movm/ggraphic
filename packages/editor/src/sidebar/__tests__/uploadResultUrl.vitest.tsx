@@ -2,17 +2,14 @@
 import { act, render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  CanvasEditorProvider,
-  type CanvasEditorServices,
-} from '@ggraphic/editor/CanvasEditorProvider';
+import { CanvasEditorProvider, type CanvasEditorServices } from '../../CanvasEditorProvider.js';
 import {
   plainImageUrls,
   type CanvasMediaItem,
   type CanvasMediaUploadResult,
-} from '@ggraphic/editor/hostServices';
-import { UploadsSection } from '@ggraphic/editor/sidebar/sections/UploadsSection';
-import { UserUploadsProvider, useUserUploads } from '@ggraphic/editor/sidebar/UserUploadsProvider';
+} from '../../hostServices.js';
+import { UploadsSection } from '../sections/UploadsSection.js';
+import { UserUploadsProvider, useUserUploads } from '../UserUploadsProvider.js';
 
 // Desktop-Raster.
 vi.stubGlobal(

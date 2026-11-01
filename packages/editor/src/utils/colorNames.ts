@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
 import { type BrandPack } from '@ggraphic/core';
 
-import { registeredBrands } from '@ggraphic/editor/brand/brandRegistry';
-import { messages } from '@ggraphic/editor/i18n/messages';
-import { brandColors } from '@ggraphic/editor/utils/colorOptions';
+import { registeredBrands } from '../brand/brandRegistry.js';
+import { messages } from '../i18n/messages.js';
+import { brandColors } from './colorOptions.js';
 
 /**
  * Name of a brand colour, otherwise "Farbe #RRGGBB" (catalogue) — for swatch `aria-label`s.

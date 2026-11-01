@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
-import { type HistoryStamps, routeHistory } from '@ggraphic/editor/utils/historyStamp';
-import { editorSkipsKey } from '@ggraphic/editor/utils/keyboardOwnership';
+import { type HistoryStamps, routeHistory } from '../../../utils/historyStamp.js';
+import { editorSkipsKey } from '../../../utils/keyboardOwnership.js';
 import { useEffect } from 'react';
 
 /**

@@ -2,12 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import * as Y from 'yjs';
 
-import {
-  getPagesMap,
-  readPages,
-  replaceDeck,
-  seedPagesIfEmpty,
-} from '@ggraphic/editor/collab/pagesDoc';
+import { getPagesMap, readPages, replaceDeck, seedPagesIfEmpty } from './pagesDoc.js';
 
 const ORIGIN = Symbol('test-local');
 

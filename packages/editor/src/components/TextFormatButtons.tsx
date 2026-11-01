@@ -33,10 +33,10 @@ import { createPortal } from 'react-dom';
 import { FiBold, FiItalic, FiList, FiUnderline } from 'react-icons/fi';
 import { MdBorderColor, MdFormatListNumbered, MdHighlight } from 'react-icons/md';
 
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { useRovingToolbar } from '@ggraphic/editor/hooks/useRovingToolbar';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { KEEP_EDITING_ATTR } from '@ggraphic/editor/utils/keyboardOwnership';
+import { useDocumentBrand } from '../brand/documentBrand.js';
+import { useRovingToolbar } from '../hooks/useRovingToolbar.js';
+import { useMessages } from '../i18n/messages.js';
+import { KEEP_EDITING_ATTR } from '../utils/keyboardOwnership.js';
 
 import { brandColors, type ColorOption } from '../utils/colorOptions.js';
 import { type FontMarkSupport } from '../utils/fontMarkSupport.js';

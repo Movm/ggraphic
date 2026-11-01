@@ -24,14 +24,14 @@ import React, { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import * as Y from 'yjs';
 
-import { pageElementStateKeys } from '@ggraphic/editor/collab/pageElementStateKeys';
-import { readPages, seedPagesIfEmpty, updatePageStateById } from '@ggraphic/editor/collab/pagesDoc';
-import { useEmitHostStateChanges } from '@ggraphic/editor/collab/useEmitHostStateChanges';
-import { PAGES_STATE_ORIGIN } from '@ggraphic/editor/collab/useYjsPages';
-import { createPageSyncedCallbacks } from '@ggraphic/editor/collab/wrapCallbacksWithPageSync';
-import { GenericCanvas } from '@ggraphic/editor/components/GenericCanvas';
-import { loadCanvasConfig } from '@ggraphic/editor/configs/configLoader';
-import { AutoSaveStoreProvider } from '@ggraphic/editor/stores/AutoSaveStoreProvider';
+import { pageElementStateKeys } from './pageElementStateKeys.js';
+import { readPages, seedPagesIfEmpty, updatePageStateById } from './pagesDoc.js';
+import { useEmitHostStateChanges } from './useEmitHostStateChanges.js';
+import { PAGES_STATE_ORIGIN } from './useYjsPages.js';
+import { createPageSyncedCallbacks } from './wrapCallbacksWithPageSync.js';
+import { GenericCanvas } from '../components/GenericCanvas.js';
+import { loadCanvasConfig } from '../configs/configLoader.js';
+import { AutoSaveStoreProvider } from '../stores/AutoSaveStoreProvider.js';
 
 import { FIXTURE_ASSET_ID } from '../testing/fixtureTemplates';
 

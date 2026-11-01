@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import * as Y from 'yjs';
 
-import { YDOC_KEYS } from '@ggraphic/editor/collab/ydocKeys';
+import { YDOC_KEYS } from './ydocKeys.js';
 
 import type { CanvasEditorStoreApi } from '../stores/createCanvasEditorStore.js';
 import type { CanvasEditorConfig } from '../types/editorTypes.js';

@@ -3,8 +3,8 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { useFloatingModuleHandlers } from '@ggraphic/editor/hooks/useFloatingModuleHandlers';
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { useFloatingModuleHandlers } from '../../../hooks/useFloatingModuleHandlers.js';
+import { messages } from '../../../i18n/messages.js';
 import { axe } from '../../../test-utils';
 
 import { FloatingImageLookControl } from './FloatingImageLookControl';

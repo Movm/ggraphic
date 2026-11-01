@@ -12,7 +12,7 @@ import {
   readNodeFrame,
   signedScale,
   type NodeFrame,
-} from '@ggraphic/editor/utils/orientation';
+} from './orientation.js';
 
 const topLeft = (rotation: number): NodeFrame => ({
   x: 10,

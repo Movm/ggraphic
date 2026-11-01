@@ -2,7 +2,7 @@
 import { rebindPageState } from '@ggraphic/core';
 import { describe, expect, it } from 'vitest';
 
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { activeBrand } from '../brand/brandRegistry.js';
 
 import { duotoneLook, IMAGE_PRESETS } from './imageFilters.js';
 import { currentImageLook, imageLookPatch } from './imageLook.js';

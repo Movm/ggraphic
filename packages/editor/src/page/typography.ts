@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 import { type BrandFontRole } from '@ggraphic/core';
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { activeBrand } from '../brand/brandRegistry.js';
 
 /** Font stacks of the active brand's headline, body and quote families. */
 export const headlineFont = () => `${activeBrand().fonts.headline}, Arial, sans-serif`;

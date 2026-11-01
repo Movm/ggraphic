@@ -5,9 +5,9 @@ import { PiFlipHorizontal, PiFlipVertical } from 'react-icons/pi';
 import {
   FloatingPositionControl,
   type PositionCommandId,
-} from '@ggraphic/editor/components/TopBar/modules/FloatingPositionControl';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { useRovingToolbar } from '@ggraphic/editor/hooks/useRovingToolbar';
+} from './modules/FloatingPositionControl.js';
+import { useMessages } from '../../i18n/messages.js';
+import { useRovingToolbar } from '../../hooks/useRovingToolbar.js';
 import {
   CANVAS_COMMANDS,
   ariaShortcut,
@@ -15,7 +15,7 @@ import {
   isMacPlatform,
   shortcutOf,
   type CanvasCommandId,
-} from '@ggraphic/editor/utils/canvasCommandRegistry';
+} from '../../utils/canvasCommandRegistry.js';
 
 import { ContextCard } from './ContextToolbar.js';
 

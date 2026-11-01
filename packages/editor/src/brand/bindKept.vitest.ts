@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { applyOperation } from '@ggraphic/editor/ai/applyOperation';
-import { placeBlock, translateBlock, type LiftedBlock } from '@ggraphic/editor/blocks/liftedBlock';
+import { applyOperation } from '../ai/applyOperation.js';
+import { placeBlock, translateBlock, type LiftedBlock } from '../blocks/liftedBlock.js';
 
 import { createShapeActions } from '../configs/factory/actionFactories.js';
 import { carryInstanceState } from '../configs/factory/carryInstanceState.js';

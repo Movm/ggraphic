@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import {
-  type CanvasStudioAssetItem,
-  type CanvasStudioAssetScope,
-} from '@ggraphic/editor/hostServices';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { registeredAssetCatalog, studioStickerId } from '@ggraphic/editor/utils/canvasAssets';
+import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
+import { type CanvasStudioAssetItem, type CanvasStudioAssetScope } from '../../../hostServices.js';
+import { useMessages } from '../../../i18n/messages.js';
+import { registeredAssetCatalog, studioStickerId } from '../../../utils/canvasAssets.js';
 import { type StickerRef } from '@ggraphic/schema';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { HiPlus } from 'react-icons/hi2';

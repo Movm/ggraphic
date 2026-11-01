@@ -13,28 +13,25 @@ import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
-import { DocumentBrandContext } from '@ggraphic/editor/brand/documentBrand';
-import { Marker } from '@ggraphic/editor/components/markerMark';
-import { createElementActions } from '@ggraphic/editor/configs/factory/actionFactories';
-import { textParagraphs } from '@ggraphic/editor/export/pptx/textModel';
-import { shapeItems } from '@ggraphic/editor/sidebar/sections/assets/useElementCatalog';
-import { ChartTypePreview } from '@ggraphic/editor/sidebar/sections/DiagrammeSection';
-import {
-  ALL_PALETTE_SHAPES,
-  getShapeVariant,
-} from '@ggraphic/editor/sidebar/sections/FormenSection';
-import { colorName } from '@ggraphic/editor/utils/colorNames';
-import { createCircleBadgeInstance } from '@ggraphic/editor/utils/circleBadgeUtils';
-import { createFrameInstance } from '@ggraphic/editor/utils/frameUtils';
-import { markerBoxes } from '@ggraphic/editor/utils/markerBoxes';
-import { defaultTextMarker, markerInkOn } from '@ggraphic/editor/utils/markerColors';
-import { createPillBadgeInstance } from '@ggraphic/editor/utils/pillBadgeUtils';
-import { createShape } from '@ggraphic/editor/utils/shapes';
+import { activeBrand, registerBrandPacks } from './brandRegistry.js';
+import { DocumentBrandContext } from './documentBrand.js';
+import { Marker } from '../components/markerMark.js';
+import { createElementActions } from '../configs/factory/actionFactories.js';
+import { textParagraphs } from '../export/pptx/textModel.js';
+import { shapeItems } from '../sidebar/sections/assets/useElementCatalog.js';
+import { ChartTypePreview } from '../sidebar/sections/DiagrammeSection.js';
+import { ALL_PALETTE_SHAPES, getShapeVariant } from '../sidebar/sections/FormenSection.js';
+import { colorName } from '../utils/colorNames.js';
+import { createCircleBadgeInstance } from '../utils/circleBadgeUtils.js';
+import { createFrameInstance } from '../utils/frameUtils.js';
+import { markerBoxes } from '../utils/markerBoxes.js';
+import { defaultTextMarker, markerInkOn } from '../utils/markerColors.js';
+import { createPillBadgeInstance } from '../utils/pillBadgeUtils.js';
+import { createShape } from '../utils/shapes.js';
 
 import { PACK_A, PACK_B } from '../testing/documentBrandPacks.js';
 
-import type { BaseCanvasState } from '@ggraphic/editor/configs/factory/baseTypes';
+import type { BaseCanvasState } from '../configs/factory/baseTypes.js';
 
 const lower = (values: readonly string[]) => values.map((v) => v.toLowerCase());
 const B_ROLES = lower([

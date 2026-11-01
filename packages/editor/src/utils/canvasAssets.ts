@@ -6,9 +6,9 @@
  */
 
 import { type AssetInstance } from '@ggraphic/core';
-import type { CanvasAiNamedOption } from '@ggraphic/editor/ai/types';
-import type { ElementPanelHost } from '@ggraphic/editor/sidebar/sections/assets/elementPanelHost';
-import type { KawaiiDef, SvgDef, SvgSource } from '@ggraphic/editor/utils/illustrations/types';
+import type { CanvasAiNamedOption } from '../ai/types.js';
+import type { ElementPanelHost } from '../sidebar/sections/assets/elementPanelHost.js';
+import type { KawaiiDef, SvgDef, SvgSource } from './illustrations/types.js';
 import type { StickerRef } from '@ggraphic/schema';
 
 export { ASSET_TARGET_SIZE, type AssetInstance } from '@ggraphic/core';

@@ -9,10 +9,10 @@ import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import * as Y from 'yjs';
 
-import { getMetaMap } from '@ggraphic/editor/collab/pagesDoc';
-import { useYjsPages } from '@ggraphic/editor/collab/useYjsPages';
-import { YDOC_KEYS } from '@ggraphic/editor/collab/ydocKeys';
-import { nextHistoryStamp } from '@ggraphic/editor/utils/historyStamp';
+import { getMetaMap } from './pagesDoc.js';
+import { useYjsPages } from './useYjsPages.js';
+import { YDOC_KEYS } from './ydocKeys.js';
+import { nextHistoryStamp } from '../utils/historyStamp.js';
 
 function setup() {
   const doc = new Y.Doc();

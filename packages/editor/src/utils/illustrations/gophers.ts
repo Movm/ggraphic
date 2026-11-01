@@ -9,7 +9,7 @@
  * Generated from the SVG filenames — see apps/web/public/illustrations/gophers/.
  */
 
-import type { SvgDef } from '@ggraphic/editor/utils/illustrations/types';
+import type { SvgDef } from './types.js';
 
 export const GOPHERS: SvgDef[] = [
   {
