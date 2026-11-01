@@ -79,6 +79,7 @@ import {
 } from '../../export/printExport.js';
 import { exportSlidesPdf } from '../../export/slidesPdf.js';
 import { EditorBoxProvider } from '../../hooks/editorBox.js';
+import { StageFitProvider, useMeasuredStageFit } from '../../hooks/stageFit.js';
 import { useIsCanvasMobile } from '../../hooks/useIsCanvasMobile.js';
 import { useZoomGestures } from '../../hooks/useZoomGestures.js';
 import { CanvasEditorLayout } from '../../layouts/index.js';
@@ -350,6 +351,9 @@ function CanvasEditorInner({
     [pagesContainerRef]
   );
   useZoomGestures(pagesContainer, setZoom, { leftOrigin: isMobileWeb });
+  // Desktop: every page fills the canvas area it can use (#112). Mobile has its own fit
+  // (`useMobileSheetFit`, the box).
+  const stageFit = useMeasuredStageFit(pagesContainer, !isMobileWeb && !isPreview);
 
   // Every page binds its config to its page Y.Map — in collab mode
   // that syncs to peers, in local mode it makes duplicate/move/undo carry
@@ -1729,108 +1733,112 @@ function CanvasEditorInner({
                     {t.shell.schemaRefusal[schemaRefusal.status]}
                   </p>
                 )}
-                <div
-                  inert={isPreview || hasPendingSuggestion}
-                  aria-busy={isPreview && !schemaRefusal}
-                  ref={pagesContainerCallbackRef}
-                  onPointerDown={handleWorkAreaPointerDown}
-                  className={cn(
-                    'heterogeneous-multipage__pages-container has-bottom-bar flex flex-col items-center gap-md p-sm pb-lg w-full max-canvas-mobile:gap-sm max-canvas-mobile:p-xs',
-                    hasPendingSuggestion && 'opacity-60 transition-opacity duration-200'
-                  )}
-                >
-                  {pages.map((page, index) => {
-                    const config = loadedConfigs.get(page.configId);
-                    if (!config) return null;
+                <StageFitProvider value={stageFit}>
+                  <div
+                    inert={isPreview || hasPendingSuggestion}
+                    aria-busy={isPreview && !schemaRefusal}
+                    ref={pagesContainerCallbackRef}
+                    onPointerDown={handleWorkAreaPointerDown}
+                    className={cn(
+                      'heterogeneous-multipage__pages-container has-bottom-bar flex flex-col items-center gap-md p-sm pb-lg w-full max-canvas-mobile:gap-sm max-canvas-mobile:p-xs',
+                      hasPendingSuggestion && 'opacity-60 transition-opacity duration-200'
+                    )}
+                  >
+                    {pages.map((page, index) => {
+                      const config = loadedConfigs.get(page.configId);
+                      if (!config) return null;
 
-                    const isActive = index === currentPageIndex;
-                    const canDelete = pageCount > 1;
+                      const isActive = index === currentPageIndex;
+                      const canDelete = pageCount > 1;
 
-                    return (
-                      <PageWrapper
-                        // A replaced state (convert, undo) mounts the page afresh on the new state.
-                        key={`${page.id}:${page.stateEpoch ?? 0}`}
-                        page={page}
-                        index={index}
-                        pageCount={pageCount}
-                        config={config}
+                      return (
+                        <PageWrapper
+                          // A replaced state (convert, undo) mounts the page afresh on the new state.
+                          key={`${page.id}:${page.stateEpoch ?? 0}`}
+                          page={page}
+                          index={index}
+                          pageCount={pageCount}
+                          config={config}
+                          formatId={formatId}
+                          isActive={isActive}
+                          canDelete={canDelete}
+                          canvasRef={canvasRefsRef.current[index]}
+                          pageRef={pageDomRefsRef.current[index]}
+                          onSelect={handlePageSelect}
+                          onDelete={removePage}
+                          onMovePage={movePage}
+                          onDuplicatePage={duplicatePage}
+                          onChangeTemplate={PagePicker ? handleOpenTemplateChange : undefined}
+                          onDropVorlage={
+                            takesPageDrops && !readOnly ? handleDropVorlage : undefined
+                          }
+                          onExport={handleExport}
+                          onCancel={onCancel}
+                          callbacks={getCallbacksForPage(page.id, page.configId)}
+                          multiPageExport={index === 0 ? multiPageExportProps : undefined}
+                          onStateChange={handlePageStateChange}
+                          onObservedState={
+                            printService && needsImpressum(printFormat)
+                              ? handleObservedState
+                              : undefined
+                          }
+                          onToolbarStateChange={
+                            isActive && !isPreview ? handleToolbarStateChange : undefined
+                          }
+                          onAutoSaveShareToken={onAutoSaveShareToken}
+                          autoSave={false}
+                          pageBinding={pageBindingAt(index, page.id, isActive)}
+                          readOnly={readOnly}
+                        />
+                      );
+                    })}
+
+                    {noPageRenderable && <CanvasPageSkeleton aspectRatio={pageAspectRatio} />}
+
+                    {templateChangePage && PagePicker && (
+                      <PagePicker
+                        isOpen
+                        mode="replace"
+                        anchorRef={pageDomRefsRef.current[templateChangePage.index]}
+                        onSelectTemplate={handleSelectTemplateChange}
+                        onClose={handleCloseTemplateChange}
+                        currentTemplateId={templateChangePage.configId}
+                        currentState={templateChangePage.state}
+                        activeTemplateId={currentTemplateId}
+                        pages={pages}
                         formatId={formatId}
-                        isActive={isActive}
-                        canDelete={canDelete}
-                        canvasRef={canvasRefsRef.current[index]}
-                        pageRef={pageDomRefsRef.current[index]}
-                        onSelect={handlePageSelect}
-                        onDelete={removePage}
-                        onMovePage={movePage}
-                        onDuplicatePage={duplicatePage}
-                        onChangeTemplate={PagePicker ? handleOpenTemplateChange : undefined}
-                        onDropVorlage={takesPageDrops && !readOnly ? handleDropVorlage : undefined}
-                        onExport={handleExport}
-                        onCancel={onCancel}
-                        callbacks={getCallbacksForPage(page.id, page.configId)}
-                        multiPageExport={index === 0 ? multiPageExportProps : undefined}
-                        onStateChange={handlePageStateChange}
-                        onObservedState={
-                          printService && needsImpressum(printFormat)
-                            ? handleObservedState
-                            : undefined
+                      />
+                    )}
+
+                    {isSlideFormat(format) && !isPreview && pages[currentPageIndex] && (
+                      <SlideNotesPanel
+                        value={
+                          typeof pages[currentPageIndex].state.notes === 'string'
+                            ? pages[currentPageIndex].state.notes
+                            : ''
                         }
-                        onToolbarStateChange={
-                          isActive && !isPreview ? handleToolbarStateChange : undefined
-                        }
-                        onAutoSaveShareToken={onAutoSaveShareToken}
-                        autoSave={false}
-                        pageBinding={pageBindingAt(index, page.id, isActive)}
+                        onChange={(notes) => updatePageState(pages[currentPageIndex].id, { notes })}
                         readOnly={readOnly}
                       />
-                    );
-                  })}
-
-                  {noPageRenderable && <CanvasPageSkeleton aspectRatio={pageAspectRatio} />}
-
-                  {templateChangePage && PagePicker && (
-                    <PagePicker
-                      isOpen
-                      mode="replace"
-                      anchorRef={pageDomRefsRef.current[templateChangePage.index]}
-                      onSelectTemplate={handleSelectTemplateChange}
-                      onClose={handleCloseTemplateChange}
-                      currentTemplateId={templateChangePage.configId}
-                      currentState={templateChangePage.state}
-                      activeTemplateId={currentTemplateId}
-                      pages={pages}
-                      formatId={formatId}
-                    />
-                  )}
-
-                  {isSlideFormat(format) && !isPreview && pages[currentPageIndex] && (
-                    <SlideNotesPanel
-                      value={
-                        typeof pages[currentPageIndex].state.notes === 'string'
-                          ? pages[currentPageIndex].state.notes
-                          : ''
-                      }
-                      onChange={(notes) => updatePageState(pages[currentPageIndex].id, { notes })}
-                      readOnly={readOnly}
-                    />
-                  )}
-                  {/* Seite hinzufügen unter der Fläche — für den Fall, in dem die
+                    )}
+                    {/* Seite hinzufügen unter der Fläche — für den Fall, in dem die
                   untere Leiste den Knopf nicht trägt: unterhalb von 900 px, wo
                   `CanvasEditorLayout` sie per `max-canvas-mobile:hidden`
                   ausblendet. Die Breakpoint-Bedingung steht hier gespiegelt, weil
                   nur CSS sie kennt. Er liegt im skalierten Seiten-Container und
                   skaliert sich mobil zurück, sonst schrumpfte er mit Fit und Zoom
                   unter 44 pt. */}
-                  {canAddPages && !showPageStrip && (
-                    <div className="w-full max-w-[28rem] pt-sm max-canvas-mobile:pt-xs max-canvas-mobile:px-xs max-canvas-mobile:origin-top max-canvas-mobile:[scale:calc(1/var(--canvas-total-scale,1))] canvas-mobile:hidden">
-                      <AddPageButton
-                        onAddPage={handleAddPageLikeCurrent}
-                        renderPicker={renderAddPicker}
-                        disabled={!canAddMore || (!renderAddPicker && !currentTemplateId)}
-                      />
-                    </div>
-                  )}
-                </div>
+                    {canAddPages && !showPageStrip && (
+                      <div className="w-full max-w-[28rem] pt-sm max-canvas-mobile:pt-xs max-canvas-mobile:px-xs max-canvas-mobile:origin-top max-canvas-mobile:[scale:calc(1/var(--canvas-total-scale,1))] canvas-mobile:hidden">
+                        <AddPageButton
+                          onAddPage={handleAddPageLikeCurrent}
+                          renderPicker={renderAddPicker}
+                          disabled={!canAddMore || (!renderAddPicker && !currentTemplateId)}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </StageFitProvider>
               </CanvasEditorLayout>
               {selectionPill}
               {!isPreview &&

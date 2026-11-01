@@ -48,6 +48,12 @@ export interface CanvasStageProps {
   responsive?: boolean;
   maxContainerWidth?: number;
   maxContainerHeight?: number;
+  /**
+   * Caps the fit at the parent's width (default). Turn it off where the parent sizes itself to the
+   * stage, like the editor's zoom wrapper (`w-fit`): its width is the stage's own, so the stage
+   * could shrink but never grow back (#112). The max sizes then decide alone.
+   */
+  fitToParent?: boolean;
   onStageClick?: (e: Konva.KonvaEventObject<MouseEvent | TouchEvent>) => void;
   /**
    * Hit detection for the whole stage. `false` skips Konva's hit graph — it
@@ -183,6 +189,7 @@ export const CanvasStage = forwardRef<CanvasStageRef, CanvasStageProps>(
       responsive = true,
       maxContainerWidth = 600,
       maxContainerHeight,
+      fitToParent = true,
       onStageClick,
       listening = true,
       ariaLabel,
@@ -209,10 +216,14 @@ export const CanvasStage = forwardRef<CanvasStageRef, CanvasStageProps>(
 
       const updateSize = () => {
         // Use actual parent container width if available
-        const actualContainerWidth = containerDivRef.current?.parentElement?.clientWidth;
-        const maxW = actualContainerWidth
-          ? Math.min(actualContainerWidth, maxContainerWidth)
-          : Math.min(window.innerWidth - 48, maxContainerWidth);
+        const actualContainerWidth = fitToParent
+          ? containerDivRef.current?.parentElement?.clientWidth
+          : undefined;
+        const maxW = !fitToParent
+          ? maxContainerWidth
+          : actualContainerWidth
+            ? Math.min(actualContainerWidth, maxContainerWidth)
+            : Math.min(window.innerWidth - 48, maxContainerWidth);
         const maxH = maxContainerHeight ?? window.innerHeight - STAGE_VERTICAL_CHROME;
 
         let containerW = maxW;
@@ -235,7 +246,7 @@ export const CanvasStage = forwardRef<CanvasStageRef, CanvasStageProps>(
 
       // Use ResizeObserver for more accurate container size tracking
       const resizeObserver = new ResizeObserver(updateSize);
-      if (containerDivRef.current?.parentElement) {
+      if (fitToParent && containerDivRef.current?.parentElement) {
         resizeObserver.observe(containerDivRef.current.parentElement);
       }
 
@@ -244,7 +255,15 @@ export const CanvasStage = forwardRef<CanvasStageRef, CanvasStageProps>(
         resizeObserver.disconnect();
         window.removeEventListener('resize', updateSize);
       };
-    }, [responsive, width, height, aspectRatio, maxContainerWidth, maxContainerHeight]);
+    }, [
+      responsive,
+      width,
+      height,
+      aspectRatio,
+      maxContainerWidth,
+      maxContainerHeight,
+      fitToParent,
+    ]);
 
     // Renders `capture` against the export view of the stage: the export
     // region at the requested pixel ratio, selection chrome hidden and — for a
