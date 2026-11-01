@@ -79,9 +79,9 @@ The repository is in changesets pre mode (`alpha`), so versions come out as `0.x
 
 ## Release checklist (maintainers)
 
-The release workflow publishes through npm trusted publishing (OIDC). Two steps are still done by hand.
+The release workflow publishes through npm trusted publishing (OIDC) and then points `latest` at what it published. A new package needs some one-time setup by hand.
 
-**A new package needs its first publish from a maintainer's terminal.** A trusted publisher can only be configured for a package that exists on npm. Until it is, the release run fails on that package. So, once per new package:
+**Once per new package**, from a maintainer's terminal. A trusted publisher can only be configured for a package that exists on npm; until it is, the release run fails on that package.
 
 1. Publish it by hand (npm asks for the 2FA code).
 2. Make the release workflow its trusted publisher:
@@ -90,13 +90,13 @@ The release workflow publishes through npm trusted publishing (OIDC). Two steps 
    npx -y npm@11 trust github @ggraphic/<pkg> --file release.yml --repo Movm/ggraphic --allow-publish -y
    ```
 
-**After every release, point `latest` at the new version.** In pre mode, `changeset publish` publishes with the `alpha` tag only, and `latest` stays where it was. The `0.0.0` placeholders are deprecated, so without this step a plain `npm install @ggraphic/<pkg>` gets an outdated or deprecated version. For each package the run published:
+3. Allow that trusted publisher to set dist-tags: on `https://www.npmjs.com/package/@ggraphic/<pkg>/access` (the package's Settings tab), under Trusted publishing, enable **Allow npm dist-tag**. `npm trust` has no flag for this.
+
+**`latest` after a release.** In pre mode, `changeset publish` publishes with the `alpha` tag only. The release workflow's step "Point latest at the published versions" then moves `latest` to each published public package; without that, a plain `npm install @ggraphic/<pkg>` would get an outdated version or one of the deprecated `0.0.0` placeholders. If the step cannot set a tag (usually because step 3 is missing), the release stays green and the run shows a warning that names the package and the command to run by hand:
 
 ```bash
 npm dist-tag add @ggraphic/<pkg>@<version> latest
 ```
-
-The release run's log and the GitHub releases list the published packages and versions.
 
 ## Tests and checks
 
