@@ -239,6 +239,7 @@ function CanvasEditorInner({
     replaceDeck,
     canUndoPageOp,
     canRedoPageOp,
+    pageOpStamps,
     isPreview,
     schemaRefusal,
   } = usePageManager<string>({
@@ -479,13 +480,13 @@ function CanvasEditorInner({
   });
 
   // Page-level undo/redo via capture-phase keydown.
-  const activePageCanUndo = toolbarState?.canUndo ?? false;
-  const activePageCanRedo = toolbarState?.canRedo ?? false;
+  const activePageStamps = useCallback(
+    () => canvasRefsRef.current[currentPageIndex]?.current?.historyStamps?.() ?? null,
+    [canvasRefsRef, currentPageIndex]
+  );
   usePageUndoRedoShortcuts({
-    activePageCanUndo,
-    activePageCanRedo,
-    canUndoPageOp,
-    canRedoPageOp,
+    activePageStamps,
+    pageOpStamps,
     undoPageOp,
     redoPageOp,
   });
@@ -613,9 +614,7 @@ function CanvasEditorInner({
   const toolbarHandlers = useToolbarHandlers({
     canvasRefsRef,
     currentPageIndex,
-    toolbarState,
-    canUndoPageOp,
-    canRedoPageOp,
+    pageOpStamps,
     undoPageOp,
     redoPageOp,
     discardReplaceDeck,

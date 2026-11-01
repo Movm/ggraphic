@@ -39,6 +39,7 @@ import { useAutoSaveStore } from '@ggraphic/editor/stores/useAutoSaveStore';
 import { type CropAspectId } from '@ggraphic/editor/utils/cropAspect';
 import { itemBodyRect } from '@ggraphic/editor/utils/deepSelect';
 import { ensureFontsReady } from '@ggraphic/editor/utils/ensureFontsReady';
+import { type HistoryStamps } from '@ggraphic/editor/utils/historyStamp';
 import {
   applyLayerSelection,
   type LayerSelectionChange,
@@ -333,6 +334,8 @@ export interface GenericCanvasRef {
   /** Toolbar handlers — called by parent when toolbar is rendered at layout level */
   undo?: () => void;
   redo?: () => void;
+  /** Stamps of the steps this page's Undo/Redo would reach (`utils/historyStamp`). */
+  historyStamps?: () => HistoryStamps;
   handleMoveLayer?: (direction: 'up' | 'down') => void;
   handleDuplicate?: () => void;
   handleDeleteElement?: () => void;
@@ -545,6 +548,7 @@ function GenericCanvasWithRef<
     debouncedSaveToHistory,
     runHistoryBatch,
     checkpoint,
+    flushPendingSaves,
     undo,
     redo,
     canUndo,
@@ -1060,6 +1064,14 @@ function GenericCanvasWithRef<
       },
       undo,
       redo,
+      historyStamps: () => {
+        flushPendingSaves();
+        const { history, historyIndex } = store.getState();
+        return {
+          undo: historyIndex > 0 ? (history[historyIndex]?.timestamp ?? null) : null,
+          redo: history[historyIndex + 1]?.timestamp ?? null,
+        };
+      },
       handleMoveLayer: (dir) => commands.moveLayer(dir === 'up' ? 'forward' : 'backward'),
       handleDuplicate: commands.duplicate,
       handleDeleteElement: commands.remove,
@@ -1171,6 +1183,7 @@ function GenericCanvasWithRef<
     [
       undo,
       redo,
+      flushPendingSaves,
       elementHandlers.handleFontSizeChange,
       elementHandlers.handleFontRoleChange,
       elementHandlers.handleTextFormatChange,
