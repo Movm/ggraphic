@@ -33,7 +33,7 @@ jobs:
           pnpm install --frozen-lockfile --filter "@ggraphic/editor..." --filter "@ggraphic/brand-default..."
           pnpm --filter "@ggraphic/editor..." --filter "@ggraphic/brand-default..." build
       - run: node examples/vite-react/scripts/pack.mjs
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: tarballs
           path: examples/vite-react/tarballs/
@@ -52,7 +52,7 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: tarballs
           path: examples/vite-react/tarballs
@@ -81,7 +81,7 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: tarballs
           path: examples/vite-react/tarballs
@@ -148,7 +148,7 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: '22'
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: tarballs
           path: examples/next/tarballs
