@@ -106,17 +106,15 @@ jobs:
           EOF
           pnpm install
       # The empty yarn.lock makes this folder the project root. Yarn does not install missing
-      # peers, so the host adds the two the editor's dependencies need and it does not declare
-      # (#118). The peer report goes to the log.
+      # peers, so a peer the editor's dependencies need and the editor does not declare breaks
+      # this job (#118). The peer report goes to the log.
       - name: Install with yarn (berry, node-modules linker)
         if: matrix.manager == 'yarn'
         run: |
           corepack enable
           npm pkg set packageManager=yarn@4.18.1 \
             'resolutions[@ggraphic/core]=file:./tarballs/ggraphic-core.tgz' \
-            'resolutions[@ggraphic/schema]=file:./tarballs/ggraphic-schema.tgz' \
-            'dependencies[@tiptap/pm]=^3.32.0' \
-            'dependencies[react-is]=^19.0.0'
+            'resolutions[@ggraphic/schema]=file:./tarballs/ggraphic-schema.tgz'
           printf 'nodeLinker: node-modules\n' > .yarnrc.yml
           touch yarn.lock
           yarn install --no-immutable
