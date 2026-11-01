@@ -16,3 +16,5 @@ Also added:
 - `stripMarks` in `@ggraphic/editor/text`.
 - `surfaceGlow` in `@ggraphic/editor/brand`.
 - `registerMeasuredCornerReservation` and its types in `@ggraphic/editor/services`.
+
+**Breaking (alpha):** `BlockInsertApi.bloecke` is now `blocks`. The field only lives in the React context a host provides, nothing persists it, so there is no alias: a host that provides or reads the context renames it (a type error points at each site).

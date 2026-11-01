@@ -871,7 +871,7 @@ Source: `src/components/CanvasEditor/blockInsertContext.ts`
 
 ```ts
 interface BlockInsertApi<TBlock = unknown> {
-  bloecke: TBlock[]
+  blocks: TBlock[]
   isLoading: boolean
   insert: (blockId: string, target?: BlockTarget) => Promise<boolean>
 }
@@ -4776,7 +4776,7 @@ Source: `src/entries/host.ts`
 type AssetAudience = "all" | "de-DE" | "de-AT"  // from packages/editor/src/utils/canvasAssets.ts (type-only export)
 function assetMatchesLocale(asset: UniversalAsset, locale: AssetAudience) => boolean  // from packages/editor/src/utils/canvasAssets.ts
 interface BlockInsertApi<TBlock = unknown> {  // from packages/editor/src/components/CanvasEditor/blockInsertContext.ts (type-only export)
-  bloecke: TBlock[]
+  blocks: TBlock[]
   isLoading: boolean
   insert: (blockId: string, target?: BlockTarget) => Promise<boolean>
 }
@@ -6395,7 +6395,7 @@ Source: `src/entries/shell.ts`
 
 ```ts
 interface BlockInsertApi<TBlock = unknown> {  // from packages/editor/src/components/CanvasEditor/blockInsertContext.ts (type-only export)
-  bloecke: TBlock[]
+  blocks: TBlock[]
   isLoading: boolean
   insert: (blockId: string, target?: BlockTarget) => Promise<boolean>
 }
