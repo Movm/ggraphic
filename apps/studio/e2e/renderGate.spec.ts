@@ -131,9 +131,11 @@ for (const template of templates) {
           expect(gate.error, `${scheme}`).toBeNull();
           expect(gate.overflow, `world ${scheme}`).toEqual([]);
           if (brand === 'default') {
-            await expect(page.getByTestId('stage')).toHaveScreenshot(
-              `${template.id}-${scheme}-${format!}.png`
-            );
+            // Soft: every world of a template is compared in one run. A hard failure stopped at the
+            // first changed world, and each further world cost another CI round of over an hour.
+            await expect
+              .soft(page.getByTestId('stage'))
+              .toHaveScreenshot(`${template.id}-${scheme}-${format!}.png`);
           }
         }
       });
