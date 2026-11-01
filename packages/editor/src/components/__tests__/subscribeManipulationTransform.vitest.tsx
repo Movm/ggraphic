@@ -6,8 +6,8 @@
  * nimmt deshalb den Druck auf den Anker (der bubbelt) als Beginn und das
  * `transformend` des Transformers selbst als Ende.
  */
-import { GenericCanvas, type GenericCanvasRef } from '@ggraphic/editor/components/GenericCanvas';
-import { loadCanvasConfig } from '@ggraphic/editor/configs/configLoader';
+import { GenericCanvas, type GenericCanvasRef } from '../GenericCanvas.js';
+import { loadCanvasConfig } from '../../configs/configLoader.js';
 
 import '../../testing/fixtureTemplates';
 import { act, render } from '@testing-library/react';
@@ -15,7 +15,7 @@ import Konva from 'konva';
 import React, { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { AutoSaveStoreProvider } from '@ggraphic/editor/stores/AutoSaveStoreProvider';
+import { AutoSaveStoreProvider } from '../../stores/AutoSaveStoreProvider.js';
 
 Object.defineProperty(document, 'fonts', {
   configurable: true,

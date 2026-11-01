@@ -9,7 +9,7 @@
 import { type BrandPack } from '@ggraphic/core';
 import { Mark } from '@tiptap/core';
 
-import { colorAttribute } from '@ggraphic/editor/components/markColor';
+import { colorAttribute } from './markColor.js';
 
 import { markerInkOn } from '../utils/markerColors.js';
 

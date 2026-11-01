@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import type { CanvasIconHit } from '@ggraphic/editor/hostServices';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { cn } from '@ggraphic/editor/utils/cn';
+import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
+import type { CanvasIconHit } from '../../../hostServices.js';
+import { useMessages } from '../../../i18n/messages.js';
+import { cn } from '../../../utils/cn.js';
 import {
   attributionLine,
   cleanIconSvg,
   externalIconId,
   type ExternalIconPayload,
   type IconSource,
-} from '@ggraphic/editor/utils/externalIcons';
+} from '../../../utils/externalIcons.js';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 

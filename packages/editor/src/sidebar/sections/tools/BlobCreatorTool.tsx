@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: MPL-2.0
 import { type BrandPack } from '@ggraphic/core';
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { CustomColorSwatch } from '@ggraphic/editor/components/CustomColorSwatch';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { brandColors } from '@ggraphic/editor/utils/colorOptions';
+import { useDocumentBrand } from '../../../brand/documentBrand.js';
+import { CustomColorSwatch } from '../../../components/CustomColorSwatch.js';
+import { useMessages } from '../../../i18n/messages.js';
+import { brandColors } from '../../../utils/colorOptions.js';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { PiShuffle, PiDropSimpleFill } from 'react-icons/pi';
 import { Layer, Line, Stage } from 'react-konva';
 
-import {
-  ToolPanel,
-  type ToolPanelSuccess,
-} from '@ggraphic/editor/sidebar/sections/tools/ToolPanel';
-import { useToolImagePlacement } from '@ggraphic/editor/sidebar/sections/tools/useToolImagePlacement';
+import { ToolPanel, type ToolPanelSuccess } from './ToolPanel.js';
+import { useToolImagePlacement } from './useToolImagePlacement.js';
 
 import type Konva from 'konva';
 

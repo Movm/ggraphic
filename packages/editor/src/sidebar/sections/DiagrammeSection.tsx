@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { useDocumentBrand } from '../../brand/documentBrand.js';
+import { useMessages } from '../../i18n/messages.js';
 import {
   CHART_GROUP_LABELS,
   CHART_GROUP_ORDER,
   CHART_TYPE_DEFS,
   type ChartType,
-} from '@ggraphic/editor/utils/chartUtils';
-import { cn } from '@ggraphic/editor/utils/cn';
+} from '../../utils/chartUtils.js';
+import { cn } from '../../utils/cn.js';
 
 import type { ReactNode } from 'react';
 

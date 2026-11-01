@@ -1,20 +1,16 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { covers, photoRectAround } from '@ggraphic/editor/utils/coverFit';
-import {
-  backgroundKeyCrop,
-  userImageKeyCrop,
-  type CropKey,
-} from '@ggraphic/editor/utils/keyboardCrop';
+import { covers, photoRectAround } from './coverFit.js';
+import { backgroundKeyCrop, userImageKeyCrop, type CropKey } from './keyboardCrop.js';
 import {
   minStraightenZoom,
   straightFramedPhoto,
   straightenWindowPhoto,
   straightPhotoCovers,
-} from '@ggraphic/editor/utils/straighten';
+} from './straighten.js';
 
-import type { UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import type { UserImageInstance } from './userImageUtils.js';
 
 const NATURAL = { width: 1200, height: 800 };
 const pan = (dx: number, dy: number): CropKey => ({ pan: { dx, dy } });

@@ -2,10 +2,10 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { useToolbarHandlers } from '@ggraphic/editor/components/CanvasEditor/hooks/useToolbarHandlers';
-import { type HistoryStamps } from '@ggraphic/editor/utils/historyStamp';
+import { useToolbarHandlers } from './useToolbarHandlers.js';
+import { type HistoryStamps } from '../../../utils/historyStamp.js';
 
-import type { GenericCanvasRef } from '@ggraphic/editor/components/GenericCanvas';
+import type { GenericCanvasRef } from '../../GenericCanvas.js';
 
 /**
  * Toolbar Undo/Redo walk the active page's element history and the page-level

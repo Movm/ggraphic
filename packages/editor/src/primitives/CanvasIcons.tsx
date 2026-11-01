@@ -5,7 +5,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import useImage from 'use-image';
 
-import { generateIconDataUrl } from '@ggraphic/editor/utils/canvasIcons';
+import { generateIconDataUrl } from '../utils/canvasIcons.js';
 
 import { CanvasImage } from './CanvasImage.js';
 

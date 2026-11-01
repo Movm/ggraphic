@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { canCropBackgroundPhoto } from '@ggraphic/editor/utils/backgroundPhotoCrop';
-import { canEnterCrop, cropTargetOf } from '@ggraphic/editor/utils/cropTarget';
-import { expandedFileName, expandTarget } from '@ggraphic/editor/utils/expandImage';
-import { smartCropView } from '@ggraphic/editor/utils/smartCrop';
-import { userFacingError, userFacingMessage } from '@ggraphic/editor/utils/userFacingError';
+import { canCropBackgroundPhoto } from './backgroundPhotoCrop.js';
+import { canEnterCrop, cropTargetOf } from './cropTarget.js';
+import { expandedFileName, expandTarget } from './expandImage.js';
+import { smartCropView } from './smartCrop.js';
+import { userFacingError, userFacingMessage } from './userFacingError.js';
 
-import type { CanvasElementConfig } from '@ggraphic/editor/configs/types';
+import type { CanvasElementConfig } from '../configs/types.js';
 
 const background = (coverFit: boolean): CanvasElementConfig[] => [
   {

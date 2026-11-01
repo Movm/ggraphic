@@ -2,10 +2,10 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { useCanvasElementHandlers } from '@ggraphic/editor/hooks/useCanvasElementHandlers';
+import { useCanvasElementHandlers } from '../useCanvasElementHandlers.js';
 
-import type { FullCanvasConfig, LayoutResult } from '@ggraphic/editor/configs/types';
-import type { OptionalCanvasActions } from '@ggraphic/editor/hooks/useCanvasElementHandlers';
+import type { FullCanvasConfig, LayoutResult } from '../../configs/types.js';
+import type { OptionalCanvasActions } from '../useCanvasElementHandlers.js';
 
 type State = Record<string, unknown>;
 

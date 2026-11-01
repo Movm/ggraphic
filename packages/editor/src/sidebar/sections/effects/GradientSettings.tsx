@@ -2,12 +2,12 @@
 import { Slider } from 'radix-ui';
 import React from 'react';
 
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { CustomColorSwatch } from '@ggraphic/editor/components/CustomColorSwatch';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { EffectCard } from '@ggraphic/editor/sidebar/sections/effects/EffectCard';
-import { brandColors } from '@ggraphic/editor/utils/colorOptions';
-import { createDefaultGradient, type GradientFill } from '@ggraphic/editor/utils/gradientFill';
+import { useDocumentBrand } from '../../../brand/documentBrand.js';
+import { CustomColorSwatch } from '../../../components/CustomColorSwatch.js';
+import { useMessages } from '../../../i18n/messages.js';
+import { EffectCard } from './EffectCard.js';
+import { brandColors } from '../../../utils/colorOptions.js';
+import { createDefaultGradient, type GradientFill } from '../../../utils/gradientFill.js';
 
 interface GradientSettingsProps {
   currentColor: string;

@@ -14,11 +14,11 @@ import {
   Transformer,
 } from 'react-konva';
 
-import { LOCKED_TRANSFORMER, useIsItemLocked } from '@ggraphic/editor/components/canvasItemLock';
-import { useBoxSnap, type SnapProps } from '@ggraphic/editor/hooks/useBoxSnap';
-import { gradientFillProps } from '@ggraphic/editor/utils/gradientFill';
-import { translucentHitFunc } from '@ggraphic/editor/utils/gradientHitArea';
-import { handDrawnPath } from '@ggraphic/editor/utils/handDrawn';
+import { LOCKED_TRANSFORMER, useIsItemLocked } from '../components/canvasItemLock.js';
+import { useBoxSnap, type SnapProps } from '../hooks/useBoxSnap.js';
+import { gradientFillProps } from '../utils/gradientFill.js';
+import { translucentHitFunc } from '../utils/gradientHitArea.js';
+import { handDrawnPath } from '../utils/handDrawn.js';
 import { sameCorners } from '../utils/cornerRadius.js';
 import { paintDots, paintGrain, paintStripes } from '../utils/grain.js';
 import { notchPx, traceNotch } from '../utils/notch.js';
@@ -29,21 +29,21 @@ import {
   MIRROR_X_ATTR,
   nodeRotation,
   signedScale,
-} from '@ggraphic/editor/utils/orientation';
-import { glowGradient, shapeGradient } from '@ggraphic/editor/utils/shade';
+} from '../utils/orientation.js';
+import { glowGradient, shapeGradient } from '../utils/shade.js';
 import {
   assertNever,
   isComposerPlane,
   STROKE_ONLY_SHAPES,
   type ShapeInstance,
-} from '@ggraphic/editor/utils/shapes';
+} from '../utils/shapes.js';
 import {
   PATH_OFFSETS,
   PATH_VIEWBOX,
   resizedShapeSize,
   shapeNodeScale,
   type PathShapeType,
-} from '@ggraphic/editor/utils/shapeTransform';
+} from '../utils/shapeTransform.js';
 
 import { shapeBox } from '../utils/renderedBoxes.js';
 

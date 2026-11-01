@@ -9,14 +9,14 @@
  * What the line is and when it counts as filled in comes from the host
  * (`CanvasEditorServices.print`); without it there is no gate.
  */
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { type PrintCanvasFormat } from '@ggraphic/editor/formats/index';
+import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
+import { type PrintCanvasFormat } from '../../../formats/index.js';
 import { useMemo } from 'react';
 
 import { type PrintImpressumGate } from '../../TopBar/DownloadSection.js';
 
-import type { AdditionalText } from '@ggraphic/editor/configs/types';
-import type { CanvasImpressumService } from '@ggraphic/editor/hostServices';
+import type { AdditionalText } from '../../../configs/types.js';
+import type { CanvasImpressumService } from '../../../hostServices.js';
 
 /** The freeform page actions the gate writes through. */
 interface FreeformImpressumActions {

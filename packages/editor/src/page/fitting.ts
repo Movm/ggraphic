@@ -6,7 +6,7 @@
  * template slot and the room down to the element below it.
  */
 import { roomBelow } from '@ggraphic/core';
-import { TEMPLATE_GATE_ADAPTER } from '@ggraphic/editor/templates/templateGeometry';
+import { TEMPLATE_GATE_ADAPTER } from '../templates/templateGeometry.js';
 
 import { slotBudgetFor, type TemplateLookup } from './slotBudgets.js';
 

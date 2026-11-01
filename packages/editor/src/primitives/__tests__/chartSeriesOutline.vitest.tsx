@@ -3,8 +3,8 @@ import { render } from '@testing-library/react';
 import * as recharts from 'recharts';
 import { describe, expect, it } from 'vitest';
 
-import { buildChartElement } from '@ggraphic/editor/primitives/ChartPrimitive';
-import { type ChartInstance, createChartInstance } from '@ggraphic/editor/utils/chartUtils';
+import { buildChartElement } from '../ChartPrimitive.js';
+import { type ChartInstance, createChartInstance } from '../../utils/chartUtils.js';
 
 const DARK = '#E76F51';
 const LIGHT = '#F4C542';

@@ -9,18 +9,18 @@ import { createRef } from 'react';
 import { Group } from 'react-konva';
 import { describe, expect, it } from 'vitest';
 
-import { useDeepSelect } from '@ggraphic/editor/hooks/useDeepSelect';
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
-import { ShapePrimitive } from '@ggraphic/editor/primitives/ShapePrimitive';
+import { useDeepSelect } from '../useDeepSelect.js';
+import { CanvasStage, type CanvasStageRef } from '../../primitives/CanvasStage.js';
+import { ShapePrimitive } from '../../primitives/ShapePrimitive.js';
 import {
   CanvasStoreProvider,
   useCanvasStore,
   useCanvasStoreSelector,
-} from '@ggraphic/editor/stores/CanvasStoreProvider';
-import { nextDeepTarget } from '@ggraphic/editor/utils/deepSelect';
-import { createShape, type ShapeInstance } from '@ggraphic/editor/utils/shapes';
+} from '../../stores/CanvasStoreProvider.js';
+import { nextDeepTarget } from '../../utils/deepSelect.js';
+import { createShape, type ShapeInstance } from '../../utils/shapes.js';
 
-import type { CanvasEditorStoreApi } from '@ggraphic/editor/stores/createCanvasEditorStore';
+import type { CanvasEditorStoreApi } from '../../stores/createCanvasEditorStore.js';
 
 // 280×140 at the origin: the jsdom canvas keeps the default 300×150 backing size.
 const sheet = (id: string, extra: Partial<ShapeInstance> = {}): ShapeInstance => ({

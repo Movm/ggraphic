@@ -15,7 +15,7 @@ import {
   pptxUnits,
   transparencyOf,
   type PptxUnits,
-} from '@ggraphic/editor/export/pptx/pptxUnits';
+} from './pptxUnits.js';
 import { shadowProps, textBoxOptions, textRuns } from './writeText.js';
 
 import type {
@@ -25,7 +25,7 @@ import type {
   PptxImageItem,
   PptxRasterRequest,
   PptxShapeItem,
-} from '@ggraphic/editor/export/pptx/types';
+} from './types.js';
 import type PptxGenJS from 'pptxgenjs';
 
 export const PPTX_MIME_TYPE =

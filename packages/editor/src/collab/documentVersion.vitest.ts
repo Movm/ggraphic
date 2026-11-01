@@ -13,9 +13,9 @@ import {
   readYDocRefusal,
   readYDocVersions,
   stampYDocument,
-} from '@ggraphic/editor/collab/documentVersion';
-import { getMetaMap, seedPagesIfEmpty, serializeDeck } from '@ggraphic/editor/collab/pagesDoc';
-import { YDOC_KEYS } from '@ggraphic/editor/collab/ydocKeys';
+} from './documentVersion.js';
+import { getMetaMap, seedPagesIfEmpty, serializeDeck } from './pagesDoc.js';
+import { YDOC_KEYS } from './ydocKeys.js';
 
 const v2Registry = () => {
   const registry = createMigrationRegistry([V2_CORE_STEP]);

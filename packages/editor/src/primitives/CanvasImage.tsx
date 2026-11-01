@@ -17,12 +17,9 @@ import Konva from 'konva';
 import { useRef, useEffect, useCallback, useMemo, memo } from 'react';
 import { Image as KonvaImage, Transformer } from 'react-konva';
 
-import { LOCKED_TRANSFORMER, useIsItemLocked } from '@ggraphic/editor/components/canvasItemLock';
-import {
-  useGeometryReporter,
-  type GeometryReporter,
-} from '@ggraphic/editor/hooks/useGeometryReporter';
-import { useSnapScheduler } from '@ggraphic/editor/hooks/useSnapScheduler';
+import { LOCKED_TRANSFORMER, useIsItemLocked } from '../components/canvasItemLock.js';
+import { useGeometryReporter, type GeometryReporter } from '../hooks/useGeometryReporter.js';
+import { useSnapScheduler } from '../hooks/useSnapScheduler.js';
 import {
   panWindowPhoto,
   photoRectAround,
@@ -30,17 +27,12 @@ import {
   windowInPhoto,
   zoomWindow,
   type Rect,
-} from '@ggraphic/editor/utils/coverFit';
-import { isGroupDrag } from '@ggraphic/editor/utils/multiSelect';
-import { ELEMENT_TRANSFORMER, normalizeRotation } from '@ggraphic/editor/utils/orientation';
+} from '../utils/coverFit.js';
+import { isGroupDrag } from '../utils/multiSelect.js';
+import { ELEMENT_TRANSFORMER, normalizeRotation } from '../utils/orientation.js';
 import { cacheFiltered, usePreviewCaptureRatio } from '../utils/filterCache.js';
-import { recacheNextFrame } from '@ggraphic/editor/utils/recacheNextFrame';
-import {
-  boxFrame,
-  createBoxFrame,
-  frameBounds,
-  snapByBounds,
-} from '@ggraphic/editor/utils/snapping';
+import { recacheNextFrame } from '../utils/recacheNextFrame.js';
+import { boxFrame, createBoxFrame, frameBounds, snapByBounds } from '../utils/snapping.js';
 import {
   panStraightPhoto,
   STRAIGHT_DRAW_ATTR,
@@ -50,7 +42,7 @@ import {
   straightSceneFunc,
   windowPhotoOfStraight,
   zoomStraightPhoto,
-} from '@ggraphic/editor/utils/straighten';
+} from '../utils/straighten.js';
 
 import {
   CROP_GHOST_NAME,
@@ -63,8 +55,8 @@ import { getActiveImageFilters, imageFilterAttrs } from '../utils/imageFilters.j
 import { backgroundKeyCrop, cropKeyOf, type CropKey } from '../utils/keyboardCrop.js';
 
 import type { ImageAdjustments } from '../utils/userImageUtils.js';
-import type { TransformConfig, TransformAnchor } from '@ggraphic/editor/types/editorTypes';
-import type { SnapTarget, SnapLine } from '@ggraphic/editor/utils/snapping';
+import type { TransformConfig, TransformAnchor } from '../types/editorTypes.js';
+import type { SnapTarget, SnapLine } from '../utils/snapping.js';
 
 // Rahmen für Snap und Geometrie-Meldung, pro Aufruf neu beschrieben (synchron, ohne Allokation).
 const dragFrame = createBoxFrame();

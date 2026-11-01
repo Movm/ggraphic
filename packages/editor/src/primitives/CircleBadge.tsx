@@ -15,20 +15,20 @@ import { type CircleBadgeInstance, type CircleBadgeTextLine } from '@ggraphic/co
 import { useRef, useCallback, useEffect, useState, memo } from 'react';
 import { Group, Circle, Ellipse, Star, Text, Rect, Transformer } from 'react-konva';
 
-import { LOCKED_TRANSFORMER, useIsItemLocked } from '@ggraphic/editor/components/canvasItemLock';
-import { useSnapScheduler } from '@ggraphic/editor/hooks/useSnapScheduler';
-import { messages } from '@ggraphic/editor/i18n/messages';
-import { captureFocusOrigin, returnFocus } from '@ggraphic/editor/utils/editorFocus';
-import { followStage } from '@ggraphic/editor/utils/followStage';
-import { isGroupDrag } from '@ggraphic/editor/utils/multiSelect';
-import { ELEMENT_TRANSFORMER, normalizeRotation } from '@ggraphic/editor/utils/orientation';
-import { boxFrame, createBoxFrame, snapByBounds } from '@ggraphic/editor/utils/snapping';
-import { stageCssScale } from '@ggraphic/editor/utils/stageCssScale';
+import { LOCKED_TRANSFORMER, useIsItemLocked } from '../components/canvasItemLock.js';
+import { useSnapScheduler } from '../hooks/useSnapScheduler.js';
+import { messages } from '../i18n/messages.js';
+import { captureFocusOrigin, returnFocus } from '../utils/editorFocus.js';
+import { followStage } from '../utils/followStage.js';
+import { isGroupDrag } from '../utils/multiSelect.js';
+import { ELEMENT_TRANSFORMER, normalizeRotation } from '../utils/orientation.js';
+import { boxFrame, createBoxFrame, snapByBounds } from '../utils/snapping.js';
+import { stageCssScale } from '../utils/stageCssScale.js';
 
 import { resolveFontFamily } from '../utils/fontAliases.js';
 import { useTextEditorOpener } from '../utils/textEditorOpeners.js';
 
-import type { SnapTarget } from '@ggraphic/editor/utils/snapping';
+import type { SnapTarget } from '../utils/snapping.js';
 import type Konva from 'konva';
 
 export { type CircleBadgeInstance, type CircleBadgeTextLine } from '@ggraphic/core';

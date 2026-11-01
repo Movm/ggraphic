@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useEffect, useRef } from 'react';
 
-import { commandForKey } from '@ggraphic/editor/utils/canvasCommandRegistry';
-import { isPageFocusTarget, returnFocusToPage } from '@ggraphic/editor/utils/editorFocus';
-import { isTextEditingTarget, isWidgetOwnedKey } from '@ggraphic/editor/utils/keyboardOwnership';
-import { assertAsPosition } from '@ggraphic/editor/utils/stateTypeAssertions';
+import { commandForKey } from '../utils/canvasCommandRegistry.js';
+import { isPageFocusTarget, returnFocusToPage } from '../utils/editorFocus.js';
+import { isTextEditingTarget, isWidgetOwnedKey } from '../utils/keyboardOwnership.js';
+import { assertAsPosition } from '../utils/stateTypeAssertions.js';
 
 import { findHostInstance, updateHostInstance } from '../utils/elementKinds.js';
 import { isLayerLocked } from '../utils/layerLock.js';
@@ -13,7 +13,7 @@ import type { OptionalCanvasActions } from './useCanvasElementHandlers.js';
 import type { BaseCanvasState } from '../configs/factory/baseTypes.js';
 import type { CanvasElementConfig } from '../configs/types.js';
 import type { CanvasCommands } from '../utils/canvasCommands.js';
-import type { CanvasEditorStoreApi } from '@ggraphic/editor/stores/createCanvasEditorStore';
+import type { CanvasEditorStoreApi } from '../stores/createCanvasEditorStore.js';
 
 /**
  * Canvas Keyboard Handlers - Keyboard shortcuts for canvas

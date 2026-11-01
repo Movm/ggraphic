@@ -21,7 +21,7 @@ const other: BrandPack = {
 describe('preview colours follow the brand roles', () => {
   beforeEach(async () => {
     vi.resetModules();
-    const { registerBrandPacks } = await import('@ggraphic/editor/brand/brandRegistry');
+    const { registerBrandPacks } = await import('../../brand/brandRegistry.js');
     registerBrandPacks([other]);
   });
 

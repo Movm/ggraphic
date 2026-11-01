@@ -13,7 +13,7 @@ import { recordCacheHit, recordCacheMiss, recordNetworkRequest } from './prefetc
 import { registeredAssetCatalog } from '../canvasAssets.js';
 import { getIllustrationPath } from './registry.js';
 
-import type { SvgDef, SvgSource } from '@ggraphic/editor/utils/illustrations/types';
+import type { SvgDef, SvgSource } from './types.js';
 
 // =============================================================================
 // TYPES

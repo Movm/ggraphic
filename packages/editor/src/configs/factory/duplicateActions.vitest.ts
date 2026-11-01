@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createIllustrationActions } from './actionFactories.js';
 
-import type { IllustrationInstance } from '@ggraphic/editor/utils/illustrations/types';
+import type { IllustrationInstance } from '../../utils/illustrations/types.js';
 
 /**
  * Die beiden Seitenleisten-Aktionen laufen durch dieselbe Tür wie Strg+D

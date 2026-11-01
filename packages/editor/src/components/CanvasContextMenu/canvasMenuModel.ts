@@ -6,14 +6,14 @@
  * nicht auseinanderlaufen.
  */
 
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { messages } from '../../i18n/messages.js';
 import {
   CANVAS_COMMANDS,
   ariaShortcut,
   formatShortcut,
   shortcutOf,
   type CanvasCommandId,
-} from '@ggraphic/editor/utils/canvasCommandRegistry';
+} from '../../utils/canvasCommandRegistry.js';
 
 import type { BackgroundControls } from '../../configs/types.js';
 import type { FloatingModuleState } from '../../hooks/useFloatingModuleState.js';

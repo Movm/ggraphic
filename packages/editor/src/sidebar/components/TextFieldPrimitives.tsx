@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { useMessages } from '../../i18n/messages.js';
 import { useCallback, useRef, useEffect } from 'react';
 import { PiMinus, PiPlus } from 'react-icons/pi';
 
 import { MOBILE_INPUT_TEXT } from '../sidebarStyles.js';
 
-import type { TextFieldConfig } from '@ggraphic/editor/configs/unifiedTabs';
+import type { TextFieldConfig } from '../../configs/unifiedTabs.js';
 
 // ============================================================================
 // FONT SIZE STEPPER

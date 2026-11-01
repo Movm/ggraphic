@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { useCanvasStoreSelector } from '@ggraphic/editor/stores/CanvasStoreProvider';
+import { useMessages } from '../../../i18n/messages.js';
+import { useCanvasStoreSelector } from '../../../stores/CanvasStoreProvider.js';
 import { Check, LayoutTemplate, RotateCcw, Sparkles } from 'lucide-react';
 
 /**

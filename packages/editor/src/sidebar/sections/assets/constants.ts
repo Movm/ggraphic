@@ -14,7 +14,7 @@ import {
   type KawaiiProps,
 } from 'react-kawaii';
 
-import type { KawaiiIllustrationType } from '@ggraphic/editor/utils/illustrations/types';
+import type { KawaiiIllustrationType } from '../../../utils/illustrations/types.js';
 
 export type AssetView =
   | 'browse'

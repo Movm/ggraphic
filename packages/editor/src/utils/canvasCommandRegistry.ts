@@ -9,7 +9,7 @@
  * Tastaturen hinter AltGr.
  */
 
-import { messages, type Messages } from '@ggraphic/editor/i18n/messages';
+import { messages, type Messages } from '../i18n/messages.js';
 
 export interface CommandShortcut {
   /** `KeyboardEvent.key`; Buchstaben klein. */

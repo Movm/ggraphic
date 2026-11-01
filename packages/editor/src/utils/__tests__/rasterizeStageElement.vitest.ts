@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { rasterizeStageElement } from '@ggraphic/editor/utils/captureStage';
+import { rasterizeStageElement } from '../captureStage.js';
 
 import type Konva from 'konva';
 

@@ -18,10 +18,10 @@ import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { v4 as uuid } from 'uuid';
 import * as Y from 'yjs';
 
-import { readPages } from '@ggraphic/editor/collab/pagesDoc';
-import { extractInheritablePageState } from '@ggraphic/editor/configs/pageInheritance';
-import { messages } from '@ggraphic/editor/i18n/messages';
-import { getTemplate, type TemplateId } from '@ggraphic/editor/templates/registry';
+import { readPages } from '../collab/pagesDoc.js';
+import { extractInheritablePageState } from '../configs/pageInheritance.js';
+import { messages } from '../i18n/messages.js';
+import { getTemplate, type TemplateId } from '../templates/registry.js';
 
 import { hostEmittedStateKeys } from '../collab/pageElementStateKeys.js';
 import { useYjsPages, type NormalizeEcho, type YjsPagesApi } from '../collab/useYjsPages.js';

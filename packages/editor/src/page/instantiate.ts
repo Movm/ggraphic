@@ -6,11 +6,8 @@ import {
   type SchemeId,
   type TemplateInput,
 } from '@ggraphic/core';
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import {
-  TEMPLATE_GATE_ADAPTER,
-  TEMPLATE_GEOMETRY,
-} from '@ggraphic/editor/templates/templateGeometry';
+import { activeBrand } from '../brand/brandRegistry.js';
+import { TEMPLATE_GATE_ADAPTER, TEMPLATE_GEOMETRY } from '../templates/templateGeometry.js';
 import { type TemplateFile, type TemplateFormat } from '@ggraphic/schema';
 
 import { HUG_ADAPTER } from './hug.js';

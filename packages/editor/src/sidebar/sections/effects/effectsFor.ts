@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
-import { STROKE_ONLY_SHAPES } from '@ggraphic/editor/utils/shapes';
+import { STROKE_ONLY_SHAPES } from '../../../utils/shapes.js';
 
-import type { FloatingModuleState } from '@ggraphic/editor/hooks/useFloatingModuleState';
+import type { FloatingModuleState } from '../../../hooks/useFloatingModuleState.js';
 
 export interface EffectsAvailability {
   gradient: boolean;

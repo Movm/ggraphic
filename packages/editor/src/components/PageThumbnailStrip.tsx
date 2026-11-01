@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MPL-2.0
-import { cn } from '@ggraphic/editor/utils/cn';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { cn } from '../utils/cn.js';
+import { useMessages } from '../i18n/messages.js';
 import { memo, useCallback, useRef, useState } from 'react';
 import { PiCaretDown, PiPlus } from 'react-icons/pi';
 
-import type { FullCanvasConfig, HeterogeneousPage } from '@ggraphic/editor/configs/types';
+import type { FullCanvasConfig, HeterogeneousPage } from '../configs/types.js';
 import type React from 'react';
 
 /** Renders the host's page picker, anchored to a button; see `EditorShellExtensions.pagePicker`. */

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { CustomColorSwatch } from '@ggraphic/editor/components/CustomColorSwatch';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { Switch } from '@ggraphic/editor/ui/switch';
+import { useDocumentBrand } from '../../brand/documentBrand.js';
+import { CustomColorSwatch } from '../../components/CustomColorSwatch.js';
+import { useMessages } from '../../i18n/messages.js';
+import { Switch } from '../../ui/switch.js';
 import {
   defaultTint,
   duotoneLook,
@@ -10,17 +10,17 @@ import {
   IMAGE_PRESETS,
   withoutDuotone,
   type ImagePreset,
-} from '@ggraphic/editor/utils/imageFilters';
+} from '../../utils/imageFilters.js';
 import {
   CROP_PRESETS,
   cropPresetUpdate,
   type CropPreset,
   type ImageAdjustments,
   type UserImageInstance,
-} from '@ggraphic/editor/utils/userImageUtils';
+} from '../../utils/userImageUtils.js';
 
-import { colorName } from '@ggraphic/editor/utils/colorNames';
-import { SidebarSlider } from '@ggraphic/editor/sidebar/components/SidebarSlider';
+import { colorName } from '../../utils/colorNames.js';
+import { SidebarSlider } from '../components/SidebarSlider.js';
 
 function naturalSize(src: string): Promise<{ width: number; height: number }> {
   return new Promise((resolve, reject) => {

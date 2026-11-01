@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
-import { GenericCanvas } from '@ggraphic/editor/components/GenericCanvas';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { cn } from '@ggraphic/editor/utils/cn';
+import { GenericCanvas } from '../GenericCanvas.js';
+import { useMessages } from '../../i18n/messages.js';
+import { cn } from '../../utils/cn.js';
 import {
   isElementDrag,
   isMediaDrag,
@@ -10,14 +10,14 @@ import {
   readElementDrag,
   readMediaDrag,
   readVorlageDrag,
-} from '@ggraphic/editor/utils/mediaDrop';
+} from '../../utils/mediaDrop.js';
 import React, { useCallback, useState, memo } from 'react';
 
-import { useTrackUnsplashDownload } from '@ggraphic/editor/hooks/useTrackUnsplashDownload';
-import { PageToolbar } from '@ggraphic/editor/components/PageToolbar';
-import { ZoomableViewport } from '@ggraphic/editor/components/ZoomableViewport';
+import { useTrackUnsplashDownload } from '../../hooks/useTrackUnsplashDownload.js';
+import { PageToolbar } from '../PageToolbar.js';
+import { ZoomableViewport } from '../ZoomableViewport.js';
 
-import { useBlockInsert } from '@ggraphic/editor/components/CanvasEditor/blockInsertContext';
+import { useBlockInsert } from './blockInsertContext.js';
 
 import type { PageWrapperProps } from './types.js';
 

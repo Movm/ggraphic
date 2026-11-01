@@ -2,8 +2,8 @@
 import { type BindingRef, type Bindings } from '@ggraphic/core';
 import { useCallback } from 'react';
 
-import { imageLookPatch, type ImageLookId } from '@ggraphic/editor/utils/imageLook';
-import { withTemplateTextAlign, type TextAlign } from '@ggraphic/editor/utils/textAlign';
+import { imageLookPatch, type ImageLookId } from '../utils/imageLook.js';
+import { withTemplateTextAlign, type TextAlign } from '../utils/textAlign.js';
 
 import { bindPatch, withPageColor } from '../brand/bindPick.js';
 import { hostElementKind, updateHostInstance } from '../utils/elementKinds.js';
@@ -12,7 +12,7 @@ import type { OptionalCanvasActions } from './useCanvasElementHandlers.js';
 import type { FloatingModuleState } from './useFloatingModuleState.js';
 import type { BaseCanvasState } from '../configs/factory/baseTypes.js';
 import type { FullCanvasConfig } from '../configs/types.js';
-import type { GradientFill } from '@ggraphic/editor/utils/gradientFill';
+import type { GradientFill } from '../utils/gradientFill.js';
 
 /** Partial shadow patch shared by shape/text/user-image update actions. */
 export interface ShadowPatch {

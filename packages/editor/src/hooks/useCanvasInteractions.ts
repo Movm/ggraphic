@@ -10,14 +10,14 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 
-import { useCanvasStore } from '@ggraphic/editor/stores/CanvasStoreProvider';
+import { useCanvasStore } from '../stores/CanvasStoreProvider.js';
 
 import { groupClickSelection, type PageGroup } from '../groups/pageGroups.js';
 
 import { useMarqueeSelection } from './useMarqueeSelection.js';
 
 import type { CanvasStageRef } from '../primitives/CanvasStage.js';
-import type { SnapTarget } from '@ggraphic/editor/utils/snapping';
+import type { SnapTarget } from '../utils/snapping.js';
 import type Konva from 'konva';
 
 export interface UseCanvasInteractionsOptions {

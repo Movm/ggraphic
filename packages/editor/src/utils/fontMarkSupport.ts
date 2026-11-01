@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { brandCuts } from '@ggraphic/editor/brand/brandRegistry';
+import { brandCuts } from '../brand/brandRegistry.js';
 
 import { aliasFontFamily } from './fontAliases.js';
 /**

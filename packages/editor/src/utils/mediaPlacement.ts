@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
-import { messages } from '@ggraphic/editor/i18n/messages';
-import { downscaleImageForUpload } from '@ggraphic/editor/utils/userImageUtils';
+import { messages } from '../i18n/messages.js';
+import { downscaleImageForUpload } from './userImageUtils.js';
 
 import type { CanvasImageUrlService } from '../hostServices.js';
 

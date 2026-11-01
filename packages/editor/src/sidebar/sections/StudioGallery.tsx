@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
+import { useCanvasEditorServices } from '../../CanvasEditorProvider.js';
 import {
   useNoStudioAssets,
   type CanvasStudioAssetItem,
   type CanvasStudioAssetKind,
   type CanvasStudioAssetScope,
-} from '@ggraphic/editor/hostServices';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { plainAssetImageUrls, registeredAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
-import { cn } from '@ggraphic/editor/utils/cn';
+} from '../../hostServices.js';
+import { useMessages } from '../../i18n/messages.js';
+import { plainAssetImageUrls, registeredAssetCatalog } from '../../utils/canvasAssets.js';
+import { cn } from '../../utils/cn.js';
 import { useEffect, useMemo, useRef, type ButtonHTMLAttributes } from 'react';
 
 /** The lists every gallery picker offers, in tab order. */

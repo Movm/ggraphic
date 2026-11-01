@@ -12,14 +12,14 @@ import React, { memo, useCallback, useMemo } from 'react';
 import { Group, Rect, Circle, Text } from 'react-konva';
 import useImage from 'use-image';
 
-import { type GeometryReporter } from '@ggraphic/editor/hooks/useGeometryReporter';
+import { type GeometryReporter } from '../hooks/useGeometryReporter.js';
 import {
   useCanvasStore,
   useCanvasStoreSelector,
   useIsElementSelected,
-} from '@ggraphic/editor/stores/CanvasStoreProvider';
-import { backgroundAdjustments } from '@ggraphic/editor/utils/imageFilters';
-import { useTrackPendingImage } from '@ggraphic/editor/utils/pendingImages';
+} from '../stores/CanvasStoreProvider.js';
+import { backgroundAdjustments } from '../utils/imageFilters.js';
+import { useTrackPendingImage } from '../utils/pendingImages.js';
 import {
   assertAsString,
   assertAsNumber,
@@ -27,10 +27,10 @@ import {
   assertAsOpacity,
   getStateValue,
   getOptionalStateValue,
-} from '@ggraphic/editor/utils/stateTypeAssertions';
-import { backgroundStraighten } from '@ggraphic/editor/utils/straighten';
-import { surfaceGlow } from '@ggraphic/editor/utils/surfaceGlow';
-import { templateTextAlignOf } from '@ggraphic/editor/utils/textAlign';
+} from '../utils/stateTypeAssertions.js';
+import { backgroundStraighten } from '../utils/straighten.js';
+import { surfaceGlow } from '../utils/surfaceGlow.js';
+import { templateTextAlignOf } from '../utils/textAlign.js';
 
 import { useCanvasEditorServices } from '../CanvasEditorProvider.js';
 import { plainImageUrls } from '../hostServices.js';
@@ -62,7 +62,7 @@ import type {
   LayoutResult,
   PositionValue,
 } from '../configs/types.js';
-import type { SnapTarget, SnapLine } from '@ggraphic/editor/utils/snapping';
+import type { SnapTarget, SnapLine } from '../utils/snapping.js';
 
 // The bundler replaces `process.env.NODE_ENV`; outside one, `process` may not exist.
 declare const process: { env: Record<string, string | undefined> };

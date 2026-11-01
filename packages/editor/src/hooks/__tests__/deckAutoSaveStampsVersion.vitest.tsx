@@ -8,12 +8,12 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as Y from 'yjs';
 
-import { CanvasEditorProvider } from '@ggraphic/editor/CanvasEditorProvider';
-import { seedPagesIfEmpty, updatePageStateById } from '@ggraphic/editor/collab/pagesDoc';
-import { useDeckAutoSave } from '@ggraphic/editor/hooks/useDeckAutoSave';
-import { AutoSaveStoreProvider } from '@ggraphic/editor/stores/AutoSaveStoreProvider';
+import { CanvasEditorProvider } from '../../CanvasEditorProvider.js';
+import { seedPagesIfEmpty, updatePageStateById } from '../../collab/pagesDoc.js';
+import { useDeckAutoSave } from '../useDeckAutoSave.js';
+import { AutoSaveStoreProvider } from '../../stores/AutoSaveStoreProvider.js';
 
-import type { CanvasCreateImageShareParams } from '@ggraphic/editor/hostServices';
+import type { CanvasCreateImageShareParams } from '../../hostServices.js';
 import type { ReactNode } from 'react';
 
 beforeEach(() => vi.useFakeTimers());

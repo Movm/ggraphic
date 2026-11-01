@@ -5,9 +5,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   EDITOR_KEY_SHIELD_ATTRIBUTE,
   usePageUndoRedoShortcuts,
-} from '@ggraphic/editor/components/CanvasEditor/hooks/usePageUndoRedoShortcuts';
-import { type HistoryStamps } from '@ggraphic/editor/utils/historyStamp';
-import { KEEP_EDITING_ATTR } from '@ggraphic/editor/utils/keyboardOwnership';
+} from './usePageUndoRedoShortcuts.js';
+import { type HistoryStamps } from '../../../utils/historyStamp.js';
+import { KEEP_EDITING_ATTR } from '../../../utils/keyboardOwnership.js';
 
 function setup(activePage: HistoryStamps | null = null) {
   const undoPageOp = vi.fn();

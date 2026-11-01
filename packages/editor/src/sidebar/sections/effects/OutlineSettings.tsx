@@ -2,11 +2,11 @@
 import { Slider } from 'radix-ui';
 import React from 'react';
 
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { CustomColorSwatch } from '@ggraphic/editor/components/CustomColorSwatch';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { EffectCard } from '@ggraphic/editor/sidebar/sections/effects/EffectCard';
-import { colorName } from '@ggraphic/editor/utils/colorNames';
+import { useDocumentBrand } from '../../../brand/documentBrand.js';
+import { CustomColorSwatch } from '../../../components/CustomColorSwatch.js';
+import { useMessages } from '../../../i18n/messages.js';
+import { EffectCard } from './EffectCard.js';
+import { colorName } from '../../../utils/colorNames.js';
 
 interface OutlineSettingsProps {
   stroke?: string;

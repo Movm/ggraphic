@@ -19,19 +19,19 @@ import {
 } from 'react';
 import { Stage, Layer, Group, Rect } from 'react-konva';
 
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { CanvasTextEditorProvider } from '@ggraphic/editor/components/CanvasTextOverlay';
-import { TransformHud } from '@ggraphic/editor/components/TransformHud';
-import { useHoverOutline } from '@ggraphic/editor/hooks/useHoverOutline';
-import { installAxisLock } from '@ggraphic/editor/utils/axisLock';
-import { cn } from '@ggraphic/editor/utils/cn';
-import { MOUSE_DRAG_DISTANCE, TOUCH_DRAG_DISTANCE } from '@ggraphic/editor/utils/touchInput';
-import { USER_PHOTO_NODE_NAME } from '@ggraphic/editor/utils/userImageUtils';
+import { useDocumentBrand } from '../brand/documentBrand.js';
+import { CanvasTextEditorProvider } from '../components/CanvasTextOverlay.js';
+import { TransformHud } from '../components/TransformHud.js';
+import { useHoverOutline } from '../hooks/useHoverOutline.js';
+import { installAxisLock } from '../utils/axisLock.js';
+import { cn } from '../utils/cn.js';
+import { MOUSE_DRAG_DISTANCE, TOUCH_DRAG_DISTANCE } from '../utils/touchInput.js';
+import { USER_PHOTO_NODE_NAME } from '../utils/userImageUtils.js';
 
 import { withSelectionChromeHidden } from '../utils/captureStage.js';
 import { BACKGROUND_IMAGE_NODE_ID, printImageInfo } from '../utils/printImageInfo.js';
 
-import type { ExportOptions } from '@ggraphic/editor/types/editorTypes';
+import type { ExportOptions } from '../types/editorTypes.js';
 
 export interface CanvasStageProps {
   width: number;

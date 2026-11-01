@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { rankByQuery } from '@ggraphic/editor/utils/filterUtils';
+import { rankByQuery } from '../../../utils/filterUtils.js';
 
 import type { ElementItem } from './elementTypes.js';
 import type { CatalogCategory, CategoryId } from './useElementCatalog.js';

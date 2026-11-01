@@ -2,9 +2,9 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { useToolbarHandlers } from '@ggraphic/editor/components/CanvasEditor/hooks/useToolbarHandlers';
+import { useToolbarHandlers } from './useToolbarHandlers.js';
 
-import type { GenericCanvasRef } from '@ggraphic/editor/components/GenericCanvas';
+import type { GenericCanvasRef } from '../../GenericCanvas.js';
 
 describe('useToolbarHandlers: handleFontRoleChange', () => {
   it('asks the page that is current when the role is picked, not the one at render', () => {

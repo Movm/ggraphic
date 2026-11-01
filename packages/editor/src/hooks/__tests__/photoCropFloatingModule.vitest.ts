@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { floatingModuleFor } from '@ggraphic/editor/hooks/useFloatingModuleState';
+import { floatingModuleFor } from '../useFloatingModuleState.js';
 
-import type { CanvasElementConfig, FullCanvasConfig } from '@ggraphic/editor/configs/types';
+import type { CanvasElementConfig, FullCanvasConfig } from '../../configs/types.js';
 
 /** Ob die Leiste „Ausschnitt“ zeigt, liest sie aus der Config des Fotos. */
 function canCrop(element: Partial<CanvasElementConfig>) {

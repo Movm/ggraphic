@@ -6,9 +6,9 @@ import {
   canMoveLayer,
   moveLayerTo,
   type CanvasItem,
-} from '@ggraphic/editor/utils/canvasLayerManager';
+} from './canvasLayerManager.js';
 
-import type { CanvasElementConfig } from '@ggraphic/editor/configs/types';
+import type { CanvasElementConfig } from '../configs/types.js';
 
 function element(id: string, order?: number): CanvasItem {
   return {

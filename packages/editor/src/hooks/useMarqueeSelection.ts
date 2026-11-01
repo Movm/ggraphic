@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useCallback, useEffect, useRef } from 'react';
 
-import { useCanvasStore } from '@ggraphic/editor/stores/CanvasStoreProvider';
+import { useCanvasStore } from '../stores/CanvasStoreProvider.js';
 import {
   canStartMarquee,
   itemsInRect,
   SELECTION_COLOR,
   syncOutlines,
-} from '@ggraphic/editor/utils/multiSelect';
+} from '../utils/multiSelect.js';
 
 import type { CanvasStageRef } from '../primitives/CanvasStage.js';
 import type Konva from 'konva';

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { rebindPageState, type Bindings } from '@ggraphic/core';
 
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { activeBrand } from '../brand/brandRegistry.js';
 import {
   DuotoneFilter,
   FlipFilter,
@@ -15,7 +15,7 @@ import {
   getActiveImageFilters,
   imageFilterAttrs,
   withoutDuotone,
-} from '@ggraphic/editor/utils/imageFilters';
+} from './imageFilters.js';
 
 import type Konva from 'konva';
 

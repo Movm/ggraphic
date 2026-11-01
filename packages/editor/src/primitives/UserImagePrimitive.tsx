@@ -10,12 +10,12 @@
 import { useState, useEffect, useRef, useMemo, memo, type ReactNode } from 'react';
 import { Image, Group, Rect, Transformer, Circle, Line } from 'react-konva';
 
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { LOCKED_TRANSFORMER, useIsItemLocked } from '@ggraphic/editor/components/canvasItemLock';
-import { useAnnounce } from '@ggraphic/editor/hooks/useAnnounce';
-import { useBoxSnap, type SnapProps } from '@ggraphic/editor/hooks/useBoxSnap';
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { activeBrand } from '../brand/brandRegistry.js';
+import { useDocumentBrand } from '../brand/documentBrand.js';
+import { LOCKED_TRANSFORMER, useIsItemLocked } from '../components/canvasItemLock.js';
+import { useAnnounce } from '../hooks/useAnnounce.js';
+import { useBoxSnap, type SnapProps } from '../hooks/useBoxSnap.js';
+import { messages } from '../i18n/messages.js';
 import {
   clampPan,
   covers,
@@ -23,17 +23,13 @@ import {
   panOfFramedPhoto,
   visiblePart,
   type Rect as Box,
-} from '@ggraphic/editor/utils/coverFit';
-import {
-  cropAspectRatio,
-  frameForAspect,
-  type CropAspectId,
-} from '@ggraphic/editor/utils/cropAspect';
+} from '../utils/coverFit.js';
+import { cropAspectRatio, frameForAspect, type CropAspectId } from '../utils/cropAspect.js';
 import { notchPx, traceNotch } from '../utils/notch.js';
-import { ELEMENT_TRANSFORMER } from '@ggraphic/editor/utils/orientation';
-import { useTrackPendingImage } from '@ggraphic/editor/utils/pendingImages';
+import { ELEMENT_TRANSFORMER } from '../utils/orientation.js';
+import { useTrackPendingImage } from '../utils/pendingImages.js';
 import { cacheFiltered, usePreviewCaptureRatio } from '../utils/filterCache.js';
-import { recacheNextFrame } from '@ggraphic/editor/utils/recacheNextFrame';
+import { recacheNextFrame } from '../utils/recacheNextFrame.js';
 import {
   clampPointToStraightPhoto,
   frameForAspectOnStraightPhoto,
@@ -45,9 +41,9 @@ import {
   straightPhotoCovers,
   straightScaleCrop,
   straightSceneFunc,
-} from '@ggraphic/editor/utils/straighten';
-import { EXPORT_HIDDEN_NAME } from '@ggraphic/editor/utils/captureStage';
-import { touchAnchorStyleFunc } from '@ggraphic/editor/utils/touchInput';
+} from '../utils/straighten.js';
+import { EXPORT_HIDDEN_NAME } from '../utils/captureStage.js';
+import { touchAnchorStyleFunc } from '../utils/touchInput.js';
 
 import {
   CROP_GHOST_NAME,

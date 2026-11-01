@@ -2,35 +2,27 @@
 export { CanvasStage } from './CanvasStage.js';
 export type { CanvasStageProps, CanvasStageRef } from './CanvasStage.js';
 
-export { CanvasBackground } from '@ggraphic/editor/primitives/CanvasBackground';
-export type {
-  CanvasBackgroundProps,
-  GradientConfig,
-  GradientStop,
-} from '@ggraphic/editor/primitives/CanvasBackground';
+export { CanvasBackground } from './CanvasBackground.js';
+export type { CanvasBackgroundProps, GradientConfig, GradientStop } from './CanvasBackground.js';
 
 export { CanvasText } from './CanvasText.js';
 export type { CanvasTextProps } from './CanvasText.js';
 
-export { SnapGuidelines } from '@ggraphic/editor/primitives/SnapGuidelines';
-export type { SnapGuidelinesProps } from '@ggraphic/editor/primitives/SnapGuidelines';
+export { SnapGuidelines } from './SnapGuidelines.js';
+export type { SnapGuidelinesProps } from './SnapGuidelines.js';
 
-export { CanvasImage } from '@ggraphic/editor/primitives/CanvasImage';
-export type { CanvasImageProps } from '@ggraphic/editor/primitives/CanvasImage';
+export { CanvasImage } from './CanvasImage.js';
+export type { CanvasImageProps } from './CanvasImage.js';
 
-export { CanvasIcons } from '@ggraphic/editor/primitives/CanvasIcons';
+export { CanvasIcons } from './CanvasIcons.js';
 
-export { ShapePrimitive } from '@ggraphic/editor/primitives/ShapePrimitive';
+export { ShapePrimitive } from './ShapePrimitive.js';
 
 export { IllustrationPrimitive } from './IllustrationPrimitive.js';
 export type { IllustrationPrimitiveProps } from './IllustrationPrimitive.js';
 
-export { CircleBadge } from '@ggraphic/editor/primitives/CircleBadge';
-export type {
-  CircleBadgeProps,
-  CircleBadgeInstance,
-  CircleBadgeTextLine,
-} from '@ggraphic/editor/primitives/CircleBadge';
+export { CircleBadge } from './CircleBadge.js';
+export type { CircleBadgeProps, CircleBadgeInstance, CircleBadgeTextLine } from './CircleBadge.js';
 
-export { PillBadge } from '@ggraphic/editor/primitives/PillBadge';
-export type { PillBadgeProps } from '@ggraphic/editor/primitives/PillBadge';
+export { PillBadge } from './PillBadge.js';
+export type { PillBadgeProps } from './PillBadge.js';

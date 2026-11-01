@@ -12,13 +12,13 @@ import {
   PiRows,
 } from 'react-icons/pi';
 
-import { TILE, useBarTiles } from '@ggraphic/editor/components/TopBar/barTiles';
-import { FloatingLayerControls } from '@ggraphic/editor/components/TopBar/modules/FloatingLayerControls';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { Popover, PopoverContent, PopoverTrigger } from '@ggraphic/editor/ui/popover';
-import { CANVAS_COMMANDS } from '@ggraphic/editor/utils/canvasCommandRegistry';
+import { TILE, useBarTiles } from '../barTiles.js';
+import { FloatingLayerControls } from './FloatingLayerControls.js';
+import { useMessages } from '../../../i18n/messages.js';
+import { Popover, PopoverContent, PopoverTrigger } from '../../../ui/popover.js';
+import { CANVAS_COMMANDS } from '../../../utils/canvasCommandRegistry.js';
 
-import type { SelectionGeometry } from '@ggraphic/editor/utils/canvasCommands';
+import type { SelectionGeometry } from '../../../utils/canvasCommands.js';
 import type { IconType } from 'react-icons';
 
 export type PositionCommandId =

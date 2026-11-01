@@ -77,15 +77,11 @@ import {
 } from 'react';
 import { createPortal, flushSync } from 'react-dom';
 
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { messages } from '@ggraphic/editor/i18n/messages';
-import {
-  captureFocusOrigin,
-  returnFocus,
-  type FocusOrigin,
-} from '@ggraphic/editor/utils/editorFocus';
-import { normalizeRotation } from '@ggraphic/editor/utils/orientation';
-import { stageCssScale } from '@ggraphic/editor/utils/stageCssScale';
+import { useDocumentBrand } from '../brand/documentBrand.js';
+import { messages } from '../i18n/messages.js';
+import { captureFocusOrigin, returnFocus, type FocusOrigin } from '../utils/editorFocus.js';
+import { normalizeRotation } from '../utils/orientation.js';
+import { stageCssScale } from '../utils/stageCssScale.js';
 
 import { resolveFontFamily } from '../utils/fontAliases.js';
 import { fontMarkSupport } from '../utils/fontMarkSupport.js';

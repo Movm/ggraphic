@@ -2,18 +2,15 @@
 import { stripInlineMarks } from '@ggraphic/schema';
 import { PiShareFat } from 'react-icons/pi';
 
-import {
-  GenericShareSection,
-  type GenericShareSectionProps,
-} from '@ggraphic/editor/sidebar/sections/index';
-import { withPhotoCredit } from '@ggraphic/editor/utils/photoCredit';
-import { creditLines } from '@ggraphic/editor/utils/photoCredits';
+import { GenericShareSection, type GenericShareSectionProps } from '../sidebar/sections/index.js';
+import { withPhotoCredit } from '../utils/photoCredit.js';
+import { creditLines } from '../utils/photoCredits.js';
 
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { messages } from '../i18n/messages.js';
 
-import { makeSectionDefiner } from '@ggraphic/editor/configs/factory/defineSection';
+import { makeSectionDefiner } from './factory/defineSection.js';
 
-import type { SectionConfig } from '@ggraphic/editor/configs/types';
+import type { SectionConfig } from './types.js';
 
 export const shareTab = {
   id: 'share' as const,

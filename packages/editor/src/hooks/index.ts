@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
-export { useElementSnapping } from '@ggraphic/editor/hooks/useElementSnapping';
-export type { UseElementSnappingResult } from '@ggraphic/editor/hooks/useElementSnapping';
-export { useCanvasUndoRedo } from '@ggraphic/editor/hooks/useCanvasUndoRedo';
+export { useElementSnapping } from './useElementSnapping.js';
+export type { UseElementSnappingResult } from './useElementSnapping.js';
+export { useCanvasUndoRedo } from './useCanvasUndoRedo.js';
 
 export { useCanvasInteractions } from './useCanvasInteractions.js';
 export type {
@@ -9,13 +9,13 @@ export type {
   UseCanvasInteractionsResult,
 } from './useCanvasInteractions.js';
 
-export { useCanvasStoreReset } from '@ggraphic/editor/hooks/useCanvasStoreReset';
+export { useCanvasStoreReset } from './useCanvasStoreReset.js';
 
-export { useCanvasHistorySetup } from '@ggraphic/editor/hooks/useCanvasHistorySetup';
-export type { UseCanvasHistorySetupResult } from '@ggraphic/editor/hooks/useCanvasHistorySetup';
+export { useCanvasHistorySetup } from './useCanvasHistorySetup.js';
+export type { UseCanvasHistorySetupResult } from './useCanvasHistorySetup.js';
 
-export { useImageCoverFit } from '@ggraphic/editor/hooks/useImageCoverFit';
-export type { CoverFitDimensions } from '@ggraphic/editor/hooks/useImageCoverFit';
+export { useImageCoverFit } from './useImageCoverFit.js';
+export type { CoverFitDimensions } from './useImageCoverFit.js';
 
 export { useFloatingModuleState } from './useFloatingModuleState.js';
 export type {
@@ -38,14 +38,11 @@ export type {
 export { useCanvasKeyboardHandlers } from './useCanvasKeyboardHandlers.js';
 export type { UseCanvasKeyboardHandlersOptions } from './useCanvasKeyboardHandlers.js';
 
-export { useFontGeneration } from '@ggraphic/editor/hooks/useFontGeneration';
-export { useFontLoader } from '@ggraphic/editor/hooks/useFontLoader';
-export type {
-  UseFontLoaderOptions,
-  UseFontLoaderResult,
-} from '@ggraphic/editor/hooks/useFontLoader';
+export { useFontGeneration } from './useFontGeneration.js';
+export { useFontLoader } from './useFontLoader.js';
+export type { UseFontLoaderOptions, UseFontLoaderResult } from './useFontLoader.js';
 
-export { usePaginatedIcons } from '@ggraphic/editor/hooks/usePaginatedIcons';
+export { usePaginatedIcons } from './usePaginatedIcons.js';
 
 export { useMultiPageExport } from './useMultiPageExport.js';
 export type {
@@ -64,4 +61,4 @@ export type {
 
 export { usePageThumbnails } from './usePageThumbnails.js';
 
-export { useMobileSheet } from '@ggraphic/editor/hooks/useMobileSheet';
+export { useMobileSheet } from './useMobileSheet.js';

@@ -8,8 +8,8 @@ import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import * as Y from 'yjs';
 
-import { seedPagesIfEmpty } from '@ggraphic/editor/collab/pagesDoc';
-import { usePageManager, type InitialPageDef } from '@ggraphic/editor/hooks/usePageManager';
+import { seedPagesIfEmpty } from '../../collab/pagesDoc.js';
+import { usePageManager, type InitialPageDef } from '../usePageManager.js';
 
 const initialPages: InitialPageDef[] = [
   { configId: 'freeform', state: { headline: 'Eins' } },

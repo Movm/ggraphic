@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
-import type { SidebarTabId } from '@ggraphic/editor/sidebar/types';
-import type {
-  GenericCanvasRef,
-  ToolbarStateReport,
-} from '@ggraphic/editor/components/GenericCanvas';
-import type { FullCanvasConfig } from '@ggraphic/editor/configs/types';
-import type { InitialPageDef } from '@ggraphic/editor/hooks/usePageManager';
+import type { SidebarTabId } from '../../sidebar/types.js';
+import type { GenericCanvasRef, ToolbarStateReport } from '../GenericCanvas.js';
+import type { FullCanvasConfig } from '../../configs/types.js';
+import type { InitialPageDef } from '../../hooks/usePageManager.js';
 import type { HocuspocusProvider } from '@hocuspocus/provider';
 import type React from 'react';
 import type * as Y from 'yjs';

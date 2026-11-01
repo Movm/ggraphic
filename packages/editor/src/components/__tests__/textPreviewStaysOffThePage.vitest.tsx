@@ -9,20 +9,20 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import Konva from 'konva';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { commitOpenTextEdit } from '@ggraphic/editor/components/CanvasTextOverlay';
-import { GenericCanvas } from '@ggraphic/editor/components/GenericCanvas';
-import { loadCanvasConfig } from '@ggraphic/editor/configs/configLoader';
-import { AutoSaveStoreProvider } from '@ggraphic/editor/stores/AutoSaveStoreProvider';
-import { captureStageImage } from '@ggraphic/editor/utils/captureStage';
-import { createShape } from '@ggraphic/editor/utils/shapes';
+import { commitOpenTextEdit } from '../CanvasTextOverlay.js';
+import { GenericCanvas } from '../GenericCanvas.js';
+import { loadCanvasConfig } from '../../configs/configLoader.js';
+import { AutoSaveStoreProvider } from '../../stores/AutoSaveStoreProvider.js';
+import { captureStageImage } from '../../utils/captureStage.js';
+import { createShape } from '../../utils/shapes.js';
 
 import '../../testing/fixtureTemplates';
 
-import type * as StoreModule from '@ggraphic/editor/stores/createCanvasEditorStore';
-import type { CanvasEditorStoreApi } from '@ggraphic/editor/stores/createCanvasEditorStore';
+import type * as StoreModule from '../../stores/createCanvasEditorStore.js';
+import type { CanvasEditorStoreApi } from '../../stores/createCanvasEditorStore.js';
 
 const stores = vi.hoisted(() => [] as unknown[]);
-vi.mock('@ggraphic/editor/stores/createCanvasEditorStore', async (importOriginal) => {
+vi.mock('../../stores/createCanvasEditorStore.js', async (importOriginal) => {
   const original = await importOriginal<typeof StoreModule>();
   return {
     ...original,
@@ -34,15 +34,15 @@ vi.mock('@ggraphic/editor/stores/createCanvasEditorStore', async (importOriginal
   };
 });
 
-vi.mock('@ggraphic/editor/utils/captureStage', () => ({
+vi.mock('../../utils/captureStage.js', () => ({
   captureStageImage: vi.fn(() => 'blob:fixture-capture'),
 }));
 // Das eigentliche Speichern (Share-Store, Netz) ist nicht Gegenstand hier.
-vi.mock('@ggraphic/editor/hooks/useCanvasAutoSave', () => ({
+vi.mock('../../hooks/useCanvasAutoSave.js', () => ({
   useCanvasAutoSave: () => ({ status: 'idle', shareToken: null, retry: async () => {} }),
 }));
 
-vi.mock('@ggraphic/editor/components/RichTextField', () => ({
+vi.mock('../RichTextField.js', () => ({
   RichTextField: ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
     <textarea aria-label="Entwurf" value={value} onChange={(e) => onChange(e.target.value)} />
   ),

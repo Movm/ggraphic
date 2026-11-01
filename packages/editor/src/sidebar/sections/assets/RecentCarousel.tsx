@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { cn } from '@ggraphic/editor/utils/cn';
+import { useMessages } from '../../../i18n/messages.js';
+import { cn } from '../../../utils/cn.js';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { PiCaretRightBold } from 'react-icons/pi';
 
-import { scrollBehavior } from '@ggraphic/editor/utils/scrollBehavior';
-import { HIDDEN_SCROLLBAR } from '@ggraphic/editor/sidebar/sidebarStyles';
+import { scrollBehavior } from '../../../utils/scrollBehavior.js';
+import { HIDDEN_SCROLLBAR } from '../../sidebarStyles.js';
 
 import { ElementTile } from './ElementTile.js';
 

@@ -2,15 +2,12 @@
 import React, { memo, type ComponentProps } from 'react';
 import { Group } from 'react-konva';
 
-import { CanvasItemLockContext } from '@ggraphic/editor/components/canvasItemLock';
-import { MultiSelectionTransformer } from '@ggraphic/editor/components/MultiSelectionTransformer';
-import {
-  RemoteSelectionOverlay,
-  type RemoteSelector,
-} from '@ggraphic/editor/components/RemoteSelectionOverlay';
-import { type GeometryReporter } from '@ggraphic/editor/hooks/useGeometryReporter';
-import { useCanvasStoreSelector } from '@ggraphic/editor/stores/CanvasStoreProvider';
-import { CANVAS_ITEM_NAME } from '@ggraphic/editor/utils/deepSelect';
+import { CanvasItemLockContext } from './canvasItemLock.js';
+import { MultiSelectionTransformer } from './MultiSelectionTransformer.js';
+import { RemoteSelectionOverlay, type RemoteSelector } from './RemoteSelectionOverlay.js';
+import { type GeometryReporter } from '../hooks/useGeometryReporter.js';
+import { useCanvasStoreSelector } from '../stores/CanvasStoreProvider.js';
+import { CANVAS_ITEM_NAME } from '../utils/deepSelect.js';
 
 import { useIconSetsFor } from '../hooks/useIconSetsFor.js';
 import { lockedIdsOf } from '../utils/layerLock.js';
@@ -24,7 +21,7 @@ import {
 
 import type { CanvasElementConfig, FullCanvasConfig, LayoutResult } from '../configs/types.js';
 import type { CanvasItem } from '../utils/canvasLayerManager.js';
-import type { SnapLine, SnapTarget } from '@ggraphic/editor/utils/snapping';
+import type { SnapLine, SnapTarget } from '../utils/snapping.js';
 
 /**
  * CanvasRenderLayer - Renders all canvas elements in layer order

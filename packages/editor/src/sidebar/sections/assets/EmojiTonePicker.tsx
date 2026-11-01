@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { cn } from '@ggraphic/editor/utils/cn';
+import { useMessages } from '../../../i18n/messages.js';
+import { cn } from '../../../utils/cn.js';
 import { useRef, type KeyboardEvent } from 'react';
 
 const SKIN_TONE_COLORS = ['#fcc21b', '#f7dece', '#f3d2a2', '#d5ab88', '#af7e57', '#7c533e'];

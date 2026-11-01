@@ -1,12 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { useNoUnsplashSearch, type UnsplashSearchFn } from '@ggraphic/editor/hostServices';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { useUnsplashHome } from '@ggraphic/editor/utils/unsplashLinks';
-import {
-  UnsplashLimitNotice,
-  UnsplashRemaining,
-} from '@ggraphic/editor/sidebar/sections/tools/UnsplashLimitNotice';
+import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
+import { useNoUnsplashSearch, type UnsplashSearchFn } from '../../../hostServices.js';
+import { useMessages } from '../../../i18n/messages.js';
+import { useUnsplashHome } from '../../../utils/unsplashLinks.js';
+import { UnsplashLimitNotice, UnsplashRemaining } from '../tools/UnsplashLimitNotice.js';
 import { useCallback, useEffect, useMemo, type ReactNode } from 'react';
 
 import { unsplashPhotoItem } from './useStockPhotos.js';

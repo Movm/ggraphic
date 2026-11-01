@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MPL-2.0
 import { type BrandPack } from '@ggraphic/core';
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { useAllIconsCatalog, useIconCatalog } from '@ggraphic/editor/hooks/useIconCatalog';
-import { useNoStudioAssets } from '@ggraphic/editor/hostServices';
-import { messages, useMessages } from '@ggraphic/editor/i18n/messages';
+import { useDocumentBrand } from '../../../brand/documentBrand.js';
+import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
+import { useAllIconsCatalog, useIconCatalog } from '../../../hooks/useIconCatalog.js';
+import { useNoStudioAssets } from '../../../hostServices.js';
+import { messages, useMessages } from '../../../i18n/messages.js';
 import {
   assetMatchesLocale,
   hasDarkPreview,
@@ -12,36 +12,29 @@ import {
   registeredAssetCatalog,
   type AssetAudience,
   type UniversalAsset,
-} from '@ggraphic/editor/utils/canvasAssets';
-import { CHART_TYPE_DEFS } from '@ggraphic/editor/utils/chartUtils';
-import {
-  FRAME_CATEGORY_ORDER,
-  FRAME_PRESETS,
-  getFramePreset,
-} from '@ggraphic/editor/utils/frameUtils';
-import { getAllIllustrations } from '@ggraphic/editor/utils/illustrations/registry';
-import { getShapeDef } from '@ggraphic/editor/utils/shapes';
+} from '../../../utils/canvasAssets.js';
+import { CHART_TYPE_DEFS } from '../../../utils/chartUtils.js';
+import { FRAME_CATEGORY_ORDER, FRAME_PRESETS, getFramePreset } from '../../../utils/frameUtils.js';
+import { getAllIllustrations } from '../../../utils/illustrations/registry.js';
+import { getShapeDef } from '../../../utils/shapes.js';
 import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState, type ReactNode } from 'react';
 import { PiImageFill } from 'react-icons/pi';
 
 import { useEmojiCatalog } from '../../../hooks/useEmojiCatalog.js';
 import { withTone } from '../../../utils/emoji/emojiCatalog.js';
-import { KAWAII_ILLUSTRATIONS } from '@ggraphic/editor/utils/illustrations/kawaii';
-import {
-  ALL_PALETTE_SHAPES,
-  getShapeVariant,
-} from '@ggraphic/editor/sidebar/sections/FormenSection';
+import { KAWAII_ILLUSTRATIONS } from '../../../utils/illustrations/kawaii.js';
+import { ALL_PALETTE_SHAPES, getShapeVariant } from '../FormenSection.js';
 
 import { ElementThumb } from './ElementThumb.js';
 import { useStockPhotos } from './useStockPhotos.js';
 
 import type { ElementBlocks } from './elementPanelHost.js';
 import type { ExtendedAssetsSectionProps } from './AssetsSection.js';
-import type { AssetView } from '@ggraphic/editor/sidebar/sections/assets/constants';
+import type { AssetView } from './constants.js';
 import type { ElementAction, ElementItem } from './elementTypes.js';
-import type { IconDef } from '@ggraphic/editor/utils/canvasIcons';
-import type { IllustrationDef } from '@ggraphic/editor/utils/illustrations/types';
+import type { IconDef } from '../../../utils/canvasIcons.js';
+import type { IllustrationDef } from '../../../utils/illustrations/types.js';
 
 export type CategoryId = Exclude<AssetView, 'browse'>;
 

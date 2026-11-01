@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { plainImageUrls } from '@ggraphic/editor/hostServices';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { useUserUploads } from '@ggraphic/editor/sidebar/UserUploadsProvider';
-import { MasonryGrid, MasonryItem } from '@ggraphic/editor/ui/masonry-grid';
-import { cn } from '@ggraphic/editor/utils/cn';
-import { MEDIA_DRAG_TYPE, type MediaDragPayload } from '@ggraphic/editor/utils/mediaDrop';
-import { downscaleImageForUpload } from '@ggraphic/editor/utils/userImageUtils';
+import { useCanvasEditorServices } from '../../CanvasEditorProvider.js';
+import { plainImageUrls } from '../../hostServices.js';
+import { useMessages } from '../../i18n/messages.js';
+import { useUserUploads } from '../UserUploadsProvider.js';
+import { MasonryGrid, MasonryItem } from '../../ui/masonry-grid.js';
+import { cn } from '../../utils/cn.js';
+import { MEDIA_DRAG_TYPE, type MediaDragPayload } from '../../utils/mediaDrop.js';
+import { downscaleImageForUpload } from '../../utils/userImageUtils.js';
 import { useRef, useState } from 'react';
 import { PiTrash } from 'react-icons/pi';
 import { HiArrowUpTray, HiMagnifyingGlass } from 'react-icons/hi2';
 
-import { useIsCanvasMobile } from '@ggraphic/editor/hooks/useIsCanvasMobile';
-import { SidebarHint } from '@ggraphic/editor/sidebar/components/SidebarHint';
-import { MOBILE_INPUT_TEXT, SIDEBAR_SECTION } from '@ggraphic/editor/sidebar/sidebarStyles';
+import { useIsCanvasMobile } from '../../hooks/useIsCanvasMobile.js';
+import { SidebarHint } from '../components/SidebarHint.js';
+import { MOBILE_INPUT_TEXT, SIDEBAR_SECTION } from '../sidebarStyles.js';
 
-import type { CanvasMediaItem } from '@ggraphic/editor/hostServices';
+import type { CanvasMediaItem } from '../../hostServices.js';
 
 export interface UploadsSectionProps {
   /** Place an already-durable URL (used when clicking a prior upload). */

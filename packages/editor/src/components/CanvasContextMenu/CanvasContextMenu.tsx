@@ -3,11 +3,8 @@ import { ContextMenu } from 'radix-ui';
 import React, { useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { PiCaretRight, PiCheck } from 'react-icons/pi';
 
-import type {
-  CanvasMenu,
-  CanvasMenuEntry,
-} from '@ggraphic/editor/components/CanvasContextMenu/canvasMenuModel';
-import type { CanvasCommandId } from '@ggraphic/editor/utils/canvasCommandRegistry';
+import type { CanvasMenu, CanvasMenuEntry } from './canvasMenuModel.js';
+import type { CanvasCommandId } from '../../utils/canvasCommandRegistry.js';
 import { EDITOR_SCOPE } from '../../ui/editorScope.js';
 
 export interface CanvasMenuRequest {

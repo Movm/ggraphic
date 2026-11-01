@@ -2,11 +2,11 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { duotoneLook, IMAGE_PRESETS } from '@ggraphic/editor/utils/imageFilters';
-import { ImageAdjustSection } from '@ggraphic/editor/sidebar/sections/ImageAdjustSection';
+import { duotoneLook, IMAGE_PRESETS } from '../../utils/imageFilters.js';
+import { ImageAdjustSection } from './ImageAdjustSection.js';
 import { axe } from '../../test-utils';
 
-import type { UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import type { UserImageInstance } from '../../utils/userImageUtils.js';
 
 const image = (extra: Partial<UserImageInstance> = {}): UserImageInstance => ({
   id: 'img',

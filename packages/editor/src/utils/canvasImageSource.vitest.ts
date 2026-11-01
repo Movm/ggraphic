@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { plainImageUrls, type CanvasImageUrlService } from '@ggraphic/editor/hostServices';
-import { canvasImageSourceUrl } from '@ggraphic/editor/utils/canvasImageSource';
+import { plainImageUrls, type CanvasImageUrlService } from '../hostServices.js';
+import { canvasImageSourceUrl } from './canvasImageSource.js';
 
 /** A host that keeps a 2160px variant of every stored image. */
 const host: CanvasImageUrlService = {

@@ -12,10 +12,10 @@ import { act, renderHook } from '@testing-library/react';
 import Konva from 'konva';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { usePageThumbnails } from '@ggraphic/editor/hooks/usePageThumbnails';
+import { usePageThumbnails } from '../usePageThumbnails.js';
 
-import type { GenericCanvasRef } from '@ggraphic/editor/components/GenericCanvas';
-import type { HeterogeneousPage } from '@ggraphic/editor/configs/types';
+import type { GenericCanvasRef } from '../../components/GenericCanvas.js';
+import type { HeterogeneousPage } from '../../configs/types.js';
 
 const shown = new Map<string, string>();
 const loadingImages = new Set<string>();

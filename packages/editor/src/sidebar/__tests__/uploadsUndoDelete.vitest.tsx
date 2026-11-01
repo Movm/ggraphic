@@ -2,12 +2,9 @@
 import { act, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  CanvasEditorProvider,
-  type CanvasEditorServices,
-} from '@ggraphic/editor/CanvasEditorProvider';
-import { UserUploadsProvider, useUserUploads } from '@ggraphic/editor/sidebar/UserUploadsProvider';
-import { registerToast } from '@ggraphic/editor/utils/editorToast';
+import { CanvasEditorProvider, type CanvasEditorServices } from '../../CanvasEditorProvider.js';
+import { UserUploadsProvider, useUserUploads } from '../UserUploadsProvider.js';
+import { registerToast } from '../../utils/editorToast.js';
 
 /**
  * Löschen in den Uploads: auf dem Handy eine dauerhafte Ecke jeder Kachel, die

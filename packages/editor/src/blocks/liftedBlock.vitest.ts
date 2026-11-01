@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { createPillBadgeInstance } from '@ggraphic/editor/utils/pillBadgeUtils';
+import { createPillBadgeInstance } from '../utils/pillBadgeUtils.js';
 
 import { boundsOf, translateBlock, type LiftedBlock } from './liftedBlock.js';
 

@@ -9,20 +9,20 @@ import { createRef } from 'react';
 import { Group } from 'react-konva';
 import { describe, expect, it } from 'vitest';
 
-import { CanvasItemLockContext } from '@ggraphic/editor/components/canvasItemLock';
-import { MultiSelectionTransformer } from '@ggraphic/editor/components/MultiSelectionTransformer';
-import { useCanvasInteractions } from '@ggraphic/editor/hooks/useCanvasInteractions';
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
-import { ShapePrimitive } from '@ggraphic/editor/primitives/ShapePrimitive';
+import { CanvasItemLockContext } from '../../components/canvasItemLock.js';
+import { MultiSelectionTransformer } from '../../components/MultiSelectionTransformer.js';
+import { useCanvasInteractions } from '../useCanvasInteractions.js';
+import { CanvasStage, type CanvasStageRef } from '../../primitives/CanvasStage.js';
+import { ShapePrimitive } from '../../primitives/ShapePrimitive.js';
 import {
   CanvasStoreProvider,
   useCanvasStore,
   useCanvasStoreSelector,
-} from '@ggraphic/editor/stores/CanvasStoreProvider';
-import { findDragNodes } from '@ggraphic/editor/utils/multiSelect';
-import { createShape, type ShapeInstance } from '@ggraphic/editor/utils/shapes';
+} from '../../stores/CanvasStoreProvider.js';
+import { findDragNodes } from '../../utils/multiSelect.js';
+import { createShape, type ShapeInstance } from '../../utils/shapes.js';
 
-import type { CanvasEditorStoreApi } from '@ggraphic/editor/stores/createCanvasEditorStore';
+import type { CanvasEditorStoreApi } from '../../stores/createCanvasEditorStore.js';
 import type Konva from 'konva';
 
 const box = (id: string, x: number, y: number): ShapeInstance => ({

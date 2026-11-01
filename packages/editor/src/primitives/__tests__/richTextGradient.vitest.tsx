@@ -9,10 +9,10 @@ import Konva from 'konva';
 import { createRef } from 'react';
 import { describe, expect, it } from 'vitest';
 
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
-import { CanvasText } from '@ggraphic/editor/primitives/CanvasText';
+import { CanvasStage, type CanvasStageRef } from '../CanvasStage.js';
+import { CanvasText } from '../CanvasText.js';
 
-import type { GradientFill } from '@ggraphic/editor/utils/gradientFill';
+import type { GradientFill } from '../../utils/gradientFill.js';
 
 const GRADIENT: GradientFill = {
   type: 'linear',

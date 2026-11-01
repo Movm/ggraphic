@@ -7,9 +7,9 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { RichTextField } from '@ggraphic/editor/components/RichTextField';
-import { TextFormatControls } from '@ggraphic/editor/components/TextFormatControls';
-import { fontMarkSupport } from '@ggraphic/editor/utils/fontMarkSupport';
+import { RichTextField } from '../RichTextField.js';
+import { TextFormatControls } from '../TextFormatControls.js';
+import { fontMarkSupport } from '../../utils/fontMarkSupport.js';
 
 import { axe } from '../../test-utils';
 

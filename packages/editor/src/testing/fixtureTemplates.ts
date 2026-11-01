@@ -19,7 +19,7 @@
  * elements behave as on a real template. Only `brandDefault` colours and
  * invented copy are used.
  */
-import { defineTemplate, registerTemplates } from '@ggraphic/editor/templates/registry';
+import { defineTemplate, registerTemplates } from '../templates/registry.js';
 
 import {
   carryBackgroundAdjustments,
@@ -46,7 +46,7 @@ import {
 
 import type { AnyCanvasConfig, FullCanvasConfig } from '../configs/types.js';
 import type { ChartType } from '../utils/chartTypes.js';
-import type { StockImageAttribution } from '@ggraphic/editor/common/imageSourceTypes';
+import type { StockImageAttribution } from '../common/imageSourceTypes.js';
 
 const WIDTH = 1080;
 const HEIGHT = 1350;

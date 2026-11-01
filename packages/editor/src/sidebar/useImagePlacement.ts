@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { plainImageUrls, type CanvasUploadSource } from '@ggraphic/editor/hostServices';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { useUserUploads } from '@ggraphic/editor/sidebar/UserUploadsProvider';
+import { useCanvasEditorServices } from '../CanvasEditorProvider.js';
+import { plainImageUrls, type CanvasUploadSource } from '../hostServices.js';
+import { useMessages } from '../i18n/messages.js';
+import { useUserUploads } from './UserUploadsProvider.js';
 import { useCallback } from 'react';
 
 export interface PlacedImage {

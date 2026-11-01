@@ -3,11 +3,11 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { messages } from '@ggraphic/editor/i18n/messages';
-import { EffectsSection } from '@ggraphic/editor/sidebar/sections/EffectsSection';
+import { messages } from '../../i18n/messages.js';
+import { EffectsSection } from './EffectsSection.js';
 import { axe } from '../../test-utils';
 
-import type { FloatingModuleState } from '@ggraphic/editor/hooks/useFloatingModuleState';
+import type { FloatingModuleState } from '../../hooks/useFloatingModuleState.js';
 
 /** The "Effects" area: gradient, outline and shadow — `effectsFor` decides who has which. */
 

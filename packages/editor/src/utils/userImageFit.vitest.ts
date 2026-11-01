@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { fitToCanvas } from '@ggraphic/editor/utils/userImageUtils';
+import { fitToCanvas } from './userImageUtils.js';
 
 describe('fitToCanvas', () => {
   it('fits a large landscape photo into 60% of a square canvas', () => {

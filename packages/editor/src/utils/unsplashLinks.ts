@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
+import { useCanvasEditorServices } from '../CanvasEditorProvider.js';
 
 /** The Unsplash home page, tagged with the host's `utm_source` (API Terms). */
 export function useUnsplashHome(): string {

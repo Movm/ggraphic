@@ -2,11 +2,11 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { useFloatingModuleHandlers } from '@ggraphic/editor/hooks/useFloatingModuleHandlers';
+import { useFloatingModuleHandlers } from '../useFloatingModuleHandlers.js';
 
-import type { GradientFill } from '@ggraphic/editor/utils/gradientFill';
-import type { FullCanvasConfig } from '@ggraphic/editor/configs/types';
-import type { FloatingModuleState } from '@ggraphic/editor/hooks/useFloatingModuleState';
+import type { GradientFill } from '../../utils/gradientFill.js';
+import type { FullCanvasConfig } from '../../configs/types.js';
+import type { FloatingModuleState } from '../useFloatingModuleState.js';
 
 type State = Record<string, unknown>;
 

@@ -2,20 +2,13 @@
 import React from 'react';
 import { PiCheckBold, PiSlidersHorizontal } from 'react-icons/pi';
 
-import { BarTilesProvider } from '@ggraphic/editor/components/TopBar/barTiles';
-import {
-  ContextControls,
-  showsCropModeBar,
-  type ContextControlsProps,
-} from '@ggraphic/editor/components/TopBar/ContextControls';
-import {
-  TOOLBAR_ITEMS_WITH_INPUTS,
-  useRovingToolbar,
-} from '@ggraphic/editor/hooks/useRovingToolbar';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { HIDDEN_SCROLLBAR } from '@ggraphic/editor/sidebar/sidebarStyles';
-import { useCanvasStoreSelector } from '@ggraphic/editor/stores/CanvasStoreProvider';
-import { cn } from '@ggraphic/editor/utils/cn';
+import { BarTilesProvider } from './barTiles.js';
+import { ContextControls, showsCropModeBar, type ContextControlsProps } from './ContextControls.js';
+import { TOOLBAR_ITEMS_WITH_INPUTS, useRovingToolbar } from '../../hooks/useRovingToolbar.js';
+import { useMessages } from '../../i18n/messages.js';
+import { HIDDEN_SCROLLBAR } from '../../sidebar/sidebarStyles.js';
+import { useCanvasStoreSelector } from '../../stores/CanvasStoreProvider.js';
+import { cn } from '../../utils/cn.js';
 
 interface MobileSelectionBarProps extends ContextControlsProps {
   /** Öffnet den Bereich der Auswahl als Sheet; fehlt, wenn es keinen gibt. */

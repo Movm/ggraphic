@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
+import { useMessages } from '../../../i18n/messages.js';
 
 /** Unsplash allows the shared key 50 searches an hour; below this the count is shown. */
 const LOW_REMAINING = 10;

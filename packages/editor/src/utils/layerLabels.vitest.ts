@@ -7,7 +7,7 @@ import {
   pageLayerLabels,
   sameLayerEntries,
   stageSummary,
-} from '@ggraphic/editor/utils/layerLabels';
+} from './layerLabels.js';
 
 import {
   FIXTURE_ASSET_ID,
@@ -15,8 +15,8 @@ import {
   registerFixtureAssets,
 } from '../testing/fixtureTemplates';
 
-import type { CanvasElementConfig } from '@ggraphic/editor/configs/types';
-import type { CanvasItem } from '@ggraphic/editor/utils/canvasLayerManager';
+import type { CanvasElementConfig } from '../configs/types.js';
+import type { CanvasItem } from './canvasLayerManager.js';
 
 registerFixtureAssets();
 

@@ -5,7 +5,7 @@
  * Placing and the gate hug through core; this is the page-level door for the rest.
  */
 import { hugPlates, type HugAdapter } from '@ggraphic/core';
-import { TEMPLATE_GATE_ADAPTER } from '@ggraphic/editor/templates/templateGeometry';
+import { TEMPLATE_GATE_ADAPTER } from '../templates/templateGeometry.js';
 
 /** The editor's measures for hugging; null parts of the gate adapter never occur in the editor. */
 export const HUG_ADAPTER: HugAdapter = {

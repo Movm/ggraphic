@@ -9,17 +9,17 @@
  */
 import { layoutRichTextBlock } from '@ggraphic/schema';
 
-import { calculatePillBadgeDimensions } from '@ggraphic/editor/utils/pillBadgeUtils';
-import { runMeasurer } from '@ggraphic/editor/utils/textUtils';
+import { calculatePillBadgeDimensions } from '../utils/pillBadgeUtils.js';
+import { runMeasurer } from '../utils/textUtils.js';
 
 import type { IconState } from '../configs/factory/baseTypes.js';
 import type { AdditionalText } from '../configs/types.js';
 import type { AssetInstance } from '../utils/canvasAssets.js';
-import type { ChartInstance } from '@ggraphic/editor/utils/chartTypes';
-import type { CircleBadgeInstance } from '@ggraphic/editor/utils/circleBadgeUtils';
-import type { PillBadgeInstance } from '@ggraphic/editor/utils/pillBadgeUtils';
-import type { ShapeInstance } from '@ggraphic/editor/utils/shapes';
-import type { UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import type { ChartInstance } from '../utils/chartTypes.js';
+import type { CircleBadgeInstance } from '../utils/circleBadgeUtils.js';
+import type { PillBadgeInstance } from '../utils/pillBadgeUtils.js';
+import type { ShapeInstance } from '../utils/shapes.js';
+import type { UserImageInstance } from '../utils/userImageUtils.js';
 
 /** The element collections a block can bring onto a page; all of them the freeform page holds. */
 export const BLOCK_COLLECTIONS = [

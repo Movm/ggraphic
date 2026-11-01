@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { cn } from '@ggraphic/editor/utils/cn';
-import { onThumbnailHover } from '@ggraphic/editor/utils/illustrations/svgCache';
-import { takeDropPlaced } from '@ggraphic/editor/utils/mediaDrop';
+import { useMessages } from '../../../i18n/messages.js';
+import { cn } from '../../../utils/cn.js';
+import { onThumbnailHover } from '../../../utils/illustrations/svgCache.js';
+import { takeDropPlaced } from '../../../utils/mediaDrop.js';
 import { memo, type CSSProperties, type DragEvent } from 'react';
 import { PiCheck } from 'react-icons/pi';
 

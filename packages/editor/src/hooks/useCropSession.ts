@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 
-import { useCanvasStore } from '@ggraphic/editor/stores/CanvasStoreProvider';
+import { useCanvasStore } from '../stores/CanvasStoreProvider.js';
 
 import { restoreCropSnapshot, takeCropSnapshot, type CropSnapshot } from '../utils/cropSession.js';
 
 import type { CanvasElementConfig } from '../configs/types.js';
-import type { HistorySessionMark } from '@ggraphic/editor/stores/createCanvasEditorStore';
+import type { HistorySessionMark } from '../stores/createCanvasEditorStore.js';
 
 interface CropSession {
   id: string;

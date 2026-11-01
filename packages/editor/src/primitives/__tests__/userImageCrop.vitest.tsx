@@ -5,10 +5,10 @@ import { type default as Konva } from 'konva';
 import { createRef } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CanvasItemLockContext } from '@ggraphic/editor/components/canvasItemLock';
-import { AnnouncerContext } from '@ggraphic/editor/hooks/useAnnounce';
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
-import { UserImagePrimitive } from '@ggraphic/editor/primitives/UserImagePrimitive';
+import { CanvasItemLockContext } from '../../components/canvasItemLock.js';
+import { AnnouncerContext } from '../../hooks/useAnnounce.js';
+import { CanvasStage, type CanvasStageRef } from '../CanvasStage.js';
+import { UserImagePrimitive } from '../UserImagePrimitive.js';
 
 beforeEach(() => {
   vi.spyOn(window, 'Image').mockImplementation(function () {

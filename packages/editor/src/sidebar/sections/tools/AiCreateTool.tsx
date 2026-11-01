@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { useMessages, type Messages } from '@ggraphic/editor/i18n/messages';
-import { useUserUploads } from '@ggraphic/editor/sidebar/UserUploadsProvider';
+import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
+import { useMessages, type Messages } from '../../../i18n/messages.js';
+import { useUserUploads } from '../../UserUploadsProvider.js';
 import { useCallback, useState } from 'react';
 import { HiSparkles } from 'react-icons/hi';
 

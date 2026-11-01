@@ -11,36 +11,25 @@
 import { useRef, useEffect, useState, useCallback, memo } from 'react';
 import { Text as KonvaText, Transformer } from 'react-konva';
 
-import { LOCKED_TRANSFORMER, useIsItemLocked } from '@ggraphic/editor/components/canvasItemLock';
-import {
-  overlayBoxForNode,
-  useCanvasTextEditor,
-} from '@ggraphic/editor/components/CanvasTextOverlay';
-import {
-  useGeometryReporter,
-  type GeometryReporter,
-} from '@ggraphic/editor/hooks/useGeometryReporter';
-import { useFontGeneration } from '@ggraphic/editor/hooks/useFontGeneration';
-import { useSnapScheduler } from '@ggraphic/editor/hooks/useSnapScheduler';
-import { gradientFillProps, type GradientFill } from '@ggraphic/editor/utils/gradientFill';
-import { isGroupDrag } from '@ggraphic/editor/utils/multiSelect';
-import { ELEMENT_TRANSFORMER, normalizeRotation } from '@ggraphic/editor/utils/orientation';
-import {
-  boxFrame,
-  createBoxFrame,
-  frameBounds,
-  snapByBounds,
-} from '@ggraphic/editor/utils/snapping';
-import { usesRichText } from '@ggraphic/editor/utils/textRouting';
-import { konvaFontStyle, runMeasurer } from '@ggraphic/editor/utils/textUtils';
+import { LOCKED_TRANSFORMER, useIsItemLocked } from '../components/canvasItemLock.js';
+import { overlayBoxForNode, useCanvasTextEditor } from '../components/CanvasTextOverlay.js';
+import { useGeometryReporter, type GeometryReporter } from '../hooks/useGeometryReporter.js';
+import { useFontGeneration } from '../hooks/useFontGeneration.js';
+import { useSnapScheduler } from '../hooks/useSnapScheduler.js';
+import { gradientFillProps, type GradientFill } from '../utils/gradientFill.js';
+import { isGroupDrag } from '../utils/multiSelect.js';
+import { ELEMENT_TRANSFORMER, normalizeRotation } from '../utils/orientation.js';
+import { boxFrame, createBoxFrame, frameBounds, snapByBounds } from '../utils/snapping.js';
+import { usesRichText } from '../utils/textRouting.js';
+import { konvaFontStyle, runMeasurer } from '../utils/textUtils.js';
 
 import { resolveFontFamily } from '../utils/fontAliases.js';
 import { CanvasRichText } from './CanvasRichText.js';
 
-import type { FontWeight } from '@ggraphic/editor/configs/types';
-import type { TransformConfig, TransformAnchor } from '@ggraphic/editor/types/editorTypes';
-import type { SnapTarget, SnapLine } from '@ggraphic/editor/utils/snapping';
-import type { TextAccent, TextMarker } from '@ggraphic/editor/utils/textUtils';
+import type { FontWeight } from '../configs/types.js';
+import type { TransformConfig, TransformAnchor } from '../types/editorTypes.js';
+import type { SnapTarget, SnapLine } from '../utils/snapping.js';
+import type { TextAccent, TextMarker } from '../utils/textUtils.js';
 import type Konva from 'konva';
 
 // Rahmen für Snap und Geometrie-Meldung, pro Aufruf neu beschrieben (synchron, ohne Allokation).

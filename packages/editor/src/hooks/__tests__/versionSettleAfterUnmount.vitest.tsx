@@ -9,9 +9,9 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import * as Y from 'yjs';
 
-import { getMetaMap, seedPagesIfEmpty } from '@ggraphic/editor/collab/pagesDoc';
-import { useYjsPages } from '@ggraphic/editor/collab/useYjsPages';
-import { YDOC_KEYS } from '@ggraphic/editor/collab/ydocKeys';
+import { getMetaMap, seedPagesIfEmpty } from '../../collab/pagesDoc.js';
+import { useYjsPages } from '../../collab/useYjsPages.js';
+import { YDOC_KEYS } from '../../collab/ydocKeys.js';
 
 const KIND_KEY = `${YDOC_KEYS.kindVersionPrefix}${STAMP_STATE_KEY}`;
 

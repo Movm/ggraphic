@@ -7,9 +7,9 @@ import { render } from '@testing-library/react';
 import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
-import { FramePrimitive } from '@ggraphic/editor/primitives/FramePrimitive';
-import { createFrameInstance } from '@ggraphic/editor/utils/frameUtils';
+import { CanvasStage, type CanvasStageRef } from '../CanvasStage.js';
+import { FramePrimitive } from '../FramePrimitive.js';
+import { createFrameInstance } from '../../utils/frameUtils.js';
 
 describe('FramePrimitive', () => {
   it('normalises a rotation past 180° on transform end', () => {

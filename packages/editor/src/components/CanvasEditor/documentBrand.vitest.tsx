@@ -10,16 +10,16 @@ import Konva from 'konva';
 import React from 'react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
-import { messages } from '@ggraphic/editor/i18n/messages';
-import { registerTemplates } from '@ggraphic/editor/templates/registry';
+import { registerBrandPacks } from '../../brand/brandRegistry.js';
+import { messages } from '../../i18n/messages.js';
+import { registerTemplates } from '../../templates/registry.js';
 
 import { brandTestConfig } from '../../testing/documentBrandConfig.js';
 import { PACK_A, PACK_B } from '../../testing/documentBrandPacks.js';
 
 import { CanvasEditorShell } from './CanvasEditorShell.js';
 
-vi.mock('@ggraphic/editor/sidebar/UserUploadsProvider', () => ({
+vi.mock('../../sidebar/UserUploadsProvider.js', () => ({
   useOptionalUserUploads: () => null,
   UserUploadsProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   useUserUploads: () => ({ uploads: [], refresh: () => {} }),

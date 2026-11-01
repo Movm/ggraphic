@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { framedPhotoRect, visiblePart } from '@ggraphic/editor/utils/coverFit';
-import { userImageCropUpdate } from '@ggraphic/editor/utils/userImageCrop';
-import { type UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import { framedPhotoRect, visiblePart } from './coverFit.js';
+import { userImageCropUpdate } from './userImageCrop.js';
+import { type UserImageInstance } from './userImageUtils.js';
 
 const natural = { width: 1200, height: 800 };
 const image: UserImageInstance = {

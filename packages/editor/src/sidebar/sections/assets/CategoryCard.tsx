@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { cn } from '@ggraphic/editor/utils/cn';
+import { cn } from '../../../utils/cn.js';
 import { memo, type CSSProperties, type ReactNode } from 'react';
 
 const FAN =

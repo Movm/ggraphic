@@ -3,8 +3,8 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { brandDefault, type BrandPack } from '@ggraphic/core';
-import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { activeBrand, registerBrandPacks } from '../../../brand/brandRegistry.js';
+import { messages } from '../../../i18n/messages.js';
 import { axe } from '../../../test-utils';
 
 import { FloatingFontRoleControl } from './FloatingFontRoleControl';

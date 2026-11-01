@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MPL-2.0
-import { FloatingPositionControl } from '@ggraphic/editor/components/TopBar/modules/FloatingPositionControl';
+import { FloatingPositionControl } from './FloatingPositionControl.js';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { messages } from '../../../i18n/messages.js';
 import { axe } from '../../../test-utils';
 
-import type { SelectionGeometry } from '@ggraphic/editor/utils/canvasCommands';
+import type { SelectionGeometry } from '../../../utils/canvasCommands.js';
 
 const GEOMETRY: SelectionGeometry = { x: 10.4, y: 20, width: 300, height: 100, resize: 'width' };
 

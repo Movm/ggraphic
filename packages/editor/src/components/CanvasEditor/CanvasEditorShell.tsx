@@ -27,35 +27,35 @@
  * - useToolbarHandlers     — bundled toolbar actions for the active page
  */
 
-import { DocumentBrandContext } from '@ggraphic/editor/brand/documentBrand';
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { messages, useMessages } from '@ggraphic/editor/i18n/messages';
-import { pagePersistedStateKeys } from '@ggraphic/editor/collab/pageElementStateKeys';
-import { serializeDeck } from '@ggraphic/editor/collab/pagesDoc';
-import { createPageSyncedCallbacks } from '@ggraphic/editor/collab/wrapCallbacksWithPageSync';
-import { CanvasTextEditorProvider } from '@ggraphic/editor/components/CanvasTextOverlay';
+import { DocumentBrandContext } from '../../brand/documentBrand.js';
+import { useCanvasEditorServices } from '../../CanvasEditorProvider.js';
+import { messages, useMessages } from '../../i18n/messages.js';
+import { pagePersistedStateKeys } from '../../collab/pageElementStateKeys.js';
+import { serializeDeck } from '../../collab/pagesDoc.js';
+import { createPageSyncedCallbacks } from '../../collab/wrapCallbacksWithPageSync.js';
+import { CanvasTextEditorProvider } from '../CanvasTextOverlay.js';
 import {
   DEFAULT_FORMAT_ID,
   getCanvasFormatOrDefault,
   isPrintFormat,
   isSlideFormat,
-} from '@ggraphic/editor/formats/index';
+} from '../../formats/index.js';
 import {
   usePageManager,
   useMultiPageExport,
   usePageThumbnails,
   type InitialPageDef,
-} from '@ggraphic/editor/hooks/index';
-import { AnnouncerContext, useLiveAnnouncer } from '@ggraphic/editor/hooks/useAnnounce';
-import { useDeckAutoSave } from '@ggraphic/editor/hooks/useDeckAutoSave';
-import { browserFileDelivery } from '@ggraphic/editor/hostServices';
-import { UserUploadsProvider } from '@ggraphic/editor/sidebar/UserUploadsProvider';
-import { useCanvasStoreSelector } from '@ggraphic/editor/stores/CanvasStoreProvider';
-import { AutoSaveStoreProvider } from '@ggraphic/editor/stores/useAutoSaveStore';
-import { Skeleton } from '@ggraphic/editor/ui/skeleton';
-import { cn } from '@ggraphic/editor/utils/cn';
-import { ensureFontsReady } from '@ggraphic/editor/utils/ensureFontsReady';
-import { sameLayerEntries } from '@ggraphic/editor/utils/layerLabels';
+} from '../../hooks/index.js';
+import { AnnouncerContext, useLiveAnnouncer } from '../../hooks/useAnnounce.js';
+import { useDeckAutoSave } from '../../hooks/useDeckAutoSave.js';
+import { browserFileDelivery } from '../../hostServices.js';
+import { UserUploadsProvider } from '../../sidebar/UserUploadsProvider.js';
+import { useCanvasStoreSelector } from '../../stores/CanvasStoreProvider.js';
+import { AutoSaveStoreProvider } from '../../stores/useAutoSaveStore.js';
+import { Skeleton } from '../../ui/skeleton.js';
+import { cn } from '../../utils/cn.js';
+import { ensureFontsReady } from '../../utils/ensureFontsReady.js';
+import { sameLayerEntries } from '../../utils/layerLabels.js';
 import Konva from 'konva';
 import React, {
   useCallback,
@@ -69,7 +69,7 @@ import React, {
 } from 'react';
 
 import { shareImageText } from '../../configs/shareSection.js';
-import { exportPptxDeck } from '@ggraphic/editor/export/pptx/exportPptxDeck';
+import { exportPptxDeck } from '../../export/pptx/exportPptxDeck.js';
 import {
   exportPrintPdf,
   lowResolutionWarnings,
@@ -77,76 +77,70 @@ import {
   printPdfFilename,
   type PrintExportPage,
 } from '../../export/printExport.js';
-import { exportSlidesPdf } from '@ggraphic/editor/export/slidesPdf';
-import { useIsCanvasMobile } from '@ggraphic/editor/hooks/useIsCanvasMobile';
-import { useZoomGestures } from '@ggraphic/editor/hooks/useZoomGestures';
-import { CanvasEditorLayout } from '@ggraphic/editor/layouts/index';
-import { SidebarPanel } from '@ggraphic/editor/sidebar/SidebarPanel';
-import { SidebarTabBar } from '@ggraphic/editor/sidebar/SidebarTabBar';
-import { hasEffects } from '@ggraphic/editor/sidebar/sections/effects/effectsFor';
-import { EffectsSection } from '@ggraphic/editor/sidebar/sections/EffectsSection';
-import { LayersSection } from '@ggraphic/editor/sidebar/sections/LayersSection';
-import { collectAltTextPages as collectCapturedAltTextPages } from '@ggraphic/editor/utils/collectAltTextPages';
-import { creditLines } from '@ggraphic/editor/utils/photoCredits';
-import { scrollBehavior } from '@ggraphic/editor/utils/scrollBehavior';
-import { CanvasAnnouncer } from '@ggraphic/editor/components/CanvasAnnouncer';
-import { CanvasActionSheet } from '@ggraphic/editor/components/CanvasContextMenu/CanvasActionSheet';
-import { CanvasContextMenu } from '@ggraphic/editor/components/CanvasContextMenu/CanvasContextMenu';
-import {
-  CanvasPageSkeleton,
-  CanvasTabRailSkeleton,
-} from '@ggraphic/editor/components/CanvasEditorSkeleton';
-import { CanvasMetaBar, CanvasZoomIndicator } from '@ggraphic/editor/components/CanvasMetaBar';
-import { SelectionPill } from '@ggraphic/editor/components/SelectionPill';
+import { exportSlidesPdf } from '../../export/slidesPdf.js';
+import { useIsCanvasMobile } from '../../hooks/useIsCanvasMobile.js';
+import { useZoomGestures } from '../../hooks/useZoomGestures.js';
+import { CanvasEditorLayout } from '../../layouts/index.js';
+import { SidebarPanel } from '../../sidebar/SidebarPanel.js';
+import { SidebarTabBar } from '../../sidebar/SidebarTabBar.js';
+import { hasEffects } from '../../sidebar/sections/effects/effectsFor.js';
+import { EffectsSection } from '../../sidebar/sections/EffectsSection.js';
+import { LayersSection } from '../../sidebar/sections/LayersSection.js';
+import { collectAltTextPages as collectCapturedAltTextPages } from '../../utils/collectAltTextPages.js';
+import { creditLines } from '../../utils/photoCredits.js';
+import { scrollBehavior } from '../../utils/scrollBehavior.js';
+import { CanvasAnnouncer } from '../CanvasAnnouncer.js';
+import { CanvasActionSheet } from '../CanvasContextMenu/CanvasActionSheet.js';
+import { CanvasContextMenu } from '../CanvasContextMenu/CanvasContextMenu.js';
+import { CanvasPageSkeleton, CanvasTabRailSkeleton } from '../CanvasEditorSkeleton.js';
+import { CanvasMetaBar, CanvasZoomIndicator } from '../CanvasMetaBar.js';
+import { SelectionPill } from '../SelectionPill.js';
 import { PageThumbnailStrip, type PagePickerSlot } from '../PageThumbnailStrip.js';
-import { SlideNotesPanel } from '@ggraphic/editor/components/SlideNotesPanel';
+import { SlideNotesPanel } from '../SlideNotesPanel.js';
 import { AddPageButton } from '../AddPageButton.js';
 import { Toolbar } from '../Toolbar.js';
-import { hasObjectActions } from '@ggraphic/editor/components/TopBar/ContextControls';
-import { ContextToolbar } from '@ggraphic/editor/components/TopBar/ContextToolbar';
-import { MobileSelectionBar } from '@ggraphic/editor/components/TopBar/MobileSelectionBar';
-import { MobileSelectionControls } from '@ggraphic/editor/components/TopBar/MobileSelectionControls';
-import { FloatingAiSuggestionBanner } from '@ggraphic/editor/components/TopBar/modules/FloatingAiSuggestionBanner';
-import { MultiSelectionToolbar } from '@ggraphic/editor/components/TopBar/MultiSelectionToolbar';
+import { hasObjectActions } from '../TopBar/ContextControls.js';
+import { ContextToolbar } from '../TopBar/ContextToolbar.js';
+import { MobileSelectionBar } from '../TopBar/MobileSelectionBar.js';
+import { MobileSelectionControls } from '../TopBar/MobileSelectionControls.js';
+import { FloatingAiSuggestionBanner } from '../TopBar/modules/FloatingAiSuggestionBanner.js';
+import { MultiSelectionToolbar } from '../TopBar/MultiSelectionToolbar.js';
 
-import { autoSwitchTab } from '@ggraphic/editor/components/CanvasEditor/autoSwitchTab';
+import { autoSwitchTab } from './autoSwitchTab.js';
 import {
   registeredEditorShell,
   withEditorTabs,
   type EditorShellProviderProps,
   type EditorTabDefinition,
   type EditorTabDropHandle,
-} from '@ggraphic/editor/components/CanvasEditor/editorShell';
-import { useCanvasContextMenu } from '@ggraphic/editor/components/CanvasEditor/hooks/useCanvasContextMenu';
-import { useLoadedConfigs } from '@ggraphic/editor/components/CanvasEditor/hooks/useLoadedConfigs';
-import { useMobileSheetFit } from '@ggraphic/editor/components/CanvasEditor/hooks/useMobileSheetFit';
-import { usePageRefs } from '@ggraphic/editor/components/CanvasEditor/hooks/usePageRefs';
-import { usePageUndoRedoShortcuts } from '@ggraphic/editor/components/CanvasEditor/hooks/usePageUndoRedoShortcuts';
+} from './editorShell.js';
+import { useCanvasContextMenu } from './hooks/useCanvasContextMenu.js';
+import { useLoadedConfigs } from './hooks/useLoadedConfigs.js';
+import { useMobileSheetFit } from './hooks/useMobileSheetFit.js';
+import { usePageRefs } from './hooks/usePageRefs.js';
+import { usePageUndoRedoShortcuts } from './hooks/usePageUndoRedoShortcuts.js';
 import {
   needsImpressum,
   usePrintImpressumGate,
   type ObservedPages,
-} from '@ggraphic/editor/components/CanvasEditor/hooks/usePrintImpressumGate';
-import { useScrollToAddedPage } from '@ggraphic/editor/components/CanvasEditor/hooks/useScrollToAddedPage';
-import { useToolbarHandlers } from '@ggraphic/editor/components/CanvasEditor/hooks/useToolbarHandlers';
-import { useWorkAreaDeselect } from '@ggraphic/editor/components/CanvasEditor/hooks/useWorkAreaDeselect';
-import { layersTab, withLayersTab } from '@ggraphic/editor/components/CanvasEditor/layersTab';
-import { getMobileSelectionArea } from '@ggraphic/editor/components/CanvasEditor/mobileSelectionArea';
-import { PageWrapper } from '@ggraphic/editor/components/CanvasEditor/PageWrapper';
+} from './hooks/usePrintImpressumGate.js';
+import { useScrollToAddedPage } from './hooks/useScrollToAddedPage.js';
+import { useToolbarHandlers } from './hooks/useToolbarHandlers.js';
+import { useWorkAreaDeselect } from './hooks/useWorkAreaDeselect.js';
+import { layersTab, withLayersTab } from './layersTab.js';
+import { getMobileSelectionArea } from './mobileSelectionArea.js';
+import { PageWrapper } from './PageWrapper.js';
 
-import type {
-  CanvasEditorProps,
-  PageWrapperProps,
-} from '@ggraphic/editor/components/CanvasEditor/types';
-import type { SidebarTabId } from '@ggraphic/editor/sidebar/types';
+import type { CanvasEditorProps, PageWrapperProps } from './types.js';
+import type { SidebarTabId } from '../../sidebar/types.js';
 import type {
   AltTextPage,
   AltTextScope,
   CanvasSpecEditBridge,
-} from '@ggraphic/editor/CanvasEditorProvider';
-import type { ToolbarStateReport } from '@ggraphic/editor/components/GenericCanvas';
-import type { ExportOptions } from '@ggraphic/editor/types/editorTypes';
-import type { LayerSelectionChange } from '@ggraphic/editor/utils/layerSelection';
+} from '../../CanvasEditorProvider.js';
+import type { ToolbarStateReport } from '../GenericCanvas.js';
+import type { ExportOptions } from '../../types/editorTypes.js';
+import type { LayerSelectionChange } from '../../utils/layerSelection.js';
 
 // Hoisted static JSX elements (Rule 6.3: avoids re-creation every render)
 const sidebarLoadingFallback = (
@@ -1851,10 +1845,7 @@ function CanvasEditorInner({
   );
 }
 
-export type {
-  CanvasEditorProps,
-  PageWrapperProps,
-} from '@ggraphic/editor/components/CanvasEditor/types';
+export type { CanvasEditorProps, PageWrapperProps } from './types.js';
 import { EDITOR_SCOPE } from '../../ui/editorScope.js';
 
 export default CanvasEditorShell;

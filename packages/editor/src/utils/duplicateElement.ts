@@ -45,14 +45,14 @@ import type { AssetInstance } from './canvasAssets.js';
 import type { HostElementData, HostElementKindName } from './canvasItem.js';
 import type { BaseCanvasState, IconState } from '../configs/factory/baseTypes.js';
 import type { AdditionalText } from '../configs/types.js';
-import type { CircleBadgeInstance } from '@ggraphic/editor/primitives/CircleBadge';
-import type { ChartInstance } from '@ggraphic/editor/utils/chartTypes';
-import type { FrameInstance } from '@ggraphic/editor/utils/frameUtils';
-import type { GradientFill } from '@ggraphic/editor/utils/gradientFill';
-import type { IllustrationInstance } from '@ggraphic/editor/utils/illustrations/types';
-import type { PillBadgeInstance } from '@ggraphic/editor/utils/pillBadgeUtils';
-import type { ShapeInstance } from '@ggraphic/editor/utils/shapes';
-import type { UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import type { CircleBadgeInstance } from '../primitives/CircleBadge.js';
+import type { ChartInstance } from './chartTypes.js';
+import type { FrameInstance } from './frameUtils.js';
+import type { GradientFill } from './gradientFill.js';
+import type { IllustrationInstance } from './illustrations/types.js';
+import type { PillBadgeInstance } from './pillBadgeUtils.js';
+import type { ShapeInstance } from './shapes.js';
+import type { UserImageInstance } from './userImageUtils.js';
 
 /** Standardversatz einer Kopie gegenüber dem Original, in Canvas-Pixeln. */
 export const DUPLICATE_OFFSET = 20;

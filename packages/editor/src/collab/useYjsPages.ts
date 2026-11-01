@@ -4,11 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuid } from 'uuid';
 import * as Y from 'yjs';
 
-import {
-  migrateYDocument,
-  readYDocRefusal,
-  stampYDocument,
-} from '@ggraphic/editor/collab/documentVersion';
+import { migrateYDocument, readYDocRefusal, stampYDocument } from './documentVersion.js';
 import {
   appendPage,
   duplicatePageById,
@@ -30,9 +26,9 @@ import {
   type PageDef,
   type PageView,
   type ReplaceDeckOps,
-} from '@ggraphic/editor/collab/pagesDoc';
-import { YDOC_KEYS } from '@ggraphic/editor/collab/ydocKeys';
-import { type HistoryStamps, nextHistoryStamp } from '@ggraphic/editor/utils/historyStamp';
+} from './pagesDoc.js';
+import { YDOC_KEYS } from './ydocKeys.js';
+import { type HistoryStamps, nextHistoryStamp } from '../utils/historyStamp.js';
 
 import { useCanvasEditorServices } from '../CanvasEditorProvider.js';
 

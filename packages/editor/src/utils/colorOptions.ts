@@ -6,7 +6,7 @@
  */
 import { type BindingRef, type BrandPack, type BrandSwatch } from '@ggraphic/core';
 
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { activeBrand } from '../brand/brandRegistry.js';
 
 /** One entry of a colour picker. */
 export interface ColorOption {

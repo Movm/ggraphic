@@ -2,9 +2,9 @@
 import { hostElementKind, type HostElementAction } from './elementKinds.js';
 
 import type { StockImageAttribution } from '../common/imageSourceTypes.js';
-import type { ChartType } from '@ggraphic/editor/utils/chartTypes';
-import type { FrameClipType } from '@ggraphic/editor/utils/frameUtils';
-import type { ShapeType } from '@ggraphic/editor/utils/shapes';
+import type { ChartType } from './chartTypes.js';
+import type { FrameClipType } from './frameUtils.js';
+import type { ShapeType } from './shapes.js';
 import type { StickerRef } from '@ggraphic/schema';
 import type Konva from 'konva';
 

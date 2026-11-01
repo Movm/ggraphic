@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import type { ElementItem, HostElementThumb } from './elementTypes.js';
-import type { HostElementKindName } from '@ggraphic/editor/utils/canvasItem';
-import type { AssetAudience } from '@ggraphic/editor/utils/canvasAssets';
+import type { HostElementKindName } from '../../../utils/canvasItem.js';
+import type { AssetAudience } from '../../../utils/canvasAssets.js';
 import type { ComponentType } from 'react';
 
 /** A host's block catalogue as the Elemente panel reads it. */

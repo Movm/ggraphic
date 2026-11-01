@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useIconCatalog } from '@ggraphic/editor/hooks/useIconCatalog';
-import { usePaginatedIcons } from '@ggraphic/editor/hooks/usePaginatedIcons';
-import { Skeleton } from '@ggraphic/editor/ui/skeleton';
-import { type IconDef } from '@ggraphic/editor/utils/canvasIcons';
-import { cn } from '@ggraphic/editor/utils/cn';
+import { useIconCatalog } from '../../hooks/useIconCatalog.js';
+import { usePaginatedIcons } from '../../hooks/usePaginatedIcons.js';
+import { Skeleton } from '../../ui/skeleton.js';
+import { type IconDef } from '../../utils/canvasIcons.js';
+import { cn } from '../../utils/cn.js';
 import { Icon } from '@iconify/react';
 import { useCallback, useMemo, useRef, useEffect } from 'react';
 import { PiCheck } from 'react-icons/pi';

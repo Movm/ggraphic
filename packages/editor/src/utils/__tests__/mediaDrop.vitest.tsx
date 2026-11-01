@@ -17,7 +17,7 @@ import {
   readElementDrag,
   readMediaDrag,
   type ElementDragPayload,
-} from '@ggraphic/editor/utils/mediaDrop';
+} from '../mediaDrop.js';
 
 function transfer(data: Record<string, string>): DataTransfer {
   return {
