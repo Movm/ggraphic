@@ -1,7 +1,7 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { pageStateFrom } from './pageState';
+import { pageStateFrom } from './pageState.js';
 
 describe('pageStateFrom brand keys', () => {
   it('reads bind, brandScheme and brandStamp back, so a re-seed keeps them', () => {

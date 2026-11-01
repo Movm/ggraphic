@@ -2,16 +2,16 @@
 import { roomBelow, type BrandPack } from '@ggraphic/core';
 import { TEMPLATE_GATE_ADAPTER } from '@ggraphic/editor/templates/templateGeometry';
 import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
+import { createPageActions } from '@ggraphic/editor/page/actions';
+import { type PageState } from '@ggraphic/editor/page/pageState';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { studioBrand } from '../../brand';
 import { formatSize } from '../document';
 import { rebindStudioDocument } from '../rebind';
 
-import { createStudioActions } from './actions';
-import { buildCatalog, catalogTemplate, type CatalogEntry } from './catalog';
+import { buildCatalog, catalogTemplate, type CatalogEntry, templateFileOf } from './catalog';
 import { templatePageState } from './instantiate';
-import { type StudioPageState } from './pageState';
 
 afterEach(() => registerBrandPacks([studioBrand]));
 
@@ -114,9 +114,9 @@ describe('committing a text edit', () => {
       shapeInstances: [],
       userImageInstances: [],
       layerOrder: [],
-    } as unknown as StudioPageState;
+    } as unknown as PageState;
     let history = 0;
-    const actions = createStudioActions(
+    const actions = createPageActions(
       () => state,
       (change) => {
         state = typeof change === 'function' ? change(state) : { ...state, ...change };
@@ -128,7 +128,8 @@ describe('committing a text edit', () => {
         history++;
       },
       1080,
-      1350
+      1350,
+      templateFileOf
     );
     const size = () => (state.additionalTexts[0] as unknown as Text).fontSize;
     return { actions, size, history: () => history };

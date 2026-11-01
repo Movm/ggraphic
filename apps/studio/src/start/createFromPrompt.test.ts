@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { brandFingerprint, resolveScheme } from '@ggraphic/core';
 import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
+import { rememberLogoSize } from '@ggraphic/editor/page/logoSize';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api, ApiError } from '../api/client';
 import { studioBrand } from '../brand';
-import { rememberLogoSize } from '../logoSize';
 
 import {
   AiPromptError,

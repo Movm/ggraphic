@@ -6,6 +6,7 @@
  */
 import { contrastRatio, deriveBrandColors, offeredSchemes } from '@ggraphic/core';
 import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
+import { pageStateFrom } from '@ggraphic/editor/page/pageState';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { studioBrand } from '../../brand';
@@ -13,7 +14,6 @@ import { formatSize } from '../document';
 
 import { studioCatalog, templatesFor } from './catalog';
 import { templatePageState } from './instantiate';
-import { pageStateFrom } from './pageState';
 import { seedFor, seedPageState } from './seeds';
 
 import golden from './__golden__/code-seeds.json';

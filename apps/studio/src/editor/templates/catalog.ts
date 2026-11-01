@@ -146,6 +146,11 @@ export function catalogTemplate(id: string): CatalogEntry | null {
   return studioCatalog().entries.find((e) => e.id === id && e.kind === 'template') ?? null;
 }
 
+/** The template file of `id` (`TemplateLookup`), for fitting texts to the line limits of its slots. */
+export function templateFileOf(id: string): TemplateFile | null {
+  return catalogTemplate(id)?.template ?? null;
+}
+
 const ASPECT_OF_FORMAT: Readonly<Record<string, TemplateFormat>> = {
   'profile-square': '1:1',
   'post-portrait': '4:5',

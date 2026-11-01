@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { type BrandPack } from '@ggraphic/core';
 import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
+import { createPageActions } from '@ggraphic/editor/page/actions';
+import { withHuggedPlates } from '@ggraphic/editor/page/hug';
+import { type PageState } from '@ggraphic/editor/page/pageState';
 import { TEMPLATE_GATE_ADAPTER } from '@ggraphic/editor/templates/templateGeometry';
 import { setWholeTextMark } from '@ggraphic/schema';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -9,11 +12,8 @@ import { studioBrand } from '../../brand';
 import { draftDeckOps } from '../aiDraft';
 import { rebindStudioDocument } from '../rebind';
 
-import { createStudioActions } from './actions';
-import { catalogTemplate } from './catalog';
-import { withHuggedPlates } from './hug';
+import { catalogTemplate, templateFileOf } from './catalog';
 import { templatePageState } from './instantiate';
-import { type StudioPageState } from './pageState';
 
 afterEach(() => registerBrandPacks([studioBrand]));
 
@@ -92,8 +92,8 @@ describe('placing a template with hugging plates', () => {
 
 describe('committing a text edit moves the plate', () => {
   function setup() {
-    let state = templatePageState(kicker(), 'post-portrait')! as unknown as StudioPageState;
-    const actions = createStudioActions(
+    let state = templatePageState(kicker(), 'post-portrait')! as unknown as PageState;
+    const actions = createPageActions(
       () => state,
       (change) => {
         state = typeof change === 'function' ? change(state) : { ...state, ...change };
@@ -101,7 +101,8 @@ describe('committing a text edit moves the plate', () => {
       () => undefined,
       () => undefined,
       1080,
-      1350
+      1350,
+      templateFileOf
     );
     return { actions, plate: () => box(state as never, 'shapeInstances', 'plate-1') };
   }
@@ -129,9 +130,9 @@ describe('committing a text edit moves the plate', () => {
 
 describe('previewing a text edit while it is typed', () => {
   function setup() {
-    let state = templatePageState(kicker(), 'post-portrait')! as unknown as StudioPageState;
+    let state = templatePageState(kicker(), 'post-portrait')! as unknown as PageState;
     let history = 0;
-    const actions = createStudioActions(
+    const actions = createPageActions(
       () => state,
       (change) => {
         state = typeof change === 'function' ? change(state) : { ...state, ...change };
@@ -143,7 +144,8 @@ describe('previewing a text edit while it is typed', () => {
         history++;
       },
       1080,
-      1350
+      1350,
+      templateFileOf
     );
     return {
       actions,

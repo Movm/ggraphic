@@ -1,8 +1,8 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: MPL-2.0
 import { type BrandFontRole } from '@ggraphic/core';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 
-/** Font stacks of the neutral brand; the families are bundled (OFL) by `src/fonts.ts`. */
+/** Font stacks of the active brand's headline, body and quote families. */
 export const headlineFont = () => `${activeBrand().fonts.headline}, Arial, sans-serif`;
 export const bodyFont = () => `${activeBrand().fonts.body}, Arial, sans-serif`;
 export const quoteFont = () => `${activeBrand().fonts.quoteEmphasis}, Georgia, serif`;

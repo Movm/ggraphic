@@ -1,6 +1,6 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: MPL-2.0
 /**
- * What the Studio's pages can do with their elements: texts, shapes, icons, emoji,
+ * What a free page can do with its elements: texts, shapes, icons, emoji,
  * illustrations, placed images and the background colour. The editor calls these by name
  * (`OptionalCanvasActions`): the canvas for moves and edits, the sidebar
  * sections for adding, the delete key for removing (`utils/elementKinds.ts`).
@@ -33,15 +33,14 @@ import {
   type UserImagePlacement,
 } from '@ggraphic/editor/utils/userImageUtils';
 
-import { fittedFontSize } from './fitting';
-import { withHuggedPlates } from './hug';
-import { type PageGroup, type StudioPageState } from './pageState';
-import { headlineFont, bodyFont, fontStackFor, scaleFor } from './typography';
+import { fittedFontSize } from './fitting.js';
+import { withHuggedPlates } from './hug.js';
+import { type PageGroup, type PageState } from './pageState.js';
+import { noTemplates, type TemplateLookup } from './slotBudgets.js';
+import { headlineFont, bodyFont, fontStackFor, scaleFor } from './typography.js';
 
-type SetState = (
-  partial: Partial<StudioPageState> | ((prev: StudioPageState) => StudioPageState)
-) => void;
-type SaveHistory = (state?: StudioPageState) => void;
+type SetState = (partial: Partial<PageState> | ((prev: PageState) => PageState)) => void;
+type SaveHistory = (state?: PageState) => void;
 
 let idCounter = 0;
 const newId = (prefix: string) =>
@@ -92,18 +91,23 @@ const TEXT_PRESETS = {
   },
 };
 
-export function createStudioActions(
-  getState: () => StudioPageState,
+/**
+ * The actions of a `width` × `height` page. `templateOf` is the host's catalogue: a text on a page
+ * made from one of its templates fits within the line limit of its slot.
+ */
+export function createPageActions(
+  getState: () => PageState,
   setState: SetState,
   saveToHistory: SaveHistory,
   debouncedSaveToHistory: SaveHistory,
   width: number,
-  height: number
+  height: number,
+  templateOf: TemplateLookup = noTemplates
 ) {
   const s = scaleFor(width, height);
 
   /** Applies `change` and records it, immediately or coalesced with its neighbours. */
-  const commit = (change: (prev: StudioPageState) => StudioPageState, debounced = false) => {
+  const commit = (change: (prev: PageState) => PageState, debounced = false) => {
     setState(change);
     (debounced ? debouncedSaveToHistory : saveToHistory)(change(getState()));
   };
@@ -142,9 +146,9 @@ export function createStudioActions(
    */
   const refitted = (
     text: AdditionalText & Record<string, unknown>,
-    page: StudioPageState
+    page: PageState
   ): AdditionalText => {
-    const fitted = fittedFontSize(text, page, height);
+    const fitted = fittedFontSize(text, page, height, templateOf);
     return fitted === null || fitted === text.fontSize ? text : { ...text, fontSize: fitted };
   };
 
@@ -209,7 +213,7 @@ export function createStudioActions(
       const prev = getState();
       const current = prev.additionalTexts.find((t) => t.id === id);
       if (!current) return null;
-      const fitted = fittedFontSize({ ...current, text: draft }, prev, height);
+      const fitted = fittedFontSize({ ...current, text: draft }, prev, height, templateOf);
       const fontSize = fitted ?? current.fontSize;
       // The text itself stays as it was: the editor shows the draft, the commit writes it.
       const additionalTexts = prev.additionalTexts.map((t) =>
@@ -447,4 +451,4 @@ export function createStudioActions(
   };
 }
 
-export type StudioActions = ReturnType<typeof createStudioActions>;
+export type PageActions = ReturnType<typeof createPageActions>;

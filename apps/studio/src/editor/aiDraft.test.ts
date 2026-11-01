@@ -2,6 +2,7 @@
 import { minTextSizePx } from '@ggraphic/core';
 import { PLAIN_STYLE, wrapLines } from '@ggraphic/schema';
 import type { AdditionalText } from '@ggraphic/editor/configs/types';
+import { headlineFont } from '@ggraphic/editor/page/typography';
 import { runMeasurer } from '@ggraphic/editor/utils/textUtils';
 import { describe, expect, it } from 'vitest';
 
@@ -13,7 +14,6 @@ import {
   QUOTE_TEMPLATE_ID,
 } from './templates/ids';
 import { seedFor } from './templates/seeds';
-import { headlineFont } from './templates/typography';
 
 const SIZE = { width: 1080, height: 1350 };
 const draft = {

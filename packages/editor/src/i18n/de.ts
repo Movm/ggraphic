@@ -893,6 +893,17 @@ export const de = {
     },
   },
 
+  /** The tabs of a free page (`createPageConfig`). */
+  pageTabs: {
+    text: 'Text',
+    textAriaLabel: 'Text: Text hinzufügen und bearbeiten',
+    elements: 'Elemente',
+    elementsAriaLabel: 'Elemente: Formen, Icons, Illustrationen und Emoji',
+    uploads: 'Uploads',
+    uploadsAriaLabel: 'Uploads: deine eigenen Bilder',
+    tools: 'Werkzeuge',
+    toolsAriaLabel: 'Werkzeuge: QR-Code, Blob, Verlaufstext und Text auf einem Pfad',
+  },
   topBar: {
     cropAction: 'Zuschneiden',
     aiTemplate: 'Vorlage',

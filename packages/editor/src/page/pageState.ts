@@ -1,4 +1,8 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: MPL-2.0
+/**
+ * The state of a free page: what a template seeds, what the editor stores and reads back. Every
+ * page of a host that offers templates as data (`createPageConfig`) has this shape.
+ */
 import { type Bindings } from '@ggraphic/core';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { type BaseCanvasState } from '@ggraphic/editor/configs/factory/baseTypes';
@@ -30,12 +34,12 @@ const isGroup = (v: unknown): v is PageGroup => {
 };
 
 /**
- * A Studio page: the editor's element collections plus a colour ground. Only
+ * A free page: the editor's element collections plus a colour ground. Only
  * keys the editor writes back into the pages document persist
  * (`PAGE_PERSISTED_STATE_KEYS`): the collections, `backgroundColor` and the
  * brand binding keys, `templateRef` and `groups`.
  */
-export interface StudioPageState extends BaseCanvasState {
+export interface PageState extends BaseCanvasState {
   backgroundColor: string;
   layerOrder: string[];
   bind?: Bindings;
@@ -48,7 +52,7 @@ export interface StudioPageState extends BaseCanvasState {
 /** What a template puts on a fresh page. */
 export type PageSeed = Partial<
   Pick<
-    StudioPageState,
+    PageState,
     | 'backgroundColor'
     | 'additionalTexts'
     | 'shapeInstances'
@@ -60,11 +64,11 @@ export type PageSeed = Partial<
 >;
 
 /** The brand binding and template keys a page keeps across a re-seed (read back, never invented). */
-function brandKeysFrom(props: Record<string, unknown>): Partial<StudioPageState> {
-  const out: Partial<StudioPageState> = {};
+function brandKeysFrom(props: Record<string, unknown>): Partial<PageState> {
+  const out: Partial<PageState> = {};
   const bind = props['bind'];
   if (typeof bind === 'object' && bind !== null && !Array.isArray(bind)) {
-    out.bind = bind as NonNullable<StudioPageState['bind']>;
+    out.bind = bind as NonNullable<PageState['bind']>;
   }
   if (typeof props['brandScheme'] === 'string') out.brandScheme = props['brandScheme'];
   if (typeof props['brandStamp'] === 'string') out.brandStamp = props['brandStamp'];
@@ -80,7 +84,7 @@ function brandKeysFrom(props: Record<string, unknown>): Partial<StudioPageState>
  * saved has no collections yet and gets the template's seed; a saved one keeps
  * exactly what it holds, also when the user emptied it.
  */
-export function pageStateFrom(props: Record<string, unknown>, seed: PageSeed): StudioPageState {
+export function pageStateFrom(props: Record<string, unknown>, seed: PageSeed): PageState {
   const stored = Array.isArray(props['additionalTexts']) || Array.isArray(props['shapeInstances']);
   const seeded = stored ? props : { ...props, ...seed, layerOrder: seedLayerOrder(seed) };
   const background = seeded['backgroundColor'];
