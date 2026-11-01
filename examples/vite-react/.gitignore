@@ -1,0 +1,4 @@
+# Built from this checkout by scripts/pack.mjs; their integrity changes with every build, so no lockfile either.
+tarballs/
+package-lock.json
+playwright-report/

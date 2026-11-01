@@ -1,0 +1,36 @@
+{
+  "name": "ggraphic-example-vite-react",
+  "private": true,
+  "type": "module",
+  "license": "CC0-1.0",
+  "scripts": {
+    "pack:local": "node scripts/pack.mjs",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "test:smoke": "playwright test"
+  },
+  "dependencies": {
+    "@ggraphic/brand-default": "file:tarballs/ggraphic-brand-default.tgz",
+    "@ggraphic/core": "file:tarballs/ggraphic-core.tgz",
+    "@ggraphic/editor": "file:tarballs/ggraphic-editor.tgz",
+    "@ggraphic/schema": "file:tarballs/ggraphic-schema.tgz",
+    "@tanstack/react-query": "^5.104.1",
+    "konva": "^10.9.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-konva": "^19.3.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.5"
+  },
+  "overrides": {
+    "@ggraphic/core": "$@ggraphic/core",
+    "@ggraphic/schema": "$@ggraphic/schema"
+  }
+}
