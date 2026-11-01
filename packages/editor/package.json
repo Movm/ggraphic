@@ -492,6 +492,7 @@
     "LICENSE",
     "NOTICE",
     "README.md",
+    "skills",
     "THIRD_PARTY_NOTICES"
   ],
   "publishConfig": {

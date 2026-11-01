@@ -3,10 +3,11 @@
 ggraphic is a brand-neutral, template-based, AI-centred open-source design editor, built on [react-konva](https://konvajs.org/docs/react/). Think of a Canva-like editor you can embed in your own app or host yourself: documents are described by a typed schema, rendered and edited by a core and an editor UI, and can be created or modified by AI.
 
 > [!WARNING]
-> **Alpha, untested.** ggraphic is early work in progress. Nothing here has been used in production or by anyone outside the project yet.
+> **Alpha.** ggraphic is early work in progress. So far it runs in ggraphic Studio and in the Grünerator, the app it was extracted from.
 >
-> - **No stability promise:** APIs, the document format and database migrations can change without notice, and there is no upgrade path between versions yet.
-> - **Limited testing:** the test suites run locally, but there is no CI, no release and no security review. The npm packages are not published yet.
+> - **No stability promise:** APIs, the document format and database migrations can change between alphas. Pin exact versions.
+> - **Testing:** CI runs typecheck, lint and the test suites on every pull request, and a browser render gate when a pull request touches the render path. There has been no security review.
+> - **Releases:** alpha versions are published to npm under the dist-tag `alpha` (`npm install @ggraphic/editor@alpha`), with provenance. `latest` still points at the empty `0.0.0` placeholder.
 >
 > Try it, read it, open issues, but do not rely on it for anything you cannot afford to lose.
 
@@ -17,6 +18,8 @@ ggraphic is a brand-neutral, template-based, AI-centred open-source design edito
 | Document schema                     | `@ggraphic/schema`         | `packages/schema`         | MPL-2.0  | alpha       |
 | Core (state, operations, rendering) | `@ggraphic/core`           | `packages/core`           | MPL-2.0  | alpha       |
 | Editor UI                           | `@ggraphic/editor`         | `packages/editor`         | MPL-2.0  | alpha       |
+| Real-time collaboration (Yjs)       | `@ggraphic/collab`         | `packages/collab`         | MPL-2.0  | alpha       |
+| UI kit (Studio components, tokens)  | `@ggraphic/ui`             | `packages/ui`             | MPL-2.0  | alpha       |
 | AI helpers                          | `@ggraphic/ai`             | `packages/ai`             | MPL-2.0  | alpha       |
 | Default brand                       | `@ggraphic/brand-default`  | `packages/brand-default`  | MPL-2.0  | not started |
 | Open template pack                  | `@ggraphic/templates-open` | `packages/templates-open` | CC0-1.0  | alpha       |
@@ -34,6 +37,10 @@ ggraphic is a brand-neutral, template-based, AI-centred open-source design edito
 ## Provenance
 
 Originally developed as part of netzbegruenung/Gruenerator (AGPL-3.0); relicensed by the copyright holder under MPL-2.0.
+
+## Embedding the editor
+
+To put the editor into your own React app, follow [`packages/editor/skills/ggraphic-embed/SKILL.md`](./packages/editor/skills/ggraphic-embed/SKILL.md). It ships inside `@ggraphic/editor`, so coding agents find it in `node_modules` too.
 
 ## Self-hosting
 
