@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MPL-2.0
 import { stripInlineMarks } from '@ggraphic/schema';
-import { PiShareFat } from 'react-icons/pi';
 
-import { GenericShareSection, type GenericShareSectionProps } from '../sidebar/sections/index.js';
+import { coreSidebar } from '../sidebar/coreSidebar.js';
+import { type GenericShareSectionProps } from '../sidebar/sections/index.js';
 import { withPhotoCredit } from '../utils/photoCredit.js';
 import { creditLines } from '../utils/photoCredits.js';
 
-import { messages } from '../i18n/messages.js';
+import { messages } from '../i18n/catalogue.js';
 
 import { makeSectionDefiner } from './factory/defineSection.js';
 
@@ -14,7 +14,10 @@ import type { SectionConfig } from './types.js';
 
 export const shareTab = {
   id: 'share' as const,
-  icon: PiShareFat,
+  // By id (`coreSidebar`), so the `config` entry loads without React.
+  get icon() {
+    return coreSidebar().icons.share;
+  },
   get label() {
     return messages().shell.share;
   },
@@ -42,7 +45,9 @@ export function createShareSection<TState, TActions = unknown>(
 ): SectionConfig<TState, TActions, GenericShareSectionProps> {
   const section = makeSectionDefiner<TState, TActions>();
   const config = section({
-    component: GenericShareSection,
+    get component() {
+      return coreSidebar().sections.share;
+    },
     propsFactory: (state, _actions, context) => {
       // Zum Teilen und Kopieren nur der Text — die Auszeichnungsmarker
       // (`**`, `_`) gehören auf die Leinwand, nicht in einen Beitrag. Der

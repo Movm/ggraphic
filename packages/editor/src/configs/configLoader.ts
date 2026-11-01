@@ -12,7 +12,7 @@
  * Now, configs are loaded dynamically based on the canvas type being used.
  */
 
-import { styledFontSpecs } from '../hooks/useFontLoader.js';
+import { styledFontSpecs } from '../utils/fontSpecs.js';
 import { getTemplate, type TemplateId } from '../templates/registry.js';
 
 import { canvasFontFamilies } from '../utils/canvasFontFamilies.js';

@@ -19,7 +19,7 @@ import {
 import Konva from 'konva';
 
 import { activeBrand } from '../brand/brandRegistry.js';
-import { messages } from '../i18n/messages.js';
+import { messages } from '../i18n/catalogue.js';
 
 import type { ImageAdjustments } from './userImageUtils.js';
 
@@ -329,8 +329,4 @@ export function withoutDuotone(img: Bound | undefined): {
   };
 }
 
-/** The template background photo's look, stored on the page state; null when untouched. */
-export function backgroundAdjustments(state: Record<string, unknown>): ImageAdjustments | null {
-  const value = state.backgroundImageAdjustments;
-  return value && typeof value === 'object' ? (value as ImageAdjustments) : null;
-}
+export { backgroundAdjustments } from './userImageUtils.js';

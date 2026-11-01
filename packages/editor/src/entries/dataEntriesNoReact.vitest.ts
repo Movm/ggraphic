@@ -2,17 +2,16 @@
 import { describe, expect, it, vi } from 'vitest';
 
 /**
- * The data entries should load without React and Konva: a module of the entry that imports React,
- * React DOM, Konva or react-konva, directly or through another module, fails the import here.
+ * The data entries load without React and Konva: a module of the entry that imports React,
+ * React DOM, Konva, react-konva or a package that renders with React (icons, React Query, the
+ * React bindings of zustand, …), directly or through another module, fails the import here.
  *
- * None does yet. The modules that pull them in:
- * - `i18n/messages` (`useMessages`): page, elements, templates, config;
- * - `utils/textUtils` → `hooks/useFontGeneration`: all five;
- * - `sidebar/sections/index`, through `page/config` and `configs/shareSection`: page, config;
- * - `utils/imageFilters` (Konva filters): elements;
- * - `configs/configLoader` → `hooks/useFontLoader`: config.
+ * Mocking the packages that depend on React matters: they are not inlined, so they would load the
+ * real React past the mocks below. Each id is the exact specifier the source imports.
  *
- * `it.fails` records the gap: once an entry is free of them, its case fails here and moves to `it`.
+ * Where a data module needs a React part (a sidebar section, a tab icon, a hook), it names it in a
+ * React-free module and the UI provides it: `i18n/catalogue`, `utils/fontGeneration`,
+ * `utils/fontSpecs`, `utils/framePresets`, `sidebar/coreSidebar`, `canvasIcons.onIconSetLoaded`.
  */
 const { forbidden } = vi.hoisted(() => ({
   forbidden: (name: string) => () => {
@@ -24,9 +23,25 @@ vi.mock('react-dom', forbidden('react-dom'));
 vi.mock('react/jsx-runtime', forbidden('react/jsx-runtime'));
 vi.mock('konva', forbidden('konva'));
 vi.mock('react-konva', forbidden('react-konva'));
+vi.mock('react-dom/client', forbidden('react-dom/client'));
+vi.mock('react-icons', forbidden('react-icons'));
+vi.mock('react-icons/pi', forbidden('react-icons/pi'));
+vi.mock('react-icons/hi', forbidden('react-icons/hi'));
+vi.mock('react-icons/hi2', forbidden('react-icons/hi2'));
+vi.mock('react-icons/io5', forbidden('react-icons/io5'));
+vi.mock('react-icons/md', forbidden('react-icons/md'));
+vi.mock('react-icons/fi', forbidden('react-icons/fi'));
+vi.mock('@iconify/react', forbidden('@iconify/react'));
+vi.mock('@tanstack/react-query', forbidden('@tanstack/react-query'));
+vi.mock('zustand', forbidden('zustand'));
+vi.mock('zustand/shallow', forbidden('zustand/shallow'));
+vi.mock('zustand/middleware', forbidden('zustand/middleware'));
+vi.mock('zustand/middleware/immer', forbidden('zustand/middleware/immer'));
+vi.mock('use-image', forbidden('use-image'));
+vi.mock('react-kawaii', forbidden('react-kawaii'));
 
 describe('data entries without React or Konva', () => {
-  it.fails.each([
+  it.each([
     ['page', () => import('./page.js')],
     ['elements', () => import('./elements.js')],
     ['templates', () => import('./templates.js')],

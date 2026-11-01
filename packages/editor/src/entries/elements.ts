@@ -60,7 +60,7 @@ export {
   type IllustrationInstance,
   type SvgDef,
 } from '../utils/illustrations/types.js';
-export { backgroundAdjustments } from '../utils/imageFilters.js';
+export { backgroundAdjustments } from '../utils/userImageUtils.js';
 export { createPillBadgeInstance, type PillBadgeInstance } from '../utils/pillBadgeUtils.js';
 export {
   COMPOSER_PLANE_IDS,

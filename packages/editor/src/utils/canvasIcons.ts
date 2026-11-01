@@ -9,7 +9,6 @@
  * the Konva canvas.
  */
 
-import { addCollection } from '@iconify/react';
 import { getIconData, iconToSVG } from '@iconify/utils';
 import { type IconifyJSON } from '@iconify-json/tabler';
 
@@ -68,11 +67,23 @@ function splitIconId(iconId: string): { prefix: string; name: string } {
 const toIconName = (iconId: string) => splitIconId(iconId).name;
 
 // ---------------------------------------------------------------------------
-// Per-set data loading (lazy dynamic import, registered with @iconify/react)
+// Per-set data loading (lazy dynamic import, handed to `onIconSetLoaded` listeners)
 // ---------------------------------------------------------------------------
 
 const setData = new Map<string, IconifyJSON>();
 const setPromises = new Map<string, Promise<IconifyJSON>>();
+const setListeners = new Set<(icons: IconifyJSON) => void>();
+
+/**
+ * Hears every icon set once it has loaded, and at once every set loaded before. The sidebar
+ * registers `addCollection` from `@iconify/react` here, so `<Icon icon="prefix:…">` renders
+ * offline; this module stays free of React for the data entries.
+ */
+export function onIconSetLoaded(listener: (icons: IconifyJSON) => void): void {
+  if (setListeners.has(listener)) return;
+  setListeners.add(listener);
+  for (const icons of setData.values()) listener(icons);
+}
 
 function loadIconSet(set: IconSet): Promise<IconifyJSON> {
   const existing = setData.get(set.prefix);
@@ -84,8 +95,7 @@ function loadIconSet(set: IconSet): Promise<IconifyJSON> {
     .load()
     .then(({ icons }) => {
       setData.set(set.prefix, icons);
-      // Register so <Icon icon="prefix:..."> in the sidebar renders offline.
-      addCollection(icons);
+      for (const listener of setListeners) listener(icons);
       return icons;
     })
     .catch((err) => {

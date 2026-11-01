@@ -30,6 +30,8 @@
 import { DocumentBrandContext } from '../../brand/documentBrand.js';
 import { useCanvasEditorServices } from '../../CanvasEditorProvider.js';
 import { messages, useMessages } from '../../i18n/messages.js';
+import { provideCoreSidebar } from '../../sidebar/coreSidebar.js';
+import { CORE_SIDEBAR_PARTS } from '../../sidebar/coreSidebarParts.js';
 import { pagePersistedStateKeys } from '../../collab/pageElementStateKeys.js';
 import { serializeDeck } from '../../collab/pagesDoc.js';
 import { createPageSyncedCallbacks } from '../../collab/wrapCallbacksWithPageSync.js';
@@ -143,6 +145,9 @@ import type {
 import type { ToolbarStateReport } from '../GenericCanvas.js';
 import type { ExportOptions } from '../../types/editorTypes.js';
 import type { LayerSelectionChange } from '../../utils/layerSelection.js';
+
+// The core sections and tab icons the page and share configs name by id (`coreSidebar`).
+provideCoreSidebar(CORE_SIDEBAR_PARTS);
 
 // Hoisted static JSX elements (Rule 6.3: avoids re-creation every render)
 const sidebarLoadingFallback = (

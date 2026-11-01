@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { messages } from '../i18n/messages.js';
+import { messages } from '../i18n/catalogue.js';
 /**
  * Applies a canvas-AI operation to the active template's actions.
  *

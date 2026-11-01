@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 import { emojiCodeAssetId, registeredAssetCatalog, type UniversalAsset } from '../canvasAssets.js';
 
-import { messageLocale, type MessageLocale } from '../../i18n/messages.js';
+import { messageLocale } from '../../i18n/catalogue.js';
+import { type MessageLocale } from '../../i18n/messages.js';
 
 /** One emoji of the full Noto set; `tones` are the five uniform skin-tone codes, light → dark. */
 export interface EmojiCatalogEntry extends UniversalAsset {

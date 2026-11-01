@@ -10,7 +10,7 @@
 import { type BrandPack } from '@ggraphic/core';
 
 import { activeBrand } from '../brand/brandRegistry.js';
-import { messages } from '../i18n/messages.js';
+import { messages } from '../i18n/catalogue.js';
 
 import type { CircleBadgeInstance, CircleBadgeTextLine } from '../primitives/CircleBadge.js';
 

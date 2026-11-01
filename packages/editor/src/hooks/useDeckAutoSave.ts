@@ -3,7 +3,7 @@ import { stampDocument } from '@ggraphic/schema';
 import { useEffect, useRef, useCallback } from 'react';
 
 import { serializeDeck, type SerializedPage } from '../collab/pagesDoc.js';
-import { messages } from '../i18n/messages.js';
+import { messages } from '../i18n/catalogue.js';
 import { useAutoSaveStore, useAutoSaveStoreApi } from '../stores/useAutoSaveStore.js';
 
 import { useCanvasEditorServices } from '../CanvasEditorProvider.js';

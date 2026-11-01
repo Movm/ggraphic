@@ -2,7 +2,7 @@
 import { type BrandPack } from '@ggraphic/core';
 
 import { registeredBrands } from '../brand/brandRegistry.js';
-import { messages } from '../i18n/messages.js';
+import { messages } from '../i18n/catalogue.js';
 import { brandColors } from './colorOptions.js';
 
 /**

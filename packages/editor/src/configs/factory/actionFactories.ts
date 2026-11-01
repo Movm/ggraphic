@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { messages } from '../../i18n/messages.js';
+import { messages } from '../../i18n/catalogue.js';
 /**
  * Common Action Creators for Canvas Factory
  *
@@ -15,7 +15,7 @@ import { createChartInstance, type ChartInstance, type ChartType } from '../../u
 import { createCircleBadgeInstance } from '../../utils/circleBadgeUtils.js';
 import { brandColors } from '../../utils/colorOptions.js';
 import { createInstanceId, duplicateElementInState } from '../../utils/duplicateElement.js';
-import { createFrameInstance } from '../../utils/frameUtils.js';
+import { createFrameInstance } from '../../utils/framePresets.js';
 import { iconInstanceIdsFor, placedIconId } from '../../utils/iconInstances.js';
 import { createIllustration } from '../../utils/illustrations/registry.js';
 import { createPillBadgeInstance } from '../../utils/pillBadgeUtils.js';

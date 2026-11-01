@@ -9,7 +9,7 @@
 
 import { type BrandPack, type PillBadgeFontStyle, type PillBadgeInstance } from '@ggraphic/core';
 import { activeBrand } from '../brand/brandRegistry.js';
-import { messages } from '../i18n/messages.js';
+import { messages } from '../i18n/catalogue.js';
 
 import { measureTextWidthWithFont } from './textUtils.js';
 
