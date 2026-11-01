@@ -1,5 +1,6 @@
 node_modules/
 dist/
+dist-gate/
 build/
 coverage/
 # next build (examples/next)

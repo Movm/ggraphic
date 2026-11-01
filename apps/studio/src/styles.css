@@ -135,7 +135,6 @@
   --font-size-md: 1rem;
 
   --canvas-panel-width: 0px;
-  --canvas-host-inset-left: 0px;
   --image-studio-tab-bar-width: 76px;
 }
 
@@ -350,43 +349,6 @@
   .heterogeneous-multipage__page-wrapper:hover:not(.heterogeneous-multipage__page-wrapper--active)
     .canvas-stage-container::after {
     border-color: rgba(0, 0, 0, 0.15);
-  }
-}
-
-.canvas-editor-layout:has(.heterogeneous-multipage__pages-container) {
-  height: auto;
-  min-height: 100dvh;
-}
-.canvas-editor-layout__main:has(.heterogeneous-multipage__pages-container) {
-  overflow: visible;
-}
-.canvas-editor-layout__canvas:has(.heterogeneous-multipage__pages-container) {
-  flex: none;
-  overflow: visible;
-}
-.canvas-editor-layout__canvas {
-  touch-action: pan-x pan-y;
-}
-.canvas-editor-layout__canvas .konvajs-content {
-  touch-action: none;
-}
-.heterogeneous-multipage__pages-container {
-  transform: scale(var(--canvas-zoom, 1));
-  transform-origin: top center;
-  transition: transform 0.12s ease-out;
-}
-.heterogeneous-multipage__pages-container[data-zooming] {
-  transition: none;
-}
-.heterogeneous-multipage__pages-container.has-bottom-bar {
-  padding-bottom: 4.5rem;
-}
-@media (max-width: 899px) {
-  .heterogeneous-multipage__pages-container.has-bottom-bar {
-    padding-bottom: 0;
-  }
-  .sidebar-section {
-    padding: 0;
   }
 }
 
@@ -1022,12 +984,6 @@ body {
   width: 100%;
   /* The browser's default blue otherwise: the only blue on the page. */
   accent-color: var(--ui-color-accent);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .heterogeneous-multipage__pages-container {
-    transition: none;
-  }
 }
 
 /* Start page: compact template row and the project search */

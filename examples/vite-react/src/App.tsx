@@ -20,8 +20,10 @@ const save = (doc: GgraphicDocument) => localStorage.setItem('design', JSON.stri
 export function App() {
   return (
     <>
-      <h1 className="page-title">My host app</h1>
-      {/* The editor fills the viewport: its sidebar and bars are fixed to the window. */}
+      <header className="host-bar">
+        <h1>My host app</h1>
+      </header>
+      {/* The editor fills this box, below the host's own bar. */}
       <main className="editor">
         <GgraphicEditor
           brand={defaultBrand}

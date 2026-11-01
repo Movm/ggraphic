@@ -14,11 +14,36 @@
     "**/hooks/useFontGeneration.ts"
   ],
   "exports": {
+    ".": "./src/entries/embed.ts",
     "./styles": "./src/styles/index.css",
     "./styles/editor": "./src/styles/editor.css",
     "./styles/tokens": "./src/styles/tokens.css",
     "./styles/tailwind": "./src/styles/tailwind.css",
     "./styles/compiled": "./dist/styles/compiled.css",
+    "./embed": "./src/entries/embed.ts",
+    "./page": "./src/entries/page.ts",
+    "./config": "./src/entries/config.ts",
+    "./shell": "./src/entries/shell.ts",
+    "./canvas": "./src/entries/canvas.ts",
+    "./kinds": "./src/entries/kinds.ts",
+    "./store": "./src/entries/store.ts",
+    "./services": "./src/entries/services.ts",
+    "./brand": "./src/entries/brand.ts",
+    "./templates": "./src/entries/templates.ts",
+    "./elements": "./src/entries/elements.ts",
+    "./text": "./src/entries/text.ts",
+    "./sidebar": "./src/entries/sidebar.ts",
+    "./collab": "./src/entries/collab.ts",
+    "./ai": "./src/entries/ai.ts",
+    "./export": "./src/entries/export.ts",
+    "./i18n": "./src/entries/i18n.ts",
+    "./illustrations/gophers": "./src/entries/illustrations/gophers.ts",
+    "./illustrations/humaaans": "./src/entries/illustrations/humaaans.ts",
+    "./illustrations/illlustrations": "./src/entries/illustrations/illlustrations.ts",
+    "./illustrations/kawaii": "./src/entries/illustrations/kawaii.ts",
+    "./illustrations/opendoodles": "./src/entries/illustrations/opendoodles.ts",
+    "./illustrations/openpeeps": "./src/entries/illustrations/openpeeps.ts",
+    "./illustrations/transhumans": "./src/entries/illustrations/transhumans.ts",
     "./ai/applyOperation": "./src/ai/applyOperation.ts",
     "./ai/describeCanvasElements": "./src/ai/describeCanvasElements.ts",
     "./ai/illustrationCapability": "./src/ai/illustrationCapability.ts",
@@ -136,7 +161,6 @@
     "./configs/types": "./src/configs/types.ts",
     "./configs/unifiedTabs": "./src/configs/unifiedTabs.ts",
     "./editorSeamTypes": "./src/editorSeamTypes.ts",
-    "./embed": "./src/embed/index.ts",
     "./export/pptx/buildPptxModel": "./src/export/pptx/buildPptxModel.ts",
     "./export/pptx/exportPptxDeck": "./src/export/pptx/exportPptxDeck.ts",
     "./export/pptx/pptxFonts": "./src/export/pptx/pptxFonts.ts",
@@ -516,15 +540,140 @@
   ],
   "publishConfig": {
     "exports": {
+      ".": {
+        "types": "./dist/entries/embed.d.ts",
+        "import": "./dist/entries/embed.js",
+        "default": "./dist/entries/embed.js"
+      },
       "./styles": "./dist/styles/index.css",
       "./styles/editor": "./dist/styles/editor.css",
       "./styles/tokens": "./dist/styles/tokens.css",
       "./styles/tailwind": "./dist/styles/tailwind.css",
       "./styles/compiled": "./dist/styles/compiled.css",
       "./embed": {
-        "types": "./dist/embed/index.d.ts",
-        "import": "./dist/embed/index.js",
-        "default": "./dist/embed/index.js"
+        "types": "./dist/entries/embed.d.ts",
+        "import": "./dist/entries/embed.js",
+        "default": "./dist/entries/embed.js"
+      },
+      "./page": {
+        "types": "./dist/entries/page.d.ts",
+        "import": "./dist/entries/page.js",
+        "default": "./dist/entries/page.js"
+      },
+      "./config": {
+        "types": "./dist/entries/config.d.ts",
+        "import": "./dist/entries/config.js",
+        "default": "./dist/entries/config.js"
+      },
+      "./shell": {
+        "types": "./dist/entries/shell.d.ts",
+        "import": "./dist/entries/shell.js",
+        "default": "./dist/entries/shell.js"
+      },
+      "./canvas": {
+        "types": "./dist/entries/canvas.d.ts",
+        "import": "./dist/entries/canvas.js",
+        "default": "./dist/entries/canvas.js"
+      },
+      "./kinds": {
+        "types": "./dist/entries/kinds.d.ts",
+        "import": "./dist/entries/kinds.js",
+        "default": "./dist/entries/kinds.js"
+      },
+      "./store": {
+        "types": "./dist/entries/store.d.ts",
+        "import": "./dist/entries/store.js",
+        "default": "./dist/entries/store.js"
+      },
+      "./services": {
+        "types": "./dist/entries/services.d.ts",
+        "import": "./dist/entries/services.js",
+        "default": "./dist/entries/services.js"
+      },
+      "./brand": {
+        "types": "./dist/entries/brand.d.ts",
+        "import": "./dist/entries/brand.js",
+        "default": "./dist/entries/brand.js"
+      },
+      "./templates": {
+        "types": "./dist/entries/templates.d.ts",
+        "import": "./dist/entries/templates.js",
+        "default": "./dist/entries/templates.js"
+      },
+      "./elements": {
+        "types": "./dist/entries/elements.d.ts",
+        "import": "./dist/entries/elements.js",
+        "default": "./dist/entries/elements.js"
+      },
+      "./text": {
+        "types": "./dist/entries/text.d.ts",
+        "import": "./dist/entries/text.js",
+        "default": "./dist/entries/text.js"
+      },
+      "./sidebar": {
+        "types": "./dist/entries/sidebar.d.ts",
+        "import": "./dist/entries/sidebar.js",
+        "default": "./dist/entries/sidebar.js"
+      },
+      "./collab": {
+        "types": "./dist/entries/collab.d.ts",
+        "import": "./dist/entries/collab.js",
+        "default": "./dist/entries/collab.js"
+      },
+      "./ai": {
+        "types": "./dist/entries/ai.d.ts",
+        "import": "./dist/entries/ai.js",
+        "default": "./dist/entries/ai.js"
+      },
+      "./export": {
+        "types": "./dist/entries/export.d.ts",
+        "import": "./dist/entries/export.js",
+        "default": "./dist/entries/export.js"
+      },
+      "./i18n": {
+        "types": "./dist/entries/i18n.d.ts",
+        "import": "./dist/entries/i18n.js",
+        "default": "./dist/entries/i18n.js"
+      },
+      "./illustrations/gophers": {
+        "types": "./dist/entries/illustrations/gophers.d.ts",
+        "import": "./dist/entries/illustrations/gophers.js",
+        "default": "./dist/entries/illustrations/gophers.js"
+      },
+      "./illustrations/humaaans": {
+        "types": "./dist/entries/illustrations/humaaans.d.ts",
+        "import": "./dist/entries/illustrations/humaaans.js",
+        "default": "./dist/entries/illustrations/humaaans.js"
+      },
+      "./illustrations/illlustrations": {
+        "types": "./dist/entries/illustrations/illlustrations.d.ts",
+        "import": "./dist/entries/illustrations/illlustrations.js",
+        "default": "./dist/entries/illustrations/illlustrations.js"
+      },
+      "./illustrations/kawaii": {
+        "types": "./dist/entries/illustrations/kawaii.d.ts",
+        "import": "./dist/entries/illustrations/kawaii.js",
+        "default": "./dist/entries/illustrations/kawaii.js"
+      },
+      "./illustrations/opendoodles": {
+        "types": "./dist/entries/illustrations/opendoodles.d.ts",
+        "import": "./dist/entries/illustrations/opendoodles.js",
+        "default": "./dist/entries/illustrations/opendoodles.js"
+      },
+      "./illustrations/openpeeps": {
+        "types": "./dist/entries/illustrations/openpeeps.d.ts",
+        "import": "./dist/entries/illustrations/openpeeps.js",
+        "default": "./dist/entries/illustrations/openpeeps.js"
+      },
+      "./illustrations/transhumans": {
+        "types": "./dist/entries/illustrations/transhumans.d.ts",
+        "import": "./dist/entries/illustrations/transhumans.js",
+        "default": "./dist/entries/illustrations/transhumans.js"
+      },
+      "./internal/*": {
+        "types": "./dist/*.d.ts",
+        "import": "./dist/*.js",
+        "default": "./dist/*.js"
       },
       "./*": {
         "types": "./dist/*.d.ts",
