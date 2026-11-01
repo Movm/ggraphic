@@ -27,6 +27,7 @@ import { installAxisLock } from '../utils/axisLock.js';
 import { cn } from '../utils/cn.js';
 import { MOUSE_DRAG_DISTANCE, TOUCH_DRAG_DISTANCE } from '../utils/touchInput.js';
 import { USER_PHOTO_NODE_NAME } from '../utils/userImageUtils.js';
+import { STAGE_VERTICAL_CHROME } from '../utils/viewport.js';
 
 import { withSelectionChromeHidden } from '../utils/captureStage.js';
 import { BACKGROUND_IMAGE_NODE_ID, printImageInfo } from '../utils/printImageInfo.js';
@@ -212,7 +213,7 @@ export const CanvasStage = forwardRef<CanvasStageRef, CanvasStageProps>(
         const maxW = actualContainerWidth
           ? Math.min(actualContainerWidth, maxContainerWidth)
           : Math.min(window.innerWidth - 48, maxContainerWidth);
-        const maxH = maxContainerHeight ?? window.innerHeight - 120;
+        const maxH = maxContainerHeight ?? window.innerHeight - STAGE_VERTICAL_CHROME;
 
         let containerW = maxW;
         let containerH = containerW / aspectRatio;

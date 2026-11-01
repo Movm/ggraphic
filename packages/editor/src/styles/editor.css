@@ -96,53 +96,50 @@
   padding-bottom: 4.5rem;
 }
 
-@media (max-width: 899px) {
-  .heterogeneous-multipage__pages-container.has-bottom-bar {
-    padding-bottom: 0;
-  }
+/* `:where([data-canvas-mobile])`: mobile is the editor's box (`useIsCanvasMobile`), and the
+   attribute leaves the specificity of the rules below as it was. */
+:where([data-canvas-mobile]) .heterogeneous-multipage__pages-container.has-bottom-bar {
+  padding-bottom: 0;
 }
 
 /* ── Mobile sidebar section padding (overrides global sidebar.css) — the
       sheet owns the 20px gutter ── */
-@media (max-width: 899px) {
-  .sidebar-section {
-    padding: 0;
-  }
+:where([data-canvas-mobile]) .sidebar-section {
+  padding: 0;
 }
 
 /* ── Mobile: the editor is one screen, not a scrolling page. Canvas, sheet and
       bar share the column; the canvas area scrolls on its own and shrinks when
       a sheet opens (see useMobileSheetFit). ── */
-@media (max-width: 899px) {
-  .canvas-editor-layout:has(.heterogeneous-multipage__pages-container) {
-    min-height: 0;
-  }
+.canvas-editor-layout:where([data-canvas-mobile]):has(.heterogeneous-multipage__pages-container) {
+  min-height: 0;
+}
 
+:where([data-canvas-mobile])
   .canvas-editor-layout__main:has(.heterogeneous-multipage__pages-container) {
-    overflow-y: auto;
-    overscroll-behavior: contain;
-  }
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
 
-  .canvas-editor-layout__main[data-sheet-open] {
-    overflow: hidden;
-  }
+:where([data-canvas-mobile]) .canvas-editor-layout__main[data-sheet-open] {
+  overflow: hidden;
+}
 
-  /* Scaled from the top-left corner: zoomed in, the pages overflow only to the
-     right, where the canvas column scrolls (a centred scale pushed the left
-     edge out of reach). The translateX re-centres them while they are
-     narrower than the column; useZoomGestures mirrors this offset. */
-  .heterogeneous-multipage__pages-container {
-    --canvas-total-scale: calc(var(--canvas-zoom, 1) * var(--canvas-sheet-scale, 1));
-    transform: translateY(var(--canvas-sheet-shift, 0px))
-      translateX(max(0px, calc((1 - var(--canvas-total-scale)) * 50%)))
-      scale(var(--canvas-total-scale));
-    transform-origin: top left;
-    transition: transform 0.22s ease;
-  }
+/* Scaled from the top-left corner: zoomed in, the pages overflow only to the
+   right, where the canvas column scrolls (a centred scale pushed the left
+   edge out of reach). The translateX re-centres them while they are
+   narrower than the column; useZoomGestures mirrors this offset. */
+:where([data-canvas-mobile]) .heterogeneous-multipage__pages-container {
+  --canvas-total-scale: calc(var(--canvas-zoom, 1) * var(--canvas-sheet-scale, 1));
+  transform: translateY(var(--canvas-sheet-shift, 0px))
+    translateX(max(0px, calc((1 - var(--canvas-total-scale)) * 50%)))
+    scale(var(--canvas-total-scale));
+  transform-origin: top left;
+  transition: transform 0.22s ease;
+}
 
-  .heterogeneous-multipage__pages-container[data-zooming] {
-    transition: none;
-  }
+:where([data-canvas-mobile]) .heterogeneous-multipage__pages-container[data-zooming] {
+  transition: none;
 }
 
 /* ── Mobile sheet: slides in from the bottom, its content fades in once the

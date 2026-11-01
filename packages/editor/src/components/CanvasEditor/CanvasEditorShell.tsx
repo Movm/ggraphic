@@ -78,6 +78,7 @@ import {
   type PrintExportPage,
 } from '../../export/printExport.js';
 import { exportSlidesPdf } from '../../export/slidesPdf.js';
+import { EditorBoxProvider } from '../../hooks/editorBox.js';
 import { useIsCanvasMobile } from '../../hooks/useIsCanvasMobile.js';
 import { useZoomGestures } from '../../hooks/useZoomGestures.js';
 import { CanvasEditorLayout } from '../../layouts/index.js';
@@ -176,9 +177,11 @@ const SCOPE_ROOT_STYLE = { display: 'contents' } as const;
 export function CanvasEditorShell(props: CanvasEditorProps) {
   return (
     <div {...EDITOR_SCOPE} style={SCOPE_ROOT_STYLE}>
-      <AutoSaveStoreProvider initialShareToken={props.initialShareToken ?? null}>
-        <CanvasEditorInner {...props} />
-      </AutoSaveStoreProvider>
+      <EditorBoxProvider>
+        <AutoSaveStoreProvider initialShareToken={props.initialShareToken ?? null}>
+          <CanvasEditorInner {...props} />
+        </AutoSaveStoreProvider>
+      </EditorBoxProvider>
     </div>
   );
 }

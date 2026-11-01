@@ -1,33 +1,38 @@
 // SPDX-License-Identifier: MPL-2.0
 /**
- * Viewport utilities for responsive canvas rendering
+ * Viewport utilities for responsive canvas rendering. `width` is the editor's box
+ * (`useEditorBox`); it defaults to the window.
  */
 
-const MOBILE_BREAKPOINT = 900;
+export const MOBILE_BREAKPOINT = 900;
 const MOBILE_PADDING = 32;
 const DESKTOP_SIDEBAR_WIDTH = 64;
 const DESKTOP_PADDING = 48;
 const DESKTOP_MAX_CAP = 1400;
+/** Height kept free around a responsive stage (top bar, page toolbar). */
+export const STAGE_VERTICAL_CHROME = 120;
+
+const windowWidth = () => (typeof window === 'undefined' ? Infinity : window.innerWidth);
 
 /**
- * Detect if current viewport is mobile size
- * @returns true if viewport width is below 900px
+ * Detect if the box is mobile size
+ * @returns true if the width is below 900px
  */
-export function isMobile(): boolean {
-  return typeof window !== 'undefined' && window.innerWidth < MOBILE_BREAKPOINT;
+export function isMobile(width: number = windowWidth()): boolean {
+  return width < MOBILE_BREAKPOINT;
 }
 
 /**
- * Get optimal container width based on viewport size
- * - Mobile: Fill screen width with minimal padding
- * - Desktop: Fill available space (viewport - sidebar - padding), capped at 1400px
+ * Get optimal container width for a box of `width`
+ * - Mobile: Fill the width with minimal padding
+ * - Desktop: Fill available space (width - sidebar - padding), capped at 1400px
  *
  * @returns Optimal maxContainerWidth for CanvasStage
  */
-export function getOptimalContainerWidth(): number {
-  if (isMobile()) {
-    return window.innerWidth - MOBILE_PADDING;
+export function getOptimalContainerWidth(width: number = windowWidth()): number {
+  if (isMobile(width)) {
+    return width - MOBILE_PADDING;
   }
-  const availableWidth = window.innerWidth - DESKTOP_SIDEBAR_WIDTH - DESKTOP_PADDING;
+  const availableWidth = width - DESKTOP_SIDEBAR_WIDTH - DESKTOP_PADDING;
   return Math.min(availableWidth, DESKTOP_MAX_CAP);
 }

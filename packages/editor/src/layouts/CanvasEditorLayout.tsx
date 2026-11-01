@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
+import { useEditorBoxRef } from '../hooks/editorBox.js';
+import { useIsCanvasMobile } from '../hooks/useIsCanvasMobile.js';
 import { useMessages } from '../i18n/messages.js';
 import { cn } from '../utils/cn.js';
 import { useMeasuredCornerReservation } from '../utils/cornerReservation.js';
@@ -62,6 +64,8 @@ export function CanvasEditorLayout({
   mobileZoomControl,
 }: CanvasEditorLayoutProps) {
   const t = useMessages();
+  const measureBox = useEditorBoxRef();
+  const isMobile = useIsCanvasMobile();
   const hasSidebar = Boolean(tabBar);
   const hasPanel = Boolean(sidebar);
   const bottomBarRef = React.useRef<HTMLDivElement>(null);
@@ -86,6 +90,8 @@ export function CanvasEditorLayout({
 
   return (
     <div
+      ref={measureBox}
+      data-canvas-mobile={isMobile ? '' : undefined}
       onClickCapture={handleClickCapture}
       className="canvas-editor-layout relative flex flex-col h-[var(--editor-height)] min-h-[500px] bg-[var(--editor-bg)]"
     >

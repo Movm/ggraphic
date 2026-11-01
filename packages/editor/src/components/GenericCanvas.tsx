@@ -49,7 +49,8 @@ import { type ViewportRect, rotaterRects, visibleArea } from '../utils/orientati
 import { PendingImagesContext } from '../utils/pendingImages.js';
 import { PreviewRenderContext } from '../utils/filterCache.js';
 import { stageCssScale } from '../utils/stageCssScale.js';
-import { getOptimalContainerWidth } from '../utils/viewport.js';
+import { STAGE_VERTICAL_CHROME, getOptimalContainerWidth } from '../utils/viewport.js';
+import { useEditorBox } from '../hooks/editorBox.js';
 
 import { blockElementIds, placeBlock, type LiftedBlock } from '../blocks/liftedBlock.js';
 import { hostEmittedStateKeys } from '../collab/pageElementStateKeys.js';
@@ -412,14 +413,10 @@ function GenericCanvasWithRef<
 
   useCanvasStoreReset(preview ? null : config.id);
 
-  // Dynamic maxContainerWidth for responsive rendering
-  const [maxWidth, setMaxWidth] = useState(getOptimalContainerWidth());
-
-  useEffect(() => {
-    const handleResize = () => setMaxWidth(getOptimalContainerWidth());
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  // The stage fits the editor's box (the window outside an editor).
+  const box = useEditorBox();
+  const maxWidth = getOptimalContainerWidth(box.width);
+  const maxHeight = box.height - STAGE_VERTICAL_CHROME;
 
   // Track config ID to detect actual config changes (not just reference changes)
   const configIdRef = useRef(config.id);
@@ -1224,6 +1221,7 @@ function GenericCanvasWithRef<
           logicalHeight={referenceHeight}
           responsive
           maxContainerWidth={maxWidth}
+          maxContainerHeight={maxHeight}
           onStageClick={handleStageClick}
           listening={interactive}
           ariaLabel={stageLabel}

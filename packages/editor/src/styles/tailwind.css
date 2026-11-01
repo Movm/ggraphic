@@ -52,6 +52,26 @@
    set on <html> by the editor), so focus rings show for keyboard users only. */
 @custom-variant kbd (&:where([data-focus-modality="keyboard"] *));
 
+/* Mobile layout follows the editor's box: `CanvasEditorLayout` sets data-canvas-mobile on its root
+   while the root is narrower than 900px (`useIsCanvasMobile`). Portals sit outside the root and
+   fall back to the window; the root is never wider than the window, so inside it the media query
+   adds nothing. `canvas-mobile:` is the exact complement. */
+@custom-variant max-canvas-mobile {
+  @media (max-width: 899px) {
+    @slot;
+  }
+  &:where([data-canvas-mobile], [data-canvas-mobile] *) {
+    @slot;
+  }
+}
+@custom-variant canvas-mobile {
+  @media (min-width: 900px) {
+    &:where(:not([data-canvas-mobile], [data-canvas-mobile] *)) {
+      @slot;
+    }
+  }
+}
+
 @theme {
   /* Brand-ramp steps the core's classes use */
   --color-primary-50: var(--primary-50);
@@ -132,9 +152,6 @@
   --radius-sm: var(--card-border-radius-small);
   --radius-md: var(--card-border-radius-medium);
   --radius-lg: var(--card-border-radius-large);
-
-  /* Layout */
-  --breakpoint-canvas-mobile: 900px;
 
   /* Animations */
   --animate-canvas-slide-down-fade: slideDownFade 0.2s cubic-bezier(0.16, 1, 0.3, 1);
