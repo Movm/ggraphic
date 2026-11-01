@@ -5,8 +5,9 @@
  * project created. Without AI the prompt itself becomes the headline.
  */
 import { offeredSchemes, type BrandPack, type SchemeId } from '@ggraphic/core';
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { withHuggedPlates } from '@ggraphic/editor/page/hug';
+import { activeBrand } from '@ggraphic/editor/brand';
+import { withHuggedPlates } from '@ggraphic/editor/page';
+import { type AdditionalText } from '@ggraphic/editor/config';
 
 import { api, ApiError, type Draft, type Pick } from '../api/client';
 import { applyBrandPack } from '../brandLoader';
@@ -22,8 +23,6 @@ import { templatePageState } from '../editor/templates/instantiate';
 
 import { pickOffers } from './aiOffers';
 import { fetchHiddenIds } from './hiddenTemplates';
-
-import { type AdditionalText } from '@ggraphic/editor/configs/types';
 
 const NAME_WORDS = 6;
 const NAME_MAX = 60;

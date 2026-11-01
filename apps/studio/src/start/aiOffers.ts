@@ -5,7 +5,7 @@
  * colour worlds of the active brand.
  */
 import { deriveSchemes, type BrandPack } from '@ggraphic/core';
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { activeBrand } from '@ggraphic/editor/brand';
 import { templateElementIds, type TemplateSlotRole } from '@ggraphic/schema';
 
 import { type PickBody } from '../api/client';

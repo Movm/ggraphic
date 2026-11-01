@@ -3,8 +3,8 @@
  * The Studio's templates as editor configs: every one is the package's free page
  * (`createPageConfig`), seeded with its catalogue template.
  */
-import { createPageConfig } from '@ggraphic/editor/page/config';
-import { defineTemplate, registerTemplates } from '@ggraphic/editor/templates/registry';
+import { createPageConfig } from '@ggraphic/editor/page';
+import { defineTemplate, registerTemplates } from '@ggraphic/editor/templates';
 
 import { templateFileOf } from './catalog';
 import { STUDIO_TEMPLATE_IDS, type StudioTemplateId } from './ids';

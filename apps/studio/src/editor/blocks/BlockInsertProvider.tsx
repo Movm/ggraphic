@@ -3,13 +3,13 @@
  * Offers the library's blocks to the editor and drops one onto a page: laid out by the library
  * for the page's format and world, then added through the page's canvas handle as one undo step.
  */
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { activeBrand } from '@ggraphic/editor/brand';
 import {
   BlockInsertContext,
   type BlockInsertApi,
   type BlockTarget,
-} from '@ggraphic/editor/components/CanvasEditor/blockInsertContext';
-import { type EditorShellProviderProps } from '@ggraphic/editor/components/CanvasEditor/editorShell';
+  type EditorShellProviderProps,
+} from '@ggraphic/editor/shell';
 import { offeredSchemes } from '@ggraphic/core';
 import { useCallback, useMemo } from 'react';
 

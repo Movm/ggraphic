@@ -12,8 +12,8 @@ import {
   type BrandPack,
   type SchemeId,
 } from '@ggraphic/core';
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { BLOCK_COLLECTIONS, boundsOf, type LiftedBlock } from '@ggraphic/editor/blocks/liftedBlock';
+import { activeBrand } from '@ggraphic/editor/brand';
+import { BLOCK_COLLECTIONS, boundsOf, type LiftedBlock } from '@ggraphic/editor/elements';
 
 import { studioCatalog, type CatalogEntry } from '../templates/catalog';
 import { templatePageState } from '../templates/instantiate';
