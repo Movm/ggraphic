@@ -108,6 +108,8 @@ npm install --save-exact @ggraphic/collab@alpha
 - The packages are **ESM-only** and need Node ≥ 22 for anything that imports them on the server.
 - `konva`, `react`, `react-dom` and `react-konva` are peers. Make sure the host resolves **one** React copy (Vite: `resolve.dedupe: ['react', 'react-dom']`), or hooks fail with "Cannot read properties of null (reading 'useContext')".
 - pnpm with `minimumReleaseAge`: a freshly published alpha is refused for that window. Add exact `@ggraphic/<pkg>@<version>` entries to `minimumReleaseAgeExclude` (and remove them once the version is old enough).
+- pnpm 12 and later print "Agent skills awaiting approval: @ggraphic/editor" on every install: the package ships this skill, and pnpm links it into `.claude/skills/` only once the host approves it (`pnpm approve`). Without approval nothing is linked and the editor works the same.
+- A host that type-checks Node-facing files (`vite.config.ts`, `playwright.config.ts`) declares `@types/node` itself. Without it, a strict pnpm host (`hoist: false`) fails tsc with `TS2688: Cannot find type definition file for 'node'` in `undici-types`; with hoisting, the copy one of the editor's dependencies brings in hides the gap.
 
 ## Styles
 

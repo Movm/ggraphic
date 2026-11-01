@@ -11,10 +11,9 @@
  * one never does.
  */
 import { type BrandPack, brandFingerprint, type SchemeId } from '@ggraphic/core';
-import { PagePreview } from '@ggraphic/editor/components/PagePreview';
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { loadCanvasConfig } from '@ggraphic/editor/configs/configLoader';
-import { type FullCanvasConfig } from '@ggraphic/editor/configs/types';
+import { PagePreview } from '@ggraphic/editor/shell';
+import { activeBrand } from '@ggraphic/editor/brand';
+import { loadCanvasConfig, type FullCanvasConfig } from '@ggraphic/editor/config';
 import { SAMPLE_PHOTOS } from '@ggraphic/templates-open';
 import {
   Component,

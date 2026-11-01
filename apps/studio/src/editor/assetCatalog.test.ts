@@ -6,9 +6,8 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
-import { registerMessages } from '@ggraphic/editor/i18n/messages';
-import { registerAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
-import { loadEmojiCatalog } from '@ggraphic/editor/utils/emoji/emojiCatalog';
+import { registerMessages } from '@ggraphic/editor/i18n';
+import { registerAssetCatalog, loadEmojiCatalog } from '@ggraphic/editor/elements';
 import { describe, expect, it } from 'vitest';
 
 import { studioAssetCatalog } from './assetCatalog';

@@ -78,6 +78,27 @@ Pick the packages and the bump type (patch/minor/major), and write a short summa
 
 The repository is in changesets pre mode (`alpha`), so versions come out as `0.x.y-alpha.n`. On `main`, the release workflow opens a "Version Packages" pull request. Merging it publishes to npm with provenance.
 
+## Release checklist (maintainers)
+
+The release workflow publishes through npm trusted publishing (OIDC) and then points `latest` at what it published. A new package needs some one-time setup by hand.
+
+**Once per new package**, from a maintainer's terminal. A trusted publisher can only be configured for a package that exists on npm; until it is, the release run fails on that package.
+
+1. Publish it by hand (npm asks for the 2FA code).
+2. Make the release workflow its trusted publisher:
+
+   ```bash
+   npx -y npm@11 trust github @ggraphic/<pkg> --file release.yml --repo Movm/ggraphic --allow-publish -y
+   ```
+
+3. Allow that trusted publisher to set dist-tags: on `https://www.npmjs.com/package/@ggraphic/<pkg>/access` (the package's Settings tab), under Trusted publishing, enable **Allow npm dist-tag**. `npm trust` has no flag for this.
+
+**`latest` after a release.** In pre mode, `changeset publish` publishes with the `alpha` tag only. The release workflow's step "Point latest at the published versions" then moves `latest` to each published public package; without that, a plain `npm install @ggraphic/<pkg>` would get an outdated version or one of the deprecated `0.0.0` placeholders. If the step cannot set a tag (usually because step 3 is missing), the release stays green and the run shows a warning that names the package and the command to run by hand:
+
+```bash
+npm dist-tag add @ggraphic/<pkg>@<version> latest
+```
+
 ## Tests and checks
 
 Run the checks for what you changed, one package at a time:

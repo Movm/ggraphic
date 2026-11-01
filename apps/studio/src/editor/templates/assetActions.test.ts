@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { createPageActions } from '@ggraphic/editor/page/actions';
-import { pageStateFrom, type PageState } from '@ggraphic/editor/page/pageState';
-import { registerAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
+import { createPageActions, pageStateFrom, type PageState } from '@ggraphic/editor/page';
+import { registerAssetCatalog } from '@ggraphic/editor/elements';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { registerEditor } from '../../registerEditor';

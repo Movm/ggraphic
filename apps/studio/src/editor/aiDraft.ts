@@ -6,11 +6,11 @@
  * page after it instead.
  */
 import { minTextSizePx, roomBelow } from '@ggraphic/core';
-import { type ReplaceDeckOps } from '@ggraphic/editor/collab/pagesDoc';
-import { type AdditionalText } from '@ggraphic/editor/configs/types';
-import { withHuggedPlates } from '@ggraphic/editor/page/hug';
-import { TEMPLATE_GATE_ADAPTER } from '@ggraphic/editor/templates/templateGeometry';
-import { runMeasurer } from '@ggraphic/editor/utils/textUtils';
+import { type ReplaceDeckOps } from '@ggraphic/editor/collab';
+import { type AdditionalText } from '@ggraphic/editor/config';
+import { withHuggedPlates } from '@ggraphic/editor/page';
+import { TEMPLATE_GATE_ADAPTER } from '@ggraphic/editor/templates';
+import { runMeasurer } from '@ggraphic/editor/text';
 import { fitFontSizeToSlot, PLAIN_STYLE } from '@ggraphic/schema';
 
 import { type Draft } from '../api/client';
