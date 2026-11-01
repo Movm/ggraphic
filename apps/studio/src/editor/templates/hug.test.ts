@@ -2,6 +2,7 @@
 import { type BrandPack } from '@ggraphic/core';
 import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
 import { TEMPLATE_GATE_ADAPTER } from '@ggraphic/editor/templates/templateGeometry';
+import { setWholeTextMark } from '@ggraphic/schema';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { studioBrand } from '../../brand';
@@ -110,6 +111,17 @@ describe('committing a text edit moves the plate', () => {
     const before = plate().width;
     actions.updateAdditionalText('line-1', { text: 'Hallo' });
     expect(plate().width).toBeLessThan(before / 2);
+    actions.updateAdditionalText('line-1', { text: 'One in four families' });
+    expect(plate().width).toBe(before);
+  });
+
+  it('widens the plate when a format put on the whole text widens it, and narrows it back', () => {
+    const { actions, plate } = setup();
+    const before = plate().width;
+    actions.updateAdditionalText('line-1', {
+      text: setWholeTextMark('One in four families', 'bold', true),
+    });
+    expect(plate().width).toBeGreaterThan(before);
     actions.updateAdditionalText('line-1', { text: 'One in four families' });
     expect(plate().width).toBe(before);
   });
