@@ -504,7 +504,7 @@
   },
   "devDependencies": {
     "@napi-rs/canvas": "^1.0.13",
-    "@rolldown/plugin-babel": "^0.3.0",
+    "@rolldown/plugin-babel": "^0.2.4",
     "@tailwindcss/node": "4.3.3",
     "@tailwindcss/oxide": "4.3.3",
     "@testing-library/jest-dom": "^7.0.1",
