@@ -31,7 +31,7 @@ import {
 import { notchPx, traceNotch } from '../utils/notch.js';
 import { ELEMENT_TRANSFORMER } from '@ggraphic/editor/utils/orientation';
 import { useTrackPendingImage } from '@ggraphic/editor/utils/pendingImages';
-import { cacheFiltered, useIsPreviewRender } from '../utils/filterCache.js';
+import { cacheFiltered, usePreviewCaptureRatio } from '../utils/filterCache.js';
 import { recacheNextFrame } from '@ggraphic/editor/utils/recacheNextFrame';
 import {
   clampPointToStraightPhoto,
@@ -118,7 +118,7 @@ function UserImagePrimitiveInner({
   const cropTransformerRef = useRef<Konva.Transformer>(null);
   const groupRef = useRef<Konva.Group>(null);
   const imageRef = useRef<Konva.Image>(null);
-  const preview = useIsPreviewRender();
+  const captureRatio = usePreviewCaptureRatio();
   const transformerRef = useRef<Konva.Transformer>(null);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [settled, setSettled] = useState<{ src: string; ok: boolean } | null>(null);
@@ -200,14 +200,14 @@ function UserImagePrimitiveInner({
     const node = imageRef.current;
     if (!node || !image) return;
     if (hasActiveImageFilters(userImage)) {
-      cacheFiltered(node, preview);
+      cacheFiltered(node, captureRatio);
     } else {
       node.clearCache();
     }
     node.getLayer()?.batchDraw();
   }, [
     image,
-    preview,
+    captureRatio,
     userImage.width,
     userImage.height,
     userImage.blur,

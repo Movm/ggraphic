@@ -216,6 +216,11 @@ export interface GenericCanvasProps<TState, TActions extends OptionalCanvasActio
    */
   preview?: boolean;
   /**
+   * Output pixels per page pixel of the capture a preview is drawn for (`PagePreview`). Filtered
+   * photos are cached at that resolution or the drawn one, whichever is larger; absent: the drawn one.
+   */
+  previewCaptureRatio?: number;
+  /**
    * False for the pages of a multi-page editor that are not the active one:
    * they drop their selection and ignore keyboard shortcuts, which every page
    * registers on `window`. Single-canvas hosts leave it at the default.
@@ -387,6 +392,7 @@ function GenericCanvasWithRef<
     onToolbarStateChange,
     onAutoSaveShareToken,
     preview = false,
+    previewCaptureRatio,
     isActivePage = true,
     pageNumber,
     readOnly = false,
@@ -1184,7 +1190,7 @@ function GenericCanvasWithRef<
 
   return (
     <PendingImagesContext.Provider value={pendingImages}>
-      <PreviewRenderContext.Provider value={preview}>
+      <PreviewRenderContext.Provider value={preview ? (previewCaptureRatio ?? 0) : null}>
         <CanvasStage
           ref={stageRef}
           width={stageWidth}
