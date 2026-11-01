@@ -127,14 +127,15 @@ Both take an array of template files (or one file) in the `@ggraphic/schema` for
 ## Install
 
 ```bash
-npm install --save-exact @ggraphic/editor@0.1.0-alpha.0 @ggraphic/core@0.1.0-alpha.0 @ggraphic/schema@0.1.0-alpha.0
-npm install --save-exact @ggraphic/brand-default@0.1.0-alpha.0 # the neutral brand and its OFL fonts
+# --save-exact pins each package to the version its `alpha` tag points to
+npm install --save-exact @ggraphic/editor@alpha @ggraphic/core@alpha @ggraphic/schema@alpha
+npm install --save-exact @ggraphic/brand-default@alpha # the neutral brand and its OFL fonts
 npm install react react-dom konva react-konva @tanstack/react-query
 # real-time collaboration (Yjs + Hocuspocus) only:
-npm install --save-exact @ggraphic/collab@0.1.0-alpha.0
+npm install --save-exact @ggraphic/collab@alpha
 ```
 
-- Keep `@ggraphic/*` on the **same exact version**; editor and collab must agree on the document schema.
+- The packages have **independent versions** (editor and core can be on `0.1.0-alpha.1` while schema is on `0.1.0-alpha.0`). Pin each one exactly to the version npm lists under the `alpha` tag (`npm view @ggraphic/<pkg> dist-tags.alpha`). The editor's own dependencies (`npm view @ggraphic/editor@<version> dependencies`) show which `@ggraphic/core` and `@ggraphic/schema` it expects; install exactly those, so editor and collab agree on the document schema.
 - The packages are **ESM-only** and need Node ≥ 22 for anything that imports them on the server.
 - `konva`, `react`, `react-dom` and `react-konva` are peers. Make sure the host resolves **one** React copy (Vite: `resolve.dedupe: ['react', 'react-dom']`), or hooks fail with "Cannot read properties of null (reading 'useContext')".
 - pnpm with `minimumReleaseAge`: a freshly published alpha is refused for that window. Add exact `@ggraphic/<pkg>@<version>` entries to `minimumReleaseAgeExclude` (and remove them once the version is old enough).
