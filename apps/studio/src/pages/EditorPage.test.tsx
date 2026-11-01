@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { rememberLogoSize } from '@ggraphic/editor/page';
 import { registerBrandPacks } from '@ggraphic/editor/brand';
+import { AssetsSection } from '@ggraphic/editor/sidebar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -323,6 +324,10 @@ describe('EditorPage', () => {
     const view = renderEditor();
 
     await waitFor(() => expect(document.querySelector('.konvajs-content canvas')).not.toBeNull());
+    // The Elements panel is a lazy chunk, and nothing in Studio preloads it: its first open
+    // suspends, and React holds the reveal back ~300 ms on top of the import, which on a busy
+    // runner ate findByRole's 1 s. Loaded first, the panel renders directly (lazyWithPreload).
+    await AssetsSection.preload();
     await user.click(await screen.findByRole('button', { name: /^Elements/ }));
     await user.click(await screen.findByRole('button', { name: /^Blocks/ }));
     await user.click(await screen.findByRole('button', { name: /Quote with name/ }));
