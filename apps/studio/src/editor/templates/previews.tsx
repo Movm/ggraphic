@@ -82,10 +82,32 @@ function emit(): void {
   hostListeners.forEach((listener) => listener());
 }
 
+/** How long a queued job waits for an idle moment before it starts anyway. */
+const IDLE_TIMEOUT_MS = 1000;
+let idleStart: (() => void) | null = null;
+
+/**
+ * Mounting a page and drawing it takes tens of milliseconds; started at once, it lands in
+ * the frames of a scrolling gallery. The next job starts when the browser is idle instead.
+ */
+function whenIdle(run: () => void): () => void {
+  if (typeof requestIdleCallback === 'function') {
+    const id = requestIdleCallback(run, { timeout: IDLE_TIMEOUT_MS });
+    return () => cancelIdleCallback(id);
+  }
+  const id = setTimeout(run, 0);
+  return () => clearTimeout(id);
+}
+
 function pump(): void {
-  if (current || queue.length === 0) return;
-  current = queue.shift()!;
-  emit();
+  if (current || idleStart || queue.length === 0) return;
+  const cancel = whenIdle(() => {
+    idleStart = null;
+    if (current || queue.length === 0) return;
+    current = queue.shift()!;
+    emit();
+  });
+  idleStart = cancel;
 }
 
 function finish(key: string, src: string | null): void {
@@ -127,6 +149,8 @@ export function requestPreview(job: PreviewJob, onDone: (src: string | null) => 
 
 /** Empties the cache and the queue; for tests. */
 export function resetPreviews(): void {
+  idleStart?.();
+  idleStart = null;
   cache.clear();
   queue.length = 0;
   waiting.clear();
