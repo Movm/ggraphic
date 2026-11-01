@@ -84,7 +84,11 @@ import {
   type SelectionGeometry,
 } from '../utils/canvasCommands.js';
 import { canvasFontFamilies } from '../utils/canvasFontFamilies.js';
-import { buildCanvasItems, buildSortedRenderList } from '../utils/canvasLayerManager.js';
+import {
+  buildCanvasItems,
+  buildSortedRenderList,
+  withInsertsOnTop,
+} from '../utils/canvasLayerManager.js';
 import { addHostElement, fromHostKinds } from '../utils/elementKinds.js';
 import {
   captureStageImage,
@@ -471,6 +475,19 @@ function GenericCanvasWithRef<
     });
   }, []);
 
+  // The setter the element actions get: whatever an action inserts is drawn on top of the page,
+  // regardless of its kind. The canvas commands (paste, duplicate, reorder) place their own
+  // elements and keep the plain setter.
+  const setActionState = useCallback(
+    (partial: Partial<TState> | ((prev: TState) => TState)) => {
+      setStateRaw((prev) => {
+        const next = typeof partial === 'function' ? partial(prev) : { ...prev, ...partial };
+        return withInsertsOnTop(config, prev, next);
+      });
+    },
+    [config]
+  );
+
   // External edits to this page's `state` Y.Map (chat sharepic editing via
   // the Hocuspocus internal API) merge into the live component state.
   // Rebuilding through createInitialState recomputes the derived fields.
@@ -574,7 +591,7 @@ function GenericCanvasWithRef<
     () => ({
       ...config.createActions(
         getState,
-        setStateWrapper,
+        setActionState,
         saveToHistory,
         debouncedSaveToHistory,
         callbacks
@@ -584,7 +601,7 @@ function GenericCanvasWithRef<
     [
       config,
       getState,
-      setStateWrapper,
+      setActionState,
       saveToHistory,
       debouncedSaveToHistory,
       runHistoryBatch,
