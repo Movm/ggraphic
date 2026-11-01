@@ -638,6 +638,17 @@ body {
   justify-content: space-between;
   gap: var(--ui-space-2) var(--ui-space-4);
 }
+.studio-start__tools {
+  display: flex;
+  /* The field has its label above it: Trash sits level with the input. */
+  align-items: flex-end;
+  gap: var(--ui-space-4);
+  margin-left: auto;
+}
+/* Side by side with the Trash link: the field alone would take the whole row. */
+.studio-start__tools .studio-search {
+  flex: 0 1 320px;
+}
 .studio-start__head .studio-muted {
   margin: 0;
 }
@@ -733,7 +744,8 @@ body {
 .studio-overlay {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  /* The editor's modal layer: above its top bar (110) and sidebar column, below popups (1020). */
+  z-index: 1010;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1008,6 +1020,8 @@ body {
 }
 .studio-brand__range {
   width: 100%;
+  /* The browser's default blue otherwise: the only blue on the page. */
+  accent-color: var(--ui-color-accent);
 }
 
 @media (prefers-reduced-motion: reduce) {

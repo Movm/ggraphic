@@ -50,6 +50,11 @@ describe('layerLabel', () => {
       item({ id: 't-1', type: 'additional-text', data: { text: '**Jetzt**\n<u>wählen</u>' } }),
       'Text: Jetzt wählen',
     ],
+    [
+      'Text mit Akzent und Marker',
+      item({ id: 't-2', type: 'additional-text', data: { text: 'CARE ==NEEDS== ++HANDS.++' } }),
+      'Text: CARE NEEDS HANDS.',
+    ],
     ['Illustration', item({ id: 'ill-1', type: 'illustration', data: {} }), 'Illustration'],
     [
       'Grafik aus dem Katalog',

@@ -138,6 +138,14 @@ describe('the template gallery', () => {
     expect(tiles().getByRole('button', { name: /^Headline/ })).toBeInTheDocument();
   });
 
+  it('says so when the filters leave no template', async () => {
+    gallery();
+    await userEvent.click(screen.getByRole('radio', { name: 'Headline' }));
+    await userEvent.click(screen.getByRole('combobox', { name: 'Photo' }));
+    await userEvent.click(await screen.findByRole('option', { name: 'With photo' }));
+    expect(screen.getByRole('status')).toHaveTextContent(/No template matches these filters/);
+  });
+
   it('a 16:9 project offers no 4:5-only template', () => {
     gallery({ formatId: 'slide-16-9' });
     expect(tiles().getByRole('button', { name: /^Headline/ })).toBeInTheDocument();

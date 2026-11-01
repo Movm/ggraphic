@@ -120,3 +120,16 @@ describe('toggleIcon', () => {
     expect(h.current().selectedIcons).toEqual(['tabler-leaf']);
   });
 });
+
+describe('toggleIcon for an icon already on the page', () => {
+  it('places a copy under its own instance id that shows the same icon', () => {
+    // Under the same id the second state overwrote the first and one node was left behind on removal.
+    const h = harness({ selectedIcons: ['tabler-sun'], iconStates: { 'tabler-sun': at(10) } });
+    h.actions.toggleIcon('tabler-sun', true);
+    const ids = h.current().selectedIcons;
+    expect(ids).toHaveLength(2);
+    expect(new Set(ids).size).toBe(2);
+    expect(h.current().iconStates['tabler-sun']?.x).toBe(10);
+    expect(h.current().iconStates[ids[1]!]?.iconId).toBe('tabler-sun');
+  });
+});

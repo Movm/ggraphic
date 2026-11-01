@@ -74,3 +74,15 @@ describe('BrandPreview accent ground', () => {
     expect(bar.style.background).toBe('rgb(255, 122, 182)');
   });
 });
+
+describe('BrandPreview layout', () => {
+  it('starts the accent rule flush with the headline, as the template does', () => {
+    const { container } = render(
+      <BrandPreview settings={settings} logoUrl={null} ground={{ color: '#6B1632', ink: '#fff' }} />
+    );
+    const page = container.querySelector('.studio-brand-preview__page')!;
+    const rule = page.querySelector('span[aria-hidden]') as HTMLElement;
+    const headline = screen.getByText('A clear headline');
+    expect(rule.style.left).toBe(headline.style.left);
+  });
+});

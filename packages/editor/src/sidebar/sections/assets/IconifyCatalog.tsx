@@ -181,7 +181,8 @@ export function IconifyCatalog({
       )}
 
       {current && (
-        <div className="flex flex-col gap-2">
+        // Sticks to the panel's lower edge: below up to 60 tiles it would be out of view.
+        <div className="sticky bottom-0 flex flex-col gap-2 py-2 bg-[var(--editor-surface)]">
           <p className="m-0 text-[11px] text-[var(--editor-text-muted)]">
             {attributionLine(sourceOf(current))}
           </p>
