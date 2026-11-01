@@ -24,6 +24,11 @@ import { aliasFontFamily } from './fontAliases.js';
 export interface FontMarkSupport {
   bold: boolean;
   italic: boolean;
+  /**
+   * Fett UND kursiv zugleich ist ein echter Schnitt. Fehlt er, gewinnt Kursiv
+   * (`runFont`) — Fett wäre sonst nur angekreuzt, aber nicht zu sehen.
+   */
+  boldItalic: boolean;
 }
 
 /**
@@ -38,12 +43,29 @@ export interface FontMarkSupport {
  * Ersetzte Familien laufen vorher durch `aliasFontFamily`.
  */
 const FACES: Record<string, FontMarkSupport> = {
-  'Instrument Sans': { bold: true, italic: true },
-  Fraunces: { bold: true, italic: true },
-  'Bricolage Grotesque': { bold: true, italic: false },
+  'Instrument Sans': { bold: true, italic: true, boldItalic: false },
+  Fraunces: { bold: true, italic: true, boldItalic: true },
+  'Bricolage Grotesque': { bold: true, italic: false, boldItalic: false },
 };
 
-const NONE: FontMarkSupport = { bold: false, italic: false };
+const NONE: FontMarkSupport = { bold: false, italic: false, boldItalic: false };
+
+/**
+ * Familien, deren `bold italic` in `typography.css` ein echter Schnitt ist:
+ * Fraunces trägt dort Bold Italic als `italic` und Black Italic als
+ * `bold italic`. Nur hier gilt „kursiv schlägt fett" nicht — der Browser
+ * fettet nichts synthetisch, er lädt den Black-Schnitt. Den braucht die
+ * Betonung einiger Markenpakete.
+ */
+const REAL_BOLD_ITALIC: ReadonlySet<string> = new Set(['Fraunces']);
+
+/**
+ * Built in, or declared by a registered brand (`BrandFonts.cuts`). Takes an
+ * already aliased family; the one answer `runFont` and the toolbar share.
+ */
+export function hasRealBoldItalic(family: string): boolean {
+  return REAL_BOLD_ITALIC.has(family) || brandCuts(family)?.boldItalic === true;
+}
 
 /** Erste Familie aus einem CSS-Stapel, ohne Anführungszeichen. */
 export function primaryFontFamily(fontFamily: string): string {
@@ -54,6 +76,7 @@ export function primaryFontFamily(fontFamily: string): string {
 export function fontMarkSupport(fontFamily: string): FontMarkSupport {
   const family = primaryFontFamily(fontFamily);
   const cuts = brandCuts(family);
-  if (cuts) return { bold: cuts.bold === true, italic: cuts.italic === true };
-  return FACES[family] ?? NONE;
+  const boldItalic = hasRealBoldItalic(family);
+  if (cuts) return { bold: cuts.bold === true, italic: cuts.italic === true, boldItalic };
+  return { ...(FACES[family] ?? NONE), boldItalic };
 }
