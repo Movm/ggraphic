@@ -7,7 +7,7 @@ import {
   type SchemeId,
 } from '@ggraphic/core';
 
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { activeBrand } from '../brand/brandRegistry.js';
 
 /** Share of the ink mixed into the ground for the placeholder fill. */
 const FILL_INK = 0.12;

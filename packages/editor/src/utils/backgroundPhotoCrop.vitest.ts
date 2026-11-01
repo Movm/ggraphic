@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import {
-  canCropBackgroundPhoto,
-  imageElementInteraction,
-} from '@ggraphic/editor/utils/backgroundPhotoCrop';
+import { canCropBackgroundPhoto, imageElementInteraction } from './backgroundPhotoCrop.js';
 
 const photo = { id: 'background-image', draggable: true, transformable: true };
 

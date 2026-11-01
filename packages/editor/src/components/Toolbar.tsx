@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasStoreSelector } from '@ggraphic/editor/stores/CanvasStoreProvider';
+import { useCanvasStoreSelector } from '../stores/CanvasStoreProvider.js';
 import React, { memo } from 'react';
 
-import { AutoSaveIndicator } from '@ggraphic/editor/components/TopBar/AutoSaveIndicator';
-import { FloatingAiSuggestionBanner } from '@ggraphic/editor/components/TopBar/modules/FloatingAiSuggestionBanner';
-import { FloatingHistoryControls } from '@ggraphic/editor/components/TopBar/modules/FloatingHistoryControls';
+import { AutoSaveIndicator } from './TopBar/AutoSaveIndicator.js';
+import { FloatingAiSuggestionBanner } from './TopBar/modules/FloatingAiSuggestionBanner.js';
+import { FloatingHistoryControls } from './TopBar/modules/FloatingHistoryControls.js';
 import { ShareDropdown, type ShareDropdownProps } from './TopBar/ShareDropdown.js';
-import { TopBar } from '@ggraphic/editor/components/TopBar/TopBar';
+import { TopBar } from './TopBar/TopBar.js';
 
 /**
  * Toolbar — the green menu bar (3a/3b design).

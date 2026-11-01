@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { registeredBrands } from '@ggraphic/editor/brand/brandRegistry';
+import { registeredBrands } from '../brand/brandRegistry.js';
 
 import type { BrandPack } from '@ggraphic/core';
 

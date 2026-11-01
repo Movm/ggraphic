@@ -10,7 +10,8 @@
     "@ggraphic/editor": "0.0.0",
     "@ggraphic/schema": "0.0.0",
     "@ggraphic/templates-open": "0.0.0",
-    "@ggraphic/ui": "0.0.0"
+    "@ggraphic/ui": "0.0.0",
+    "@ggraphic/brand-default": "0.0.0"
   },
   "changesets": [
     "ai-pick-and-fill",
@@ -19,9 +20,11 @@
     "brand-bindings",
     "brand-fonts-logo-alt",
     "brand-shape-cycle",
+    "brands-templates-as-data",
     "circle-badge-outline",
     "collab-first-release",
     "compact-context-bar",
+    "compiled-css",
     "core-dist-exports",
     "core-element-model",
     "derive-brand-colors",
@@ -30,6 +33,8 @@
     "document-v3",
     "duotone",
     "editor-element-types-from-core",
+    "editor-embed-skill",
+    "editor-page-model",
     "font-alias-yields-to-brand",
     "font-roles-core",
     "font-roles-editor",
@@ -39,6 +44,7 @@
     "hyphenate-long-words",
     "image-look-control",
     "initial-import",
+    "insert-on-top",
     "one-undo-clock",
     "open-asset-packs",
     "page-groups",
@@ -52,6 +58,7 @@
     "template-format",
     "template-instantiate",
     "templates-open",
+    "text-format-and-labels",
     "text-format-on-select",
     "ui-kit",
     "ui-menu"

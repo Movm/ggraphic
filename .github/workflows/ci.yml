@@ -40,12 +40,19 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
+      # Surface drift only reports (a warning and the step summary) until D2b; an export key whose
+      # target file is missing fails the step.
+      - name: API report
+        run: pnpm api:check
       - run: pnpm lint
       - run: pnpm format:check
       - run: pnpm test
         env:
           DATABASE_URL: postgres://studio:studio@127.0.0.1:5432/studio_test
       - run: pnpm build
+      # publint and attw on the tarballs `pnpm pack` produces, so publishConfig and `files` apply.
+      - name: Package checks (publint, attw)
+        run: pnpm check:packed
       - name: Guard self-tests
         run: pnpm check:guards:self-test
       - name: Licence check (production dependency tree)
@@ -74,7 +81,7 @@ jobs:
           fi
           files=$(git diff --name-only "$(git merge-base "$BASE" HEAD)" HEAD)
           printf '%s\n' "$files"
-          relevant=$(printf '%s\n' "$files" | grep -vE '(\.md$|^\.changeset/|^docs/|^LICENSE|^NOTICE|^THIRD_PARTY_NOTICES|^\.github/workflows/(dco|release)\.yml$|^\.github/ISSUE_TEMPLATE/|^\.github/dependabot\.yml$)' || true)
+          relevant=$(printf '%s\n' "$files" | grep -vE '(\.md$|^\.changeset/|^docs/|^LICENSE|^NOTICE|^THIRD_PARTY_NOTICES|^examples/|^\.github/workflows/(dco|release|examples)\.yml$|^\.github/ISSUE_TEMPLATE/|^\.github/dependabot\.yml$)' || true)
           if [ -n "$relevant" ]; then echo "render=true"; else echo "render=false"; fi >> "$GITHUB_OUTPUT"
 
   # Stage 2 of the template render gate: every template drawn in Chromium with the bundled fonts,

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MPL-2.0
 import { currentFontRole, fontRoleOptions, type Bindings, type FontRole } from '@ggraphic/core';
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { TileCaption, useBarTiles } from '@ggraphic/editor/components/TopBar/barTiles';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { primaryFontFamily } from '@ggraphic/editor/utils/fontMarkSupport';
-import { requestFontFace } from '@ggraphic/editor/utils/textUtils';
+import { useDocumentBrand } from '../../../brand/documentBrand.js';
+import { TileCaption, useBarTiles } from '../barTiles.js';
+import { useMessages } from '../../../i18n/messages.js';
+import { primaryFontFamily } from '../../../utils/fontMarkSupport.js';
+import { requestFontFace } from '../../../utils/textUtils.js';
 import React from 'react';
 
 /** Value of the entry that stands for a family no role has. */

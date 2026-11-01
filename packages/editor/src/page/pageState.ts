@@ -4,9 +4,9 @@
  * page of a host that offers templates as data (`createPageConfig`) has this shape.
  */
 import { type Bindings } from '@ggraphic/core';
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { type BaseCanvasState } from '@ggraphic/editor/configs/factory/baseTypes';
-import { carryInstanceState } from '@ggraphic/editor/configs/factory/carryInstanceState';
+import { activeBrand } from '../brand/brandRegistry.js';
+import { type BaseCanvasState } from '../configs/factory/baseTypes.js';
+import { carryInstanceState } from '../configs/factory/carryInstanceState.js';
 
 /** An element group on a page; the full semantics come with the groups feature. */
 export interface PageGroup {

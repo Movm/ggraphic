@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createCanvasEditorStore } from '@ggraphic/editor/stores/createCanvasEditorStore';
-import { nextHistoryStamp } from '@ggraphic/editor/utils/historyStamp';
+import { createCanvasEditorStore } from '../createCanvasEditorStore.js';
+import { nextHistoryStamp } from '../../utils/historyStamp.js';
 
 afterEach(() => {
   vi.useRealTimers();

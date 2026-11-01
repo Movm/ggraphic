@@ -3,7 +3,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { PageToolbar } from '@ggraphic/editor/components/PageToolbar';
+import { PageToolbar } from '../PageToolbar.js';
 
 const props = {
   pageIndex: 0,

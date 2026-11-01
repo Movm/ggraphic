@@ -11,16 +11,16 @@ import {
 
 import type { FullCanvasConfig, LayoutResult, AdditionalText } from '../configs/types.js';
 import type { FontRole } from '@ggraphic/core';
-import type { CircleBadgeInstance } from '@ggraphic/editor/primitives/CircleBadge';
-import type { ChartInstance, ChartType } from '@ggraphic/editor/utils/chartTypes';
-import type { FrameClipType, FrameInstance } from '@ggraphic/editor/utils/frameUtils';
-import type { PillBadgeInstance } from '@ggraphic/editor/utils/pillBadgeUtils';
-import type { ShapeInstance, ShapeType } from '@ggraphic/editor/utils/shapes';
+import type { CircleBadgeInstance } from '../primitives/CircleBadge.js';
+import type { ChartInstance, ChartType } from '../utils/chartTypes.js';
+import type { FrameClipType, FrameInstance } from '../utils/frameUtils.js';
+import type { PillBadgeInstance } from '../utils/pillBadgeUtils.js';
+import type { ShapeInstance, ShapeType } from '../utils/shapes.js';
 import type {
   ElementPlacement,
   UserImageInstance,
   UserImagePlacement,
-} from '@ggraphic/editor/utils/userImageUtils';
+} from '../utils/userImageUtils.js';
 import type { StickerRef } from '@ggraphic/schema';
 
 /**

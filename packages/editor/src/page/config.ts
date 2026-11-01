@@ -5,18 +5,18 @@
  * with (`seedFor`). The config lays out on the document's format, so one template serves every
  * format.
  */
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { makeSectionDefiner } from '@ggraphic/editor/configs/factory/defineSection';
-import { injectFeatureProps } from '@ggraphic/editor/configs/featureInjector';
-import { type FullCanvasConfig } from '@ggraphic/editor/configs/types';
-import { getCanvasFormatOrDefault } from '@ggraphic/editor/formats/index';
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { activeBrand } from '../brand/brandRegistry.js';
+import { makeSectionDefiner } from '../configs/factory/defineSection.js';
+import { injectFeatureProps } from '../configs/featureInjector.js';
+import { type FullCanvasConfig } from '../configs/types.js';
+import { getCanvasFormatOrDefault } from '../formats/index.js';
+import { messages } from '../i18n/messages.js';
 import {
   AssetsSection,
   CombinedTextSection,
   ToolsSection,
   UploadsSection,
-} from '@ggraphic/editor/sidebar/sections/index';
+} from '../sidebar/sections/index.js';
 import { PiSquaresFour, PiTextAa, PiToolbox, PiUploadSimple } from 'react-icons/pi';
 
 import { createPageActions, type PageActions } from './actions.js';

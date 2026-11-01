@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, it, expect } from 'vitest';
 
-import { isReportableGeometry, type Geometry } from '@ggraphic/editor/hooks/useGeometryReporter';
+import { isReportableGeometry, type Geometry } from '../useGeometryReporter.js';
 
 describe('isReportableGeometry', () => {
   it('meldet die erste brauchbare Messung', () => {

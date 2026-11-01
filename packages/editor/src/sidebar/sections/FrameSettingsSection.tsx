@@ -1,17 +1,13 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { useMessages } from '../../i18n/messages.js';
 import { useCallback, useEffect, useState } from 'react';
 import { PiTrash } from 'react-icons/pi';
 
-import {
-  ACTION_BTN_DANGER,
-  SECTION_HEADER,
-  SECTION_TITLE,
-} from '@ggraphic/editor/sidebar/sidebarStyles';
+import { ACTION_BTN_DANGER, SECTION_HEADER, SECTION_TITLE } from '../sidebarStyles.js';
 
-import { ImageInputPicker } from '@ggraphic/editor/sidebar/sections/tools/ImageInputPicker';
+import { ImageInputPicker } from './tools/ImageInputPicker.js';
 
-import type { FrameInstance } from '@ggraphic/editor/utils/frameUtils';
+import type { FrameInstance } from '../../utils/frameUtils.js';
 
 export interface FrameSettingsSectionProps {
   selectedFrame: FrameInstance | null;

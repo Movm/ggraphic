@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useLayoutEffect, useRef } from 'react';
 
-import { useCanvasStoreSelector } from '@ggraphic/editor/stores/CanvasStoreProvider';
+import { useCanvasStoreSelector } from '../stores/CanvasStoreProvider.js';
 
 import { paintCropGhosts, visibleContainerRect } from '../utils/cropGhost.js';
 

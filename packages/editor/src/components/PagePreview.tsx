@@ -12,8 +12,8 @@
  */
 import { useEffect, useRef } from 'react';
 
-import { getCanvasFormatOrDefault } from '@ggraphic/editor/formats/index';
-import { AutoSaveStoreProvider } from '@ggraphic/editor/stores/AutoSaveStoreProvider';
+import { getCanvasFormatOrDefault } from '../formats/index.js';
+import { AutoSaveStoreProvider } from '../stores/AutoSaveStoreProvider.js';
 
 import { GenericCanvas, type GenericCanvasRef } from './GenericCanvas.js';
 

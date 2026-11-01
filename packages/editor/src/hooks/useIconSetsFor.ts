@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useEffect, useState } from 'react';
 
-import { iconSetsLoaded, loadIconSetsFor } from '@ggraphic/editor/utils/canvasIcons';
+import { iconSetsLoaded, loadIconSetsFor } from '../utils/canvasIcons.js';
 
 import { registerStoredExternalIcons, type StoredIcon } from '../utils/externalIcons.js';
 import { selectedCatalogIconIds, type IconIdCarrier } from '../utils/iconInstances.js';

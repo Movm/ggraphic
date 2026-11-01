@@ -13,13 +13,9 @@ import type {
   UseCanvasStudioAssets,
   UseCanvasUnsplashSearch,
 } from './hostServices.js';
-import type {
-  ApplyResult,
-  HostCanvasAiOperation,
-  HostCanvasAiSnapshot,
-} from '@ggraphic/editor/ai/types';
-import type { StockImage, StockImageAttribution } from '@ggraphic/editor/common/imageSourceTypes';
-import type { AltTextPage, CanvasSpecEditBridge } from '@ggraphic/editor/editorSeamTypes';
+import type { ApplyResult, HostCanvasAiOperation, HostCanvasAiSnapshot } from './ai/types.js';
+import type { StockImage, StockImageAttribution } from './common/imageSourceTypes.js';
+import type { AltTextPage, CanvasSpecEditBridge } from './editorSeamTypes.js';
 import type { SlotBudget } from '@ggraphic/core';
 import type { CanvasAiCapabilities } from '@ggraphic/schema';
 import type { ComponentType, PropsWithChildren } from 'react';
@@ -39,11 +35,7 @@ export interface CanvasAiEditBridge {
   applyOperations: (ops: HostCanvasAiOperation[]) => ApplyResult[];
 }
 
-export type {
-  AltTextPage,
-  AltTextScope,
-  CanvasSpecEditBridge,
-} from '@ggraphic/editor/editorSeamTypes';
+export type { AltTextPage, AltTextScope, CanvasSpecEditBridge } from './editorSeamTypes.js';
 
 /**
  * Props passed to the host-supplied chat component when the user opens the

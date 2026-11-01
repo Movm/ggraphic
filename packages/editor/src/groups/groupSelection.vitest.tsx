@@ -14,19 +14,19 @@ import {
   readPages,
   seedPagesIfEmpty,
   updatePageStateById,
-} from '@ggraphic/editor/collab/pagesDoc';
-import { useCanvasHistorySetup } from '@ggraphic/editor/hooks/useCanvasHistorySetup';
-import { useCanvasInteractions } from '@ggraphic/editor/hooks/useCanvasInteractions';
-import { CanvasStoreProvider, useCanvasStore } from '@ggraphic/editor/stores/CanvasStoreProvider';
-import { CANVAS_COMMANDS, commandForKey } from '@ggraphic/editor/utils/canvasCommandRegistry';
-import { createCanvasCommands, type CanvasCommands } from '@ggraphic/editor/utils/canvasCommands';
+} from '../collab/pagesDoc.js';
+import { useCanvasHistorySetup } from '../hooks/useCanvasHistorySetup.js';
+import { useCanvasInteractions } from '../hooks/useCanvasInteractions.js';
+import { CanvasStoreProvider, useCanvasStore } from '../stores/CanvasStoreProvider.js';
+import { CANVAS_COMMANDS, commandForKey } from '../utils/canvasCommandRegistry.js';
+import { createCanvasCommands, type CanvasCommands } from '../utils/canvasCommands.js';
 
 import { readGroups, type PageGroup } from './pageGroups.js';
 
-import type { BaseCanvasState } from '@ggraphic/editor/configs/factory/baseTypes';
-import type { LayoutResult } from '@ggraphic/editor/configs/types';
-import type { CanvasEditorStoreApi } from '@ggraphic/editor/stores/createCanvasEditorStore';
-import type { CanvasItem } from '@ggraphic/editor/utils/canvasLayerManager';
+import type { BaseCanvasState } from '../configs/factory/baseTypes.js';
+import type { LayoutResult } from '../configs/types.js';
+import type { CanvasEditorStoreApi } from '../stores/createCanvasEditorStore.js';
+import type { CanvasItem } from '../utils/canvasLayerManager.js';
 
 type Text = { id: string; text: string; x: number; y: number };
 type PageState = {

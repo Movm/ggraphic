@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { useAutoSaveStore } from '@ggraphic/editor/stores/useAutoSaveStore';
-import { cn } from '@ggraphic/editor/utils/cn';
+import { useMessages } from '../../i18n/messages.js';
+import { useAutoSaveStore } from '../../stores/useAutoSaveStore.js';
+import { cn } from '../../utils/cn.js';
 import { useEffect, useState } from 'react';
 import { PiCheck, PiWarning } from 'react-icons/pi';
 

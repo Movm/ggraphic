@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 
-import { useAutoSaveStore, useAutoSaveStoreApi } from '@ggraphic/editor/stores/useAutoSaveStore';
+import { useAutoSaveStore, useAutoSaveStoreApi } from '../stores/useAutoSaveStore.js';
 
 import { useCanvasEditorServices } from '../CanvasEditorProvider.js';
 import { plainImageUrls } from '../hostServices.js';

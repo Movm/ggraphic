@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { messages } from '../i18n/messages.js';
 /**
  * Icons from a host's icon search (Iconify, say), as opposed to the sets the
  * editor bundles. A placed one is stored in the design as a COPY of its SVG

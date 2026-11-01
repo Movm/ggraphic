@@ -5,25 +5,25 @@
  * callback; a restore that only set the component state left the document
  * on the undone value, so a reload (or another client) showed it again.
  */
-import { pagePersistedStateKeys } from '@ggraphic/editor/collab/pageElementStateKeys';
-import { readPages, seedPagesIfEmpty, updatePageStateById } from '@ggraphic/editor/collab/pagesDoc';
-import { PAGES_STATE_ORIGIN } from '@ggraphic/editor/collab/useYjsPages';
-import { createPageSyncedCallbacks } from '@ggraphic/editor/collab/wrapCallbacksWithPageSync';
-import { GenericCanvas, type GenericCanvasRef } from '@ggraphic/editor/components/GenericCanvas';
-import { loadCanvasConfig } from '@ggraphic/editor/configs/configLoader';
+import { pagePersistedStateKeys } from './pageElementStateKeys.js';
+import { readPages, seedPagesIfEmpty, updatePageStateById } from './pagesDoc.js';
+import { PAGES_STATE_ORIGIN } from './useYjsPages.js';
+import { createPageSyncedCallbacks } from './wrapCallbacksWithPageSync.js';
+import { GenericCanvas, type GenericCanvasRef } from '../components/GenericCanvas.js';
+import { loadCanvasConfig } from '../configs/configLoader.js';
 import '../testing/fixtureTemplates';
-import { AutoSaveStoreProvider } from '@ggraphic/editor/stores/AutoSaveStoreProvider';
+import { AutoSaveStoreProvider } from '../stores/AutoSaveStoreProvider.js';
 
 import { act, render } from '@testing-library/react';
 import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import * as Y from 'yjs';
 
-import type * as StoreModule from '@ggraphic/editor/stores/createCanvasEditorStore';
-import type { CanvasEditorStoreApi } from '@ggraphic/editor/stores/createCanvasEditorStore';
+import type * as StoreModule from '../stores/createCanvasEditorStore.js';
+import type { CanvasEditorStoreApi } from '../stores/createCanvasEditorStore.js';
 
 const stores = vi.hoisted(() => [] as unknown[]);
-vi.mock('@ggraphic/editor/stores/createCanvasEditorStore', async (importOriginal) => {
+vi.mock('../stores/createCanvasEditorStore.js', async (importOriginal) => {
   const original = await importOriginal<typeof StoreModule>();
   return {
     ...original,

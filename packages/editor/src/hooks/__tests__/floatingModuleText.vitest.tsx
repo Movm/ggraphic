@@ -6,9 +6,9 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { useFloatingModuleState } from '@ggraphic/editor/hooks/useFloatingModuleState';
+import { useFloatingModuleState } from '../useFloatingModuleState.js';
 
-import type { FullCanvasConfig, LayoutResult } from '@ggraphic/editor/configs/types';
+import type { FullCanvasConfig, LayoutResult } from '../../configs/types.js';
 
 type State = Record<string, unknown>;
 

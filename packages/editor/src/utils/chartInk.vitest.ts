@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { CHART_INK_DARK, chartInk } from '@ggraphic/editor/utils/chartUtils';
+import { CHART_INK_DARK, chartInk } from './chartUtils.js';
 
 describe('chartInk', () => {
   it('writes white on a dark ground', () => {

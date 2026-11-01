@@ -9,10 +9,10 @@
 
 import { useState, useCallback, useEffect, useRef, type RefObject } from 'react';
 
-import { messages } from '@ggraphic/editor/i18n/messages';
-import { type ExportFormat } from '@ggraphic/editor/types/editorTypes';
-import { isDownloadTooLarge } from '@ggraphic/editor/utils/downloadError';
-import { zipPageImages } from '@ggraphic/editor/utils/zipPageImages';
+import { messages } from '../i18n/messages.js';
+import { type ExportFormat } from '../types/editorTypes.js';
+import { isDownloadTooLarge } from '../utils/downloadError.js';
+import { zipPageImages } from '../utils/zipPageImages.js';
 
 import { useCanvasEditorServices } from '../CanvasEditorProvider.js';
 import { browserFileDelivery } from '../hostServices.js';

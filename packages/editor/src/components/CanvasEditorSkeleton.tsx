@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { getCanvasFormatOrDefault } from '@ggraphic/editor/formats/index';
+import { useMessages } from '../i18n/messages.js';
+import { getCanvasFormatOrDefault } from '../formats/index.js';
 
 import type { ReactNode } from 'react';
 

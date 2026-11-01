@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { useMessages } from '../../../i18n/messages.js';
 import { useId } from 'react';
 
 import './toolTiles.css';

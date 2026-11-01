@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, it, expect } from 'vitest';
 
-import { nextPageIdAfterRemoval } from '@ggraphic/editor/hooks/usePageManager';
+import { nextPageIdAfterRemoval } from './usePageManager.js';
 
 const pages = [{ id: 'a' }, { id: 'b' }, { id: 'c' }, { id: 'd' }];
 

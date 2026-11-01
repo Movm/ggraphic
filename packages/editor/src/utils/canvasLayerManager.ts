@@ -4,13 +4,13 @@ import { ELEMENT_KINDS, hostElementKinds, kindItem, kindList } from './elementKi
 import type { AssetInstance } from './canvasAssets.js';
 import type { CanvasItem } from './canvasItem.js';
 import type { AdditionalText, CanvasElementConfig, FullCanvasConfig } from '../configs/types.js';
-import type { ChartInstance } from '@ggraphic/editor/utils/chartTypes';
-import type { CircleBadgeInstance } from '@ggraphic/editor/utils/circleBadgeUtils';
-import type { FrameInstance } from '@ggraphic/editor/utils/frameUtils';
-import type { IllustrationInstance } from '@ggraphic/editor/utils/illustrations/types';
-import type { PillBadgeInstance } from '@ggraphic/editor/utils/pillBadgeUtils';
-import type { ShapeInstance } from '@ggraphic/editor/utils/shapes';
-import type { UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import type { ChartInstance } from './chartTypes.js';
+import type { CircleBadgeInstance } from './circleBadgeUtils.js';
+import type { FrameInstance } from './frameUtils.js';
+import type { IllustrationInstance } from './illustrations/types.js';
+import type { PillBadgeInstance } from './pillBadgeUtils.js';
+import type { ShapeInstance } from './shapes.js';
+import type { UserImageInstance } from './userImageUtils.js';
 
 /**
  * Canvas Layer Manager - Utilities for managing layer ordering

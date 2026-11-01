@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { contextPressSelection } from '@ggraphic/editor/utils/deepSelect';
+import { contextPressSelection } from './deepSelect.js';
 
 describe('contextPressSelection', () => {
   it('wählt das oberste Element, wenn nichts Ausgewähltes darunter liegt', () => {

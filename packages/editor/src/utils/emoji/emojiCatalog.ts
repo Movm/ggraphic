@@ -1,9 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import {
-  emojiCodeAssetId,
-  registeredAssetCatalog,
-  type UniversalAsset,
-} from '@ggraphic/editor/utils/canvasAssets';
+import { emojiCodeAssetId, registeredAssetCatalog, type UniversalAsset } from '../canvasAssets.js';
 
 import { messageLocale, type MessageLocale } from '../../i18n/messages.js';
 

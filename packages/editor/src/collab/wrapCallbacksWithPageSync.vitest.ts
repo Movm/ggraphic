@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, it, expect, vi } from 'vitest';
 
-import { createPageSyncedCallbacks } from '@ggraphic/editor/collab/wrapCallbacksWithPageSync';
+import { createPageSyncedCallbacks } from './wrapCallbacksWithPageSync.js';
 
 describe('createPageSyncedCallbacks', () => {
   it('dual-writes on<Key>Change callbacks into page state with the lowercased key', () => {

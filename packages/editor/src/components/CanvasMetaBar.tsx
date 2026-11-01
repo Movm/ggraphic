@@ -8,7 +8,7 @@ import {
   PiMagnifyingGlassPlus,
 } from 'react-icons/pi';
 
-import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { useMessages } from '../i18n/messages.js';
 
 interface CanvasMetaBarProps {
   pageCount: number;

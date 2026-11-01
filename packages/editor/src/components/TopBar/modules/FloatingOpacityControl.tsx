@@ -3,9 +3,9 @@ import { Slider } from 'radix-ui';
 import React from 'react';
 import { PiCheckerboard } from 'react-icons/pi';
 
-import { TILE, TileCaption, useBarTiles } from '@ggraphic/editor/components/TopBar/barTiles';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { Popover, PopoverContent, PopoverTrigger } from '@ggraphic/editor/ui/popover';
+import { TILE, TileCaption, useBarTiles } from '../barTiles.js';
+import { useMessages } from '../../../i18n/messages.js';
+import { Popover, PopoverContent, PopoverTrigger } from '../../../ui/popover.js';
 
 interface FloatingOpacityControlProps {
   opacity: number;

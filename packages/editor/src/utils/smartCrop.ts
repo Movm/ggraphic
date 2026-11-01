@@ -2,13 +2,10 @@
 // „Automatisch": smartcrop schlägt den interessantesten Ausschnitt vor; hier wird er zu Pan/Zoom.
 // Ausschnitt und Zoom: immer der kleinste erlaubte Zoom, ungedreht, auf Deckung.
 
-import { photoRectAround, type Rect, type Size } from '@ggraphic/editor/utils/coverFit';
-import { CANVAS_ITEM_NAME } from '@ggraphic/editor/utils/deepSelect';
-import { BACKGROUND_STRAIGHTEN_KEY, backgroundStraighten } from '@ggraphic/editor/utils/straighten';
-import {
-  USER_PHOTO_NODE_NAME,
-  type UserImageInstance,
-} from '@ggraphic/editor/utils/userImageUtils';
+import { photoRectAround, type Rect, type Size } from './coverFit.js';
+import { CANVAS_ITEM_NAME } from './deepSelect.js';
+import { BACKGROUND_STRAIGHTEN_KEY, backgroundStraighten } from './straighten.js';
+import { USER_PHOTO_NODE_NAME, type UserImageInstance } from './userImageUtils.js';
 
 import { backgroundCropConfig, userImageOf, type CropUpdate } from './cropTarget.js';
 import { BACKGROUND_IMAGE_NODE_ID } from './printImageInfo.js';

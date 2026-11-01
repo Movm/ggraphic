@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MPL-2.0
 import React from 'react';
 
-import { effectsFor } from '@ggraphic/editor/sidebar/sections/effects/effectsFor';
-import { GradientSettings } from '@ggraphic/editor/sidebar/sections/effects/GradientSettings';
-import { OutlineSettings } from '@ggraphic/editor/sidebar/sections/effects/OutlineSettings';
-import { ShadowSettings } from '@ggraphic/editor/sidebar/sections/effects/ShadowSettings';
-import { SIDEBAR_SECTION } from '@ggraphic/editor/sidebar/sidebarStyles';
+import { effectsFor } from './effects/effectsFor.js';
+import { GradientSettings } from './effects/GradientSettings.js';
+import { OutlineSettings } from './effects/OutlineSettings.js';
+import { ShadowSettings } from './effects/ShadowSettings.js';
+import { SIDEBAR_SECTION } from '../sidebarStyles.js';
 
-import type { ShadowPatch } from '@ggraphic/editor/hooks/useFloatingModuleHandlers';
-import type { FloatingModuleState } from '@ggraphic/editor/hooks/useFloatingModuleState';
-import type { GradientFill } from '@ggraphic/editor/utils/gradientFill';
+import type { ShadowPatch } from '../../hooks/useFloatingModuleHandlers.js';
+import type { FloatingModuleState } from '../../hooks/useFloatingModuleState.js';
+import type { GradientFill } from '../../utils/gradientFill.js';
 
 export interface EffectsSectionProps {
   module: FloatingModuleState | null;

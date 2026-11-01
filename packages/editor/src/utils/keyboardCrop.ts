@@ -8,8 +8,8 @@ import {
   zoomWindow,
   type Rect,
   type Size,
-} from '@ggraphic/editor/utils/coverFit';
-import { isWidgetOwnedKey } from '@ggraphic/editor/utils/keyboardOwnership';
+} from './coverFit.js';
+import { isWidgetOwnedKey } from './keyboardOwnership.js';
 import {
   minStraightenZoom,
   panOfStraightPhoto,
@@ -17,7 +17,7 @@ import {
   straightFramedPhoto,
   windowPhotoOfStraight,
   zoomStraightPhoto,
-} from '@ggraphic/editor/utils/straighten';
+} from './straighten.js';
 
 import type { UserImageInstance } from './userImageUtils.js';
 

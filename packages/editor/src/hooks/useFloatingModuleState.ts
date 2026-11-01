@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useMemo, useRef } from 'react';
 
-import { templateTextAlignOf, type TextAlign } from '@ggraphic/editor/utils/textAlign';
+import { templateTextAlignOf, type TextAlign } from '../utils/textAlign.js';
 
 import { canCropBackgroundPhoto } from '../utils/backgroundPhotoCrop.js';
 import { resolveValue } from '../utils/canvasValueResolver.js';
@@ -17,8 +17,8 @@ import { effectiveAccent, effectiveMarker } from '../utils/textUtils.js';
 import type { FullCanvasConfig, LayoutResult } from '../configs/types.js';
 import type { HostElementKindName } from '../utils/canvasItem.js';
 import type { Bindings } from '@ggraphic/core';
-import type { StockImageAttribution } from '@ggraphic/editor/common/imageSourceTypes';
-import type { GradientFill } from '@ggraphic/editor/utils/gradientFill';
+import type { StockImageAttribution } from '../common/imageSourceTypes.js';
+import type { GradientFill } from '../utils/gradientFill.js';
 
 /**
  * Floating Module State - Determines active floating toolbar module

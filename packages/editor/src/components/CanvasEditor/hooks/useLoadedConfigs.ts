@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useEffect, useState } from 'react';
 
-import type { FullCanvasConfig } from '@ggraphic/editor/configs/types';
+import type { FullCanvasConfig } from '../../../configs/types.js';
 
 interface UseLoadedConfigsParams<TConfigId extends string> {
   pages: Array<{ configId: TConfigId }>;

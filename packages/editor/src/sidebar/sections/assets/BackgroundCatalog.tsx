@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
+import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
 import {
   plainImageUrls,
   type CanvasStudioAssetItem,
   type CanvasStudioAssetScope,
-} from '@ggraphic/editor/hostServices';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { registeredAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
-import { fetchShareImageFile } from '@ggraphic/editor/utils/mediaPlacement';
+} from '../../../hostServices.js';
+import { useMessages } from '../../../i18n/messages.js';
+import { registeredAssetCatalog } from '../../../utils/canvasAssets.js';
+import { fetchShareImageFile } from '../../../utils/mediaPlacement.js';
 import { useRef, useState } from 'react';
 
 import { GalleryTabs, StudioGalleryGrid, useGalleryScopes } from '../StudioGallery.js';
 
-import type { BackgroundControls } from '@ggraphic/editor/configs/types';
+import type { BackgroundControls } from '../../../configs/types.js';
 
 type ImageChange = NonNullable<BackgroundControls['onImageChange']>;
 

@@ -5,12 +5,12 @@
  * selection-chrome aus), jenseits der Bühne zeichnet ihn `CropGhostOverlay`.
  * Es ist nur im Modus da und folgt Pan und Zoom, beim Ziehen ohne React-Zustand.
  */
-import { GenericCanvas, type GenericCanvasRef } from '@ggraphic/editor/components/GenericCanvas';
-import { loadCanvasConfig } from '@ggraphic/editor/configs/configLoader';
+import { GenericCanvas, type GenericCanvasRef } from '../GenericCanvas.js';
+import { loadCanvasConfig } from '../../configs/configLoader.js';
 import '../../testing/fixtureTemplates';
-import { AutoSaveStoreProvider } from '@ggraphic/editor/stores/AutoSaveStoreProvider';
-import { withSelectionChromeHidden } from '@ggraphic/editor/utils/captureStage';
-import { CROP_GHOST_NAME, paintCropGhosts } from '@ggraphic/editor/utils/cropGhost';
+import { AutoSaveStoreProvider } from '../../stores/AutoSaveStoreProvider.js';
+import { withSelectionChromeHidden } from '../../utils/captureStage.js';
+import { CROP_GHOST_NAME, paintCropGhosts } from '../../utils/cropGhost.js';
 
 import { createCanvas } from '@napi-rs/canvas';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
@@ -18,12 +18,12 @@ import Konva from 'konva';
 import { createRef } from 'react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type * as StoreModule from '@ggraphic/editor/stores/createCanvasEditorStore';
-import type { CanvasEditorStoreApi } from '@ggraphic/editor/stores/createCanvasEditorStore';
-import type { UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import type * as StoreModule from '../../stores/createCanvasEditorStore.js';
+import type { CanvasEditorStoreApi } from '../../stores/createCanvasEditorStore.js';
+import type { UserImageInstance } from '../../utils/userImageUtils.js';
 
 const stores = vi.hoisted(() => [] as unknown[]);
-vi.mock('@ggraphic/editor/stores/createCanvasEditorStore', async (importOriginal) => {
+vi.mock('../../stores/createCanvasEditorStore.js', async (importOriginal) => {
   const original = await importOriginal<typeof StoreModule>();
   return {
     ...original,

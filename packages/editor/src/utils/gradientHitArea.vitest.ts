@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { type GradientFill } from '@ggraphic/editor/utils/gradientFill';
-import {
-  alphaBands,
-  alphaIntervals,
-  translucentHitFunc,
-} from '@ggraphic/editor/utils/gradientHitArea';
+import { type GradientFill } from './gradientFill.js';
+import { alphaBands, alphaIntervals, translucentHitFunc } from './gradientHitArea.js';
 
 const linear = (angle: number, ...colors: [number, string][]): GradientFill => ({
   type: 'linear',

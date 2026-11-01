@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { buildCanvasItems, type CanvasItem } from '@ggraphic/editor/utils/canvasLayerManager';
+import { buildCanvasItems, type CanvasItem } from './canvasLayerManager.js';
 import {
   DUPLICABLE_TYPES,
   canDuplicateElement,
   duplicateElementInState,
   insertInstance,
   type DuplicableType,
-} from '@ggraphic/editor/utils/duplicateElement';
+} from './duplicateElement.js';
 
-import type { BaseCanvasState } from '@ggraphic/editor/configs/factory/baseTypes';
-import type { FullCanvasConfig } from '@ggraphic/editor/configs/types';
+import type { BaseCanvasState } from '../configs/factory/baseTypes.js';
+import type { FullCanvasConfig } from '../configs/types.js';
 
 /**
  * Ein Zustand mit genau einem Eintrag je Instanz-Sammlung. Die Felder sind so

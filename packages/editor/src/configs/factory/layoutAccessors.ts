@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import type { LayoutElementResult, PositionValue } from '@ggraphic/editor/configs/types';
+import type { LayoutElementResult, PositionValue } from '../types.js';
 
 type LayoutNumericField = keyof LayoutElementResult;
 

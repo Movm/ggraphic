@@ -9,19 +9,19 @@ import { createRef } from 'react';
 import { Group } from 'react-konva';
 import { describe, expect, it } from 'vitest';
 
-import { MultiSelectionTransformer } from '@ggraphic/editor/components/MultiSelectionTransformer';
-import { useCanvasInteractions } from '@ggraphic/editor/hooks/useCanvasInteractions';
-import { useContextPress } from '@ggraphic/editor/hooks/useContextPress';
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
-import { ShapePrimitive } from '@ggraphic/editor/primitives/ShapePrimitive';
+import { MultiSelectionTransformer } from '../../components/MultiSelectionTransformer.js';
+import { useCanvasInteractions } from '../useCanvasInteractions.js';
+import { useContextPress } from '../useContextPress.js';
+import { CanvasStage, type CanvasStageRef } from '../../primitives/CanvasStage.js';
+import { ShapePrimitive } from '../../primitives/ShapePrimitive.js';
 import {
   CanvasStoreProvider,
   useCanvasStore,
   useCanvasStoreSelector,
-} from '@ggraphic/editor/stores/CanvasStoreProvider';
-import { createShape, type ShapeInstance } from '@ggraphic/editor/utils/shapes';
+} from '../../stores/CanvasStoreProvider.js';
+import { createShape, type ShapeInstance } from '../../utils/shapes.js';
 
-import type { CanvasEditorStoreApi } from '@ggraphic/editor/stores/createCanvasEditorStore';
+import type { CanvasEditorStoreApi } from '../../stores/createCanvasEditorStore.js';
 
 const box = (id: string, x: number, y: number): ShapeInstance => ({
   ...createShape('rect', x, y, '#888888', '#888888'),

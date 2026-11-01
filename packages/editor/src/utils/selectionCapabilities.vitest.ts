@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: MPL-2.0
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import {
-  registerElementKind,
-  type ElementKindRegistration,
-} from '@ggraphic/editor/utils/elementKinds';
-import { selectionCapabilities } from '@ggraphic/editor/utils/selectionCapabilities';
+import { registerElementKind, type ElementKindRegistration } from './elementKinds.js';
+import { selectionCapabilities } from './selectionCapabilities.js';
 
-import type { CanvasItem } from '@ggraphic/editor/utils/canvasLayerManager';
+import type { CanvasItem } from './canvasLayerManager.js';
 
 const renderList = [
   { id: 'headline', type: 'element', data: { id: 'headline', type: 'text', editable: true } },

@@ -24,8 +24,8 @@ import {
   PiTriangleFill,
 } from 'react-icons/pi';
 
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { activeBrand } from '../brand/brandRegistry.js';
+import { messages } from '../i18n/messages.js';
 
 import type { IconType } from 'react-icons';
 

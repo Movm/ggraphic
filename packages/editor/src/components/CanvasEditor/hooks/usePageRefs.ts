@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import React, { useMemo, useRef } from 'react';
 
-import type { GenericCanvasRef } from '@ggraphic/editor/components/GenericCanvas';
+import type { GenericCanvasRef } from '../../GenericCanvas.js';
 
 export interface PageRefs {
   /** One GenericCanvas ref per page (imperative handle). */

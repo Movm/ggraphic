@@ -12,7 +12,7 @@ import {
   renameChartSeries,
   setChartValue,
   type ChartInstance,
-} from '@ggraphic/editor/utils/chartUtils';
+} from './chartUtils.js';
 
 const base = (): ChartInstance => ({
   ...createChartInstance('bar', 1920, 1080),

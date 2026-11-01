@@ -3,15 +3,15 @@ import {
   buildCanvasItems,
   buildSortedRenderList,
   type CanvasItem,
-} from '@ggraphic/editor/utils/canvasLayerManager';
-import { hostElementKind } from '@ggraphic/editor/utils/elementKinds';
-import { isLayerLocked } from '@ggraphic/editor/utils/layerLock';
-import { isComposerPlane } from '@ggraphic/editor/utils/shapes';
+} from '../utils/canvasLayerManager.js';
+import { hostElementKind } from '../utils/elementKinds.js';
+import { isLayerLocked } from '../utils/layerLock.js';
+import { isComposerPlane } from '../utils/shapes.js';
 
-import type { BaseCanvasState } from '@ggraphic/editor/configs/factory/baseTypes';
-import type { FullCanvasConfig } from '@ggraphic/editor/configs/types';
-import type { HostCanvasAiSnapshot } from '@ggraphic/editor/ai/types';
-import type { HostElementKindName } from '@ggraphic/editor/utils/canvasItem';
+import type { BaseCanvasState } from '../configs/factory/baseTypes.js';
+import type { FullCanvasConfig } from '../configs/types.js';
+import type { HostCanvasAiSnapshot } from './types.js';
+import type { HostElementKindName } from '../utils/canvasItem.js';
 
 type HostEntry = HostCanvasAiSnapshot['elementsSummary'][number];
 // A host kind is named by its registration; the core's snapshot schema leaves

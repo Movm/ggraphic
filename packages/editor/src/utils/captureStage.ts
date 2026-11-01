@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
-import { CANVAS_ITEM_NAME } from '@ggraphic/editor/utils/deepSelect';
+import { CANVAS_ITEM_NAME } from './deepSelect.js';
 
 import type { CanvasStageRef } from '../primitives/CanvasStage.js';
-import type { ExportOptions } from '@ggraphic/editor/types/editorTypes';
+import type { ExportOptions } from '../types/editorTypes.js';
 import type Konva from 'konva';
 
 /** Konva node name of what the editor shows but no export contains. */

@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  applyPixelHitArea,
-  HIT_ALPHA_THRESHOLD,
-  hitCacheRatios,
-} from '@ggraphic/editor/utils/pixelHitArea';
+import { applyPixelHitArea, HIT_ALPHA_THRESHOLD, hitCacheRatios } from './pixelHitArea.js';
 
 import type Konva from 'konva';
 

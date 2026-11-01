@@ -11,7 +11,7 @@
 
 import { type BrandPack } from '@ggraphic/core';
 
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { activeBrand } from '../../brand/brandRegistry.js';
 
 import { registeredAssetCatalog } from '../canvasAssets.js';
 
@@ -21,7 +21,7 @@ import type {
   IllustrationDef,
   IllustrationInstance,
   KawaiiIllustrationType,
-} from '@ggraphic/editor/utils/illustrations/types';
+} from './types.js';
 
 // Re-export types and constants for convenience
 export type {
@@ -33,9 +33,9 @@ export type {
   SvgInstance,
   KawaiiMood,
   KawaiiIllustrationType,
-} from '@ggraphic/editor/utils/illustrations/types';
+} from './types.js';
 
-export { KAWAII_MOODS } from '@ggraphic/editor/utils/illustrations/types';
+export { KAWAII_MOODS } from './types.js';
 
 // =============================================================================
 // HOST SOURCES

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MPL-2.0
-import { messages } from '@ggraphic/editor/i18n/messages';
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { plainAssetImageUrls, registeredAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
+import { messages } from '../../../i18n/messages.js';
+import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
+import { plainAssetImageUrls, registeredAssetCatalog } from '../../../utils/canvasAssets.js';
 import { useQuery, type QueryClient } from '@tanstack/react-query';
 
 import type { ElementItem } from './elementTypes.js';
-import type { StockImage, StockImageAttribution } from '@ggraphic/editor/common/imageSourceTypes';
+import type { StockImage, StockImageAttribution } from '../../../common/imageSourceTypes.js';
 
 const STOCK_PHOTOS_QUERY_KEY = ['canvas', 'stock-photos'] as const;
 

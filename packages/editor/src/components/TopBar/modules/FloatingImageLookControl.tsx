@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { useMessages } from '../../../i18n/messages.js';
 import {
   currentImageLook,
   IMAGE_LOOK_IDS,
   type ImageLookId,
   type LookFields,
-} from '@ggraphic/editor/utils/imageLook';
+} from '../../../utils/imageLook.js';
 import React from 'react';
 
 interface FloatingImageLookControlProps {

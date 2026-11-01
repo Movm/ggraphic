@@ -1,20 +1,16 @@
 // SPDX-License-Identifier: MPL-2.0
 import { type BindingRef, type BrandPack } from '@ggraphic/core';
 import type { CanvasStageRef } from '../primitives/CanvasStage.js';
-import type { HostCanvasAiCapabilities } from '@ggraphic/editor/ai/types';
-import type { StockImageAttribution } from '@ggraphic/editor/common/imageSourceTypes';
-import type { BackgroundType, TextFieldConfig } from '@ggraphic/editor/configs/unifiedTabs';
+import type { HostCanvasAiCapabilities } from '../ai/types.js';
+import type { StockImageAttribution } from '../common/imageSourceTypes.js';
+import type { BackgroundType, TextFieldConfig } from './unifiedTabs.js';
 import type {
   AltTextPage,
   AltTextScope,
   CanvasSpecEditBridge,
   HeterogeneousPage,
-} from '@ggraphic/editor/editorSeamTypes';
-import type {
-  BackgroundColorOption,
-  SidebarTabId,
-  SidebarTab,
-} from '@ggraphic/editor/sidebar/tabTypes';
+} from '../editorSeamTypes.js';
+import type { BackgroundColorOption, SidebarTabId, SidebarTab } from '../sidebar/tabTypes.js';
 
 export { type AdditionalText, type FontWeight } from '@ggraphic/core';
 

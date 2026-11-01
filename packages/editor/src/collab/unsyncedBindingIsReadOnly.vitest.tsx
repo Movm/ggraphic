@@ -7,10 +7,10 @@ import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import * as Y from 'yjs';
 
-import { useYjsCanvasBinding } from '@ggraphic/editor/collab/useYjsCanvasBinding';
-import { CanvasStoreProvider, useCanvasStore } from '@ggraphic/editor/stores/CanvasStoreProvider';
+import { useYjsCanvasBinding } from './useYjsCanvasBinding.js';
+import { CanvasStoreProvider, useCanvasStore } from '../stores/CanvasStoreProvider.js';
 
-import type { CanvasEditorStoreApi } from '@ggraphic/editor/stores/createCanvasEditorStore';
+import type { CanvasEditorStoreApi } from '../stores/createCanvasEditorStore.js';
 
 let captured: CanvasEditorStoreApi | null = null;
 

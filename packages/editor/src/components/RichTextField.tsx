@@ -41,10 +41,10 @@ import { Placeholder, UndoRedo } from '@tiptap/extensions';
 import { EditorContent, useEditor, type Editor } from '@tiptap/react';
 import { useEffect, useRef, type CSSProperties } from 'react';
 
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { Accent } from '@ggraphic/editor/components/accentMark';
-import { messages } from '@ggraphic/editor/i18n/messages';
-import { keepsEditing } from '@ggraphic/editor/utils/keyboardOwnership';
+import { useDocumentBrand } from '../brand/documentBrand.js';
+import { Accent } from './accentMark.js';
+import { messages } from '../i18n/messages.js';
+import { keepsEditing } from '../utils/keyboardOwnership.js';
 
 import { Marker } from './markerMark.js';
 import { formatToolbarOf, TextFormatControls, type OfferedMarks } from './TextFormatControls.js';

@@ -5,8 +5,8 @@ import Konva from 'konva';
 import { createRef } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CanvasImage } from '@ggraphic/editor/primitives/CanvasImage';
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
+import { CanvasImage } from '../CanvasImage.js';
+import { CanvasStage, type CanvasStageRef } from '../CanvasStage.js';
 
 beforeEach(() => {
   vi.spyOn(Konva.Image.prototype, 'cache').mockReturnThis();

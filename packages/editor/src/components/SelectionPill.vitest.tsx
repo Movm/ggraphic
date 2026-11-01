@@ -1,14 +1,10 @@
 // SPDX-License-Identifier: MPL-2.0
-import {
-  SelectionPill,
-  type SelectionPillProps,
-  placePill,
-} from '@ggraphic/editor/components/SelectionPill';
+import { SelectionPill, type SelectionPillProps, placePill } from './SelectionPill.js';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { messages } from '../i18n/messages.js';
 
 /**
  * Die Pille steht über dem ausgewählten Objekt (darunter, wenn oben kein

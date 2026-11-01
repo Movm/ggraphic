@@ -8,10 +8,10 @@ import { act, render } from '@testing-library/react';
 import { useCallback, useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { useCanvasHistorySetup } from '@ggraphic/editor/hooks/useCanvasHistorySetup';
-import { CanvasStoreProvider, useCanvasStore } from '@ggraphic/editor/stores/CanvasStoreProvider';
+import { useCanvasHistorySetup } from '../useCanvasHistorySetup.js';
+import { CanvasStoreProvider, useCanvasStore } from '../../stores/CanvasStoreProvider.js';
 
-import type { CanvasEditorStoreApi } from '@ggraphic/editor/stores/createCanvasEditorStore';
+import type { CanvasEditorStoreApi } from '../../stores/createCanvasEditorStore.js';
 
 type S = { n: number };
 

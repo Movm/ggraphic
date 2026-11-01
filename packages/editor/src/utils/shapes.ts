@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 import { type BrandPack, type ShapeInstance, type ShapeType } from '@ggraphic/core';
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { messages } from '../i18n/messages.js';
 
 import { defaultMarkerFill } from './markerColors.js';
 

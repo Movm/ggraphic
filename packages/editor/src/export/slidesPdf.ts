@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { messages } from '../i18n/messages.js';
 /**
  * PDF eines digitalen Folien-Decks: eine PDF-Seite je Folie, 16:9, das
  * gerasterte PNG füllt die Seite. Kein Beschnitt, keine Schnittmarken.

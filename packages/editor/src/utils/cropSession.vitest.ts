@@ -6,10 +6,10 @@ import {
   cropRotationUpdate,
   restoreCropSnapshot,
   takeCropSnapshot,
-} from '@ggraphic/editor/utils/cropSession';
+} from './cropSession.js';
 
-import type { CanvasElementConfig } from '@ggraphic/editor/configs/types';
-import type { UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import type { CanvasElementConfig } from '../configs/types.js';
+import type { UserImageInstance } from './userImageUtils.js';
 
 const elements: CanvasElementConfig[] = [
   {

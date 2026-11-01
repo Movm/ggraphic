@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { TOUCH_TAP_SLOP } from '@ggraphic/editor/utils/touchInput';
+import { TOUCH_TAP_SLOP } from '../../../utils/touchInput.js';
 import { useCallback, useEffect, useRef } from 'react';
 
 /**

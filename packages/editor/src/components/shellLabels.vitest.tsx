@@ -2,10 +2,10 @@
 import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { layersTab } from '@ggraphic/editor/components/CanvasEditor/layersTab';
-import { DownloadSection } from '@ggraphic/editor/components/TopBar/DownloadSection';
-import { shareTab } from '@ggraphic/editor/configs/shareSection';
-import { messages, registerMessages } from '@ggraphic/editor/i18n/messages';
+import { layersTab } from './CanvasEditor/layersTab.js';
+import { DownloadSection } from './TopBar/DownloadSection.js';
+import { shareTab } from '../configs/shareSection.js';
+import { messages, registerMessages } from '../i18n/messages.js';
 
 import { AddPageButton } from './AddPageButton.js';
 import { CanvasMetaBar } from './CanvasMetaBar.js';

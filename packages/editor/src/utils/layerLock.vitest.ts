@@ -1,19 +1,13 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import {
-  isLockable,
-  isLayerLocked,
-  lockedIdsOf,
-  lockStateOf,
-  toggledLocks,
-} from '@ggraphic/editor/utils/layerLock';
-import { findElementRemover } from '@ggraphic/editor/utils/removeElement';
-import { selectionCapabilities } from '@ggraphic/editor/utils/selectionCapabilities';
+import { isLockable, isLayerLocked, lockedIdsOf, lockStateOf, toggledLocks } from './layerLock.js';
+import { findElementRemover } from './removeElement.js';
+import { selectionCapabilities } from './selectionCapabilities.js';
 
-import type { BaseCanvasState } from '@ggraphic/editor/configs/factory/baseTypes';
-import type { CanvasElementConfig } from '@ggraphic/editor/configs/types';
-import type { CanvasItem } from '@ggraphic/editor/utils/canvasLayerManager';
+import type { BaseCanvasState } from '../configs/factory/baseTypes.js';
+import type { CanvasElementConfig } from '../configs/types.js';
+import type { CanvasItem } from './canvasLayerManager.js';
 
 const element = (id: string, extra: Record<string, unknown>): CanvasItem => ({
   id,

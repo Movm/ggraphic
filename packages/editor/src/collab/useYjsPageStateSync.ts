@@ -2,7 +2,7 @@
 import { useEffect, useRef } from 'react';
 import * as Y from 'yjs';
 
-import { YDOC_KEYS } from '@ggraphic/editor/collab/ydocKeys';
+import { YDOC_KEYS } from './ydocKeys.js';
 
 import { PAGES_STATE_ORIGIN } from './useYjsPages.js';
 

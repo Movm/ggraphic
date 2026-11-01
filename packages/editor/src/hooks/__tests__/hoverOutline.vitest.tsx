@@ -12,7 +12,7 @@ import { createRef } from 'react';
 import { Group, Rect } from 'react-konva';
 import { describe, expect, it, vi } from 'vitest';
 
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
+import { CanvasStage, type CanvasStageRef } from '../../primitives/CanvasStage.js';
 
 function mount(listening = true) {
   const stageRef = createRef<CanvasStageRef>();

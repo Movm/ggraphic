@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { cn } from '@ggraphic/editor/utils/cn';
+import { useMessages } from '../i18n/messages.js';
+import { cn } from '../utils/cn.js';
 import { memo, useCallback } from 'react';
 
-import { AutoSaveIndicator } from '@ggraphic/editor/components/TopBar/AutoSaveIndicator';
-import { useIsCanvasMobile } from '@ggraphic/editor/hooks/useIsCanvasMobile';
+import { AutoSaveIndicator } from '../components/TopBar/AutoSaveIndicator.js';
+import { useIsCanvasMobile } from '../hooks/useIsCanvasMobile.js';
 
-import { SIDEBAR_PANEL_ID } from '@ggraphic/editor/sidebar/sidebarStyles';
+import { SIDEBAR_PANEL_ID } from './sidebarStyles.js';
 
-import type { SidebarTabBarProps, SidebarTabId, SidebarTab } from '@ggraphic/editor/sidebar/types';
+import type { SidebarTabBarProps, SidebarTabId, SidebarTab } from './types.js';
 
 interface TabButtonProps {
   tab: SidebarTab;

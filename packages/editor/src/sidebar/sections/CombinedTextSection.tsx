@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { messages, useMessages } from '@ggraphic/editor/i18n/messages';
-import { cn } from '@ggraphic/editor/utils/cn';
+import { useDocumentBrand } from '../../brand/documentBrand.js';
+import { messages, useMessages } from '../../i18n/messages.js';
+import { cn } from '../../utils/cn.js';
 import { PiPlusBold, PiTextAa, PiTextHBold, PiTrash } from 'react-icons/pi';
 
-import { useIsCanvasMobile } from '@ggraphic/editor/hooks/useIsCanvasMobile';
-import { SidebarHint } from '@ggraphic/editor/sidebar/components/SidebarHint';
-import { TextField } from '@ggraphic/editor/sidebar/components/TextFieldPrimitives';
-import { MOBILE_INPUT_TEXT, SIDEBAR_SECTION } from '@ggraphic/editor/sidebar/sidebarStyles';
+import { useIsCanvasMobile } from '../../hooks/useIsCanvasMobile.js';
+import { SidebarHint } from '../components/SidebarHint.js';
+import { TextField } from '../components/TextFieldPrimitives.js';
+import { MOBILE_INPUT_TEXT, SIDEBAR_SECTION } from '../sidebarStyles.js';
 
-import type { AdditionalText } from '@ggraphic/editor/configs/types';
-import type { TextFieldConfig } from '@ggraphic/editor/configs/unifiedTabs';
+import type { AdditionalText } from '../../configs/types.js';
+import type { TextFieldConfig } from '../../configs/unifiedTabs.js';
 
 export interface CombinedTextSectionProps {
   onAddHeader?: () => void;

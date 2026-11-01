@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MPL-2.0
-import { BarTilesProvider } from '@ggraphic/editor/components/TopBar/barTiles';
-import { ContextControls } from '@ggraphic/editor/components/TopBar/ContextControls';
+import { BarTilesProvider } from './barTiles.js';
+import { ContextControls } from './ContextControls.js';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { messages } from '../../i18n/messages.js';
 import { axe } from '../../test-utils';
 
-import type { FloatingModuleState } from '@ggraphic/editor/hooks/useFloatingModuleState';
+import type { FloatingModuleState } from '../../hooks/useFloatingModuleState.js';
 
 /**
  * Mobil stehen die Werkzeuge der Auswahl als Kacheln: Icon oben, Wort darunter.

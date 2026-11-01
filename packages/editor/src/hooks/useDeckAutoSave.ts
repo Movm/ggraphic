@@ -2,9 +2,9 @@
 import { stampDocument } from '@ggraphic/schema';
 import { useEffect, useRef, useCallback } from 'react';
 
-import { serializeDeck, type SerializedPage } from '@ggraphic/editor/collab/pagesDoc';
-import { messages } from '@ggraphic/editor/i18n/messages';
-import { useAutoSaveStore, useAutoSaveStoreApi } from '@ggraphic/editor/stores/useAutoSaveStore';
+import { serializeDeck, type SerializedPage } from '../collab/pagesDoc.js';
+import { messages } from '../i18n/messages.js';
+import { useAutoSaveStore, useAutoSaveStoreApi } from '../stores/useAutoSaveStore.js';
 
 import { useCanvasEditorServices } from '../CanvasEditorProvider.js';
 

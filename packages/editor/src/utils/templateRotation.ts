@@ -12,7 +12,7 @@
  * `BACKGROUND_IMAGE_NODE_ID` ist `'background-image'`.
  */
 
-import { normalizeRotation } from '@ggraphic/editor/utils/orientation';
+import { normalizeRotation } from './orientation.js';
 
 import { resolveValue } from './canvasValueResolver.js';
 import { BACKGROUND_IMAGE_NODE_ID } from './printImageInfo.js';

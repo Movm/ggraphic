@@ -8,12 +8,12 @@ import { act, render, renderHook } from '@testing-library/react';
 import { Layer, Stage } from 'react-konva';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useSnapScheduler } from '@ggraphic/editor/hooks/useSnapScheduler';
-import { SnapGuidelines } from '@ggraphic/editor/primitives/SnapGuidelines';
-import { CanvasStoreProvider, useCanvasStore } from '@ggraphic/editor/stores/CanvasStoreProvider';
+import { useSnapScheduler } from '../useSnapScheduler.js';
+import { SnapGuidelines } from '../../primitives/SnapGuidelines.js';
+import { CanvasStoreProvider, useCanvasStore } from '../../stores/CanvasStoreProvider.js';
 
-import type { CanvasEditorStoreApi } from '@ggraphic/editor/stores/createCanvasEditorStore';
-import type { SnapLine } from '@ggraphic/editor/utils/snapping';
+import type { CanvasEditorStoreApi } from '../../stores/createCanvasEditorStore.js';
+import type { SnapLine } from '../../utils/snapping.js';
 import type Konva from 'konva';
 
 const elementLine: SnapLine = { orientation: 'vertical', position: 300, start: 0, end: 100 };

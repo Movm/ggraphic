@@ -6,7 +6,7 @@
 import { layoutRichTextBlock, type MeasureRun } from '@ggraphic/schema';
 import { describe, it, expect } from 'vitest';
 
-import { markerBoxes } from '@ggraphic/editor/utils/markerBoxes';
+import { markerBoxes } from '../markerBoxes.js';
 
 const measure: MeasureRun = (text) => text.length * 10;
 const marker = { fill: '#FFFFFF', color: '#1D3557', padX: 0.2, padY: 0 };

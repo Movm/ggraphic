@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { messages } from '../i18n/messages.js';
 /**
  * Applies a canvas-AI operation to the active template's actions.
  *
@@ -16,22 +16,22 @@ import { messages } from '@ggraphic/editor/i18n/messages';
  *   - Each op is wrapped in try/catch so one bad op in a multi-op
  *     suggestion doesn't abort the rest.
  */
-import { isLayerLocked } from '@ggraphic/editor/utils/layerLock';
-import { findHostInstance, kindAction } from '@ggraphic/editor/utils/elementKinds';
-import { findElementRemover } from '@ggraphic/editor/utils/removeElement';
-import { type ShapeInstance } from '@ggraphic/editor/utils/shapes';
+import { isLayerLocked } from '../utils/layerLock.js';
+import { findHostInstance, kindAction } from '../utils/elementKinds.js';
+import { findElementRemover } from '../utils/removeElement.js';
+import { type ShapeInstance } from '../utils/shapes.js';
 import {
   type CanvasAiUpdatePatch,
   type CoreCanvasAiOperation,
   isCoreCanvasAiOperation,
 } from '@ggraphic/schema';
 
-import type { ApplyResult, TemplateAiCapabilities } from '@ggraphic/editor/ai/types';
-import type { BaseCanvasState } from '@ggraphic/editor/configs/factory/baseTypes';
-import type { AdditionalText } from '@ggraphic/editor/configs/types';
-import type { CircleBadgeInstance } from '@ggraphic/editor/primitives/CircleBadge';
-import type { FrameInstance } from '@ggraphic/editor/utils/frameUtils';
-import type { PillBadgeInstance } from '@ggraphic/editor/utils/pillBadgeUtils';
+import type { ApplyResult, TemplateAiCapabilities } from './types.js';
+import type { BaseCanvasState } from '../configs/factory/baseTypes.js';
+import type { AdditionalText } from '../configs/types.js';
+import type { CircleBadgeInstance } from '../primitives/CircleBadge.js';
+import type { FrameInstance } from '../utils/frameUtils.js';
+import type { PillBadgeInstance } from '../utils/pillBadgeUtils.js';
 
 export type { ApplyResult };
 

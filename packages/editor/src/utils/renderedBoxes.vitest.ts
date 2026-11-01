@@ -2,28 +2,22 @@
 import Konva from 'konva';
 import { describe, expect, it } from 'vitest';
 
-import {
-  chartBox,
-  frameBox,
-  illustrationBox,
-  shapeBox,
-  userImageBox,
-} from '@ggraphic/editor/utils/renderedBoxes';
-import { PATH_OFFSETS, PATH_VIEWBOX } from '@ggraphic/editor/utils/shapeTransform';
+import { chartBox, frameBox, illustrationBox, shapeBox, userImageBox } from './renderedBoxes.js';
+import { PATH_OFFSETS, PATH_VIEWBOX } from './shapeTransform.js';
 import {
   boxFrame,
   createBoxFrame,
   frameBounds,
   snapByBounds,
   type SnapTarget,
-} from '@ggraphic/editor/utils/snapping';
+} from './snapping.js';
 
-import type { RenderedBox } from '@ggraphic/editor/hooks/useBoxSnap';
-import type { ChartInstance } from '@ggraphic/editor/utils/chartUtils';
-import type { FrameInstance } from '@ggraphic/editor/utils/frameUtils';
-import type { IllustrationInstance } from '@ggraphic/editor/utils/illustrations/types';
-import type { ShapeInstance } from '@ggraphic/editor/utils/shapes';
-import type { UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import type { RenderedBox } from '../hooks/useBoxSnap.js';
+import type { ChartInstance } from './chartUtils.js';
+import type { FrameInstance } from './frameUtils.js';
+import type { IllustrationInstance } from './illustrations/types.js';
+import type { ShapeInstance } from './shapes.js';
+import type { UserImageInstance } from './userImageUtils.js';
 
 // Ziel mit linker Kante bei x = 600, weit weg von der Seitenmitte (540).
 const EDGE: SnapTarget[] = [{ id: 'edge', x: 600, y: 900, width: 200, height: 200 }];

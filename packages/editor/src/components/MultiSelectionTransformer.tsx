@@ -26,16 +26,16 @@
 import { memo, useCallback, useEffect, useRef } from 'react';
 import { Transformer } from 'react-konva';
 
-import { useSnapScheduler } from '@ggraphic/editor/hooks/useSnapScheduler';
-import { measureGroupSnap, snapGroup, type GroupSnap } from '@ggraphic/editor/utils/groupSnap';
+import { useSnapScheduler } from '../hooks/useSnapScheduler.js';
+import { measureGroupSnap, snapGroup, type GroupSnap } from '../utils/groupSnap.js';
 import {
   findDragNodes,
   findItemGroups,
   MULTI_SELECTION_TRANSFORMER_NAME,
   SELECTION_COLOR,
   syncOutlines,
-} from '@ggraphic/editor/utils/multiSelect';
-import { ELEMENT_TRANSFORMER } from '@ggraphic/editor/utils/orientation';
+} from '../utils/multiSelect.js';
+import { ELEMENT_TRANSFORMER } from '../utils/orientation.js';
 
 import {
   useCanvasStore,
@@ -43,7 +43,7 @@ import {
   useCanvasStoreShallow,
 } from '../stores/CanvasStoreProvider.js';
 
-import type { SnapLine } from '@ggraphic/editor/utils/snapping';
+import type { SnapLine } from '../utils/snapping.js';
 import type Konva from 'konva';
 
 interface MultiSelectionTransformerProps {

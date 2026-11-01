@@ -18,14 +18,14 @@ import { immer } from 'zustand/middleware/immer';
 
 import { createStore } from 'zustand/vanilla';
 
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { nextHistoryStamp } from '@ggraphic/editor/utils/historyStamp';
+import { activeBrand } from '../brand/brandRegistry.js';
+import { nextHistoryStamp } from '../utils/historyStamp.js';
 
 import { DEFAULT_FORMAT_ID, getCanvasFormatOrDefault } from '../formats/index.js';
 
 import type { CanvasEditorConfig, CanvasHistoryEntry } from '../types/editorTypes.js';
-import type { CropAspectId } from '@ggraphic/editor/utils/cropAspect';
-import type { SnapTarget, SnapLine } from '@ggraphic/editor/utils/snapping';
+import type { CropAspectId } from '../utils/cropAspect.js';
+import type { SnapTarget, SnapLine } from '../utils/snapping.js';
 
 // =============================================================================
 // TYPES

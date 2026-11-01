@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MPL-2.0
-import type { AdditionalText } from '@ggraphic/editor/configs/types';
-import type { SidebarTab, SidebarTabId } from '@ggraphic/editor/sidebar/tabTypes';
+import type { AdditionalText } from '../configs/types.js';
+import type { SidebarTab, SidebarTabId } from './tabTypes.js';
 
 export type {
   BackgroundColorOption,
   CoreSidebarTabId,
   SidebarTab,
   SidebarTabId,
-} from '@ggraphic/editor/sidebar/tabTypes';
+} from './tabTypes.js';
 
 export interface TextSectionProps {
   quote: string;
@@ -27,7 +27,7 @@ export interface TextSectionProps {
   onUpdateAdditionalTextFontSize?: (id: string, size: number) => void;
 }
 
-export type { StockImageAttribution } from '@ggraphic/editor/common/imageSourceTypes';
+export type { StockImageAttribution } from '../common/imageSourceTypes.js';
 
 export interface ImageSectionProps {
   scale: number;

@@ -3,7 +3,7 @@ import { XIcon } from 'lucide-react';
 import { Dialog as DialogPrimitive } from 'radix-ui';
 import * as React from 'react';
 
-import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { useMessages } from '../i18n/messages.js';
 
 import { cn } from '../utils/cn.js';
 import { EDITOR_SCOPE } from './editorScope.js';

@@ -1,24 +1,19 @@
 // SPDX-License-Identifier: MPL-2.0
 import { bindPatch } from '../../brand/bindPick.js';
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { CustomColorSwatch } from '@ggraphic/editor/components/CustomColorSwatch';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { cn } from '@ggraphic/editor/utils/cn';
+import { useDocumentBrand } from '../../brand/documentBrand.js';
+import { CustomColorSwatch } from '../../components/CustomColorSwatch.js';
+import { useMessages } from '../../i18n/messages.js';
+import { cn } from '../../utils/cn.js';
 import { PiTrash, PiCopy } from 'react-icons/pi';
 
 import { SidebarSlider } from '../components/SidebarSlider.js';
-import {
-  ACTION_BTN,
-  ACTION_BTN_DANGER,
-  SECTION_HEADER,
-  SECTION_TITLE,
-} from '@ggraphic/editor/sidebar/sidebarStyles';
+import { ACTION_BTN, ACTION_BTN_DANGER, SECTION_HEADER, SECTION_TITLE } from '../sidebarStyles.js';
 
 import type {
   IllustrationInstance,
   KawaiiMood,
   KawaiiInstance,
-} from '@ggraphic/editor/utils/illustrations/types';
+} from '../../utils/illustrations/types.js';
 
 const MOOD_OPTIONS: { id: KawaiiMood; label: string }[] = [
   { id: 'happy', label: '😊' },

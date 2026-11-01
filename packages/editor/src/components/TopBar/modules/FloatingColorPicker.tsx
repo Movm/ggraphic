@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MPL-2.0
 import { type BindingRef } from '@ggraphic/core';
 
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { CustomColorSwatch } from '@ggraphic/editor/components/CustomColorSwatch';
-import { TILE, useBarTiles } from '@ggraphic/editor/components/TopBar/barTiles';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { cn } from '@ggraphic/editor/utils/cn';
-import { brandColors, type ColorOption } from '@ggraphic/editor/utils/colorOptions';
+import { useDocumentBrand } from '../../../brand/documentBrand.js';
+import { CustomColorSwatch } from '../../CustomColorSwatch.js';
+import { TILE, useBarTiles } from '../barTiles.js';
+import { useMessages } from '../../../i18n/messages.js';
+import { cn } from '../../../utils/cn.js';
+import { brandColors, type ColorOption } from '../../../utils/colorOptions.js';
 import React from 'react';
 
 interface FloatingColorPickerProps {

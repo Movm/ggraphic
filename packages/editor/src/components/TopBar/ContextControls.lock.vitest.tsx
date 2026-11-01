@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MPL-2.0
-import { ContextControls } from '@ggraphic/editor/components/TopBar/ContextControls';
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { ContextControls } from './ContextControls.js';
+import { messages } from '../../i18n/messages.js';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { FloatingModuleState } from '@ggraphic/editor/hooks/useFloatingModuleState';
+import type { FloatingModuleState } from '../../hooks/useFloatingModuleState.js';
 
 /**
  * Sperren in den Auswahl-Steuerungen (mobil im Auswahl-Block des Sheets). Am

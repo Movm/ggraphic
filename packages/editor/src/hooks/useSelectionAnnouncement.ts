@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useEffect, useRef } from 'react';
 
-import { useAnnouncer } from '@ggraphic/editor/hooks/useAnnounce';
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { useAnnouncer } from './useAnnounce.js';
+import { messages } from '../i18n/messages.js';
 
 import type { CanvasEditorStoreApi } from '../stores/createCanvasEditorStore.js';
 

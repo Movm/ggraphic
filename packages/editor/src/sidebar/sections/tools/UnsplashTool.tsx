@@ -1,22 +1,19 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { useNoUnsplashSearch, type UnsplashSearchFn } from '@ggraphic/editor/hostServices';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
+import { useNoUnsplashSearch, type UnsplashSearchFn } from '../../../hostServices.js';
+import { useMessages } from '../../../i18n/messages.js';
 import { useCallback, useEffect, useState } from 'react';
 import { HiMagnifyingGlass } from 'react-icons/hi2';
 
-import { useTrackUnsplashDownload } from '@ggraphic/editor/hooks/useTrackUnsplashDownload';
-import { useUnsplashHome } from '@ggraphic/editor/utils/unsplashLinks';
-import { MOBILE_INPUT_TEXT } from '@ggraphic/editor/sidebar/sidebarStyles';
-import { unsplashThumbnailUrl } from '@ggraphic/editor/sidebar/sections/assets/useStockPhotos';
+import { useTrackUnsplashDownload } from '../../../hooks/useTrackUnsplashDownload.js';
+import { useUnsplashHome } from '../../../utils/unsplashLinks.js';
+import { MOBILE_INPUT_TEXT } from '../../sidebarStyles.js';
+import { unsplashThumbnailUrl } from '../assets/useStockPhotos.js';
 
-import {
-  UnsplashLimitNotice,
-  UnsplashRemaining,
-} from '@ggraphic/editor/sidebar/sections/tools/UnsplashLimitNotice';
+import { UnsplashLimitNotice, UnsplashRemaining } from './UnsplashLimitNotice.js';
 
-import type { StockImage } from '@ggraphic/editor/common/imageSourceTypes';
-import type { UserImagePlacement } from '@ggraphic/editor/utils/userImageUtils';
+import type { StockImage } from '../../../common/imageSourceTypes.js';
+import type { UserImagePlacement } from '../../../utils/userImageUtils.js';
 
 export interface UnsplashToolProps {
   onPlaceImageUrl?: (url: string, fileName: string, options?: UserImagePlacement) => void;

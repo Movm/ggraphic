@@ -6,7 +6,7 @@ import {
   calculateElementSnapPosition,
   createSnapHysteresis,
   type SnapTarget,
-} from '@ggraphic/editor/utils/snapping';
+} from '../snapping.js';
 
 const STAGE = 1080;
 

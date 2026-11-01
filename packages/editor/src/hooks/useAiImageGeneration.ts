@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
-import { messages } from '@ggraphic/editor/i18n/messages';
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
+import { messages } from '../i18n/messages.js';
+import { useCanvasEditorServices } from '../CanvasEditorProvider.js';
 import { useCallback, useEffect, useState } from 'react';
 
 export type AiVariant = 'illustration' | 'realistic' | 'pixel';

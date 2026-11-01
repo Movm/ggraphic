@@ -1,12 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 import React from 'react';
 
-import {
-  ContextControls,
-  type ContextControlsProps,
-  hasObjectActions,
-} from '@ggraphic/editor/components/TopBar/ContextControls';
-import { useCanvasStoreSelector } from '@ggraphic/editor/stores/CanvasStoreProvider';
+import { ContextControls, type ContextControlsProps, hasObjectActions } from './ContextControls.js';
+import { useCanvasStoreSelector } from '../../stores/CanvasStoreProvider.js';
 
 /**
  * ContextToolbar — desktop floating formatting card, centered over the canvas

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
-import { messages } from '@ggraphic/editor/i18n/messages';
-import { mmToPx, type PrintCanvasFormat } from '@ggraphic/editor/formats/index';
+import { messages } from '../i18n/messages.js';
+import { mmToPx, type PrintCanvasFormat } from '../formats/index.js';
 
 import {
   buildPrintPdf,

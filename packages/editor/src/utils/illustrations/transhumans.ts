@@ -6,7 +6,7 @@
  * free for personal and commercial use. Rendered in native colors.
  */
 
-import type { SvgDef } from '@ggraphic/editor/utils/illustrations/types';
+import type { SvgDef } from './types.js';
 
 export const TRANSHUMANS: SvgDef[] = [
   {

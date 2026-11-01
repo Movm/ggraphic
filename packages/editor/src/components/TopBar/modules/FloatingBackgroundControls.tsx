@@ -9,21 +9,21 @@ import {
   HiOutlineTrash,
 } from 'react-icons/hi2';
 
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { TILE, TileCaption, useBarTiles } from '@ggraphic/editor/components/TopBar/barTiles';
-import { plainImageUrls } from '@ggraphic/editor/hostServices';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { useUserUploads } from '@ggraphic/editor/sidebar/UserUploadsProvider';
-import { Popover, PopoverContent, PopoverTrigger } from '@ggraphic/editor/ui/popover';
-import { cn } from '@ggraphic/editor/utils/cn';
-import { fetchShareImageFile } from '@ggraphic/editor/utils/mediaPlacement';
-import { downscaleImageForUpload } from '@ggraphic/editor/utils/userImageUtils';
+import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
+import { TILE, TileCaption, useBarTiles } from '../barTiles.js';
+import { plainImageUrls } from '../../../hostServices.js';
+import { useMessages } from '../../../i18n/messages.js';
+import { useUserUploads } from '../../../sidebar/UserUploadsProvider.js';
+import { Popover, PopoverContent, PopoverTrigger } from '../../../ui/popover.js';
+import { cn } from '../../../utils/cn.js';
+import { fetchShareImageFile } from '../../../utils/mediaPlacement.js';
+import { downscaleImageForUpload } from '../../../utils/userImageUtils.js';
 
 import { MOBILE_INPUT_TEXT } from '../../../sidebar/sidebarStyles.js';
 
-import type { StockImageAttribution } from '@ggraphic/editor/common/imageSourceTypes';
-import type { BackgroundControls } from '@ggraphic/editor/configs/types';
-import type { CanvasMediaItem } from '@ggraphic/editor/hostServices';
+import type { StockImageAttribution } from '../../../common/imageSourceTypes.js';
+import type { BackgroundControls } from '../../../configs/types.js';
+import type { CanvasMediaItem } from '../../../hostServices.js';
 
 const ICON_BTN =
   'inline-flex items-center justify-center size-8 shrink-0 rounded-md border-none bg-transparent cursor-pointer text-[var(--editor-text)] transition-colors duration-150 hover:bg-[var(--editor-surface-hover)] hover:text-[var(--editor-active-fg)]';

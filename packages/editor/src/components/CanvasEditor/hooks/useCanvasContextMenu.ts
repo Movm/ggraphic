@@ -4,17 +4,17 @@ import { useCallback, useEffect, useRef } from 'react';
 import {
   buildCanvasMenu,
   type CanvasMenuSnapshot,
-} from '@ggraphic/editor/components/CanvasContextMenu/canvasMenuModel';
-import { CanvasClipboard } from '@ggraphic/editor/utils/canvasClipboard';
+} from '../../CanvasContextMenu/canvasMenuModel.js';
+import { CanvasClipboard } from '../../../utils/canvasClipboard.js';
 import {
   isMacPlatform,
   isPageCommand,
   type CanvasCommandId,
-} from '@ggraphic/editor/utils/canvasCommandRegistry';
+} from '../../../utils/canvasCommandRegistry.js';
 
 import type { CanvasContextMenuHandle } from '../../CanvasContextMenu/CanvasContextMenu.js';
-import type { GenericCanvasRef } from '@ggraphic/editor/components/GenericCanvas';
-import type { ClientPoint } from '@ggraphic/editor/utils/canvasCommands';
+import type { GenericCanvasRef } from '../../GenericCanvas.js';
+import type { ClientPoint } from '../../../utils/canvasCommands.js';
 import type React from 'react';
 
 interface UseCanvasContextMenuParams {

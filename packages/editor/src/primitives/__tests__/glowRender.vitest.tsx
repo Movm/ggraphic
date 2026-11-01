@@ -3,9 +3,9 @@ import { act, render } from '@testing-library/react';
 import { createRef } from 'react';
 import { describe, expect, it } from 'vitest';
 
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
-import { ShapePrimitive } from '@ggraphic/editor/primitives/ShapePrimitive';
-import { createShape, type ShapeInstance } from '@ggraphic/editor/utils/shapes';
+import { CanvasStage, type CanvasStageRef } from '../CanvasStage.js';
+import { ShapePrimitive } from '../ShapePrimitive.js';
+import { createShape, type ShapeInstance } from '../../utils/shapes.js';
 
 function alphaAt(shape: ShapeInstance, points: Array<[number, number]>): number[] {
   const ref = createRef<CanvasStageRef>();
