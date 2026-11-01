@@ -243,12 +243,25 @@ export class UnsupportedCanvasFormatError extends Error {
   }
 }
 
-/** Unknown digital ids fall back to the default; unknown print ids throw. */
+/** Unknown ids already warned about: a document resolves its format on every render. */
+const warnedUnknownIds = new Set<string>();
+
+/**
+ * Unknown digital ids fall back to the default, with a warning once per id:
+ * a host that forgot to register its formats would otherwise ship them as
+ * 4:5 without a trace. Unknown print ids throw.
+ */
 export function getCanvasFormatOrDefault(id: string | null | undefined): CanvasFormat {
   if (id) {
     const found = getCanvasFormat(id);
     if (found) return found;
     if (isUnsupportedFormatId(id)) throw new UnsupportedCanvasFormatError(id);
+    if (!warnedUnknownIds.has(id)) {
+      warnedUnknownIds.add(id);
+      console.warn(
+        `unknown canvas format '${id}', falling back to '${DEFAULT_FORMAT_ID}'; register it with registerCanvasFormats`
+      );
+    }
   }
   const fallback = getCanvasFormat(DEFAULT_FORMAT_ID);
   if (!fallback) {

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   CANVAS_FORMATS,
@@ -26,7 +26,10 @@ const story: CanvasFormat = {
   print: null,
 };
 
-afterEach(() => registerCanvasFormats([]));
+afterEach(() => {
+  registerCanvasFormats([]);
+  vi.restoreAllMocks();
+});
 
 describe('registerCanvasFormats', () => {
   it('without registration the list and the fallback are the built-ins', () => {
@@ -53,5 +56,29 @@ describe('registerCanvasFormats', () => {
     );
     expect(() => registerCanvasFormats([story, story])).toThrow(/story-9-16/);
     expect(canvasFormats()).toEqual(CANVAS_FORMATS);
+  });
+});
+
+describe('getCanvasFormatOrDefault on an unknown id', () => {
+  it('warns once per id, naming the fallback and the fix', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(getCanvasFormatOrDefault('gone-4-3').id).toBe('post-portrait');
+    expect(getCanvasFormatOrDefault('gone-4-3').id).toBe('post-portrait');
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(
+      "unknown canvas format 'gone-4-3', falling back to 'post-portrait'; register it with registerCanvasFormats"
+    );
+    getCanvasFormatOrDefault('gone-2-1');
+    expect(warn).toHaveBeenCalledTimes(2);
+  });
+
+  it('stays quiet for a missing id and for a known or registered one', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    getCanvasFormatOrDefault(null);
+    getCanvasFormatOrDefault('');
+    getCanvasFormatOrDefault('slide-16-9');
+    registerCanvasFormats([{ ...story, id: 'quiet-9-16' }]);
+    getCanvasFormatOrDefault('quiet-9-16');
+    expect(warn).not.toHaveBeenCalled();
   });
 });

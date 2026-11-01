@@ -24,3 +24,4 @@ The format catalogue is now the host's. The editor ships three neutral formats; 
   - `formats.groups` uses the new group ids.
 - Image looks `gruen` → `tinted` and `grau` → `grayscale`, with the message keys `imageLooks.*` renamed the same way. Look ids are never stored: applying a look writes its values.
 - `CoreSidebarTabId` no longer lists `'vorlagen'`. The editor has no such tab; a host tab with that id still type-checks as a `SidebarTabId`.
+- `getCanvasFormatOrDefault` warns once per unknown id (`unknown canvas format 'x', falling back to 'post-portrait'; register it with registerCanvasFormats`), so a host that forgot to register a digital format sees it in its logs instead of shipping 4:5.
