@@ -15,6 +15,7 @@ import {
 
 import type { FullCanvasConfig, LayoutResult } from '../configs/types.js';
 import type { HostElementKindName } from '../utils/canvasItem.js';
+import type { Bindings } from '@ggraphic/core';
 import type { StockImageAttribution } from '@ggraphic/editor/common/imageSourceTypes';
 import type { GradientFill } from '@ggraphic/editor/utils/gradientFill';
 
@@ -60,6 +61,9 @@ export interface FloatingModuleState {
     fillGradient?: GradientFill | null;
     /** Ausrichtung des Textes in seiner Box (beide Textarten). */
     align?: TextAlign;
+    /** Schrift und Bindungen eines freien Textes, für die Schriftrolle (`FloatingFontRoleControl`). */
+    fontFamily?: string;
+    bind?: Bindings;
     /**
      * True only for instance-backed text (additionalTexts), which stores effect
      * fields directly. Config-declared template texts route through state keys
@@ -146,7 +150,10 @@ function floatingModuleEqual(
     a.data.duotoneLow === b.data.duotoneLow &&
     a.data.duotoneHigh === b.data.duotoneHigh &&
     a.data.fillGradient === b.data.fillGradient &&
-    a.data.align === b.data.align
+    a.data.align === b.data.align &&
+    // The font role picker reads both: a role change must reach it without a new selection.
+    a.data.fontFamily === b.data.fontFamily &&
+    a.data.bind === b.data.bind
   );
 }
 
@@ -187,6 +194,8 @@ const KIND_MODULES: KindModules = {
       shadowOpacity: t.shadowOpacity,
       fillGradient: t.fillGradient,
       align: t.align ?? 'left',
+      fontFamily: t.fontFamily,
+      bind: t.bind,
     },
   }),
   illustration: ({ id, data }) => ({ type: 'illustration', data: { ...data, id } }),

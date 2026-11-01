@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { type BindingRef } from '@ggraphic/core';
+import { type BindingRef, type FontRole } from '@ggraphic/core';
 import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
 import { useCanvasTextFormatting } from '@ggraphic/editor/components/CanvasTextOverlay';
 import { type BackgroundControls } from '@ggraphic/editor/configs/types';
@@ -34,6 +34,7 @@ import {
   SetAsBackgroundButton,
 } from '@ggraphic/editor/components/TopBar/modules/FloatingBackgroundControls';
 import { FloatingColorPicker } from '@ggraphic/editor/components/TopBar/modules/FloatingColorPicker';
+import { FloatingFontRoleControl } from '@ggraphic/editor/components/TopBar/modules/FloatingFontRoleControl';
 import { FloatingFontSizeControl } from '@ggraphic/editor/components/TopBar/modules/FloatingFontSizeControl';
 import { FloatingGradientControl } from '@ggraphic/editor/components/TopBar/modules/FloatingGradientControl';
 import { FloatingLayerControls } from '@ggraphic/editor/components/TopBar/modules/FloatingLayerControls';
@@ -68,6 +69,8 @@ export interface ContextControlsProps {
   canLock?: boolean;
   /** Lässt sich die Auswahl verschieben — Ausrichten und Position (`selectionCapabilities`). */
   canAlign?: boolean;
+  /** Bietet der Host die Schriftrolle an? Erst dann zeigen freie Texte die Auswahl (`handlers.handleFontRoleChange`). */
+  canChangeFontRole?: boolean;
   /** Zählt hoch, wenn das Kontextmenü „Bild ersetzen …“ wählt: die Bildauswahl öffnet sich. */
   backgroundPickerRequest?: number;
   handlers: {
@@ -76,6 +79,8 @@ export interface ContextControlsProps {
     handleColorSelect: (color: string) => void;
     handleOpacityChange: (id: string, opacity: number, type: string) => void;
     handleFontSizeChange: (id: string, size: number) => void;
+    /** Die Schrift eines freien Textes als Rolle der Marke (Überschrift, Text, Schmal, Akzent). */
+    handleFontRoleChange?: (id: string, role: FontRole) => void;
     /** Ausrichten und Position laufen über die Befehls-Türen der Seite. */
     runCommand?: (id: PositionCommandId) => void;
     getGeometry?: () => SelectionGeometry | null;
@@ -159,6 +164,7 @@ export function ContextControls({
   lockState = 'none',
   canLock = false,
   canAlign = false,
+  canChangeFontRole = false,
   backgroundPickerRequest = 0,
   handlers,
   background,
@@ -395,6 +401,25 @@ export function ContextControls({
           onRemoveUserImage(imageId);
           onDeselect?.();
         }}
+      />
+    );
+  }
+
+  if (
+    isText &&
+    activeFloatingModule?.data.isInstanceText &&
+    canChangeFontRole &&
+    handlers.handleFontRoleChange
+  ) {
+    const { handleFontRoleChange } = handlers;
+    groups.push(
+      <FloatingFontRoleControl
+        key="fontrole"
+        text={{
+          fontFamily: activeFloatingModule.data.fontFamily ?? '',
+          bind: activeFloatingModule.data.bind,
+        }}
+        onChange={(role) => handleFontRoleChange(activeFloatingModule.data.id, role)}
       />
     );
   }

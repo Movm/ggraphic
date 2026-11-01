@@ -5,6 +5,7 @@ import type {
   GenericCanvasRef,
   ToolbarStateReport,
 } from '@ggraphic/editor/components/GenericCanvas';
+import type { FontRole } from '@ggraphic/core';
 import type { ShadowPatch } from '@ggraphic/editor/hooks/useFloatingModuleHandlers';
 import type { PageCommandId } from '@ggraphic/editor/utils/canvasCommandRegistry';
 import { type SelectionGeometry } from '@ggraphic/editor/utils/canvasCommands';
@@ -79,6 +80,8 @@ export function useToolbarHandlers({
       handleOpacityChange: (id: string, opacity: number, type: string) =>
         page()?.handleOpacityChange?.(id, opacity, type),
       handleFontSizeChange: (id: string, size: number) => page()?.handleFontSizeChange?.(id, size),
+      handleFontRoleChange: (id: string, role: FontRole) =>
+        page()?.handleFontRoleChange?.(id, role),
       runCommand: (id: PageCommandId) => page()?.runCommand?.(id, null),
       getGeometry: (): SelectionGeometry | null => page()?.getGeometry?.() ?? null,
       handlePositionChange: (patch: { x?: number; y?: number }) => page()?.setPosition?.(patch),

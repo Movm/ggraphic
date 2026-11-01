@@ -6,6 +6,12 @@ exports[`duplicateElementInState per kind > additional-text 1`] = `
     "additionalTexts": [
       {
         "align": "center",
+        "bind": {
+          "fontFamily": {
+            "ref": "font.condensed",
+            "value": "Anton",
+          },
+        },
         "fill": "#ffffff",
         "fillGradient": {
           "angle": 90,
@@ -17,6 +23,7 @@ exports[`duplicateElementInState per kind > additional-text 1`] = `
           ],
           "type": "linear",
         },
+        "fontFamily": "Anton, Arial, sans-serif",
         "fontSize": 40,
         "id": "text-1",
         "opacity": 0.9,
@@ -35,6 +42,12 @@ exports[`duplicateElementInState per kind > additional-text 1`] = `
       },
       {
         "align": "center",
+        "bind": {
+          "fontFamily": {
+            "ref": "font.condensed",
+            "value": "Anton",
+          },
+        },
         "fill": "#ffffff",
         "fillGradient": {
           "angle": 90,
@@ -46,6 +59,7 @@ exports[`duplicateElementInState per kind > additional-text 1`] = `
           ],
           "type": "linear",
         },
+        "fontFamily": "Anton, Arial, sans-serif",
         "fontSize": 40,
         "id": "additional-text-1700000000000-4fzzzxjyl",
         "opacity": 0.9,
@@ -845,6 +859,12 @@ exports[`floatingModuleFor per kind > additional-text 1`] = `
 {
   "data": {
     "align": "center",
+    "bind": {
+      "fontFamily": {
+        "ref": "font.condensed",
+        "value": "Anton",
+      },
+    },
     "fill": "#ffffff",
     "fillGradient": {
       "angle": 90,
@@ -856,6 +876,7 @@ exports[`floatingModuleFor per kind > additional-text 1`] = `
       ],
       "type": "linear",
     },
+    "fontFamily": "Anton, Arial, sans-serif",
     "fontSize": 40,
     "id": "text-1",
     "isInstanceText": true,

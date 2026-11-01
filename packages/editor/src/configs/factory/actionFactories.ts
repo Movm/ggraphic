@@ -346,27 +346,31 @@ export function createIllustrationActions<
 // ============================================================================
 
 // Read per call, not at import: the brand packs are registered after the modules load.
+// Every text is born bound to the brand font its family stands for, so a brand change takes it along.
 function additionalTextDefaults() {
   const { fonts } = activeBrand();
   return {
     header: {
       fontSize: 48,
       fontFamily: `${fonts.headline}, Arial, sans-serif`,
+      bind: { fontFamily: { ref: 'font.headline', value: fonts.headline } },
       fontStyle: 'normal' as const,
       width: 400,
     },
     subheader: {
       fontSize: 36,
       fontFamily: `${fonts.headline}, Arial, sans-serif`,
+      bind: { fontFamily: { ref: 'font.headline', value: fonts.headline } },
       fontStyle: 'normal' as const,
       width: 400,
     },
     body: {
       fontSize: 32,
       fontFamily: `${fonts.body}, Arial, sans-serif`,
+      bind: { fontFamily: { ref: 'font.body', value: fonts.body } },
       width: 400,
     },
-  };
+  } satisfies Record<string, Partial<AdditionalText>>;
 }
 
 /**

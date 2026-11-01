@@ -47,6 +47,13 @@ export {
 export { deriveBrandColors, deriveGrounds, type BrandColorInputs } from './brand/derive.js';
 export { fitLogoBox } from './brand/logoFit.js';
 export {
+  FONT_ROLES,
+  currentFontRole,
+  fontRoleOptions,
+  type FontRole,
+  type FontRoleOption,
+} from './brand/fontRoles.js';
+export {
   brandFingerprint,
   firstFontFamily,
   groundClass,
