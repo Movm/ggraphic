@@ -40,8 +40,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
-      # Reports only: a change to the public surface shows up as a warning and in the step summary.
-      - name: API report (informational)
+      # Surface drift only reports (a warning and the step summary) until D2b; an export key whose
+      # target file is missing fails the step.
+      - name: API report
         run: pnpm api:check
       - run: pnpm lint
       - run: pnpm format:check
@@ -49,6 +50,9 @@ jobs:
         env:
           DATABASE_URL: postgres://studio:studio@127.0.0.1:5432/studio_test
       - run: pnpm build
+      # publint and attw on the tarballs `pnpm pack` produces, so publishConfig and `files` apply.
+      - name: Package checks (publint, attw)
+        run: pnpm check:packed
       - name: Guard self-tests
         run: pnpm check:guards:self-test
       - name: Licence check (production dependency tree)

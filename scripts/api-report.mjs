@@ -14,8 +14,10 @@
  * Usage:
  *   node scripts/api-report.mjs            rewrite the reports
  *   node scripts/api-report.mjs --check    compare with the committed reports and print what
- *                                          changed; reports only, always exits 0 (CI annotates
- *                                          the drift as a warning and in the step summary)
+ *                                          changed. Drift only reports (a warning annotation and
+ *                                          the step summary); a committed report whose package is
+ *                                          gone counts as drift. An export key whose target has no
+ *                                          source file is an error: exit 1.
  *
  * Needs node_modules (the signatures come from the TypeScript checker).
  */
@@ -66,7 +68,10 @@ function compiledFiles(pkgDir) {
 const SOURCE_EXT = /\.(d\.ts|[mc]?js|[mc]?tsx?)$/;
 const stemOf = (file) => file.replace(SOURCE_EXT, '');
 
-/** Export-map entries of one package as [subpath, absolute source file or null for CSS]. */
+/**
+ * Export-map entries of one package as [subpath, absolute source file or null for CSS, the
+ * target when no source file exists for it].
+ */
 function entriesOf(pkgDir, manifest, { options, fileNames }) {
   const outDir = options.outDir && posix(options.outDir);
   const rootDir = options.rootDir && posix(options.rootDir);
@@ -90,7 +95,7 @@ function entriesOf(pkgDir, manifest, { options, fileNames }) {
     const stem = sourceStem(target);
     if (!key.includes('*')) {
       const file = sources.find((f) => stemOf(f) === stem);
-      entries.push([key, file ?? `${stem}.ts`]);
+      entries.push(file ? [key, file] : [key, null, target]);
       continue;
     }
     // `./*` → `./dist/*.js`: every compiled file the pattern matches is an entry of its own.
@@ -210,6 +215,7 @@ function reportFor(pkgDir) {
   const compiled = compiledFiles(pkgDir);
   const { options } = compiled;
   const entries = entriesOf(pkgDir, manifest, compiled);
+  const missing = entries.filter(([, , target]) => target).map(([key]) => key);
   const program = ts.createProgram({
     rootNames: entries.map(([, f]) => f).filter(Boolean),
     options,
@@ -218,8 +224,14 @@ function reportFor(pkgDir) {
 
   let names = 0;
   const sections = [];
-  for (const [subpath, file] of entries) {
+  for (const [subpath, file, missingTarget] of entries) {
     const specifier = subpath === '.' ? manifest.name : `${manifest.name}/${subpath.slice(2)}`;
+    if (missingTarget) {
+      sections.push(
+        `## \`${specifier}\`\n\nMissing target: \`${missingTarget}\` has no source file.\n`
+      );
+      continue;
+    }
     if (!file) {
       sections.push(`## \`${specifier}\`\n\nStylesheet.\n`);
       continue;
@@ -254,7 +266,11 @@ function reportFor(pkgDir) {
       : '',
     '',
   ];
-  return { file: join(pkgDir, REPORT), text: `${header.join('\n')}\n${sections.join('\n')}` };
+  return {
+    file: join(pkgDir, REPORT),
+    text: `${header.join('\n')}\n${sections.join('\n')}`,
+    missing,
+  };
 }
 
 /** Section headings that differ between two reports, as added / removed / changed lists. */
@@ -280,12 +296,27 @@ function sectionDiff(before, after) {
 const check = process.argv.includes('--check');
 const packagesDir = join(ROOT, 'packages');
 const summary = [];
+const errors = [];
 for (const name of readdirSync(packagesDir).sort()) {
   const pkgDir = join(packagesDir, name);
-  if (!existsSync(join(pkgDir, 'package.json'))) continue;
-  const report = reportFor(pkgDir);
-  if (!report) continue;
+  const report = existsSync(join(pkgDir, 'package.json')) ? reportFor(pkgDir) : null;
+  if (!report) {
+    // A report left behind by a package that was removed or lost its exports.
+    const stale = join(pkgDir, REPORT);
+    if (check && existsSync(stale)) {
+      const rel = posix(relative(ROOT, stale));
+      const line = `${rel}: committed report of a package that no longer exists or has no exports.`;
+      console.log(line);
+      console.log(`::warning file=${rel}::Stale API report; delete it.`);
+      summary.push(line, '');
+    }
+    continue;
+  }
   const rel = posix(relative(ROOT, report.file));
+  for (const key of report.missing) {
+    errors.push(`${rel}: export key \`${key}\` points at a target with no source file.`);
+    console.log(`::error file=${rel}::Export key ${key} has no target file.`);
+  }
   if (!check) {
     writeFileSync(report.file, report.text);
     console.log(`wrote ${rel}`);
@@ -307,6 +338,10 @@ for (const name of readdirSync(packagesDir).sort()) {
     `::warning file=${rel}::API surface changed; run \`pnpm api:report\` and commit the report if the change is intended.`
   );
   summary.push(...lines, '');
+}
+if (errors.length) {
+  console.error(errors.join('\n'));
+  if (check) process.exitCode = 1;
 }
 if (check) {
   if (!summary.length) console.log('API reports are up to date.');

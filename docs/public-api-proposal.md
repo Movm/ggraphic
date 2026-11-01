@@ -172,7 +172,7 @@ The Grünerator's production code imports 33 subpaths that have no public home i
   - Interfaces list their own members and their `extends` clause, not inherited members, so DOM props do not flood the file.
   - A signature longer than 400 characters is cut and stamped with a hash of the full text, so a change in the cut part still shows.
 - **Development map:** each report also lists published entries that are missing from the development export map.
-- **In CI:** `pnpm api:check` runs in the `check` job after `typecheck`. It compares with the committed reports. On a difference it prints the added, removed and changed entries, writes a warning annotation and a step summary, and exits 0. It never blocks a merge. A pull request that changes the surface on purpose runs `pnpm api:report` and commits the result, so the change is reviewed as a diff.
+- **In CI:** `pnpm api:check` runs in the `check` job after `typecheck`. It compares with the committed reports. On a difference it prints the added, removed and changed entries, writes a warning annotation and a step summary, and exits 0; a committed report of a removed package counts as such a difference. Drift never blocks a merge until D2b. An export key whose target has no source file fails the step (D2c). A pull request that changes the surface on purpose runs `pnpm api:report` and commits the result, so the change is reviewed as a diff.
 - **Why not api-extractor:**
   - It needs built declaration files, so the report would need a build first.
   - It reads one entry per run, and today the editor has 432.
