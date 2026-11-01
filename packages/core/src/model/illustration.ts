@@ -20,9 +20,28 @@ export type KawaiiIllustrationType =
   | 'file'
   | 'folder';
 
-// SVG Illustration types
-export type SvgSource =
-  'opendoodles' | 'illlustrations' | 'gophers' | 'transhumans' | 'humaaans' | 'openpeeps';
+/**
+ * The SVG illustration sets, by name. A host that ships a set of its own adds
+ * it here, so documents and catalogues that name it typecheck:
+ *
+ * ```ts
+ * declare module '@ggraphic/core' {
+ *   interface SvgSources {
+ *     mine: true;
+ *   }
+ * }
+ * ```
+ */
+export interface SvgSources {
+  opendoodles: true;
+  illlustrations: true;
+  gophers: true;
+  transhumans: true;
+  humaaans: true;
+  openpeeps: true;
+}
+
+export type SvgSource = keyof SvgSources;
 
 export interface KawaiiInstance {
   id: string;

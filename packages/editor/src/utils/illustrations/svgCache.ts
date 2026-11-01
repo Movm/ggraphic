@@ -10,9 +10,10 @@
  */
 
 import { recordCacheHit, recordCacheMiss, recordNetworkRequest } from './prefetchAnalytics.js';
+import { registeredAssetCatalog } from '../canvasAssets.js';
 import { getIllustrationPath } from './registry.js';
 
-import type { SvgDef } from '@ggraphic/editor/utils/illustrations/types';
+import type { SvgDef, SvgSource } from '@ggraphic/editor/utils/illustrations/types';
 
 // =============================================================================
 // TYPES
@@ -20,6 +21,7 @@ import type { SvgDef } from '@ggraphic/editor/utils/illustrations/types';
 
 interface CachedSVG {
   rawSvg: string; // Original SVG text
+  source: SvgSource; // The set, for its recolour key
   colorVariants: Map<string, string>; // color → base64 data URL (computed on demand)
   dataUrl: string | null; // Default (no color manipulation)
   timestamp: number; // For LRU eviction
@@ -75,11 +77,18 @@ function ensureXmlns(svgText: string): string {
 /**
  * Replace SVG colors with target color
  */
-function replaceColors(svgText: string, color: string): string {
-  let result = svgText;
-  // Replace Open Doodles primary color
-  result = result.replace(/#ff5678/gi, color);
-  return result;
+const BUILT_IN_RECOLOR: Readonly<Partial<Record<SvgSource, string>>> = {
+  opendoodles: '#ff5678',
+};
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** Swaps the set's main colour (host `recolor`, else the built-in one) for `color`. */
+function replaceColors(svgText: string, color: string, source: SvgSource): string {
+  const key = registeredAssetCatalog().illustrations?.recolor?.[source] ?? BUILT_IN_RECOLOR[source];
+  return key ? svgText.replace(new RegExp(escapeRegExp(key), 'gi'), color) : svgText;
 }
 
 /**
@@ -104,7 +113,7 @@ function getOrComputeColorVariant(cached: CachedSVG, color: string): string {
   const existing = cached.colorVariants.get(color);
   if (existing) return existing;
 
-  const coloredSvg = replaceColors(cached.rawSvg, color);
+  const coloredSvg = replaceColors(cached.rawSvg, color, cached.source);
   const dataUrl = svgToDataUrl(coloredSvg);
   cached.colorVariants.set(color, dataUrl);
 
@@ -197,6 +206,7 @@ async function fetchAndCacheSVG(
     const size = finalSvg.length * 2 + dataUrl.length * 2;
     const cached: CachedSVG = {
       rawSvg: finalSvg,
+      source: def.source,
       colorVariants,
       dataUrl,
       timestamp: Date.now(),

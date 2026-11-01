@@ -8,7 +8,7 @@
 import { type AssetInstance } from '@ggraphic/core';
 import type { CanvasAiNamedOption } from '@ggraphic/editor/ai/types';
 import type { ElementPanelHost } from '@ggraphic/editor/sidebar/sections/assets/elementPanelHost';
-import type { KawaiiDef, SvgDef } from '@ggraphic/editor/utils/illustrations/types';
+import type { KawaiiDef, SvgDef, SvgSource } from '@ggraphic/editor/utils/illustrations/types';
 import type { StickerRef } from '@ggraphic/schema';
 
 export { ASSET_TARGET_SIZE, type AssetInstance } from '@ggraphic/core';
@@ -164,6 +164,12 @@ export interface IllustrationSources {
   featured?: readonly SvgDef[];
   /** Colour the Kawaii characters are drawn in on their tiles. */
   kawaiiColor?: string;
+  /**
+   * Per SVG set, the colour its files draw their main shapes in; a tinted
+   * illustration swaps it for the chosen colour. A set without an entry keeps
+   * its colours. Open Doodles' `#ff5678` is known without a host entry.
+   */
+  recolor?: Readonly<Partial<Record<SvgSource, string>>>;
 }
 
 /**
