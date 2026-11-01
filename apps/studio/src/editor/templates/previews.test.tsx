@@ -334,6 +334,25 @@ describe('template previews', () => {
     expect(host.style.visibility).toBe('hidden');
   });
 
+  it('starts a render only when the browser is idle, so scrolling keeps its frames', async () => {
+    const idle: (() => void)[] = [];
+    vi.stubGlobal('requestIdleCallback', (callback: () => void) => idle.push(callback));
+    vi.stubGlobal('cancelIdleCallback', () => {});
+    render(
+      <>
+        <PreviewHost />
+        <Tile id="a" />
+      </>
+    );
+    show('a');
+    await waitFor(() => expect(idle).toHaveLength(1));
+    expect(mounted.count).toBe(0);
+
+    act(() => idle.shift()!());
+    await waitFor(() => expect(screen.getByAltText('a')).toBeInTheDocument());
+    expect(mounted.count).toBe(1);
+  });
+
   describe('a stuck job', () => {
     afterEach(() => {
       vi.useRealTimers();

@@ -6,15 +6,14 @@
  * The same renderer as the editor stage, mounted without the editor shell: a
  * second renderer would drift from what the editor shows. Settled means the
  * images are in (`imagesSettled`) and the fonts are loaded (`ensureFontsReady`),
- * the same two gates the thumbnails and the export use. A page whose image
+ * the same two gates the thumbnails and the export use; the PNG is encoded off
+ * the main thread. A page whose image
  * never arrives is reported after `SETTLE_TIMEOUT_MS` rather than hanging a queue.
  */
 import { useEffect, useRef } from 'react';
 
 import { getCanvasFormatOrDefault } from '@ggraphic/editor/formats/index';
 import { AutoSaveStoreProvider } from '@ggraphic/editor/stores/AutoSaveStoreProvider';
-
-import { ensureFontsReady } from '../utils/ensureFontsReady.js';
 
 import { GenericCanvas, type GenericCanvasRef } from './GenericCanvas.js';
 
@@ -62,18 +61,13 @@ export function PagePreview({
         const late = Date.now() - startedAt > SETTLE_TIMEOUT_MS;
         if (!ref && late) return onFailedRef.current?.();
         if (ref && (ref.imagesSettled() || late)) {
-          await ensureFontsReady();
+          // Waits for the fonts, then encodes off the main thread: a gallery keeps scrolling.
+          const dataUrl = await ref.captureCanvas({
+            format: 'png',
+            pixelRatio: width / stageWidth,
+            keepPlaceholders: true,
+          });
           if (cancelled) return;
-          let dataUrl: string | undefined;
-          try {
-            dataUrl = ref.toDataURL({
-              format: 'png',
-              pixelRatio: width / stageWidth,
-              keepPlaceholders: true,
-            });
-          } catch {
-            dataUrl = undefined;
-          }
           if (dataUrl) onRenderedRef.current(dataUrl);
           else onFailedRef.current?.();
           return;
