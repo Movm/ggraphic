@@ -135,6 +135,7 @@
     "./configs/types": "./src/configs/types.ts",
     "./configs/unifiedTabs": "./src/configs/unifiedTabs.ts",
     "./editorSeamTypes": "./src/editorSeamTypes.ts",
+    "./embed": "./src/embed/index.ts",
     "./export/pptx/buildPptxModel": "./src/export/pptx/buildPptxModel.ts",
     "./export/pptx/exportPptxDeck": "./src/export/pptx/exportPptxDeck.ts",
     "./export/pptx/pptxFonts": "./src/export/pptx/pptxFonts.ts",
@@ -511,6 +512,11 @@
       "./styles/editor": "./dist/styles/editor.css",
       "./styles/tokens": "./dist/styles/tokens.css",
       "./styles/tailwind": "./dist/styles/tailwind.css",
+      "./embed": {
+        "types": "./dist/embed/index.d.ts",
+        "import": "./dist/embed/index.js",
+        "default": "./dist/embed/index.js"
+      },
       "./*": {
         "types": "./dist/*.d.ts",
         "import": "./dist/*.js",
