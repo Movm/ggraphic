@@ -3,8 +3,8 @@
  * The Tools tab with the Studio's services: the four tools that run in the
  * browser are offered, and no tile of a tool that needs a server is.
  */
-import { CanvasEditorProvider } from '@ggraphic/editor/CanvasEditorProvider';
-import { ToolsSection } from '@ggraphic/editor/sidebar/sections/tools/ToolsSection';
+import { CanvasEditorProvider } from '@ggraphic/editor/shell';
+import { ToolsSection } from '@ggraphic/editor/sidebar';
 import { render, screen } from '@testing-library/react';
 import { beforeAll, describe, expect, it } from 'vitest';
 
@@ -17,12 +17,14 @@ beforeAll(() => registerEditor());
 describe('the Tools tab', () => {
   it.each([{ ai: false }, { ai: true }])(
     'shows blob, QR code, gradient text and text path and no server tool (%o)',
-    ({ ai }) => {
+    async ({ ai }) => {
       render(
         <CanvasEditorProvider services={createStudioServices({ ai, organisationId: 'org-1' })}>
           <ToolsSection />
         </CanvasEditorProvider>
       );
+      // The public `ToolsSection` is lazy: wait for it to load.
+      await screen.findByRole('button', { name: 'Create blob' });
       for (const name of ['Create blob', 'Create QR code', 'Gradient text', 'Create path text']) {
         expect(screen.getByRole('button', { name })).toBeInTheDocument();
       }

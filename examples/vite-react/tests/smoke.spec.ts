@@ -13,11 +13,30 @@ test('the embedded editor mounts, takes a text and exports a PNG', async ({ page
   await expect(page.locator('[data-ggraphic] canvas').first()).toBeVisible();
 
   // The compiled stylesheet stays inside [data-ggraphic]: the host's heading keeps its own font.
-  const hostHeading = page.locator('h1.page-title');
+  const hostHeading = page.locator('.host-bar h1');
   await expect(hostHeading).toHaveCSS('font-family', 'Georgia, serif');
   await expect(hostHeading).toHaveCSS('font-size', '20px');
 
-  // Add a text; it reaches the host through onChange.
+  // The editor fills exactly the host's box below the host bar, chrome included (#100).
+  const box = await page.evaluate(() => {
+    const rect = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+    const host = rect('main.editor');
+    const inHost = (r: DOMRect) => r.top >= host.top && r.bottom <= host.bottom;
+    return {
+      barBottom: rect('.host-bar').bottom,
+      host: [host.top, host.bottom],
+      editor: [rect('.canvas-editor-layout').top, rect('.canvas-editor-layout').bottom],
+      sidebarInHost: inHost(rect('.canvas-sidebar')),
+      bottomBarInHost: inHost(rect('.canvas-editor-layout__bottom-bar')),
+    };
+  });
+  expect(box.host[0]).toBe(box.barBottom);
+  expect(box.editor).toEqual(box.host);
+  expect(box.sidebarInHost).toBe(true);
+  expect(box.bottomBarInHost).toBe(true);
+
+  // Add a text; it reaches the host through onChange. The panel's first button must not sit under
+  // the editor's top bar, so this click goes through without force.
   await page.getByRole('button', { name: /^Text/ }).click();
   const textsOnCanvas = page.getByRole('button', { name: 'Remove text' });
   const storedTexts = () =>
@@ -41,4 +60,34 @@ test('the embedded editor mounts, takes a text and exports a PNG', async ({ page
   expect(png.length).toBeGreaterThan(1000);
 
   expect(errors).toEqual([]);
+});
+
+test.describe('on a phone', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+
+  test('the page stays reachable above an open sheet', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('[data-ggraphic] canvas').first()).toBeVisible();
+
+    await page.getByRole('button', { name: /^Elements/ }).click();
+    await expect(page.locator('.canvas-editor-layout__main[data-sheet-open]')).toBeVisible();
+
+    // The stage bottom is either visible above the sheet or the canvas area scrolls down to it.
+    const unreachable = () =>
+      page.evaluate(() => {
+        const main = document.querySelector('.canvas-editor-layout__main')!;
+        const stage = document.querySelector('.konvajs-content')!.getBoundingClientRect();
+        const below = stage.bottom - main.getBoundingClientRect().bottom;
+        const scrolls = ['auto', 'scroll'].includes(getComputedStyle(main).overflowY);
+        const scrollRoom = scrolls ? main.scrollHeight - main.clientHeight - main.scrollTop : 0;
+        return Math.max(0, below - scrollRoom);
+      });
+    await expect.poll(unreachable).toBeLessThanOrEqual(1);
+    // ...and the host page itself does not grow under the sheet.
+    const pageOverflow = () =>
+      page.evaluate(
+        () => document.scrollingElement!.scrollHeight - document.scrollingElement!.clientHeight
+      );
+    await expect.poll(pageOverflow).toBe(0);
+  });
 });

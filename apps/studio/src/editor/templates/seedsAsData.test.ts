@@ -7,10 +7,9 @@
  */
 import { deriveSchemes, type SchemeId } from '@ggraphic/core';
 import { instantiateTemplatePage } from '@ggraphic/core';
-import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
-import { logoSizeOf, rememberLogoSize } from '@ggraphic/editor/page/logoSize';
-import { fontFallbackFor } from '@ggraphic/editor/page/typography';
-import { TEMPLATE_GEOMETRY } from '@ggraphic/editor/templates/templateGeometry';
+import { registerBrandPacks } from '@ggraphic/editor/brand';
+import { logoSizeOf, rememberLogoSize, fontFallbackFor } from '@ggraphic/editor/page';
+import { TEMPLATE_GEOMETRY } from '@ggraphic/editor/templates';
 import { readTemplateFile } from '@ggraphic/schema';
 import { OPEN_TEMPLATES } from '@ggraphic/templates-open';
 import { afterEach, describe, expect, it } from 'vitest';

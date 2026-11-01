@@ -296,9 +296,9 @@ export function SidebarPanel({ isOpen, title, children, onClose }: ExtendedSideb
       tabIndex={-1}
       className={cn(
         FOCUS_RING,
-        'sidebar-panel fixed bg-[var(--editor-surface)] flex flex-col z-[101]',
+        'sidebar-panel absolute bg-[var(--editor-surface)] flex flex-col z-[101]',
         'top-[var(--editor-topbar-height)] bottom-0 right-auto w-[348px] max-w-[348px] min-w-0 overflow-visible border-r border-[var(--editor-border)]',
-        'left-[calc(var(--canvas-host-inset-left,0px)_+_var(--image-studio-tab-bar-width,76px))]'
+        'left-[var(--image-studio-tab-bar-width,76px)]'
       )}
     >
       <div className="sidebar-panel__content flex-1 min-h-0 overflow-y-auto scrollbar-thin p-3 flex flex-col gap-3">

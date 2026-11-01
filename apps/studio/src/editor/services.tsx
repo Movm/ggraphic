@@ -11,8 +11,8 @@
  * (no key in this version), AI images, gallery autosave
  * (`imageShares`: the Studio saves the document itself), print, carousel.
  */
-import { type CanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
 import {
+  type CanvasEditorServices,
   browserFileDelivery,
   plainImageUrls,
   type CanvasImageUrlService,
@@ -20,8 +20,8 @@ import {
   type CanvasMediaLibraryService,
   type CanvasMediaUploadResult,
   type CanvasMediaUploadState,
-} from '@ggraphic/editor/hostServices';
-import { slotBudgetFor } from '@ggraphic/editor/page/slotBudgets';
+} from '@ggraphic/editor/services';
+import { slotBudgetFor } from '@ggraphic/editor/page';
 import { useState, useSyncExternalStore } from 'react';
 
 import { api, type Draft } from '../api/client';
@@ -34,7 +34,7 @@ export interface StudioAiDraftService {
   draft: (briefing: string, size: { width: number; height: number }) => Promise<Draft>;
 }
 
-declare module '@ggraphic/editor/CanvasEditorProvider' {
+declare module '@ggraphic/editor/services' {
   interface CanvasEditorHostServices {
     /** When omitted, the AI draft tab is hidden. */
     aiDraft?: StudioAiDraftService;

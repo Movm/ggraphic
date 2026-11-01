@@ -4,12 +4,12 @@
  * document tab and the page picker behind "Add page" and "Change template".
  */
 import { SCHEME_IDS, type SchemeId } from '@ggraphic/core';
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
 import {
+  useCanvasEditorServices,
   registerEditorShell,
   type EditorPagePickerProps,
   type EditorTabSectionProps,
-} from '@ggraphic/editor/components/CanvasEditor/editorShell';
+} from '@ggraphic/editor/shell';
 import { Button } from '@ggraphic/ui';
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';

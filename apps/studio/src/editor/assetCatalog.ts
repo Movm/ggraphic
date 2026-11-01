@@ -10,8 +10,8 @@
  * the emoji, no Gophers, no illlustrations.co. The sets are not exhaustive
  * because the files are served from the Studio image; see the notices.
  */
-import { type CanvasAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
-import { KAWAII_ILLUSTRATIONS } from '@ggraphic/editor/utils/illustrations/kawaii';
+import { type CanvasAssetCatalog } from '@ggraphic/editor/elements';
+import { KAWAII_ILLUSTRATIONS } from '@ggraphic/editor/illustrations/kawaii';
 
 import { STUDIO_ELEMENT_PANEL } from './blocks/blockPanel';
 
@@ -28,8 +28,8 @@ export function studioAssetCatalog(): CanvasAssetCatalog {
       loadKawaii: () => Promise.resolve(KAWAII_ILLUSTRATIONS),
       loadSvg: async () => {
         const [{ OPENDOODLES }, { OPENPEEPS }] = await Promise.all([
-          import('@ggraphic/editor/utils/illustrations/opendoodles'),
-          import('@ggraphic/editor/utils/illustrations/openpeeps'),
+          import('@ggraphic/editor/illustrations/opendoodles'),
+          import('@ggraphic/editor/illustrations/openpeeps'),
         ]);
         return [...OPENDOODLES, ...OPENPEEPS];
       },
