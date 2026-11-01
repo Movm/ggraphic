@@ -29,6 +29,7 @@ export {
   type KawaiiMood,
   type SvgInstance,
   type SvgSource,
+  type SvgSources,
 } from './illustration.js';
 export { type ShapeBlendMode, type ShapeInstance, type ShapeType, type TailSide } from './shape.js';
 export {

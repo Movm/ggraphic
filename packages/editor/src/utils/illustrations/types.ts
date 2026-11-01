@@ -13,6 +13,7 @@ export {
   type KawaiiMood,
   type SvgInstance,
   type SvgSource,
+  type SvgSources,
 } from '@ggraphic/core';
 
 // =============================================================================
