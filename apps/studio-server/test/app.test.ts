@@ -36,7 +36,7 @@ describe('GET /api/config', () => {
     const res = await request(
       makeApp({
         features: {
-          removeBackground: { url: 'http://rembg.internal:7000', timeoutMs: 1000 },
+          removeBackground: { url: 'http://rembg.internal:7000', model: 'u2net', timeoutMs: 1000 },
           iconify: null,
         },
       }).app

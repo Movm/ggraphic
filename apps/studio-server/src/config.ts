@@ -100,6 +100,12 @@ const envSchema = z.object({
   REMBG_URL: optionalString,
   REMBG_ENABLED: toggle,
   REMBG_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
+  // Sent with every image: rembg's own default, bria-rmbg, needs a paid licence for commercial use.
+  REMBG_MODEL: z
+    .string()
+    .trim()
+    .regex(/^[a-z0-9][a-z0-9_-]*$/i)
+    .default('u2net'),
   // Iconify needs no key, so it is opt-in: search terms leave the instance when it is on.
   ICONIFY_ENABLED: toggle,
   ICONIFY_API_URL: optionalString,
@@ -117,6 +123,8 @@ export interface AiConfig {
 export interface RembgConfig {
   /** Operator-set base URL of the rembg server, without a trailing slash. */
   url: string;
+  /** The rembg model asked for, e.g. `u2net`. */
+  model: string;
   timeoutMs: number;
 }
 
@@ -238,7 +246,13 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     'REMBG',
     e.REMBG_ENABLED,
     'REMBG_URL',
-    e.REMBG_URL ? { url: e.REMBG_URL.replace(/\/+$/, ''), timeoutMs: e.REMBG_TIMEOUT_MS } : null
+    e.REMBG_URL
+      ? {
+          url: e.REMBG_URL.replace(/\/+$/, ''),
+          model: e.REMBG_MODEL,
+          timeoutMs: e.REMBG_TIMEOUT_MS,
+        }
+      : null
   );
   const iconifyUrl = e.ICONIFY_API_URL ?? ICONIFY_DEFAULT_URL;
   if (!/^https?:\/\/[^\s/]/i.test(iconifyUrl)) {
