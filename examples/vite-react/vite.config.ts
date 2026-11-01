@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: CC0-1.0
+// SPDX-License-Identifier: MPL-2.0
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: CC0-1.0
+// SPDX-License-Identifier: MPL-2.0
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 

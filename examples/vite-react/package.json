@@ -2,7 +2,7 @@
   "name": "ggraphic-example-vite-react",
   "private": true,
   "type": "module",
-  "license": "CC0-1.0",
+  "license": "MPL-2.0",
   "scripts": {
     "pack:local": "node scripts/pack.mjs",
     "dev": "vite",
