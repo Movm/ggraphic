@@ -91,3 +91,35 @@ test.describe('on a phone', () => {
     await expect.poll(pageOverflow).toBe(0);
   });
 });
+
+test('a narrow host box gets the mobile layout in a desktop window (#106)', async ({ page }) => {
+  // The host gives the editor a phone-wide box; the window stays 1440 px wide.
+  await page.addInitScript(() => {
+    document.addEventListener('DOMContentLoaded', () => {
+      const style = document.createElement('style');
+      style.id = 'narrow-host';
+      style.textContent = 'main.editor { width: 390px; }';
+      document.head.append(style);
+    });
+  });
+  await page.goto('/');
+  await expect(page.locator('[data-ggraphic] canvas').first()).toBeVisible();
+
+  await expect(page.locator('.canvas-editor-layout__bottom-bar')).toHaveCount(0);
+
+  // The stage fits into the box, not into the window.
+  const fit = () =>
+    page.evaluate(() => {
+      const host = document.querySelector('main.editor')!.getBoundingClientRect();
+      const stage = document.querySelector('.konvajs-content')!.getBoundingClientRect();
+      return stage.width > 0 && stage.left >= host.left && stage.right <= host.right;
+    });
+  await expect.poll(fit).toBe(true);
+  const layout = page.locator('.canvas-editor-layout');
+  await expect(layout).toHaveAttribute('data-canvas-mobile', '');
+
+  // Same window, wider box: back to the desktop layout.
+  await page.evaluate(() => document.getElementById('narrow-host')!.remove());
+  await expect(layout).not.toHaveAttribute('data-canvas-mobile');
+  await expect(page.locator('.canvas-editor-layout__bottom-bar')).toBeVisible();
+});
