@@ -15,7 +15,7 @@ Releases are published under the npm dist-tag `alpha`. The package is ESM-only.
 
 ## Embedding
 
-The editor needs a host: a brand pack, at least one template (page config), host services and styles. The step-by-step guide, with the traps hosts have hit, is the agent skill shipped in this package: [`skills/ggraphic-embed/SKILL.md`](./skills/ggraphic-embed/SKILL.md). It is plain Markdown, so it reads as documentation too.
+The editor needs a host: a brand pack, at least one template (page config), host services and styles. The step-by-step guide, with the traps hosts have hit, is the agent skill shipped in this package: [`skills/ggraphic-embed/SKILL.md`](./skills/ggraphic-embed/SKILL.md). It is plain Markdown, so it reads as documentation too. pnpm 12 and later link it into the host's `.claude/skills/` only after the host approves it (`pnpm approve`), and until then print "Agent skills awaiting approval: @ggraphic/editor" on every install; the editor works the same either way.
 
 ## Entry points
 

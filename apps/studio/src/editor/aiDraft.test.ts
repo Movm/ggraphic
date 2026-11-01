@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { minTextSizePx } from '@ggraphic/core';
 import { PLAIN_STYLE, wrapLines } from '@ggraphic/schema';
-import type { AdditionalText } from '@ggraphic/editor/configs/types';
-import { headlineFont } from '@ggraphic/editor/page/typography';
-import { runMeasurer } from '@ggraphic/editor/utils/textUtils';
+import { type AdditionalText } from '@ggraphic/editor/config';
+import { headlineFont } from '@ggraphic/editor/page';
+import { runMeasurer } from '@ggraphic/editor/text';
 import { describe, expect, it } from 'vitest';
 
 import { draftDeckOps, draftTexts, fillById, fillTexts } from './aiDraft';

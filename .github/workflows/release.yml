@@ -27,6 +27,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - uses: changesets/action@v1
+        id: changesets
         with:
           version: pnpm version-packages
           publish: pnpm release
@@ -35,3 +36,22 @@ jobs:
         # make it skip OIDC. Each package's trusted publisher is Movm/ggraphic, release.yml.
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Pre mode publishes to `alpha` only; move `latest` along, also over OIDC. It needs
+      # "Allow npm dist-tag" on each package's trusted publisher and npm >= 11.21 (setup-node ships
+      # npm 10). A failed tag is a warning with the manual command, never a failed release: the
+      # packages are already published at this point.
+      - name: Point latest at the published versions
+        if: steps.changesets.outputs.published == 'true'
+        continue-on-error: true
+        env:
+          PUBLISHED: ${{ steps.changesets.outputs.publishedPackages }}
+        run: |
+          private=$(pnpm -r ls --depth -1 --json | jq -c '[.[] | select(.private) | .name]')
+          for spec in $(jq -r --argjson private "$private" \
+            '.[] | select(.name as $n | $private | index($n) | not) | "\(.name)@\(.version)"' <<<"$PUBLISHED"); do
+            if npx -y npm@11 dist-tag add "$spec" latest; then
+              echo "latest -> $spec"
+            else
+              echo "::warning title=dist-tag not set::${spec%@*}: latest was not moved. Enable \"Allow npm dist-tag\" for its trusted publisher, or run: npm dist-tag add $spec latest"
+            fi
+          done

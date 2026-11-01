@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { activeBrand, registeredBrands } from '@ggraphic/editor/brand/brandRegistry';
-import * as logoSize from '@ggraphic/editor/page/logoSize';
+import { activeBrand, registeredBrands } from '@ggraphic/editor/brand';
+import * as logoSize from '@ggraphic/editor/page';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { studioBrand } from './brand';
