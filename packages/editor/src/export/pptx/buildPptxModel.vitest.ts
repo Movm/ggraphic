@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { buildPptxModel } from './buildPptxModel.js';
 import { pptxUnits } from './pptxUnits.js';
 import { textRuns } from './writeText.js';
+import { PACK_B } from '../../testing/documentBrandPacks.js';
 import { shadeGradient } from '../../utils/shade.js';
 
 import type { CanvasFormat } from '../../formats/index.js';
@@ -234,5 +235,31 @@ describe('buildPptxModel shape devices', () => {
     expect(flat).toMatchObject({ kind: 'raster', box: { height: 0 } });
     expect((bent as { box: { y: number; height: number } }).box.y).toBeLessThan(400);
     expect((bent as { box: { y: number; height: number } }).box.height).toBeGreaterThan(50);
+  });
+});
+
+describe('buildPptxModel brand', () => {
+  it('gives a ++marker++ run the default box and ink of the document brand', () => {
+    // A deck of another pack exports with its own brand: the page was drawn with it.
+    const text = {
+      id: 'b1',
+      text: '++b++ ++{#FFFFFF}c++',
+      type: 'body',
+      x: 0,
+      y: 0,
+      width: 600,
+      fontSize: 40,
+      fontFamily: 'Raleway',
+      fill: '#000000',
+    };
+    const [item] = buildPptxModel([{ additionalTexts: [text] }] as never, format, {
+      brand: PACK_B,
+    }).slides[0]!.items as PptxTextItem[];
+    const [plain, , own] = item!.paragraphs[0]!.runs;
+    expect(plain).toMatchObject({
+      highlight: PACK_B.markers.swatches[0]!.color,
+      color: PACK_B.markers.ink,
+    });
+    expect(own).toMatchObject({ highlight: '#FFFFFF', color: PACK_B.markers.ink });
   });
 });
