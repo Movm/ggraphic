@@ -134,6 +134,7 @@ function focusFormatToolbar(editor: Editor | null): boolean {
 const ALL_MARKS_SUPPORTED: OfferedMarks = {
   bold: true,
   italic: true,
+  boldItalic: true,
   accent: false,
   marker: false,
 };

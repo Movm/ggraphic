@@ -113,7 +113,13 @@ export interface OverlayBox {
 }
 
 /** Ohne offene Sitzung trägt niemand einen Schnitt. */
-const NO_MARKS: OfferedMarks = { bold: false, italic: false, accent: false, marker: false };
+const NO_MARKS: OfferedMarks = {
+  bold: false,
+  italic: false,
+  boldItalic: false,
+  accent: false,
+  marker: false,
+};
 
 /**
  * Untergrenze für die gespiegelte Deckkraft. Der Regler der Kopfleiste geht
