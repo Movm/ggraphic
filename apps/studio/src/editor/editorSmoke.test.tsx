@@ -4,9 +4,11 @@
  * template, and checks that it comes up: the Studio's tabs, a stage, and the
  * template's texts in the pages the autosave reads.
  */
-import { CanvasEditorProvider } from '@ggraphic/editor/CanvasEditorProvider';
-import { CanvasEditorShell } from '@ggraphic/editor/components/CanvasEditor/CanvasEditorShell';
-import { type CanvasEditorExportApi } from '@ggraphic/editor/components/CanvasEditor/types';
+import {
+  CanvasEditorProvider,
+  CanvasEditorShell,
+  type CanvasEditorExportApi,
+} from '@ggraphic/editor/shell';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

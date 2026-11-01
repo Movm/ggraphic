@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { brandDefault } from '@ggraphic/core';
-import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
-import { PagePreview } from '@ggraphic/editor/components/PagePreview';
-import { loadCanvasConfig } from '@ggraphic/editor/configs/configLoader';
-import { type FullCanvasConfig } from '@ggraphic/editor/configs/types';
+import { registerBrandPacks } from '@ggraphic/editor/brand';
+import { PagePreview } from '@ggraphic/editor/shell';
+import { loadCanvasConfig, type FullCanvasConfig } from '@ggraphic/editor/config';
 import { render, waitFor } from '@testing-library/react';
 import Konva from 'konva';
 import { beforeAll, describe, expect, it, vi } from 'vitest';

@@ -20,13 +20,11 @@ import {
   type BrandPack,
   type SchemeId,
 } from '@ggraphic/core';
-import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
-import { PagePreview } from '@ggraphic/editor/components/PagePreview';
-import { loadCanvasConfig } from '@ggraphic/editor/configs/configLoader';
-import { type FullCanvasConfig } from '@ggraphic/editor/configs/types';
-import { getCanvasFormatOrDefault } from '@ggraphic/editor/formats/index';
-import { ensureFontsReady } from '@ggraphic/editor/utils/ensureFontsReady';
-import { runMeasurer } from '@ggraphic/editor/utils/textUtils';
+import { registerBrandPacks } from '@ggraphic/editor/brand';
+import { PagePreview } from '@ggraphic/editor/shell';
+import { loadCanvasConfig, type FullCanvasConfig } from '@ggraphic/editor/config';
+import { getCanvasFormatOrDefault } from '@ggraphic/editor/templates';
+import { ensureFontsReady, runMeasurer } from '@ggraphic/editor/text';
 import { layoutRichTextBlock } from '@ggraphic/schema';
 import { SAMPLE_PHOTOS } from '@ggraphic/templates-open';
 import { testBrandPacks } from '@ggraphic/templates-open/test/testBrands';

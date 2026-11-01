@@ -51,14 +51,10 @@
 
 /* ── :has() body-level selectors ── */
 
-/* Override layout to use natural page scroll instead of nested scroll */
-.canvas-editor-layout:has(.heterogeneous-multipage__pages-container) {
-  height: auto;
-  min-height: 100dvh;
-}
-
+/* The pages scroll inside the editor, not the host page: the chrome sits in the editor's own
+   box (--editor-height) and stays put while the pages move. */
 .canvas-editor-layout__main:has(.heterogeneous-multipage__pages-container) {
-  overflow: visible;
+  overflow: auto;
 }
 
 .canvas-editor-layout__canvas:has(.heterogeneous-multipage__pages-container) {
@@ -119,7 +115,6 @@
       a sheet opens (see useMobileSheetFit). ── */
 @media (max-width: 899px) {
   .canvas-editor-layout:has(.heterogeneous-multipage__pages-container) {
-    height: 100dvh;
     min-height: 0;
   }
 

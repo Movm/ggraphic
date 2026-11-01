@@ -5,8 +5,8 @@
  * template reads on its ground in every world, brand and format.
  */
 import { contrastRatio, deriveBrandColors, offeredSchemes } from '@ggraphic/core';
-import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
-import { pageStateFrom } from '@ggraphic/editor/page/pageState';
+import { registerBrandPacks } from '@ggraphic/editor/brand';
+import { pageStateFrom } from '@ggraphic/editor/page';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { studioBrand } from '../../brand';

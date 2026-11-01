@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { normalizeColor } from '@ggraphic/core';
-import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
+import { registerBrandPacks } from '@ggraphic/editor/brand';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { studioBrand } from '../brand';

@@ -3,9 +3,11 @@
  * "Change template" on a free page: the canvas must show the new page at once (the Text panel lists
  * what the page's live state holds), and undo brings the old page back in one step.
  */
-import { CanvasEditorProvider } from '@ggraphic/editor/CanvasEditorProvider';
-import { CanvasEditorShell } from '@ggraphic/editor/components/CanvasEditor/CanvasEditorShell';
-import { type CanvasEditorExportApi } from '@ggraphic/editor/components/CanvasEditor/types';
+import {
+  CanvasEditorProvider,
+  CanvasEditorShell,
+  type CanvasEditorExportApi,
+} from '@ggraphic/editor/shell';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

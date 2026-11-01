@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /** The Elements panel's "Blocks" category: the library blocks the active page can take, under their family. */
-import { useBlockInsert } from '@ggraphic/editor/components/CanvasEditor/blockInsertContext';
-import { type ElementItem } from '@ggraphic/editor/sidebar/sections/assets/elementTypes';
+import { useBlockInsert } from '@ggraphic/editor/shell';
 import {
+  type ElementItem,
   type ElementBlocks,
   type ElementPanelHost,
-} from '@ggraphic/editor/sidebar/sections/assets/elementPanelHost';
+} from '@ggraphic/editor/sidebar';
 
 import { FAMILY_LABELS } from '../templates/catalog';
 
