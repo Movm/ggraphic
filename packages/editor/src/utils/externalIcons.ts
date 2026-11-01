@@ -12,19 +12,12 @@ import { messages } from '@ggraphic/editor/i18n/messages';
  * with the bundled sets.
  */
 
+import { type IconSource } from '@ggraphic/core';
 import { sanitizeSvg } from '@ggraphic/schema';
 
 import type { IconDef } from './canvasIcons.js';
 
-/** Where a placed icon came from; the licence and author are shown and stored. */
-export interface IconSource {
-  kind: 'iconify';
-  prefix: string;
-  name: string;
-  setTitle: string;
-  licence: string;
-  author: string;
-}
+export { type IconSource } from '@ggraphic/core';
 
 /** What a placed external icon adds to its `IconState`. */
 export interface ExternalIconPayload {

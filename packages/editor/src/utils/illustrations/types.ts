@@ -3,28 +3,21 @@
  * Shared types and constants for illustration registry
  */
 
-import { type Bindings } from '@ggraphic/core';
+import { type KawaiiIllustrationType, type KawaiiMood, type SvgSource } from '@ggraphic/core';
 import { messages } from '@ggraphic/editor/i18n/messages';
+
+export {
+  type IllustrationInstance,
+  type KawaiiIllustrationType,
+  type KawaiiInstance,
+  type KawaiiMood,
+  type SvgInstance,
+  type SvgSource,
+} from '@ggraphic/core';
 
 // =============================================================================
 // TYPES
 // =============================================================================
-
-// React Kawaii types
-export type KawaiiMood = 'sad' | 'shocked' | 'happy' | 'blissful' | 'lovestruck' | 'excited' | 'ko';
-
-export type KawaiiIllustrationType =
-  | 'planet'
-  | 'cat'
-  | 'ghost'
-  | 'iceCream'
-  | 'browser'
-  | 'mug'
-  | 'speechBubble'
-  | 'backpack'
-  | 'creditCard'
-  | 'file'
-  | 'folder';
 
 export interface KawaiiDef {
   id: KawaiiIllustrationType;
@@ -32,27 +25,6 @@ export interface KawaiiDef {
   tags: string[];
   source: 'kawaii';
 }
-
-export interface KawaiiInstance {
-  id: string;
-  /** Fields that follow a brand role; see `@ggraphic/core` bindings. */
-  bind?: Bindings;
-  illustrationId: KawaiiIllustrationType;
-  source: 'kawaii';
-  x: number;
-  y: number;
-  scale: number;
-  rotation: number;
-  color: string;
-  opacity: number;
-  mood: KawaiiMood;
-  flipX?: boolean;
-  flipY?: boolean;
-}
-
-// SVG Illustration types
-export type SvgSource =
-  'opendoodles' | 'illlustrations' | 'gophers' | 'transhumans' | 'humaaans' | 'openpeeps';
 
 export interface SvgDef {
   id: string;
@@ -63,25 +35,8 @@ export interface SvgDef {
   category?: string;
 }
 
-export interface SvgInstance {
-  id: string;
-  /** Fields that follow a brand role; see `@ggraphic/core` bindings. */
-  bind?: Bindings;
-  illustrationId: string;
-  source: SvgSource;
-  x: number;
-  y: number;
-  scale: number;
-  rotation: number;
-  opacity: number;
-  color?: string;
-  flipX?: boolean;
-  flipY?: boolean;
-}
-
 // Unified Union Types
 export type IllustrationDef = KawaiiDef | SvgDef;
-export type IllustrationInstance = KawaiiInstance | SvgInstance;
 
 // =============================================================================
 // SHARED CONSTANTS

@@ -5,9 +5,11 @@
  * (`bend`), and a speech-bubble tail on a rounded rect (`tailSide`, `tailAt`, `tailSize`).
  * Every input is optional; without them each function returns what the shape drew before.
  */
+import { type TailSide } from '@ggraphic/core';
+
 import { type Corners } from './cornerRadius.js';
 
-export type TailSide = 'top' | 'right' | 'bottom' | 'left';
+export { type TailSide } from '@ggraphic/core';
 
 export interface Tail {
   side: TailSide;
