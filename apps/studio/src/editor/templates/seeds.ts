@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The page a legacy template id starts with. The designs themselves are template files
- * (`@ggraphic/templates-open`), placed through `@ggraphic/editor/page/seeds`; this only maps an
+ * (`@ggraphic/templates-open`), placed through `@ggraphic/editor/page`; this only maps an
  * id to its template.
  */
-import { type PageSeed } from '@ggraphic/editor/page/pageState';
-import { seedFromTemplate, storedPageSeed } from '@ggraphic/editor/page/seeds';
+import { type PageSeed, seedFromTemplate, storedPageSeed } from '@ggraphic/editor/page';
 
 import { catalogTemplate } from './catalog';
 import { BLANK_TEMPLATE_ID } from './ids';

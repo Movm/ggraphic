@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { type BrandPack } from '@ggraphic/core';
-import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
-import { createPageActions } from '@ggraphic/editor/page/actions';
-import { type PageState } from '@ggraphic/editor/page/pageState';
-import { TEMPLATE_GATE_ADAPTER } from '@ggraphic/editor/templates/templateGeometry';
+import { registerBrandPacks } from '@ggraphic/editor/brand';
+import { createPageActions, type PageState } from '@ggraphic/editor/page';
+import { TEMPLATE_GATE_ADAPTER } from '@ggraphic/editor/templates';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { studioBrand } from '../../brand';

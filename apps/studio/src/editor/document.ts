@@ -4,8 +4,8 @@
  * the pages (template id plus state each). The server treats it as opaque JSON.
  */
 import { type SchemeId } from '@ggraphic/core';
-import { getCanvasFormat } from '@ggraphic/editor/formats/index';
-import { readInitialDocument, type InitialPageDef } from '@ggraphic/editor/hooks/usePageManager';
+import { getCanvasFormat } from '@ggraphic/editor/templates';
+import { readInitialDocument, type InitialPageDef } from '@ggraphic/editor/shell';
 import { migrateDocument, stampDocument } from '@ggraphic/schema';
 
 import { catalogTemplate, templatesFor } from './templates/catalog';

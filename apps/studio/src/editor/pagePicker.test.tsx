@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { type EditorPagePickerProps } from '@ggraphic/editor/components/CanvasEditor/editorShell';
+import { type EditorPagePickerProps } from '@ggraphic/editor/shell';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /** Places a catalogue template on a page of a Studio format. */
 import { type BrandPack, type SchemeId } from '@ggraphic/core';
-import { placeTemplate } from '@ggraphic/editor/page/instantiate';
+import { placeTemplate } from '@ggraphic/editor/page';
 
 import { formatSize } from '../document';
 

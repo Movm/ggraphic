@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { createPageActions } from '@ggraphic/editor/page/actions';
-import { type PageState } from '@ggraphic/editor/page/pageState';
+import { createPageActions, type PageState } from '@ggraphic/editor/page';
 import { describe, expect, it } from 'vitest';
 
 import { blockLibrary, liftLibraryBlock } from '../blocks/blockLibrary';

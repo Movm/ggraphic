@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { deriveSchemes, type BrandPack } from '@ggraphic/core';
-import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
+import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { OFFER_ID_PATTERN } from '@ggraphic/schema';
