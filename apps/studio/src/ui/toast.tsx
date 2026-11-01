@@ -3,7 +3,7 @@
  * A small toast queue for the app and for the editor's toast seam
  * (`registerToast`). One live region announces every message.
  */
-import { type EditorToast, type EditorToastOptions } from '@ggraphic/editor/utils/editorToast';
+import { type EditorToast, type EditorToastOptions } from '@ggraphic/editor/services';
 import { useSyncExternalStore } from 'react';
 
 interface ToastItem {

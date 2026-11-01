@@ -47,16 +47,18 @@ class FakeIntersectionObserver {
   disconnect() {}
 }
 
-vi.mock('@ggraphic/editor/components/PagePreview', async () => {
+vi.mock('@ggraphic/editor/shell', async (importOriginal) => {
   const { useEffect } = await import('react');
   return {
+    ...(await importOriginal<object>()),
     PagePreview: ({ onRendered }: { onRendered: (dataUrl: string) => void }) => {
       useEffect(() => onRendered('data:image/png;base64,x'), [onRendered]);
       return null;
     },
   };
 });
-vi.mock('@ggraphic/editor/configs/configLoader', () => ({
+vi.mock('@ggraphic/editor/config', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
   loadCanvasConfig: async () => ({ id: 'studio-blank', canvas: { width: 1080, height: 1350 } }),
 }));
 

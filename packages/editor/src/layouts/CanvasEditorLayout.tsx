@@ -39,7 +39,7 @@ export interface CanvasEditorLayoutProps {
   toolbar?: ReactNode;
   /** Floating context-formatting bar, centered over the canvas work area (desktop) */
   contextBar?: ReactNode;
-  /** Optional sticky-bottom region (page navigator, zoom/meta bar) pinned to viewport bottom */
+  /** Optional bottom region (page navigator, zoom/meta bar) pinned to the editor's bottom edge */
   bottomBar?: ReactNode;
   /** Mobile page navigator between canvas and bottom bar (the desktop bottomBar is hidden there) */
   mobilePageStrip?: ReactNode;
@@ -87,12 +87,12 @@ export function CanvasEditorLayout({
   return (
     <div
       onClickCapture={handleClickCapture}
-      className="canvas-editor-layout flex flex-col h-dvh min-h-[500px] bg-[var(--editor-bg)] max-canvas-mobile:relative"
+      className="canvas-editor-layout relative flex flex-col h-[var(--editor-height)] min-h-[500px] bg-[var(--editor-bg)]"
     >
       {toolbar}
       {hasSidebar && (
         <div
-          className="canvas-sidebar fixed left-[var(--canvas-host-inset-left,0px)] top-[var(--editor-topbar-height)] bottom-0 z-[120] max-canvas-mobile:static max-canvas-mobile:contents"
+          className="canvas-sidebar absolute left-0 top-[var(--editor-topbar-height)] bottom-0 z-[120] max-canvas-mobile:static max-canvas-mobile:contents"
           style={SIDEBAR_FONT_SIZES}
         >
           {tabBar}
@@ -128,7 +128,7 @@ export function CanvasEditorLayout({
         {/* The slot keeps its height whether or not a selection shows the bar:
             a bar in the flow moved every Stage under the pointer when it
             appeared, and Konva added that shift to the element being dragged. */}
-        <div className="pointer-events-none sticky top-[var(--editor-topbar-height)] z-[90] h-14 w-full shrink-0 max-canvas-mobile:hidden">
+        <div className="pointer-events-none sticky top-0 z-[90] h-14 w-full shrink-0 max-canvas-mobile:hidden">
           {contextBar && (
             <div className="absolute inset-x-0 top-0 flex justify-center px-3 pt-3">
               {/* SelectionPill misst die Unterkante und bleibt darunter. */}
@@ -170,9 +170,9 @@ export function CanvasEditorLayout({
         <div
           ref={bottomBarRef}
           className={cn(
-            'canvas-editor-layout__bottom-bar fixed bottom-0 right-0 z-[140] left-[var(--canvas-host-inset-left,0px)] transition-[left] duration-200 max-canvas-mobile:hidden',
+            'canvas-editor-layout__bottom-bar absolute bottom-0 right-0 z-[140] left-0 transition-[left] duration-200 max-canvas-mobile:hidden',
             hasSidebar &&
-              'left-[calc(var(--canvas-host-inset-left,0px)_+_var(--image-studio-tab-bar-width)_+_var(--canvas-panel-width,0px))]'
+              'left-[calc(var(--image-studio-tab-bar-width)_+_var(--canvas-panel-width,0px))]'
           )}
         >
           {bottomBar}

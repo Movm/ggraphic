@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { type BrandPack } from '@ggraphic/core';
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { CanvasEditorProvider } from '@ggraphic/editor/CanvasEditorProvider';
-import { messages } from '@ggraphic/editor/i18n/messages';
-import { CanvasEditorShell } from '@ggraphic/editor/components/CanvasEditor/CanvasEditorShell';
-import { type CanvasEditorExportApi } from '@ggraphic/editor/components/CanvasEditor/types';
-import { logoSizeOf } from '@ggraphic/editor/page/logoSize';
+import { activeBrand } from '@ggraphic/editor/brand';
+import {
+  CanvasEditorProvider,
+  CanvasEditorShell,
+  type CanvasEditorExportApi,
+} from '@ggraphic/editor/shell';
+import { messages } from '@ggraphic/editor/i18n';
+import { logoSizeOf } from '@ggraphic/editor/page';
 import { Alert, Button } from '@ggraphic/ui';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useMemo, useRef } from 'react';

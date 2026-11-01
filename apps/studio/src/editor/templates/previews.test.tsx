@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
+import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { useEffect, useRef } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -35,7 +35,8 @@ vi.mock('./instantiate', async (importOriginal) => {
   };
 });
 
-vi.mock('@ggraphic/editor/components/PagePreview', () => ({
+vi.mock('@ggraphic/editor/shell', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
   PagePreview: ({
     onRendered,
     config,
@@ -60,9 +61,10 @@ vi.mock('@ggraphic/editor/components/PagePreview', () => ({
   },
 }));
 
-vi.mock('@ggraphic/editor/configs/configLoader', async () => {
-  const { activeBrand: brandNow } = await import('@ggraphic/editor/brand/brandRegistry');
+vi.mock('@ggraphic/editor/config', async (importOriginal) => {
+  const { activeBrand: brandNow } = await import('@ggraphic/editor/brand');
   return {
+    ...(await importOriginal<object>()),
     loadCanvasConfig: async () => {
       if (mounted.configFails) throw new Error('no config');
       const primary = brandNow().fonts.headline;

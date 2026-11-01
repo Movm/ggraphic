@@ -3,6 +3,9 @@ dist/
 dist-gate/
 build/
 coverage/
+# next build (examples/next)
+.next/
+next-env.d.ts
 *.tsbuildinfo
 .turbo/
 .env

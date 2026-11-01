@@ -1,0 +1,9 @@
+# Built from this checkout by scripts/pack.mjs; their integrity changes with every build, so no lockfile either.
+tarballs/
+package-lock.json
+# Written by next build.
+.next/
+next-env.d.ts
+*.tsbuildinfo
+playwright-report/
+test-results/

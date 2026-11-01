@@ -14,6 +14,9 @@ const root = fileURLToPath(new URL('../../../', import.meta.url));
 const out = fileURLToPath(new URL('../tarballs/', import.meta.url));
 rmSync(out, { recursive: true, force: true });
 mkdirSync(out);
+// The lockfiles of an earlier install pin the old tarballs' integrity, and npm would keep them.
+for (const lock of ['../package-lock.json', '../node_modules/.package-lock.json'])
+  rmSync(fileURLToPath(new URL(lock, import.meta.url)), { force: true });
 
 for (const name of PACKAGES) {
   execFileSync('pnpm', ['pack', '--pack-destination', out], {

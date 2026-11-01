@@ -1,0 +1,20 @@
+/* SPDX-License-Identifier: MPL-2.0 */
+/* The host page's own styles. The editor's compiled CSS must leave them alone. */
+body {
+  margin: 0;
+  font-family: Georgia, serif;
+}
+
+.page-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  font-size: 1.25rem;
+}
+
+.editor {
+  height: 100dvh;
+}

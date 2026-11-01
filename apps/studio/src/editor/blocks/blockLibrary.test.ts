@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { deriveSchemes } from '@ggraphic/core';
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { blockElementIds, type LiftedBlock } from '@ggraphic/editor/blocks/liftedBlock';
-import { createPageActions } from '@ggraphic/editor/page/actions';
-import { type PageState } from '@ggraphic/editor/page/pageState';
+import { activeBrand } from '@ggraphic/editor/brand';
+import { blockElementIds, type LiftedBlock } from '@ggraphic/editor/elements';
+import { createPageActions, type PageState } from '@ggraphic/editor/page';
 import { describe, expect, it } from 'vitest';
 
 import { studioCatalog } from '../templates/catalog';
