@@ -64,6 +64,6 @@ A host supplies **data and services**, not editor code:
 ## Rules for the work
 
 - **Licensing:** moving Studio code into `packages/*` relicenses it from AGPL-3.0 to MPL-2.0. The copyright holder does that explicitly in the PR. Every moved file gets its SPDX header changed and `check:licences` passes.
-- **Brand neutrality:** nothing brand-specific moves into the packages (`scripts/check-ggraphic-core-boundary.mjs` rules apply).
+- **Brand neutrality:** nothing brand-specific moves into the packages: no organisation names, colours, fonts, logos or wording (see CONTRIBUTING.md).
 - **Pixel identity:** a move must not change a render. Studio's render gate (CI only, never run locally) and its template goldens are the proof. Take goldens only from CI artifacts.
 - **Release and contribution rules:** every published-package change carries a changeset (pre mode `alpha`), commits are signed off (DCO), and only needed CI runs are triggered.
