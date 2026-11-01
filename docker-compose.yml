@@ -18,11 +18,9 @@ services:
       timeout: 5s
       retries: 10
 
+  # The published image. To build it from a checkout instead, add docker-compose.build.yml.
   studio:
-    build:
-      context: .
-      dockerfile: apps/studio-server/Dockerfile
-    image: ggraphic-studio:local
+    image: ghcr.io/movm/ggraphic-studio:${STUDIO_VERSION:-latest}
     restart: unless-stopped
     depends_on:
       db:
@@ -44,7 +42,10 @@ services:
       OPENAI_MODEL: ${OPENAI_MODEL:-}
       AI_TIMEOUT_MS: ${AI_TIMEOUT_MS:-}
       AI_ENABLED: ${AI_ENABLED:-}
-      REMBG_URL: ${REMBG_URL:-}
+      # With COMPOSE_PROFILES=rembg in .env, the rembg service below. Compose shows the profiles to
+      # this file only through that variable, not through `--profile` on the command line.
+      REMBG_URL: ${REMBG_URL:-${COMPOSE_PROFILES:+http://rembg:7000}}
+      REMBG_MODEL: ${REMBG_MODEL:-}
       REMBG_TIMEOUT_MS: ${REMBG_TIMEOUT_MS:-}
       REMBG_ENABLED: ${REMBG_ENABLED:-}
       ICONIFY_ENABLED: ${ICONIFY_ENABLED:-}
@@ -53,12 +54,25 @@ services:
       ICONIFY_TIMEOUT_MS: ${ICONIFY_TIMEOUT_MS:-}
     volumes:
       - studio-data:/data
+    networks: [default, rembg]
     # Lets OPENAI_BASE_URL point at a model server on the host (e.g. Ollama), also on Linux.
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     # Reachable from this machine only; expose it through a TLS reverse proxy. See docs/self-hosting.md.
     ports:
       - '127.0.0.1:${STUDIO_PORT:-8080}:8080'
+
+  # Background removal, only with COMPOSE_PROFILES=rembg in .env: rembg with the open u2net model
+  # (Apache-2.0) built in. On an internal network, so the images sent for cutting cannot leave it.
+  rembg:
+    image: ghcr.io/movm/ggraphic-rembg:${REMBG_VERSION:-latest}
+    profiles: [rembg]
+    restart: unless-stopped
+    networks: [rembg]
+
+networks:
+  rembg:
+    internal: true
 
 volumes:
   db-data:

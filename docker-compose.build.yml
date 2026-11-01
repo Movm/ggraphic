@@ -1,0 +1,15 @@
+# SPDX-License-Identifier: AGPL-3.0-only
+# Builds the images from this checkout instead of pulling the published ones:
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+# A separate file, so that the main one never builds: without a checkout there is nothing to build
+# from, and a local build under the published name would hide the next pulled release.
+services:
+  studio:
+    image: ggraphic-studio:local
+    build:
+      context: .
+      dockerfile: apps/studio-server/Dockerfile
+
+  rembg:
+    image: ggraphic-rembg:local
+    build: docker/rembg

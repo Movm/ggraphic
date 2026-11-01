@@ -1,0 +1,168 @@
+name: rembg image
+
+# The image of the rembg profile in docker-compose.yml, ghcr.io/movm/ggraphic-rembg
+# (docker/rembg/Dockerfile): rembg's server with the u2net model built in. Pull requests build it
+# and cut out a photo in it without network access; nothing is pushed. On main a rembg version
+# without an image is published, tagged with that version and latest; a manual run republishes it.
+on:
+  pull_request:
+    paths: ['docker/rembg/**', '.github/workflows/rembg-image.yml']
+  push:
+    branches: [main]
+    paths: ['docker/rembg/**', '.github/workflows/rembg-image.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rembg-image-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  IMAGE: ghcr.io/movm/ggraphic-rembg
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+      - name: Build the image (amd64)
+        uses: docker/build-push-action@v7
+        with:
+          context: docker/rembg
+          load: true
+          tags: ${{ env.IMAGE }}:ci
+          cache-from: type=gha,scope=rembg
+          cache-to: type=gha,scope=rembg,mode=max
+      # An internal network has no route out: if the server tried to download a model, the cut
+      # would fail. The request is the one Studio sends (file plus model).
+      - name: Cut out a photo without network access
+        run: |
+          docker network create --internal rembg-smoke
+          docker run -d --name rembg --network rembg-smoke "$IMAGE:ci"
+          mkdir -p "$RUNNER_TEMP/cut"
+          cp packages/templates-open/src/samples/group-1.jpg "$RUNNER_TEMP/cut/in.jpg"
+          cut_out() {
+            docker run --rm --network rembg-smoke --user "$(id -u):$(id -g)" -v "$RUNNER_TEMP/cut:/cut" \
+              --entrypoint python "$IMAGE:ci" -c '
+          import urllib.request, uuid
+          boundary = uuid.uuid4().hex
+          image = open("/cut/in.jpg", "rb").read()
+          body = (f"--{boundary}\r\nContent-Disposition: form-data; name=\"model\"\r\n\r\nu2net\r\n"
+                  f"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"in.jpg\"\r\n"
+                  "Content-Type: image/jpeg\r\n\r\n").encode() + image + f"\r\n--{boundary}--\r\n".encode()
+          request = urllib.request.Request("http://rembg:7000/api/remove", body,
+                                           {"Content-Type": f"multipart/form-data; boundary={boundary}"})
+          open("/cut/out.png", "wb").write(urllib.request.urlopen(request, timeout=120).read())'
+          }
+          for attempt in $(seq 1 30); do cut_out && break; sleep 4; done
+          test -s "$RUNNER_TEMP/cut/out.png"
+      - name: The result is a PNG with a transparent background
+        run: |
+          docker run --rm --network none -v "$RUNNER_TEMP/cut:/cut" --entrypoint python "$IMAGE:ci" -c '
+          from PIL import Image
+          image = Image.open("/cut/out.png")
+          assert image.format == "PNG" and image.mode == "RGBA", (image.format, image.mode)
+          alpha = image.getchannel("A").histogram()
+          clear, total = alpha[0], sum(alpha)
+          print(f"{image.size}, {clear / total:.0%} transparent")
+          assert 0.05 < clear / total < 0.95'
+      - name: Image size
+        run: docker image inspect --format '{{.Size}}' "$IMAGE:ci" | numfmt --to=si --suffix=B
+      - name: Logs
+        if: failure()
+        run: docker logs rembg
+      - name: Build the image (arm64)
+        uses: docker/build-push-action@v7
+        with:
+          context: docker/rembg
+          platforms: linux/arm64
+          cache-from: type=gha,scope=rembg-arm64
+          cache-to: type=gha,scope=rembg-arm64,mode=max
+
+  version:
+    needs: smoke
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      publish: ${{ steps.published.outputs.publish }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: rembg version
+        id: version
+        run: |
+          version=$(sed -n 's/^ARG REMBG_VERSION=//p' docker/rembg/Dockerfile)
+          test -n "$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Already published?
+        id: published
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != workflow_dispatch ] \
+            && docker buildx imagetools inspect "$IMAGE:$VERSION" >/dev/null 2>&1; then
+            echo "$IMAGE:$VERSION exists"; echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+  publish:
+    needs: version
+    if: needs.version.outputs.publish == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v6
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=raw,value=${{ needs.version.outputs.version }}
+            type=raw,value=latest
+          labels: |
+            org.opencontainers.image.title=rembg for ggraphic Studio
+            org.opencontainers.image.description=rembg's HTTP server with the u2net model (Apache-2.0) only
+            org.opencontainers.image.licenses=MIT AND Apache-2.0
+            org.opencontainers.image.version=${{ needs.version.outputs.version }}
+          annotations: |
+            org.opencontainers.image.title=rembg for ggraphic Studio
+            org.opencontainers.image.description=rembg's HTTP server with the u2net model (Apache-2.0) only
+            org.opencontainers.image.licenses=MIT AND Apache-2.0
+            org.opencontainers.image.version=${{ needs.version.outputs.version }}
+      - uses: docker/build-push-action@v7
+        with:
+          context: docker/rembg
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          cache-from: |
+            type=gha,scope=rembg
+            type=gha,scope=rembg-arm64
