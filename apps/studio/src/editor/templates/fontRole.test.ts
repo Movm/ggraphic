@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { type BrandPack } from '@ggraphic/core';
 import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
+import { createPageActions } from '@ggraphic/editor/page/actions';
+import { type PageState } from '@ggraphic/editor/page/pageState';
 import { TEMPLATE_GATE_ADAPTER } from '@ggraphic/editor/templates/templateGeometry';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { studioBrand } from '../../brand';
 import { rebindStudioDocument } from '../rebind';
 
-import { createStudioActions } from './actions';
-import { catalogTemplate } from './catalog';
+import { catalogTemplate, templateFileOf } from './catalog';
 import { templatePageState } from './instantiate';
-import { type StudioPageState } from './pageState';
 
 beforeEach(() => registerBrandPacks([studioBrand]));
 afterEach(() => registerBrandPacks([studioBrand]));
@@ -26,7 +26,7 @@ type Text = {
 };
 type Bound = { id: string; hug?: unknown };
 
-function setup(initial: Partial<StudioPageState> & Record<string, unknown>) {
+function setup(initial: Partial<PageState> & Record<string, unknown>) {
   let state = {
     backgroundColor: '#000000',
     additionalTexts: [],
@@ -34,9 +34,9 @@ function setup(initial: Partial<StudioPageState> & Record<string, unknown>) {
     userImageInstances: [],
     layerOrder: [],
     ...initial,
-  } as unknown as StudioPageState;
-  const history: StudioPageState[] = [];
-  const actions = createStudioActions(
+  } as unknown as PageState;
+  const history: PageState[] = [];
+  const actions = createPageActions(
     () => state,
     (change) => {
       state = typeof change === 'function' ? change(state) : { ...state, ...change };
@@ -44,7 +44,8 @@ function setup(initial: Partial<StudioPageState> & Record<string, unknown>) {
     (saved) => history.push(saved ?? state),
     (saved) => history.push(saved ?? state),
     1080,
-    1350
+    1350,
+    templateFileOf
   );
   const texts = () => state.additionalTexts as unknown as Text[];
   return { actions, state: () => state, history, texts };
@@ -131,9 +132,9 @@ describe('setAdditionalTextFontRole', () => {
       templatePageState(
         catalogTemplate('studio-study-kicker-boxes')!,
         'post-portrait'
-      ) as unknown as Partial<StudioPageState>
+      ) as unknown as Partial<PageState>
     );
-    const plateWidth = (s: StudioPageState) =>
+    const plateWidth = (s: PageState) =>
       TEMPLATE_GATE_ADAPTER.box(
         'shapeInstances',
         (s.shapeInstances as unknown as Bound[]).find((p) => p.id === 'plate-1') as never,

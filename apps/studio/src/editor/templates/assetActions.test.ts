@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import { createPageActions } from '@ggraphic/editor/page/actions';
+import { pageStateFrom, type PageState } from '@ggraphic/editor/page/pageState';
 import { registerAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { registerEditor } from '../../registerEditor';
 import { studioAssetCatalog } from '../assetCatalog';
-
-import { createStudioActions } from './actions';
-import { pageStateFrom, type StudioPageState } from './pageState';
 
 beforeAll(() => {
   registerEditor();
@@ -14,9 +13,9 @@ beforeAll(() => {
 });
 
 function harness() {
-  let state: StudioPageState = pageStateFrom({}, {});
-  const saved: StudioPageState[] = [];
-  const actions = createStudioActions(
+  let state: PageState = pageStateFrom({}, {});
+  const saved: PageState[] = [];
+  const actions = createPageActions(
     () => state,
     (change) => {
       state = typeof change === 'function' ? change(state) : { ...state, ...change };

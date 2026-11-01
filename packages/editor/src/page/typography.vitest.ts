@@ -1,7 +1,7 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { fontFallbackFor, fontStackFor } from './typography';
+import { fontFallbackFor, fontStackFor } from './typography.js';
 
 describe('fontFallbackFor', () => {
   it('falls back to a serif stack for the serif roles', () => {

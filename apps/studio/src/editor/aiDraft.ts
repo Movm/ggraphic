@@ -8,13 +8,13 @@
 import { minTextSizePx, roomBelow } from '@ggraphic/core';
 import { type ReplaceDeckOps } from '@ggraphic/editor/collab/pagesDoc';
 import { type AdditionalText } from '@ggraphic/editor/configs/types';
+import { withHuggedPlates } from '@ggraphic/editor/page/hug';
 import { TEMPLATE_GATE_ADAPTER } from '@ggraphic/editor/templates/templateGeometry';
 import { runMeasurer } from '@ggraphic/editor/utils/textUtils';
 import { fitFontSizeToSlot, PLAIN_STYLE } from '@ggraphic/schema';
 
 import { type Draft } from '../api/client';
 
-import { withHuggedPlates } from './templates/hug';
 import { FREE_PAGE_CONFIG_ID, HEADLINE_TEMPLATE_ID } from './templates/ids';
 import { seedPageState, TEXT_ROLES } from './templates/seeds';
 

@@ -6,13 +6,13 @@
  */
 import { offeredSchemes, type BrandPack, type SchemeId } from '@ggraphic/core';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { withHuggedPlates } from '@ggraphic/editor/page/hug';
 
 import { api, ApiError, type Draft, type Pick } from '../api/client';
 import { applyBrandPack } from '../brandLoader';
 import { fillById, fillTexts } from '../editor/aiDraft';
 import { formatSize, newDocument, type StudioDocument } from '../editor/document';
 import { templatesFor } from '../editor/templates/catalog';
-import { withHuggedPlates } from '../editor/templates/hug';
 import {
   BLANK_TEMPLATE_ID,
   FREE_PAGE_CONFIG_ID,

@@ -1,7 +1,8 @@
-// SPDX-License-Identifier: AGPL-3.0-only
+// SPDX-License-Identifier: MPL-2.0
 /**
  * Natural sizes of brand logos. A template seed is built synchronously but needs the
- * logo's proportions, so `applyBrandPack` measures the image first and the seeds read it here.
+ * logo's proportions, so the host measures the image first (`measureLogo`, when it applies a
+ * brand) and placing reads it here.
  */
 const sizes = new Map<string, { width: number; height: number }>();
 

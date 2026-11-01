@@ -879,6 +879,16 @@ export const en: Messages = {
     },
   },
 
+  pageTabs: {
+    text: 'Text',
+    textAriaLabel: 'Text: add and edit text',
+    elements: 'Elements',
+    elementsAriaLabel: 'Elements: shapes, icons, illustrations and emoji',
+    uploads: 'Uploads',
+    uploadsAriaLabel: 'Uploads: your own images',
+    tools: 'Tools',
+    toolsAriaLabel: 'Tools: QR code, blob, gradient text and text on a path',
+  },
   topBar: {
     cropAction: 'Crop',
     aiTemplate: 'Template',

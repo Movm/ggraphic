@@ -2,11 +2,11 @@
 import { deriveSchemes } from '@ggraphic/core';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { blockElementIds, type LiftedBlock } from '@ggraphic/editor/blocks/liftedBlock';
+import { createPageActions } from '@ggraphic/editor/page/actions';
+import { type PageState } from '@ggraphic/editor/page/pageState';
 import { describe, expect, it } from 'vitest';
 
-import { createStudioActions } from '../templates/actions';
 import { studioCatalog } from '../templates/catalog';
-import { type StudioPageState } from '../templates/pageState';
 
 import { blockLibrary, blockScheme, liftLibraryBlock } from './blockLibrary';
 
@@ -148,7 +148,7 @@ describe('liftLibraryBlock', () => {
  * A page as the editor holds it: an action reads the state committed by the last render, so a
  * change is applied to that state once, and `insert` settles it afterwards.
  */
-function pageWith(initial: Partial<StudioPageState>) {
+function pageWith(initial: Partial<PageState>) {
   let committed = {
     backgroundColor: lightGround(),
     additionalTexts: [],
@@ -158,9 +158,9 @@ function pageWith(initial: Partial<StudioPageState>) {
     iconStates: {},
     layerOrder: [],
     ...initial,
-  } as unknown as StudioPageState;
+  } as unknown as PageState;
   let live = committed;
-  const actions = createStudioActions(
+  const actions = createPageActions(
     () => committed,
     (change) => {
       live = typeof change === 'function' ? change(live) : { ...live, ...change };

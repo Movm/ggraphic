@@ -8,14 +8,14 @@
 import { deriveSchemes, type SchemeId } from '@ggraphic/core';
 import { instantiateTemplatePage } from '@ggraphic/core';
 import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
+import { logoSizeOf, rememberLogoSize } from '@ggraphic/editor/page/logoSize';
+import { fontFallbackFor } from '@ggraphic/editor/page/typography';
 import { TEMPLATE_GEOMETRY } from '@ggraphic/editor/templates/templateGeometry';
 import { readTemplateFile } from '@ggraphic/schema';
 import { OPEN_TEMPLATES } from '@ggraphic/templates-open';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { studioBrand } from '../../brand';
-import { logoSizeOf, rememberLogoSize } from '../../logoSize';
-import { fontFallbackFor } from './typography';
 
 import golden from './__golden__/code-seeds.json';
 
