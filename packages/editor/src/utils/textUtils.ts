@@ -11,7 +11,7 @@ import { type TextAccent, type TextMarker } from '@ggraphic/core';
 import { layoutRichTextBlock, wrapLines, type MeasureRun, type RunStyle } from '@ggraphic/schema';
 
 import { registeredBrands } from '../brand/brandRegistry.js';
-import { notifyFontLoaded } from '../hooks/useFontGeneration.js';
+import { notifyFontLoaded } from './fontGeneration.js';
 
 import { aliasFontFamily, resolveFontFamily } from './fontAliases.js';
 import { hasRealBoldItalic, primaryFontFamily } from './fontMarkSupport.js';

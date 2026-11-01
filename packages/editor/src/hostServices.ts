@@ -22,7 +22,7 @@
 import { useState, type ComponentType } from 'react';
 import { type Doc } from 'yjs';
 
-import { messages } from './i18n/messages.js';
+import { messages } from './i18n/catalogue.js';
 
 import type { AdditionalText } from './configs/types.js';
 import type { StockImage, UnsplashSearchResult } from '@ggraphic/schema';

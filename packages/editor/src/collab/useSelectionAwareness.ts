@@ -2,7 +2,7 @@
 import { useEffect, useMemo } from 'react';
 
 import { useAwarenessState } from './useAwarenessState.js';
-import { messages } from '../i18n/messages.js';
+import { messages } from '../i18n/catalogue.js';
 import { useCanvasStoreSelector } from '../stores/CanvasStoreProvider.js';
 
 import type { HocuspocusProvider } from '@hocuspocus/provider';

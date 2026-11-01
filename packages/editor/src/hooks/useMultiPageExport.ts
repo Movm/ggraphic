@@ -9,7 +9,7 @@
 
 import { useState, useCallback, useEffect, useRef, type RefObject } from 'react';
 
-import { messages } from '../i18n/messages.js';
+import { messages } from '../i18n/catalogue.js';
 import { type ExportFormat } from '../types/editorTypes.js';
 import { isDownloadTooLarge } from '../utils/downloadError.js';
 import { zipPageImages } from '../utils/zipPageImages.js';

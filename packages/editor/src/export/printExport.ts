@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { messages } from '../i18n/messages.js';
+import { messages } from '../i18n/catalogue.js';
 import { mmToPx, type PrintCanvasFormat } from '../formats/index.js';
 
 import {

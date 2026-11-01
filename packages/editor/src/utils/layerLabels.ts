@@ -8,7 +8,7 @@
 
 import { stripInlineMarks } from '@ggraphic/schema';
 
-import { messages } from '../i18n/messages.js';
+import { messages } from '../i18n/catalogue.js';
 import { getShapeDef } from './shapes.js';
 
 import { getAssetById, isStickerLikeInstance } from './canvasAssets.js';

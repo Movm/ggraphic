@@ -6,7 +6,7 @@
  * nicht auseinanderlaufen.
  */
 
-import { messages } from '../../i18n/messages.js';
+import { messages } from '../../i18n/catalogue.js';
 import {
   CANVAS_COMMANDS,
   ariaShortcut,

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { messages } from '../../../i18n/messages.js';
+import { messages } from '../../../i18n/catalogue.js';
 import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
 import { plainAssetImageUrls, registeredAssetCatalog } from '../../../utils/canvasAssets.js';
 import { useQuery, type QueryClient } from '@tanstack/react-query';
