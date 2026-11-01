@@ -12,6 +12,7 @@ import {
   type CoreElementKindName,
   type KindItem,
 } from '../utils/elementKinds.js';
+import { effectiveAccent, effectiveMarker } from '../utils/textUtils.js';
 
 import type { FullCanvasConfig, LayoutResult } from '../configs/types.js';
 import type { HostElementKindName } from '../utils/canvasItem.js';
@@ -65,6 +66,15 @@ export interface FloatingModuleState {
     fontFamily?: string;
     bind?: Bindings;
     /**
+     * Der gespeicherte Text, nur wo er sich bearbeiten lässt: die Format-Knöpfe eines Textes, der
+     * ausgewählt und nicht im Editor ist, lesen und schreiben ihn als Ganzes. Fehlt er, gibt es
+     * keine (eine Seitenzahl, ein Feld ohne `editable`).
+     */
+    text?: string;
+    /** Die Vorlage des Textes hat einen Akzent- bzw. Markerstil (die „Vorlagenfarbe“ der Knöpfe). */
+    hasAccent?: boolean;
+    hasMarker?: boolean;
+    /**
      * True only for instance-backed text (additionalTexts), which stores effect
      * fields directly. Config-declared template texts route through state keys
      * and don't support outline/shadow/gradient, so their controls are hidden.
@@ -95,6 +105,12 @@ function getStateProperty<T>(state: unknown, key: string | undefined): T | undef
   if (!key) return undefined;
   const stateObj = state as Record<string, unknown>;
   return stateObj[key] as T | undefined;
+}
+
+/** The stored text of a template text; a field that holds no string has none yet. */
+function templateText(state: unknown, textKey: string): string {
+  const value = getStateProperty<unknown>(state, textKey);
+  return typeof value === 'string' ? value : '';
 }
 
 /**
@@ -153,7 +169,11 @@ function floatingModuleEqual(
     a.data.align === b.data.align &&
     // The font role picker reads both: a role change must reach it without a new selection.
     a.data.fontFamily === b.data.fontFamily &&
-    a.data.bind === b.data.bind
+    a.data.bind === b.data.bind &&
+    // The format buttons read the text whole: a change must reach them without a new selection.
+    a.data.text === b.data.text &&
+    a.data.hasAccent === b.data.hasAccent &&
+    a.data.hasMarker === b.data.hasMarker
   );
 }
 
@@ -196,6 +216,10 @@ const KIND_MODULES: KindModules = {
       align: t.align ?? 'left',
       fontFamily: t.fontFamily,
       bind: t.bind,
+      // A page counter is not edited, so it is not formatted either.
+      ...(t.counter === undefined && { text: t.text }),
+      hasAccent: !!effectiveAccent(t),
+      hasMarker: !!effectiveMarker(t),
     },
   }),
   illustration: ({ id, data }) => ({ type: 'illustration', data: { ...data, id } }),
@@ -282,6 +306,12 @@ export function floatingModuleFor<
         opacity: typeof currentOpacity === 'number' ? currentOpacity : 1,
         fill: typeof currentFill === 'string' ? currentFill : '#000000',
         align: templateTextAlignOf(state, selectedElement) ?? textElement.align ?? 'left',
+        // Only a field that is edited can be formatted (by its font's cuts); it has no accent or
+        // marker style of its own.
+        ...(textElement.editable && {
+          fontFamily: textElement.fontFamily,
+          text: templateText(state, textElement.textKey),
+        }),
       },
     };
   }
