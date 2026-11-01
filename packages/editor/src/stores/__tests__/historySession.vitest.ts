@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { createCanvasEditorStore } from '@ggraphic/editor/stores/createCanvasEditorStore';
+import { createCanvasEditorStore } from '../createCanvasEditorStore.js';
 
 function storeWith(...values: number[]) {
   const store = createCanvasEditorStore();

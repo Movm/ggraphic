@@ -15,7 +15,7 @@
  * licence. A set with no row, or one under a licence outside ALLOWED, fails.
  * This part reads files only and needs no node_modules.
  *
- * It also fails when a tracked source file under apps/ or packages/ lacks an
+ * It also fails when a tracked source file under apps/, packages/ or examples/ lacks an
  * SPDX-License-Identifier line in its first lines, or names another licence than the
  * package it sits in declares.
  *
@@ -50,7 +50,16 @@ export const ALLOWED = new Set([
   'Zlib',
 ]);
 
-export const ROOT_PACKAGES = ['schema', 'core', 'editor', 'collab', 'ui', 'ai', 'templates-open'];
+export const ROOT_PACKAGES = [
+  'schema',
+  'core',
+  'editor',
+  'collab',
+  'ui',
+  'ai',
+  'templates-open',
+  'brand-default',
+];
 
 // Packages whose manifest declares no licence although they ship one. Keyed by exact
 // version, so a bump falls back to the manifest and needs a fresh look.
@@ -336,8 +345,11 @@ export function mismatchedSpdxHeaders(root, files) {
   return out;
 }
 
+/** Where tracked source files must carry an SPDX header naming their package's licence. */
+const SPDX_ROOTS = ['apps', 'packages', 'examples'];
+
 function trackedSources(root) {
-  return execFileSync('git', ['ls-files', '-z', 'apps', 'packages'], {
+  return execFileSync('git', ['ls-files', '-z', ...SPDX_ROOTS], {
     cwd: root,
     encoding: 'utf8',
   })
@@ -501,6 +513,25 @@ function selfTest() {
     ]);
     if (wrong.length !== 1 || wrong[0].file !== 'packages/p/wrong.ts')
       failures.push(`spdx-id: expected only wrong.ts, got ${JSON.stringify(wrong)}`);
+    // The examples are scanned too: a tracked file there without a header, or with another id.
+    const repo = join(base, 'repo');
+    const example = join(repo, 'examples', 'e');
+    write(join(example, 'package.json'), { name: 'e', private: true, license: 'MPL-2.0' });
+    writeFileSync(join(example, 'bare.ts'), 'export {};\n');
+    writeFileSync(join(example, 'wrong.ts'), '// SPDX-License-Identifier: CC0-1.0\nexport {};\n');
+    execFileSync('git', ['init', '-q'], { cwd: repo });
+    execFileSync('git', ['add', '.'], { cwd: repo });
+    const tracked = trackedSources(repo);
+    const exampleBare = missingSpdxHeaders(repo, tracked);
+    if (exampleBare.join() !== 'examples/e/bare.ts')
+      failures.push(
+        `spdx-examples: expected examples/e/bare.ts, got ${JSON.stringify(exampleBare)}`
+      );
+    const exampleWrong = mismatchedSpdxHeaders(repo, tracked).map((w) => w.file);
+    if (exampleWrong.join() !== 'examples/e/wrong.ts')
+      failures.push(
+        `spdx-examples: expected examples/e/wrong.ts, got ${JSON.stringify(exampleWrong)}`
+      );
   } finally {
     rmSync(base, { recursive: true, force: true });
   }
@@ -515,7 +546,7 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
       for (const f of failures) console.error(`  · ${f}`);
       process.exit(1);
     }
-    console.log('✓ ggraphic licence self-test: 17 probes ok');
+    console.log('✓ ggraphic licence self-test: 19 probes ok');
   } else {
     const root = fileURLToPath(new URL('..', import.meta.url));
     const assetProblems = checkBundledAssets(root);
@@ -549,7 +580,7 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
       for (const file of bare) console.error(`  ${file}`);
       process.exit(1);
     }
-    console.log('✓ every source file under apps/ and packages/ carries an SPDX header');
+    console.log('✓ every source file under apps/, packages/ and examples/ carries an SPDX header');
     const wrong = mismatchedSpdxHeaders(root, trackedSources(root));
     if (wrong.length > 0) {
       console.error(

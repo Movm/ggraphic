@@ -8,9 +8,9 @@
  * ChartSettingsSection) while still exporting/collab-syncing like any element.
  */
 
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { messages } from '@ggraphic/editor/i18n/messages';
-import { contrastRatio, luminance } from '@ggraphic/editor/utils/colorLuminance';
+import { activeBrand } from '../brand/brandRegistry.js';
+import { messages } from '../i18n/messages.js';
+import { contrastRatio, luminance } from './colorLuminance.js';
 
 import type {
   ChartDataPoint,
@@ -18,7 +18,7 @@ import type {
   ChartLegendPosition,
   ChartSeries,
   ChartType,
-} from '@ggraphic/editor/utils/chartTypes';
+} from './chartTypes.js';
 
 export type {
   ChartDataPoint,
@@ -26,7 +26,7 @@ export type {
   ChartLegendPosition,
   ChartSeries,
   ChartType,
-} from '@ggraphic/editor/utils/chartTypes';
+} from './chartTypes.js';
 
 export type ChartGroup = 'balken' | 'linien' | 'kreis';
 

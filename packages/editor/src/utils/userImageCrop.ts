@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
-import {
-  coverPhotoRect,
-  panOfFramedPhoto,
-  type Rect,
-  type Size,
-} from '@ggraphic/editor/utils/coverFit';
-import { panOfStraightPhoto } from '@ggraphic/editor/utils/straighten';
+import { coverPhotoRect, panOfFramedPhoto, type Rect, type Size } from './coverFit.js';
+import { panOfStraightPhoto } from './straighten.js';
 
 import { type UserImageInstance } from './userImageUtils.js';
 

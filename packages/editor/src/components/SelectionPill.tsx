@@ -11,18 +11,19 @@ import {
   PiTrash,
 } from 'react-icons/pi';
 
-import { useIsCanvasTextEditing } from '@ggraphic/editor/components/CanvasTextOverlay';
-import { useRovingToolbar } from '@ggraphic/editor/hooks/useRovingToolbar';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { useIsCanvasTextEditing } from './CanvasTextOverlay.js';
+import { useRovingToolbar } from '../hooks/useRovingToolbar.js';
+import { useMessages } from '../i18n/messages.js';
 import {
   CANVAS_COMMANDS,
   formatShortcut,
   isMacPlatform,
   shortcutOf,
-} from '@ggraphic/editor/utils/canvasCommandRegistry';
-import { cn } from '@ggraphic/editor/utils/cn';
+} from '../utils/canvasCommandRegistry.js';
+import { cn } from '../utils/cn.js';
 
-import type { SelectionBox } from '@ggraphic/editor/components/GenericCanvas';
+import type { SelectionBox } from './GenericCanvas.js';
+import { EDITOR_SCOPE } from '../ui/editorScope.js';
 
 /**
  * Finger (`touch`) oder Maus (`pointer`). Am Desktop ist die Pille kleiner und
@@ -214,6 +215,7 @@ export function SelectionPill({
 
   return createPortal(
     <div
+      {...EDITOR_SCOPE}
       ref={pillRef}
       onKeyDown={onKeyDown}
       onFocus={onFocus}

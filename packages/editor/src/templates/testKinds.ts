@@ -4,7 +4,7 @@
  * `templates/templateGeometry.vitest.ts`): every kind built by its own factory,
  * and a "populated" variant that also sets the optional numbers of its type.
  */
-import { registerAssetCatalog, type CanvasAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
+import { registerAssetCatalog, type CanvasAssetCatalog } from '../utils/canvasAssets.js';
 
 import {
   createAdditionalTextActions,

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
+import { useCanvasEditorServices } from '../CanvasEditorProvider.js';
 import { useCallback } from 'react';
 
-import type { StockImageAttribution } from '@ggraphic/editor/common/imageSourceTypes';
+import type { StockImageAttribution } from '../common/imageSourceTypes.js';
 
 /**
  * Unsplash API Terms: every placement of an Unsplash photo pings its

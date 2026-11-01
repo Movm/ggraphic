@@ -4,8 +4,8 @@
  * Abbrechen stellt den Zuschnitt vom Betreten her und hinterlässt keinen
  * Schritt, der ihn zurückbrächte; jedes andere Ende behält ihn als einen Schritt.
  */
-import { GenericCanvas, type GenericCanvasRef } from '@ggraphic/editor/components/GenericCanvas';
-import { loadCanvasConfig } from '@ggraphic/editor/configs/configLoader';
+import { GenericCanvas, type GenericCanvasRef } from '../GenericCanvas.js';
+import { loadCanvasConfig } from '../../configs/configLoader.js';
 
 import '../../testing/fixtureTemplates';
 import { createCanvas } from '@napi-rs/canvas';
@@ -14,15 +14,15 @@ import Konva from 'konva';
 import { createRef } from 'react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AutoSaveStoreProvider } from '@ggraphic/editor/stores/AutoSaveStoreProvider';
-import { straightPhotoCovers, type StraightDraw } from '@ggraphic/editor/utils/straighten';
+import { AutoSaveStoreProvider } from '../../stores/AutoSaveStoreProvider.js';
+import { straightPhotoCovers, type StraightDraw } from '../../utils/straighten.js';
 
-import type * as StoreModule from '@ggraphic/editor/stores/createCanvasEditorStore';
-import type { CanvasEditorStoreApi } from '@ggraphic/editor/stores/createCanvasEditorStore';
-import type { UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import type * as StoreModule from '../../stores/createCanvasEditorStore.js';
+import type { CanvasEditorStoreApi } from '../../stores/createCanvasEditorStore.js';
+import type { UserImageInstance } from '../../utils/userImageUtils.js';
 
 const stores = vi.hoisted(() => [] as unknown[]);
-vi.mock('@ggraphic/editor/stores/createCanvasEditorStore', async (importOriginal) => {
+vi.mock('../../stores/createCanvasEditorStore.js', async (importOriginal) => {
   const original = await importOriginal<typeof StoreModule>();
   return {
     ...original,

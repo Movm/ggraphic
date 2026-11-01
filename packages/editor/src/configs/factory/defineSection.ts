@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import type { SectionConfig, SectionContext } from '@ggraphic/editor/configs/types';
+import type { SectionConfig, SectionContext } from '../types.js';
 
 /**
  * Returns a section definer bound to a template's `TState` / `TActions`.

@@ -12,9 +12,9 @@
 
 import { type BrandPack } from '@ggraphic/core';
 
-import { carryInstanceState } from '@ggraphic/editor/configs/factory/carryInstanceState';
-import { ASSET_TARGET_SIZE } from '@ggraphic/editor/utils/canvasAssets';
-import { fromHostKinds, hostElementKinds, kindList } from '@ggraphic/editor/utils/elementKinds';
+import { carryInstanceState } from '../../configs/factory/carryInstanceState.js';
+import { ASSET_TARGET_SIZE } from '../../utils/canvasAssets.js';
+import { fromHostKinds, hostElementKinds, kindList } from '../../utils/elementKinds.js';
 import {
   chartInk,
   chartLegendPosition,
@@ -22,14 +22,14 @@ import {
   isRoundChartType,
   type ChartInstance,
   type ChartType,
-} from '@ggraphic/editor/utils/chartUtils';
-import { ICON_TARGET_SIZE, ILLUSTRATION_TARGET_SIZE } from '@ggraphic/editor/utils/motifSizes';
+} from '../../utils/chartUtils.js';
+import { ICON_TARGET_SIZE, ILLUSTRATION_TARGET_SIZE } from '../../utils/motifSizes.js';
 import { shownText } from '../../utils/pageCounter.js';
-import { photoStripBeside, type ShapeInstance } from '@ggraphic/editor/utils/shapes';
-import { hasCorners } from '@ggraphic/editor/utils/cornerRadius';
+import { photoStripBeside, type ShapeInstance } from '../../utils/shapes.js';
+import { hasCorners } from '../../utils/cornerRadius.js';
 import { bubbleExtent, tailOf } from '../../utils/shapeDevices.js';
-import { backgroundStraighten } from '@ggraphic/editor/utils/straighten';
-import { konvaFontStyle } from '@ggraphic/editor/utils/textUtils';
+import { backgroundStraighten } from '../../utils/straighten.js';
+import { konvaFontStyle } from '../../utils/textUtils.js';
 
 import {
   estimateMeasure,
@@ -49,11 +49,11 @@ import type {
   PptxShapeKind,
   PptxSlideModel,
 } from './types.js';
-import type { AdditionalText } from '@ggraphic/editor/configs/types';
-import type { CanvasFormat } from '@ggraphic/editor/formats/index';
-import type { CircleBadgeInstance } from '@ggraphic/editor/utils/circleBadgeUtils';
-import type { PillBadgeInstance } from '@ggraphic/editor/utils/pillBadgeUtils';
-import type { ImageAdjustments, UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import type { AdditionalText } from '../../configs/types.js';
+import type { CanvasFormat } from '../../formats/index.js';
+import type { CircleBadgeInstance } from '../../utils/circleBadgeUtils.js';
+import type { PillBadgeInstance } from '../../utils/pillBadgeUtils.js';
+import type { ImageAdjustments, UserImageInstance } from '../../utils/userImageUtils.js';
 
 /** Ein Seitenzustand, wie er in `pages[i].state` steht. */
 export type PptxPageState = Readonly<Record<string, unknown>>;

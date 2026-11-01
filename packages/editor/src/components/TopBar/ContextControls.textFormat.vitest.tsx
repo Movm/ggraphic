@@ -8,16 +8,13 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { createRef } from 'react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-import {
-  CanvasTextEditorProvider,
-  preloadRichText,
-} from '@ggraphic/editor/components/CanvasTextOverlay';
-import { ContextControls } from '@ggraphic/editor/components/TopBar/ContextControls';
-import { messages } from '@ggraphic/editor/i18n/messages';
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
-import { CanvasText } from '@ggraphic/editor/primitives/CanvasText';
+import { CanvasTextEditorProvider, preloadRichText } from '../CanvasTextOverlay.js';
+import { ContextControls } from './ContextControls.js';
+import { messages } from '../../i18n/messages.js';
+import { CanvasStage, type CanvasStageRef } from '../../primitives/CanvasStage.js';
+import { CanvasText } from '../../primitives/CanvasText.js';
 
-import type { FloatingModuleState } from '@ggraphic/editor/hooks/useFloatingModuleState';
+import type { FloatingModuleState } from '../../hooks/useFloatingModuleState.js';
 
 const INSTRUMENT_SANS = 'Instrument Sans, Arial, sans-serif';
 const DISPLAY_FONT = 'FixtureSans, Arial, sans-serif';

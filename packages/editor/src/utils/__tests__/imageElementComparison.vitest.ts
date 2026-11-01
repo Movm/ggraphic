@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, it, expect } from 'vitest';
 
-import { imageRenderInputsAreEqual } from '@ggraphic/editor/utils/imageElementComparison';
+import { imageRenderInputsAreEqual } from '../imageElementComparison.js';
 
-import type { ImageElementConfig, LayoutResult } from '@ggraphic/editor/configs/types';
+import type { ImageElementConfig, LayoutResult } from '../../configs/types.js';
 
 type State = Record<string, unknown>;
 

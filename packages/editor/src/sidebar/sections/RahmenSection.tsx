@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { FRAME_PRESET_PATHS, type FrameClipType } from '@ggraphic/editor/utils/frameUtils';
+import { FRAME_PRESET_PATHS, type FrameClipType } from '../../utils/frameUtils.js';
 
 const PREVIEW_GRADIENT_ID = 'rahmen-preset-preview-gradient';
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it, vi } from 'vitest';
 
-import { withSelectionChromeHidden } from '@ggraphic/editor/utils/captureStage';
+import { withSelectionChromeHidden } from './captureStage.js';
 
 import type Konva from 'konva';
 

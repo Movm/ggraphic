@@ -4,7 +4,7 @@
  */
 
 import { type KawaiiIllustrationType, type KawaiiMood, type SvgSource } from '@ggraphic/core';
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { messages } from '../../i18n/messages.js';
 
 export {
   type IllustrationInstance,

@@ -6,9 +6,10 @@
  * damit Bühnen-Beschriftung, Alt-Text und Ansagen dieselben Namen lesen.
  */
 
-import { stripMarks } from '@ggraphic/editor/composer/marks';
-import { messages } from '@ggraphic/editor/i18n/messages';
-import { getShapeDef } from '@ggraphic/editor/utils/shapes';
+import { stripInlineMarks } from '@ggraphic/schema';
+
+import { messages } from '../i18n/messages.js';
+import { getShapeDef } from './shapes.js';
 
 import { getAssetById, isStickerLikeInstance } from './canvasAssets.js';
 import { hostElementKind } from './elementKinds.js';
@@ -47,12 +48,9 @@ function templateImageName(id: string): string | undefined {
   }
 }
 
-/** Fließtext für den Namen: Inline-Marken (`**`, `==`, `++` …) und <u> weg, Leerraum zusammengezogen, gekürzt. */
+/** Fließtext für den Namen: Inline-Marken (`**`, `_`, `==`, `++`, <u> …) weg, Leerraum zusammengezogen, gekürzt. */
 function shorten(text: string): string {
-  const flat = stripMarks(text)
-    .replace(/<\/?u>/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
+  const flat = stripInlineMarks(text).replace(/\s+/g, ' ').trim();
   return flat.length > LAYER_TEXT_MAX ? `${flat.slice(0, LAYER_TEXT_MAX - 1).trimEnd()}…` : flat;
 }
 

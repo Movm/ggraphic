@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { createShape, photoStripBeside, STROKE_ONLY_SHAPES } from '@ggraphic/editor/utils/shapes';
+import { createShape, photoStripBeside, STROKE_ONLY_SHAPES } from './shapes.js';
 
 describe('STROKE_ONLY_SHAPES', () => {
   it('contains only the line-* ids rendered as Konva Line/Arrow', () => {

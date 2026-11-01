@@ -22,7 +22,7 @@
 import { externalIconKey, isExternalIconId } from './externalIcons.js';
 
 import type { IconState } from '../configs/factory/baseTypes.js';
-import type { IconDef } from '@ggraphic/editor/utils/canvasIcons';
+import type { IconDef } from './canvasIcons.js';
 
 /**
  * Zum Auflösen zählt nur dieses eine Feld. Der Renderer hält seinen eigenen,

@@ -8,9 +8,9 @@ import { brandDefault, type BrandPack } from '@ggraphic/core';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { DocumentBrandContext } from '@ggraphic/editor/brand/documentBrand';
-import { OutlineSettings } from '@ggraphic/editor/sidebar/sections/effects/OutlineSettings';
-import { ShadowSettings } from '@ggraphic/editor/sidebar/sections/effects/ShadowSettings';
+import { DocumentBrandContext } from '../../../brand/documentBrand.js';
+import { OutlineSettings } from './OutlineSettings.js';
+import { ShadowSettings } from './ShadowSettings.js';
 
 const OTHER_BRAND: BrandPack = {
   ...brandDefault,

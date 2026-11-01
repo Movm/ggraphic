@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { useUserUploads } from '@ggraphic/editor/sidebar/UserUploadsProvider';
+import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
+import { useMessages } from '../../../i18n/messages.js';
+import { useUserUploads } from '../../UserUploadsProvider.js';
 import { useCallback, useState } from 'react';
 import { HiScissors } from 'react-icons/hi2';
 
 import { ImageInputPicker } from './ImageInputPicker.js';
-import {
-  ToolPanel,
-  type ToolPanelSuccess,
-} from '@ggraphic/editor/sidebar/sections/tools/ToolPanel';
+import { ToolPanel, type ToolPanelSuccess } from './ToolPanel.js';
 
 export interface RemoveBackgroundToolProps {
   onJumpToUploads?: () => void;

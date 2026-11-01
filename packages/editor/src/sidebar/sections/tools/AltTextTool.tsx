@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { cn } from '@ggraphic/editor/utils/cn';
+import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
+import { useMessages } from '../../../i18n/messages.js';
+import { cn } from '../../../utils/cn.js';
 import { useCallback, useId, useState } from 'react';
 import { HiChatBubbleBottomCenterText } from 'react-icons/hi2';
 
-import { MOBILE_INPUT_TEXT } from '@ggraphic/editor/sidebar/sidebarStyles';
+import { MOBILE_INPUT_TEXT } from '../../sidebarStyles.js';
 
-import { ToolPanel } from '@ggraphic/editor/sidebar/sections/tools/ToolPanel';
+import { ToolPanel } from './ToolPanel.js';
 
-import type { AltTextPage, AltTextScope } from '@ggraphic/editor/CanvasEditorProvider';
+import type { AltTextPage, AltTextScope } from '../../../CanvasEditorProvider.js';
 
 /** Instagram's alt-text limit; the contract's `SLIDE_ALT_TEXT_MAX_CHARS` (guarded by a test) is the same number. */
 export const ALT_TEXT_MAX_CHARS = 1000;

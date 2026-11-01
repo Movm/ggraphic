@@ -1,21 +1,18 @@
 // SPDX-License-Identifier: MPL-2.0
 import { type BrandPack } from '@ggraphic/core';
-import { CustomColorSwatch } from '@ggraphic/editor/components/CustomColorSwatch';
-import { headlineFontStack } from '@ggraphic/editor/brand/brandRegistry';
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { brandColors } from '@ggraphic/editor/utils/colorOptions';
+import { CustomColorSwatch } from '../../../components/CustomColorSwatch.js';
+import { headlineFontStack } from '../../../brand/brandRegistry.js';
+import { useDocumentBrand } from '../../../brand/documentBrand.js';
+import { useMessages } from '../../../i18n/messages.js';
+import { brandColors } from '../../../utils/colorOptions.js';
 import Konva from 'konva';
 import { useCallback, useEffect, useState } from 'react';
 import { PiPath } from 'react-icons/pi';
 
-import { MOBILE_INPUT_TEXT } from '@ggraphic/editor/sidebar/sidebarStyles';
+import { MOBILE_INPUT_TEXT } from '../../sidebarStyles.js';
 
-import {
-  ToolPanel,
-  type ToolPanelSuccess,
-} from '@ggraphic/editor/sidebar/sections/tools/ToolPanel';
-import { useToolImagePlacement } from '@ggraphic/editor/sidebar/sections/tools/useToolImagePlacement';
+import { ToolPanel, type ToolPanelSuccess } from './ToolPanel.js';
+import { useToolImagePlacement } from './useToolImagePlacement.js';
 
 export interface TextPathCreatorToolProps {
   onJumpToUploads?: () => void;

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@ggraphic/editor/ui/dialog';
+import { useMessages } from '../i18n/messages.js';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '../ui/dialog.js';
 
 interface LightboxProps {
   isOpen: boolean;

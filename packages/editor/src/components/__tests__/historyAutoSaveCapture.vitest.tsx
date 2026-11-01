@@ -4,20 +4,20 @@
  * step) only feeds auto-save. With `autoSave={false}` — collab and multi-page
  * decks — it used to run anyway: a wasted main-thread encode after every edit.
  */
-import { GenericCanvas } from '@ggraphic/editor/components/GenericCanvas';
-import { loadCanvasConfig } from '@ggraphic/editor/configs/configLoader';
+import { GenericCanvas } from '../GenericCanvas.js';
+import { loadCanvasConfig } from '../../configs/configLoader.js';
 import '../../testing/fixtureTemplates';
-import { AutoSaveStoreProvider } from '@ggraphic/editor/stores/AutoSaveStoreProvider';
-import { captureStageImage } from '@ggraphic/editor/utils/captureStage';
+import { AutoSaveStoreProvider } from '../../stores/AutoSaveStoreProvider.js';
+import { captureStageImage } from '../../utils/captureStage.js';
 
 import { act, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type * as StoreModule from '@ggraphic/editor/stores/createCanvasEditorStore';
-import type { CanvasEditorStoreApi } from '@ggraphic/editor/stores/createCanvasEditorStore';
+import type * as StoreModule from '../../stores/createCanvasEditorStore.js';
+import type { CanvasEditorStoreApi } from '../../stores/createCanvasEditorStore.js';
 
 const stores = vi.hoisted(() => [] as unknown[]);
-vi.mock('@ggraphic/editor/stores/createCanvasEditorStore', async (importOriginal) => {
+vi.mock('../../stores/createCanvasEditorStore.js', async (importOriginal) => {
   const original = await importOriginal<typeof StoreModule>();
   return {
     ...original,
@@ -28,11 +28,11 @@ vi.mock('@ggraphic/editor/stores/createCanvasEditorStore', async (importOriginal
     },
   };
 });
-vi.mock('@ggraphic/editor/utils/captureStage', () => ({
+vi.mock('../../utils/captureStage.js', () => ({
   captureStageImage: vi.fn(() => 'blob:fixture-capture'),
 }));
 // Das eigentliche Speichern (Share-Store, Netz) ist nicht Gegenstand hier.
-vi.mock('@ggraphic/editor/hooks/useCanvasAutoSave', () => ({
+vi.mock('../../hooks/useCanvasAutoSave.js', () => ({
   useCanvasAutoSave: () => ({ status: 'idle', shareToken: null, retry: async () => {} }),
 }));
 

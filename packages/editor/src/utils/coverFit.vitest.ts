@@ -14,7 +14,7 @@ import {
   windowInPhoto,
   zoomBackground,
   zoomWindow,
-} from '@ggraphic/editor/utils/coverFit';
+} from './coverFit.js';
 
 const page = { x: 0, y: 0, width: 1080, height: 1350 };
 const landscape = { width: 5306, height: 3542 };

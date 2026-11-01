@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MPL-2.0
 import { type BrandPack } from '@ggraphic/core';
-import { defaultTextMarker, markerInkOn } from '@ggraphic/editor/utils/markerColors';
+import { defaultTextMarker, markerInkOn } from '../../utils/markerColors.js';
 import { markdownLiteToRichText, type CanvasRichTextDoc } from '@ggraphic/schema';
 
 import type { PptxBullet, PptxParagraph, PptxTextRun } from './types.js';
-import type { AdditionalText } from '@ggraphic/editor/configs/types';
+import type { AdditionalText } from '../../configs/types.js';
 
 type RichNode = NonNullable<CanvasRichTextDoc['content']>[number];
 

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useEffect, useMemo } from 'react';
 
-import { useAwarenessState } from '@ggraphic/editor/collab/useAwarenessState';
-import { messages } from '@ggraphic/editor/i18n/messages';
-import { useCanvasStoreSelector } from '@ggraphic/editor/stores/CanvasStoreProvider';
+import { useAwarenessState } from './useAwarenessState.js';
+import { messages } from '../i18n/messages.js';
+import { useCanvasStoreSelector } from '../stores/CanvasStoreProvider.js';
 
 import type { HocuspocusProvider } from '@hocuspocus/provider';
 

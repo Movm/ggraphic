@@ -3,11 +3,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  CanvasEditorProvider,
-  type CanvasEditorServices,
-} from '@ggraphic/editor/CanvasEditorProvider';
-import type { CanvasIconSearchService } from '@ggraphic/editor/hostServices';
+import { CanvasEditorProvider, type CanvasEditorServices } from '../../../CanvasEditorProvider.js';
+import type { CanvasIconSearchService } from '../../../hostServices.js';
 
 import { IconifyCatalog } from './IconifyCatalog.js';
 

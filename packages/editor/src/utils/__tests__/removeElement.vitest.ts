@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it, vi } from 'vitest';
 
-import { findElementRemover } from '@ggraphic/editor/utils/removeElement';
+import { findElementRemover } from '../removeElement.js';
 
 describe('findElementRemover', () => {
   it('löscht eine Instanz über ihre Aktion', () => {

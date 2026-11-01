@@ -1,5 +1,29 @@
 # @ggraphic/editor
 
+## 0.1.0-alpha.1
+
+### Minor Changes
+
+- 0a2be62: Brands and templates as data. `defineBrand` (core) derives a full `BrandPack` from an id, a name, three colours, the fonts (with `cuts`) and an optional logo: the colour roles and grounds come from `deriveBrandColors` and `deriveGrounds`, and the pickers offer the roles bound to them. `templatePackFromJson` (`@ggraphic/editor/page/templatePack`) reads template files into a pack whose `definitions` go straight into `registerTemplates`; each template is a free page (`createPageConfig`), and files that do not read are reported, not half-loaded. The new `@ggraphic/brand-default` is the neutral pack ready to render: `brandDefault` with the cuts of its families declared, and `@ggraphic/brand-default/fonts` to load the OFL families.
+- ee8b50f: New export `@ggraphic/editor/styles/compiled`: one stylesheet for hosts without Tailwind. It holds
+  the token defaults, the editor rules and every Tailwind class the editor uses, compiled. All of it
+  sits in `@layer ggraphic`, so unlayered host rules win without `!important`, and it applies only
+  inside `[data-ggraphic]` (Tailwind's reset included), which the editor root and every portal the
+  editor opens on `<body>` now carry. The token defaults stay global, so theming and dark mode work
+  through the `--editor-*` properties as before. `styles` and `styles/tailwind` are unchanged.
+- d17ef7d: New `@ggraphic/editor/page/*` modules: the free page model a host used to write itself. `createPageConfig` builds the page config (colour ground, Text/Elements/Uploads/Tools tabs, the free elements) from a seed and the host's template lookup; `createPageActions` holds the page's actions; `pageStateFrom`, `seedFromTemplate`, `storedPageSeed`, `placeTemplate`, `fittedFontSize`, `withHuggedPlates`, `slotBudgetFor` and the typography and logo-size helpers come with it. The tab texts are new catalogue entries (`pageTabs`) in German and English. The code moved from the Studio, which now uses it from the package.
+
+### Patch Changes
+
+- 37bceca: Ship the `ggraphic-embed` agent skill in the package (`skills/ggraphic-embed/SKILL.md`): how to install, register, mount, style and test the editor in a host app. The README now describes the editor as it is.
+- d74febd: A newly inserted element (icon, shape, chart, text, asset, ...) is now drawn on top of everything on the page and listed first in the layers, whatever its kind. Before, it was stacked among the untracked elements in per-kind order and could land under an older one.
+- e092ec1: Fix three text editing details. Bold is disabled (and shown as not pressed, with an explanatory label)
+  while italic is on in a font without a bold italic cut; `FontMarkSupport` gains `boldItalic`, the one
+  answer `runFont` also reads. Layer names no longer show italic markers (`_text_`) literally. The
+  canvas texts in the Text tab are textareas, so editing no longer drops their line breaks.
+- Updated dependencies [0a2be62]
+  - @ggraphic/core@0.1.0-alpha.1
+
 ## 0.1.0-alpha.0
 
 ### Minor Changes

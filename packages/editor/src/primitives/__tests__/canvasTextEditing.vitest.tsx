@@ -19,12 +19,12 @@ import {
   CanvasTextEditorProvider,
   preloadRichText,
   useCanvasTextFormatting,
-} from '@ggraphic/editor/components/CanvasTextOverlay';
-import { TextFormatControls } from '@ggraphic/editor/components/TextFormatControls';
-import { CanvasStage } from '@ggraphic/editor/primitives/CanvasStage';
-import { CanvasText } from '@ggraphic/editor/primitives/CanvasText';
+} from '../../components/CanvasTextOverlay.js';
+import { TextFormatControls } from '../../components/TextFormatControls.js';
+import { CanvasStage } from '../CanvasStage.js';
+import { CanvasText } from '../CanvasText.js';
 
-import type { CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
+import type { CanvasStageRef } from '../CanvasStage.js';
 
 const BRAND_TYPE = 'FixtureSans, Arial, sans-serif';
 const INSTRUMENT_SANS = 'Instrument Sans, Arial, sans-serif';

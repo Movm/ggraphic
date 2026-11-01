@@ -7,11 +7,11 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createRef, useEffect, useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { commitOpenTextEdit } from '@ggraphic/editor/components/CanvasTextOverlay';
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
-import { CanvasText } from '@ggraphic/editor/primitives/CanvasText';
+import { commitOpenTextEdit } from '../CanvasTextOverlay.js';
+import { CanvasStage, type CanvasStageRef } from '../../primitives/CanvasStage.js';
+import { CanvasText } from '../../primitives/CanvasText.js';
 
-vi.mock('@ggraphic/editor/components/RichTextField', () => ({
+vi.mock('../RichTextField.js', () => ({
   RichTextField: ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
     <textarea aria-label="Entwurf" value={value} onChange={(e) => onChange(e.target.value)} />
   ),

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import { rememberLogoSize } from '@ggraphic/editor/page/logoSize';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -6,7 +7,6 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { type StudioConfig } from '../api/client';
 import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
-import { rememberLogoSize } from '../logoSize';
 
 import { studioBrand } from '../brand';
 import { newDocument } from '../editor/document';

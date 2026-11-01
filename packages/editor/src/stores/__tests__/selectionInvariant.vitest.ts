@@ -6,7 +6,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { createCanvasEditorStore } from '@ggraphic/editor/stores/createCanvasEditorStore';
+import { createCanvasEditorStore } from '../createCanvasEditorStore.js';
 
 const selection = (store: ReturnType<typeof createCanvasEditorStore>) => {
   const { selectedLayerIds, selectedElement } = store.getState();

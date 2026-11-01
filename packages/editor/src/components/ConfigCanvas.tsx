@@ -12,7 +12,7 @@
 
 import { memo, useRef } from 'react';
 
-import { DEFAULT_FORMAT_ID, formatIdForSize } from '@ggraphic/editor/formats/index';
+import { DEFAULT_FORMAT_ID, formatIdForSize } from '../formats/index.js';
 
 import { GenericCanvas } from './GenericCanvas.js';
 

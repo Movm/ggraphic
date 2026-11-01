@@ -5,6 +5,7 @@ import { CanvasEditorProvider } from '@ggraphic/editor/CanvasEditorProvider';
 import { messages } from '@ggraphic/editor/i18n/messages';
 import { CanvasEditorShell } from '@ggraphic/editor/components/CanvasEditor/CanvasEditorShell';
 import { type CanvasEditorExportApi } from '@ggraphic/editor/components/CanvasEditor/types';
+import { logoSizeOf } from '@ggraphic/editor/page/logoSize';
 import { Alert, Button } from '@ggraphic/ui';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useMemo, useRef } from 'react';
@@ -16,7 +17,6 @@ import { parseDocument, type StudioDocument } from '../editor/document';
 import { rebindStudioDocument } from '../editor/rebind';
 import { createStudioServices } from '../editor/services';
 import { useAutosave, type SaveStatus } from '../editor/useAutosave';
-import { logoSizeOf } from '../logoSize';
 import { navigate, TRASH_PATH } from '../router';
 
 const STATUS_TEXT: Record<SaveStatus, string> = {

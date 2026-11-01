@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
 import { PiTextAlignCenter, PiTextAlignLeft, PiTextAlignRight } from 'react-icons/pi';
 
-import { TILE, TileCaption, useBarTiles } from '@ggraphic/editor/components/TopBar/barTiles';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { TEXT_ALIGNS, type TextAlign } from '@ggraphic/editor/utils/textAlign';
+import { TILE, TileCaption, useBarTiles } from '../barTiles.js';
+import { useMessages } from '../../../i18n/messages.js';
+import { TEXT_ALIGNS, type TextAlign } from '../../../utils/textAlign.js';
 
 import type { IconType } from 'react-icons';
 

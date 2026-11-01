@@ -33,16 +33,17 @@ import { createPortal } from 'react-dom';
 import { FiBold, FiItalic, FiList, FiUnderline } from 'react-icons/fi';
 import { MdBorderColor, MdFormatListNumbered, MdHighlight } from 'react-icons/md';
 
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { useRovingToolbar } from '@ggraphic/editor/hooks/useRovingToolbar';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { KEEP_EDITING_ATTR } from '@ggraphic/editor/utils/keyboardOwnership';
+import { useDocumentBrand } from '../brand/documentBrand.js';
+import { useRovingToolbar } from '../hooks/useRovingToolbar.js';
+import { useMessages } from '../i18n/messages.js';
+import { KEEP_EDITING_ATTR } from '../utils/keyboardOwnership.js';
 
 import { brandColors, type ColorOption } from '../utils/colorOptions.js';
 import { type FontMarkSupport } from '../utils/fontMarkSupport.js';
 import { defaultTextMarker, markerSwatches } from '../utils/markerColors.js';
 
 import { CustomColorSwatch } from './CustomColorSwatch.js';
+import { EDITOR_SCOPE } from '../ui/editorScope.js';
 
 export type TextFormatVariant = 'floating' | 'contextBar';
 
@@ -175,6 +176,7 @@ export function TextFormatButtons({
   const m = useMessages().textFormat;
   const brand = useDocumentBrand();
   const { ref: rovingRef, ...rovingHandlers } = roving;
+  const boldHidden = marks.bold && state.italic && !marks.boldItalic;
   useImperativeHandle(toolbarRef, () => rovingRef.current as HTMLDivElement, [rovingRef]);
 
   return (
@@ -191,8 +193,11 @@ export function TextFormatButtons({
       {marks.bold && (
         <ToolbarButton
           onClick={commands.toggleBold}
-          isActive={state.bold}
-          label={m.bold}
+          // Kursiv schlägt Fett, wo es keinen fett-kursiven Schnitt gibt: der Knopf
+          // zeigte sonst „gedrückt", der Text bliebe aber nur kursiv.
+          isActive={state.bold && !boldHidden}
+          disabled={boldHidden}
+          label={boldHidden ? m.boldNeedsItalicCut : m.bold}
           variant={variant}
         >
           <FiBold />
@@ -373,6 +378,7 @@ function MarkColorButton({
       {position &&
         createPortal(
           <div
+            {...EDITOR_SCOPE}
             ref={popoverRef}
             {...{ [KEEP_EDITING_ATTR]: '' }}
             role="dialog"

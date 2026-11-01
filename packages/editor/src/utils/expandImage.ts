@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 // „Erweitern": die KI ergänzt das Foto auf das Seitenverhältnis seines Rahmens; danach liegt es wie neu eingesetzt.
 
-import { BACKGROUND_STRAIGHTEN_KEY, backgroundStraighten } from '@ggraphic/editor/utils/straighten';
+import { BACKGROUND_STRAIGHTEN_KEY, backgroundStraighten } from './straighten.js';
 
 import { cropTargetOf, type CropUpdate } from './cropTarget.js';
 import { resolveValue } from './resolveElementValue.js';

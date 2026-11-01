@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MPL-2.0
-import { type StockImageAttribution } from '@ggraphic/editor/common/imageSourceTypes';
+import { type StockImageAttribution } from '../common/imageSourceTypes.js';
 
-import { iconCreditLine, pageIconSources } from '@ggraphic/editor/utils/externalIcons';
-import { photoCreditLine } from '@ggraphic/editor/utils/photoCredit';
+import { iconCreditLine, pageIconSources } from './externalIcons.js';
+import { photoCreditLine } from './photoCredit.js';
 
-import type { UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import type { UserImageInstance } from './userImageUtils.js';
 
 /** Alle Foto-Nachweise einer Seite: Hintergrundfoto und eingefügte Fotos. */
 export function pagePhotoCredits(state: Record<string, unknown>): StockImageAttribution[] {

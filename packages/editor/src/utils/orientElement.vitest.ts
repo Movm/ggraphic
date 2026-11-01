@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it, vi } from 'vitest';
 
-import { findOrientationDoor } from '@ggraphic/editor/utils/orientElement';
+import { findOrientationDoor } from './orientElement.js';
 
-import type { LayoutResult } from '@ggraphic/editor/configs/types';
+import type { LayoutResult } from '../configs/types.js';
 
 const layout = { centerX: 500, centerY: 500 } as unknown as LayoutResult;
 

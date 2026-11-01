@@ -14,9 +14,9 @@ import { memo, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Image, Group, Rect, Transformer } from 'react-konva';
 
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { LOCKED_TRANSFORMER, useIsItemLocked } from '@ggraphic/editor/components/canvasItemLock';
-import { useBoxSnap, type SnapProps } from '@ggraphic/editor/hooks/useBoxSnap';
+import { activeBrand } from '../brand/brandRegistry.js';
+import { LOCKED_TRANSFORMER, useIsItemLocked } from '../components/canvasItemLock.js';
+import { useBoxSnap, type SnapProps } from '../hooks/useBoxSnap.js';
 import {
   CHART_INK_DARK,
   chartInk,
@@ -24,9 +24,9 @@ import {
   chartSeries,
   chartSeriesOutlines,
   type ChartInstance,
-} from '@ggraphic/editor/utils/chartUtils';
-import { ELEMENT_TRANSFORMER } from '@ggraphic/editor/utils/orientation';
-import { useTrackPendingImage } from '@ggraphic/editor/utils/pendingImages';
+} from '../utils/chartUtils.js';
+import { ELEMENT_TRANSFORMER } from '../utils/orientation.js';
+import { useTrackPendingImage } from '../utils/pendingImages.js';
 
 import { chartBox } from '../utils/renderedBoxes.js';
 

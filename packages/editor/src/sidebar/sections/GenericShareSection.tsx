@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { browserFileDelivery } from '@ggraphic/editor/hostServices';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { useAutoSaveStore, useAutoSaveStoreApi } from '@ggraphic/editor/stores/useAutoSaveStore';
-import { Skeleton } from '@ggraphic/editor/ui/skeleton';
-import { downloadErrorMessage } from '@ggraphic/editor/utils/downloadError';
+import { useCanvasEditorServices } from '../../CanvasEditorProvider.js';
+import { browserFileDelivery } from '../../hostServices.js';
+import { useMessages } from '../../i18n/messages.js';
+import { useAutoSaveStore, useAutoSaveStoreApi } from '../../stores/useAutoSaveStore.js';
+import { Skeleton } from '../../ui/skeleton.js';
+import { downloadErrorMessage } from '../../utils/downloadError.js';
 import { useCallback, useState, useMemo, useRef, useEffect, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import {
@@ -17,14 +17,15 @@ import {
 } from 'react-icons/pi';
 import { IoCheckmarkOutline, IoShareOutline } from 'react-icons/io5';
 
-import { DownloadNotice } from '@ggraphic/editor/components/DownloadNotice';
+import { DownloadNotice } from '../../components/DownloadNotice.js';
 import {
   AltTextField,
   useCaptionAltText,
   useShareAltText,
   withAltText,
-} from '@ggraphic/editor/sidebar/components/AltTextField';
+} from '../components/AltTextField.js';
 import { SubsectionTabBar } from '../SubsectionTabBar.js';
+import { EDITOR_SCOPE } from '../../ui/editorScope.js';
 
 export interface GenericShareSectionProps {
   exportedImage: string | null;
@@ -305,6 +306,7 @@ function DownloadShareSubsection({
             isMultiPage &&
             createPortal(
               <div
+                {...EDITOR_SCOPE}
                 ref={dlDropdown.menuRef}
                 className={dropdownMenu}
                 style={dlDropdown.style}
@@ -370,6 +372,7 @@ function DownloadShareSubsection({
               onShareAllPages &&
               createPortal(
                 <div
+                  {...EDITOR_SCOPE}
                   ref={shareDropdown.menuRef}
                   className={dropdownMenu}
                   style={shareDropdown.style}

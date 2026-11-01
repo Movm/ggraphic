@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { printImageInfo } from '@ggraphic/editor/utils/printImageInfo';
+import { printImageInfo } from './printImageInfo.js';
 
 import type Konva from 'konva';
 

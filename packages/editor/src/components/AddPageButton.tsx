@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { cn } from '@ggraphic/editor/utils/cn';
+import { useMessages } from '../i18n/messages.js';
+import { cn } from '../utils/cn.js';
 import { useRef, useState } from 'react';
 import { HiPlus } from 'react-icons/hi';
 

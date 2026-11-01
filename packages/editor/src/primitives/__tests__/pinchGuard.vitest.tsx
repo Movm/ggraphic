@@ -4,7 +4,7 @@ import { createRef, useState } from 'react';
 import { Rect, Transformer } from 'react-konva';
 import { describe, expect, it, vi } from 'vitest';
 
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
+import { CanvasStage, type CanvasStageRef } from '../CanvasStage.js';
 
 import type Konva from 'konva';
 

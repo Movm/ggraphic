@@ -5,12 +5,12 @@ import type Konva from 'konva';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
-import { ShapePrimitive } from '@ggraphic/editor/primitives/ShapePrimitive';
-import { UserImagePrimitive } from '@ggraphic/editor/primitives/UserImagePrimitive';
-import { createShape, type ShapeInstance } from '@ggraphic/editor/utils/shapes';
+import { CanvasStage, type CanvasStageRef } from '../CanvasStage.js';
+import { ShapePrimitive } from '../ShapePrimitive.js';
+import { UserImagePrimitive } from '../UserImagePrimitive.js';
+import { createShape, type ShapeInstance } from '../../utils/shapes.js';
 
-import type { UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import type { UserImageInstance } from '../../utils/userImageUtils.js';
 
 afterEach(() => vi.restoreAllMocks());
 

@@ -9,7 +9,7 @@
  * Generated from the SVG filenames — see apps/web/public/illustrations/illlustrations/.
  */
 
-import type { SvgDef } from '@ggraphic/editor/utils/illustrations/types';
+import type { SvgDef } from './types.js';
 
 export const ILLLUSTRATIONS: SvgDef[] = [
   {

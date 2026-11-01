@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import {
-  CROP_ASPECT_PRESETS,
-  cropAspectRatio,
-  frameForAspect,
-} from '@ggraphic/editor/utils/cropAspect';
+import { CROP_ASPECT_PRESETS, cropAspectRatio, frameForAspect } from './cropAspect.js';
 
 const photo = { x: -100, y: -50, width: 1200, height: 800 };
 

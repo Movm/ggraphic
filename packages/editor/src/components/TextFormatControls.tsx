@@ -13,7 +13,7 @@
 import { useEditorState, type Editor } from '@tiptap/react';
 import { useEffect, useMemo, useRef, type FocusEvent } from 'react';
 
-import { keepsEditing } from '@ggraphic/editor/utils/keyboardOwnership';
+import { keepsEditing } from '../utils/keyboardOwnership.js';
 
 import {
   TextFormatButtons,

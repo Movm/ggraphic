@@ -11,11 +11,11 @@ import { act, render } from '@testing-library/react';
 import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { CanvasRichText } from '@ggraphic/editor/primitives/CanvasRichText';
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
-import { measureTextWidthWithFont } from '@ggraphic/editor/utils/textUtils';
+import { CanvasRichText } from '../CanvasRichText.js';
+import { CanvasStage, type CanvasStageRef } from '../CanvasStage.js';
+import { measureTextWidthWithFont } from '../../utils/textUtils.js';
 
-import type * as TextUtils from '@ggraphic/editor/utils/textUtils';
+import type * as TextUtils from '../../utils/textUtils.js';
 import type Konva from 'konva';
 
 const fonts = vi.hoisted(() => {
@@ -33,7 +33,7 @@ const fonts = vi.hoisted(() => {
 
 const measured = vi.hoisted(() => ({ factor: 1 }));
 
-vi.mock('@ggraphic/editor/utils/textUtils', async (importOriginal) => ({
+vi.mock('../../utils/textUtils.js', async (importOriginal) => ({
   ...(await importOriginal<typeof TextUtils>()),
   runMeasurer: () => (text: string) => text.length * 10 * measured.factor,
 }));

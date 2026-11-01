@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
-import { fromLayout } from '@ggraphic/editor/configs/factory/layoutAccessors';
+import { fromLayout } from './layoutAccessors.js';
 
-import type {
-  FillValue,
-  LayoutResult,
-  PositionValue,
-  TextElementConfig,
-} from '@ggraphic/editor/configs/types';
+import type { FillValue, LayoutResult, PositionValue, TextElementConfig } from '../types.js';
 
 /**
  * Shared shape for the primary/secondary text-element factories.

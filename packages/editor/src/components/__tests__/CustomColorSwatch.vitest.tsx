@@ -6,7 +6,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { CustomColorSwatch } from '@ggraphic/editor/components/CustomColorSwatch';
+import { CustomColorSwatch } from '../CustomColorSwatch.js';
 
 const PRESETS = ['#1D3557', '#FFFFFF'];
 

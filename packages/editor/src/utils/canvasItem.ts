@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MPL-2.0
 import type { AssetInstance } from './canvasAssets.js';
 import type { AdditionalText, CanvasElementConfig } from '../configs/types.js';
-import type { ChartInstance } from '@ggraphic/editor/utils/chartTypes';
-import type { CircleBadgeInstance } from '@ggraphic/editor/utils/circleBadgeUtils';
-import type { FrameInstance } from '@ggraphic/editor/utils/frameUtils';
-import type { IllustrationInstance } from '@ggraphic/editor/utils/illustrations/types';
-import type { PillBadgeInstance } from '@ggraphic/editor/utils/pillBadgeUtils';
-import type { ShapeInstance } from '@ggraphic/editor/utils/shapes';
-import type { UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import type { ChartInstance } from './chartTypes.js';
+import type { CircleBadgeInstance } from './circleBadgeUtils.js';
+import type { FrameInstance } from './frameUtils.js';
+import type { IllustrationInstance } from './illustrations/types.js';
+import type { PillBadgeInstance } from './pillBadgeUtils.js';
+import type { ShapeInstance } from './shapes.js';
+import type { UserImageInstance } from './userImageUtils.js';
 
 /**
  * The element kinds a host adds to the core's. Empty in the core; a host

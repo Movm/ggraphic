@@ -34,20 +34,20 @@
  * `templateTextAligns` is the same for the alignment of the template's texts.
  */
 
-import { fromHostKinds, hostElementKinds } from '@ggraphic/editor/utils/elementKinds';
-import { isTextAlign, type TextAlign } from '@ggraphic/editor/utils/textAlign';
+import { fromHostKinds, hostElementKinds } from '../../utils/elementKinds.js';
+import { isTextAlign, type TextAlign } from '../../utils/textAlign.js';
 
 import type { IconState } from './baseTypes.js';
 import type { AssetInstance } from '../../utils/canvasAssets.js';
 import type { HostElementState } from '../../utils/canvasItem.js';
 import type { AdditionalText } from '../types.js';
-import type { ChartInstance } from '@ggraphic/editor/utils/chartTypes';
-import type { CircleBadgeInstance } from '@ggraphic/editor/utils/circleBadgeUtils';
-import type { FrameInstance } from '@ggraphic/editor/utils/frameUtils';
-import type { IllustrationInstance } from '@ggraphic/editor/utils/illustrations/types';
-import type { PillBadgeInstance } from '@ggraphic/editor/utils/pillBadgeUtils';
-import type { ShapeInstance } from '@ggraphic/editor/utils/shapes';
-import type { ImageAdjustments, UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import type { ChartInstance } from '../../utils/chartTypes.js';
+import type { CircleBadgeInstance } from '../../utils/circleBadgeUtils.js';
+import type { FrameInstance } from '../../utils/frameUtils.js';
+import type { IllustrationInstance } from '../../utils/illustrations/types.js';
+import type { PillBadgeInstance } from '../../utils/pillBadgeUtils.js';
+import type { ShapeInstance } from '../../utils/shapes.js';
+import type { ImageAdjustments, UserImageInstance } from '../../utils/userImageUtils.js';
 
 /** The carried collections; a host kind's list rides along under its `stateKey`. */
 export interface CarriedInstanceState extends HostElementState {

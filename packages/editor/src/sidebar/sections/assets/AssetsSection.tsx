@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: MPL-2.0
-import { registeredAssetCatalog, type AssetInstance } from '@ggraphic/editor/utils/canvasAssets';
-import { prefetchBackground } from '@ggraphic/editor/utils/illustrations/svgCache';
-import { type ShapeInstance, type ShapeType } from '@ggraphic/editor/utils/shapes';
-import { type UserImagePlacement } from '@ggraphic/editor/utils/userImageUtils';
+import { registeredAssetCatalog, type AssetInstance } from '../../../utils/canvasAssets.js';
+import { prefetchBackground } from '../../../utils/illustrations/svgCache.js';
+import { type ShapeInstance, type ShapeType } from '../../../utils/shapes.js';
+import { type UserImagePlacement } from '../../../utils/userImageUtils.js';
 import { useEffect } from 'react';
 
 import { ElementsPanel } from './ElementsPanel.js';
 
-import type { BackgroundControls } from '@ggraphic/editor/configs/types';
-import type { ChartInstance, ChartType } from '@ggraphic/editor/utils/chartUtils';
-import type { FrameClipType, FrameInstance } from '@ggraphic/editor/utils/frameUtils';
-import type { IllustrationInstance } from '@ggraphic/editor/utils/illustrations/types';
+import type { BackgroundControls } from '../../../configs/types.js';
+import type { ChartInstance, ChartType } from '../../../utils/chartUtils.js';
+import type { FrameClipType, FrameInstance } from '../../../utils/frameUtils.js';
+import type { IllustrationInstance } from '../../../utils/illustrations/types.js';
 import type { StickerRef } from '@ggraphic/schema';
-import type { ExternalIconPayload } from '@ggraphic/editor/utils/externalIcons';
+import type { ExternalIconPayload } from '../../../utils/externalIcons.js';
 
 export interface ExtendedAssetsSectionProps {
   recommendedAssetIds?: string[];

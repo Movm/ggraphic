@@ -2,11 +2,8 @@
 import { render, screen, act } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { messages, registerMessages } from '@ggraphic/editor/i18n/messages';
-import {
-  defaultAutoSaveStore,
-  type AutoSaveStatus,
-} from '@ggraphic/editor/stores/createAutoSaveStore';
+import { messages, registerMessages } from '../../i18n/messages.js';
+import { defaultAutoSaveStore, type AutoSaveStatus } from '../../stores/createAutoSaveStore.js';
 
 import { AutoSaveIndicator } from './AutoSaveIndicator.js';
 

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { cn } from '@ggraphic/editor/utils/cn';
+import { useMessages } from '../../i18n/messages.js';
+import { cn } from '../../utils/cn.js';
 import { type BrandPack } from '@ggraphic/core';
 
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { brandColors } from '@ggraphic/editor/utils/colorOptions';
-import { handDrawnPath, type HandShapeType } from '@ggraphic/editor/utils/handDrawn';
-import { defaultMarkerFill } from '@ggraphic/editor/utils/markerColors';
+import { activeBrand } from '../../brand/brandRegistry.js';
+import { useDocumentBrand } from '../../brand/documentBrand.js';
+import { brandColors } from '../../utils/colorOptions.js';
+import { handDrawnPath, type HandShapeType } from '../../utils/handDrawn.js';
+import { defaultMarkerFill } from '../../utils/markerColors.js';
 import {
   CATEGORY_LABELS,
   CATEGORY_ORDER,
@@ -15,7 +15,7 @@ import {
   getShapeDef,
   type ShapeCategory,
   type ShapeType,
-} from '@ggraphic/editor/utils/shapes';
+} from '../../utils/shapes.js';
 import { useMemo } from 'react';
 import {
   PiStarFill,

@@ -14,9 +14,9 @@ import Konva from 'konva';
 import React, { createRef } from 'react';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { GenericCanvas, type GenericCanvasRef } from '@ggraphic/editor/components/GenericCanvas';
-import { loadCanvasConfig } from '@ggraphic/editor/configs/configLoader';
-import { AutoSaveStoreProvider } from '@ggraphic/editor/stores/AutoSaveStoreProvider';
+import { GenericCanvas, type GenericCanvasRef } from './GenericCanvas.js';
+import { loadCanvasConfig } from '../configs/configLoader.js';
+import { AutoSaveStoreProvider } from '../stores/AutoSaveStoreProvider.js';
 
 import { FIXTURE_ASSET_ID, registerFixtureAssets } from '../testing/fixtureTemplates';
 

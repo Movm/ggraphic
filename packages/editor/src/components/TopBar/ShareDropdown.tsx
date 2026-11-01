@@ -1,17 +1,12 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { browserFileDelivery } from '@ggraphic/editor/hostServices';
-import { useAutoSaveStoreApi } from '@ggraphic/editor/stores/useAutoSaveStore';
-import { Button } from '@ggraphic/editor/ui/button';
-import { IconButton, IconButtonRow } from '@ggraphic/editor/ui/icon-button';
-import {
-  Popover,
-  PopoverAnchor,
-  PopoverContent,
-  PopoverTrigger,
-} from '@ggraphic/editor/ui/popover';
-import { Skeleton } from '@ggraphic/editor/ui/skeleton';
+import { useCanvasEditorServices } from '../../CanvasEditorProvider.js';
+import { useMessages } from '../../i18n/messages.js';
+import { browserFileDelivery } from '../../hostServices.js';
+import { useAutoSaveStoreApi } from '../../stores/useAutoSaveStore.js';
+import { Button } from '../../ui/button.js';
+import { IconButton, IconButtonRow } from '../../ui/icon-button.js';
+import { Popover, PopoverAnchor, PopoverContent, PopoverTrigger } from '../../ui/popover.js';
+import { Skeleton } from '../../ui/skeleton.js';
 import { stripInlineMarks } from '@ggraphic/schema';
 import { useCallback, useMemo, useState } from 'react';
 import { IoShareOutline } from 'react-icons/io5';
@@ -24,14 +19,14 @@ import {
   PiUserPlus,
 } from 'react-icons/pi';
 
-import { useIsCanvasMobile } from '@ggraphic/editor/hooks/useIsCanvasMobile';
+import { useIsCanvasMobile } from '../../hooks/useIsCanvasMobile.js';
 import {
   AltTextField,
   useCaptionAltText,
   useShareAltText,
   withAltText,
-} from '@ggraphic/editor/sidebar/components/AltTextField';
-import { withPhotoCredit } from '@ggraphic/editor/utils/photoCredit';
+} from '../../sidebar/components/AltTextField.js';
+import { withPhotoCredit } from '../../utils/photoCredit.js';
 
 import {
   DownloadSection,

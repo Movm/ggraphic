@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
-import { loadCanvasConfig, preloadCanvasTemplate } from '@ggraphic/editor/configs/configLoader';
+import { loadCanvasConfig, preloadCanvasTemplate } from '../configLoader.js';
 import '../../testing/fixtureTemplates';
-import { canvasFontFamilies } from '@ggraphic/editor/utils/canvasFontFamilies';
+import { canvasFontFamilies } from '../../utils/canvasFontFamilies.js';
 
 import { afterEach, beforeAll, beforeEach, describe, it, expect, vi } from 'vitest';
 

@@ -5,11 +5,11 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import type { RunStyle } from '@ggraphic/schema';
 
-import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
-import { registerMessages } from '@ggraphic/editor/i18n/messages';
-import { fontMarkSupport } from '@ggraphic/editor/utils/fontMarkSupport';
-import { runFont } from '@ggraphic/editor/utils/textUtils';
-import { zipPageImages } from '@ggraphic/editor/utils/zipPageImages';
+import { registerBrandPacks } from '../../brand/brandRegistry.js';
+import { registerMessages } from '../../i18n/messages.js';
+import { fontMarkSupport } from '../fontMarkSupport.js';
+import { runFont } from '../textUtils.js';
+import { zipPageImages } from '../zipPageImages.js';
 
 // A host whose emphasis family ships a real Black Italic and loads it itself.
 const BOLD_ITALIC: RunStyle = {
@@ -59,13 +59,36 @@ describe('a bold italic run', () => {
 describe('the marks a family is offered', () => {
   it('follow the cuts a registered pack declares', () => {
     registerBrandPacks([PACK]);
-    expect(fontMarkSupport('PT Sans, Arial, sans-serif')).toEqual({ bold: true, italic: true });
-    expect(fontMarkSupport('Vollkorn')).toEqual({ bold: true, italic: false });
+    expect(fontMarkSupport('PT Sans, Arial, sans-serif')).toEqual({
+      bold: true,
+      italic: true,
+      boldItalic: false,
+    });
+    expect(fontMarkSupport('Vollkorn')).toEqual({ bold: true, italic: false, boldItalic: true });
   });
 
   it('keep the built-in table where no pack declares the family', () => {
-    expect(fontMarkSupport('Fraunces')).toEqual({ bold: true, italic: true });
-    expect(fontMarkSupport('Raleway')).toEqual({ bold: false, italic: false });
+    expect(fontMarkSupport('Fraunces')).toEqual({ bold: true, italic: true, boldItalic: true });
+    expect(fontMarkSupport('Raleway')).toEqual({ bold: false, italic: false, boldItalic: false });
+  });
+});
+
+describe('boldItalic', () => {
+  it('is the answer runFont draws by, for every family', () => {
+    registerBrandPacks([
+      {
+        ...PACK,
+        fonts: {
+          ...PACK.fonts,
+          cuts: { ...PACK.fonts.cuts, 'PT Sans': { bold: true, italic: true, boldItalic: true } },
+        },
+      },
+    ]);
+    for (const family of ['Fraunces', 'PT Sans', 'Vollkorn', 'Raleway', 'Instrument Sans']) {
+      const real = runFont(family, 'normal', BOLD_ITALIC, null).fontStyle === 'bold italic';
+      expect(fontMarkSupport(family).boldItalic).toBe(real);
+    }
+    expect(fontMarkSupport('PT Sans').boldItalic).toBe(true);
   });
 });
 

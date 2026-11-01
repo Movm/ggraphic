@@ -10,9 +10,9 @@
  * The applier (utils/illustrations/registry.createIllustration) resolves an id
  * at apply time.
  */
-import { registeredAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
+import { registeredAssetCatalog } from '../utils/canvasAssets.js';
 
-import type { CanvasAiNamedOption } from '@ggraphic/editor/ai/types';
+import type { CanvasAiNamedOption } from './types.js';
 
 /**
  * Build the AI illustration capability list: `{id, label}` pairs the LLM can

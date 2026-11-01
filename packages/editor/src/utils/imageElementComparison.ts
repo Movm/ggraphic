@@ -11,9 +11,9 @@
  * erzwingt.
  */
 
-import { backgroundAdjustments } from '@ggraphic/editor/utils/imageFilters';
-import { assertAsPosition, assertAsSize } from '@ggraphic/editor/utils/stateTypeAssertions';
-import { backgroundStraighten } from '@ggraphic/editor/utils/straighten';
+import { backgroundAdjustments } from './imageFilters.js';
+import { assertAsPosition, assertAsSize } from './stateTypeAssertions.js';
+import { backgroundStraighten } from './straighten.js';
 
 import { BACKGROUND_IMAGE_NODE_ID } from './printImageInfo.js';
 import { templateRotationOf } from './templateRotation.js';

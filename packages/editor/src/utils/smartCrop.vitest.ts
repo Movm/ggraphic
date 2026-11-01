@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import { covers, framedPhotoRect, photoRectAround } from '@ggraphic/editor/utils/coverFit';
+import { covers, framedPhotoRect, photoRectAround } from './coverFit.js';
 import {
   backgroundSmartCropView,
   backgroundSmartCropWindow,
@@ -10,11 +10,11 @@ import {
   userImageSmartCropPatch,
   userImageSmartCropView,
   viewAround,
-} from '@ggraphic/editor/utils/smartCrop';
-import { straightenWindowPhoto } from '@ggraphic/editor/utils/straighten';
+} from './smartCrop.js';
+import { straightenWindowPhoto } from './straighten.js';
 
-import type { CanvasElementConfig, LayoutResult } from '@ggraphic/editor/configs/types';
-import type { UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import type { CanvasElementConfig, LayoutResult } from '../configs/types.js';
+import type { UserImageInstance } from './userImageUtils.js';
 
 const IMAGE: UserImageInstance = {
   id: 'photo',

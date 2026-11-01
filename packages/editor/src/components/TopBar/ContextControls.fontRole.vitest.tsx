@@ -2,10 +2,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { ContextControls } from '@ggraphic/editor/components/TopBar/ContextControls';
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { ContextControls } from './ContextControls.js';
+import { messages } from '../../i18n/messages.js';
 
-import type { FloatingModuleState } from '@ggraphic/editor/hooks/useFloatingModuleState';
+import type { FloatingModuleState } from '../../hooks/useFloatingModuleState.js';
 
 const base = {
   handleMoveLayer: () => {},

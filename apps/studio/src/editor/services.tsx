@@ -21,12 +21,13 @@ import {
   type CanvasMediaUploadResult,
   type CanvasMediaUploadState,
 } from '@ggraphic/editor/hostServices';
+import { slotBudgetFor } from '@ggraphic/editor/page/slotBudgets';
 import { useState, useSyncExternalStore } from 'react';
 
 import { api, type Draft } from '../api/client';
 import { apiErrorText } from '../ui/errorText';
 
-import { budgetFor } from './templates/slotBudgets';
+import { templateFileOf } from './templates/catalog';
 
 /** The AI draft behind the "AI draft" tab (`aiDraftTab.tsx`). */
 export interface StudioAiDraftService {
@@ -199,7 +200,7 @@ export function createStudioServices({
     },
     imageUrls: studioImageUrls,
     fileDelivery: { ...browserFileDelivery, filenamePrefix: 'ggraphic', shareTitle: 'ggraphic' },
-    slotBudgets: { budgetFor },
+    slotBudgets: { budgetFor: (page, id) => slotBudgetFor(page, id, templateFileOf) },
     unsplashUtmSource: 'ggraphic',
     qrPreviewUrl: 'https://example.org',
     ...(removeBackground

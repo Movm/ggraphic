@@ -4,13 +4,13 @@ import { ELEMENT_KINDS, hostElementKinds, kindItem, kindList } from './elementKi
 import type { AssetInstance } from './canvasAssets.js';
 import type { CanvasItem } from './canvasItem.js';
 import type { AdditionalText, CanvasElementConfig, FullCanvasConfig } from '../configs/types.js';
-import type { ChartInstance } from '@ggraphic/editor/utils/chartTypes';
-import type { CircleBadgeInstance } from '@ggraphic/editor/utils/circleBadgeUtils';
-import type { FrameInstance } from '@ggraphic/editor/utils/frameUtils';
-import type { IllustrationInstance } from '@ggraphic/editor/utils/illustrations/types';
-import type { PillBadgeInstance } from '@ggraphic/editor/utils/pillBadgeUtils';
-import type { ShapeInstance } from '@ggraphic/editor/utils/shapes';
-import type { UserImageInstance } from '@ggraphic/editor/utils/userImageUtils';
+import type { ChartInstance } from './chartTypes.js';
+import type { CircleBadgeInstance } from './circleBadgeUtils.js';
+import type { FrameInstance } from './frameUtils.js';
+import type { IllustrationInstance } from './illustrations/types.js';
+import type { PillBadgeInstance } from './pillBadgeUtils.js';
+import type { ShapeInstance } from './shapes.js';
+import type { UserImageInstance } from './userImageUtils.js';
 
 /**
  * Canvas Layer Manager - Utilities for managing layer ordering
@@ -159,4 +159,30 @@ export function canMoveLayer(items: readonly CanvasItem[], id: string, step: Lay
     backgroundFloor(items)
   );
   return target !== null && target.from !== target.to;
+}
+
+/**
+ * An action that inserts an element writes only its own list, never `layerOrder`, so the new item
+ * stays untracked and `buildSortedRenderList` draws it among the other untracked ones in per-kind
+ * order: a new icon (first kind) landed under an older chart (last kind). Wrapped around an
+ * action's state update, this puts every item that update introduces on top of the page: the new
+ * `layerOrder` is the render order of `prev` (materialized when it was empty, as `moveLayerTo`
+ * does) followed by the new ids.
+ *
+ * Template elements are not inserts and stay where the config puts them. An update that already
+ * wrote a different `layerOrder` (a duplicate placed above its original) is left alone.
+ */
+export function withInsertsOnTop<
+  TState extends StateWithFeatures & { layerOrder?: string[] },
+  TActions = Record<string, unknown>,
+>(config: FullCanvasConfig<TState, TActions>, prev: TState, next: TState): TState {
+  if (next === prev || next.layerOrder !== prev.layerOrder) return next;
+  const before = buildCanvasItems(config, prev);
+  const known = new Set(before.map((item) => item.id));
+  const added = buildCanvasItems(config, next)
+    .filter((item) => item.type !== 'element' && !known.has(item.id))
+    .map((item) => item.id);
+  if (added.length === 0) return next;
+  const order = buildSortedRenderList(before, prev.layerOrder ?? []).map((item) => item.id);
+  return { ...next, layerOrder: [...order, ...added] };
 }

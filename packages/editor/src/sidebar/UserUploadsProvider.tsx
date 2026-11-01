@@ -9,8 +9,8 @@ import {
   useState,
 } from 'react';
 
-import { messages } from '@ggraphic/editor/i18n/messages';
-import { toast } from '@ggraphic/editor/utils/editorToast';
+import { messages } from '../i18n/messages.js';
+import { toast } from '../utils/editorToast.js';
 
 import { useCanvasEditorServices } from '../CanvasEditorProvider.js';
 import {

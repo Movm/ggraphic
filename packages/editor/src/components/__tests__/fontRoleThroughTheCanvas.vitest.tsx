@@ -7,24 +7,20 @@ import { act, cleanup, render, screen } from '@testing-library/react';
 import { createRef, useState } from 'react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import {
-  GenericCanvas,
-  type GenericCanvasRef,
-  type ToolbarStateReport,
-} from '@ggraphic/editor/components/GenericCanvas';
-import { loadCanvasConfig } from '@ggraphic/editor/configs/configLoader';
-import { FloatingFontRoleControl } from '@ggraphic/editor/components/TopBar/modules/FloatingFontRoleControl';
-import { messages } from '@ggraphic/editor/i18n/messages';
-import { AutoSaveStoreProvider } from '@ggraphic/editor/stores/AutoSaveStoreProvider';
+import { GenericCanvas, type GenericCanvasRef, type ToolbarStateReport } from '../GenericCanvas.js';
+import { loadCanvasConfig } from '../../configs/configLoader.js';
+import { FloatingFontRoleControl } from '../TopBar/modules/FloatingFontRoleControl.js';
+import { messages } from '../../i18n/messages.js';
+import { AutoSaveStoreProvider } from '../../stores/AutoSaveStoreProvider.js';
 
 import '../../testing/fixtureTemplates';
 
-import type * as StoreModule from '@ggraphic/editor/stores/createCanvasEditorStore';
-import type { CanvasEditorStoreApi } from '@ggraphic/editor/stores/createCanvasEditorStore';
-import type { FloatingModuleState } from '@ggraphic/editor/hooks/useFloatingModuleState';
+import type * as StoreModule from '../../stores/createCanvasEditorStore.js';
+import type { CanvasEditorStoreApi } from '../../stores/createCanvasEditorStore.js';
+import type { FloatingModuleState } from '../../hooks/useFloatingModuleState.js';
 
 const stores = vi.hoisted(() => [] as unknown[]);
-vi.mock('@ggraphic/editor/stores/createCanvasEditorStore', async (importOriginal) => {
+vi.mock('../../stores/createCanvasEditorStore.js', async (importOriginal) => {
   const original = await importOriginal<typeof StoreModule>();
   return {
     ...original,

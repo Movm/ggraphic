@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { headlineFontStack } from '@ggraphic/editor/brand/brandRegistry';
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { cn } from '@ggraphic/editor/utils/cn';
+import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
+import { headlineFontStack } from '../../../brand/brandRegistry.js';
+import { useDocumentBrand } from '../../../brand/documentBrand.js';
+import { useMessages } from '../../../i18n/messages.js';
+import { cn } from '../../../utils/cn.js';
 import { Suspense, useEffect, useId, useState } from 'react';
 import { HiSparkles } from 'react-icons/hi';
 import {
@@ -15,14 +15,14 @@ import {
 } from 'react-icons/hi2';
 import { PiArrowLeft, PiCaretRightBold, PiDropSimpleFill, PiPath } from 'react-icons/pi';
 
-import { useIsCanvasMobile } from '@ggraphic/editor/hooks/useIsCanvasMobile';
-import { lazyWithPreload } from '@ggraphic/editor/sidebar/sections/lazyWithPreload';
-import { whenIdle } from '@ggraphic/editor/sidebar/sections/whenIdle';
+import { useIsCanvasMobile } from '../../../hooks/useIsCanvasMobile.js';
+import { lazyWithPreload } from '../lazyWithPreload.js';
+import { whenIdle } from '../whenIdle.js';
 
-import { ToolTile, type ToolTileId } from '@ggraphic/editor/sidebar/sections/tools/ToolTiles';
+import { ToolTile, type ToolTileId } from './ToolTiles.js';
 
-import type { AltTextPagesSource } from '@ggraphic/editor/sidebar/sections/tools/AltTextTool';
-import type { UserImagePlacement } from '@ggraphic/editor/utils/userImageUtils';
+import type { AltTextPagesSource } from './AltTextTool.js';
+import type { UserImagePlacement } from '../../../utils/userImageUtils.js';
 import type { ComponentType } from 'react';
 import type { IconType } from 'react-icons';
 
@@ -31,35 +31,19 @@ import type { IconType } from 'react-icons';
 // tile also warms its own on pointer-enter/focus in case the click comes first.
 const PANELS = {
   'remove-bg': lazyWithPreload(() =>
-    import('@ggraphic/editor/sidebar/sections/tools/RemoveBackgroundTool').then(
-      (m) => m.RemoveBackgroundTool
-    )
+    import('./RemoveBackgroundTool.js').then((m) => m.RemoveBackgroundTool)
   ),
-  'ai-create': lazyWithPreload(() =>
-    import('@ggraphic/editor/sidebar/sections/tools/AiCreateTool').then((m) => m.AiCreateTool)
-  ),
-  'ai-edit': lazyWithPreload(() =>
-    import('@ggraphic/editor/sidebar/sections/tools/AiEditTool').then((m) => m.AiEditTool)
-  ),
-  'alt-text': lazyWithPreload(() =>
-    import('@ggraphic/editor/sidebar/sections/tools/AltTextTool').then((m) => m.AltTextTool)
-  ),
+  'ai-create': lazyWithPreload(() => import('./AiCreateTool.js').then((m) => m.AiCreateTool)),
+  'ai-edit': lazyWithPreload(() => import('./AiEditTool.js').then((m) => m.AiEditTool)),
+  'alt-text': lazyWithPreload(() => import('./AltTextTool.js').then((m) => m.AltTextTool)),
   unsplash: lazyWithPreload(() => import('./UnsplashTool.js').then((m) => m.UnsplashTool)),
-  'qr-code': lazyWithPreload(() =>
-    import('@ggraphic/editor/sidebar/sections/tools/QRCodeTool').then((m) => m.QRCodeTool)
-  ),
+  'qr-code': lazyWithPreload(() => import('./QRCodeTool.js').then((m) => m.QRCodeTool)),
   'gradient-text': lazyWithPreload(() =>
-    import('@ggraphic/editor/sidebar/sections/tools/GradientTextTool').then(
-      (m) => m.GradientTextTool
-    )
+    import('./GradientTextTool.js').then((m) => m.GradientTextTool)
   ),
-  blob: lazyWithPreload(() =>
-    import('@ggraphic/editor/sidebar/sections/tools/BlobCreatorTool').then((m) => m.BlobCreatorTool)
-  ),
+  blob: lazyWithPreload(() => import('./BlobCreatorTool.js').then((m) => m.BlobCreatorTool)),
   'text-path': lazyWithPreload(() =>
-    import('@ggraphic/editor/sidebar/sections/tools/TextPathCreatorTool').then(
-      (m) => m.TextPathCreatorTool
-    )
+    import('./TextPathCreatorTool.js').then((m) => m.TextPathCreatorTool)
   ),
 } satisfies Record<ToolTileId, { preload: () => Promise<unknown> }>;
 

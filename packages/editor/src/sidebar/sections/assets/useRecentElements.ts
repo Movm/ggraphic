@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MPL-2.0
-import { getHostStorageKey, onHostStorageKeysChange } from '@ggraphic/editor/utils/hostStorageKeys';
+import { getHostStorageKey, onHostStorageKeysChange } from '../../../utils/hostStorageKeys.js';
 import {
   onAssetCatalogChange,
   plainAssetImageUrls,
   registeredAssetCatalog,
-} from '@ggraphic/editor/utils/canvasAssets';
+} from '../../../utils/canvasAssets.js';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 

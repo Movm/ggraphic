@@ -6,10 +6,10 @@ import {
   type CanvasMenuEntry,
   type CanvasMenuEnv,
   type CanvasMenuSnapshot,
-} from '@ggraphic/editor/components/CanvasContextMenu/canvasMenuModel';
-import { formatShortcut, shortcutOf } from '@ggraphic/editor/utils/canvasCommandRegistry';
+} from './canvasMenuModel.js';
+import { formatShortcut, shortcutOf } from '../../utils/canvasCommandRegistry.js';
 
-import type { SelectionCapabilities } from '@ggraphic/editor/utils/selectionCapabilities';
+import type { SelectionCapabilities } from '../../utils/selectionCapabilities.js';
 
 const CAPS: SelectionCapabilities = {
   count: 1,

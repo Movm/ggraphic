@@ -9,7 +9,7 @@ import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import * as Y from 'yjs';
 
-import { useYjsPages } from '@ggraphic/editor/collab/useYjsPages';
+import { useYjsPages } from './useYjsPages.js';
 
 function setup() {
   const doc = new Y.Doc();

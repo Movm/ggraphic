@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import {
-  MAX_OVERLAY_AREA,
-  MAX_OVERLAY_SIDE,
-  overlayRegion,
-} from '@ggraphic/editor/utils/cropGhost';
+import { MAX_OVERLAY_AREA, MAX_OVERLAY_SIDE, overlayRegion } from './cropGhost.js';
 
 describe('overlayRegion', () => {
   it('zeichnet nur, was im sichtbaren Ausschnitt liegt', () => {

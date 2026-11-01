@@ -11,10 +11,10 @@ import { cleanup, render, waitFor } from '@testing-library/react';
 import Konva from 'konva';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 
-import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
-import { ConfigCanvas } from '@ggraphic/editor/components/ConfigCanvas';
-import { StandaloneCanvas } from '@ggraphic/editor/components/StandaloneCanvas';
-import { registerTemplates } from '@ggraphic/editor/templates/registry';
+import { registerBrandPacks } from '../brand/brandRegistry.js';
+import { ConfigCanvas } from './ConfigCanvas.js';
+import { StandaloneCanvas } from './StandaloneCanvas.js';
+import { registerTemplates } from '../templates/registry.js';
 
 import { brandTestConfig } from '../testing/documentBrandConfig.js';
 import { PACK_A, PACK_B } from '../testing/documentBrandPacks.js';

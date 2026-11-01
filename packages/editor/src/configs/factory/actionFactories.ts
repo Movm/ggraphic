@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { messages } from '../../i18n/messages.js';
 /**
  * Common Action Creators for Canvas Factory
  *
@@ -9,42 +9,38 @@ import { messages } from '@ggraphic/editor/i18n/messages';
 
 import { type BrandPack } from '@ggraphic/core';
 
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { createAssetInstance, createStickerInstance } from '@ggraphic/editor/utils/canvasAssets';
-import {
-  createChartInstance,
-  type ChartInstance,
-  type ChartType,
-} from '@ggraphic/editor/utils/chartUtils';
-import { createCircleBadgeInstance } from '@ggraphic/editor/utils/circleBadgeUtils';
-import { brandColors } from '@ggraphic/editor/utils/colorOptions';
-import { createInstanceId, duplicateElementInState } from '@ggraphic/editor/utils/duplicateElement';
-import { createFrameInstance } from '@ggraphic/editor/utils/frameUtils';
-import { iconInstanceIdsFor, placedIconId } from '@ggraphic/editor/utils/iconInstances';
-import { createIllustration } from '@ggraphic/editor/utils/illustrations/registry';
-import { createPillBadgeInstance } from '@ggraphic/editor/utils/pillBadgeUtils';
-import { createShape } from '@ggraphic/editor/utils/shapes';
+import { activeBrand } from '../../brand/brandRegistry.js';
+import { createAssetInstance, createStickerInstance } from '../../utils/canvasAssets.js';
+import { createChartInstance, type ChartInstance, type ChartType } from '../../utils/chartUtils.js';
+import { createCircleBadgeInstance } from '../../utils/circleBadgeUtils.js';
+import { brandColors } from '../../utils/colorOptions.js';
+import { createInstanceId, duplicateElementInState } from '../../utils/duplicateElement.js';
+import { createFrameInstance } from '../../utils/frameUtils.js';
+import { iconInstanceIdsFor, placedIconId } from '../../utils/iconInstances.js';
+import { createIllustration } from '../../utils/illustrations/registry.js';
+import { createPillBadgeInstance } from '../../utils/pillBadgeUtils.js';
+import { createShape } from '../../utils/shapes.js';
 import {
   createUserImageInstance,
   createUserImageInstanceFromUrl,
-} from '@ggraphic/editor/utils/userImageUtils';
+} from '../../utils/userImageUtils.js';
 import { v4 as uuid } from 'uuid';
 
-import type { IconState, BaseCanvasState } from '@ggraphic/editor/configs/factory/baseTypes';
-import type { AdditionalText } from '@ggraphic/editor/configs/types';
-import type { AssetInstance } from '@ggraphic/editor/utils/canvasAssets';
-import type { CircleBadgeInstance } from '@ggraphic/editor/utils/circleBadgeUtils';
-import type { ExternalIconPayload } from '@ggraphic/editor/utils/externalIcons';
-import type { FrameClipType, FrameInstance } from '@ggraphic/editor/utils/frameUtils';
-import type { IllustrationInstance } from '@ggraphic/editor/utils/illustrations/types';
-import type { PillBadgeInstance } from '@ggraphic/editor/utils/pillBadgeUtils';
-import type { ShapeInstance, ShapeType } from '@ggraphic/editor/utils/shapes';
+import type { IconState, BaseCanvasState } from './baseTypes.js';
+import type { AdditionalText } from '../types.js';
+import type { AssetInstance } from '../../utils/canvasAssets.js';
+import type { CircleBadgeInstance } from '../../utils/circleBadgeUtils.js';
+import type { ExternalIconPayload } from '../../utils/externalIcons.js';
+import type { FrameClipType, FrameInstance } from '../../utils/frameUtils.js';
+import type { IllustrationInstance } from '../../utils/illustrations/types.js';
+import type { PillBadgeInstance } from '../../utils/pillBadgeUtils.js';
+import type { ShapeInstance, ShapeType } from '../../utils/shapes.js';
 import type {
   ElementPlacement,
   ImageAdjustments,
   UserImageInstance,
   UserImagePlacement,
-} from '@ggraphic/editor/utils/userImageUtils';
+} from '../../utils/userImageUtils.js';
 import type { StickerRef } from '@ggraphic/schema';
 
 // ============================================================================

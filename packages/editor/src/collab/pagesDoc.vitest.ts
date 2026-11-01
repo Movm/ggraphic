@@ -20,8 +20,8 @@ import {
   serializeDeck,
   setPageConfigById,
   updatePageStateById,
-} from '@ggraphic/editor/collab/pagesDoc';
-import { YDOC_KEYS } from '@ggraphic/editor/collab/ydocKeys';
+} from './pagesDoc.js';
+import { YDOC_KEYS } from './ydocKeys.js';
 
 /** Two docs kept in sync by applying each other's updates (a fake network). */
 function syncedPair(): [Y.Doc, Y.Doc] {

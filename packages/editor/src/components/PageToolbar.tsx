@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { useMessages } from '../i18n/messages.js';
 import { memo } from 'react';
 import { PiArrowUp, PiArrowDown, PiCopy, PiSwap, PiTrash } from 'react-icons/pi';
 

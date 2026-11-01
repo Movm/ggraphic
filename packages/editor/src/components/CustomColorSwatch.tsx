@@ -18,9 +18,9 @@
  */
 import { useEffect, useRef, type CSSProperties, type InputHTMLAttributes } from 'react';
 
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { cn } from '@ggraphic/editor/utils/cn';
+import { useDocumentBrand } from '../brand/documentBrand.js';
+import { useMessages } from '../i18n/messages.js';
+import { cn } from '../utils/cn.js';
 
 const HEX6 = /^#[0-9a-f]{6}$/i;
 const DRAG_COMMIT_MS = 250;

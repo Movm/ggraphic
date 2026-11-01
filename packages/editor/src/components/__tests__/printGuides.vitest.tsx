@@ -7,14 +7,10 @@ import { render } from '@testing-library/react';
 import { createRef } from 'react';
 import { describe, expect, it } from 'vitest';
 
-import { PrintGuides } from '@ggraphic/editor/components/PrintGuides';
-import {
-  CANVAS_FORMATS,
-  printGeometry,
-  type PrintCanvasFormat,
-} from '@ggraphic/editor/formats/index';
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
-import { withSelectionChromeHidden } from '@ggraphic/editor/utils/captureStage';
+import { PrintGuides } from '../PrintGuides.js';
+import { CANVAS_FORMATS, printGeometry, type PrintCanvasFormat } from '../../formats/index.js';
+import { CanvasStage, type CanvasStageRef } from '../../primitives/CanvasStage.js';
+import { withSelectionChromeHidden } from '../../utils/captureStage.js';
 
 import type Konva from 'konva';
 

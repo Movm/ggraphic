@@ -2,15 +2,15 @@
 import Konva from 'konva';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { createCanvasEditorStore } from '@ggraphic/editor/stores/createCanvasEditorStore';
-import { createCanvasCommands } from '@ggraphic/editor/utils/canvasCommands';
-import { CANVAS_ITEM_ID_ATTR, CANVAS_ITEM_NAME } from '@ggraphic/editor/utils/deepSelect';
-import { axisAlignedBounds, readNodeFrame } from '@ggraphic/editor/utils/orientation';
+import { createCanvasEditorStore } from '../stores/createCanvasEditorStore.js';
+import { createCanvasCommands } from './canvasCommands.js';
+import { CANVAS_ITEM_ID_ATTR, CANVAS_ITEM_NAME } from './deepSelect.js';
+import { axisAlignedBounds, readNodeFrame } from './orientation.js';
 
 import { registerStampKind } from '../testing/stampKind.js';
 
-import type { BaseCanvasState } from '@ggraphic/editor/configs/factory/baseTypes';
-import type { LayoutResult } from '@ggraphic/editor/configs/types';
+import type { BaseCanvasState } from '../configs/factory/baseTypes.js';
+import type { LayoutResult } from '../configs/types.js';
 
 /**
  * Ausrichten, Verteilen und Position über die Befehls-Türen — dieselbe

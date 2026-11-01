@@ -3,16 +3,16 @@ import { fireEvent, render, renderHook, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { brandDefault, type BrandPack, type Bindings } from '@ggraphic/core';
-import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
-import { FloatingColorPicker } from '@ggraphic/editor/components/TopBar/modules/FloatingColorPicker';
-import { useFloatingModuleHandlers } from '@ggraphic/editor/hooks/useFloatingModuleHandlers';
-import { ContextControls } from '@ggraphic/editor/components/TopBar/ContextControls';
-import { IllustrationSettings } from '@ggraphic/editor/sidebar/sections/IllustrationSettings';
-import { asColorOptions } from '@ggraphic/editor/utils/colorOptions';
+import { activeBrand, registerBrandPacks } from './brandRegistry.js';
+import { FloatingColorPicker } from '../components/TopBar/modules/FloatingColorPicker.js';
+import { useFloatingModuleHandlers } from '../hooks/useFloatingModuleHandlers.js';
+import { ContextControls } from '../components/TopBar/ContextControls.js';
+import { IllustrationSettings } from '../sidebar/sections/IllustrationSettings.js';
+import { asColorOptions } from '../utils/colorOptions.js';
 
-import type { FullCanvasConfig } from '@ggraphic/editor/configs/types';
-import type { FloatingModuleState } from '@ggraphic/editor/hooks/useFloatingModuleState';
-import type { KawaiiInstance } from '@ggraphic/editor/utils/illustrations/types';
+import type { FullCanvasConfig } from '../configs/types.js';
+import type { FloatingModuleState } from '../hooks/useFloatingModuleState.js';
+import type { KawaiiInstance } from '../utils/illustrations/types.js';
 
 type State = Record<string, unknown>;
 

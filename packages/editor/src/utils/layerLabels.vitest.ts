@@ -7,7 +7,7 @@ import {
   pageLayerLabels,
   sameLayerEntries,
   stageSummary,
-} from '@ggraphic/editor/utils/layerLabels';
+} from './layerLabels.js';
 
 import {
   FIXTURE_ASSET_ID,
@@ -15,8 +15,8 @@ import {
   registerFixtureAssets,
 } from '../testing/fixtureTemplates';
 
-import type { CanvasElementConfig } from '@ggraphic/editor/configs/types';
-import type { CanvasItem } from '@ggraphic/editor/utils/canvasLayerManager';
+import type { CanvasElementConfig } from '../configs/types.js';
+import type { CanvasItem } from './canvasLayerManager.js';
 
 registerFixtureAssets();
 
@@ -26,6 +26,18 @@ const element = (data: Record<string, unknown>) =>
   item({ id: data.id, type: 'element', data: data as unknown as CanvasElementConfig });
 
 const state = { headline: 'Klimaschutz', currentImageSrc: 'foto.jpg' };
+
+describe('layerLabel inline marks', () => {
+  it.each([
+    ['_schräg_', 'Text: schräg'],
+    ['**fett** und ==marker== ++akzent++', 'Text: fett und marker akzent'],
+    ['<u>unter</u> gestrichen', 'Text: unter gestrichen'],
+  ])('strips the markers of %s', (text, expected) => {
+    expect(
+      layerLabel(element({ id: 'headline', type: 'text', textKey: 'headline' }), { headline: text })
+    ).toBe(expected);
+  });
+});
 
 describe('layerLabel', () => {
   it.each<[string, CanvasItem, string]>([

@@ -11,7 +11,7 @@ import {
   pageFocusTarget,
   returnFocus,
   returnFocusToPage,
-} from '@ggraphic/editor/utils/editorFocus';
+} from '../editorFocus.js';
 
 function mountEditor() {
   document.body.innerHTML = `

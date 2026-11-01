@@ -18,9 +18,9 @@ import {
   CanvasEditorProvider,
   type CanvasEditorServices,
   type CanvasSpecEditBridge,
-} from '@ggraphic/editor/CanvasEditorProvider';
-import { CanvasEditorShell } from '@ggraphic/editor/components/CanvasEditor/CanvasEditorShell';
-import { registerEditorShell } from '@ggraphic/editor/components/CanvasEditor/editorShell';
+} from '../../CanvasEditorProvider.js';
+import { CanvasEditorShell } from './CanvasEditorShell.js';
+import { registerEditorShell } from './editorShell.js';
 
 import '../../testing/fixtureTemplates';
 

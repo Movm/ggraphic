@@ -8,9 +8,9 @@ import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import * as Y from 'yjs';
 
-import { getMetaMap, seedPagesIfEmpty } from '@ggraphic/editor/collab/pagesDoc';
-import { YDOC_KEYS } from '@ggraphic/editor/collab/ydocKeys';
-import { usePageManager } from '@ggraphic/editor/hooks/usePageManager';
+import { getMetaMap, seedPagesIfEmpty } from '../../collab/pagesDoc.js';
+import { YDOC_KEYS } from '../../collab/ydocKeys.js';
+import { usePageManager } from '../usePageManager.js';
 
 function open() {
   const ydoc = new Y.Doc();

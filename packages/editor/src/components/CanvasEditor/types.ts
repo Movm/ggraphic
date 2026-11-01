@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
-import type { SidebarTabId } from '@ggraphic/editor/sidebar/types';
-import type {
-  GenericCanvasRef,
-  ToolbarStateReport,
-} from '@ggraphic/editor/components/GenericCanvas';
-import type { FullCanvasConfig } from '@ggraphic/editor/configs/types';
-import type { InitialPageDef } from '@ggraphic/editor/hooks/usePageManager';
+import type { SidebarTabId } from '../../sidebar/types.js';
+import type { GenericCanvasRef, ToolbarStateReport } from '../GenericCanvas.js';
+import type { FullCanvasConfig } from '../../configs/types.js';
+import type { InitialPageDef } from '../../hooks/usePageManager.js';
 import type { HocuspocusProvider } from '@hocuspocus/provider';
 import type React from 'react';
 import type * as Y from 'yjs';
@@ -100,6 +97,12 @@ export interface CanvasEditorProps<TConfigId extends string = string> {
   showShare?: boolean;
   /** Lets the host render the active page itself, e.g. to save it somewhere else. */
   exportApiRef?: React.Ref<CanvasEditorExportApi>;
+  /**
+   * Called with every page (config and state, as `getPages` returns them) after each change to
+   * the deck: an edit, an added, moved or removed page, an undo. For a host that stores the
+   * document itself.
+   */
+  onPagesChange?: (pages: { configId: string; state: Record<string, unknown> }[]) => void;
   /**
    * The host draws the menu bar itself (the mobile app's native header). The
    * editor then renders no bar of its own: undo/redo run through

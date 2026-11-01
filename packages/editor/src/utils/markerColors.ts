@@ -7,8 +7,8 @@
  */
 import { type BrandPack } from '@ggraphic/core';
 
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { contrastRatio, luminance } from '@ggraphic/editor/utils/colorLuminance';
+import { activeBrand } from '../brand/brandRegistry.js';
+import { contrastRatio, luminance } from './colorLuminance.js';
 
 import { asColorOptions, type ColorOption } from './colorOptions.js';
 import { type TextMarker } from './textUtils.js';

@@ -7,9 +7,9 @@
  */
 import { type BrandFontFace, type BrandPack } from '@ggraphic/core';
 import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
+import { measureLogo } from '@ggraphic/editor/page/logoSize';
 
 import { studioBrand } from './brand';
-import { measureLogo } from './logoSize';
 
 const loaded = new Map<string, Promise<void>>();
 

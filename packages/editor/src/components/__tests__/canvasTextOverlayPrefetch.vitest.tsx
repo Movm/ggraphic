@@ -7,12 +7,12 @@
 import { cleanup, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { CanvasStage } from '@ggraphic/editor/primitives/CanvasStage';
-import { CanvasText } from '@ggraphic/editor/primitives/CanvasText';
+import { CanvasStage } from '../../primitives/CanvasStage.js';
+import { CanvasText } from '../../primitives/CanvasText.js';
 
 const loads = vi.hoisted(() => ({ count: 0 }));
 
-vi.mock('@ggraphic/editor/components/RichTextField', async (importOriginal) => {
+vi.mock('../RichTextField.js', async (importOriginal) => {
   loads.count += 1;
   return importOriginal();
 });

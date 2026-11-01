@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { useDebounce } from '@ggraphic/editor/hooks/useDebounce';
-import { messages, useMessages } from '@ggraphic/editor/i18n/messages';
-import { registeredAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
-import { cn } from '@ggraphic/editor/utils/cn';
-import { addHostElement } from '@ggraphic/editor/utils/elementKinds';
-import { MAX_ICON_SELECTIONS } from '@ggraphic/editor/utils/iconInstances';
+import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
+import { useDebounce } from '../../../hooks/useDebounce.js';
+import { messages, useMessages } from '../../../i18n/messages.js';
+import { registeredAssetCatalog } from '../../../utils/canvasAssets.js';
+import { cn } from '../../../utils/cn.js';
+import { addHostElement } from '../../../utils/elementKinds.js';
+import { MAX_ICON_SELECTIONS } from '../../../utils/iconInstances.js';
 import {
   useCallback,
   useDeferredValue,
@@ -18,18 +18,18 @@ import {
 import { PiCaretLeftBold, PiMagnifyingGlass, PiX } from 'react-icons/pi';
 
 import { useIsCanvasMobile } from '../../../hooks/useIsCanvasMobile.js';
-import { useTrackUnsplashDownload } from '@ggraphic/editor/hooks/useTrackUnsplashDownload';
-import { MOBILE_INPUT_TEXT } from '@ggraphic/editor/sidebar/sidebarStyles';
+import { useTrackUnsplashDownload } from '../../../hooks/useTrackUnsplashDownload.js';
+import { MOBILE_INPUT_TEXT } from '../../sidebarStyles.js';
 import { IllustrationSettings } from '../IllustrationSettings.js';
-import { FramePreviewDefs } from '@ggraphic/editor/sidebar/sections/RahmenSection';
+import { FramePreviewDefs } from '../RahmenSection.js';
 
 import { BackgroundCatalog } from './BackgroundCatalog.js';
-import { CategoryCard } from '@ggraphic/editor/sidebar/sections/assets/CategoryCard';
+import { CategoryCard } from './CategoryCard.js';
 import { ElementGrid } from './ElementGrid.js';
 import { searchElements } from './elementSearch.js';
 import { ElementTile } from './ElementTile.js';
 import { galleryStickerItem, type ElementItem } from './elementTypes.js';
-import { EmojiTonePicker } from '@ggraphic/editor/sidebar/sections/assets/EmojiTonePicker';
+import { EmojiTonePicker } from './EmojiTonePicker.js';
 import { FotosCatalog } from './FotosCatalog.js';
 import { IconifyCatalog } from './IconifyCatalog.js';
 import { RecentCarousel } from './RecentCarousel.js';

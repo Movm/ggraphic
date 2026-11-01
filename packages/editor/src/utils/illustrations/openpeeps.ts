@@ -7,7 +7,7 @@
  * atoms are intentionally excluded — only complete illustrations here.
  */
 
-import type { SvgDef } from '@ggraphic/editor/utils/illustrations/types';
+import type { SvgDef } from './types.js';
 
 export const OPENPEEPS: SvgDef[] = [
   {

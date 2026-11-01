@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
-import type {
-  CanvasEditorServices,
-  CanvasSpecEditBridge,
-} from '@ggraphic/editor/CanvasEditorProvider';
-import type { GenericCanvasRef } from '@ggraphic/editor/components/GenericCanvas';
-import type { HeterogeneousPage } from '@ggraphic/editor/configs/types';
-import type { SidebarTab, SidebarTabId } from '@ggraphic/editor/sidebar/types';
+import type { CanvasEditorServices, CanvasSpecEditBridge } from '../../CanvasEditorProvider.js';
+import type { GenericCanvasRef } from '../GenericCanvas.js';
+import type { HeterogeneousPage } from '../../configs/types.js';
+import type { SidebarTab, SidebarTabId } from '../../sidebar/types.js';
 import type React from 'react';
 
 /** Lets the editor hand a tile dropped on a page (`isVorlageDrag`) to the open tab. */

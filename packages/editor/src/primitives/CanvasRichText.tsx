@@ -27,32 +27,24 @@ import { layoutRichTextBlock } from '@ggraphic/schema';
 import { useRef, useEffect, useCallback, useMemo, useState, Fragment } from 'react';
 import { Group, Rect, Text as KonvaText, Transformer } from 'react-konva';
 
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { LOCKED_TRANSFORMER, useIsItemLocked } from '@ggraphic/editor/components/canvasItemLock';
-import {
-  overlayBoxForNode,
-  useCanvasTextEditor,
-} from '@ggraphic/editor/components/CanvasTextOverlay';
-import { useFontGeneration } from '@ggraphic/editor/hooks/useFontGeneration';
-import { useGeometryReporter } from '@ggraphic/editor/hooks/useGeometryReporter';
-import { useSnapScheduler } from '@ggraphic/editor/hooks/useSnapScheduler';
+import { useDocumentBrand } from '../brand/documentBrand.js';
+import { LOCKED_TRANSFORMER, useIsItemLocked } from '../components/canvasItemLock.js';
+import { overlayBoxForNode, useCanvasTextEditor } from '../components/CanvasTextOverlay.js';
+import { useFontGeneration } from '../hooks/useFontGeneration.js';
+import { useGeometryReporter } from '../hooks/useGeometryReporter.js';
+import { useSnapScheduler } from '../hooks/useSnapScheduler.js';
 import { resolveFontFamily } from '../utils/fontAliases.js';
-import { gradientFillProps } from '@ggraphic/editor/utils/gradientFill';
-import { markerBoxes } from '@ggraphic/editor/utils/markerBoxes';
-import { defaultTextMarker, markerInkOn } from '@ggraphic/editor/utils/markerColors';
-import { isGroupDrag } from '@ggraphic/editor/utils/multiSelect';
-import { ELEMENT_TRANSFORMER, normalizeRotation } from '@ggraphic/editor/utils/orientation';
-import {
-  boxFrame,
-  createBoxFrame,
-  frameBounds,
-  snapByBounds,
-} from '@ggraphic/editor/utils/snapping';
-import { konvaFontStyle, runFont, runMeasurer } from '@ggraphic/editor/utils/textUtils';
+import { gradientFillProps } from '../utils/gradientFill.js';
+import { markerBoxes } from '../utils/markerBoxes.js';
+import { defaultTextMarker, markerInkOn } from '../utils/markerColors.js';
+import { isGroupDrag } from '../utils/multiSelect.js';
+import { ELEMENT_TRANSFORMER, normalizeRotation } from '../utils/orientation.js';
+import { boxFrame, createBoxFrame, frameBounds, snapByBounds } from '../utils/snapping.js';
+import { konvaFontStyle, runFont, runMeasurer } from '../utils/textUtils.js';
 
 import { type CanvasTextProps, isWidthOnlyScale } from './CanvasText.js';
 
-import type { TransformAnchor } from '@ggraphic/editor/types/editorTypes';
+import type { TransformAnchor } from '../types/editorTypes.js';
 import type Konva from 'konva';
 
 // Rahmen für Snap und Geometrie-Meldung, pro Aufruf neu beschrieben (synchron, ohne Allokation).

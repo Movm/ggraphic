@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
-import { runMeasurer } from '@ggraphic/editor/utils/textUtils';
+import { runMeasurer } from '../utils/textUtils.js';
 import { layoutRichTextBlock } from '@ggraphic/schema';
 
-import type { AdditionalText } from '@ggraphic/editor/configs/types';
-import type { ShapeInstance } from '@ggraphic/editor/utils/shapes';
+import type { AdditionalText } from '../configs/types.js';
+import type { ShapeInstance } from '../utils/shapes.js';
 
 interface CardPage {
   additionalTexts: AdditionalText[];

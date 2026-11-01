@@ -1,30 +1,24 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { Button } from '@ggraphic/editor/ui/button';
-import { Input } from '@ggraphic/editor/ui/input';
-import { Label } from '@ggraphic/editor/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@ggraphic/editor/ui/select';
-import { Skeleton } from '@ggraphic/editor/ui/skeleton';
-import { Switch } from '@ggraphic/editor/ui/switch';
-import { downloadErrorMessage } from '@ggraphic/editor/utils/downloadError';
+import { useCanvasEditorServices } from '../../CanvasEditorProvider.js';
+import { useMessages } from '../../i18n/messages.js';
+import { Button } from '../../ui/button.js';
+import { Input } from '../../ui/input.js';
+import { Label } from '../../ui/label.js';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select.js';
+import { Skeleton } from '../../ui/skeleton.js';
+import { Switch } from '../../ui/switch.js';
+import { downloadErrorMessage } from '../../utils/downloadError.js';
 import { useId, useState, type FormEvent } from 'react';
 import { PiDownloadSimple } from 'react-icons/pi';
 
-import { MOBILE_INPUT_TEXT } from '@ggraphic/editor/sidebar/sidebarStyles';
-import { DownloadNotice } from '@ggraphic/editor/components/DownloadNotice';
+import { MOBILE_INPUT_TEXT } from '../../sidebar/sidebarStyles.js';
+import { DownloadNotice } from '../DownloadNotice.js';
 
 import type {
   CanvasImpressumLocale,
   CanvasImpressumParts,
   CanvasImpressumService,
-} from '@ggraphic/editor/hostServices';
+} from '../../hostServices.js';
 
 export type CanvasDownloadChoice = 'png' | 'jpeg' | 'webp';
 

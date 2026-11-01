@@ -1,21 +1,18 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { plainAssetImageUrls, registeredAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
-import { cn } from '@ggraphic/editor/utils/cn';
+import { useDocumentBrand } from '../../../brand/documentBrand.js';
+import { plainAssetImageUrls, registeredAssetCatalog } from '../../../utils/canvasAssets.js';
+import { cn } from '../../../utils/cn.js';
 import { Icon } from '@iconify/react';
 
-import { ChartTypePreview } from '@ggraphic/editor/sidebar/sections/DiagrammeSection';
-import {
-  ALL_PALETTE_SHAPES,
-  getShapeVariant,
-} from '@ggraphic/editor/sidebar/sections/FormenSection';
-import { IllustrationThumb } from '@ggraphic/editor/sidebar/sections/IllustrationThumb';
-import { FramePresetPreview } from '@ggraphic/editor/sidebar/sections/RahmenSection';
+import { ChartTypePreview } from '../DiagrammeSection.js';
+import { ALL_PALETTE_SHAPES, getShapeVariant } from '../FormenSection.js';
+import { IllustrationThumb } from '../IllustrationThumb.js';
+import { FramePresetPreview } from '../RahmenSection.js';
 
-import { PREVIEW_COMPONENTS } from '@ggraphic/editor/sidebar/sections/assets/constants';
+import { PREVIEW_COMPONENTS } from './constants.js';
 
 import type { ElementThumbSpec } from './elementTypes.js';
-import type { ShapeType } from '@ggraphic/editor/utils/shapes';
+import type { ShapeType } from '../../../utils/shapes.js';
 
 const PALETTE_BY_TYPE = new Map(ALL_PALETTE_SHAPES.map((shape) => [shape.id, shape]));
 

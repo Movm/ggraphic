@@ -1,13 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, expect, it } from 'vitest';
 
-import {
-  framedPhotoRect,
-  panOfFramedPhoto,
-  photoRectAround,
-  type Rect,
-} from '@ggraphic/editor/utils/coverFit';
-import { frameForAspect } from '@ggraphic/editor/utils/cropAspect';
+import { framedPhotoRect, panOfFramedPhoto, photoRectAround, type Rect } from './coverFit.js';
+import { frameForAspect } from './cropAspect.js';
 import {
   clampPointToStraightPhoto,
   clampStraighten,
@@ -24,7 +19,7 @@ import {
   straightenWindowPhoto,
   windowPhotoOfStraight,
   zoomStraightPhoto,
-} from '@ggraphic/editor/utils/straighten';
+} from './straighten.js';
 
 const page: Rect = { x: 0, y: 0, width: 1080, height: 1350 };
 const landscape = { width: 1200, height: 800 };

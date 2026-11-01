@@ -2,9 +2,9 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { StandaloneCanvas } from '@ggraphic/editor/components/StandaloneCanvas';
-import { messages, registerMessages } from '@ggraphic/editor/i18n/messages';
-import { registerTemplates } from '@ggraphic/editor/templates/registry';
+import { StandaloneCanvas } from './StandaloneCanvas.js';
+import { messages, registerMessages } from '../i18n/messages.js';
+import { registerTemplates } from '../templates/registry.js';
 
 afterEach(() => registerMessages('de'));
 

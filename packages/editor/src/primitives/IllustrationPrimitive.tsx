@@ -2,12 +2,12 @@
 import { useState, useEffect, useRef, memo } from 'react';
 import { Image, Group, Rect, Transformer } from 'react-konva';
 
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { LOCKED_TRANSFORMER, useIsItemLocked } from '@ggraphic/editor/components/canvasItemLock';
-import { useBoxSnap, type SnapProps } from '@ggraphic/editor/hooks/useBoxSnap';
-import { ILLUSTRATION_TARGET_SIZE, MOTIF_BASE_SIZE } from '@ggraphic/editor/utils/motifSizes';
-import { ELEMENT_TRANSFORMER, signedScale } from '@ggraphic/editor/utils/orientation';
-import { illustrationBox } from '@ggraphic/editor/utils/renderedBoxes';
+import { activeBrand } from '../brand/brandRegistry.js';
+import { LOCKED_TRANSFORMER, useIsItemLocked } from '../components/canvasItemLock.js';
+import { useBoxSnap, type SnapProps } from '../hooks/useBoxSnap.js';
+import { ILLUSTRATION_TARGET_SIZE, MOTIF_BASE_SIZE } from '../utils/motifSizes.js';
+import { ELEMENT_TRANSFORMER, signedScale } from '../utils/orientation.js';
+import { illustrationBox } from '../utils/renderedBoxes.js';
 
 import { useCanvasEditorServices } from '../CanvasEditorProvider.js';
 import { getIllustrationPath, findIllustrationById } from '../utils/illustrations/registry.js';
@@ -18,7 +18,7 @@ import type {
   KawaiiIllustrationType,
   SvgDef,
   KawaiiInstance,
-} from '@ggraphic/editor/utils/illustrations/types';
+} from '../utils/illustrations/types.js';
 import type Konva from 'konva';
 
 // react-kawaii and react-dom/server are only needed once a kawaii

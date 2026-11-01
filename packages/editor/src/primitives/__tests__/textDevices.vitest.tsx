@@ -8,11 +8,11 @@ import Konva from 'konva';
 import { createRef } from 'react';
 import { describe, expect, it } from 'vitest';
 
-import { renderKindItem, type RenderCtx } from '@ggraphic/editor/components/kindRenderers';
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
-import { CanvasText } from '@ggraphic/editor/primitives/CanvasText';
+import { renderKindItem, type RenderCtx } from '../../components/kindRenderers.js';
+import { CanvasStage, type CanvasStageRef } from '../CanvasStage.js';
+import { CanvasText } from '../CanvasText.js';
 
-import type { AdditionalText } from '@ggraphic/editor/configs/types';
+import type { AdditionalText } from '../../configs/types.js';
 
 function stageOf(node: React.ReactNode): Konva.Stage {
   Konva.autoDrawEnabled = false;

@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { registerBrandPacks, activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { registerMessages } from '@ggraphic/editor/i18n/messages';
+import { createPageActions } from '@ggraphic/editor/page/actions';
+import { type PageState } from '@ggraphic/editor/page/pageState';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { studioBrand } from '../../brand';
 
-import { createStudioActions } from './actions';
 import { createStudioConfig } from './config';
 import { HEADLINE_TEMPLATE_ID } from './ids';
-import { type StudioPageState } from './pageState';
 
 afterEach(() => registerBrandPacks([studioBrand]));
 
@@ -18,8 +19,8 @@ function setup() {
     shapeInstances: [],
     userImageInstances: [],
     layerOrder: [],
-  } as unknown as StudioPageState;
-  const actions = createStudioActions(
+  } as unknown as PageState;
+  const actions = createPageActions(
     () => state,
     (change) => {
       state = typeof change === 'function' ? change(state) : { ...state, ...change };
@@ -58,6 +59,8 @@ describe('background swatches', () => {
 
 describe('the Studio page config', () => {
   it('offers the tools tab, with its section', () => {
+    // The Studio speaks English (`registerEditor`); the labels come from the editor's catalogue.
+    registerMessages('en');
     const config = createStudioConfig(HEADLINE_TEMPLATE_ID, 'post-portrait');
     expect(config.tabs.map((tab) => tab.id)).toEqual(['text', 'elements', 'uploads', 'tools']);
     expect(config.tabs.find((tab) => tab.id === 'tools')?.label).toBe('Tools');

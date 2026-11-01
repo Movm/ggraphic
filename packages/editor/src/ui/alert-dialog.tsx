@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { cn } from '../utils/cn.js';
 import { Button } from './button.js';
+import { EDITOR_SCOPE } from './editorScope.js';
 
 function AlertDialog({ ...props }: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
@@ -25,6 +26,7 @@ function AlertDialogOverlay({
 }: React.ComponentProps<typeof AlertDialogPrimitive.Overlay>) {
   return (
     <AlertDialogPrimitive.Overlay
+      {...EDITOR_SCOPE}
       data-slot="alert-dialog-overlay"
       className={cn(
         'fixed inset-0 z-[1010] bg-black/50 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:animate-in data-[state=open]:fade-in-0',
@@ -46,6 +48,7 @@ function AlertDialogContent({
     <AlertDialogPortal>
       <AlertDialogOverlay />
       <AlertDialogPrimitive.Content
+        {...EDITOR_SCOPE}
         data-slot="alert-dialog-content"
         data-size={size}
         className={cn(

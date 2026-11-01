@@ -4,8 +4,8 @@ import { cleanup, render, renderHook } from '@testing-library/react';
 import { type ReactNode } from 'react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { CanvasEditorProvider } from '@ggraphic/editor/CanvasEditorProvider';
-import { registerAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
+import { CanvasEditorProvider } from '../../../CanvasEditorProvider.js';
+import { registerAssetCatalog } from '../../../utils/canvasAssets.js';
 
 import { useElementCatalog } from './useElementCatalog.js';
 

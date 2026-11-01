@@ -24,8 +24,8 @@ import { createRef } from 'react';
 import { Rect } from 'react-konva';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { CanvasStage, type CanvasStageRef } from '@ggraphic/editor/primitives/CanvasStage';
-import { captureStageImageAsync } from '@ggraphic/editor/utils/captureStage';
+import { CanvasStage, type CanvasStageRef } from '../CanvasStage.js';
+import { captureStageImageAsync } from '../../utils/captureStage.js';
 
 const napi = await import('@napi-rs/canvas');
 

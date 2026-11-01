@@ -4,19 +4,19 @@ import Konva from 'konva';
 import { act } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { useCanvasKeyboardHandlers } from '@ggraphic/editor/hooks/useCanvasKeyboardHandlers';
-import { createCanvasEditorStore } from '@ggraphic/editor/stores/createCanvasEditorStore';
-import { CanvasClipboard } from '@ggraphic/editor/utils/canvasClipboard';
+import { useCanvasKeyboardHandlers } from '../useCanvasKeyboardHandlers.js';
+import { createCanvasEditorStore } from '../../stores/createCanvasEditorStore.js';
+import { CanvasClipboard } from '../../utils/canvasClipboard.js';
 import {
   CANVAS_COMMAND_IDS,
   shortcutOf,
   type CanvasCommandId,
-} from '@ggraphic/editor/utils/canvasCommandRegistry';
-import { createCanvasCommands, type CanvasCommands } from '@ggraphic/editor/utils/canvasCommands';
-import { CANVAS_ITEM_ID_ATTR, CANVAS_ITEM_NAME } from '@ggraphic/editor/utils/deepSelect';
+} from '../../utils/canvasCommandRegistry.js';
+import { createCanvasCommands, type CanvasCommands } from '../../utils/canvasCommands.js';
+import { CANVAS_ITEM_ID_ATTR, CANVAS_ITEM_NAME } from '../../utils/deepSelect.js';
 
-import type { BaseCanvasState } from '@ggraphic/editor/configs/factory/baseTypes';
-import type { LayoutResult } from '@ggraphic/editor/configs/types';
+import type { BaseCanvasState } from '../../configs/factory/baseTypes.js';
+import type { LayoutResult } from '../../configs/types.js';
 
 /**
  * Die Kürzel im Menü und die, auf die die Tastatur hört, kommen aus derselben

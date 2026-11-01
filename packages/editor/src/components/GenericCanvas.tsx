@@ -21,42 +21,35 @@ import React, {
   useLayoutEffect,
 } from 'react';
 
-import { DocumentBrandContext } from '@ggraphic/editor/brand/documentBrand';
-import { useEmitHostStateChanges } from '@ggraphic/editor/collab/useEmitHostStateChanges';
-import { useYjsCanvasBinding } from '@ggraphic/editor/collab/useYjsCanvasBinding';
-import { stateKeyOfCallback } from '@ggraphic/editor/collab/wrapCallbacksWithPageSync';
-import { CropGhostOverlay } from '@ggraphic/editor/components/CropGhostOverlay';
-import { PrintGuides } from '@ggraphic/editor/components/PrintGuides';
-import { SlotBudgetStatus } from '@ggraphic/editor/components/SlotBudgetStatus';
-import { getCanvasFormatOrDefault } from '@ggraphic/editor/formats/index';
-import { useAnnounce } from '@ggraphic/editor/hooks/useAnnounce';
-import { useSelectionAnnouncement } from '@ggraphic/editor/hooks/useSelectionAnnouncement';
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { DocumentBrandContext } from '../brand/documentBrand.js';
+import { useEmitHostStateChanges } from '../collab/useEmitHostStateChanges.js';
+import { useYjsCanvasBinding } from '../collab/useYjsCanvasBinding.js';
+import { stateKeyOfCallback } from '../collab/wrapCallbacksWithPageSync.js';
+import { CropGhostOverlay } from './CropGhostOverlay.js';
+import { PrintGuides } from './PrintGuides.js';
+import { SlotBudgetStatus } from './SlotBudgetStatus.js';
+import { getCanvasFormatOrDefault } from '../formats/index.js';
+import { useAnnounce } from '../hooks/useAnnounce.js';
+import { useSelectionAnnouncement } from '../hooks/useSelectionAnnouncement.js';
+import { messages } from '../i18n/messages.js';
 import {
   CanvasStoreProvider,
   useCanvasStore,
   useCanvasStoreSelector,
-} from '@ggraphic/editor/stores/CanvasStoreProvider';
-import { useAutoSaveStore } from '@ggraphic/editor/stores/useAutoSaveStore';
-import { type CropAspectId } from '@ggraphic/editor/utils/cropAspect';
-import { itemBodyRect } from '@ggraphic/editor/utils/deepSelect';
-import { ensureFontsReady } from '@ggraphic/editor/utils/ensureFontsReady';
-import { type HistoryStamps } from '@ggraphic/editor/utils/historyStamp';
-import {
-  applyLayerSelection,
-  type LayerSelectionChange,
-} from '@ggraphic/editor/utils/layerSelection';
-import {
-  locateDrop,
-  type ElementDragPayload,
-  type MediaDragPayload,
-} from '@ggraphic/editor/utils/mediaDrop';
-import { selectableItemIds } from '@ggraphic/editor/utils/multiSelect';
-import { type ViewportRect, rotaterRects, visibleArea } from '@ggraphic/editor/utils/orientation';
-import { PendingImagesContext } from '@ggraphic/editor/utils/pendingImages';
+} from '../stores/CanvasStoreProvider.js';
+import { useAutoSaveStore } from '../stores/useAutoSaveStore.js';
+import { type CropAspectId } from '../utils/cropAspect.js';
+import { itemBodyRect } from '../utils/deepSelect.js';
+import { ensureFontsReady } from '../utils/ensureFontsReady.js';
+import { type HistoryStamps } from '../utils/historyStamp.js';
+import { applyLayerSelection, type LayerSelectionChange } from '../utils/layerSelection.js';
+import { locateDrop, type ElementDragPayload, type MediaDragPayload } from '../utils/mediaDrop.js';
+import { selectableItemIds } from '../utils/multiSelect.js';
+import { type ViewportRect, rotaterRects, visibleArea } from '../utils/orientation.js';
+import { PendingImagesContext } from '../utils/pendingImages.js';
 import { PreviewRenderContext } from '../utils/filterCache.js';
-import { stageCssScale } from '@ggraphic/editor/utils/stageCssScale';
-import { getOptimalContainerWidth } from '@ggraphic/editor/utils/viewport';
+import { stageCssScale } from '../utils/stageCssScale.js';
+import { getOptimalContainerWidth } from '../utils/viewport.js';
 
 import { blockElementIds, placeBlock, type LiftedBlock } from '../blocks/liftedBlock.js';
 import { hostEmittedStateKeys } from '../collab/pageElementStateKeys.js';
@@ -84,7 +77,11 @@ import {
   type SelectionGeometry,
 } from '../utils/canvasCommands.js';
 import { canvasFontFamilies } from '../utils/canvasFontFamilies.js';
-import { buildCanvasItems, buildSortedRenderList } from '../utils/canvasLayerManager.js';
+import {
+  buildCanvasItems,
+  buildSortedRenderList,
+  withInsertsOnTop,
+} from '../utils/canvasLayerManager.js';
 import { addHostElement, fromHostKinds } from '../utils/elementKinds.js';
 import {
   captureStageImage,
@@ -101,7 +98,7 @@ import { ToolbarStateBridge } from './ToolbarStateBridge.js';
 
 import type { CanvasMenuSnapshot } from './CanvasContextMenu/canvasMenuModel.js';
 import type { ToolbarBridgeState } from './ToolbarStateBridge.js';
-import type { RemoteSelector } from '@ggraphic/editor/components/RemoteSelectionOverlay';
+import type { RemoteSelector } from './RemoteSelectionOverlay.js';
 
 const EMPTY_CALLBACKS: Record<string, ((val: unknown) => void) | undefined> = {};
 const hostLayoutKeys = fromHostKinds((kinds) => kinds.flatMap((k) => k.layoutStateKeys ?? []));
@@ -114,12 +111,12 @@ import type { FloatingModuleState } from '../hooks/useFloatingModuleState.js';
 import type { CanvasStageRef } from '../primitives/CanvasStage.js';
 import type { LayerEntry } from '../utils/layerLabels.js';
 import type { LockState } from '../utils/layerLock.js';
-import type { CanvasEditorStoreApi } from '@ggraphic/editor/stores/createCanvasEditorStore';
-import type { ExportOptions } from '@ggraphic/editor/types/editorTypes';
-import type { PageCommandId } from '@ggraphic/editor/utils/canvasCommandRegistry';
-import type { ImageLookId } from '@ggraphic/editor/utils/imageLook';
-import type { GradientFill } from '@ggraphic/editor/utils/gradientFill';
-import type { TextAlign } from '@ggraphic/editor/utils/textAlign';
+import type { CanvasEditorStoreApi } from '../stores/createCanvasEditorStore.js';
+import type { ExportOptions } from '../types/editorTypes.js';
+import type { PageCommandId } from '../utils/canvasCommandRegistry.js';
+import type { ImageLookId } from '../utils/imageLook.js';
+import type { GradientFill } from '../utils/gradientFill.js';
+import type { TextAlign } from '../utils/textAlign.js';
 import type { FontRole } from '@ggraphic/core';
 import type { HocuspocusProvider } from '@hocuspocus/provider';
 import type * as Y from 'yjs';
@@ -471,6 +468,19 @@ function GenericCanvasWithRef<
     });
   }, []);
 
+  // The setter the element actions get: whatever an action inserts is drawn on top of the page,
+  // regardless of its kind. The canvas commands (paste, duplicate, reorder) place their own
+  // elements and keep the plain setter.
+  const setActionState = useCallback(
+    (partial: Partial<TState> | ((prev: TState) => TState)) => {
+      setStateRaw((prev) => {
+        const next = typeof partial === 'function' ? partial(prev) : { ...prev, ...partial };
+        return withInsertsOnTop(config, prev, next);
+      });
+    },
+    [config]
+  );
+
   // External edits to this page's `state` Y.Map (chat sharepic editing via
   // the Hocuspocus internal API) merge into the live component state.
   // Rebuilding through createInitialState recomputes the derived fields.
@@ -574,7 +584,7 @@ function GenericCanvasWithRef<
     () => ({
       ...config.createActions(
         getState,
-        setStateWrapper,
+        setActionState,
         saveToHistory,
         debouncedSaveToHistory,
         callbacks
@@ -584,7 +594,7 @@ function GenericCanvasWithRef<
     [
       config,
       getState,
-      setStateWrapper,
+      setActionState,
       saveToHistory,
       debouncedSaveToHistory,
       runHistoryBatch,

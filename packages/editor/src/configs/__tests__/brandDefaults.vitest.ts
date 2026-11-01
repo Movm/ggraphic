@@ -7,7 +7,7 @@
  */
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
+import { registerBrandPacks } from '../../brand/brandRegistry.js';
 
 import { brandTestConfig, type BrandTestState } from '../../testing/documentBrandConfig.js';
 import { PACK_A, PACK_B } from '../../testing/documentBrandPacks.js';

@@ -13,14 +13,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react';
 
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { messages } from '../i18n/messages.js';
 import {
   useCanvasStore,
   useCanvasStoreSelector,
   useCanvasStoreShallow,
-} from '@ggraphic/editor/stores/CanvasStoreProvider';
-import { toast } from '@ggraphic/editor/utils/editorToast';
-import { userFacingMessage } from '@ggraphic/editor/utils/userFacingError';
+} from '../stores/CanvasStoreProvider.js';
+import { toast } from '../utils/editorToast.js';
+import { userFacingMessage } from '../utils/userFacingError.js';
 
 import { useCanvasEditorServices } from '../CanvasEditorProvider.js';
 import { useFloatingModuleHandlers } from '../hooks/useFloatingModuleHandlers.js';
@@ -54,11 +54,11 @@ import type { OptionalCanvasActions } from '../hooks/useCanvasElementHandlers.js
 import type { ShadowPatch } from '../hooks/useFloatingModuleHandlers.js';
 import type { FloatingModuleState } from '../hooks/useFloatingModuleState.js';
 import type { CanvasItem } from '../utils/canvasLayerManager.js';
-import type { Rect } from '@ggraphic/editor/utils/coverFit';
-import type { CropAspectId } from '@ggraphic/editor/utils/cropAspect';
-import type { ImageLookId } from '@ggraphic/editor/utils/imageLook';
-import type { GradientFill } from '@ggraphic/editor/utils/gradientFill';
-import type { TextAlign } from '@ggraphic/editor/utils/textAlign';
+import type { Rect } from '../utils/coverFit.js';
+import type { CropAspectId } from '../utils/cropAspect.js';
+import type { ImageLookId } from '../utils/imageLook.js';
+import type { GradientFill } from '../utils/gradientFill.js';
+import type { TextAlign } from '../utils/textAlign.js';
 import type Konva from 'konva';
 
 export interface ToolbarBridgeState {

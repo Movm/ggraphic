@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MPL-2.0
-import { CanvasActionSheet } from '@ggraphic/editor/components/CanvasContextMenu/CanvasActionSheet';
-import { buildCanvasMenu } from '@ggraphic/editor/components/CanvasContextMenu/canvasMenuModel';
+import { CanvasActionSheet } from './CanvasActionSheet.js';
+import { buildCanvasMenu } from './canvasMenuModel.js';
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { messages } from '../../i18n/messages.js';
 import { axe } from '../../test-utils';
 
-import type { CanvasContextMenuHandle } from '@ggraphic/editor/components/CanvasContextMenu/CanvasContextMenu';
-import type { SelectionCapabilities } from '@ggraphic/editor/utils/selectionCapabilities';
+import type { CanvasContextMenuHandle } from './CanvasContextMenu.js';
+import type { SelectionCapabilities } from '../../utils/selectionCapabilities.js';
 
 /**
  * „…“ in der Pille öffnet mobil ein Sheet mit demselben Menü wie der

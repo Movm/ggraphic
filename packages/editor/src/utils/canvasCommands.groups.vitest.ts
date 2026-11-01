@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MPL-2.0
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CanvasClipboard } from '@ggraphic/editor/utils/canvasClipboard';
-import { createCanvasEditorStore } from '@ggraphic/editor/stores/createCanvasEditorStore';
-import { createCanvasCommands } from '@ggraphic/editor/utils/canvasCommands';
+import { CanvasClipboard } from './canvasClipboard.js';
+import { createCanvasEditorStore } from '../stores/createCanvasEditorStore.js';
+import { createCanvasCommands } from './canvasCommands.js';
 
-import type { BaseCanvasState } from '@ggraphic/editor/configs/factory/baseTypes';
-import type { LayoutResult } from '@ggraphic/editor/configs/types';
-import type { CanvasItem } from '@ggraphic/editor/utils/canvasLayerManager';
+import type { BaseCanvasState } from '../configs/factory/baseTypes.js';
+import type { LayoutResult } from '../configs/types.js';
+import type { CanvasItem } from './canvasLayerManager.js';
 
 /** Copy and paste carry a grouped selection's group (page key `groups`, F0). */
 

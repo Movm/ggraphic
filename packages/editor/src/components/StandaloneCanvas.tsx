@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { messages } from '@ggraphic/editor/i18n/messages';
+import { messages } from '../i18n/messages.js';
 /**
  * StandaloneCanvas — Lightweight canvas component for direct embedding
  *
@@ -16,11 +16,11 @@ import { messages } from '@ggraphic/editor/i18n/messages';
  * For the full editing experience with sidebar/toolbar, use ControllableCanvasWrapper.
  */
 
-import { ConfigCanvas, type ConfigCanvasProps } from '@ggraphic/editor/components/ConfigCanvas';
-import { getTemplate, type TemplateId } from '@ggraphic/editor/templates/registry';
+import { ConfigCanvas, type ConfigCanvasProps } from './ConfigCanvas.js';
+import { getTemplate, type TemplateId } from '../templates/registry.js';
 import { useState, useRef, memo } from 'react';
 
-import type { AnyCanvasConfig } from '@ggraphic/editor/configs/types';
+import type { AnyCanvasConfig } from '../configs/types.js';
 
 /** Which template to draw: a registered id, or a config object. Read once on mount. */
 type StandaloneCanvasSource =

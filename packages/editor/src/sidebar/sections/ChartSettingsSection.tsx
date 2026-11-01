@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
-import { CustomColorSwatch } from '@ggraphic/editor/components/CustomColorSwatch';
-import { useMessages, type Messages } from '@ggraphic/editor/i18n/messages';
-import { Switch } from '@ggraphic/editor/ui/switch';
+import { useDocumentBrand } from '../../brand/documentBrand.js';
+import { CustomColorSwatch } from '../../components/CustomColorSwatch.js';
+import { useMessages, type Messages } from '../../i18n/messages.js';
+import { Switch } from '../../ui/switch.js';
 import {
   addChartRow,
   addChartSeries,
@@ -16,7 +16,7 @@ import {
   type ChartInstance,
   type ChartLegendPosition,
   type ChartType,
-} from '@ggraphic/editor/utils/chartUtils';
+} from '../../utils/chartUtils.js';
 import {
   PiChartBar,
   PiChartBarHorizontal,
@@ -28,7 +28,7 @@ import {
   PiPlus,
 } from 'react-icons/pi';
 
-import { MOBILE_INPUT_TEXT } from '@ggraphic/editor/sidebar/sidebarStyles';
+import { MOBILE_INPUT_TEXT } from '../sidebarStyles.js';
 
 import type { IconType } from 'react-icons';
 

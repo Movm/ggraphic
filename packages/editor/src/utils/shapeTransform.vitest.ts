@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { describe, it, expect } from 'vitest';
 
-import {
-  PATH_VIEWBOX,
-  resizedShapeSize,
-  shapeNodeScale,
-} from '@ggraphic/editor/utils/shapeTransform';
+import { PATH_VIEWBOX, resizedShapeSize, shapeNodeScale } from './shapeTransform.js';
 
 describe('resizedShapeSize', () => {
   describe('path shapes (node scale is absolute)', () => {
