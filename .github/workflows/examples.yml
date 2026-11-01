@@ -91,9 +91,12 @@ jobs:
         uses: oven-sh/setup-bun@v2
       # Its own workspace file makes this folder the root, so pnpm does not climb to the
       # repository's. Isolated and without hoisting, a package sees only what it declares.
+      # The host declares @types/node: undici-types, pulled in by pptxgenjs, cannot see it
+      # otherwise (#119).
       - name: Install with pnpm (isolated, no hoisting)
         if: matrix.manager == 'pnpm'
         run: |
+          npm pkg set 'devDependencies[@types/node]=^22'
           cat > pnpm-workspace.yaml <<'EOF'
           nodeLinker: isolated
           hoist: false
@@ -102,17 +105,22 @@ jobs:
             '@ggraphic/schema': file:tarballs/ggraphic-schema.tgz
           EOF
           pnpm install
-      # The empty yarn.lock makes this folder the project root.
+      # The empty yarn.lock makes this folder the project root. Yarn does not install missing
+      # peers, so the host adds the two the editor's dependencies need and it does not declare
+      # (#118). The peer report goes to the log.
       - name: Install with yarn (berry, node-modules linker)
         if: matrix.manager == 'yarn'
         run: |
           corepack enable
           npm pkg set packageManager=yarn@4.18.1 \
             'resolutions[@ggraphic/core]=file:./tarballs/ggraphic-core.tgz' \
-            'resolutions[@ggraphic/schema]=file:./tarballs/ggraphic-schema.tgz'
+            'resolutions[@ggraphic/schema]=file:./tarballs/ggraphic-schema.tgz' \
+            'dependencies[@tiptap/pm]=^3.32.0' \
+            'dependencies[react-is]=^19.0.0'
           printf 'nodeLinker: node-modules\n' > .yarnrc.yml
           touch yarn.lock
           yarn install --no-immutable
+          yarn explain peer-requirements || true
       # bun reads npm's `overrides`, `$` references included.
       - name: Install with bun
         if: matrix.manager == 'bun'
