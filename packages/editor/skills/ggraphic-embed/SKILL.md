@@ -14,7 +14,7 @@ A host supplies data and services; the component does the rest.
 ```tsx
 import { defaultBrand } from '@ggraphic/brand-default';
 import '@ggraphic/brand-default/fonts';
-import '@ggraphic/editor/styles/compiled';
+import '@ggraphic/editor/styles/compiled.css';
 import {
   GgraphicEditor,
   templatePackFromJson,
@@ -115,8 +115,10 @@ The components carry Tailwind v4 utility classes. Pick one of two ways to style 
 - **Any host (no Tailwind needed):** one import, everything compiled.
 
   ```ts
-  import '@ggraphic/editor/styles/compiled';
+  import '@ggraphic/editor/styles/compiled.css';
   ```
+
+  - Import the stylesheets from JavaScript with the `.css` key (`styles/compiled.css`, `styles/index.css`, `styles/editor.css`, `styles/tokens.css`, `styles/tailwind.css`). The bundler's `declare module '*.css'` matches only those; the keys without the extension fail TypeScript 6 with TS2882. Both resolve to the same file, and CSS `@import`s can use either.
 
   - Every rule sits in `@layer ggraphic`, so any unlayered host rule wins without `!important`. If your own CSS is layered, declare `ggraphic` first (`@layer ggraphic, base, …;`) to keep the same order.
   - The rules apply only inside `[data-ggraphic]`, Tailwind's reset included, so your page keeps its own reset and theme. `CanvasEditorShell` (and so `GgraphicEditor`) renders that root, and every dialog, menu and popover the editor portals onto `<body>` carries the attribute too. If you mount editor components outside the shell, wrap them in an element with `data-ggraphic` (`EDITOR_SCOPE` from `@ggraphic/editor/ui/editorScope`).
