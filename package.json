@@ -19,6 +19,8 @@
     "gate:render:update": "pnpm --filter @ggraphic/studio gate:render:update",
     "check:licences": "node scripts/check-licences.mjs",
     "check:esm": "node scripts/check-esm-specifiers.mjs",
+    "api:report": "node scripts/api-report.mjs",
+    "api:check": "node scripts/api-report.mjs --check",
     "check:guards:self-test": "node scripts/check-licences.mjs --self-test && node scripts/check-esm-specifiers.mjs --self-test",
     "changeset": "changeset",
     "version-packages": "changeset version",
