@@ -1,14 +1,14 @@
 # Public API proposal
 
-Status: proposal for stage D of the [embedding roadmap](embedding-roadmap.md), 2026-11-01. Owner of the decisions: Moritz. This is D1: inventory, proposal and a report tool. D2 changes the export maps, after C2.
+Status: proposal for stage D of the [embedding roadmap](embedding-roadmap.md), 2026-11-01; Moritz decided the open points the same day (see [Decisions](#decisions)). This is D1: inventory, proposal and a report tool. D2 changes the export maps, after C2.
 
 ## Summary
 
-- **Today everything is API:** the published export map of `@ggraphic/editor` is a `./*` wildcard. That makes 429 entries with 1,892 exported names. `@ggraphic/schema` has the same wildcard (19 entries).
+- **Today everything is API:** the published export map of `@ggraphic/editor` is a `./*` wildcard. On `main` after #84–#86 that makes 432 entries with 1,896 exported names. `@ggraphic/schema` has the same wildcard (19 entries).
 - **Actual use is much smaller:**
   - Outside tests, Studio, the Grünerator and the other packages import 147 editor subpaths.
   - Tests import 105 more.
-  - 177 entries have no consumer outside the editor.
+  - 177 of the 429 entries at the time of the inventory had no consumer outside the editor.
 - **The proposal:**
   - **Public surface:** 41 entry points, grouped by domain rather than by file. They are listed in the table under [Proposed surface](#proposed-surface).
   - **Unstable channel:** `@ggraphic/editor/internal/*`, exported on purpose, with no semver promise.
@@ -46,7 +46,7 @@ What the numbers say:
 
    A codemod therefore touches one package plus a handful of files.
 
-2. **Over 100 Grünerator subpaths appear only in tests:** 108 subpaths, used by 196 test files. These are integration tests against the Grünerator's own configs; only 11 share a file name with a ggraphic test. They should not shape the public surface. Tests may import `internal/*`.
+2. **Over 100 Grünerator subpaths appear only in tests:** 108 subpaths, used by 196 test files. These are integration tests against the Grünerator's own configs; only 11 share a file name with a ggraphic test. They should not shape the public surface. The ones that test ggraphic behaviour move into this repository; the Grünerator keeps only tests of its own configs ([decision 5](#decisions)).
 3. **Studio needs little.** After stages A and B it uses 48 subpaths. Ten of them are the page model from #85 and belong behind one entry.
 4. **The editor imports itself by package name:** 1,857 imports of 322 subpaths. Any change to the export map breaks these unless they become relative imports first. This is the first step of D2.
 5. **Schema subpaths need no public home.** Every schema subpath the Grünerator uses (`schema/media/*`, `schema/text/*`, `schema/richtext`) is already re-exported from the `@ggraphic/schema` root. Moving the Grünerator off them is mechanical.
@@ -69,6 +69,7 @@ Principles:
 
 | Entry point                                                                                                   | Content                                                                                                                                                                                                                                                                                                 | Built from today                                                                                                                                                      | Used by                              |
 | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `@ggraphic/editor` (root)                                                                                     | alias of `./embed`                                                                                                                                                                                                                                                                                      | new                                                                                                                                                                   | every new host                       |
 | `@ggraphic/editor/embed`                                                                                      | `<GgraphicEditor>` and its props (C2)                                                                                                                                                                                                                                                                   | new                                                                                                                                                                   | every new host                       |
 | `@ggraphic/editor/page`                                                                                       | The generic page model: `createPageConfig`, `createPageActions`, `PageState`, `pageStateFrom`, seeds, `placeTemplate`, `templatePackFromJson`, `TextPreview`, typography, fitting and logo size                                                                                                         | `page/*` (#85, #86)                                                                                                                                                   | Studio                               |
 | `@ggraphic/editor/config`                                                                                     | The escape hatch for hosts with their own page logic: `FullCanvasConfig` and its element configs, `loadCanvasConfig`, the factories (`makeSectionDefiner`, `create*Actions`, `carryInstanceState`, `BaseCanvasState`), `injectFeatureProps`, placeholders, `createShareSection`                         | `configs/*`                                                                                                                                                           | Grünerator (11 subpaths), Studio (6) |
@@ -95,11 +96,11 @@ Principles:
 
 **Count:** 41 entry points.
 
-| Package                                                             | Entries | Of which                                            |
-| ------------------------------------------------------------------- | ------: | --------------------------------------------------- |
-| `@ggraphic/editor`                                                  |      30 | 18 code entries, 7 illustration sets, 5 stylesheets |
-| `@ggraphic/ui`                                                      |       5 | the root and 4 stylesheets                          |
-| `core`, `schema`, `ai`, `collab`, `templates-open`, `brand-default` |       6 | one root each                                       |
+| Package                                                             | Entries | Of which                                                                        |
+| ------------------------------------------------------------------- | ------: | ------------------------------------------------------------------------------- |
+| `@ggraphic/editor`                                                  |      30 | 18 code entries (the root alias among them), 7 illustration sets, 5 stylesheets |
+| `@ggraphic/ui`                                                      |       5 | the root and 4 stylesheets                                                      |
+| `core`, `schema`, `ai`, `collab`, `templates-open`, `brand-default` |       6 | one root each                                                                   |
 
 Measured against what consumers use today:
 
@@ -108,7 +109,7 @@ Measured against what consumers use today:
 
 This is below the roadmap's estimate of 50–70 entries because the entries group by domain. Keeping today's file paths would need about 150 public entries, one per subpath used outside tests, and would freeze the file layout.
 
-The root `@ggraphic/editor` stays without content for now. Whether it should become an alias of `./embed` once C2 has landed is one of the [open questions](#open-questions).
+The root `@ggraphic/editor` becomes an alias of `./embed` once C2 (#92) is on `main` ([decision 4](#decisions)).
 
 ## Borderline cases
 
@@ -125,19 +126,19 @@ The Grünerator's production code imports 33 subpaths that have no public home i
      - `captureFocusOrigin`, `returnFocus`, `followStage`;
      - `applyPixelHitArea`, `normalizeRotation`.
    - **Diagnosis:** a gap in the public surface, not a shortcut. `registerKindRenderers` is public in spirit, but a renderer cannot be written without these.
-   - **Proposal:** a curated `editor/kinds` entry with exactly what a renderer needs, documented with one example kind. The rest of `utils/*` stays internal.
+   - **Decided:** `editor/kinds` becomes public in D2: a curated entry with exactly what a renderer needs, plus an example kind. The rest of `utils/*` stays internal.
 2. **Composer, 4 subpaths, used by 13 Grünerator layout files.**
    - **Generic part:** `composer/textFit` holds generic text fitting (`wrapWords`, `balancedWrap`, `largestSizeWordsFit`).
    - **Brand-specific part:** `composer/textFit` also holds `fitStoererText` and the `STOERER_*` constants (German "Störer", a burst badge). `composer/steckbriefLayout` and `configs/buildSharepicText` are Grünerator formats. So is `VORLAGE_DRAG_TYPE` in `utils/mediaDrop`. `sidebar/sections/StudioGallery` sits in the editor under a Studio name.
    - **Conflict:** this clashes with the brand-neutrality rule in CONTRIBUTING.md.
-   - **Proposal:**
+   - **Decided:**
      - The generic fitting goes public in `editor/text` under neutral names.
-     - Steckbrief, Störer and Sharepic text move back into the Grünerator.
+     - The Grünerator-specific parts move back into the Grünerator: Steckbrief, Störer (`fitStoererText`, `STOERER_*`), `buildSharepicText`, `VORLAGE_DRAG_TYPE` and `StudioGallery`.
      - The section names in German (`DiagrammeSection`, `FormenSection`, `RahmenSection`) are renamed when they become public.
 3. **Store internals, 3 subpaths.**
    - **What:** the Grünerator calls `createCanvasEditorStore` and reads `CanvasEditorState` directly.
    - **Cost:** making those public turns the whole store shape into API, and every new field becomes a semver question.
-   - **Proposal:** publish the provider and the selector hooks. Keep the factory and state type internal until the Grünerator's composer has moved to `<GgraphicEditor>` or `FullCanvasConfig` callbacks, then look again.
+   - **Decided:** the provider and the selector hooks are public. `createCanvasEditorStore` and `CanvasEditorState` go to `internal/*`.
 4. **Editor UI primitives and `cn`, 4 subpaths, one of them (`cn`) counted under group 1.**
    - **What:** `ui/alert-dialog`, `ui/button`, `ui/skeleton` and `utils/cn`, used in Grünerator panels.
    - **Proposal:** these are the editor's own shadcn copies, so they stay internal. A host uses its own UI or `@ggraphic/ui`.
@@ -160,6 +161,7 @@ The Grünerator's production code imports 33 subpaths that have no public home i
    - The table in the inventory is the mapping from subpath to entry.
    - Imports with a public home move to it; the rest move to `internal/*`.
    - Each remaining `internal/*` import in production code gets a Grünerator issue.
+   - The Grünerator-specific composer parts move into the Grünerator, and its tests of ggraphic behaviour move into this repository.
 6. **Next alpha:** drop the `./*` wildcards from `editor` and `schema`.
 
 ## The API report
@@ -173,12 +175,15 @@ The Grünerator's production code imports 33 subpaths that have no public home i
 - **In CI:** `pnpm api:check` runs in the `check` job after `typecheck`. It compares with the committed reports. On a difference it prints the added, removed and changed entries, writes a warning annotation and a step summary, and exits 0. It never blocks a merge. A pull request that changes the surface on purpose runs `pnpm api:report` and commits the result, so the change is reviewed as a diff.
 - **Why not api-extractor:**
   - It needs built declaration files, so the report would need a build first.
-  - It reads one entry per run, and today the editor has 429.
+  - It reads one entry per run, and today the editor has 432.
   - After D2, with about 40 entries, it could be reconsidered. Its main gain would be `@public`/`@internal` release tags.
 
-## Open questions
+## Decisions
 
-1. **Gap or move back:** is the composer text fitting generic enough for `editor/text`? Or does all of `composer/*` move back into the Grünerator?
-2. **Custom element kinds:** should `editor/kinds` be public in D2? Or should it stay in `internal/*` until a second host writes a custom kind?
-3. **Package root:** should the root `@ggraphic/editor` become an alias of `./embed` once C2 has landed?
-4. **Grünerator tests on internals:** should they stay on `internal/*`, or should the ones that test ggraphic behaviour rather than Grünerator configs move into this repository?
+Moritz decided the open points of this proposal on 2026-11-01:
+
+1. **Composer:** the Grünerator-specific parts move back into the Grünerator: Steckbrief, Störer (`fitStoererText`, `STOERER_*`), `buildSharepicText`, `VORLAGE_DRAG_TYPE` and `StudioGallery`. Only the neutral building blocks stay in the package; the generic text fitting goes public in `editor/text` under neutral names.
+2. **Custom element kinds:** `editor/kinds` becomes public in D2, a curated entry with what a renderer needs, plus an example kind.
+3. **Store:** `createCanvasEditorStore` and `CanvasEditorState` go to `internal/*`. The provider and the selector hooks are public.
+4. **Package root:** `@ggraphic/editor` becomes an alias of `./embed` once C2 (#92) is on `main`.
+5. **Tests:** Grünerator tests that test ggraphic behaviour move into this repository (part of D2e). The Grünerator keeps only tests of its own configs.
