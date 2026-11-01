@@ -9,6 +9,13 @@ export interface GateOverflow {
   maxLines: number | null;
 }
 
+/** One world of a `scheme=all` sweep. */
+export interface GateWorld {
+  scheme: string;
+  overflow: GateOverflow[];
+  error: string | null;
+}
+
 export interface GateResult {
   ready: boolean;
   overflow: GateOverflow[];
@@ -16,6 +23,8 @@ export interface GateResult {
   error: string | null;
   /** The worlds the brand keeps of the template (only when no `scheme` was asked for). */
   schemes?: string[];
+  /** Every offered world measured and drawn in one page load (only for `scheme=all`). */
+  worlds?: GateWorld[];
   /** The catalogue the gate covers (only for `list=1`). */
   templates?: { id: string; formats: string[] }[];
   brands?: string[];

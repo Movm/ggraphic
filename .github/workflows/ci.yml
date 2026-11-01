@@ -54,25 +54,69 @@ jobs:
         run: node scripts/check-esm-specifiers.mjs --dist
       # Brand-neutral boundary checks live in the Gruenerator repository by design.
 
+  # Whether the render gate has anything to look at. A deny list, not an allow list: a path nobody
+  # thought of runs the gate rather than skipping it.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      render: ${{ steps.diff.outputs.render }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: diff
+        env:
+          BASE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          # A new branch or a force push has no usable base: run the gate.
+          if ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            echo "render=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          files=$(git diff --name-only "$(git merge-base "$BASE" HEAD)" HEAD)
+          printf '%s\n' "$files"
+          relevant=$(printf '%s\n' "$files" | grep -vE '(\.md$|^\.changeset/|^docs/|^LICENSE|^NOTICE|^THIRD_PARTY_NOTICES|^\.github/workflows/(dco|release)\.yml$|^\.github/ISSUE_TEMPLATE/|^\.github/dependabot\.yml$)' || true)
+          if [ -n "$relevant" ]; then echo "render=true"; else echo "render=false"; fi >> "$GITHUB_OUTPUT"
+
   # Stage 2 of the template render gate: every template drawn in Chromium with the bundled fonts,
   # no slot text overflowing, goldens on the default brand. The goldens are rasteriser-bound, so
   # the job runs in the official Playwright image; its tag must match @playwright/test in
   # apps/studio/package.json (scripts/gate-render-docker.sh reads the version from there).
-  render-gate:
+  # Split across runners with `--shard`; each still draws one page at a time.
+  render-gate-shard:
+    needs: changes
+    if: needs.changes.outputs.render == 'true'
     runs-on: ubuntu-latest
-    # A full run takes about an hour; a hang must not burn the default six.
-    timeout-minutes: 90
+    # A hang must not burn the default six hours.
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-noble
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
       - run: pnpm install --frozen-lockfile --filter "@ggraphic/studio..."
-      - run: pnpm --filter @ggraphic/studio gate:render
+      - run: pnpm --filter @ggraphic/studio gate:render --shard=${{ matrix.shard }}/3
       - name: Upload the diff images of a failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: render-gate-results
+          name: render-gate-results-${{ matrix.shard }}
           path: apps/studio/test-results
           if-no-files-found: ignore
+
+  # The one status to look at: green when every shard passed or the change cannot affect a render.
+  render-gate:
+    needs: [changes, render-gate-shard]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          CHANGES: ${{ needs.changes.result }}
+          SHARDS: ${{ needs.render-gate-shard.result }}
+        run: |
+          echo "changes=$CHANGES shards=$SHARDS"
+          [ "$CHANGES" = success ] || exit 1
+          [ "$SHARDS" = success ] || [ "$SHARDS" = skipped ]

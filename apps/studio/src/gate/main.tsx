@@ -6,6 +6,8 @@
  * reports on `window.__gate`.
  *
  *   no `scheme`   reports the worlds the brand keeps of the template (`schemes`), draws nothing
+ *   `scheme=all`  measures and draws every offered world in this one page load and reports each
+ *                 on `worlds`; nothing is shown, so it is for the overflow sweep, not for goldens
  *   `list=1`      reports the templates and brands the gate covers
  *   `probe=overflow`   sets every slot text to three times its `maxChars`, which must overflow
  *
@@ -39,7 +41,7 @@ import { templatePageState } from '../editor/templates/instantiate';
 import { withSamplePhotos } from '../editor/templates/samplePhotos';
 import { registerEditor } from '../registerEditor';
 import '../fonts';
-import { type GateOverflow, type GateResult } from './result';
+import { type GateOverflow, type GateResult, type GateWorld } from './result';
 
 /** A text box may end this far past its frame (rounding), as stage 1 allows. */
 const SLACK = 1;
@@ -148,6 +150,39 @@ function Stage(props: {
   );
 }
 
+interface SweepWorld {
+  scheme: string;
+  state: Obj;
+  overflow: GateOverflow[];
+}
+
+/** Draws the worlds one after another off screen; a world that cannot be drawn is reported, not thrown. */
+function Sweep(props: { config: FullCanvasConfig; formatId: string; worlds: SweepWorld[] }) {
+  const { config, formatId, worlds } = props;
+  const [done, setDone] = useState<GateWorld[]>([]);
+  const current = worlds[done.length];
+  if (!current) return null;
+  const next = (error: string | null) => {
+    const all = [...done, { scheme: current.scheme, overflow: current.overflow, error }];
+    setDone(all);
+    if (all.length === worlds.length)
+      publish({ ready: true, overflow: [], error: null, worlds: all });
+  };
+  return (
+    <div style={{ position: 'fixed', left: -100000 }}>
+      <PagePreview
+        key={current.scheme}
+        config={config}
+        state={current.state}
+        formatId={formatId}
+        width={getCanvasFormatOrDefault(formatId).width}
+        onRendered={() => next(null)}
+        onFailed={() => next('the page could not be drawn')}
+      />
+    </div>
+  );
+}
+
 async function run(): Promise<void> {
   const params = new URLSearchParams(window.location.search);
   const catalog = studioCatalog().entries.filter((e) => e.kind === 'template');
@@ -175,7 +210,7 @@ async function run(): Promise<void> {
     publish({ ready: true, overflow: [], error: null, schemes: [...offered] });
     return;
   }
-  if (!offered.includes(scheme as SchemeId))
+  if (scheme !== 'all' && !offered.includes(scheme as SchemeId))
     throw new Error(`brand ${brand.id} does not offer ${scheme}`);
 
   // The brand under test is the active one before the page config and the placement read it.
@@ -183,13 +218,32 @@ async function run(): Promise<void> {
   await prepareBrandPack(brand);
   await ensureFontsReady();
   const config = (await loadCanvasConfig(FREE_PAGE_CONFIG_ID)) as FullCanvasConfig;
+  const root = document.getElementById('root');
+  if (!root) throw new Error('#root is missing in gate.html');
+
+  if (scheme === 'all') {
+    const worlds = offered.map((id): SweepWorld => {
+      const placed = templatePageState(entry, formatId, { schemeId: id, brand });
+      if (!placed) throw new Error(`${entry.id} cannot be placed on ${formatId}`);
+      return {
+        scheme: id,
+        overflow: measureOverflow(placed, entry, brand, formatSize(formatId)),
+        state: withSamplePhotos(placed, SAMPLE_PHOTOS, entry.id, formatSize(formatId)),
+      };
+    });
+    if (worlds.length === 0) {
+      publish({ ready: true, overflow: [], error: null, worlds: [] });
+      return;
+    }
+    createRoot(root).render(<Sweep config={config} formatId={formatId} worlds={worlds} />);
+    return;
+  }
+
   const state = templatePageState(entry, formatId, { schemeId: scheme as SchemeId, brand });
   if (!state) throw new Error(`${entry.id} cannot be placed on ${formatId}`);
   if (params.get('probe') === 'overflow') applyProbe(state, entry);
 
   const overflow = measureOverflow(state, entry, brand, formatSize(formatId));
-  const root = document.getElementById('root');
-  if (!root) throw new Error('#root is missing in gate.html');
   createRoot(root).render(
     <Stage
       config={config}

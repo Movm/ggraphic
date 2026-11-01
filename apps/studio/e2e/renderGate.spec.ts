@@ -126,17 +126,31 @@ for (const template of templates) {
         const offered = await open(page, { template: template.id, brand, format: format! });
         expect(offered.error).toBeNull();
         expect(offered.schemes?.length ?? 0).toBeGreaterThan(0);
+        if (brand !== 'default') {
+          // No golden off the default brand: every world is measured and drawn in one page load.
+          const sweep = await open(page, {
+            template: template.id,
+            scheme: 'all',
+            brand,
+            format: format!,
+          });
+          expect(sweep.error).toBeNull();
+          expect(sweep.worlds?.map((w) => w.scheme)).toEqual(offered.schemes);
+          for (const world of sweep.worlds ?? []) {
+            expect(world.error, world.scheme).toBeNull();
+            expect(world.overflow, `world ${world.scheme}`).toEqual([]);
+          }
+          return;
+        }
         for (const scheme of offered.schemes ?? []) {
           const gate = await open(page, { template: template.id, scheme, brand, format: format! });
           expect(gate.error, `${scheme}`).toBeNull();
           expect(gate.overflow, `world ${scheme}`).toEqual([]);
-          if (brand === 'default') {
-            // Soft: every world of a template is compared in one run. A hard failure stopped at the
-            // first changed world, and each further world cost another CI round of over an hour.
-            await expect
-              .soft(page.getByTestId('stage'))
-              .toHaveScreenshot(`${template.id}-${scheme}-${format!}.png`);
-          }
+          // Soft: every world of a template is compared in one run. A hard failure stopped at the
+          // first changed world, and each further world cost another CI round of over an hour.
+          await expect
+            .soft(page.getByTestId('stage'))
+            .toHaveScreenshot(`${template.id}-${scheme}-${format!}.png`);
         }
       });
     }

@@ -12,9 +12,10 @@ export default defineConfig({
   testDir: './e2e',
   // A golden has one name on every platform; the image is the only place it is made.
   snapshotPathTemplate: '{testDir}/__goldens__/{arg}{ext}',
-  // One browser, one page at a time: the CI image and the local Docker VM are small.
+  // One browser, one page at a time: the CI image and the local Docker VM are small. Tests are
+  // still independent (`fullyParallel`), so CI can split them across runners with `--shard`.
   workers: 1,
-  fullyParallel: false,
+  fullyParallel: true,
   retries: 0,
   timeout: 60_000,
   reporter: [['list']],
