@@ -13,7 +13,6 @@ import { templatesFor } from '../editor/templates/catalog';
 
 type Slot = PickBody['templates'][number]['slots'][number];
 
-const MAX_TEMPLATES = 12;
 const MAX_SLOTS = 8;
 
 /** What the AI is told a slot holds when the template gives it no label of its own. */
@@ -32,8 +31,8 @@ const ROLE_LABELS: Record<Exclude<TemplateSlotRole, 'photo'>, string> = {
 const capitalised = (id: string) => id.charAt(0).toUpperCase() + id.slice(1);
 
 /**
- * Offered per call: what `formatId` and the organisation's brand can actually place, minus the
- * templates the organisation hid.
+ * Offered per call: every template `formatId` and the organisation's brand can actually place,
+ * minus the templates the organisation hid. All of them: a cut leaves whole families unreachable.
  */
 export function pickOffers(
   formatId: string,
@@ -55,8 +54,7 @@ export function pickOffers(
       return slots.length > 0
         ? [{ id: entry.id, label: entry.title, description: entry.description, slots }]
         : [];
-    })
-    .slice(0, MAX_TEMPLATES);
+    });
   const schemes = deriveSchemes(brand).map((s) => ({ id: s.id, label: capitalised(s.id) }));
   return { templates, schemes };
 }

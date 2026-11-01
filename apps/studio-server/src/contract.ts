@@ -105,7 +105,8 @@ export const pickBody = z.object({
       })
     )
     .min(1)
-    .max(12),
+    // The Studio offers a format's whole catalogue (79 today); the bound only caps the prompt.
+    .max(200),
   schemes: z.array(z.object({ id: offerId, label: offerText })).max(8),
   format: z
     .object({ width: z.int().min(1).max(20_000), height: z.int().min(1).max(20_000) })

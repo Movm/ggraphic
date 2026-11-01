@@ -287,7 +287,8 @@
   color: var(--ui-color-text-muted);
 }
 .ui-select__content {
-  z-index: 50;
+  /* Popup layer: above dialogs (1010), which they open from. */
+  z-index: 1020;
   min-width: var(--radix-select-trigger-width);
   max-height: var(--radix-select-content-available-height);
   overflow: hidden;
@@ -320,7 +321,8 @@
 
 /* Menu */
 .ui-menu__content {
-  z-index: 50;
+  /* Popup layer: above dialogs (1010), which they open from. */
+  z-index: 1020;
   min-width: 12rem;
   padding: var(--ui-space-1);
   background: var(--ui-color-surface);

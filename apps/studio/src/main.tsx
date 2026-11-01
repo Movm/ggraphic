@@ -5,9 +5,10 @@ import { createRoot } from 'react-dom/client';
 
 import '@ggraphic/ui/fonts.css';
 import '@ggraphic/ui/tokens.css';
-import '@ggraphic/ui/editor-bridge.css';
 import '@ggraphic/ui/styles.css';
 import '@ggraphic/editor/styles';
+// After the editor's defaults: both sit in :where(:root), so the later one wins.
+import '@ggraphic/ui/editor-bridge.css';
 import './fonts';
 import './styles.css';
 import { App } from './App';

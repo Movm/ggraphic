@@ -29,7 +29,8 @@ const settle = async () => {
 
 function setup(opened: string, baseline?: string) {
   let current = doc(opened);
-  const exportApi = { current: { getPages: () => current.pages } } as never;
+  const captureActivePage = vi.fn(() => Promise.resolve(undefined));
+  const exportApi = { current: { getPages: () => current.pages, captureActivePage } } as never;
   const hook = renderHook(() =>
     useAutosave({
       projectId: 'p1',
@@ -41,7 +42,7 @@ function setup(opened: string, baseline?: string) {
       hasThumbnail: true,
     })
   );
-  return { hook, set: (mark: string) => (current = doc(mark)) };
+  return { hook, set: (mark: string) => (current = doc(mark)), captureActivePage };
 }
 
 const markOf = (call: unknown) =>
@@ -125,5 +126,35 @@ describe('the opening rebind', () => {
     await settle();
     expect(mocked.updateProject.mock.calls.length).toBeGreaterThan(1);
     expect(hook.result.current.status).toBe('saved');
+  });
+});
+
+describe('the thumbnail', () => {
+  it('follows a save made inside the half-minute window, once the window is over', async () => {
+    const { set, captureActivePage } = setup('opened');
+    await settle();
+    set('edit');
+    await settle();
+    expect(captureActivePage).toHaveBeenCalledTimes(1);
+    // The undo is stored a few seconds later: the card would keep showing the edit.
+    set('opened');
+    await settle();
+    expect(captureActivePage).toHaveBeenCalledTimes(1);
+    await act(() => vi.advanceTimersByTimeAsync(30_000));
+    expect(captureActivePage).toHaveBeenCalledTimes(2);
+  });
+
+  it('is taken on leaving when the last save had none', async () => {
+    const { hook, set, captureActivePage } = setup('opened');
+    await settle();
+    set('edit');
+    await settle();
+    set('opened');
+    await settle();
+    await act(() => hook.result.current.flush());
+    expect(captureActivePage).toHaveBeenCalledTimes(2);
+    // Leaving took it: the window ending later does not take another.
+    await act(() => vi.advanceTimersByTimeAsync(30_000));
+    expect(captureActivePage).toHaveBeenCalledTimes(2);
   });
 });

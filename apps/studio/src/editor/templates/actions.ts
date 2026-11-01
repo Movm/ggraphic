@@ -13,7 +13,9 @@ import { blockElementIds, type LiftedBlock } from '@ggraphic/editor/blocks/lifte
 import { type IconState } from '@ggraphic/editor/configs/factory/baseTypes';
 import { type AdditionalText } from '@ggraphic/editor/configs/types';
 import { type AssetInstance, createAssetInstance } from '@ggraphic/editor/utils/canvasAssets';
-import { iconInstanceIdsFor } from '@ggraphic/editor/utils/iconInstances';
+import { type ExternalIconPayload } from '@ggraphic/editor/utils/externalIcons';
+import { createInstanceId } from '@ggraphic/editor/utils/duplicateElement';
+import { iconInstanceIdsFor, placedIconId } from '@ggraphic/editor/utils/iconInstances';
 import { createIllustration } from '@ggraphic/editor/utils/illustrations/registry';
 import { type IllustrationInstance } from '@ggraphic/editor/utils/illustrations/types';
 import { createShape, type ShapeInstance, type ShapeType } from '@ggraphic/editor/utils/shapes';
@@ -173,8 +175,14 @@ export function createStudioActions(
 
     // ── Icons ────────────────────────────────────────────────────────────────
     // `selectedIcons` lists instance ids; the first copy of an icon carries its catalogue id.
-    toggleIcon: (id: string, selected: boolean, options?: ElementPlacement) => {
+    toggleIcon: (
+      id: string,
+      selected: boolean,
+      options?: ElementPlacement,
+      external?: ExternalIconPayload
+    ) => {
       if (selected) {
+        const placed = placedIconId(id, getState().selectedIcons, () => createInstanceId('icon'));
         const iconState: IconState = {
           x: options?.center?.x ?? width / 2,
           y: options?.center?.y ?? height / 2,
@@ -182,12 +190,15 @@ export function createStudioActions(
           rotation: 0,
           color: inkFor(getState().backgroundColor),
           opacity: 1,
+          // An icon from the icon search: the page keeps its markup (to draw it) and its source (to credit it).
+          ...(placed.iconId ? { iconId: placed.iconId } : {}),
+          ...(external ? { svg: external.svg, source: external.source } : {}),
         };
         commit((prev) => ({
           ...prev,
-          selectedIcons: [...prev.selectedIcons, id],
-          iconStates: { ...prev.iconStates, [id]: iconState },
-          layerOrder: withLayer(prev.layerOrder, id),
+          selectedIcons: [...prev.selectedIcons, placed.id],
+          iconStates: { ...prev.iconStates, [placed.id]: iconState },
+          layerOrder: withLayer(prev.layerOrder, placed.id),
         }));
         return;
       }

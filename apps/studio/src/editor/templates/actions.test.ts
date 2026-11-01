@@ -118,3 +118,45 @@ describe('updateShape on a hugging plate', () => {
     expect(state().shapeInstances[0]).toHaveProperty('hug');
   });
 });
+
+describe('toggleIcon', () => {
+  it('keeps the svg and source of an icon from the icon search on the page', () => {
+    // Without them the renderer has nothing to draw and the credit line has no source.
+    const { actions, state } = setup({ selectedIcons: [], iconStates: {} } as never);
+    const source = {
+      kind: 'iconify',
+      prefix: 'reicon',
+      name: 'bicycle-filled',
+      setTitle: 'Reicon',
+      licence: 'MIT',
+      author: 'REICON',
+    } as const;
+    const svg = '<svg viewBox="0 0 24 24"><path d="M0 0h24"/></svg>';
+    actions.toggleIcon('iconify:reicon:bicycle-filled', true, undefined, { svg, source });
+    expect(state().iconStates['iconify:reicon:bicycle-filled']).toMatchObject({ svg, source });
+  });
+});
+
+describe('toggleIcon for an icon already on the page', () => {
+  it('places a copy under its own instance id that shows the same icon', () => {
+    const svg = '<svg viewBox="0 0 24 24"><path d="M0 0h24"/></svg>';
+    const source = {
+      kind: 'iconify',
+      prefix: 'reicon',
+      name: 'bicycle-filled',
+      setTitle: 'Reicon',
+      licence: 'MIT',
+      author: 'REICON',
+    } as const;
+    const { actions, state } = setup({ selectedIcons: [], iconStates: {} } as never);
+    actions.toggleIcon('iconify:reicon:bicycle-filled', true, undefined, { svg, source });
+    actions.toggleIcon('iconify:reicon:bicycle-filled', true, undefined, { svg, source });
+    const ids = state().selectedIcons;
+    expect(new Set(ids).size).toBe(2);
+    expect(new Set(state().layerOrder).size).toBe(state().layerOrder!.length);
+    expect(state().iconStates[ids[1]!]).toMatchObject({
+      iconId: 'iconify:reicon:bicycle-filled',
+      svg,
+    });
+  });
+});
