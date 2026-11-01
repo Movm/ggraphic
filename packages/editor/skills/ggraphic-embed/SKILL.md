@@ -59,6 +59,7 @@ Props:
 Things to know:
 
 - **Client only, SSR-safe import.** Importing `@ggraphic/editor/embed` touches no browser global, so a server-rendered page (Next.js app router, Remix …) can import it. It renders nothing on the server and loads the editor in the browser after hydration. No `dynamic(..., { ssr: false })` needed.
+- **React Server Components.** The entry (and the package root) is marked `'use client'`, so importing it from a server component gives a client reference instead of failing on `createContext`. Render the editor from your own `'use client'` component that builds the brand and the template pack: props passed from a server component must be serialisable, and a template pack holds functions. Rendering `<GgraphicEditor>` straight from a server component therefore only works if every prop you pass is plain data.
 - **Give it room.** Put it in a container with a height; the Studio gives its editor the full viewport (`min-height: 100dvh`, flex column).
 - **One brand and locale per page.** The registers are module-level: two `GgraphicEditor`s on one page share the brand and locale of the one rendered last. Template ids are stored in documents and never re-registered: a second pack that reuses an id keeps the first one's template.
 - **No collaboration** unless you use the low-level path below.
@@ -119,7 +120,7 @@ The other five colour roles, the grounds and every picker are derived with WCAG 
 
 ### Templates as data: `loadTemplatePack`
 
-`loadTemplatePack(files)` returns a promise of the pack and loads the parser (the schema validators and the page config, several hundred kB) in a chunk of its own, next to the editor. `templatePackFromJson(files)` does the same work synchronously, but whatever imports it carries that code: called at module level, it more than doubles a host's entry chunk. Use it where you need the pack before rendering, for example on the server.
+`loadTemplatePack(files)` returns a promise of the pack and loads the parser (the schema validators and the page config, several hundred kB) in a chunk of its own, next to the editor. `templatePackFromJson(files)` does the same work synchronously, but whatever imports it carries that code: called at module level, it more than doubles a host's entry chunk. Use it where you need the pack before rendering. Neither is a server API: both are exported from the `'use client'` entry, so a server component that imports them gets a client reference, not the function, and the pack they return holds functions that cannot cross to the client.
 
 Both take an array of template files (or one file) in the `@ggraphic/schema` format. `@ggraphic/templates-open` is a CC0 pack to start from. Every template becomes a page the editor opens under the template's id. A file that does not read, was written by a newer version or repeats an id is skipped and listed in `problems`; blocks are left out (they are not pages).
 
