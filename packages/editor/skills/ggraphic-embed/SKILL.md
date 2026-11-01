@@ -48,16 +48,17 @@ What it does for you:
 
 Props:
 
-| Prop          | Default                                                      | Notes                                                                                                                                                                         |
-| ------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `brand`       | required                                                     | `defaultBrand` from `@ggraphic/brand-default`, or your own from `defineBrand` (below).                                                                                        |
-| `templates`   | required                                                     | `templatePackFromJson(files)`. Build it once, not per render. Check `templates.problems` for files that were skipped.                                                         |
-| `document`    | one page of the pack's first template on `post-portrait`     | `{ formatId, pages: [{ configId, state }] }`. Read when the editor mounts; give the component a new `key` to open another document.                                           |
-| `onChange`    | none                                                         | The whole document after every change (edits, added or moved pages, undo). Store it as it comes; debounce on your side if saving is expensive.                                |
-| `services`    | downloads through the browser, uploads as object URLs, no AI | `CanvasEditorServices` from `@ggraphic/editor/CanvasEditorProvider`. Pass only what you have: a `mediaLibrary` for durable uploads, `aiDraft`, `iconSearch`, `fileDelivery` … |
-| `locale`      | `'en'`                                                       | `'en'` or `'de'`.                                                                                                                                                             |
-| `queryClient` | own client                                                   | Pass yours to share a cache with the rest of the app.                                                                                                                         |
-| `title`       | none                                                         | The design's name, used for the PDF and slide-deck downloads.                                                                                                                 |
+| Prop           | Default                                                      | Notes                                                                                                                                                                         |
+| -------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `brand`        | required                                                     | `defaultBrand` from `@ggraphic/brand-default`, or your own from `defineBrand` (below).                                                                                        |
+| `templates`    | required                                                     | `templatePackFromJson(files)`. Build it once, not per render. Check `templates.problems` for files that were skipped.                                                         |
+| `document`     | one page of the pack's first template on `post-portrait`     | `{ formatId, pages: [{ configId, state }] }`. Read when the editor mounts; give the component a new `key` to open another document.                                           |
+| `onChange`     | none                                                         | The whole document after every change (edits, added or moved pages, undo). Store it as it comes; debounce on your side if saving is expensive.                                |
+| `services`     | downloads through the browser, uploads as object URLs, no AI | `CanvasEditorServices` from `@ggraphic/editor/CanvasEditorProvider`. Pass only what you have: a `mediaLibrary` for durable uploads, `aiDraft`, `iconSearch`, `fileDelivery` … |
+| `locale`       | `'en'`                                                       | `'en'` or `'de'`.                                                                                                                                                             |
+| `queryClient`  | own client                                                   | Pass yours to share a cache with the rest of the app.                                                                                                                         |
+| `title`        | none                                                         | The design's name, used for the PDF and slide-deck downloads.                                                                                                                 |
+| `exportApiRef` | none                                                         | A ref that receives `CanvasEditorExportApi` once the editor has loaded (see Export).                                                                                          |
 
 Things to know:
 
@@ -65,6 +66,37 @@ Things to know:
 - **Give it room.** Put it in a container with a height; the Studio gives its editor the full viewport (`min-height: 100dvh`, flex column).
 - **One brand and locale per page.** The registers are module-level: two `GgraphicEditor`s on one page share the brand and locale of the one rendered last. Template ids are stored in documents and never re-registered: a second pack that reuses an id keeps the first one's template.
 - **No collaboration** unless you use the low-level path below.
+
+### Export
+
+The editor's own Share menu downloads PNG, PDF and slide decks. To export from your own UI (a "Save PNG" button, a thumbnail on save), pass `exportApiRef`:
+
+```tsx
+import { type CanvasEditorExportApi } from '@ggraphic/editor/embed';
+
+const [api, setApi] = useState<CanvasEditorExportApi | null>(null);
+
+<GgraphicEditor brand={defaultBrand} templates={templates} exportApiRef={setApi} />;
+
+<button
+  disabled={!api}
+  onClick={async () => {
+    const png = await api?.captureActivePage({ pixelRatio: 2 });
+    if (png) download(png, 'design.png'); // a data URL
+  }}
+>
+  Save PNG
+</button>;
+```
+
+- The api arrives after the editor has loaded in the browser, and goes back to `null` when it unmounts. A callback ref (`setApi` above) tells you when; a `useRef` works too if you only read it on click.
+- `captureActivePage({ pixelRatio, transparent })`: the active page as a PNG data URL, or `null` while its canvas is not mounted.
+- `capturePages({ pixelRatio })`: every page as a PNG data URL, in order.
+- `exportPptx()`: the deck as an editable .pptx `Blob`.
+- `getPages()`: the document's pages as `onChange` reports them.
+- `undo()` / `redo()`.
+
+To hide the editor's own Share menu, use the low-level path (`showShare={false}` on `CanvasEditorShell`).
 
 ### A brand of your own: `defineBrand`
 

@@ -3,3 +3,4 @@
 export { GgraphicEditor } from './GgraphicEditor.js';
 export { type GgraphicDocument, type GgraphicEditorProps } from './types.js';
 export { templatePackFromJson, type TemplatePack } from '../page/templatePack.js';
+export { type CanvasEditorExportApi } from '../components/CanvasEditor/types.js';

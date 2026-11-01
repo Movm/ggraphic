@@ -68,6 +68,7 @@ export default function EmbeddedEditor({
   locale = 'en',
   queryClient,
   title,
+  exportApiRef,
 }: GgraphicEditorProps) {
   syncRegisters(brand, locale, templates);
 
@@ -112,6 +113,7 @@ export default function EmbeddedEditor({
           onExport={NOOP}
           onCancel={NOOP}
           galleryAutoSave={false}
+          {...(exportApiRef !== undefined && { exportApiRef })}
           {...(onChange !== undefined && { onPagesChange: report })}
         />
       </CanvasEditorProvider>

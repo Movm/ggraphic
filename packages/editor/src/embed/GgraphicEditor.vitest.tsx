@@ -8,12 +8,17 @@ import { CANVAS_DOCUMENT_VERSION } from '@ggraphic/schema';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Konva from 'konva';
-import React from 'react';
+import React, { createRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { messages } from '../i18n/messages.js';
 
-import { GgraphicEditor, templatePackFromJson, type GgraphicDocument } from './index.js';
+import {
+  type CanvasEditorExportApi,
+  GgraphicEditor,
+  templatePackFromJson,
+  type GgraphicDocument,
+} from './index.js';
 
 vi.mock('../sidebar/UserUploadsProvider.js', () => ({
   useOptionalUserUploads: () => null,
@@ -106,5 +111,20 @@ describe('GgraphicEditor', () => {
       expect(ids[0]).toBe('headline');
       expect(ids).toHaveLength(2);
     });
+  });
+
+  it('hands the host the export api once the editor has loaded, and takes it back on unmount', async () => {
+    const api = createRef<CanvasEditorExportApi>();
+    const { unmount } = render(
+      <GgraphicEditor brand={brandDefault} templates={pack} exportApiRef={api} />
+    );
+
+    await waitFor(() => expect(api.current).not.toBeNull(), { timeout: 10_000 });
+    expect(api.current?.getPages().map((p) => p.configId)).toEqual(['embed-headline']);
+    // jsdom cannot rasterise a stage, so the PNG itself is not checked here.
+    expect(typeof api.current?.captureActivePage).toBe('function');
+
+    unmount();
+    expect(api.current).toBeNull();
   });
 });
