@@ -26,6 +26,11 @@ export interface BrandPack {
   markers: { swatches: BrandSwatch[]; ink: string };
   /** Chart series, strongest first, one colour per part of a pie. */
   chart: readonly string[];
+  /**
+   * `palette` ids the shape tiles cycle through, in order. Absent, or naming no
+   * palette colour: the colour roles primary, secondary, accent, accentOnLight, attention.
+   */
+  shapeCycle?: readonly string[];
   /** Colours offered for an image's tint and for shadow and outline effects, in picker order. */
   effects: BrandEffects;
   fonts: BrandFonts;

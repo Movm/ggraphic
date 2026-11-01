@@ -586,7 +586,8 @@ const MARKER_SHAPES: ReadonlySet<ShapeType> = new Set(['hand-marker', 'hand-mark
  * Brand color variants cycled across shape tiles (Canva-style); clicking inserts the
  * shown color. Keyed by the shape's global palette index so the same shape shows the
  * same color in the strip, the drill-down groups, and search results.
- * The cycle is the brand's colour roles, so any brand fills it. Lazy for the
+ * The cycle is the pack's `shapeCycle`, else the brand's colour roles, so any
+ * brand fills it. Lazy for the
  * same chunk-init reason as getShapesByCategory below, and because the host
  * registers its brand at startup.
  */
@@ -595,9 +596,14 @@ function shapeVariants(brand: BrandPack): Map<ShapeType, ShapeVariant> {
   let byType = shapeVariantsByPack.get(brand);
   if (!byType) {
     const { colors } = brand;
-    const variants = SHAPE_VARIANT_ROLES.map((role) => ({
-      color: colors[role],
-      darkPreviewClass: role === 'primary' ? PRIMARY_PREVIEW_CLASS : '',
+    const palette = brandColors(brand);
+    const named = (brand.shapeCycle ?? []).flatMap((id) =>
+      palette.filter((c) => c.id === id).map((c) => c.value)
+    );
+    const cycle = named.length > 0 ? named : SHAPE_VARIANT_ROLES.map((role) => colors[role]);
+    const variants = cycle.map((color) => ({
+      color,
+      darkPreviewClass: color === colors.primary ? PRIMARY_PREVIEW_CLASS : '',
     }));
     byType = new Map(
       ALL_PALETTE_SHAPES.map((shape, index) => [shape.id, variants[index % variants.length]])
