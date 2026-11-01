@@ -60,6 +60,8 @@ jobs:
   # apps/studio/package.json (scripts/gate-render-docker.sh reads the version from there).
   render-gate:
     runs-on: ubuntu-latest
+    # A full run takes about an hour; a hang must not burn the default six.
+    timeout-minutes: 90
     container:
       image: mcr.microsoft.com/playwright:v1.64.1-noble
     steps:
