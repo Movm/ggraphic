@@ -6,7 +6,7 @@ import { loadCanvasConfig } from '@ggraphic/editor/configs/configLoader';
 import { type FullCanvasConfig } from '@ggraphic/editor/configs/types';
 import { render, waitFor } from '@testing-library/react';
 import Konva from 'konva';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { catalogTemplate } from '../editor/templates/catalog';
 import { FREE_PAGE_CONFIG_ID } from '../editor/templates/ids';
@@ -43,6 +43,13 @@ async function drawn(id: string) {
   const stage = Konva.stages[Konva.stages.length - 1]!;
   return stage.find('.export-hidden').length;
 }
+
+// The preview encodes through `toBlob`, which jsdom never calls back; the count needs no pixels.
+beforeAll(() => {
+  vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation((done) =>
+    done(new Blob(['png'], { type: 'image/png' }))
+  );
+});
 
 describe('empty photo slots', () => {
   it('the countdown draws one placeholder', async () => {

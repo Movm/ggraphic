@@ -263,14 +263,26 @@ function shadeInterval(base: string, overlays: Overlay[]): [Ground, Ground] | nu
   if (!start || start.a !== 1) return null;
   const fills = overlays.map((o) => parseColor(o.fill));
   if (fills.some((f) => !f || f.a !== 1)) return null;
-  const at = (shadeAlpha: number): Ground => {
-    let c = [start.r, start.g, start.b];
+  const mix = (shadeAlpha: number): [number, number, number] => {
+    let r = start.r;
+    let g = start.g;
+    let b = start.b;
     overlays.forEach((o, i) => {
       const f = fills[i]!;
       const a = o.shade ? shadeAlpha : o.alpha[0];
-      c = [c[0]! + (f.r - c[0]!) * a, c[1]! + (f.g - c[1]!) * a, c[2]! + (f.b - c[2]!) * a];
+      r += (f.r - r) * a;
+      g += (f.g - g) * a;
+      b += (f.b - b) * a;
     });
-    const [r, g, b] = c as [number, number, number];
+    return [r, g, b];
+  };
+  // The search reads only the luminance; a colour name is built for the three grounds kept.
+  const lumAt = (shadeAlpha: number): number => {
+    const [r, g, b] = mix(shadeAlpha);
+    return relativeLuminance({ r, g, b, a: 1 });
+  };
+  const at = (shadeAlpha: number): Ground => {
+    const [r, g, b] = mix(shadeAlpha);
     return {
       hex: `#${hex2(Math.round(r))}${hex2(Math.round(g))}${hex2(Math.round(b))}`,
       lum: relativeLuminance({ r, g, b, a: 1 }),
@@ -283,7 +295,7 @@ function shadeInterval(base: string, overlays: Overlay[]): [Ground, Ground] | nu
   for (let i = 0; i < SEARCH_STEPS; i++) {
     const m1 = a + (b - a) / 3;
     const m2 = b - (b - a) / 3;
-    if (at(m1).lum < at(m2).lum) b = m2;
+    if (lumAt(m1) < lumAt(m2)) b = m2;
     else a = m1;
   }
   const inner = at((a + b) / 2);

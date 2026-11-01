@@ -51,6 +51,7 @@ import {
 import { selectableItemIds } from '@ggraphic/editor/utils/multiSelect';
 import { type ViewportRect, rotaterRects, visibleArea } from '@ggraphic/editor/utils/orientation';
 import { PendingImagesContext } from '@ggraphic/editor/utils/pendingImages';
+import { PreviewRenderContext } from '../utils/filterCache.js';
 import { stageCssScale } from '@ggraphic/editor/utils/stageCssScale';
 import { getOptimalContainerWidth } from '@ggraphic/editor/utils/viewport';
 
@@ -214,6 +215,11 @@ export interface GenericCanvasProps<TState, TActions extends OptionalCanvasActio
    * hat sie niemand —, also gibt es hier nichts mehr abzuschalten.
    */
   preview?: boolean;
+  /**
+   * Output pixels per page pixel of the capture a preview is drawn for (`PagePreview`). Filtered
+   * photos are cached at that resolution or the drawn one, whichever is larger; absent: the drawn one.
+   */
+  previewCaptureRatio?: number;
   /**
    * False for the pages of a multi-page editor that are not the active one:
    * they drop their selection and ignore keyboard shortcuts, which every page
@@ -386,6 +392,7 @@ function GenericCanvasWithRef<
     onToolbarStateChange,
     onAutoSaveShareToken,
     preview = false,
+    previewCaptureRatio,
     isActivePage = true,
     pageNumber,
     readOnly = false,
@@ -1183,75 +1190,77 @@ function GenericCanvasWithRef<
 
   return (
     <PendingImagesContext.Provider value={pendingImages}>
-      <CanvasStage
-        ref={stageRef}
-        width={stageWidth}
-        height={stageHeight}
-        logicalWidth={referenceWidth}
-        logicalHeight={referenceHeight}
-        responsive
-        maxContainerWidth={maxWidth}
-        onStageClick={handleStageClick}
-        listening={interactive}
-        ariaLabel={stageLabel}
-        className={`${config.id}-stage`}
-        overlay={
-          interactive ? (
-            <>
-              <CropGhostOverlay getStage={getStage} />
-              <SlotBudgetStatus
-                state={state as Record<string, unknown>}
-                canvasWidth={referenceWidth}
-                canvasHeight={referenceHeight}
-              />
-            </>
-          ) : null
-        }
-      >
-        <CanvasRenderLayer
-          sortedRenderList={sortedRenderList}
-          canRotateSelection={canRotateSelection}
-          config={config}
-          state={drawnState}
-          layout={layout}
-          handlers={elementHandlers}
-          getSnapTargets={getSnapTargets}
-          registerGeometry={updateElementPosition}
-          handleSnapChange={handleSnapChange}
-          setSnapLines={setSnapLines}
-          stageWidth={config.canvas.width}
-          stageHeight={config.canvas.height}
-          isFontAvailable={isFontAvailable}
-          remoteSelections={remoteSelections}
-          {...(pageNumber === undefined ? {} : { pageNumber })}
-        />
+      <PreviewRenderContext.Provider value={preview ? (previewCaptureRatio ?? 0) : null}>
+        <CanvasStage
+          ref={stageRef}
+          width={stageWidth}
+          height={stageHeight}
+          logicalWidth={referenceWidth}
+          logicalHeight={referenceHeight}
+          responsive
+          maxContainerWidth={maxWidth}
+          onStageClick={handleStageClick}
+          listening={interactive}
+          ariaLabel={stageLabel}
+          className={`${config.id}-stage`}
+          overlay={
+            interactive ? (
+              <>
+                <CropGhostOverlay getStage={getStage} />
+                <SlotBudgetStatus
+                  state={state as Record<string, unknown>}
+                  canvasWidth={referenceWidth}
+                  canvasHeight={referenceHeight}
+                />
+              </>
+            ) : null
+          }
+        >
+          <CanvasRenderLayer
+            sortedRenderList={sortedRenderList}
+            canRotateSelection={canRotateSelection}
+            config={config}
+            state={drawnState}
+            layout={layout}
+            handlers={elementHandlers}
+            getSnapTargets={getSnapTargets}
+            registerGeometry={updateElementPosition}
+            handleSnapChange={handleSnapChange}
+            setSnapLines={setSnapLines}
+            stageWidth={config.canvas.width}
+            stageHeight={config.canvas.height}
+            isFontAvailable={isFontAvailable}
+            remoteSelections={remoteSelections}
+            {...(pageNumber === undefined ? {} : { pageNumber })}
+          />
 
-        <PrintGuides format={format} />
+          <PrintGuides format={format} />
 
-        <SnapGuidelines />
-      </CanvasStage>
+          <SnapGuidelines />
+        </CanvasStage>
 
-      {/* Renderless bridge: owns all selectedElement-derived computation.
+        {/* Renderless bridge: owns all selectedElement-derived computation.
           Re-renders only this component (returns null) on selection change,
           NOT GenericCanvasInner or the Konva tree. */}
-      <ToolbarStateBridge
-        bridgeRef={bridgeRef}
-        config={config}
-        state={state}
-        layout={layout}
-        actions={actions}
-        sortedRenderList={sortedRenderList}
-        setState={setStateWrapper}
-        debouncedSaveToHistory={debouncedSaveToHistory}
-        canUndo={canUndo}
-        canRedo={canRedo}
-        readOnly={!interactive}
-        saveToHistory={saveToHistory}
-        runHistoryBatch={runHistoryBatch}
-        cropCancelCount={cropSession.cancelCount}
-        getStage={getStage}
-        onToolbarStateChange={onToolbarStateChange}
-      />
+        <ToolbarStateBridge
+          bridgeRef={bridgeRef}
+          config={config}
+          state={state}
+          layout={layout}
+          actions={actions}
+          sortedRenderList={sortedRenderList}
+          setState={setStateWrapper}
+          debouncedSaveToHistory={debouncedSaveToHistory}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          readOnly={!interactive}
+          saveToHistory={saveToHistory}
+          runHistoryBatch={runHistoryBatch}
+          cropCancelCount={cropSession.cancelCount}
+          getStage={getStage}
+          onToolbarStateChange={onToolbarStateChange}
+        />
+      </PreviewRenderContext.Provider>
     </PendingImagesContext.Provider>
   );
 }

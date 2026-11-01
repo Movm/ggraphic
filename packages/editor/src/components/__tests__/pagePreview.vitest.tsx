@@ -23,11 +23,15 @@ vi.mock('use-image', async () => {
 });
 
 vi.spyOn(Konva.Node.prototype, 'cache').mockReturnThis();
-// Konva's PNG export composes layers with a drawImage the napi context rejects
-// for jsdom canvases; pixels are not under test, the call and its scale are.
-const toDataURL = vi
-  .spyOn(Konva.Stage.prototype, 'toDataURL')
-  .mockReturnValue('data:image/png;base64,iVBORw0KGgo=');
+// Konva's export composes layers with a drawImage the napi context rejects for
+// jsdom canvases; pixels are not under test, the call, its scale and the
+// encoder are. The PNG is encoded through `toBlob`, off the main thread.
+const blob = { current: new Blob(['png'], { type: 'image/png' }) as Blob | null };
+const toBlob = vi.fn((done: (result: Blob | null) => void) => done(blob.current));
+const toCanvas = vi
+  .spyOn(Konva.Stage.prototype, 'toCanvas')
+  .mockImplementation(() => ({ toBlob, width: 1, height: 1 }) as unknown as HTMLCanvasElement);
+const toDataURL = vi.spyOn(Konva.Stage.prototype, 'toDataURL');
 
 Object.defineProperty(document, 'fonts', {
   configurable: true,
@@ -55,13 +59,16 @@ describe('PagePreview', () => {
     await new Promise((resolve) => setTimeout(resolve, 300));
     expect(onRendered).toHaveBeenCalledTimes(1);
     expect(onRendered.mock.calls[0]![0]).toMatch(/^data:image\/png;base64,/);
+    // Encoded by toBlob; the synchronous encoder would block a scrolling gallery.
+    expect(toBlob).toHaveBeenCalledTimes(1);
+    expect(toDataURL).not.toHaveBeenCalled();
     // The stage turns the 200 px target into a region and ratio; their product is the PNG width.
-    const options = toDataURL.mock.calls[0]![0] as { width: number; pixelRatio: number };
+    const options = toCanvas.mock.calls[0]![0] as { width: number; pixelRatio: number };
     expect(Math.floor(options.width * options.pixelRatio)).toBe(200);
   });
 
   it('calls onFailed, not onRendered, when the stage gives no image', async () => {
-    toDataURL.mockReturnValueOnce(undefined as never);
+    blob.current = null;
     const onRendered = vi.fn();
     const onFailed = vi.fn();
     render(
@@ -75,5 +82,6 @@ describe('PagePreview', () => {
     );
     await waitFor(() => expect(onFailed).toHaveBeenCalledTimes(1), { timeout: 3000 });
     expect(onRendered).not.toHaveBeenCalled();
+    blob.current = new Blob(['png'], { type: 'image/png' });
   });
 });
