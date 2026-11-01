@@ -36,6 +36,7 @@ export {
 } from '../utils/canvasAssets.js';
 export {
   type CanvasFormat,
+  CANVAS_FORMAT_GROUP_ORDER,
   type CanvasFormatGroupDef,
   canvasFormats,
   getCanvasFormat,

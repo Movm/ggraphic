@@ -19,3 +19,5 @@ Also added:
 - `registerMeasuredCornerReservation` and its types in `@ggraphic/editor/services`.
 
 **Breaking (alpha):** `BlockInsertApi.bloecke` is now `blocks`. The field only lives in the React context a host provides, nothing persists it, so there is no alias: a host that provides or reads the context renames it (a type error points at each site).
+
+`CanvasFormatGroupDef` takes an optional `order`. It places a host group among the built-in picker groups, whose positions are in `CANVAS_FORMAT_GROUP_ORDER` (`templates`, `host`): `post` is 100, `square` 200, `slides` 300. A group without `order` follows the positioned ones, as before.
