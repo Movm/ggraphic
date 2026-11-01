@@ -12,6 +12,7 @@ import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { blockElementIds, type LiftedBlock } from '@ggraphic/editor/blocks/liftedBlock';
 import { type IconState } from '@ggraphic/editor/configs/factory/baseTypes';
 import { type AdditionalText } from '@ggraphic/editor/configs/types';
+import { type TextPreview } from '@ggraphic/editor/hooks/useCanvasElementHandlers';
 import { type AssetInstance, createAssetInstance } from '@ggraphic/editor/utils/canvasAssets';
 import { type ExternalIconPayload } from '@ggraphic/editor/utils/externalIcons';
 import { createInstanceId } from '@ggraphic/editor/utils/duplicateElement';
@@ -132,6 +133,33 @@ export function createStudioActions(
           }),
         true
       ),
+    /**
+     * How the page will look once a text edit is committed, while it is still being typed: the
+     * size the draft fits at and the plates that hug it. A function of the committed page that
+     * changes and records nothing; the canvas draws the result over the page until the edit ends,
+     * and the commit (`updateAdditionalText`) is what writes. Null for a text that is gone.
+     */
+    previewAdditionalText: (id: string, draft: string): TextPreview | null => {
+      const prev = getState();
+      const current = prev.additionalTexts.find((t) => t.id === id);
+      if (!current) return null;
+      const fitted = fittedFontSize({ ...current, text: draft }, prev, height);
+      const fontSize = fitted ?? current.fontSize;
+      // The text itself stays as it was: the editor shows the draft, the commit writes it.
+      const additionalTexts = prev.additionalTexts.map((t) =>
+        t.id === id ? { ...t, fontSize } : t
+      );
+      const hugged = withHuggedPlates({
+        ...prev,
+        additionalTexts: prev.additionalTexts.map((t) =>
+          t.id === id ? { ...t, text: draft, fontSize } : t
+        ),
+      });
+      return {
+        fontSize: fitted,
+        overrides: { additionalTexts, shapeInstances: hugged.shapeInstances },
+      };
+    },
     removeAdditionalText: (id: string) =>
       commit((prev) => ({
         ...prev,
