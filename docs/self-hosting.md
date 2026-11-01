@@ -12,13 +12,18 @@ ggraphic Studio is the hostable design app: organisations with their own project
 
 ## Install and start
 
+Studio is published as a container image, `ghcr.io/movm/ggraphic-studio`, for linux/amd64 and linux/arm64. You need two files from this repository, not a clone:
+
 ```bash
-git clone <repository-url> ggraphic && cd ggraphic
-cp .env.example .env
+mkdir ggraphic-studio && cd ggraphic-studio
+curl -fsSLO https://raw.githubusercontent.com/Movm/ggraphic/main/docker-compose.yml
+curl -fsSL https://raw.githubusercontent.com/Movm/ggraphic/main/.env.example -o .env
 # Set at least POSTGRES_PASSWORD (URL-safe), e.g.:
 sed -i.bak "s/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=$(openssl rand -hex 24)/" .env && rm .env.bak
-docker compose up -d --build
+docker compose up -d
 ```
+
+Compose pulls `latest` by default. To stay on one version, set `STUDIO_VERSION` in `.env` (e.g. `0.1.0-alpha.1`); the published versions are listed on the [package page](https://github.com/Movm/ggraphic/pkgs/container/ggraphic-studio).
 
 Read the setup token with `docker compose logs studio`, open <http://localhost:8080> and create the admin account with it. The token works once and is not printed again; if you lose it before setup, restart Studio for a new one. Check the state with `docker compose ps` and `curl http://localhost:8080/healthz` (answers `{"status":"ok"}` when the database is reachable). Logs: `docker compose logs -f studio`.
 
@@ -30,6 +35,20 @@ Data lives in two named volumes:
 | ----------------------------- | -------------------------------------------------------------------------------------------- |
 | `ggraphic-studio_db-data`     | Postgres: accounts, sessions, organisations, projects, documents, thumbnails, brand settings |
 | `ggraphic-studio_studio-data` | Uploaded images (`/data/uploads`), brand logos and fonts (`/data/brand-assets`)              |
+
+The image is built from this repository by `.github/workflows/studio-image.yml`. Its labels name the source (`org.opencontainers.image.source`) and the licence, and `/app/LICENSES` holds the licence texts. Studio is AGPL-3.0: if you run a modified Studio as a service, offer its source to your users.
+
+### Building from source
+
+To build the image from a checkout instead of pulling it, add `docker-compose.build.yml`:
+
+```bash
+git clone https://github.com/Movm/ggraphic ggraphic && cd ggraphic
+cp .env.example .env   # then set POSTGRES_PASSWORD as above
+docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+```
+
+The build is tagged `ggraphic-studio:local`, not with the published name, so a later `docker compose up` without the second file uses the published image again.
 
 ## Configuration
 
@@ -91,13 +110,23 @@ The API key stays on the server: it is never sent to the browser and never writt
 
 ### Remove background
 
-The editor's "remove background" tool is on when `REMBG_URL` points at a [rembg](https://github.com/danielgatis/rembg) server (`rembg s`, MIT). Studio posts the image to `<REMBG_URL>/api/remove` and returns the PNG; `REMBG_TIMEOUT_MS` (default 60000) bounds one call. The URL is operator configuration: the route only takes image bytes from users, never a URL. Images sent for cutting leave Studio for the rembg server, so keep it on your own network, without a public port and without outbound access once its model is downloaded.
+The editor's "remove background" tool is on when `REMBG_URL` points at a [rembg](https://github.com/danielgatis/rembg) server (`rembg s`, MIT). Studio posts the image and the model name `REMBG_MODEL` to `<REMBG_URL>/api/remove` and returns the PNG; `REMBG_TIMEOUT_MS` (default 60000) bounds one call. The URL is operator configuration: the route only takes image bytes from users, never a URL. Images sent for cutting leave Studio for the rembg server, so keep it on your own network, without a public port and without outbound access once its model is downloaded.
 
-Studio does not ship a rembg container. rembg's README lists `bria-rmbg` as the default model and says its BRIA licence requires a paid agreement for commercial use; it also says model weights carry their own licences, independent of rembg's MIT licence. Its Dockerfile runs `rembg d bria-rmbg`, so the published image carries those weights (checked against rembg's `main` branch, October 2026). Run your own rembg and check the licence of the model it serves; the README documents `-m u2net` for the command line, but how the server picks its model is not something Studio controls or that I verified. Example with the Python package, then `REMBG_URL=http://host.docker.internal:7000`:
+**With docker compose** add this line to `.env`, then `docker compose up -d`:
+
+```bash
+COMPOSE_PROFILES=rembg
+```
+
+This starts `ghcr.io/movm/ggraphic-rembg` next to Studio and points `REMBG_URL` at it (`http://rembg:7000`). The image is rembg's server with one model built in, u2net (Apache-2.0), so it never downloads a model. It runs on an internal network with no route out of the instance and no port on the host. It needs about {REMBG_IMAGE_SIZE} of disk; one cut takes a few seconds of CPU. `REMBG_VERSION` pins its tag (the rembg version). Use `COMPOSE_PROFILES` in `.env` rather than `docker compose --profile rembg`: compose shows the profiles to the compose file only through that variable, so with `--profile` alone rembg would run but Studio would not know about it.
+
+**The model.** rembg's server picks the model per request, and its own default, `bria-rmbg`, carries BRIA's licence, which requires a paid agreement for commercial use; rembg's README says model weights have their own licences, independent of rembg's MIT licence. Studio therefore asks for `u2net` with every image. Before, Studio sent no model name, so a rembg server cut with `bria-rmbg`. If you have a BRIA licence, set `REMBG_MODEL=bria-rmbg`; any other model name rembg knows works the same way, and rembg downloads it on first use. rembg's own Docker image is not used here: it is amd64 only and carries the `bria-rmbg` weights (its Dockerfile runs `rembg d bria-rmbg`; checked against rembg's `main` branch, November 2026).
+
+**Your own rembg server** works too: set `REMBG_URL`, e.g. with the Python package and `REMBG_URL=http://host.docker.internal:7000`:
 
 ```bash
 pip install "rembg[cpu,cli]"
-rembg s --host 0.0.0.0 --port 7000
+rembg s --host 0.0.0.0 --port 7000 --no-ui
 ```
 
 Uploads for this tool are limited by `UPLOAD_MAX_BYTES`; SVG is refused.
@@ -139,9 +168,11 @@ docker compose up -d
 
 ```bash
 # Back up first (see above), then:
-git pull
-docker compose up -d --build
+docker compose pull
+docker compose up -d
 ```
+
+With `STUDIO_VERSION` set in `.env`, change it to the new version first. A new release can change `docker-compose.yml` or add settings to `.env.example`: fetch the compose file again with the `curl` line from [Install and start](#install-and-start) and compare `.env.example` with your `.env`. If you build from source, `git pull`, then `docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build`.
 
 Migrations run on start-up, each in its own transaction; a failed migration stops Studio and leaves the database as it was. Check `docker compose logs studio` after an upgrade.
 
