@@ -116,6 +116,7 @@ import type { PageCommandId } from '@ggraphic/editor/utils/canvasCommandRegistry
 import type { ImageLookId } from '@ggraphic/editor/utils/imageLook';
 import type { GradientFill } from '@ggraphic/editor/utils/gradientFill';
 import type { TextAlign } from '@ggraphic/editor/utils/textAlign';
+import type { FontRole } from '@ggraphic/core';
 import type { HocuspocusProvider } from '@hocuspocus/provider';
 import type * as Y from 'yjs';
 
@@ -152,6 +153,8 @@ export interface ToolbarStateReport {
   /** Ausrichten, Verteilen und Position — siehe `utils/selectionCapabilities.ts`. */
   canAlign: boolean;
   canDistribute: boolean;
+  /** Bietet der Host die Schriftrolle für freie Texte an (`setAdditionalTextFontRole`)? */
+  canChangeFontRole: boolean;
   /** Die Elemente der Seite für die Ebenen-Liste, vorderstes zuerst (`utils/layerLabels.ts`). */
   layers: readonly LayerEntry[];
   /** Alle ausgewählten Ids, auch bei Mehrfachauswahl. */
@@ -347,6 +350,7 @@ export interface GenericCanvasRef {
   handleColorSelect?: (color: string) => void;
   handleOpacityChange?: (id: string, opacity: number, type: string) => void;
   handleFontSizeChange?: (id: string, size: number) => void;
+  handleFontRoleChange?: (id: string, role: FontRole) => void;
   handleShadowChange?: (id: string, patch: ShadowPatch, type: string) => void;
   handleOutlineChange?: (id: string, patch: { stroke?: string; strokeWidth?: number }) => void;
   handleBlurChange?: (id: string, blur: number) => void;
@@ -1138,6 +1142,7 @@ function GenericCanvasWithRef<
       handleColorSelect: (color) => bridgeRef.current?.handleColorSelect(color),
       handleOpacityChange: (id, op, type) => bridgeRef.current?.handleOpacityChange(id, op, type),
       handleFontSizeChange: elementHandlers.handleFontSizeChange,
+      handleFontRoleChange: elementHandlers.handleFontRoleChange,
       handleShadowChange: (id, patch, type) =>
         bridgeRef.current?.handleShadowChange(id, patch, type),
       handleOutlineChange: (id, patch) => bridgeRef.current?.handleOutlineChange(id, patch),
@@ -1157,6 +1162,7 @@ function GenericCanvasWithRef<
       undo,
       redo,
       elementHandlers.handleFontSizeChange,
+      elementHandlers.handleFontRoleChange,
       setSelectedElement,
       beginMarquee,
       pendingImages,
