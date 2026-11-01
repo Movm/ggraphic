@@ -14,9 +14,7 @@ describe('useToolbarHandlers: handleFontRoleChange', () => {
       useToolbarHandlers({
         canvasRefsRef,
         currentPageIndex: 0,
-        toolbarState: null,
-        canUndoPageOp: false,
-        canRedoPageOp: false,
+        pageOpStamps: () => ({ undo: null, redo: null }),
         undoPageOp: () => {},
         redoPageOp: () => {},
         discardReplaceDeck: () => {},
