@@ -40,6 +40,9 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
+      # Reports only: a change to the public surface shows up as a warning and in the step summary.
+      - name: API report (informational)
+        run: pnpm api:check
       - run: pnpm lint
       - run: pnpm format:check
       - run: pnpm test
