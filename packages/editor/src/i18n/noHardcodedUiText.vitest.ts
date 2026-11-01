@@ -30,6 +30,8 @@ const ALLOWED_FILES = [
   // Built-in format data in the original language; `formatLabel()` / `formatDescription()` read
   // the catalogue.
   /^formats\/index\.ts$/,
+  // The catalogue built in up to 0.1.0-alpha.1, kept verbatim for hosts to register.
+  /^formats\/legacyCatalog\.ts$/,
 ];
 /** Stored or shared ids and file names that happen to be German words: frozen, never shown. */
 const FROZEN = new Set([

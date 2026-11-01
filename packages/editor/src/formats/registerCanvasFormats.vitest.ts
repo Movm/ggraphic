@@ -15,7 +15,7 @@ const story: CanvasFormat = {
   id: 'story-9-16',
   label: 'Story',
   description: '1080 × 1920 · 9:16',
-  group: 'sharepic',
+  group: 'post',
   category: 'digital',
   width: 1080,
   height: 1920,

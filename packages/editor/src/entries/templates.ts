@@ -35,7 +35,6 @@ export {
   isSlideFormat,
   isUnsupportedFormatId,
   mmToPx,
-  pinnedFormatId,
   type PrintCanvasFormat,
   printGeometry,
   type PrintRect,

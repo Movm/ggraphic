@@ -235,7 +235,7 @@ A template is a `FullCanvasConfig` (canvas size, sidebar tabs and sections, elem
 ```
 
 - The editor uses TanStack Query internally, so a `QueryClientProvider` must wrap it.
-- `formatId` is one of the editor's formats (`@ggraphic/editor/formats/index`), e.g. `post-portrait`, `post-portrait-tall`, `profile-square`, `slide-16-9`.
+- `formatId` is a built-in format (`post-portrait`, `profile-square`, `slide-16-9`) or one the host added with `registerCanvasFormatGroups` / `registerCanvasFormats` from `@ggraphic/editor/templates`. A format joins the `slides` group to become a slide deck; print formats go in `print`.
 - Pass `initialPages` to open a stored multi-page document; `onPagesChange` to hear every change; `exportApiRef` for programmatic export and `getPages()`; `readOnly` to lock it; `chromeLeft` / `chromeCenter` / `chromeRight` for your own top bar items.
 - `collaborative` connects a page to a Yjs room (`@ggraphic/collab`); without it the host saves the document itself.
 - Konva needs `window`: in Next.js and other SSR frameworks render the shell client-only (`'use client'` plus a dynamic import with `ssr: false`).
