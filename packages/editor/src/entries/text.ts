@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-/** Text measuring, wrapping and fitting, font loading and font aliases. */
+/** Text measuring, wrapping and fitting, stripping inline marks, font loading and font aliases. */
 export {
   measureTextWidthWithFont,
   runFont,
@@ -13,3 +13,4 @@ export {
 export { ensureFontsReady } from '../utils/ensureFontsReady.js';
 export { aliasFontFamily, resolveFontFamily, FONT_FAMILY_ALIASES } from '../utils/fontAliases.js';
 export { wrapWords, balancedWrap, largestSizeWordsFit } from '../composer/textFit.js';
+export { stripMarks } from '../composer/marks.js';

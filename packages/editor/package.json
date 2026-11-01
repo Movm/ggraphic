@@ -33,6 +33,7 @@
     "./kinds": "./src/entries/kinds.ts",
     "./store": "./src/entries/store.ts",
     "./services": "./src/entries/services.ts",
+    "./host": "./src/entries/host.ts",
     "./brand": "./src/entries/brand.ts",
     "./templates": "./src/entries/templates.ts",
     "./elements": "./src/entries/elements.ts",
@@ -599,6 +600,11 @@
         "types": "./dist/entries/services.d.ts",
         "import": "./dist/entries/services.js",
         "default": "./dist/entries/services.js"
+      },
+      "./host": {
+        "types": "./dist/entries/host.d.ts",
+        "import": "./dist/entries/host.js",
+        "default": "./dist/entries/host.js"
       },
       "./brand": {
         "types": "./dist/entries/brand.d.ts",
