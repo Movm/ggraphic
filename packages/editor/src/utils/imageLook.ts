@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { BW_LOOK, duotoneLook, withoutDuotone } from './imageFilters.js';
 
-import type { Bindings } from '@ggraphic/core';
+import type { Bindings, BrandPack } from '@ggraphic/core';
 
 /** The four looks of the top-bar control; each is derived from stored fields, none is stored. */
 export const IMAGE_LOOK_IDS = ['none', 'bw', 'duotone', 'darken'] as const;
@@ -30,7 +30,9 @@ export function currentImageLook(img: LookFields): ImageLookId {
 export function imageLookPatch(
   look: ImageLookId,
   img: LookFields,
-  brandScheme: string | null | undefined
+  brandScheme: string | null | undefined,
+  /** The pack of the document the image sits in; the active brand by default. */
+  brand?: BrandPack
 ): Record<string, unknown> {
   switch (look) {
     case 'none':
@@ -43,7 +45,7 @@ export function imageLookPatch(
     case 'bw':
       return { ...BW_LOOK, ...withoutDuotone(img) };
     case 'duotone':
-      return duotoneLook(img, brandScheme) ?? {};
+      return duotoneLook(img, brandScheme, brand) ?? {};
     case 'darken':
       // Exclusive: a look ends B/W (and its contrast) and the duotone.
       return {

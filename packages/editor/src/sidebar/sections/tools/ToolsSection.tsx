@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { activeBrand, headlineFontStack } from '@ggraphic/editor/brand/brandRegistry';
+import { headlineFontStack } from '@ggraphic/editor/brand/brandRegistry';
+import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
 import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { cn } from '@ggraphic/editor/utils/cn';
 import { Suspense, useEffect, useId, useState } from 'react';
@@ -102,7 +103,8 @@ interface ToolCard {
 // The letters carry the gradient themselves, so the tile shows what the tool makes.
 export function GradientTextIcon({ size = 24, className }: { size?: number; className?: string }) {
   const gradientId = useId();
-  const { secondary, accent } = activeBrand().colors;
+  const brand = useDocumentBrand();
+  const { secondary, accent } = brand.colors;
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden="true">
       <defs>
@@ -117,7 +119,7 @@ export function GradientTextIcon({ size = 24, className }: { size?: number; clas
         textAnchor="middle"
         fontSize="17"
         fontWeight="900"
-        fontFamily={headlineFontStack()}
+        fontFamily={headlineFontStack(brand)}
         fill={`url(#${gradientId})`}
       >
         Aa

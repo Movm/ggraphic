@@ -13,6 +13,7 @@ import {
   withBinding,
   withoutBinding,
   type Bindings,
+  type BrandPack,
   type SchemeId,
 } from '@ggraphic/core';
 import Konva from 'konva';
@@ -293,9 +294,10 @@ type Bound = { bind?: Bindings };
  */
 export function duotoneLook(
   img: Bound | undefined,
-  brandScheme: string | null | undefined
+  brandScheme: string | null | undefined,
+  /** The pack of the document the image sits in; the active brand by default. */
+  brand: BrandPack = activeBrand()
 ): (ImageAdjustments & { bind: Bindings }) | null {
-  const brand = activeBrand();
   const id: SchemeId = (SCHEME_IDS as readonly string[]).includes(brandScheme ?? '')
     ? (brandScheme as SchemeId)
     : 'primary';

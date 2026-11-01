@@ -27,6 +27,7 @@ import { layoutRichTextBlock } from '@ggraphic/schema';
 import { useRef, useEffect, useCallback, useMemo, useState, Fragment } from 'react';
 import { Group, Rect, Text as KonvaText, Transformer } from 'react-konva';
 
+import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
 import { LOCKED_TRANSFORMER, useIsItemLocked } from '@ggraphic/editor/components/canvasItemLock';
 import {
   overlayBoxForNode,
@@ -172,8 +173,9 @@ export function CanvasRichText({
       ),
     [lines, lineWidths, align, padding, innerBoxWidth]
   );
-  // Ohne Markerstil der Vorlage bekommt ein `++`-Lauf den Standardkasten.
-  const marker = templateMarker ?? defaultTextMarker();
+  // Ohne Markerstil der Vorlage bekommt ein `++`-Lauf den Standardkasten des Dokuments.
+  const brand = useDocumentBrand();
+  const marker = templateMarker ?? defaultTextMarker(brand);
   const boxes = useMemo(
     () =>
       markerBoxes(lines, measure, marker, {
@@ -181,8 +183,9 @@ export function CanvasRichText({
         lineHeightPx,
         top: padding,
         originX,
+        brand,
       }),
-    [marker, lines, measure, fontSize, lineHeightPx, padding, originX]
+    [marker, lines, measure, fontSize, lineHeightPx, padding, originX, brand]
   );
 
   useEffect(() => {
@@ -477,7 +480,7 @@ export function CanvasRichText({
                       {
                         fill:
                           run.accentColor ??
-                          (run.markerColor ? markerInkOn(run.markerColor) : marker.color),
+                          (run.markerColor ? markerInkOn(run.markerColor, brand) : marker.color),
                         lineJoin: 'round' as const,
                       }
                     : {

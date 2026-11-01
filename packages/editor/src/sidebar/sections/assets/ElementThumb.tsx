@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
 import { plainAssetImageUrls, registeredAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
 import { cn } from '@ggraphic/editor/utils/cn';
 import { Icon } from '@iconify/react';
@@ -32,9 +33,10 @@ export function thumbNeedsDarkTile(thumb: ElementThumbSpec): boolean {
 }
 
 function ShapeThumb({ shapeType }: { shapeType: ShapeType }) {
+  const brand = useDocumentBrand();
   const shape = PALETTE_BY_TYPE.get(shapeType);
   if (!shape) return null;
-  const variant = getShapeVariant(shapeType);
+  const variant = getShapeVariant(shapeType, brand);
   return (
     // The palette glyphs are drawn at 32px; scaling is a transform, not a re-layout.
     <span

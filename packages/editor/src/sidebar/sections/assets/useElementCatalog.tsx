@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
+import { type BrandPack } from '@ggraphic/core';
+import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
 import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
 import { useAllIconsCatalog, useIconCatalog } from '@ggraphic/editor/hooks/useIconCatalog';
 import { useNoStudioAssets } from '@ggraphic/editor/hostServices';
@@ -68,18 +70,31 @@ export function assetItem(asset: UniversalAsset): ElementItem {
   };
 }
 
-export const SHAPE_ITEMS: ElementItem[] = ALL_PALETTE_SHAPES.map((shape) => {
-  const def = getShapeDef(shape.id);
-  return {
-    key: `shape:${shape.id}`,
-    get label() {
-      return def.name;
-    },
-    keywords: def.tags,
-    action: { kind: 'shape', shapeType: shape.id, color: getShapeVariant(shape.id).color },
-    thumb: { t: 'shape', shapeType: shape.id },
-  };
-});
+/** The shape tiles in a pack's colours, built once per pack. */
+const shapeItemsByPack = new WeakMap<BrandPack, ElementItem[]>();
+export function shapeItems(brand: BrandPack): ElementItem[] {
+  let items = shapeItemsByPack.get(brand);
+  if (!items) {
+    items = ALL_PALETTE_SHAPES.map((shape) => {
+      const def = getShapeDef(shape.id);
+      return {
+        key: `shape:${shape.id}`,
+        get label() {
+          return def.name;
+        },
+        keywords: def.tags,
+        action: {
+          kind: 'shape',
+          shapeType: shape.id,
+          color: getShapeVariant(shape.id, brand).color,
+        },
+        thumb: { t: 'shape', shapeType: shape.id },
+      };
+    });
+    shapeItemsByPack.set(brand, items);
+  }
+  return items;
+}
 
 export const CHART_ITEMS: ElementItem[] = CHART_TYPE_DEFS.map((def) => ({
   key: `chart:${def.id}`,
@@ -254,6 +269,7 @@ export function useElementCatalog(
   emojiTone = 0
 ): CatalogCategory[] {
   const t = useMessages();
+  const shapes = shapeItems(useDocumentBrand());
   const { userLocale = 'de-DE', fetchStockImages } = useCanvasEditorServices();
   const panelHost = registeredAssetCatalog().elementPanel;
   const locale: AssetAudience = userLocale;
@@ -394,8 +410,8 @@ export function useElementCatalog(
       push({
         id: 'formen',
         label: t.sidebar.elements.categories.shapes,
-        count: SHAPE_ITEMS.length,
-        items: SHAPE_ITEMS,
+        count: shapes.length,
+        items: shapes,
         isLoading: false,
         searchable: true,
       });
@@ -461,6 +477,7 @@ export function useElementCatalog(
     photos.isLoading,
     props.onSetBackgroundImage,
     props.onAddShape,
+    shapes,
     props.onAddChart,
     props.onAddFrame,
     hasIllustrations,

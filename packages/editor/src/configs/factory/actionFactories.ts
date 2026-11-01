@@ -7,6 +7,8 @@ import { messages } from '@ggraphic/editor/i18n/messages';
  * These eliminate the need to duplicate action logic across configs.
  */
 
+import { type BrandPack } from '@ggraphic/core';
+
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 import { createAssetInstance, createStickerInstance } from '@ggraphic/editor/utils/canvasAssets';
 import {
@@ -226,13 +228,17 @@ export function createShapeActions<TState extends { shapeInstances: ShapeInstanc
   debouncedSaveToHistory: HistorySaver<TState>,
   canvasWidth: number,
   canvasHeight: number,
-  defaultColor: string = brandColors()[0]?.value ?? '#000000',
-  insertScale = 1
+  /** The fill of a shape that names none; absent: the first colour of `brand`. */
+  defaultColor?: string,
+  insertScale = 1,
+  /** The pack of the page's document; the active brand by default. */
+  brand: BrandPack = activeBrand()
 ) {
+  const baseColor = defaultColor ?? brandColors(brand)[0]?.value ?? '#000000';
   return {
     addShape: (type: ShapeType, color?: string, options?: ElementPlacement) => {
       const center = options?.center ?? { x: canvasWidth / 2, y: canvasHeight / 2 };
-      const created = createShape(type, center.x, center.y, defaultColor, color);
+      const created = createShape(type, center.x, center.y, baseColor, color, brand);
       const newShape =
         insertScale === 1
           ? created
@@ -276,11 +282,13 @@ export function createIllustrationActions<
   saveToHistory: HistorySaver<TState>,
   debouncedSaveToHistory: HistorySaver<TState>,
   canvasWidth: number,
-  canvasHeight: number
+  canvasHeight: number,
+  /** The pack of the page's document; the active brand by default. */
+  brand: BrandPack = activeBrand()
 ) {
   return {
     addIllustration: (id: string, options?: ElementPlacement) => {
-      void createIllustration(id, canvasWidth, canvasHeight).then((created) => {
+      void createIllustration(id, canvasWidth, canvasHeight, brand).then((created) => {
         if (!created) return;
         // The primitive centres the artwork on x/y.
         const newIllustration = { ...created, ...options?.center };
@@ -347,8 +355,8 @@ export function createIllustrationActions<
 
 // Read per call, not at import: the brand packs are registered after the modules load.
 // Every text is born bound to the brand font its family stands for, so a brand change takes it along.
-function additionalTextDefaults() {
-  const { fonts } = activeBrand();
+function additionalTextDefaults(brand: BrandPack) {
+  const { fonts } = brand;
   return {
     header: {
       fontSize: 48,
@@ -380,9 +388,10 @@ function additionalTextDefaults() {
 function textPreset(
   type: keyof ReturnType<typeof additionalTextDefaults>,
   canvasWidth: number,
-  s: number
+  s: number,
+  brand: BrandPack
 ) {
-  const preset = additionalTextDefaults()[type];
+  const preset = additionalTextDefaults(brand)[type];
   const width = preset.width * s;
   return {
     ...preset,
@@ -400,7 +409,9 @@ export function createAdditionalTextActions<TState extends { additionalTexts: Ad
   canvasWidth: number,
   canvasHeight: number,
   fontColor: string = '#ffffff',
-  insertScale = 1
+  insertScale = 1,
+  /** The pack of the page's document; the active brand by default. */
+  brand: BrandPack = activeBrand()
 ) {
   return {
     addHeader: () => {
@@ -409,7 +420,7 @@ export function createAdditionalTextActions<TState extends { additionalTexts: Ad
         text: messages().sidebar.text.defaultHeader,
         type: 'header',
         y: canvasHeight / 3,
-        ...textPreset('header', canvasWidth, insertScale),
+        ...textPreset('header', canvasWidth, insertScale, brand),
         fill: fontColor,
       };
       setState((prev) => ({
@@ -424,7 +435,7 @@ export function createAdditionalTextActions<TState extends { additionalTexts: Ad
         text: messages().sidebar.text.defaultSubheader,
         type: 'subheader',
         y: canvasHeight * 0.4,
-        ...textPreset('subheader', canvasWidth, insertScale),
+        ...textPreset('subheader', canvasWidth, insertScale, brand),
         fill: fontColor,
       };
       setState((prev) => ({
@@ -439,7 +450,7 @@ export function createAdditionalTextActions<TState extends { additionalTexts: Ad
         text: messages().sidebar.text.defaultBody,
         type: 'body',
         y: canvasHeight / 2,
-        ...textPreset('body', canvasWidth, insertScale),
+        ...textPreset('body', canvasWidth, insertScale, brand),
         fill: fontColor,
       };
       setState((prev) => ({
@@ -458,7 +469,7 @@ export function createAdditionalTextActions<TState extends { additionalTexts: Ad
         text: content,
         type: 'body',
         y: canvasHeight / 2,
-        ...textPreset('body', canvasWidth, insertScale),
+        ...textPreset('body', canvasWidth, insertScale, brand),
         fill: fontColor,
       };
       setState((prev) => ({
@@ -492,11 +503,13 @@ export function createPillBadgeActions<TState extends { pillBadgeInstances: Pill
   getState: () => TState,
   setState: StateSetter<TState>,
   saveToHistory: HistorySaver<TState>,
-  debouncedSaveToHistory: HistorySaver<TState>
+  debouncedSaveToHistory: HistorySaver<TState>,
+  /** The pack of the page's document; the active brand by default. */
+  brand: BrandPack = activeBrand()
 ) {
   return {
     addPillBadge: (preset?: string) => {
-      const newPillBadge = createPillBadgeInstance(preset);
+      const newPillBadge = createPillBadgeInstance(preset, {}, brand);
       setState((prev) => ({
         ...prev,
         pillBadgeInstances: [...prev.pillBadgeInstances, newPillBadge],
@@ -532,11 +545,13 @@ export function createCircleBadgeActions<
   getState: () => TState,
   setState: StateSetter<TState>,
   saveToHistory: HistorySaver<TState>,
-  debouncedSaveToHistory: HistorySaver<TState>
+  debouncedSaveToHistory: HistorySaver<TState>,
+  /** The pack of the page's document; the active brand by default. */
+  brand: BrandPack = activeBrand()
 ) {
   return {
     addCircleBadge: (preset?: string) => {
-      const newCircleBadge = createCircleBadgeInstance(preset);
+      const newCircleBadge = createCircleBadgeInstance(preset, {}, brand);
       setState((prev) => ({
         ...prev,
         circleBadgeInstances: [...prev.circleBadgeInstances, newCircleBadge],
@@ -573,13 +588,20 @@ export function createChartActions<TState extends { chartInstances: ChartInstanc
   debouncedSaveToHistory: HistorySaver<TState>,
   canvasWidth: number,
   canvasHeight: number,
-  /** Series colours of a new chart; the page's country palette. */
+  /** Series colours of a new chart; absent: the `chart` of `brand`. */
   chartColors?: readonly string[],
-  insertScale = 1
+  insertScale = 1,
+  /** The pack of the page's document; the active brand by default. */
+  brand: BrandPack = activeBrand()
 ) {
   return {
     addChart: (chartType: ChartType, options?: ElementPlacement) => {
-      const created = createChartInstance(chartType, canvasWidth, canvasHeight, chartColors);
+      const created = createChartInstance(
+        chartType,
+        canvasWidth,
+        canvasHeight,
+        chartColors ?? brand.chart
+      );
       // Charts store their top-left corner; `scale` grows them from there.
       const center =
         options?.center ?? (insertScale !== 1 ? { x: canvasWidth / 2, y: canvasHeight / 2 } : null);
@@ -624,12 +646,14 @@ export function createFrameActions<TState extends { frameInstances: FrameInstanc
   saveToHistory: HistorySaver<TState>,
   debouncedSaveToHistory: HistorySaver<TState>,
   canvasWidth: number,
-  canvasHeight: number
+  canvasHeight: number,
+  /** The pack of the page's document; the active brand by default. */
+  brand: BrandPack = activeBrand()
 ) {
   return {
     addFrame: (clipType: FrameClipType, options?: ElementPlacement) => {
       const center = options?.center ?? { x: canvasWidth / 2, y: canvasHeight / 2 };
-      const newFrame = createFrameInstance(clipType, center.x, center.y);
+      const newFrame = createFrameInstance(clipType, center.x, center.y, brand);
       setState((prev) => ({
         ...prev,
         frameInstances: [...prev.frameInstances, newFrame],
@@ -787,7 +811,13 @@ export function createElementActions<TState extends BaseCanvasState>(
   fontColor?: string,
   chartColors?: readonly string[],
   /** Startgröße neuer Elemente (`insertScaleFor`); 1 = Sharepic-Werte. */
-  insertScale = 1
+  insertScale = 1,
+  /**
+   * The pack of the page's document (`FullCanvasConfig.brand`): what new elements take their
+   * colours and fonts from. Last, and a `BrandPack`, so it cannot be bound to `chartColors`
+   * (a string list) or `insertScale` (a number). The active brand by default.
+   */
+  brand: BrandPack = activeBrand()
 ) {
   return {
     ...createAssetActions(
@@ -819,7 +849,8 @@ export function createElementActions<TState extends BaseCanvasState>(
       canvasWidth,
       canvasHeight,
       undefined,
-      insertScale
+      insertScale,
+      brand
     ),
     ...createIllustrationActions(
       getState,
@@ -827,7 +858,8 @@ export function createElementActions<TState extends BaseCanvasState>(
       saveToHistory,
       debouncedSaveToHistory,
       canvasWidth,
-      canvasHeight
+      canvasHeight,
+      brand
     ),
     ...createAdditionalTextActions(
       getState,
@@ -837,10 +869,11 @@ export function createElementActions<TState extends BaseCanvasState>(
       canvasWidth,
       canvasHeight,
       fontColor,
-      insertScale
+      insertScale,
+      brand
     ),
-    ...createPillBadgeActions(getState, setState, saveToHistory, debouncedSaveToHistory),
-    ...createCircleBadgeActions(getState, setState, saveToHistory, debouncedSaveToHistory),
+    ...createPillBadgeActions(getState, setState, saveToHistory, debouncedSaveToHistory, brand),
+    ...createCircleBadgeActions(getState, setState, saveToHistory, debouncedSaveToHistory, brand),
     ...createChartActions(
       getState,
       setState,
@@ -849,7 +882,8 @@ export function createElementActions<TState extends BaseCanvasState>(
       canvasWidth,
       canvasHeight,
       chartColors,
-      insertScale
+      insertScale,
+      brand
     ),
     ...createFrameActions(
       getState,
@@ -857,7 +891,8 @@ export function createElementActions<TState extends BaseCanvasState>(
       saveToHistory,
       debouncedSaveToHistory,
       canvasWidth,
-      canvasHeight
+      canvasHeight,
+      brand
     ),
     ...createUserImageActions(
       getState,

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { type BindingRef, type FontRole } from '@ggraphic/core';
 import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
+import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
 import {
   useCanvasTextFormatting,
   useIsCanvasTextEditing,
@@ -181,6 +182,7 @@ export function ContextControls({
   hideObjectActions = false,
   cropLayout = 'inline',
 }: ContextControlsProps) {
+  const brand = useDocumentBrand();
   const t = useMessages();
   const tiles = useBarTiles();
   const unsplashHome = useUnsplashHome();
@@ -267,7 +269,7 @@ export function ContextControls({
         isExpanded={isColorPickerExpanded}
         onExpandChange={setIsColorPickerExpanded}
         variant={colorConfig.variant}
-        {...(isText ? { colors: fontColors() } : {})}
+        {...(isText ? { colors: fontColors(brand) } : {})}
       />
     );
   }
@@ -284,7 +286,7 @@ export function ContextControls({
     const known = new Set(own.map((c) => c.value.toLowerCase()));
     const palette = paletteOnly
       ? own
-      : [...own, ...brandColors().filter((c) => !known.has(c.value.toLowerCase()))];
+      : [...own, ...brandColors(brand).filter((c) => !known.has(c.value.toLowerCase()))];
     const pickColor =
       isPhoto && !colorReplacesImage && onImageChange
         ? (color: string, ref?: BindingRef) => {

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 import { currentFontRole, fontRoleOptions, type Bindings, type FontRole } from '@ggraphic/core';
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
 import { TileCaption, useBarTiles } from '@ggraphic/editor/components/TopBar/barTiles';
 import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { primaryFontFamily } from '@ggraphic/editor/utils/fontMarkSupport';
@@ -26,7 +26,7 @@ interface FloatingFontRoleControlProps {
 export function FloatingFontRoleControl({ text, onChange }: FloatingFontRoleControlProps) {
   const t = useMessages();
   const tiles = useBarTiles();
-  const options = fontRoleOptions(activeBrand());
+  const options = fontRoleOptions(useDocumentBrand());
   const role = currentFontRole(text, options);
   const family = options.find((o) => o.role === role)?.family ?? primaryFontFamily(text.fontFamily);
 

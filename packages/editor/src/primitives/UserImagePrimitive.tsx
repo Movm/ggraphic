@@ -11,6 +11,7 @@ import { useState, useEffect, useRef, useMemo, memo, type ReactNode } from 'reac
 import { Image, Group, Rect, Transformer, Circle, Line } from 'react-konva';
 
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
 import { LOCKED_TRANSFORMER, useIsItemLocked } from '@ggraphic/editor/components/canvasItemLock';
 import { useAnnounce } from '@ggraphic/editor/hooks/useAnnounce';
 import { useBoxSnap, type SnapProps } from '@ggraphic/editor/hooks/useBoxSnap';
@@ -111,6 +112,7 @@ function UserImagePrimitiveInner({
   ...snapProps
 }: UserImagePrimitiveProps) {
   const locked = useIsItemLocked();
+  const documentBrand = useDocumentBrand();
   const snap = useBoxSnap({ id: userImage.id, ...snapProps }, userImageBox(userImage));
   const announce = useAnnounce();
   const panStartRef = useRef<Box | null>(null);
@@ -331,7 +333,12 @@ function UserImagePrimitiveInner({
 
   if (!image || noPhoto) {
     // The slot keeps its frame: same position, scale, rotation and mask as a photo would get.
-    const look = photoPlaceholderLook(brandScheme, userImage.width, userImage.height);
+    const look = photoPlaceholderLook(
+      brandScheme,
+      userImage.width,
+      userImage.height,
+      documentBrand
+    );
     return (
       <>
         <Group ref={groupRef} {...groupProps} draggable={draggable && !locked}>

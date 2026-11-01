@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { cn } from '@ggraphic/editor/utils/cn';
+import { type BrandPack } from '@ggraphic/core';
+
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
 import { brandColors } from '@ggraphic/editor/utils/colorOptions';
 import { handDrawnPath, type HandShapeType } from '@ggraphic/editor/utils/handDrawn';
 import { defaultMarkerFill } from '@ggraphic/editor/utils/markerColors';
@@ -587,22 +590,28 @@ const MARKER_SHAPES: ReadonlySet<ShapeType> = new Set(['hand-marker', 'hand-mark
  * same chunk-init reason as getShapesByCategory below, and because the host
  * registers its brand at startup.
  */
-let shapeVariantByType: Map<ShapeType, ShapeVariant> | null = null;
-export function getShapeVariant(type: ShapeType): ShapeVariant {
-  if (!shapeVariantByType) {
-    const { colors } = activeBrand();
+const shapeVariantsByPack = new WeakMap<BrandPack, Map<ShapeType, ShapeVariant>>();
+function shapeVariants(brand: BrandPack): Map<ShapeType, ShapeVariant> {
+  let byType = shapeVariantsByPack.get(brand);
+  if (!byType) {
+    const { colors } = brand;
     const variants = SHAPE_VARIANT_ROLES.map((role) => ({
       color: colors[role],
       darkPreviewClass: role === 'primary' ? PRIMARY_PREVIEW_CLASS : '',
     }));
-    shapeVariantByType = new Map(
+    byType = new Map(
       ALL_PALETTE_SHAPES.map((shape, index) => [shape.id, variants[index % variants.length]])
     );
+    shapeVariantsByPack.set(brand, byType);
   }
-  if (MARKER_SHAPES.has(type)) return { color: defaultMarkerFill(), darkPreviewClass: '' };
+  return byType;
+}
+/** The colour variant of a shape tile in `brand` (the document's pack); the active brand by default. */
+export function getShapeVariant(type: ShapeType, brand: BrandPack = activeBrand()): ShapeVariant {
+  if (MARKER_SHAPES.has(type)) return { color: defaultMarkerFill(brand), darkPreviewClass: '' };
   return (
-    shapeVariantByType.get(type) ?? {
-      color: brandColors()[0]?.value ?? EUCALYPTUS,
+    shapeVariants(brand).get(type) ?? {
+      color: brandColors(brand)[0]?.value ?? EUCALYPTUS,
       darkPreviewClass: '',
     }
   );
@@ -644,6 +653,7 @@ export function FormenSection({
   searchQuery = '',
 }: FormenSectionProps) {
   const t = useMessages();
+  const brand = useDocumentBrand();
   const q = searchQuery.trim().toLowerCase();
 
   // Collapsed (mobile) view: flat first-N grid, no subheaders.
@@ -665,7 +675,7 @@ export function FormenSection({
   }, [q]);
 
   const renderShapeButton = (shape: ShapeDefinition) => {
-    const variant = getShapeVariant(shape.id);
+    const variant = getShapeVariant(shape.id, brand);
     return (
       <button
         key={shape.id}

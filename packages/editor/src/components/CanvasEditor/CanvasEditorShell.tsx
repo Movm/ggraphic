@@ -27,6 +27,7 @@
  * - useToolbarHandlers     — bundled toolbar actions for the active page
  */
 
+import { DocumentBrandContext } from '@ggraphic/editor/brand/documentBrand';
 import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
 import { messages, useMessages } from '@ggraphic/editor/i18n/messages';
 import { pagePersistedStateKeys } from '@ggraphic/editor/collab/pageElementStateKeys';
@@ -639,16 +640,19 @@ function CanvasEditorInner({
       if (deck.some((_, i) => !refs[i]?.current)) {
         throw new Error(messages().errors.exportSlidesPartial);
       }
+      // One brand per deck: its pages share a country.
+      const brand = deck[0] ? loadedConfigs.get(deck[0].configId)?.brand : undefined;
       return exportPptxDeck({
         pages: deck.map((page) => page.state),
         format: getCanvasFormatOrDefault(formatId),
         rasterizeElement: async (slideIndex, elementId) =>
           (await refs[slideIndex]?.current?.rasterizeElement(elementId)) ?? null,
         ...(documentTitle ? { title: documentTitle } : {}),
+        ...(brand ? { brand } : {}),
         ...(onProgress ? { onProgress } : {}),
       });
     },
-    [pagesDoc, canvasRefsRef, formatId, documentTitle]
+    [pagesDoc, canvasRefsRef, formatId, documentTitle, loadedConfigs]
   );
   useImperativeHandle(
     exportApiRef,
@@ -1231,7 +1235,7 @@ function CanvasEditorInner({
       ...shareProps,
       ...(specEdit && { specEdit }),
       background: source.config.background?.(source.state, source.actions) ?? null,
-      chartColors: source.config.chartColors,
+      chartColors: source.config.chartColors ?? source.config.brand?.chart,
     });
 
     return (
@@ -1633,190 +1637,192 @@ function CanvasEditorInner({
   );
 
   return (
-    <AnnouncerContext.Provider value={announcer}>
-      <CanvasAnnouncer message={liveMessage} />
-      <ShellProvider
-        pages={pages}
-        currentPageIndex={currentPageIndex}
-        formatId={formatId}
-        canvasRefsRef={canvasRefsRef}
-        configTabIds={configTabIds}
-      >
-        <UserUploadsProvider>
-          {/* Die Text-Bearbeitung sitzt an der Wurzel des Editors, nicht je Seite:
+    <DocumentBrandContext.Provider value={activeConfig?.brand ?? null}>
+      <AnnouncerContext.Provider value={announcer}>
+        <CanvasAnnouncer message={liveMessage} />
+        <ShellProvider
+          pages={pages}
+          currentPageIndex={currentPageIndex}
+          formatId={formatId}
+          canvasRefsRef={canvasRefsRef}
+          configTabIds={configTabIds}
+        >
+          <UserUploadsProvider>
+            {/* Die Text-Bearbeitung sitzt an der Wurzel des Editors, nicht je Seite:
             nur so liegt sie über der Kontextleiste, die ihre Formatierungsknöpfe
             zeigt. Der Provider in `CanvasStage` merkt, dass er einen über sich
             hat, und reicht durch. Ob die Leiste die Knöpfe wirklich übernimmt,
             meldet sie selbst an — wo wir sie nicht rendern, zeigt das Overlay
             wieder seine eigene Karte. */}
-          <CanvasTextEditorProvider>
-            {!isPreview && !readOnly && !hasPendingSuggestion && (
-              // Der erste Tab-Halt des Editors: unsichtbar, bis er den Fokus hat.
-              // Solange ein KI-Vorschlag offen ist, ist die Seitenleiste inert —
-              // der Sprung ginge ins Leere, also gibt es ihn dann nicht.
-              <button
-                type="button"
-                onClick={handleSkipToLayers}
-                className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-[400] focus:flex focus:min-h-8 focus:items-center focus:rounded-md focus:border focus:border-[var(--editor-border-strong)] focus:bg-[var(--editor-surface)] focus:px-3 focus:text-[length:var(--font-size-small)] focus:font-semibold focus:text-[var(--editor-text)] focus:shadow-md outline-none kbd:focus-visible:outline-2 kbd:focus-visible:outline-solid kbd:focus-visible:outline-offset-2 kbd:focus-visible:outline-[var(--editor-accent)]"
-              >
-                {t.shell.skipToLayers}
-              </button>
-            )}
-            <CanvasEditorLayout
-              // Vorschau vor dem Sync: zeigen, aber nichts anbieten, was schreibt —
-              // die Seiten hängen noch an keinem Y.Map, jede Änderung ginge verloren.
-              // Ein Viewer ebenso: der Server verwirft seine Schreibzugriffe.
-              sidebar={
-                isPreview || readOnly ? null : hasPendingSuggestion ? (
-                  <div inert className="contents">
-                    {panel}
-                  </div>
-                ) : (
-                  panel
-                )
-              }
-              tabBar={isPreview || readOnly ? null : tabBar}
-              actions={null}
-              toolbar={toolbarElement}
-              contextBar={isPreview || readOnly ? null : contextBarElement}
-              // Die Desktop-Leiste ist auf dem Handy per CSS ausgeblendet; gar
-              // nicht erst mitgeben, sonst hinge der Streifen zweimal im Baum.
-              bottomBar={isMobileWeb || isPreview ? null : bottomBar}
-              // Auf dem Handy scrollt ein Finger auf dem Sharepic nicht (wie in
-              // Canva) — die Seiten wechselt dort dieser Streifen.
-              mobilePageStrip={isMobileWeb && !isMobileSheetOpen && !isPreview ? pageStrip : null}
-              mobileZoomControl={
-                isMobileWeb && !isMobileSheetOpen && !isPreview ? (
-                  <CanvasZoomIndicator zoom={zoom} onZoomChange={setZoom} />
-                ) : null
-              }
-              mobileSheetOpen={isMobileSheetOpen}
-              onCanvasBackdropPointerDown={isMobileSheetOpen ? handlePanelClose : undefined}
-            >
-              {schemaRefusal && (
-                // Read-only for good, not loading: say why nothing can be edited.
-                <p
-                  role="alert"
-                  className="mx-auto mt-sm max-w-prose rounded-md border border-[var(--editor-border-strong)] bg-[var(--editor-surface)] px-3 py-2 text-[length:var(--font-size-small)] text-[var(--editor-text)]"
+            <CanvasTextEditorProvider>
+              {!isPreview && !readOnly && !hasPendingSuggestion && (
+                // Der erste Tab-Halt des Editors: unsichtbar, bis er den Fokus hat.
+                // Solange ein KI-Vorschlag offen ist, ist die Seitenleiste inert —
+                // der Sprung ginge ins Leere, also gibt es ihn dann nicht.
+                <button
+                  type="button"
+                  onClick={handleSkipToLayers}
+                  className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-[400] focus:flex focus:min-h-8 focus:items-center focus:rounded-md focus:border focus:border-[var(--editor-border-strong)] focus:bg-[var(--editor-surface)] focus:px-3 focus:text-[length:var(--font-size-small)] focus:font-semibold focus:text-[var(--editor-text)] focus:shadow-md outline-none kbd:focus-visible:outline-2 kbd:focus-visible:outline-solid kbd:focus-visible:outline-offset-2 kbd:focus-visible:outline-[var(--editor-accent)]"
                 >
-                  {t.shell.schemaRefusal[schemaRefusal.status]}
-                </p>
+                  {t.shell.skipToLayers}
+                </button>
               )}
-              <div
-                inert={isPreview || hasPendingSuggestion}
-                aria-busy={isPreview && !schemaRefusal}
-                ref={pagesContainerCallbackRef}
-                onPointerDown={handleWorkAreaPointerDown}
-                className={cn(
-                  'heterogeneous-multipage__pages-container has-bottom-bar flex flex-col items-center gap-md p-sm pb-lg w-full max-canvas-mobile:gap-sm max-canvas-mobile:p-xs',
-                  hasPendingSuggestion && 'opacity-60 transition-opacity duration-200'
-                )}
+              <CanvasEditorLayout
+                // Vorschau vor dem Sync: zeigen, aber nichts anbieten, was schreibt —
+                // die Seiten hängen noch an keinem Y.Map, jede Änderung ginge verloren.
+                // Ein Viewer ebenso: der Server verwirft seine Schreibzugriffe.
+                sidebar={
+                  isPreview || readOnly ? null : hasPendingSuggestion ? (
+                    <div inert className="contents">
+                      {panel}
+                    </div>
+                  ) : (
+                    panel
+                  )
+                }
+                tabBar={isPreview || readOnly ? null : tabBar}
+                actions={null}
+                toolbar={toolbarElement}
+                contextBar={isPreview || readOnly ? null : contextBarElement}
+                // Die Desktop-Leiste ist auf dem Handy per CSS ausgeblendet; gar
+                // nicht erst mitgeben, sonst hinge der Streifen zweimal im Baum.
+                bottomBar={isMobileWeb || isPreview ? null : bottomBar}
+                // Auf dem Handy scrollt ein Finger auf dem Sharepic nicht (wie in
+                // Canva) — die Seiten wechselt dort dieser Streifen.
+                mobilePageStrip={isMobileWeb && !isMobileSheetOpen && !isPreview ? pageStrip : null}
+                mobileZoomControl={
+                  isMobileWeb && !isMobileSheetOpen && !isPreview ? (
+                    <CanvasZoomIndicator zoom={zoom} onZoomChange={setZoom} />
+                  ) : null
+                }
+                mobileSheetOpen={isMobileSheetOpen}
+                onCanvasBackdropPointerDown={isMobileSheetOpen ? handlePanelClose : undefined}
               >
-                {pages.map((page, index) => {
-                  const config = loadedConfigs.get(page.configId);
-                  if (!config) return null;
+                {schemaRefusal && (
+                  // Read-only for good, not loading: say why nothing can be edited.
+                  <p
+                    role="alert"
+                    className="mx-auto mt-sm max-w-prose rounded-md border border-[var(--editor-border-strong)] bg-[var(--editor-surface)] px-3 py-2 text-[length:var(--font-size-small)] text-[var(--editor-text)]"
+                  >
+                    {t.shell.schemaRefusal[schemaRefusal.status]}
+                  </p>
+                )}
+                <div
+                  inert={isPreview || hasPendingSuggestion}
+                  aria-busy={isPreview && !schemaRefusal}
+                  ref={pagesContainerCallbackRef}
+                  onPointerDown={handleWorkAreaPointerDown}
+                  className={cn(
+                    'heterogeneous-multipage__pages-container has-bottom-bar flex flex-col items-center gap-md p-sm pb-lg w-full max-canvas-mobile:gap-sm max-canvas-mobile:p-xs',
+                    hasPendingSuggestion && 'opacity-60 transition-opacity duration-200'
+                  )}
+                >
+                  {pages.map((page, index) => {
+                    const config = loadedConfigs.get(page.configId);
+                    if (!config) return null;
 
-                  const isActive = index === currentPageIndex;
-                  const canDelete = pageCount > 1;
+                    const isActive = index === currentPageIndex;
+                    const canDelete = pageCount > 1;
 
-                  return (
-                    <PageWrapper
-                      // A replaced state (convert, undo) mounts the page afresh on the new state.
-                      key={`${page.id}:${page.stateEpoch ?? 0}`}
-                      page={page}
-                      index={index}
-                      pageCount={pageCount}
-                      config={config}
+                    return (
+                      <PageWrapper
+                        // A replaced state (convert, undo) mounts the page afresh on the new state.
+                        key={`${page.id}:${page.stateEpoch ?? 0}`}
+                        page={page}
+                        index={index}
+                        pageCount={pageCount}
+                        config={config}
+                        formatId={formatId}
+                        isActive={isActive}
+                        canDelete={canDelete}
+                        canvasRef={canvasRefsRef.current[index]}
+                        pageRef={pageDomRefsRef.current[index]}
+                        onSelect={handlePageSelect}
+                        onDelete={removePage}
+                        onMovePage={movePage}
+                        onDuplicatePage={duplicatePage}
+                        onChangeTemplate={PagePicker ? handleOpenTemplateChange : undefined}
+                        onDropVorlage={takesPageDrops && !readOnly ? handleDropVorlage : undefined}
+                        onExport={handleExport}
+                        onCancel={onCancel}
+                        callbacks={getCallbacksForPage(page.id, page.configId)}
+                        multiPageExport={index === 0 ? multiPageExportProps : undefined}
+                        onStateChange={handlePageStateChange}
+                        onObservedState={
+                          printService && needsImpressum(printFormat)
+                            ? handleObservedState
+                            : undefined
+                        }
+                        onToolbarStateChange={
+                          isActive && !isPreview ? handleToolbarStateChange : undefined
+                        }
+                        onAutoSaveShareToken={onAutoSaveShareToken}
+                        autoSave={false}
+                        pageBinding={pageBindingAt(index, page.id, isActive)}
+                        readOnly={readOnly}
+                      />
+                    );
+                  })}
+
+                  {noPageRenderable && <CanvasPageSkeleton aspectRatio={pageAspectRatio} />}
+
+                  {templateChangePage && PagePicker && (
+                    <PagePicker
+                      isOpen
+                      mode="replace"
+                      anchorRef={pageDomRefsRef.current[templateChangePage.index]}
+                      onSelectTemplate={handleSelectTemplateChange}
+                      onClose={handleCloseTemplateChange}
+                      currentTemplateId={templateChangePage.configId}
+                      currentState={templateChangePage.state}
+                      activeTemplateId={currentTemplateId}
+                      pages={pages}
                       formatId={formatId}
-                      isActive={isActive}
-                      canDelete={canDelete}
-                      canvasRef={canvasRefsRef.current[index]}
-                      pageRef={pageDomRefsRef.current[index]}
-                      onSelect={handlePageSelect}
-                      onDelete={removePage}
-                      onMovePage={movePage}
-                      onDuplicatePage={duplicatePage}
-                      onChangeTemplate={PagePicker ? handleOpenTemplateChange : undefined}
-                      onDropVorlage={takesPageDrops && !readOnly ? handleDropVorlage : undefined}
-                      onExport={handleExport}
-                      onCancel={onCancel}
-                      callbacks={getCallbacksForPage(page.id, page.configId)}
-                      multiPageExport={index === 0 ? multiPageExportProps : undefined}
-                      onStateChange={handlePageStateChange}
-                      onObservedState={
-                        printService && needsImpressum(printFormat)
-                          ? handleObservedState
-                          : undefined
+                    />
+                  )}
+
+                  {isSlideFormat(format) && !isPreview && pages[currentPageIndex] && (
+                    <SlideNotesPanel
+                      value={
+                        typeof pages[currentPageIndex].state.notes === 'string'
+                          ? pages[currentPageIndex].state.notes
+                          : ''
                       }
-                      onToolbarStateChange={
-                        isActive && !isPreview ? handleToolbarStateChange : undefined
-                      }
-                      onAutoSaveShareToken={onAutoSaveShareToken}
-                      autoSave={false}
-                      pageBinding={pageBindingAt(index, page.id, isActive)}
+                      onChange={(notes) => updatePageState(pages[currentPageIndex].id, { notes })}
                       readOnly={readOnly}
                     />
-                  );
-                })}
-
-                {noPageRenderable && <CanvasPageSkeleton aspectRatio={pageAspectRatio} />}
-
-                {templateChangePage && PagePicker && (
-                  <PagePicker
-                    isOpen
-                    mode="replace"
-                    anchorRef={pageDomRefsRef.current[templateChangePage.index]}
-                    onSelectTemplate={handleSelectTemplateChange}
-                    onClose={handleCloseTemplateChange}
-                    currentTemplateId={templateChangePage.configId}
-                    currentState={templateChangePage.state}
-                    activeTemplateId={currentTemplateId}
-                    pages={pages}
-                    formatId={formatId}
-                  />
-                )}
-
-                {isSlideFormat(format) && !isPreview && pages[currentPageIndex] && (
-                  <SlideNotesPanel
-                    value={
-                      typeof pages[currentPageIndex].state.notes === 'string'
-                        ? pages[currentPageIndex].state.notes
-                        : ''
-                    }
-                    onChange={(notes) => updatePageState(pages[currentPageIndex].id, { notes })}
-                    readOnly={readOnly}
-                  />
-                )}
-                {/* Seite hinzufügen unter der Fläche — für den Fall, in dem die
+                  )}
+                  {/* Seite hinzufügen unter der Fläche — für den Fall, in dem die
                   untere Leiste den Knopf nicht trägt: unterhalb von 900 px, wo
                   `CanvasEditorLayout` sie per `max-canvas-mobile:hidden`
                   ausblendet. Die Breakpoint-Bedingung steht hier gespiegelt, weil
                   nur CSS sie kennt. Er liegt im skalierten Seiten-Container und
                   skaliert sich mobil zurück, sonst schrumpfte er mit Fit und Zoom
                   unter 44 pt. */}
-                {canAddPages && !showPageStrip && (
-                  <div className="w-full max-w-[28rem] pt-sm max-canvas-mobile:pt-xs max-canvas-mobile:px-xs max-canvas-mobile:origin-top max-canvas-mobile:[scale:calc(1/var(--canvas-total-scale,1))] canvas-mobile:hidden">
-                    <AddPageButton
-                      onAddPage={handleAddPageLikeCurrent}
-                      renderPicker={renderAddPicker}
-                      disabled={!canAddMore || (!renderAddPicker && !currentTemplateId)}
-                    />
-                  </div>
-                )}
-              </div>
-            </CanvasEditorLayout>
-            {selectionPill}
-            {!isPreview &&
-              !readOnly &&
-              (isMobileWeb ? (
-                <CanvasActionSheet handleRef={contextMenuRef} />
-              ) : (
-                <CanvasContextMenu handleRef={contextMenuRef} closeKey={zoom} />
-              ))}
-          </CanvasTextEditorProvider>
-        </UserUploadsProvider>
-      </ShellProvider>
-    </AnnouncerContext.Provider>
+                  {canAddPages && !showPageStrip && (
+                    <div className="w-full max-w-[28rem] pt-sm max-canvas-mobile:pt-xs max-canvas-mobile:px-xs max-canvas-mobile:origin-top max-canvas-mobile:[scale:calc(1/var(--canvas-total-scale,1))] canvas-mobile:hidden">
+                      <AddPageButton
+                        onAddPage={handleAddPageLikeCurrent}
+                        renderPicker={renderAddPicker}
+                        disabled={!canAddMore || (!renderAddPicker && !currentTemplateId)}
+                      />
+                    </div>
+                  )}
+                </div>
+              </CanvasEditorLayout>
+              {selectionPill}
+              {!isPreview &&
+                !readOnly &&
+                (isMobileWeb ? (
+                  <CanvasActionSheet handleRef={contextMenuRef} />
+                ) : (
+                  <CanvasContextMenu handleRef={contextMenuRef} closeKey={zoom} />
+                ))}
+            </CanvasTextEditorProvider>
+          </UserUploadsProvider>
+        </ShellProvider>
+      </AnnouncerContext.Provider>
+    </DocumentBrandContext.Provider>
   );
 }
 

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MPL-2.0
+import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
 import { CustomColorSwatch } from '@ggraphic/editor/components/CustomColorSwatch';
 import { useMessages, type Messages } from '@ggraphic/editor/i18n/messages';
 import { Switch } from '@ggraphic/editor/ui/switch';
 import {
   addChartRow,
   addChartSeries,
-  chartColors,
   chartLegendPosition,
   chartSeries,
   isRoundChartType,
@@ -63,9 +63,11 @@ export function ChartSettingsSection({
   selectedChart,
   onUpdateChart,
   onRemoveChart,
-  palette = chartColors(),
+  palette: ownPalette,
 }: ChartSettingsSectionProps) {
   const t = useMessages();
+  const documentChart = useDocumentBrand().chart;
+  const palette = ownPalette ?? documentChart;
   const chart = selectedChart;
   if (!chart) return null;
   const update = (partial: Partial<ChartInstance>) => onUpdateChart(chart.id, partial);
