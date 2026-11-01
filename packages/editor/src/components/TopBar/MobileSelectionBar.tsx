@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: MPL-2.0
-import {
-  TOOLBAR_ITEMS_WITH_INPUTS,
-  useRovingToolbar,
-} from '@ggraphic/editor/hooks/useRovingToolbar';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { useCanvasStoreSelector } from '@ggraphic/editor/stores/CanvasStoreProvider';
-import { cn } from '@ggraphic/editor/utils/cn';
 import React from 'react';
 import { PiCheckBold, PiSlidersHorizontal } from 'react-icons/pi';
 
-import { HIDDEN_SCROLLBAR } from '@ggraphic/editor/sidebar/sidebarStyles';
-
+import { BarTilesProvider } from '@ggraphic/editor/components/TopBar/barTiles';
 import {
   ContextControls,
   showsCropModeBar,
   type ContextControlsProps,
 } from '@ggraphic/editor/components/TopBar/ContextControls';
+import {
+  TOOLBAR_ITEMS_WITH_INPUTS,
+  useRovingToolbar,
+} from '@ggraphic/editor/hooks/useRovingToolbar';
+import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { HIDDEN_SCROLLBAR } from '@ggraphic/editor/sidebar/sidebarStyles';
+import { useCanvasStoreSelector } from '@ggraphic/editor/stores/CanvasStoreProvider';
+import { cn } from '@ggraphic/editor/utils/cn';
 
 interface MobileSelectionBarProps extends ContextControlsProps {
   /** Öffnet den Bereich der Auswahl als Sheet; fehlt, wenn es keinen gibt. */
@@ -27,7 +27,8 @@ interface MobileSelectionBarProps extends ContextControlsProps {
  * MobileSelectionBar — mobil die untere Leiste, solange etwas ausgewählt ist
  * und kein Sheet offen ist. Sie steht im Slot der Bereichs-Leiste (gleiche
  * Höhe, `order-2`), die Fläche behält also ihre Größe. Formatierung liegt hier,
- * Duplizieren und Löschen in der Pille am Objekt (`MobileSelectionPill`).
+ * Duplizieren, Löschen und das Menü „…“ in der Pille am Objekt (`SelectionPill`).
+ * Die Werkzeuge stehen als beschriftete Kacheln (`barTiles`).
  */
 export function MobileSelectionBar({ onOpenArea, onDone, ...controls }: MobileSelectionBarProps) {
   const t = useMessages();
@@ -59,7 +60,11 @@ export function MobileSelectionBar({ onOpenArea, onDone, ...controls }: MobileSe
             HIDDEN_SCROLLBAR
           )}
         >
-          {!hasPendingAiSuggestion && <ContextControls {...controls} hideObjectActions />}
+          {!hasPendingAiSuggestion && (
+            <BarTilesProvider>
+              <ContextControls {...controls} hideObjectActions />
+            </BarTilesProvider>
+          )}
         </div>
       )}
       {onOpenArea && !cropping && (
