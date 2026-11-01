@@ -49,7 +49,7 @@ test('styles the editor layout and sidebar', async ({ page }) => {
   expect(await style(page, '.canvas-editor-layout', 'background-color')).toBe(
     await tokenColour(page, '--editor-bg')
   );
-  expect(await style(page, '.canvas-sidebar', 'position')).toBe('fixed');
+  expect(await style(page, '.canvas-sidebar', 'position')).toBe('absolute');
   expect(await style(page, '.canvas-sidebar', 'z-index')).toBe('120');
   // The scoped reset: a sidebar tab button has no UA border or background.
   const tab = page.getByRole('button', { name: /^Text/ });

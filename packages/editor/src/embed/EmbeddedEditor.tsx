@@ -5,7 +5,7 @@
  */
 import { type BrandPack } from '@ggraphic/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useMemo, useRef, useState } from 'react';
+import { type CSSProperties, useMemo, useRef, useState } from 'react';
 
 import { registerBrandPacks } from '../brand/brandRegistry.js';
 import { type CanvasEditorServices, CanvasEditorProvider } from '../CanvasEditorProvider.js';
@@ -59,6 +59,9 @@ function syncRegisters(brand: BrandPack, locale: MessageLocale, templates: Templ
 
 const NOOP = () => {};
 
+/** The editor fills the host's box (`--editor-height`), not the viewport. */
+const FILL_HOST_BOX = { display: 'contents', '--editor-height': '100%' } as CSSProperties;
+
 export default function EmbeddedEditor({
   brand,
   templates,
@@ -103,17 +106,19 @@ export default function EmbeddedEditor({
   return (
     <QueryClientProvider client={client}>
       <CanvasEditorProvider services={merged}>
-        <CanvasEditorShell
-          initialConfigId={opened.pages[0]?.configId ?? BLANK_PAGE_ID}
-          initialPages={opened.pages}
-          initialProps={{}}
-          formatId={opened.formatId}
-          {...(title !== undefined && { documentTitle: title })}
-          onExport={NOOP}
-          onCancel={NOOP}
-          galleryAutoSave={false}
-          {...(onChange !== undefined && { onPagesChange: report })}
-        />
+        <div style={FILL_HOST_BOX}>
+          <CanvasEditorShell
+            initialConfigId={opened.pages[0]?.configId ?? BLANK_PAGE_ID}
+            initialPages={opened.pages}
+            initialProps={{}}
+            formatId={opened.formatId}
+            {...(title !== undefined && { documentTitle: title })}
+            onExport={NOOP}
+            onCancel={NOOP}
+            galleryAutoSave={false}
+            {...(onChange !== undefined && { onPagesChange: report })}
+          />
+        </div>
       </CanvasEditorProvider>
     </QueryClientProvider>
   );

@@ -135,7 +135,6 @@
   --font-size-md: 1rem;
 
   --canvas-panel-width: 0px;
-  --canvas-host-inset-left: 0px;
   --image-studio-tab-bar-width: 76px;
 }
 
@@ -353,17 +352,6 @@
   }
 }
 
-.canvas-editor-layout:has(.heterogeneous-multipage__pages-container) {
-  height: auto;
-  min-height: 100dvh;
-}
-.canvas-editor-layout__main:has(.heterogeneous-multipage__pages-container) {
-  overflow: visible;
-}
-.canvas-editor-layout__canvas:has(.heterogeneous-multipage__pages-container) {
-  flex: none;
-  overflow: visible;
-}
 .canvas-editor-layout__canvas {
   touch-action: pan-x pan-y;
 }
