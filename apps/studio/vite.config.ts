@@ -57,6 +57,9 @@ export default defineConfig(({ mode }) => ({
             },
           },
           chunkSizeWarningLimit: 6000,
+          // Unminified, so `e2e/compiledCss.spec.ts` can compare the served rules with the
+          // editor's compiled.css; the minifier merges and rewrites `@layer` blocks.
+          cssMinify: false,
         }
       : {
           outDir: 'dist',

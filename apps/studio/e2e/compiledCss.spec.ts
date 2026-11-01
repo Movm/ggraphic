@@ -4,6 +4,9 @@
  * styled, the styles stay inside `[data-ggraphic]` (portals included), host rules win without
  * `!important`, and dark mode follows the tokens. No goldens: computed styles only.
  */
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+
 import { expect, test, type Page } from '@playwright/test';
 
 const style = (page: Page, selector: string, prop: string) =>
@@ -28,19 +31,33 @@ test.beforeEach(async ({ page }) => {
   await expect(page.locator('.konvajs-content canvas').first()).toBeVisible({ timeout: 45_000 });
 });
 
+const COMPILED_CSS = path.resolve(
+  import.meta.dirname,
+  '../../../packages/editor/dist/styles/compiled.css'
+);
+
 test('the page has no stylesheet but the compiled one (and font faces)', async ({ page }) => {
-  // Vite's dev server injects every imported stylesheet as <style data-vite-dev-id="<path>">.
-  const sheets = await page.evaluate(() =>
-    [...document.querySelectorAll<HTMLStyleElement>('style[data-vite-dev-id]')].map((el) => ({
-      id: el.dataset['viteDevId'] ?? '',
-      rules: [...(el.sheet?.cssRules ?? [])]
-        .filter((rule) => !(rule instanceof CSSFontFaceRule))
-        .map((rule) => rule.cssText.slice(0, 80)),
-    }))
+  // The gate build (`--mode gate`, CSS unminified) names stylesheets after chunks, not sources, and
+  // would merge foreign CSS into the same file: so compare the rules, not the file names.
+  const { served, expected } = await page.evaluate(
+    (source) => {
+      const rules = (list: CSSRuleList) =>
+        [...list].filter((rule) => !(rule instanceof CSSFontFaceRule)).map((rule) => rule.cssText);
+      const reference = new CSSStyleSheet();
+      reference.replaceSync(source);
+      return {
+        served: [...document.styleSheets].filter((s) => s.href).flatMap((s) => rules(s.cssRules)),
+        expected: rules(reference.cssRules),
+      };
+    },
+    readFileSync(COMPILED_CSS, 'utf8')
   );
-  const compiled = sheets.filter((s) => s.id.endsWith('/dist/styles/compiled.css'));
-  expect(compiled).toHaveLength(1);
-  expect(sheets.filter((s) => !compiled.includes(s)).flatMap((s) => s.rules)).toEqual([]);
+  expect(expected.length).toBeGreaterThan(0);
+  // A readable diff first; the full rules are hundreds of KB.
+  expect(served.map((rule) => rule.slice(0, 80))).toEqual(
+    expected.map((rule) => rule.slice(0, 80))
+  );
+  expect(served).toEqual(expected);
 });
 
 test('styles the editor layout and sidebar', async ({ page }) => {
