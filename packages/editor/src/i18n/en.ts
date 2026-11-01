@@ -183,6 +183,7 @@ export const en: Messages = {
     partlySent: (sent) =>
       `${sent === 1 ? 'Page 1 was' : `Pages 1 to ${sent} were`} sent individually, page ${sent + 1} was not.`,
     allSent: 'The pages were sent individually.',
+    pageFile: 'page',
   },
 
   formats: {

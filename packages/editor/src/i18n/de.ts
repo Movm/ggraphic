@@ -192,6 +192,8 @@ export const de = {
     partlySent: (sent: number) =>
       `${sent === 1 ? 'Seite 1 wurde' : `Die Seiten 1 bis ${sent} wurden`} einzeln gesendet, Seite ${sent + 1} nicht.`,
     allSent: 'Die Seiten wurden einzeln gesendet.',
+    /** The word in an exported page's file name: `<name>-seite-2.png`. */
+    pageFile: 'seite',
   },
 
   formats: {

@@ -896,7 +896,7 @@ function CanvasEditorInner({
         const ext = format === 'jpeg' ? 'jpg' : format;
         await fileDelivery.downloadDataUrl(
           dataUrl,
-          `${filenamePrefix}-page-${currentPageIndex + 1}.${ext}`
+          `${filenamePrefix}-${messages().export.pageFile}-${currentPageIndex + 1}.${ext}`
         );
         onDownload?.(dataUrl);
       }
@@ -1083,9 +1083,13 @@ function CanvasEditorInner({
 
     if (route === 'native-host') {
       dataUrls.forEach((dataUrl, i) =>
-        fileDelivery.shareDataUrlViaNativeHost(dataUrl, `${filenamePrefix}-page-${i + 1}.png`, {
-          title: shareTitle,
-        })
+        fileDelivery.shareDataUrlViaNativeHost(
+          dataUrl,
+          `${filenamePrefix}-${messages().export.pageFile}-${i + 1}.png`,
+          {
+            title: shareTitle,
+          }
+        )
       );
       return;
     }
@@ -1093,7 +1097,9 @@ function CanvasEditorInner({
     const files = await Promise.all(
       dataUrls.map(async (dataUrl, i) => {
         const blob = await (await fetch(dataUrl)).blob();
-        return new File([blob], `${filenamePrefix}-page-${i + 1}.png`, { type: 'image/png' });
+        return new File([blob], `${filenamePrefix}-${messages().export.pageFile}-${i + 1}.png`, {
+          type: 'image/png',
+        });
       })
     );
 
@@ -1124,7 +1130,7 @@ function CanvasEditorInner({
           if (dataUrl) {
             await fileDelivery.downloadDataUrl(
               dataUrl,
-              `${filenamePrefix}-slider-page-${currentPageIndex + 1}.png`
+              `${filenamePrefix}-slider-${messages().export.pageFile}-${currentPageIndex + 1}.png`
             );
           }
         }
