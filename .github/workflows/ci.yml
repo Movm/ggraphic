@@ -81,7 +81,7 @@ jobs:
           fi
           files=$(git diff --name-only "$(git merge-base "$BASE" HEAD)" HEAD)
           printf '%s\n' "$files"
-          relevant=$(printf '%s\n' "$files" | grep -vE '(\.md$|^\.changeset/|^docs/|^LICENSE|^NOTICE|^THIRD_PARTY_NOTICES|^\.github/workflows/(dco|release)\.yml$|^\.github/ISSUE_TEMPLATE/|^\.github/dependabot\.yml$)' || true)
+          relevant=$(printf '%s\n' "$files" | grep -vE '(\.md$|^\.changeset/|^docs/|^LICENSE|^NOTICE|^THIRD_PARTY_NOTICES|^examples/|^\.github/workflows/(dco|release|examples)\.yml$|^\.github/ISSUE_TEMPLATE/|^\.github/dependabot\.yml$)' || true)
           if [ -n "$relevant" ]; then echo "render=true"; else echo "render=false"; fi >> "$GITHUB_OUTPUT"
 
   # Stage 2 of the template render gate: every template drawn in Chromium with the bundled fonts,
