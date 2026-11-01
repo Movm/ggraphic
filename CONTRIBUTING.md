@@ -77,6 +77,27 @@ Pick the packages and the bump type (patch/minor/major), and write a short summa
 
 The repository is in changesets pre mode (`alpha`), so versions come out as `0.x.y-alpha.n`. On `main`, the release workflow opens a "Version Packages" pull request. Merging it publishes to npm with provenance.
 
+## Release checklist (maintainers)
+
+The release workflow publishes through npm trusted publishing (OIDC). Two steps are still done by hand.
+
+**A new package needs its first publish from a maintainer's terminal.** A trusted publisher can only be configured for a package that exists on npm. Until it is, the release run fails on that package. So, once per new package:
+
+1. Publish it by hand (npm asks for the 2FA code).
+2. Make the release workflow its trusted publisher:
+
+   ```bash
+   npx -y npm@11 trust github @ggraphic/<pkg> --file release.yml --repo Movm/ggraphic --allow-publish -y
+   ```
+
+**After every release, point `latest` at the new version.** In pre mode, `changeset publish` publishes with the `alpha` tag only, and `latest` stays where it was. The `0.0.0` placeholders are deprecated, so without this step a plain `npm install @ggraphic/<pkg>` gets an outdated or deprecated version. For each package the run published:
+
+```bash
+npm dist-tag add @ggraphic/<pkg>@<version> latest
+```
+
+The release run's log and the GitHub releases list the published packages and versions.
+
 ## Tests and checks
 
 Run the checks for what you changed, one package at a time:
