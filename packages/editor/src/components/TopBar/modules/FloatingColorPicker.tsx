@@ -2,6 +2,7 @@
 import { type BindingRef } from '@ggraphic/core';
 
 import { CustomColorSwatch } from '@ggraphic/editor/components/CustomColorSwatch';
+import { TILE, useBarTiles } from '@ggraphic/editor/components/TopBar/barTiles';
 import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { cn } from '@ggraphic/editor/utils/cn';
 import { brandColors, type ColorOption } from '@ggraphic/editor/utils/colorOptions';
@@ -37,6 +38,7 @@ export function FloatingColorPicker({
   allowCustom = true,
 }: FloatingColorPickerProps) {
   const t = useMessages();
+  const tiles = useBarTiles();
   const colorOptions = colors ?? brandColors();
   const [internalExpanded, setInternalExpanded] = React.useState(false);
   const isExpanded = externalExpanded !== undefined ? externalExpanded : internalExpanded;
@@ -83,6 +85,41 @@ export function FloatingColorPicker({
       document.removeEventListener('keydown', handleEscape);
     };
   }, [isExpanded]);
+
+  if (!isExpanded && tiles) {
+    // Als Kachel: Farbe oben, „Farbe“ darunter; der sichtbare Name ist der Name.
+    return (
+      <div className="flex items-center shrink-0" ref={containerRef}>
+        <button
+          className={TILE}
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsExpanded(true);
+          }}
+          title={variant === 'font' ? t.topBar.changeTextColor : t.topBar.changeColor}
+          type="button"
+          aria-expanded={false}
+        >
+          {variant === 'font' ? (
+            <span className="flex flex-col items-center" aria-hidden>
+              <span className="text-[15px] font-bold leading-none">A</span>
+              <span
+                className="mt-[2px] h-[3px] w-[15px] rounded-[1px]"
+                style={{ backgroundColor: currentColor }}
+              />
+            </span>
+          ) : (
+            <span
+              className="size-[18px] rounded-md border border-[var(--editor-border-strong)]"
+              style={{ backgroundColor: currentColor }}
+              aria-hidden
+            />
+          )}
+          {t.topBar.tiles.color}
+        </button>
+      </div>
+    );
+  }
 
   if (!isExpanded) {
     return (

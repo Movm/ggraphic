@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import { currentFontRole, fontRoleOptions, type Bindings, type FontRole } from '@ggraphic/core';
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { TileCaption, useBarTiles } from '@ggraphic/editor/components/TopBar/barTiles';
 import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { primaryFontFamily } from '@ggraphic/editor/utils/fontMarkSupport';
 import { requestFontFace } from '@ggraphic/editor/utils/textUtils';
@@ -24,11 +25,12 @@ interface FloatingFontRoleControlProps {
  */
 export function FloatingFontRoleControl({ text, onChange }: FloatingFontRoleControlProps) {
   const t = useMessages();
+  const tiles = useBarTiles();
   const options = fontRoleOptions(activeBrand());
   const role = currentFontRole(text, options);
   const family = options.find((o) => o.role === role)?.family ?? primaryFontFamily(text.fontFamily);
 
-  return (
+  const select = (
     <select
       aria-label={t.topBar.fontRole}
       title={t.topBar.fontRole}
@@ -54,5 +56,13 @@ export function FloatingFontRoleControl({ text, onChange }: FloatingFontRoleCont
         </option>
       ))}
     </select>
+  );
+  if (!tiles) return select;
+  // On the mobile tile bar the select sits above a caption; its accessible name stays on the select.
+  return (
+    <div className="flex flex-col items-center justify-end gap-1 h-14 pb-2 shrink-0">
+      {select}
+      <TileCaption decorative>{t.topBar.tiles.fontRole}</TileCaption>
+    </div>
   );
 }

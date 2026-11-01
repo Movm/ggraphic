@@ -1,12 +1,4 @@
 // SPDX-License-Identifier: MPL-2.0
-import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
-import { plainImageUrls } from '@ggraphic/editor/hostServices';
-import { useMessages } from '@ggraphic/editor/i18n/messages';
-import { useUserUploads } from '@ggraphic/editor/sidebar/UserUploadsProvider';
-import { Popover, PopoverContent, PopoverTrigger } from '@ggraphic/editor/ui/popover';
-import { cn } from '@ggraphic/editor/utils/cn';
-import { fetchShareImageFile } from '@ggraphic/editor/utils/mediaPlacement';
-import { downscaleImageForUpload } from '@ggraphic/editor/utils/userImageUtils';
 import { Slider } from 'radix-ui';
 import { useEffect, useId, useRef, useState, type ChangeEvent } from 'react';
 import {
@@ -16,6 +8,16 @@ import {
   HiOutlinePhoto,
   HiOutlineTrash,
 } from 'react-icons/hi2';
+
+import { useCanvasEditorServices } from '@ggraphic/editor/CanvasEditorProvider';
+import { TILE, TileCaption, useBarTiles } from '@ggraphic/editor/components/TopBar/barTiles';
+import { plainImageUrls } from '@ggraphic/editor/hostServices';
+import { useMessages } from '@ggraphic/editor/i18n/messages';
+import { useUserUploads } from '@ggraphic/editor/sidebar/UserUploadsProvider';
+import { Popover, PopoverContent, PopoverTrigger } from '@ggraphic/editor/ui/popover';
+import { cn } from '@ggraphic/editor/utils/cn';
+import { fetchShareImageFile } from '@ggraphic/editor/utils/mediaPlacement';
+import { downscaleImageForUpload } from '@ggraphic/editor/utils/userImageUtils';
 
 import { MOBILE_INPUT_TEXT } from '../../../sidebar/sidebarStyles.js';
 
@@ -48,6 +50,7 @@ export function BackgroundImagePicker({
   openRequest?: number;
 }) {
   const t = useMessages();
+  const tiles = useBarTiles();
   const { imageUrls = plainImageUrls } = useCanvasEditorServices();
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -114,7 +117,8 @@ export function BackgroundImagePicker({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className={TEXT_BTN}
+          className={tiles ? TILE : TEXT_BTN}
+          // The name starts with the visible word (WCAG 2.5.3).
           aria-label={t.topBar.backgroundImageNamed(label)}
         >
           <HiOutlinePhoto size={17} aria-hidden="true" />
@@ -219,6 +223,7 @@ export function BackgroundZoomControl({
   onScaleChange: (scale: number) => void;
 }) {
   const t = useMessages();
+  const tiles = useBarTiles();
   const titleId = useId();
 
   return (
@@ -226,11 +231,12 @@ export function BackgroundZoomControl({
       <PopoverTrigger asChild>
         <button
           type="button"
-          className={ICON_BTN}
+          className={tiles ? TILE : ICON_BTN}
           title={t.topBar.zoom}
           aria-label={t.topBar.background.zoom}
         >
           <HiMagnifyingGlassPlus size={17} aria-hidden="true" />
+          <TileCaption>{t.topBar.zoom}</TileCaption>
         </button>
       </PopoverTrigger>
       <PopoverContent
@@ -268,10 +274,11 @@ export function BackgroundZoomControl({
 
 export function BackgroundRestoreImageButton({ onRestore }: { onRestore: () => void }) {
   const t = useMessages();
+  const tiles = useBarTiles();
   return (
     <button
       type="button"
-      className={TEXT_BTN}
+      className={tiles ? TILE : TEXT_BTN}
       onClick={onRestore}
       title={t.topBar.background.restoreHint}
     >
@@ -282,15 +289,17 @@ export function BackgroundRestoreImageButton({ onRestore }: { onRestore: () => v
 
 export function BackgroundRemoveImageButton({ onRemove }: { onRemove: () => void }) {
   const t = useMessages();
+  const tiles = useBarTiles();
   return (
     <button
       type="button"
-      className={ICON_BTN}
+      className={tiles ? TILE : ICON_BTN}
       onClick={onRemove}
       title={t.topBar.background.remove}
       aria-label={t.topBar.background.remove}
     >
       <HiOutlineTrash size={17} aria-hidden="true" />
+      <TileCaption>{t.topBar.tiles.remove}</TileCaption>
     </button>
   );
 }
@@ -314,6 +323,7 @@ export function SetAsBackgroundButton({
   onRemoveElement: () => void;
 }) {
   const t = useMessages();
+  const tiles = useBarTiles();
   const [pending, setPending] = useState(false);
   const [failed, setFailed] = useState(false);
   const { imageUrls = plainImageUrls } = useCanvasEditorServices();
@@ -335,7 +345,7 @@ export function SetAsBackgroundButton({
   return (
     <button
       type="button"
-      className={TEXT_BTN}
+      className={tiles ? TILE : TEXT_BTN}
       onClick={() => void handleClick()}
       disabled={pending}
       aria-busy={pending}

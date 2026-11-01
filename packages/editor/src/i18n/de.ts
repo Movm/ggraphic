@@ -76,6 +76,7 @@ export const de = {
     background: 'Hintergrund',
     backgroundImage: 'Hintergrundbild …',
     layer: 'Ebene',
+    back: 'Zurück',
   },
 
   announce: {
@@ -523,6 +524,9 @@ export const de = {
       uploadingN: (n: number) => `Lädt ${n} Bilder hoch…`,
       loadingN: (n: number) => `Lädt ${n}…`,
     },
+    effects: {
+      title: 'Effekte',
+    },
     layers: {
       title: 'Ebenen',
       tabAriaLabel: 'Ebenen: alle Elemente der Seite',
@@ -894,7 +898,7 @@ export const de = {
     aiDiscard: (noun: string) => `${noun} verwerfen`,
     aiDiscardUndo: (noun: string) => `${noun} verwerfen (Rückgängig)`,
     aiKeep: (noun: string) => `${noun} behalten`,
-    backgroundImageNamed: (label: string) => `Hintergrundbild: ${label}`,
+    backgroundImageNamed: (label: string) => `${label} (Hintergrundbild)`,
     editSelection: 'Auswahl bearbeiten',
     nothingDeletable: 'Nichts davon lässt sich löschen',
     clearSelection: 'Auswahl aufheben (Esc)',
@@ -930,9 +934,6 @@ export const de = {
     undoWin: 'Rückgängig (Strg+Z)',
     redoMac: 'Wiederholen (⌘⇧Z)',
     redoWin: 'Wiederholen (Strg+Y)',
-    editShadow: 'Schatten bearbeiten',
-    editOutline: 'Textkontur bearbeiten',
-    editGradient: 'Farbverlauf bearbeiten',
     background: {
       uploadFailed: 'Bild konnte nicht hochgeladen werden. Bitte versuche es erneut.',
       imageLoadError: 'Fehler beim Laden des Bildes',
@@ -986,6 +987,15 @@ export const de = {
     outline: 'Kontur',
     outlineWidth: 'Konturstärke',
     position: 'Position',
+    effects: 'Effekte',
+    tiles: {
+      color: 'Farbe',
+      fontSize: 'Größe',
+      fontRole: 'Schrift',
+      textFormat: 'Format',
+      textAlign: 'Ausrichtung',
+      remove: 'Entfernen',
+    },
     shadow: 'Schatten',
     strength: 'Stärke',
     shape: 'Form',
