@@ -1,7 +1,7 @@
 name: Examples
 
 # Proof that an outside host can embed ggraphic: the examples install the packages from tarballs
-# packed in this run, with npm, outside the pnpm workspace.
+# packed in this run, outside the pnpm workspace.
 on:
   push:
     branches: [main]
@@ -17,12 +17,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  vite-react:
+  # Builds and packs the packages once; every job below installs these tarballs.
+  pack:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    defaults:
-      run:
-        working-directory: examples/vite-react
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -31,13 +29,62 @@ jobs:
           node-version: '22'
           cache: pnpm
       - name: Build the packages
-        working-directory: .
         run: |
           pnpm install --frozen-lockfile --filter "@ggraphic/editor..." --filter "@ggraphic/brand-default..."
           pnpm --filter "@ggraphic/editor..." --filter "@ggraphic/brand-default..." build
-      - run: node scripts/pack.mjs
+      - run: node examples/vite-react/scripts/pack.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tarballs
+          path: examples/vite-react/tarballs/
+          if-no-files-found: error
+          retention-days: 1
+
+  vite-react:
+    needs: pack
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: examples/vite-react
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: tarballs
+          path: examples/vite-react/tarballs
       - run: npm install --no-audit --no-fund
       - name: tsc and vite build
         run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:smoke
+
+  next:
+    needs: pack
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+    defaults:
+      run:
+        working-directory: examples/next
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: tarballs
+          path: examples/next/tarballs
+      - run: npm install --no-audit --no-fund
+      - name: next build (runs tsc)
+        run: npm run build
+      - name: Import the embed entry in plain Node
+        run: npm run test:ssr
+      - run: npx playwright install --with-deps chromium
+      - name: Server HTML and smoke test
+        run: npm run test:smoke
