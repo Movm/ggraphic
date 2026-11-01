@@ -15,9 +15,9 @@ import { MOBILE_INPUT_TEXT } from '../../sidebar/sidebarStyles.js';
 import { DownloadNotice } from '../DownloadNotice.js';
 
 import type {
-  CanvasImpressumLocale,
-  CanvasImpressumParts,
-  CanvasImpressumService,
+  CanvasImprintLocale,
+  CanvasImprintParts,
+  CanvasImprintService,
 } from '../../hostServices.js';
 
 export type CanvasDownloadChoice = 'png' | 'jpeg' | 'webp';
@@ -50,11 +50,11 @@ type DeckLocale = 'de-DE' | 'de-AT';
 export interface PrintImpressumGate {
   /** False until every poster page has reported its state; no warning until then. */
   ready: boolean;
-  locale: CanvasImpressumLocale;
+  locale: CanvasImprintLocale;
   /** The impressum line on the canvas; null when the element is gone. */
   text: string | null;
   /** Writes the line to the canvas (updates the element, or re-adds it). */
-  onSubmit: (parts: CanvasImpressumParts) => void;
+  onSubmit: (parts: CanvasImprintParts) => void;
 }
 
 function ImpressumForm({
@@ -62,7 +62,7 @@ function ImpressumForm({
   impressum,
 }: {
   gate: PrintImpressumGate;
-  impressum: CanvasImpressumService;
+  impressum: CanvasImprintService;
 }) {
   const t = useMessages();
   const { isFilled } = impressum;
@@ -71,24 +71,24 @@ function ImpressumForm({
   const current = impressum.parse(gate.locale, gate.text ?? '');
   const initial = (value: string) => (isFilled(value) ? value : '');
   const [name, setName] = useState(initial(current.name));
-  const [anschrift, setAnschrift] = useState(initial(current.anschrift));
+  const [address, setAddress] = useState(initial(current.address));
   const [touched, setTouched] = useState(false);
-  const valid = impressum.isComplete({ name, anschrift });
+  const valid = impressum.isComplete({ name, address });
   const nameError =
-    touched && !isFilled(name) ? t.shell.downloadPanel.impressumNameRequired(labels.name) : null;
-  const anschriftError =
-    touched && !isFilled(anschrift) ? t.shell.downloadPanel.impressumAddressRequired : null;
+    touched && !isFilled(name) ? t.shell.downloadPanel.imprintNameRequired(labels.name) : null;
+  const addressError =
+    touched && !isFilled(address) ? t.shell.downloadPanel.imprintAddressRequired : null;
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
     setTouched(true);
-    if (valid) gate.onSubmit({ name, anschrift });
+    if (valid) gate.onSubmit({ name, address });
   };
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-2" noValidate>
       <h4 className="m-0 text-sm font-semibold text-foreground">
-        {t.shell.downloadPanel.impressumHeading}
+        {t.shell.downloadPanel.imprintHeading}
       </h4>
       <p className="m-0 text-xs text-foreground-muted">{labels.hint}</p>
       <div className="flex flex-col gap-1.5">
@@ -111,33 +111,26 @@ function ImpressumForm({
         )}
       </div>
       <div className="flex flex-col gap-1.5">
-        <Label
-          htmlFor={`${fieldId}-anschrift`}
-          className="text-xs font-medium text-foreground-muted"
-        >
-          {t.shell.downloadPanel.impressumAddress}
+        <Label htmlFor={`${fieldId}-address`} className="text-xs font-medium text-foreground-muted">
+          {t.shell.downloadPanel.imprintAddress}
         </Label>
         <Input
-          id={`${fieldId}-anschrift`}
+          id={`${fieldId}-address`}
           className={MOBILE_INPUT_TEXT}
-          value={anschrift}
-          placeholder={t.shell.downloadPanel.impressumAddressPlaceholder}
-          onChange={(e) => setAnschrift(e.target.value)}
-          aria-invalid={anschriftError !== null}
-          {...(anschriftError ? { 'aria-describedby': `${fieldId}-anschrift-error` } : {})}
+          value={address}
+          placeholder={t.shell.downloadPanel.imprintAddressPlaceholder}
+          onChange={(e) => setAddress(e.target.value)}
+          aria-invalid={addressError !== null}
+          {...(addressError ? { 'aria-describedby': `${fieldId}-address-error` } : {})}
         />
-        {anschriftError && (
-          <p
-            id={`${fieldId}-anschrift-error`}
-            role="alert"
-            className="m-0 text-xs text-destructive"
-          >
-            {anschriftError}
+        {addressError && (
+          <p id={`${fieldId}-address-error`} role="alert" className="m-0 text-xs text-destructive">
+            {addressError}
           </p>
         )}
       </div>
       <Button type="submit" variant="brand" className="w-full rounded-lg">
-        {t.shell.downloadPanel.impressumSubmit}
+        {t.shell.downloadPanel.imprintSubmit}
       </Button>
     </form>
   );
@@ -201,7 +194,7 @@ export function DownloadSection({
   const fieldId = useId();
   // Without the host's print service no format carries an impressum.
   const { print, carousel } = useCanvasEditorServices();
-  const impressum = print?.impressum ?? null;
+  const impressum = print?.imprint ?? null;
 
   const isPdf = choice === 'pdf' && printExport !== null;
   const impressumGate = isPdf && impressum ? (printExport?.impressum ?? null) : null;
@@ -339,9 +332,7 @@ export function DownloadSection({
 
       {impressumMissing && impressumGate && impressum && (
         <>
-          <DownloadNotice tone="info">
-            {t.shell.downloadPanel.impressumMissingNotice}
-          </DownloadNotice>
+          <DownloadNotice tone="info">{t.shell.downloadPanel.imprintMissingNotice}</DownloadNotice>
           <ImpressumForm gate={impressumGate} impressum={impressum} />
         </>
       )}

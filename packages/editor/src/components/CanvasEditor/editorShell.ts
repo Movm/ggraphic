@@ -5,7 +5,7 @@ import type { HeterogeneousPage } from '../../configs/types.js';
 import type { SidebarTab, SidebarTabId } from '../../sidebar/types.js';
 import type React from 'react';
 
-/** Lets the editor hand a tile dropped on a page (`isVorlageDrag`) to the open tab. */
+/** Lets the editor hand a tile dropped on a page (`isTemplateDrag`) to the open tab. */
 export interface EditorTabDropHandle {
   drop: (id: string, pageId: string) => void;
 }

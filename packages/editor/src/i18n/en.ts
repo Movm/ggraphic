@@ -273,7 +273,7 @@ export const en: Messages = {
     address: '1 Sample Street, 12345 Town',
   },
 
-  sharepicText: {
+  canvasText: {
     labels: {
       quote: 'Quote',
       name: 'Name',
@@ -525,7 +525,7 @@ export const en: Messages = {
       hint: 'The frontmost element is at the top.',
       empty: 'There are no elements on this page.',
     },
-    studio: {
+    assetLibrary: {
       loadMore: 'Load more',
       loading: 'Loading …',
       noMatch: (noun: string, q: string) => `No ${noun} for “${q}”.`,
@@ -869,13 +869,13 @@ export const en: Messages = {
       currentPage: 'Current page',
       selectPages: 'Select pages',
       defaultMark: '(default)',
-      impressumMissingNotice: 'The imprint is not complete yet – you can still download.',
-      impressumHeading: 'Complete the imprint',
-      impressumNameRequired: (field) => `Please enter ${field}.`,
-      impressumAddress: 'Address',
-      impressumAddressPlaceholder: 'Street no., postcode city',
-      impressumAddressRequired: 'Please enter the address.',
-      impressumSubmit: 'Apply',
+      imprintMissingNotice: 'The imprint is not complete yet – you can still download.',
+      imprintHeading: 'Complete the imprint',
+      imprintNameRequired: (field) => `Please enter ${field}.`,
+      imprintAddress: 'Address',
+      imprintAddressPlaceholder: 'Street no., postcode city',
+      imprintAddressRequired: 'Please enter the address.',
+      imprintSubmit: 'Apply',
     },
   },
 

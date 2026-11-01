@@ -38,7 +38,7 @@ const FROZEN = new Set([
   'bild',
   'fotos',
   'kreis',
-  'application/x-ggraphic-vorlage',
+  'application/x-ggraphic-template',
 ]);
 /** Object keys whose array of strings is search vocabulary, not text on screen. */
 const VOCABULARY_KEYS = new Set(['tags', 'keywords']);

@@ -34,8 +34,8 @@ import type { SnapTarget, SnapLine } from '../utils/snapping.js';
 export interface PendingAiSuggestion {
   title: string;
   undo?: 'pages';
-  /** A Vorlage replaced the design — no AI was involved, the banner says so. */
-  source?: 'vorlage';
+  /** A template replaced the design — no AI was involved, the banner says so. */
+  source?: 'template';
 }
 
 export interface CanvasEditorState<

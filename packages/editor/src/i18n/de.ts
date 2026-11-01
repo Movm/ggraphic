@@ -284,7 +284,7 @@ export const de = {
     address: 'Musterstraße 1, 12345 Stadt',
   } as Record<string, string>,
 
-  sharepicText: {
+  canvasText: {
     labels: {
       quote: 'Zitat',
       name: 'Name',
@@ -536,7 +536,7 @@ export const de = {
       hint: 'Oben steht das vorderste Element.',
       empty: 'Auf dieser Seite liegen keine Elemente.',
     },
-    studio: {
+    assetLibrary: {
       loadMore: 'Mehr laden',
       loading: 'Wird geladen …',
       noMatch: (noun: string, q: string) => `Keine ${noun} für „${q}“.`,
@@ -883,14 +883,13 @@ export const de = {
       currentPage: 'Aktuelle Seite',
       selectPages: 'Seiten auswählen',
       defaultMark: '(Standard)',
-      impressumMissingNotice:
-        'Noch kein vollständiges Impressum – herunterladen kannst du trotzdem.',
-      impressumHeading: 'Impressum ergänzen',
-      impressumNameRequired: (field: string) => `Bitte ${field} eintragen.`,
-      impressumAddress: 'Anschrift',
-      impressumAddressPlaceholder: 'Straße Nr., PLZ Ort',
-      impressumAddressRequired: 'Bitte Anschrift eintragen.',
-      impressumSubmit: 'Übernehmen',
+      imprintMissingNotice: 'Noch kein vollständiges Impressum – herunterladen kannst du trotzdem.',
+      imprintHeading: 'Impressum ergänzen',
+      imprintNameRequired: (field: string) => `Bitte ${field} eintragen.`,
+      imprintAddress: 'Anschrift',
+      imprintAddressPlaceholder: 'Straße Nr., PLZ Ort',
+      imprintAddressRequired: 'Bitte Anschrift eintragen.',
+      imprintSubmit: 'Übernehmen',
     },
   },
 

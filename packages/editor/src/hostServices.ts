@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 /**
  * What the editor needs from its host for data it does not own: the media
- * library, image shares, image URLs, file delivery, Studio assets, the
- * Unsplash search state, print (the impressum) and the carousel chrome.
+ * library, image shares, image URLs, file delivery, the asset library, the
+ * Unsplash search state, print (the imprint) and the carousel chrome.
  * Supplied through `CanvasEditorServices`; the host passes its own
  * implementations, including those for print and the carousel chrome. Services
  * only a host's own UI reads are declared by that host, by augmenting
@@ -229,30 +229,30 @@ export const browserFileDelivery: CanvasFileDeliveryService = {
   },
 };
 
-// ── Studio assets (sticker and background galleries) ────────────────────────
+// ── Asset library (sticker and background galleries) ────────────────────────
 
-export type CanvasStudioAssetKind = 'sticker' | 'background';
+export type CanvasAssetLibraryKind = 'sticker' | 'background';
 
 /** The public shop, the viewer's own, the viewer's saved ones. */
-export type CanvasStudioAssetScope = 'shop' | 'mine' | 'saved';
+export type CanvasAssetLibraryScope = 'shop' | 'mine' | 'saved';
 
-/** A Studio asset, as far as the editor reads it; the host's items carry more. */
-export interface CanvasStudioAssetItem {
+/** An asset from the host's library, as far as the editor reads it; the host's items carry more. */
+export interface CanvasAssetLibraryItem {
   id: string;
   title: string;
   src: string;
   thumbUrl: string | null;
 }
 
-export interface CanvasStudioAssetsFilter {
-  kind: CanvasStudioAssetKind;
-  scope: CanvasStudioAssetScope;
+export interface CanvasAssetLibraryFilter {
+  kind: CanvasAssetLibraryKind;
+  scope: CanvasAssetLibraryScope;
   q: string;
   sort: 'new';
 }
 
-export interface CanvasStudioAssetsState {
-  items: CanvasStudioAssetItem[];
+export interface CanvasAssetLibraryState {
+  items: CanvasAssetLibraryItem[];
   isLoading: boolean;
   isError: boolean;
   hasNextPage: boolean;
@@ -261,10 +261,10 @@ export interface CanvasStudioAssetsState {
   refetch: () => Promise<unknown>;
 }
 
-/** Hook: one page-wise list of Studio assets. */
-export type UseCanvasStudioAssets = (filter: CanvasStudioAssetsFilter) => CanvasStudioAssetsState;
+/** Hook: one page-wise list of the host's library assets. */
+export type UseCanvasAssetLibrary = (filter: CanvasAssetLibraryFilter) => CanvasAssetLibraryState;
 
-const NO_ASSETS: CanvasStudioAssetsState = {
+const NO_ASSETS: CanvasAssetLibraryState = {
   items: [],
   isLoading: false,
   isError: false,
@@ -274,7 +274,22 @@ const NO_ASSETS: CanvasStudioAssetsState = {
   refetch: () => Promise.resolve(),
 };
 
-export const useNoStudioAssets: UseCanvasStudioAssets = () => NO_ASSETS;
+export const useNoAssetLibrary: UseCanvasAssetLibrary = () => NO_ASSETS;
+
+/** @deprecated Use `CanvasAssetLibraryKind`. Removed in the next alpha. */
+export type CanvasStudioAssetKind = CanvasAssetLibraryKind;
+/** @deprecated Use `CanvasAssetLibraryScope`. Removed in the next alpha. */
+export type CanvasStudioAssetScope = CanvasAssetLibraryScope;
+/** @deprecated Use `CanvasAssetLibraryItem`. Removed in the next alpha. */
+export type CanvasStudioAssetItem = CanvasAssetLibraryItem;
+/** @deprecated Use `CanvasAssetLibraryFilter`. Removed in the next alpha. */
+export type CanvasStudioAssetsFilter = CanvasAssetLibraryFilter;
+/** @deprecated Use `CanvasAssetLibraryState`. Removed in the next alpha. */
+export type CanvasStudioAssetsState = CanvasAssetLibraryState;
+/** @deprecated Use `UseCanvasAssetLibrary`. Removed in the next alpha. */
+export type UseCanvasStudioAssets = UseCanvasAssetLibrary;
+/** @deprecated Use `useNoAssetLibrary`. Removed in the next alpha. */
+export const useNoStudioAssets = useNoAssetLibrary;
 
 // ── Unsplash search state ───────────────────────────────────────────────────
 
@@ -354,18 +369,18 @@ export interface CanvasIconSearchService {
   refresh?: (query: string, signal?: AbortSignal) => Promise<{ retryAfterSeconds: number | null }>;
 }
 
-// ── Print (V.i.S.d.P. / Impressum) ──────────────────────────────────────────
+// ── Print (the imprint: V.i.S.d.P. / Impressum) ─────────────────────────────
 
-/** The country form an impressum line is written in. */
-export type CanvasImpressumLocale = 'de-DE' | 'de-AT';
+/** The country form an imprint line is written in. */
+export type CanvasImprintLocale = 'de-DE' | 'de-AT';
 
-export interface CanvasImpressumParts {
+export interface CanvasImprintParts {
   /** Name (DE) or Medieninhaber (AT). */
   name: string;
-  anschrift: string;
+  address: string;
 }
 
-export interface CanvasImpressumLabels {
+export interface CanvasImprintLabels {
   name: string;
   namePlaceholder: string;
   hint: string;
@@ -376,37 +391,46 @@ export interface CanvasImpressumLabels {
  * The editor's export gate reads it back through these functions, so what
  * counts as filled in is decided by the host.
  */
-export interface CanvasImpressumService {
+export interface CanvasImprintService {
   /** Id of the text element that carries the line on a page. */
   elementId: string;
   /** Which country form a page's line is written in. */
-  localeOf: (page: { configId: string } | null) => CanvasImpressumLocale;
-  line: (locale: CanvasImpressumLocale, parts: CanvasImpressumParts) => string;
-  parse: (locale: CanvasImpressumLocale, text: string) => CanvasImpressumParts;
+  localeOf: (page: { configId: string } | null) => CanvasImprintLocale;
+  line: (locale: CanvasImprintLocale, parts: CanvasImprintParts) => string;
+  parse: (locale: CanvasImprintLocale, text: string) => CanvasImprintParts;
   /** A field counts once it is non-empty and not a placeholder. */
   isFilled: (value: string) => boolean;
-  isComplete: (parts: CanvasImpressumParts) => boolean;
-  labels: Record<CanvasImpressumLocale, CanvasImpressumLabels>;
+  isComplete: (parts: CanvasImprintParts) => boolean;
+  labels: Record<CanvasImprintLocale, CanvasImprintLabels>;
   /** The element at its standard position on a page of print format `formatId`, for re-adding a deleted line. */
   composeElement: (formatId: string, isAt: boolean, text: string) => AdditionalText;
 }
 
 /**
  * What the editor needs for print beyond the PDF export itself: the
- * impressum gate.
+ * imprint gate.
  *
- * Without it the editor treats every format as one without an impressum —
- * no warning or form in the download view, no impressum carried over when a
- * Vorlage replaces the design. The PDF export is unaffected.
+ * Without it the editor treats every format as one without an imprint —
+ * no warning or form in the download view, no imprint carried over when a
+ * template replaces the design. The PDF export is unaffected.
  *
- * A host adds its own print members (a print Vorlagen composer, say) by
+ * A host adds its own print members (a print template composer, say) by
  * augmenting this interface.
  */
 export interface CanvasPrintService {
-  impressum: CanvasImpressumService;
+  imprint: CanvasImprintService;
   /** Shown in the download view next to the print PDF; omitted, there is no notice. */
   untestedNotice?: string;
 }
+
+/** @deprecated Use `CanvasImprintLocale`. Removed in the next alpha. */
+export type CanvasImpressumLocale = CanvasImprintLocale;
+/** @deprecated Use `CanvasImprintLabels`. Removed in the next alpha. */
+export type CanvasImpressumLabels = CanvasImprintLabels;
+/** @deprecated Use `CanvasImprintService`. Removed in the next alpha. */
+export type CanvasImpressumService = CanvasImprintService;
+/** @deprecated Use `CanvasImprintParts`; its `anschrift` is now `address`. Removed in the next alpha. */
+export type CanvasImpressumParts = CanvasImprintParts;
 
 /**
  * Lets surfaces that hide the host's floating feedback launcher (the mobile

@@ -26,8 +26,12 @@ export type { CombinedTextSectionProps } from './CombinedTextSection.js';
 export { IconsSection } from './IconsSection.js';
 export { FrameSettingsSection } from './FrameSettingsSection.js';
 export type { FrameSettingsSectionProps } from './FrameSettingsSection.js';
-export { FormenSection } from './FormenSection.js';
-export type { FormenSectionProps } from './FormenSection.js';
+export { ShapesSection } from './ShapesSection.js';
+export type { ShapesSectionProps } from './ShapesSection.js';
+/** @deprecated Use `ShapesSection`. Removed in the next alpha. */
+export { ShapesSection as FormenSection } from './ShapesSection.js';
+/** @deprecated Use `ShapesSectionProps`. Removed in the next alpha. */
+export type { ShapesSectionProps as FormenSectionProps } from './ShapesSection.js';
 
 // =============================================================================
 // LAZY EXPORTS - Heavy sections loaded on-demand

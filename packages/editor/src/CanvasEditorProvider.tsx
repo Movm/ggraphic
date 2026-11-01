@@ -10,7 +10,7 @@ import type {
   CanvasImageUrlService,
   CanvasMediaLibraryService,
   CanvasPrintService,
-  UseCanvasStudioAssets,
+  UseCanvasAssetLibrary,
   UseCanvasUnsplashSearch,
 } from './hostServices.js';
 import type { ApplyResult, HostCanvasAiOperation, HostCanvasAiSnapshot } from './ai/types.js';
@@ -44,8 +44,8 @@ export type { AltTextPage, AltTextScope, CanvasSpecEditBridge } from './editorSe
 export interface ChatSectionContentProps {
   /** Template id (e.g. 'zitat', 'simple'). */
   canvasType: string;
-  /** Returns a structured German text description of the current canvas. */
-  getSharepicText: () => string;
+  /** Returns a structured text description of the current canvas, in the editor's language. */
+  getCanvasText: () => string;
   /** Captures the current canvas as a PNG data URL (or null if not ready). */
   captureCanvasImage?: () => Promise<string | null>;
   /** Optional bridge to canvas-AI edit operations. Present only when the
@@ -214,7 +214,7 @@ export interface CanvasEditorServices extends CanvasEditorHostServices {
   fileDelivery?: CanvasFileDeliveryService;
 
   /** Hook for the sticker and background galleries. When omitted, they stay empty. */
-  useStudioAssets?: UseCanvasStudioAssets;
+  useAssetLibrary?: UseCanvasAssetLibrary;
 
   /** Hook holding the Unsplash search state. When omitted, searches find nothing. */
   useUnsplashSearch?: UseCanvasUnsplashSearch;
