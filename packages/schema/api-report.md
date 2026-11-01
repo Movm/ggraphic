@@ -190,6 +190,7 @@ interface SlotFit {  // from packages/schema/src/text/fitText.ts
   maxLines?: number | undefined
   wholeWords?: boolean | undefined
   countLines?: ((size: number) => number) | undefined
+  widestWord?: ((size: number) => number) | undefined
 }
 function slotFits(text: string, slot: SlotFit, measureAt: MeasureAt, size: number) => boolean  // from packages/schema/src/text/fitText.ts
 function splitListItems(text: string) => ListItem[]  // from packages/schema/src/text/listLayout.ts
@@ -521,6 +522,7 @@ interface SlotFit {
   maxLines?: number | undefined
   wholeWords?: boolean | undefined
   countLines?: ((size: number) => number) | undefined
+  widestWord?: ((size: number) => number) | undefined
 }
 function slotFits(text: string, slot: SlotFit, measureAt: MeasureAt, size: number) => boolean
 ```

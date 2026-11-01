@@ -17,6 +17,7 @@ import {
 import {
   fitFontSizeToSlot,
   layoutRichTextBlock,
+  parseInlineMarks,
   PLAIN_STYLE,
   slotFits,
   type MeasureRun,
@@ -487,6 +488,30 @@ function layoutText(p: TextProps): TextLayout {
 }
 
 /**
+ * Width of the widest word, each run measured in its own style: a bold word is wider than the
+ * same word plain, and a word can switch style midway (`Donau**dampf**`). Marks pair per line,
+ * as the renderer parses them.
+ */
+function widestWord(text: string, run: MeasureRun): number {
+  let widest = 0;
+  for (const line of text.split('\n')) {
+    let word = 0;
+    for (const r of parseInlineMarks(line)) {
+      for (const part of r.text.split(/(\s+)/)) {
+        if (/^\s+$/.test(part)) {
+          widest = Math.max(widest, word);
+          word = 0;
+        } else if (part !== '') {
+          word += run(part, r);
+        }
+      }
+    }
+    widest = Math.max(widest, word);
+  }
+  return widest;
+}
+
+/**
  * Fits a text to its box in its own font: the largest size from the legibility floor up to
  * `maxFontSize` at which no word is wider than the box (words are never broken) and the lines,
  * counted by the same layout as the gate, stay within `maxLines` (or the box `height`, when the
@@ -513,6 +538,8 @@ function fitTextToBox(
     wholeWords: true,
     ...(req.maxLines === undefined ? {} : { maxLines: req.maxLines }),
     countLines: (size) => layoutText({ ...props, fontSize: size }).lines,
+    widestWord: (size) =>
+      widestWord(props.text, tableRunMeasure({ ...props, fontSize: size }, { reason: null })),
   };
   const measureAt = (size: number) => (text: string) =>
     tableRunMeasure({ ...props, fontSize: size }, { reason: null })(text, PLAIN_STYLE);

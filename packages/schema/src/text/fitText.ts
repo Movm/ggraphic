@@ -33,6 +33,11 @@ export interface SlotFit {
   wholeWords?: boolean;
   /** Zeilenzahl bei `size`, wenn der Aufrufer sie genauer kennt als `wrapLines` (der Renderer-Umbruch). */
   countLines?: (size: number) => number;
+  /**
+   * Breite des breitesten Worts bei `size`, wenn der Aufrufer sie genauer kennt als `measureAt`
+   * (jeder Lauf in seinem eigenen Schnitt: ein fettes Wort ist breiter). Gilt nur mit `wholeWords`.
+   */
+  widestWord?: (size: number) => number;
 }
 
 /** Passt eine Messung für `fontSize` an: `measureAt(size)` misst Text in dieser Größe. */
@@ -67,7 +72,11 @@ function wordsFit(text: string, width: number, measure: MeasureText, whole = fal
 /** Passt `text` bei genau `size` in das Feld? */
 export function slotFits(text: string, slot: SlotFit, measureAt: MeasureAt, size: number): boolean {
   const measure = measureAt(size);
-  if (!wordsFit(text, slot.width, measure, slot.wholeWords)) return false;
+  const wordsOk =
+    slot.wholeWords && slot.widestWord
+      ? slot.widestWord(size) <= slot.width
+      : wordsFit(text, slot.width, measure, slot.wholeWords);
+  if (!wordsOk) return false;
   const lines = slot.countLines?.(size) ?? wrapLines(text, slot.width, measure).length;
   if (slot.maxLines !== undefined && lines > slot.maxLines) return false;
   const high = (lines + (slot.gap ?? 0)) * size * slot.lineHeight;
