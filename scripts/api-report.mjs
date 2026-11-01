@@ -8,7 +8,9 @@
  * The entries are the ones an npm consumer can import: the published export map
  * (`publishConfig.exports`, else `exports`), its dist targets mapped back to their source through
  * the outDir/rootDir of tsconfig.build.json. A wildcard (`./*`) is expanded over the files that
- * config compiles into dist, so tests and fixtures stay out as in the published package.
+ * config compiles into dist, so tests and fixtures stay out as in the published package; a file a
+ * fixed entry already reports is not repeated under the wildcard. `./internal/*` is the unstable
+ * channel and is not expanded: one section with the number of files it reaches.
  * Stylesheet entries are listed without symbols.
  *
  * Usage:
@@ -68,9 +70,13 @@ function compiledFiles(pkgDir) {
 const SOURCE_EXT = /\.(d\.ts|[mc]?js|[mc]?tsx?)$/;
 const stemOf = (file) => file.replace(SOURCE_EXT, '');
 
+// The unstable channel: published so a host can reach anything, but not part of the surface the
+// report guards. It gets one section with the number of files it reaches instead of one per file.
+const isInternal = (key) => key.startsWith('./internal/') && key.includes('*');
+
 /**
- * Export-map entries of one package as [subpath, absolute source file or null for CSS, the
- * target when no source file exists for it].
+ * Export-map entries of one package as [subpath, absolute source file or null, the target when no
+ * source file exists for it, the number of files an unexpanded internal wildcard reaches].
  */
 function entriesOf(pkgDir, manifest, { options, fileNames }) {
   const outDir = options.outDir && posix(options.outDir);
@@ -84,6 +90,7 @@ function entriesOf(pkgDir, manifest, { options, fileNames }) {
   };
   const sources = fileNames.filter((f) => !f.endsWith('.d.ts'));
   const entries = [];
+  const wildcards = [];
   const map = manifest.publishConfig?.exports ?? manifest.exports ?? {};
   for (const [key, value] of Object.entries(map)) {
     const target = targetOf(value);
@@ -93,17 +100,30 @@ function entriesOf(pkgDir, manifest, { options, fileNames }) {
       continue;
     }
     const stem = sourceStem(target);
-    if (!key.includes('*')) {
-      const file = sources.find((f) => stemOf(f) === stem);
-      entries.push(file ? [key, file] : [key, null, target]);
+    if (key.includes('*')) {
+      wildcards.push([key, stem]);
       continue;
     }
-    // `./*` → `./dist/*.js`: every compiled file the pattern matches is an entry of its own.
+    const file = sources.find((f) => stemOf(f) === stem);
+    entries.push(file ? [key, file] : [key, null, target]);
+  }
+  // `./*` → `./dist/*.js`: every compiled file the pattern matches is an entry of its own, except
+  // a file a fixed entry already reports (the facades under entries/), which would appear twice.
+  const fixed = new Set(entries.map(([, file]) => file).filter(Boolean));
+  for (const [key, stem] of wildcards) {
     const [pre, post] = stem.split('*');
-    for (const file of sources) {
+    const matched = sources.filter((f) => {
+      const s = stemOf(f);
+      return s.startsWith(pre) && s.endsWith(post);
+    });
+    if (isInternal(key)) {
+      entries.push([key, null, null, matched.length]);
+      continue;
+    }
+    for (const file of matched) {
+      if (fixed.has(file)) continue;
       const s = stemOf(file);
-      if (s.startsWith(pre) && s.endsWith(post))
-        entries.push([key.replace('*', s.slice(pre.length, s.length - post.length)), file]);
+      entries.push([key.replace('*', s.slice(pre.length, s.length - post.length)), file]);
     }
   }
   return entries.sort(([a], [b]) => a.localeCompare(b));
@@ -224,8 +244,14 @@ function reportFor(pkgDir) {
 
   let names = 0;
   const sections = [];
-  for (const [subpath, file, missingTarget] of entries) {
+  for (const [subpath, file, missingTarget, internalFiles] of entries) {
     const specifier = subpath === '.' ? manifest.name : `${manifest.name}/${subpath.slice(2)}`;
+    if (internalFiles !== undefined) {
+      sections.push(
+        `## \`${specifier}\`\n\nUnstable channel, not expanded; ${internalFiles} compiled files.\n`
+      );
+      continue;
+    }
     if (missingTarget) {
       sections.push(
         `## \`${specifier}\`\n\nMissing target: \`${missingTarget}\` has no source file.\n`
@@ -250,8 +276,8 @@ function reportFor(pkgDir) {
   const published = manifest.publishConfig?.exports ?? manifest.exports;
   const unlisted = Object.keys(manifest.exports).filter((k) => k.includes('*')).length
     ? []
-    : entries.map(([k]) => k).filter((k) => !(k in manifest.exports));
-  const wildcard = Object.keys(published).filter((k) => k.includes('*'));
+    : entries.map(([k]) => k).filter((k) => !(k in manifest.exports) && !isInternal(k));
+  const wildcard = Object.keys(published).filter((k) => k.includes('*') && !isInternal(k));
   const header = [
     `# ${manifest.name}: API report`,
     '',
