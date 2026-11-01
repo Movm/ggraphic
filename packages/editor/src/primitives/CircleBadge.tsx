@@ -11,9 +11,9 @@
  * - Inline text editing on double-click per text line
  */
 
-import { type Bindings } from '@ggraphic/core';
+import { type CircleBadgeInstance, type CircleBadgeTextLine } from '@ggraphic/core';
 import { useRef, useCallback, useEffect, useState, memo } from 'react';
-import { Group, Circle, Text, Rect, Transformer } from 'react-konva';
+import { Group, Circle, Ellipse, Star, Text, Rect, Transformer } from 'react-konva';
 
 import { LOCKED_TRANSFORMER, useIsItemLocked } from '@ggraphic/editor/components/canvasItemLock';
 import { useSnapScheduler } from '@ggraphic/editor/hooks/useSnapScheduler';
@@ -31,31 +31,14 @@ import { useTextEditorOpener } from '../utils/textEditorOpeners.js';
 import type { SnapTarget } from '@ggraphic/editor/utils/snapping';
 import type Konva from 'konva';
 
+export { type CircleBadgeInstance, type CircleBadgeTextLine } from '@ggraphic/core';
+
 // Rahmen für Snap und Geometrie-Meldung, pro Aufruf neu beschrieben (synchron, ohne Allokation).
 const dragFrame = createBoxFrame();
-
-export interface CircleBadgeTextLine {
-  text: string;
-  yOffset: number;
-  fontFamily: string;
-  fontSize: number;
-  fontWeight?: 'normal' | 'bold';
-}
-
-export interface CircleBadgeInstance {
-  id: string;
-  /** Fields that follow a brand role; see `@ggraphic/core` bindings. */
-  bind?: Bindings;
-  x: number;
-  y: number;
-  radius: number;
-  backgroundColor: string;
-  textColor: string;
-  rotation: number;
-  scale: number;
-  opacity?: number;
-  textLines: CircleBadgeTextLine[];
-}
+/** A burst's points and the share of the radius its valleys reach. */
+const BURST = { points: 16, inner: 0.8 } as const;
+/** An ellipse's half-axes as shares of the radius. */
+const ELLIPSE = { x: 1.3, y: 0.78 } as const;
 
 export interface CircleBadgeProps {
   id: string;
@@ -68,6 +51,7 @@ export interface CircleBadgeProps {
   scale: number;
   opacity?: number;
   textLines: CircleBadgeTextLine[];
+  outline?: CircleBadgeInstance['outline'];
   selected: boolean;
   onSelect: () => void;
   onDragEnd: (x: number, y: number) => void;
@@ -91,6 +75,7 @@ function CircleBadgeInner({
   scale,
   opacity = 1,
   textLines,
+  outline = 'circle',
   selected,
   onSelect,
   onDragEnd,
@@ -311,8 +296,27 @@ function CircleBadgeInner({
         onMouseDown={onSelect}
         onTouchStart={onSelect}
       >
-        {/* Circle background */}
-        <Circle x={0} y={0} radius={radius} fill={backgroundColor} />
+        {/* Background: circle, burst or ellipse */}
+        {outline === 'burst' ? (
+          <Star
+            x={0}
+            y={0}
+            numPoints={BURST.points}
+            innerRadius={radius * BURST.inner}
+            outerRadius={radius}
+            fill={backgroundColor}
+          />
+        ) : outline === 'ellipse' ? (
+          <Ellipse
+            x={0}
+            y={0}
+            radiusX={radius * ELLIPSE.x}
+            radiusY={radius * ELLIPSE.y}
+            fill={backgroundColor}
+          />
+        ) : (
+          <Circle x={0} y={0} radius={radius} fill={backgroundColor} />
+        )}
 
         {/* Text lines centered in circle */}
         {textLines.map((line, index) => {
@@ -391,6 +395,7 @@ export const CircleBadge = memo(CircleBadgeInner, (prevProps, nextProps) => {
   if (prevProps.rotation !== nextProps.rotation) return false;
   if (prevProps.scale !== nextProps.scale) return false;
   if (prevProps.opacity !== nextProps.opacity) return false;
+  if (prevProps.outline !== nextProps.outline) return false;
   if (prevProps.selected !== nextProps.selected) return false;
   if (prevProps.stageWidth !== nextProps.stageWidth) return false;
   if (prevProps.stageHeight !== nextProps.stageHeight) return false;

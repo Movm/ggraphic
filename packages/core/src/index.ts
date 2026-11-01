@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
+export { type BackgroundColorOption } from './brand/backgroundColorOption.js';
 export { FONT_FAMILY_ALIASES, aliasFontFamily } from './brand/fontAliases.js';
 export { brandDefault } from './brand/brandDefault.js';
 export {
@@ -102,3 +103,4 @@ export {
   type BudgetViolation,
   type SlotBudget,
 } from './templates/slotBudget.js';
+export * from './model/index.js';
