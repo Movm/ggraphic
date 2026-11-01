@@ -5,6 +5,7 @@
 New entry `@ggraphic/editor/host`. It holds what a host's start-up code and test setup need, without loading the editor UI:
 
 - the `register*` seams: element kinds, asset catalogue, formats and format groups, templates, brand packs, messages, toasts, storage keys, PPTX fonts and screen-corner reservations;
+- the format lookups a host's template registry needs: `canvasFormats`, `getCanvasFormat` and `getCanvasFormatOrDefault`;
 - `useCanvasEditorServices` and `BlockInsertContext`;
 - the interfaces a host augments: `CanvasEditorHostServices`, `HostElementKinds`, `HostCanvasActions` and `CanvasAiHostTypes`.
 

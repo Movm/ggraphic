@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 /**
  * What a host calls at start-up, reads from its services, and augments, without the editor UI: the
- * register functions, the services hook, the block-insert context and the interfaces a host extends
- * with `declare module`. Its module graph holds no component, sidebar, store or primitive
+ * register functions with the format lookups its template registry needs, the services hook, the
+ * block-insert context and the interfaces a host extends with `declare module`. Its module graph holds no component, sidebar, store or primitive
  * (`hostEntry.vitest.ts` keeps it that way), so a host's start-up code and its test setup can import
  * it without loading the editor. Every name here is also in its domain entry.
  *
@@ -37,6 +37,9 @@ export {
 export {
   type CanvasFormat,
   type CanvasFormatGroupDef,
+  canvasFormats,
+  getCanvasFormat,
+  getCanvasFormatOrDefault,
   registerCanvasFormatGroups,
   registerCanvasFormats,
 } from '../formats/index.js';
