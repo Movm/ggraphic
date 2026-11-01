@@ -4,7 +4,7 @@ A minimal Next.js host (App Router) that embeds `<GgraphicEditor>` from `@ggraph
 
 - `app/page.tsx` is a server component. It renders the host page and `app/Editor.tsx`, a client component (`'use client'`) that renders `GgraphicEditor`.
 - The server sends the page without the editor; the editor loads in the browser after hydration. No `dynamic(..., { ssr: false })` is needed.
-- A server component cannot render `GgraphicEditor` itself: `@ggraphic/editor/embed` fails to import in the server-component environment, and `onChange` is a function, which cannot be passed from the server to the client.
+- A server component cannot render `GgraphicEditor` itself: the template pack and `onChange` contain functions, which cannot be passed from the server to a client component.
 
 It is not part of the pnpm workspace. It installs the packages with npm from tarballs packed from this checkout, as an outside consumer would get them from the registry:
 
