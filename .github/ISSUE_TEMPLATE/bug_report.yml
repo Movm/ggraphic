@@ -1,0 +1,51 @@
+name: Bug report
+description: Something in a package or in Studio does not work as it should.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: Minimal steps. A document JSON, a template id or a small code sample helps most.
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where
+      options:
+        - '@ggraphic/editor'
+        - '@ggraphic/core'
+        - '@ggraphic/schema'
+        - '@ggraphic/collab'
+        - '@ggraphic/ai'
+        - '@ggraphic/ui'
+        - '@ggraphic/templates-open'
+        - Studio
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Package version (e.g. 0.1.0-alpha.0) or Studio commit.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser and OS; for a host app, the bundler (Vite, Next.js, …) and package manager.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console output or screenshots
+      render: text
