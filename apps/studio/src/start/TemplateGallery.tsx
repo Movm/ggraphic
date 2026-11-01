@@ -32,6 +32,8 @@ export interface TemplateGalleryProps {
   /** Templates the organisation hid: left out, unless `canHide` (the owner sees them to show them again). */
   hiddenIds?: ReadonlySet<string>;
   canHide?: boolean;
+  /** The hidden list is still being read: nothing is listed yet, so a hidden template never flashes. */
+  loading?: boolean;
   onToggleHidden?: (id: string, hidden: boolean) => void;
   showBlank?: boolean;
   onPickBlank?: () => void;
@@ -131,6 +133,7 @@ export function TemplateGallery({
   disabled = false,
   hiddenIds,
   canHide = false,
+  loading = false,
   onToggleHidden,
   showBlank = false,
   onPickBlank,
@@ -165,6 +168,16 @@ export function TemplateGallery({
   );
   const { width, height } = formatSize(formatId);
   const ratio = `${width} / ${height}`;
+
+  if (loading) {
+    return (
+      <div className="studio-gallery">
+        <p className="studio-muted" role="status">
+          Loading templates…
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="studio-gallery">

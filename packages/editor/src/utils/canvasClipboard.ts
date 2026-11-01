@@ -11,6 +11,8 @@
  * hier, während Strg+D es konnte.
  */
 
+import { type PageGroup } from '../groups/pageGroups.js';
+
 import {
   type DuplicableDataMap,
   type DuplicableEntry,
@@ -28,6 +30,10 @@ export type ClipboardEntry = DuplicableEntry;
  */
 export interface ClipboardContent {
   readonly entries: readonly ClipboardEntry[];
+  /** The ids the entries had on the page they were copied from, one per entry. */
+  readonly sourceIds: readonly string[];
+  /** The groups that lay wholly within the copied elements, over their source ids. */
+  readonly groups: readonly PageGroup[];
   readonly bounds: { x: number; y: number; width: number; height: number } | null;
 }
 

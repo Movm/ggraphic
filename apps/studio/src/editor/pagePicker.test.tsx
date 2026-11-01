@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { type EditorPagePickerProps } from '@ggraphic/editor/components/CanvasEditor/editorShell';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -11,7 +11,8 @@ import { newDocument } from './document';
 import { StudioPagePicker } from './shell';
 import { HEADLINE_TEMPLATE_ID } from './templates/ids';
 
-function open(props: Partial<EditorPagePickerProps>) {
+/** Opens the picker and waits for its list: the gallery shows nothing until the hidden list is in. */
+async function open(props: Partial<EditorPagePickerProps>) {
   const onSelectTemplate = vi.fn();
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
@@ -31,16 +32,23 @@ function open(props: Partial<EditorPagePickerProps>) {
       </WithSession>
     </QueryClientProvider>
   );
+  await screen.findByRole('list', { name: 'Templates' });
   return onSelectTemplate;
 }
 
+beforeEach(() =>
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => Response.json({ templateIds: [] }))
+  )
+);
 afterEach(() => vi.unstubAllGlobals());
 
 const headlinePage = () => newDocument('post-portrait', HEADLINE_TEMPLATE_ID).pages[0]!.state;
 
 describe('the page picker in replace mode', () => {
-  it('marks the template the page holds, not the free page config', () => {
-    open({ currentState: headlinePage() });
+  it('marks the template the page holds, not the free page config', async () => {
+    await open({ currentState: headlinePage() });
     expect(screen.getByRole('button', { name: /Headline/ })).toHaveAttribute(
       'aria-current',
       'true'
@@ -49,7 +57,7 @@ describe('the page picker in replace mode', () => {
   });
 
   it('Blank clears the page of a free page, keeping its ground', async () => {
-    const onSelect = open({ currentState: headlinePage() });
+    const onSelect = await open({ currentState: headlinePage() });
     await userEvent.click(screen.getByRole('button', { name: /Blank/ }));
     expect(onSelect).toHaveBeenCalledTimes(1);
     const [configId, state] = onSelect.mock.calls[0] as [string, Record<string, unknown>];
@@ -62,7 +70,7 @@ describe('the page picker in replace mode', () => {
   });
 
   it('a template puts its own page on the free page config', async () => {
-    const onSelect = open({ currentState: headlinePage() });
+    const onSelect = await open({ currentState: headlinePage() });
     await userEvent.click(screen.getByRole('button', { name: /Quote/ }));
     const [configId, state] = onSelect.mock.calls[0] as [string, Record<string, unknown>];
     expect(configId).toBe('studio-blank');
@@ -72,7 +80,7 @@ describe('the page picker in replace mode', () => {
 
 describe('the picker shows the gallery', () => {
   it('replace mode puts the picked template and world on the page in place', async () => {
-    const onSelect = open({ currentState: headlinePage() });
+    const onSelect = await open({ currentState: headlinePage() });
     const worlds = screen.getByRole('group', { name: 'Quote colour world' });
     await userEvent.click(within(worlds).getByRole('radio', { name: 'Primary' }));
     await userEvent.click(screen.getByRole('button', { name: /^Quote/ }));
@@ -86,7 +94,7 @@ describe('the picker shows the gallery', () => {
 
   it('add mode adds a free page with the picked template and world', async () => {
     const addPage = vi.fn(async () => {});
-    open({ mode: 'add', addPage });
+    await open({ mode: 'add', addPage });
     const worlds = screen.getByRole('group', { name: 'Headline + text colour world' });
     await userEvent.click(within(worlds).getByRole('radio', { name: 'Dark' }));
     await userEvent.click(screen.getByRole('button', { name: /^Headline/ }));
@@ -102,7 +110,7 @@ describe('the picker shows the gallery', () => {
 
 describe('the colour world on Change template', () => {
   const pickQuote = async (brandScheme: string | undefined) => {
-    const onSelect = open({ currentState: { ...headlinePage(), brandScheme } });
+    const onSelect = await open({ currentState: { ...headlinePage(), brandScheme } });
     await userEvent.click(screen.getByRole('button', { name: /Quote/ }));
     return (onSelect.mock.calls[0] as [string, Record<string, unknown>])[1];
   };
@@ -121,13 +129,6 @@ describe('the colour world on Change template', () => {
 });
 
 describe('where the picker renders', () => {
-  beforeEach(() =>
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => Response.json({ templateIds: [] }))
-    )
-  );
-
   it('is mounted on the document body, whatever small box opened it', () => {
     const { container } = render(
       <QueryClientProvider client={new QueryClient()}>
@@ -160,10 +161,8 @@ describe('the picker and hidden templates', () => {
       'fetch',
       vi.fn(async () => Response.json({ templateIds: ['studio-quote'] }))
     );
-    open({ currentState: headlinePage() });
-    await waitFor(() =>
-      expect(screen.queryByRole('button', { name: /^Quote/ })).not.toBeInTheDocument()
-    );
+    await open({ currentState: headlinePage() });
+    expect(screen.queryByRole('button', { name: /^Quote/ })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^Headline/ })).toBeInTheDocument();
   });
 });

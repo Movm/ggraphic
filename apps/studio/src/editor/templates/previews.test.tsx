@@ -18,6 +18,10 @@ const mounted = vi.hoisted(() => ({
   /** Entry ids whose state building throws. */
   throwFor: [] as string[],
   pending: [] as (() => void)[],
+  /** The headline font each loaded page config was built with (the real one reads the active brand). */
+  loadedFonts: [] as string[],
+  /** The config each preview was drawn with. */
+  drawnWith: [] as unknown[],
 }));
 
 vi.mock('./instantiate', async (importOriginal) => {
@@ -32,9 +36,16 @@ vi.mock('./instantiate', async (importOriginal) => {
 });
 
 vi.mock('@ggraphic/editor/components/PagePreview', () => ({
-  PagePreview: ({ onRendered }: { onRendered: (dataUrl: string) => void }) => {
+  PagePreview: ({
+    onRendered,
+    config,
+  }: {
+    onRendered: (dataUrl: string) => void;
+    config: unknown;
+  }) => {
     const done = useRef(onRendered);
     useEffect(() => {
+      mounted.drawnWith.push(config);
       mounted.count += 1;
       mounted.live += 1;
       mounted.maxLive = Math.max(mounted.maxLive, mounted.live);
@@ -49,12 +60,17 @@ vi.mock('@ggraphic/editor/components/PagePreview', () => ({
   },
 }));
 
-vi.mock('@ggraphic/editor/configs/configLoader', () => ({
-  loadCanvasConfig: async () => {
-    if (mounted.configFails) throw new Error('no config');
-    return { id: 'studio-blank', canvas: { width: 1080, height: 1350 } };
-  },
-}));
+vi.mock('@ggraphic/editor/configs/configLoader', async () => {
+  const { activeBrand: brandNow } = await import('@ggraphic/editor/brand/brandRegistry');
+  return {
+    loadCanvasConfig: async () => {
+      if (mounted.configFails) throw new Error('no config');
+      const primary = brandNow().fonts.headline;
+      mounted.loadedFonts.push(primary);
+      return { id: 'studio-blank', canvas: { width: 1080, height: 1350 }, fonts: { primary } };
+    },
+  };
+});
 
 // jsdom has no IntersectionObserver: the test decides who is visible.
 const observed = new Map<Element, (visible: boolean) => void>();
@@ -96,6 +112,8 @@ beforeEach(() => {
     configFails: false,
     throwFor: [],
     pending: [],
+    loadedFonts: [],
+    drawnWith: [],
   });
   observed.clear();
   vi.stubGlobal('IntersectionObserver', FakeIntersectionObserver);
@@ -222,6 +240,33 @@ describe('template previews', () => {
       </>
     );
     await waitFor(() => expect(mounted.count).toBe(2));
+  });
+
+  it('draws with a page config built for the brand that is active now, not the first one', async () => {
+    const { rerender } = render(
+      <>
+        <PreviewHost />
+        <Tile id="a" />
+      </>
+    );
+    show('a');
+    await screen.findByAltText('a');
+    expect(mounted.loadedFonts).toEqual([original.fonts.headline]);
+
+    const other = {
+      ...original,
+      fonts: { ...original.fonts, headline: 'Fraunces' },
+    } as typeof original;
+    registerBrandPacks([other]);
+    rerender(
+      <>
+        <PreviewHost />
+        <Tile id="a" />
+      </>
+    );
+    await waitFor(() => expect(mounted.count).toBe(2));
+    expect(mounted.loadedFonts).toEqual([original.fonts.headline, 'Fraunces']);
+    expect((mounted.drawnWith[1] as { fonts: { primary: string } }).fonts.primary).toBe('Fraunces');
   });
 
   it('one render runs at a time', async () => {
