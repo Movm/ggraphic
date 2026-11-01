@@ -8,14 +8,18 @@
  * The entries are the ones an npm consumer can import: the published export map
  * (`publishConfig.exports`, else `exports`), its dist targets mapped back to their source through
  * the outDir/rootDir of tsconfig.build.json. A wildcard (`./*`) is expanded over the files that
- * config compiles into dist, so tests and fixtures stay out as in the published package.
+ * config compiles into dist, so tests and fixtures stay out as in the published package; a file a
+ * fixed entry already reports is not repeated under the wildcard. `./internal/*` is the unstable
+ * channel and is not expanded: one section with the number of files it reaches.
  * Stylesheet entries are listed without symbols.
  *
  * Usage:
  *   node scripts/api-report.mjs            rewrite the reports
  *   node scripts/api-report.mjs --check    compare with the committed reports and print what
- *                                          changed; reports only, always exits 0 (CI annotates
- *                                          the drift as a warning and in the step summary)
+ *                                          changed. Drift only reports (a warning annotation and
+ *                                          the step summary); a committed report whose package is
+ *                                          gone counts as drift. An export key whose target has no
+ *                                          source file is an error: exit 1.
  *
  * Needs node_modules (the signatures come from the TypeScript checker).
  */
@@ -66,7 +70,14 @@ function compiledFiles(pkgDir) {
 const SOURCE_EXT = /\.(d\.ts|[mc]?js|[mc]?tsx?)$/;
 const stemOf = (file) => file.replace(SOURCE_EXT, '');
 
-/** Export-map entries of one package as [subpath, absolute source file or null for CSS]. */
+// The unstable channel: published so a host can reach anything, but not part of the surface the
+// report guards. It gets one section with the number of files it reaches instead of one per file.
+const isInternal = (key) => key.startsWith('./internal/') && key.includes('*');
+
+/**
+ * Export-map entries of one package as [subpath, absolute source file or null, the target when no
+ * source file exists for it, the number of files an unexpanded internal wildcard reaches].
+ */
 function entriesOf(pkgDir, manifest, { options, fileNames }) {
   const outDir = options.outDir && posix(options.outDir);
   const rootDir = options.rootDir && posix(options.rootDir);
@@ -79,6 +90,7 @@ function entriesOf(pkgDir, manifest, { options, fileNames }) {
   };
   const sources = fileNames.filter((f) => !f.endsWith('.d.ts'));
   const entries = [];
+  const wildcards = [];
   const map = manifest.publishConfig?.exports ?? manifest.exports ?? {};
   for (const [key, value] of Object.entries(map)) {
     const target = targetOf(value);
@@ -88,17 +100,30 @@ function entriesOf(pkgDir, manifest, { options, fileNames }) {
       continue;
     }
     const stem = sourceStem(target);
-    if (!key.includes('*')) {
-      const file = sources.find((f) => stemOf(f) === stem);
-      entries.push([key, file ?? `${stem}.ts`]);
+    if (key.includes('*')) {
+      wildcards.push([key, stem]);
       continue;
     }
-    // `./*` → `./dist/*.js`: every compiled file the pattern matches is an entry of its own.
+    const file = sources.find((f) => stemOf(f) === stem);
+    entries.push(file ? [key, file] : [key, null, target]);
+  }
+  // `./*` → `./dist/*.js`: every compiled file the pattern matches is an entry of its own, except
+  // a file a fixed entry already reports (the facades under entries/), which would appear twice.
+  const fixed = new Set(entries.map(([, file]) => file).filter(Boolean));
+  for (const [key, stem] of wildcards) {
     const [pre, post] = stem.split('*');
-    for (const file of sources) {
+    const matched = sources.filter((f) => {
+      const s = stemOf(f);
+      return s.startsWith(pre) && s.endsWith(post);
+    });
+    if (isInternal(key)) {
+      entries.push([key, null, null, matched.length]);
+      continue;
+    }
+    for (const file of matched) {
+      if (fixed.has(file)) continue;
       const s = stemOf(file);
-      if (s.startsWith(pre) && s.endsWith(post))
-        entries.push([key.replace('*', s.slice(pre.length, s.length - post.length)), file]);
+      entries.push([key.replace('*', s.slice(pre.length, s.length - post.length)), file]);
     }
   }
   return entries.sort(([a], [b]) => a.localeCompare(b));
@@ -210,6 +235,7 @@ function reportFor(pkgDir) {
   const compiled = compiledFiles(pkgDir);
   const { options } = compiled;
   const entries = entriesOf(pkgDir, manifest, compiled);
+  const missing = entries.filter(([, , target]) => target).map(([key]) => key);
   const program = ts.createProgram({
     rootNames: entries.map(([, f]) => f).filter(Boolean),
     options,
@@ -218,8 +244,20 @@ function reportFor(pkgDir) {
 
   let names = 0;
   const sections = [];
-  for (const [subpath, file] of entries) {
+  for (const [subpath, file, missingTarget, internalFiles] of entries) {
     const specifier = subpath === '.' ? manifest.name : `${manifest.name}/${subpath.slice(2)}`;
+    if (internalFiles !== undefined) {
+      sections.push(
+        `## \`${specifier}\`\n\nUnstable channel, not expanded; ${internalFiles} compiled files.\n`
+      );
+      continue;
+    }
+    if (missingTarget) {
+      sections.push(
+        `## \`${specifier}\`\n\nMissing target: \`${missingTarget}\` has no source file.\n`
+      );
+      continue;
+    }
     if (!file) {
       sections.push(`## \`${specifier}\`\n\nStylesheet.\n`);
       continue;
@@ -238,8 +276,8 @@ function reportFor(pkgDir) {
   const published = manifest.publishConfig?.exports ?? manifest.exports;
   const unlisted = Object.keys(manifest.exports).filter((k) => k.includes('*')).length
     ? []
-    : entries.map(([k]) => k).filter((k) => !(k in manifest.exports));
-  const wildcard = Object.keys(published).filter((k) => k.includes('*'));
+    : entries.map(([k]) => k).filter((k) => !(k in manifest.exports) && !isInternal(k));
+  const wildcard = Object.keys(published).filter((k) => k.includes('*') && !isInternal(k));
   const header = [
     `# ${manifest.name}: API report`,
     '',
@@ -254,7 +292,11 @@ function reportFor(pkgDir) {
       : '',
     '',
   ];
-  return { file: join(pkgDir, REPORT), text: `${header.join('\n')}\n${sections.join('\n')}` };
+  return {
+    file: join(pkgDir, REPORT),
+    text: `${header.join('\n')}\n${sections.join('\n')}`,
+    missing,
+  };
 }
 
 /** Section headings that differ between two reports, as added / removed / changed lists. */
@@ -280,12 +322,27 @@ function sectionDiff(before, after) {
 const check = process.argv.includes('--check');
 const packagesDir = join(ROOT, 'packages');
 const summary = [];
+const errors = [];
 for (const name of readdirSync(packagesDir).sort()) {
   const pkgDir = join(packagesDir, name);
-  if (!existsSync(join(pkgDir, 'package.json'))) continue;
-  const report = reportFor(pkgDir);
-  if (!report) continue;
+  const report = existsSync(join(pkgDir, 'package.json')) ? reportFor(pkgDir) : null;
+  if (!report) {
+    // A report left behind by a package that was removed or lost its exports.
+    const stale = join(pkgDir, REPORT);
+    if (check && existsSync(stale)) {
+      const rel = posix(relative(ROOT, stale));
+      const line = `${rel}: committed report of a package that no longer exists or has no exports.`;
+      console.log(line);
+      console.log(`::warning file=${rel}::Stale API report; delete it.`);
+      summary.push(line, '');
+    }
+    continue;
+  }
   const rel = posix(relative(ROOT, report.file));
+  for (const key of report.missing) {
+    errors.push(`${rel}: export key \`${key}\` points at a target with no source file.`);
+    console.log(`::error file=${rel}::Export key ${key} has no target file.`);
+  }
   if (!check) {
     writeFileSync(report.file, report.text);
     console.log(`wrote ${rel}`);
@@ -307,6 +364,10 @@ for (const name of readdirSync(packagesDir).sort()) {
     `::warning file=${rel}::API surface changed; run \`pnpm api:report\` and commit the report if the change is intended.`
   );
   summary.push(...lines, '');
+}
+if (errors.length) {
+  console.error(errors.join('\n'));
+  if (check) process.exitCode = 1;
 }
 if (check) {
   if (!summary.length) console.log('API reports are up to date.');
