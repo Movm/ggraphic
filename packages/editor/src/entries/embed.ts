@@ -5,6 +5,7 @@ export {
   GgraphicEditor,
   type GgraphicDocument,
   type GgraphicEditorProps,
+  loadTemplatePack,
   templatePackFromJson,
   type TemplatePack,
 } from '../embed/index.js';

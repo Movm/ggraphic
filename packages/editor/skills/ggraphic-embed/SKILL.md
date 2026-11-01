@@ -15,15 +15,11 @@ A host supplies data and services; the component does the rest.
 import { defaultBrand } from '@ggraphic/brand-default';
 import '@ggraphic/brand-default/fonts';
 import '@ggraphic/editor/styles/compiled.css';
-import {
-  GgraphicEditor,
-  templatePackFromJson,
-  type GgraphicDocument,
-} from '@ggraphic/editor/embed';
+import { GgraphicEditor, loadTemplatePack, type GgraphicDocument } from '@ggraphic/editor/embed';
 
 import templateFiles from './templates.json'; // template files (`@ggraphic/schema` format)
 
-const templates = templatePackFromJson(templateFiles); // once, at module level
+const templates = loadTemplatePack(templateFiles); // once, at module level
 
 export function DesignEditor({
   doc,
@@ -48,17 +44,17 @@ What it does for you:
 
 Props:
 
-| Prop           | Default                                                      | Notes                                                                                                                                                                         |
-| -------------- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `brand`        | required                                                     | `defaultBrand` from `@ggraphic/brand-default`, or your own from `defineBrand` (below).                                                                                        |
-| `templates`    | required                                                     | `templatePackFromJson(files)`. Build it once, not per render. Check `templates.problems` for files that were skipped.                                                         |
-| `document`     | one page of the pack's first template on `post-portrait`     | `{ formatId, pages: [{ configId, state }] }`. Read when the editor mounts; give the component a new `key` to open another document.                                           |
-| `onChange`     | none                                                         | The whole document after every change (edits, added or moved pages, undo). Store it as it comes; debounce on your side if saving is expensive.                                |
-| `services`     | downloads through the browser, uploads as object URLs, no AI | `CanvasEditorServices` from `@ggraphic/editor/CanvasEditorProvider`. Pass only what you have: a `mediaLibrary` for durable uploads, `aiDraft`, `iconSearch`, `fileDelivery` … |
-| `locale`       | `'en'`                                                       | `'en'` or `'de'`.                                                                                                                                                             |
-| `queryClient`  | own client                                                   | Pass yours to share a cache with the rest of the app.                                                                                                                         |
-| `title`        | none                                                         | The design's name, used for the PDF and slide-deck downloads.                                                                                                                 |
-| `exportApiRef` | none                                                         | A ref that receives `CanvasEditorExportApi` once the editor has loaded (see Export).                                                                                          |
+| Prop           | Default                                                      | Notes                                                                                                                                                                                                         |
+| -------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `brand`        | required                                                     | `defaultBrand` from `@ggraphic/brand-default`, or your own from `defineBrand` (below).                                                                                                                        |
+| `templates`    | required                                                     | `loadTemplatePack(files)`, a promise the editor resolves while it loads. Create it once, not per render. Await it to read `problems` (files that were skipped). A pack from `templatePackFromJson` works too. |
+| `document`     | one page of the pack's first template on `post-portrait`     | `{ formatId, pages: [{ configId, state }] }`. Read when the editor mounts; give the component a new `key` to open another document.                                                                           |
+| `onChange`     | none                                                         | The whole document after every change (edits, added or moved pages, undo). Store it as it comes; debounce on your side if saving is expensive.                                                                |
+| `services`     | downloads through the browser, uploads as object URLs, no AI | `CanvasEditorServices` from `@ggraphic/editor/CanvasEditorProvider`. Pass only what you have: a `mediaLibrary` for durable uploads, `aiDraft`, `iconSearch`, `fileDelivery` …                                 |
+| `locale`       | `'en'`                                                       | `'en'` or `'de'`.                                                                                                                                                                                             |
+| `queryClient`  | own client                                                   | Pass yours to share a cache with the rest of the app.                                                                                                                                                         |
+| `title`        | none                                                         | The design's name, used for the PDF and slide-deck downloads.                                                                                                                                                 |
+| `exportApiRef` | none                                                         | A ref that receives `CanvasEditorExportApi` once the editor has loaded (see Export).                                                                                                                          |
 
 Things to know:
 
@@ -121,9 +117,11 @@ export const brand = defineBrand({
 
 The other five colour roles, the grounds and every picker are derived with WCAG contrast checks. It throws when a colour is not a colour. Load the fonts you name yourself (see Fonts).
 
-### Templates as data: `templatePackFromJson`
+### Templates as data: `loadTemplatePack`
 
-Takes an array of template files (or one file) in the `@ggraphic/schema` format. `@ggraphic/templates-open` is a CC0 pack to start from. Every template becomes a page the editor opens under the template's id. A file that does not read, was written by a newer version or repeats an id is skipped and listed in `problems`; blocks are left out (they are not pages).
+`loadTemplatePack(files)` returns a promise of the pack and loads the parser (the schema validators and the page config, several hundred kB) in a chunk of its own, next to the editor. `templatePackFromJson(files)` does the same work synchronously, but whatever imports it carries that code: called at module level, it more than doubles a host's entry chunk. Use it where you need the pack before rendering, for example on the server.
+
+Both take an array of template files (or one file) in the `@ggraphic/schema` format. `@ggraphic/templates-open` is a CC0 pack to start from. Every template becomes a page the editor opens under the template's id. A file that does not read, was written by a newer version or repeats an id is skipped and listed in `problems`; blocks are left out (they are not pages).
 
 ## Install
 

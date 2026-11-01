@@ -17,8 +17,11 @@ export interface GgraphicDocument {
 export interface GgraphicEditorProps {
   /** The brand pack (`defineBrand`, or `defaultBrand` from `@ggraphic/brand-default`). */
   brand: BrandPack;
-  /** The templates a document's pages come from (`templatePackFromJson`). */
-  templates: TemplatePack;
+  /**
+   * The templates a document's pages come from: `loadTemplatePack(files)`, which keeps the
+   * parser out of the host's entry chunk, or a pack from `templatePackFromJson`.
+   */
+  templates: TemplatePack | Promise<TemplatePack>;
   /**
    * The design to open, read when the editor mounts (give it a new `key` to open another).
    * Absent: one page of the pack's first template, or a blank page, on the default format.
