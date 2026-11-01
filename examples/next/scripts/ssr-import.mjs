@@ -5,17 +5,17 @@
  * nothing. Next.js bundles it instead; the server HTML is checked in tests/ssr.spec.ts.
  */
 import { defaultBrand } from '@ggraphic/brand-default';
-import { GgraphicEditor, templatePackFromJson } from '@ggraphic/editor/embed';
+import { GgraphicEditor, loadTemplatePack } from '@ggraphic/editor/embed';
 import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
 
 import templateFiles from '../app/templates.json' with { type: 'json' };
 
-const templates = templatePackFromJson(templateFiles);
-if (templates.problems.length > 0) {
-  throw new Error(`Skipped templates: ${JSON.stringify(templates.problems)}`);
-}
-
+const templates = loadTemplatePack(templateFiles);
 const html = renderToString(createElement(GgraphicEditor, { brand: defaultBrand, templates }));
 if (html !== '') throw new Error(`Expected no server markup, got: ${html}`);
+
+// The parser's chunk resolves from the published files too.
+const { problems } = await templates;
+if (problems.length > 0) throw new Error(`Skipped templates: ${JSON.stringify(problems)}`);
 console.log('@ggraphic/editor/embed imports in Node and renders nothing on the server.');

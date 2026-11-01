@@ -5,18 +5,17 @@
 
 import { defaultBrand } from '@ggraphic/brand-default';
 import '@ggraphic/brand-default/fonts';
-import '@ggraphic/editor/styles/compiled';
-import {
-  GgraphicEditor,
-  templatePackFromJson,
-  type GgraphicDocument,
-} from '@ggraphic/editor/embed';
+import '@ggraphic/editor/styles/compiled.css';
+import { GgraphicEditor, loadTemplatePack, type GgraphicDocument } from '@ggraphic/editor/embed';
 import { useState } from 'react';
 
 import templateFiles from './templates.json';
 
-const templates = templatePackFromJson(templateFiles);
-if (templates.problems.length > 0) console.warn('Skipped templates', templates.problems);
+// The parser loads in a chunk of its own, next to the editor; GgraphicEditor resolves the promise.
+const templates = loadTemplatePack(templateFiles);
+void templates.then(({ problems }) => {
+  if (problems.length > 0) console.warn('Skipped templates', problems);
+});
 
 // This module runs on the server too, which has no localStorage.
 function storedDesign(): GgraphicDocument | undefined {
