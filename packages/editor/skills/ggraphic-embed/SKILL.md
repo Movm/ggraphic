@@ -62,7 +62,7 @@ Props:
 Things to know:
 
 - **Client only, SSR-safe import.** Importing `@ggraphic/editor/embed` touches no browser global, so a server-rendered page (Next.js app router, Remix …) can import it. It renders nothing on the server and loads the editor in the browser after hydration. No `dynamic(..., { ssr: false })` needed.
-- **Give it room.** Put it in a container with a height; the Studio gives its editor the full viewport (`min-height: 100dvh`, flex column).
+- **Give it a box with a height.** The editor fills exactly the container it is rendered in (`height: 100%`): top bar, sidebar, panel and bottom bar sit inside it, and the pages scroll inside it, so your own header or sidebar can sit next to it. The container needs a definite height (`height: calc(100dvh - 56px)`, or a flex item that is stretched to one); a container that only has a `min-height` gives the editor nothing to fill.
 - **One brand and locale per page.** The registers are module-level: two `GgraphicEditor`s on one page share the brand and locale of the one rendered last. Template ids are stored in documents and never re-registered: a second pack that reuses an id keeps the first one's template.
 - **No collaboration** unless you use the low-level path below.
 
@@ -207,6 +207,7 @@ A template is a `FullCanvasConfig` (canvas size, sidebar tabs and sections, elem
 - `formatId` is one of the editor's formats (`@ggraphic/editor/formats/index`), e.g. `post-portrait`, `post-portrait-tall`, `profile-square`, `slide-16-9`.
 - Pass `initialPages` to open a stored multi-page document; `onPagesChange` to hear every change; `exportApiRef` for programmatic export and `getPages()`; `readOnly` to lock it; `chromeLeft` / `chromeCenter` / `chromeRight` for your own top bar items.
 - `collaborative` connects a page to a Yjs room (`@ggraphic/collab`); without it the host saves the document itself.
+- `CanvasEditorShell` is as tall as the viewport (`--editor-height: 100dvh`), as a full-screen host expects. To make it fill a container of yours instead, set `--editor-height: 100%` on an element around it; the chrome is positioned inside the editor either way.
 - Konva needs `window`: in Next.js and other SSR frameworks render the shell client-only (`'use client'` plus a dynamic import with `ssr: false`).
 
 ### Per-document brand
