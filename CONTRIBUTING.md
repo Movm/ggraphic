@@ -40,6 +40,7 @@ To run Studio with Docker Compose instead, see [docs/self-hosting.md](./docs/sel
 | `packages/ui`                       | UI kit used by Studio                             | MPL-2.0  |
 | `packages/templates-open`           | Open template pack                                | CC0-1.0  |
 | `apps/studio`, `apps/studio-server` | ggraphic Studio, the hostable app                 | AGPL-3.0 |
+| `examples/*`                        | Host examples built from the packed packages      | MPL-2.0  |
 
 ## Rules that keep the packages usable
 
@@ -59,7 +60,7 @@ git commit -s -m "feat(core): add layer lock"
 
 This adds a `Signed-off-by: Your Name <you@example.com>` trailer. CI rejects pull requests with unsigned commits.
 
-Your contribution is licensed under the licence of the part you change: MPL-2.0 for `packages/*`, CC0-1.0 for `packages/templates-open`, AGPL-3.0 for `apps/*`.
+Your contribution is licensed under the licence of the part you change: MPL-2.0 for `packages/*`, CC0-1.0 for `packages/templates-open`, AGPL-3.0 for `apps/*`. The host examples in `examples/*` are MPL-2.0, like the packages they embed.
 
 ## Commits
 

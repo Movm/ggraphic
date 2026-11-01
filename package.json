@@ -19,6 +19,7 @@
     "gate:render:update": "pnpm --filter @ggraphic/studio gate:render:update",
     "check:licences": "node scripts/check-licences.mjs",
     "check:esm": "node scripts/check-esm-specifiers.mjs",
+    "check:packed": "node scripts/check-packed.mjs",
     "api:report": "node scripts/api-report.mjs",
     "api:check": "node scripts/api-report.mjs --check",
     "check:guards:self-test": "node scripts/check-licences.mjs --self-test && node scripts/check-esm-specifiers.mjs --self-test",
@@ -27,6 +28,7 @@
     "release": "pnpm -r build && changeset publish"
   },
   "devDependencies": {
+    "@arethetypeswrong/cli": "0.18.5",
     "@changesets/cli": "^2.29.0",
     "@eslint/js": "^9.39.5",
     "eslint": "^9.39.5",
@@ -35,6 +37,7 @@
     "eslint-plugin-react-hooks": "7.1.1",
     "globals": "^16.0.0",
     "prettier": "3.9.10",
+    "publint": "0.3.25",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.2"
   }
