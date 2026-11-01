@@ -26,6 +26,8 @@ const NONE: ReadonlySet<string> = new Set();
 
 export function useHiddenTemplates(): {
   hiddenIds: ReadonlySet<string>;
+  /** The list has been read, or reading it failed: until then `hiddenIds` is not yet the answer. */
+  settled: boolean;
   /** Only owners may hide. */
   canHide: boolean;
   setHidden: (templateId: string, hidden: boolean) => void;
@@ -47,5 +49,10 @@ export function useHiddenTemplates(): {
   const hiddenIds = useMemo(() => (query.data ? new Set(query.data) : NONE), [query.data]);
   const { mutate } = mutation;
   const setHidden = useCallback((id: string, hidden: boolean) => mutate({ id, hidden }), [mutate]);
-  return { hiddenIds, canHide: organisation.role === 'owner', setHidden };
+  return {
+    hiddenIds,
+    settled: !query.isPending,
+    canHide: organisation.role === 'owner',
+    setHidden,
+  };
 }

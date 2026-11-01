@@ -28,11 +28,12 @@ export function BlockInsertProvider({
   children,
 }: EditorShellProviderProps) {
   const brand = activeBrand();
-  // Hidden for everyone: a page that already holds a block keeps it.
-  const { hiddenIds } = useHiddenTemplates();
+  // Hidden for everyone: a page that already holds a block keeps it. Until the hidden list is in,
+  // no block is offered, so a hidden one never flashes up.
+  const { hiddenIds, settled } = useHiddenTemplates();
   const bloecke = useMemo<LibraryBlock[]>(() => {
     const aspect = formatId ? formatAspect(formatId) : null;
-    if (!aspect) return [];
+    if (!aspect || !settled) return [];
     const entries = studioCatalog().entries.filter(
       (e) =>
         !hiddenIds.has(e.id) &&
@@ -40,7 +41,7 @@ export function BlockInsertProvider({
         offeredSchemes(e.template, brand).length > 0
     );
     return blockLibrary(entries);
-  }, [formatId, brand, hiddenIds]);
+  }, [formatId, brand, hiddenIds, settled]);
 
   const insert = useCallback(
     async (blockId: string, target: BlockTarget = {}): Promise<boolean> => {
@@ -62,8 +63,13 @@ export function BlockInsertProvider({
   );
 
   const value = useMemo<BlockInsertApi | null>(
-    () => (bloecke.length > 0 ? { bloecke, isLoading: false, insert } : null),
-    [bloecke, insert]
+    () =>
+      !settled
+        ? { bloecke, isLoading: true, insert }
+        : bloecke.length > 0
+          ? { bloecke, isLoading: false, insert }
+          : null,
+    [bloecke, insert, settled]
   );
   return <BlockInsertContext.Provider value={value}>{children}</BlockInsertContext.Provider>;
 }

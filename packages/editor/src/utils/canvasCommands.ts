@@ -31,10 +31,17 @@ import {
 } from '@ggraphic/editor/utils/orientation';
 import { openTextEditor } from '@ggraphic/editor/utils/textEditorOpeners';
 
-import { pruneGroups, readGroups, wholeGroupsIn, withoutGroup } from '../groups/pageGroups.js';
+import {
+  pruneGroups,
+  readGroups,
+  remapGroups,
+  wholeGroupsIn,
+  withoutGroup,
+} from '../groups/pageGroups.js';
 import { CanvasClipboard } from './canvasClipboard.js';
 import { moveLayerTo, type CanvasItem, type LayerStep } from './canvasLayerManager.js';
 import {
+  createInstanceId,
   DUPLICATE_OFFSET,
   duplicateElementInState,
   findDuplicableEntry,
@@ -226,11 +233,18 @@ export function createCanvasCommands<TState extends Partial<BaseCanvasState>>(
   const copyQuietly = (): boolean => {
     const ids = selection();
     const state = ctx.getState();
-    const entries = ids
-      .map((id) => findDuplicableEntry(state, id, ctx.template))
-      .filter((entry): entry is DuplicableEntry => entry !== null);
-    if (entries.length === 0) return false;
-    CanvasClipboard.copy({ entries, bounds: measure(ids) });
+    const found = ids.flatMap((id) => {
+      const entry = findDuplicableEntry(state, id, ctx.template);
+      return entry ? [{ id, entry }] : [];
+    });
+    if (found.length === 0) return false;
+    const copiedIds = found.map((item) => item.id);
+    CanvasClipboard.copy({
+      entries: found.map((item) => item.entry),
+      sourceIds: copiedIds,
+      groups: wholeGroupsIn(readGroups(state as Record<string, unknown>), copiedIds),
+      bounds: measure(ids),
+    });
     return true;
   };
 
@@ -307,6 +321,18 @@ export function createCanvasCommands<TState extends Partial<BaseCanvasState>>(
       const result = insertInstance(next, entry, { offset });
       next = result.state;
       newIds.push(result.newId);
+    }
+    // A copied group comes back as a group of the pasted elements: its own id, the same block.
+    if (content.groups.length > 0) {
+      const idMap = new Map(content.sourceIds.map((id, i) => [id, newIds[i]!]));
+      const pasted = remapGroups(content.groups, idMap).map((group) => ({
+        ...group,
+        id: createInstanceId('group'),
+      }));
+      next = {
+        ...next,
+        groups: [...readGroups(next as Record<string, unknown>), ...pasted],
+      };
     }
     commit(next, newIds);
     ctx.announce?.(

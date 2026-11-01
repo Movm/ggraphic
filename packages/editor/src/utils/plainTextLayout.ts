@@ -8,8 +8,12 @@
  * word when none fits, and drops the whitespace at the break.
  */
 
-/** Width of `text` in px; `graphemes` is its length in code points (letter spacing is per grapheme). */
+/** Width of `text` in px; `graphemes` is its length in grapheme clusters (letter spacing is per grapheme). */
 export type MeasureLine = (text: string, graphemes: number) => number;
+
+const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+const splitGraphemes = (line: string): string[] =>
+  Array.from(segmenter.segment(line), (part) => part.segment);
 
 export function plainTextLines(
   text: string,
@@ -19,7 +23,7 @@ export function plainTextLines(
 ): string[] {
   const out: string[] = [];
   for (const line of text.split('\n')) {
-    const graphemes = [...line];
+    const graphemes = splitGraphemes(line);
     const length = graphemes.length;
     const lineWidth = measure(line, length);
     if (!(Number.isFinite(maxWidth) && lineWidth > maxWidth)) {
