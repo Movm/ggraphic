@@ -198,6 +198,14 @@ export function effectiveAccent(text: {
  */
 const REAL_BOLD_ITALIC: ReadonlySet<string> = new Set(['Fraunces']);
 
+/** Built in, or declared by a registered brand (`BrandFonts.boldItalicFamilies`). */
+function hasRealBoldItalic(family: string): boolean {
+  return (
+    REAL_BOLD_ITALIC.has(family) ||
+    registeredBrands().some((brand) => brand.fonts.boldItalicFamilies?.includes(family))
+  );
+}
+
 /**
  * The family that carries the bold cut of `family`, when a registered brand
  * declares it as a family of its own (`BrandFonts.boldFamilies`):
@@ -236,7 +244,7 @@ export function runFont(
     if (weightBoldFamily) return { fontFamily: weightBoldFamily, fontStyle: 'normal' };
     return { fontFamily: family, fontStyle: konvaFontStyle(italic ? 'italic' : 'normal', weight) };
   }
-  if (bold && italic && REAL_BOLD_ITALIC.has(family)) {
+  if (bold && italic && hasRealBoldItalic(family)) {
     return { fontFamily: family, fontStyle: 'bold italic' };
   }
   const boldFamily = boldFamilyOf(family);

@@ -94,6 +94,12 @@ export interface BrandFonts {
   condensed?: string;
   /** Families whose bold cut is declared as a family of its own, regular → bold. */
   boldFamilies?: Readonly<Record<string, string>>;
+  /**
+   * Families whose `bold italic` is a real cut the host loads (for example a
+   * Black Italic). For every other family a bold italic run draws italic,
+   * so the browser fakes no weight.
+   */
+  boldItalicFamilies?: readonly string[];
 }
 
 export interface BrandFontFace {
