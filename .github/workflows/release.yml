@@ -26,12 +26,13 @@ jobs:
           node-version: '22'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - uses: changesets/action@v1
+      # v2 pairs with @changesets/cli 3. It reads what was published from the CLI's output file
+      # (CHANGESETS_OUTPUT, passed down through `pnpm release`), not from stdout, and takes the
+      # GitHub token from its `github-token` input, which defaults to the job's token.
+      - uses: changesets/action@v2
         with:
-          version: pnpm version-packages
-          publish: pnpm release
+          version-script: pnpm version-packages
+          publish-script: pnpm release
         # No npm token: pnpm publishes through npm trusted publishing (OIDC, `id-token: write`),
         # which also attaches provenance. A token here, or `registry-url` on setup-node, would
         # make it skip OIDC. Each package's trusted publisher is Movm/ggraphic, release.yml.
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
