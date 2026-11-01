@@ -56,6 +56,9 @@ and are checked, including the licence in each set's `info.json`, by
 Fraunces, Instrument Sans, Raleway, Bricolage Grotesque and Anton are bundled from
 the Fontsource packages and licensed under the SIL Open Font License 1.1
 (full text below).
+`@ggraphic/brand-default` loads all of them except Raleway from the same packages
+(`@ggraphic/brand-default/fonts`) and carries this list and the licence text in its
+own `THIRD_PARTY_NOTICES`.
 
 - Copyright 2020 The Fraunces Project Authors (https://github.com/undercasetype/Fraunces)
 - Copyright 2022 The Instrument Sans Project Authors (https://github.com/Instrument/instrument-sans)

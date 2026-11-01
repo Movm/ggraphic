@@ -202,6 +202,7 @@
     "./page/pageState": "./src/page/pageState.ts",
     "./page/seeds": "./src/page/seeds.ts",
     "./page/slotBudgets": "./src/page/slotBudgets.ts",
+    "./page/templatePack": "./src/page/templatePack.ts",
     "./page/typography": "./src/page/typography.ts",
     "./primitives/AssetPrimitive": "./src/primitives/AssetPrimitive.tsx",
     "./primitives/CanvasBackground": "./src/primitives/CanvasBackground.tsx",
