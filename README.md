@@ -2,20 +2,26 @@
 
 ggraphic is a brand-neutral, template-based, AI-centred open-source design editor, built on [react-konva](https://konvajs.org/docs/react/). Think of a Canva-like editor you can embed in your own app or host yourself: documents are described by a typed schema, rendered and edited by a core and an editor UI, and can be created or modified by AI.
 
-> Status: skeleton. Packages are imported into this repository in a separate step (see [scripts/import-from-gruenerator.md](./scripts/import-from-gruenerator.md)).
+> [!WARNING]
+> **Alpha, untested.** ggraphic is early work in progress. Nothing here has been used in production or by anyone outside the project yet.
+>
+> - **No stability promise:** APIs, the document format and database migrations can change without notice, and there is no upgrade path between versions yet.
+> - **Limited testing:** the test suites run locally, but there is no CI, no release and no security review. The npm packages are not published yet.
+>
+> Try it, read it, open issues, but do not rely on it for anything you cannot afford to lose.
 
 ## Packages
 
-| Package                             | npm                        | Path                      | Licence  | Status                 |
-| ----------------------------------- | -------------------------- | ------------------------- | -------- | ---------------------- |
-| Document schema                     | `@ggraphic/schema`         | `packages/schema`         | MPL-2.0  | planned (first import) |
-| Core (state, operations, rendering) | `@ggraphic/core`           | `packages/core`           | MPL-2.0  | planned (first import) |
-| Editor UI                           | `@ggraphic/editor`         | `packages/editor`         | MPL-2.0  | planned (first import) |
-| AI helpers                          | `@ggraphic/ai`             | `packages/ai`             | MPL-2.0  | later                  |
-| Default brand                       | `@ggraphic/brand-default`  | `packages/brand-default`  | MPL-2.0  | later                  |
-| Open template pack                  | `@ggraphic/templates-open` | `packages/templates-open` | CC0-1.0  | planned                |
-| ggraphic Studio (hostable app)      | n/a                        | `apps/studio`             | AGPL-3.0 | later                  |
-| ggraphic Studio server              | n/a                        | `apps/studio-server`      | AGPL-3.0 | MVP                    |
+| Package                             | npm                        | Path                      | Licence  | Status      |
+| ----------------------------------- | -------------------------- | ------------------------- | -------- | ----------- |
+| Document schema                     | `@ggraphic/schema`         | `packages/schema`         | MPL-2.0  | alpha       |
+| Core (state, operations, rendering) | `@ggraphic/core`           | `packages/core`           | MPL-2.0  | alpha       |
+| Editor UI                           | `@ggraphic/editor`         | `packages/editor`         | MPL-2.0  | alpha       |
+| AI helpers                          | `@ggraphic/ai`             | `packages/ai`             | MPL-2.0  | alpha       |
+| Default brand                       | `@ggraphic/brand-default`  | `packages/brand-default`  | MPL-2.0  | not started |
+| Open template pack                  | `@ggraphic/templates-open` | `packages/templates-open` | CC0-1.0  | alpha       |
+| ggraphic Studio (hostable app)      | n/a                        | `apps/studio`             | AGPL-3.0 | alpha       |
+| ggraphic Studio server              | n/a                        | `apps/studio-server`      | AGPL-3.0 | alpha       |
 
 ## Licence model
 

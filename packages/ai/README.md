@@ -1,5 +1,7 @@
 # @ggraphic/ai
 
+> **Alpha, untested.** Early work in progress: the API and the document format can change without notice. See the [repository README](../../README.md#ggraphic).
+
 Optional AI helpers for ggraphic. Licensed under the [Mozilla Public License 2.0](./LICENSE).
 
 The package is pure: it builds prompts and JSON schemas and validates what a model answers, but it never talks to a network. The host injects a `CallObject` that does one model round trip per attempt.

@@ -1,5 +1,7 @@
 # @ggraphic/ui
 
+> **Alpha, untested.** Early work in progress: the API and the document format can change without notice. See the [repository README](../../README.md#ggraphic).
+
 Design tokens and accessible React components for ggraphic's landing, auth and app surfaces. MPL-2.0. Derived from the design mockups; the review and every decision are in [`docs/design/ui-kit-review.md`](../../docs/design/ui-kit-review.md).
 
 ## Install
