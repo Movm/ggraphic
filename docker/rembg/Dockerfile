@@ -35,5 +35,8 @@ RUN mkdir -p "$NUMBA_CACHE_DIR" \
 
 USER nobody
 EXPOSE 7000
+# For `docker compose ps` and `up --wait`. The image has no curl or wget, so Python asks.
+HEALTHCHECK --interval=10s --timeout=5s --start-period=60s \
+  CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:7000/openapi.json', timeout=4)"]
 # Studio asks for the model with every image (REMBG_MODEL, default u2net).
 ENTRYPOINT ["rembg", "s", "--host", "0.0.0.0", "--port", "7000", "--no-ui"]

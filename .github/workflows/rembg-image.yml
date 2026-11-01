@@ -45,11 +45,14 @@ jobs:
         run: |
           docker network create --internal rembg-smoke
           docker run -d --name rembg --network rembg-smoke "$IMAGE:ci"
+          # The image's healthcheck says when the server is up; compose's `up --wait` relies on it.
+          health() { docker inspect -f '{{.State.Health.Status}}' rembg; }
+          for attempt in $(seq 1 60); do [ "$(health)" = healthy ] && break; sleep 2; done
+          test "$(health)" = healthy
           mkdir -p "$RUNNER_TEMP/cut"
           cp packages/templates-open/src/samples/group-1.jpg "$RUNNER_TEMP/cut/in.jpg"
-          cut_out() {
-            docker run --rm --network rembg-smoke --user "$(id -u):$(id -g)" -v "$RUNNER_TEMP/cut:/cut" \
-              --entrypoint python "$IMAGE:ci" -c '
+          docker run --rm --network rembg-smoke --user "$(id -u):$(id -g)" -v "$RUNNER_TEMP/cut:/cut" \
+            --entrypoint python "$IMAGE:ci" -c '
           import urllib.request, uuid
           boundary = uuid.uuid4().hex
           image = open("/cut/in.jpg", "rb").read()
@@ -59,8 +62,6 @@ jobs:
           request = urllib.request.Request("http://rembg:7000/api/remove", body,
                                            {"Content-Type": f"multipart/form-data; boundary={boundary}"})
           open("/cut/out.png", "wb").write(urllib.request.urlopen(request, timeout=120).read())'
-          }
-          for attempt in $(seq 1 30); do cut_out && break; sleep 4; done
           test -s "$RUNNER_TEMP/cut/out.png"
       - name: The result is a PNG with a transparent background
         run: |
