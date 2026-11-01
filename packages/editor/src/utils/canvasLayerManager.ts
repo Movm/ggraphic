@@ -160,3 +160,29 @@ export function canMoveLayer(items: readonly CanvasItem[], id: string, step: Lay
   );
   return target !== null && target.from !== target.to;
 }
+
+/**
+ * An action that inserts an element writes only its own list, never `layerOrder`, so the new item
+ * stays untracked and `buildSortedRenderList` draws it among the other untracked ones in per-kind
+ * order: a new icon (first kind) landed under an older chart (last kind). Wrapped around an
+ * action's state update, this puts every item that update introduces on top of the page: the new
+ * `layerOrder` is the render order of `prev` (materialized when it was empty, as `moveLayerTo`
+ * does) followed by the new ids.
+ *
+ * Template elements are not inserts and stay where the config puts them. An update that already
+ * wrote a different `layerOrder` (a duplicate placed above its original) is left alone.
+ */
+export function withInsertsOnTop<
+  TState extends StateWithFeatures & { layerOrder?: string[] },
+  TActions = Record<string, unknown>,
+>(config: FullCanvasConfig<TState, TActions>, prev: TState, next: TState): TState {
+  if (next === prev || next.layerOrder !== prev.layerOrder) return next;
+  const before = buildCanvasItems(config, prev);
+  const known = new Set(before.map((item) => item.id));
+  const added = buildCanvasItems(config, next)
+    .filter((item) => item.type !== 'element' && !known.has(item.id))
+    .map((item) => item.id);
+  if (added.length === 0) return next;
+  const order = buildSortedRenderList(before, prev.layerOrder ?? []).map((item) => item.id);
+  return { ...next, layerOrder: [...order, ...added] };
+}
