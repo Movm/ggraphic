@@ -8,7 +8,6 @@
  * and a populated fixture that sets every optional number. Keyed by `stateKey`, as `BINDABLE_FIELDS` is.
  */
 import {
-  aliasFontFamily,
   minTextSizePx,
   parseColor,
   toHex,
@@ -24,6 +23,7 @@ import {
   type SlotFit,
 } from '@ggraphic/schema';
 
+import { aliasFontFamily } from '../utils/fontAliases.js';
 import { GRAIN_SPECK_ALPHA } from '../utils/grainSpec.js';
 import { PAGE_COUNTER_PROBE } from '../utils/pageCounter.js';
 import { plainTextLines } from '../utils/plainTextLayout.js';

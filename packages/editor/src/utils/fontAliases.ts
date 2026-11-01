@@ -1,7 +1,18 @@
 // SPDX-License-Identifier: MPL-2.0
-import { FONT_FAMILY_ALIASES, aliasFontFamily } from '@ggraphic/core';
+import { FONT_FAMILY_ALIASES, aliasFontFamily as aliasReplacedFamily } from '@ggraphic/core';
 
-export { FONT_FAMILY_ALIASES, aliasFontFamily };
+import { declaredFontFamilies } from '../brand/brandRegistry.js';
+
+export { FONT_FAMILY_ALIASES };
+
+/**
+ * A single family mapped to its current family. A family a registered brand
+ * pack declares stays as it is: the host ships that font, so the alias would
+ * only swap it for one the host does not load.
+ */
+export function aliasFontFamily(family: string): string {
+  return declaredFontFamilies().has(family) ? family : aliasReplacedFamily(family);
+}
 
 /**
  * A family name or CSS stack ("PT Sans, Arial, sans-serif") with every
@@ -15,8 +26,8 @@ export function resolveFontFamily(fontFamily: string): string {
     .map((part) => {
       const trimmed = part.trim();
       const bare = trimmed.replace(/^['"]|['"]$/g, '');
-      const target = FONT_FAMILY_ALIASES[bare];
-      if (!target) return part;
+      const target = aliasFontFamily(bare);
+      if (target === bare) return part;
       return trimmed === bare ? target : `"${target}"`;
     })
     .join(',');
