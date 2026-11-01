@@ -50,7 +50,16 @@ export const ALLOWED = new Set([
   'Zlib',
 ]);
 
-export const ROOT_PACKAGES = ['schema', 'core', 'editor', 'collab', 'ui', 'ai', 'templates-open'];
+export const ROOT_PACKAGES = [
+  'schema',
+  'core',
+  'editor',
+  'collab',
+  'ui',
+  'ai',
+  'templates-open',
+  'brand-default',
+];
 
 // Packages whose manifest declares no licence although they ship one. Keyed by exact
 // version, so a bump falls back to the manifest and needs a fresh look.

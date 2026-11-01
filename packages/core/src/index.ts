@@ -47,6 +47,7 @@ export {
   safeArea,
 } from './brand/layout.js';
 export { deriveBrandColors, deriveGrounds, type BrandColorInputs } from './brand/derive.js';
+export { defineBrand, type BrandInputs } from './brand/define.js';
 export { fitLogoBox } from './brand/logoFit.js';
 export {
   FONT_ROLES,
