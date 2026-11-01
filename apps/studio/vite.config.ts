@@ -18,7 +18,14 @@ const testBrandsSrc = path.resolve(
   '../../packages/templates-open/test/testBrands.ts'
 );
 
-export default defineConfig({
+/**
+ * `vite build --mode gate` (with `NODE_ENV=development`) builds the render gate's own entries into
+ * `dist-gate`, and `vite preview --mode gate` serves them. The gate used to run on the dev server,
+ * whose transform middleware crashed V8 while sending the multi-MB editor module (#109).
+ */
+const GATE_MODE = 'gate';
+
+export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss()],
   resolve: {
     // @ggraphic/schema points `import` at a dist nobody builds in the workspace; read its source,
@@ -39,12 +46,28 @@ export default defineConfig({
     // The Studio server; same origin for the browser, it has no CORS.
     proxy: { '/api': 'http://127.0.0.1:8080' },
   },
-  build: {
-    outDir: 'dist',
-    // One page. `gate.html` (the render gate) and `compiled.html` are dev and test entries served by the dev server;
-    // naming the input keeps it out of the build, and `e2e/renderGate.spec.ts` builds to prove it.
-    rollupOptions: { input: path.resolve(import.meta.dirname, 'index.html') },
-    // The editor is one large chunk by design; it loads only on the editor route.
-    chunkSizeWarningLimit: 6000,
-  },
-});
+  build:
+    mode === GATE_MODE
+      ? {
+          outDir: 'dist-gate',
+          rollupOptions: {
+            input: {
+              gate: path.resolve(import.meta.dirname, 'gate.html'),
+              compiled: path.resolve(import.meta.dirname, 'compiled.html'),
+            },
+          },
+          chunkSizeWarningLimit: 6000,
+          // Unminified, so `e2e/compiledCss.spec.ts` can compare the served rules with the
+          // editor's compiled.css; the minifier merges and rewrites `@layer` blocks.
+          cssMinify: false,
+        }
+      : {
+          outDir: 'dist',
+          // One page. `gate.html` (the render gate) and `compiled.html` are test entries with a
+          // build of their own (`--mode gate`); naming the input keeps them out of this build, and
+          // `e2e/renderGate.spec.ts` builds to prove it.
+          rollupOptions: { input: path.resolve(import.meta.dirname, 'index.html') },
+          // The editor is one large chunk by design; it loads only on the editor route.
+          chunkSizeWarningLimit: 6000,
+        },
+}));

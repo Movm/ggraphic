@@ -27,8 +27,12 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],
   webServer: {
-    // compiled.html (e2e/compiledCss.spec.ts) loads the editor's built stylesheet.
-    command: `pnpm --filter @ggraphic/editor build:css && pnpm exec vite --host 127.0.0.1 --port ${PORT} --strictPort`,
+    // compiled.html (e2e/compiledCss.spec.ts) loads the editor's built stylesheet. The gate's
+    // entries are built and previewed, not served by the dev server: its transform middleware
+    // crashed V8 sending the multi-MB editor module (#109). NODE_ENV=development keeps what the dev
+    // server gave: React's checks, the editor's development-only errors and the `development`
+    // export condition, which resolves workspace packages to their source.
+    command: `pnpm --filter @ggraphic/editor build:css && NODE_ENV=development pnpm exec vite build --mode gate --logLevel warn && pnpm exec vite preview --mode gate --host 127.0.0.1 --port ${PORT} --strictPort`,
     url: `http://127.0.0.1:${PORT}/gate.html?list=1`,
     reuseExistingServer: false,
     timeout: 120_000,
