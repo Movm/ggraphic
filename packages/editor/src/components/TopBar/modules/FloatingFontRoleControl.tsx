@@ -43,7 +43,7 @@ export function FloatingFontRoleControl({ text, onChange }: FloatingFontRoleCont
         onChange(picked.role);
       }}
       style={{ fontFamily: stackOf(family) }}
-      className="h-8 max-canvas-mobile:h-11 max-w-36 shrink-0 rounded-md border-none bg-transparent px-1 cursor-pointer text-[13px] font-medium text-[var(--editor-text)] hover:bg-[var(--editor-surface-hover)]"
+      className={`${tiles ? 'h-11 -mb-3' : 'h-8 max-canvas-mobile:h-11'} max-w-36 shrink-0 rounded-md border-none bg-transparent px-1 cursor-pointer text-[13px] font-medium text-[var(--editor-text)] hover:bg-[var(--editor-surface-hover)]`}
     >
       {role === null && (
         <option value={CUSTOM} disabled>
@@ -58,7 +58,8 @@ export function FloatingFontRoleControl({ text, onChange }: FloatingFontRoleCont
     </select>
   );
   if (!tiles) return select;
-  // On the mobile tile bar the select sits above a caption; its accessible name stays on the select.
+  // On the mobile tile bar the select keeps its full 44 px; the caption sits in its empty
+  // lower edge and lets taps through. The accessible name stays on the select.
   return (
     <div className="flex flex-col items-center justify-end gap-1 h-14 pb-2 shrink-0">
       {select}

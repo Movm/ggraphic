@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
 import React, { createContext, useContext } from 'react';
 
+import { cn } from '@ggraphic/editor/utils/cn';
+
 /**
  * Kacheln statt Knöpfe: mobil steht unter jedem Werkzeug der Auswahl-Leiste
  * sein Name, wie in der Bereichs-Leiste und bei Canva — eine Reihe nackter
@@ -39,7 +41,11 @@ export function TileCaption({
   if (!useBarTiles()) return null;
   return (
     <span
-      className="text-[11px] font-medium leading-none text-[var(--editor-text-secondary)]"
+      className={cn(
+        'text-[11px] font-medium leading-none text-[var(--editor-text-secondary)]',
+        // A label only: taps go to the control underneath.
+        decorative && 'pointer-events-none'
+      )}
       aria-hidden={decorative || undefined}
     >
       {children}
