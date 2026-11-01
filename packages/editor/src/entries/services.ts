@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-/** Host services: the service types `CanvasEditorProvider` takes, their browser defaults, toasts and storage keys. */
+/** Host services: the service types `CanvasEditorProvider` takes, their browser defaults, toasts, storage keys and screen-corner reservations. */
 export {
   type CanvasEditorServices,
   type CanvasEditorHostServices,
@@ -10,8 +10,8 @@ export {
   type CanvasCarouselService,
   type CanvasFeedbackService,
   type CanvasImageUrlService,
-  type CanvasImpressumParts,
-  type CanvasImpressumService,
+  type CanvasImprintParts,
+  type CanvasImprintService,
   type CanvasMediaItem,
   type CanvasMediaLibraryService,
   type CanvasMediaUploadResult,
@@ -26,3 +26,9 @@ export {
   type EditorToastAction,
 } from '../utils/editorToast.js';
 export { registerHostStorageKeys, type HostStorageKeyName } from '../utils/hostStorageKeys.js';
+export {
+  type MeasuredCornerReservation,
+  type MeasuredCornerReservationHook,
+  registerMeasuredCornerReservation,
+  type ScreenCorner,
+} from '../utils/cornerReservation.js';

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { registerMessages } from '../i18n/messages.js';
 import {
+  CANVAS_FORMAT_GROUP_ORDER,
   canvasFormatGroupLabel,
   canvasFormatGroupOrder,
   registerCanvasFormatGroups,
@@ -32,37 +33,53 @@ afterEach(() => {
 });
 
 describe('format groups', () => {
-  it('without host groups: today order and German labels', () => {
-    expect(canvasFormatGroupOrder()).toEqual([
-      'sharepic',
-      'sharepic-tall',
-      'profilbild',
-      'praesentation',
+  it('without host groups: the built-in order and German labels', () => {
+    expect(canvasFormatGroupOrder()).toEqual(['post', 'square', 'slides']);
+    expect(['post', 'square', 'slides', 'print'].map(canvasFormatGroupLabel)).toEqual([
+      'Beiträge',
+      'Quadratisch',
+      'Präsentationen',
+      'Print',
     ]);
-    expect(
-      ['sharepic', 'sharepic-tall', 'profilbild', 'praesentation', 'print'].map(
-        canvasFormatGroupLabel
-      )
-    ).toEqual(['Sharepics', 'Sharepics 3:4', 'Profilbild', 'Präsentationen', 'Print']);
   });
 
   it('a registered host group follows the built-ins and accepts formats', () => {
     registerCanvasFormatGroups([{ id: 'story', label: 'Stories' }]);
     registerCanvasFormats([story]);
-    expect(canvasFormatGroupOrder()).toEqual([
-      'sharepic',
-      'sharepic-tall',
-      'profilbild',
-      'praesentation',
-      'story',
-    ]);
+    expect(canvasFormatGroupOrder()).toEqual(['post', 'square', 'slides', 'story']);
     expect(canvasFormatGroupLabel('story')).toBe('Stories');
+  });
+
+  it('places a host group by its order between the built-ins', () => {
+    registerCanvasFormatGroups([
+      { id: 'story', label: 'Stories' },
+      { id: 'post-tall', label: 'Posts 3:4', order: CANVAS_FORMAT_GROUP_ORDER.post + 50 },
+      { id: 'banner', label: 'Banner', order: CANVAS_FORMAT_GROUP_ORDER.slides },
+      { id: 'flyer', label: 'Flyer' },
+    ]);
+    // Positioned by order (a tie keeps the built-in first), unpositioned last in registration order.
+    expect(canvasFormatGroupOrder()).toEqual([
+      'post',
+      'post-tall',
+      'square',
+      'slides',
+      'banner',
+      'story',
+      'flyer',
+    ]);
+  });
+
+  it('throws for a group without a finite order', () => {
+    expect(() =>
+      registerCanvasFormatGroups([{ id: 'story', label: 'Stories', order: Number.NaN }])
+    ).toThrow(/story/);
+    expect(canvasFormatGroupOrder()).toEqual(['post', 'square', 'slides']);
   });
 
   it('built-in labels follow the active locale', () => {
     registerMessages('en');
-    expect(canvasFormatGroupLabel('praesentation')).toBe('Presentations');
-    expect(canvasFormatGroupLabel('profilbild')).toBe('Profile picture');
+    expect(canvasFormatGroupLabel('slides')).toBe('Presentations');
+    expect(canvasFormatGroupLabel('square')).toBe('Square');
   });
 
   it('throws for a format with an unknown group, leaving formats unchanged', () => {
@@ -77,7 +94,7 @@ describe('format groups', () => {
         { id: 'a', label: 'B' },
       ])
     ).toThrow(/'a'/);
-    expect(canvasFormatGroupOrder()).toHaveLength(4);
+    expect(canvasFormatGroupOrder()).toHaveLength(3);
   });
 
   it('rejects a replacement that orphans a registered format, keeping the groups', () => {

@@ -21,7 +21,7 @@ import { useIsCanvasMobile } from '../../../hooks/useIsCanvasMobile.js';
 import { useTrackUnsplashDownload } from '../../../hooks/useTrackUnsplashDownload.js';
 import { MOBILE_INPUT_TEXT } from '../../sidebarStyles.js';
 import { IllustrationSettings } from '../IllustrationSettings.js';
-import { FramePreviewDefs } from '../RahmenSection.js';
+import { FramePreviewDefs } from '../FramesSection.js';
 
 import { BackgroundCatalog } from './BackgroundCatalog.js';
 import { CategoryCard } from './CategoryCard.js';

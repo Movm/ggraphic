@@ -19,7 +19,7 @@ import { Check, LayoutTemplate, RotateCcw, Sparkles } from 'lucide-react';
  * A suggestion flagged `undo: 'pages'` (spec path: the deck was replaced in one
  * Yjs step) reverts through `onUndoPages`, which discards that replacement for
  * good (`discardReplaceDeck`: Redo does not bring it back). The „Vorlagen"
- * tab uses the same banner after replacing a design (`source: 'vorlage'`).
+ * tab uses the same banner after replacing a design (`source: 'template'`).
  *
  * `variant="card"` is the same decision over the locked canvas, in the slot of
  * the selection bar: while a suggestion is open the pages take no input.
@@ -41,8 +41,8 @@ export function FloatingAiSuggestionBanner({
 
   if (!pending) return null;
 
-  const noun = pending.source === 'vorlage' ? t.topBar.aiTemplate : t.topBar.aiSuggestionNoun;
-  const Icon = pending.source === 'vorlage' ? LayoutTemplate : Sparkles;
+  const noun = pending.source === 'template' ? t.topBar.aiTemplate : t.topBar.aiSuggestionNoun;
+  const Icon = pending.source === 'template' ? LayoutTemplate : Sparkles;
   const handleAccept = () => setPending(null);
 
   const handleReject = () => {

@@ -2,15 +2,15 @@
 import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
 import {
   plainImageUrls,
-  type CanvasStudioAssetItem,
-  type CanvasStudioAssetScope,
+  type CanvasAssetLibraryItem,
+  type CanvasAssetLibraryScope,
 } from '../../../hostServices.js';
 import { useMessages } from '../../../i18n/messages.js';
 import { registeredAssetCatalog } from '../../../utils/canvasAssets.js';
 import { fetchShareImageFile } from '../../../utils/mediaPlacement.js';
 import { useRef, useState } from 'react';
 
-import { GalleryTabs, StudioGalleryGrid, useGalleryScopes } from '../StudioGallery.js';
+import { GalleryTabs, AssetGalleryGrid, useGalleryScopes } from '../AssetGallery.js';
 
 import type { BackgroundControls } from '../../../configs/types.js';
 
@@ -27,7 +27,7 @@ function useBackgroundPick(onImageChange: ImageChange) {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const pick = async (item: CanvasStudioAssetItem) => {
+  const pick = async (item: CanvasAssetLibraryItem) => {
     if (!registeredAssetCatalog().isInstanceSrc(item.src)) return;
     const seq = ++seqRef.current;
     setError(null);
@@ -56,7 +56,7 @@ export function BackgroundCatalog({
   searchQuery?: string;
 }) {
   const t = useMessages();
-  const [scope, setScope] = useState<CanvasStudioAssetScope>('shop');
+  const [scope, setScope] = useState<CanvasAssetLibraryScope>('shop');
   const scopes = useGalleryScopes();
   const { pick, pendingId, error } = useBackgroundPick(onImageChange);
 
@@ -76,7 +76,7 @@ export function BackgroundCatalog({
           {error}
         </div>
       )}
-      <StudioGalleryGrid
+      <AssetGalleryGrid
         kind="background"
         scope={scope}
         query={searchQuery}

@@ -80,16 +80,23 @@ export function takeDropPlaced(): boolean {
   return placed;
 }
 
-/** Drag type of a Vorlagen tile; the payload is the Vorlage id. */
-export const VORLAGE_DRAG_TYPE = 'application/x-ggraphic-vorlage';
+/** Drag type of a template tile; the payload is the template id. */
+export const TEMPLATE_DRAG_TYPE = 'application/x-ggraphic-template';
 
-export function isVorlageDrag(dataTransfer: DataTransfer | null): boolean {
-  return !!dataTransfer && Array.from(dataTransfer.types).includes(VORLAGE_DRAG_TYPE);
+export function isTemplateDrag(dataTransfer: DataTransfer | null): boolean {
+  return !!dataTransfer && Array.from(dataTransfer.types).includes(TEMPLATE_DRAG_TYPE);
 }
 
-export function readVorlageDrag(dataTransfer: DataTransfer | null): string | null {
-  return dataTransfer?.getData(VORLAGE_DRAG_TYPE) || null;
+export function readTemplateDrag(dataTransfer: DataTransfer | null): string | null {
+  return dataTransfer?.getData(TEMPLATE_DRAG_TYPE) || null;
 }
+
+/** @deprecated Use `TEMPLATE_DRAG_TYPE`. Removed in the next alpha. */
+export const VORLAGE_DRAG_TYPE = TEMPLATE_DRAG_TYPE;
+/** @deprecated Use `isTemplateDrag`. Removed in the next alpha. */
+export const isVorlageDrag = isTemplateDrag;
+/** @deprecated Use `readTemplateDrag`. Removed in the next alpha. */
+export const readVorlageDrag = readTemplateDrag;
 
 export function isMediaDrag(dataTransfer: DataTransfer | null): boolean {
   return !!dataTransfer && Array.from(dataTransfer.types).includes(MEDIA_DRAG_TYPE);

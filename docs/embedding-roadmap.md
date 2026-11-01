@@ -105,6 +105,43 @@ Each step is its own PR and can be released on its own.
 - **`internal/*` is part of the published package, without semver:** first-party hosts may use it and accept breakage in any release. The public list carries the promise.
 - **No change in this stage to the other packages' barrels** (core, collab, ai, ui are already single-entry).
 
+## Later stages
+
+Not scheduled. Recorded so the measurements and the decisions do not get lost.
+
+### Self-hosting Studio
+
+Scheduled out of order on 2026-11-01, as its own package next to E:
+
+- a prebuilt multi-arch image on GHCR;
+- a compose file that needs no clone;
+- a CI smoke test of the image (setup token, editor, PNG export);
+- rembg as a compose profile;
+- a quickstart in `docs/self-hosting.md`.
+
+Estimate: 8–18 agent hours.
+
+### F: React Native (deferred)
+
+Decision 2026-11-01: deferred, not dropped. Measured on main 14118a15 (non-test source):
+
+| Part                                                                  | Lines   | On React Native                            |
+| --------------------------------------------------------------------- | ------- | ------------------------------------------ |
+| `core`, `schema`, `collab`                                            | ~7,400  | runs as is (plain TS, Yjs)                 |
+| editor logic: stores, utils, configs, templates, AI operations        | ~34,700 | mostly reusable                            |
+| Konva code: rendering, transformer, snapping, text overlay (57 files) | ~17,700 | rewrite; react-konva has no native backend |
+| DOM UI: sidebar, panels, menus, Radix, Tiptap, Tailwind (141 files)   | ~24,200 | rewrite as React Native components         |
+
+Options, in agent hours:
+
+| Option                                           | Content                                                                                                                                                                                                                                                                                                   | Effort   |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| **F1: embed the web editor**                     | `@ggraphic/react-native` wraps `<GgraphicEditor>` as an Expo DOM component or WebView. A native bridge handles export, image picking and sharing. This is what the Grünerator's app already does by hand (`web-viewer.tsx`, `SharepicRenderHost.tsx`).                                                    | ~10–20   |
+| **F2: native renderer, display and export only** | `react-native-skia`, with all element kinds redrawn, Skia Paragraph text layout, fonts, filters, SVG illustrations and charts. Editing stays on the web. Two renderers must stay pixel-identical, so the render gate has to cover both against the same goldens. Every new element kind then costs twice. | ~60–120  |
+| **F3: fully native editor**                      | F2 plus native selection, transform, snapping and text editing (Gesture Handler, Reanimated), and the whole editor UI rebuilt in React Native. The result is two editors that drift apart with every feature.                                                                                             | ~250–450 |
+
+Recommendation when F is picked up: F1. F2 only for a concrete need, such as native feed previews without a WebView. F3 is not recommended. F2 and F3 are rough estimates; only the split of the code was measured.
+
 ## Why this order
 
 - **A before everything:** while the host writes state and actions, embedding stays expensive however good the docs and CSS are.

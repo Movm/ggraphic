@@ -3,7 +3,7 @@ import { type BrandPack } from '@ggraphic/core';
 import { useDocumentBrand } from '../../../brand/documentBrand.js';
 import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
 import { useAllIconsCatalog, useIconCatalog } from '../../../hooks/useIconCatalog.js';
-import { useNoStudioAssets } from '../../../hostServices.js';
+import { useNoAssetLibrary } from '../../../hostServices.js';
 import { messages, useMessages } from '../../../i18n/messages.js';
 import {
   assetMatchesLocale,
@@ -24,7 +24,7 @@ import { PiImageFill } from 'react-icons/pi';
 import { useEmojiCatalog } from '../../../hooks/useEmojiCatalog.js';
 import { withTone } from '../../../utils/emoji/emojiCatalog.js';
 import { KAWAII_ILLUSTRATIONS } from '../../../utils/illustrations/kawaii.js';
-import { ALL_PALETTE_SHAPES, getShapeVariant } from '../FormenSection.js';
+import { ALL_PALETTE_SHAPES, getShapeVariant } from '../ShapesSection.js';
 
 import { ElementThumb } from './ElementThumb.js';
 import { useStockPhotos } from './useStockPhotos.js';
@@ -226,8 +226,8 @@ function emojiStandInCover(): ReactNode {
 const STAND_IN_EMOJI = '1f600';
 
 function BackgroundCover() {
-  const { useStudioAssets = useNoStudioAssets } = useCanvasEditorServices();
-  const { items } = useStudioAssets({ kind: 'background', scope: 'shop', q: '', sort: 'new' });
+  const { useAssetLibrary = useNoAssetLibrary } = useCanvasEditorServices();
+  const { items } = useAssetLibrary({ kind: 'background', scope: 'shop', q: '', sort: 'new' });
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const first = items[0];
   const src = first

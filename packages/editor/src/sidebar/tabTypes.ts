@@ -24,8 +24,6 @@ export type CoreSidebarTabId =
   | 'uploads'
   | 'tools'
   | 'chat'
-  // Editor-level: the whole document, not a page (components/CanvasEditor/vorlagenTab.ts)
-  | 'vorlagen'
   // Editor-level: every element of the active page (components/CanvasEditor/layersTab.ts)
   | 'layers'
   // Editor-level, opened from the context bar's "Effekte" (sidebar/sections/EffectsSection.tsx)

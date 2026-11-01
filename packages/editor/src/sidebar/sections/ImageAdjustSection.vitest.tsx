@@ -80,7 +80,7 @@ describe('ImageAdjustSection duotone', () => {
       'dark'
     );
     fireEvent.click(
-      screen.getByRole('button', { name: IMAGE_PRESETS.find((p) => p.id === 'grau')!.label })
+      screen.getByRole('button', { name: IMAGE_PRESETS.find((p) => p.id === 'grayscale')!.label })
     );
     const patch = onUpdateImage.mock.calls[0]![1];
     expect(patch).toMatchObject({ grayscale: true, duotoneLow: null, duotoneHigh: null });

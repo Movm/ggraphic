@@ -5,11 +5,11 @@ import { cn } from '../../utils/cn.js';
 import {
   isElementDrag,
   isMediaDrag,
-  isVorlageDrag,
+  isTemplateDrag,
   markDropPlaced,
   readElementDrag,
   readMediaDrag,
-  readVorlageDrag,
+  readTemplateDrag,
 } from '../../utils/mediaDrop.js';
 import React, { useCallback, useState, memo } from 'react';
 
@@ -39,7 +39,7 @@ export const PageWrapper = memo(function PageWrapper({
   onMovePage,
   onDuplicatePage,
   onChangeTemplate,
-  onDropVorlage,
+  onDropTemplate,
   onExport,
   onCancel,
   callbacks,
@@ -101,7 +101,7 @@ export const PageWrapper = memo(function PageWrapper({
   const handleClick = useCallback((e: React.MouseEvent) => activateFrom(e.target), [activateFrom]);
 
   // An upload, photo or Elemente tile dragged from the sidebar lands where it
-  // is dropped, on this page. A Vorlagen tile becomes a page of its own, so
+  // is dropped, on this page. A template tile becomes a page of its own, so
   // the page hands it on with its id: a Seite goes in after it.
   const [isDropTarget, setIsDropTarget] = useState(false);
   const handleDragOver = useCallback(
@@ -109,7 +109,7 @@ export const PageWrapper = memo(function PageWrapper({
       if (
         !isMediaDrag(e.dataTransfer) &&
         !isElementDrag(e.dataTransfer) &&
-        !(onDropVorlage && isVorlageDrag(e.dataTransfer))
+        !(onDropTemplate && isTemplateDrag(e.dataTransfer))
       ) {
         return;
       }
@@ -117,7 +117,7 @@ export const PageWrapper = memo(function PageWrapper({
       e.dataTransfer.dropEffect = 'copy';
       setIsDropTarget(true);
     },
-    [onDropVorlage]
+    [onDropTemplate]
   );
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setIsDropTarget(false);
@@ -127,10 +127,10 @@ export const PageWrapper = memo(function PageWrapper({
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       setIsDropTarget(false);
-      const vorlageId = onDropVorlage ? readVorlageDrag(e.dataTransfer) : null;
-      if (vorlageId) {
+      const templateId = onDropTemplate ? readTemplateDrag(e.dataTransfer) : null;
+      if (templateId) {
         e.preventDefault();
-        onDropVorlage?.(vorlageId, page.id);
+        onDropTemplate?.(templateId, page.id);
         return;
       }
       const media = readMediaDrag(e.dataTransfer);
@@ -150,7 +150,7 @@ export const PageWrapper = memo(function PageWrapper({
         void blocks.insert(element.blockId, { pageIndex: index, at });
       } else if (element && canvasRef.current?.dropElement(e, element)) markDropPlaced();
     },
-    [isActive, onSelect, index, canvasRef, onDropVorlage, page.id, trackDownload, blocks]
+    [isActive, onSelect, index, canvasRef, onDropTemplate, page.id, trackDownload, blocks]
   );
 
   return (

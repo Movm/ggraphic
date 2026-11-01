@@ -614,7 +614,7 @@ function CanvasEditorInner({
   // A tile dropped on a page goes to the open document tab: a Seite lands
   // after that page, a print Vorlage asks first on a design with content.
   const pageDropRef = useRef<EditorTabDropHandle>(null);
-  const handleDropVorlage = useCallback(
+  const handleDropTemplate = useCallback(
     (id: string, pageId: string) => pageDropRef.current?.drop(id, pageId),
     []
   );
@@ -1769,8 +1769,8 @@ function CanvasEditorInner({
                           onMovePage={movePage}
                           onDuplicatePage={duplicatePage}
                           onChangeTemplate={PagePicker ? handleOpenTemplateChange : undefined}
-                          onDropVorlage={
-                            takesPageDrops && !readOnly ? handleDropVorlage : undefined
+                          onDropTemplate={
+                            takesPageDrops && !readOnly ? handleDropTemplate : undefined
                           }
                           onExport={handleExport}
                           onCancel={onCancel}

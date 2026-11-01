@@ -11,6 +11,7 @@ export { buildIllustrationCapability } from '../ai/illustrationCapability.js';
 export {
   type CanvasAiApplyOverride,
   type CanvasAiApplyOverrides,
+  type CanvasAiHostTypes,
   type CanvasAiNamedOption,
   type HostCanvasAiCapabilities,
   type HostCanvasAiOperation,
