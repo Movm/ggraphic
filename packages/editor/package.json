@@ -292,6 +292,7 @@
     "./ui/alert-dialog": "./src/ui/alert-dialog.tsx",
     "./ui/button": "./src/ui/button.tsx",
     "./ui/dialog": "./src/ui/dialog.tsx",
+    "./ui/editorScope": "./src/ui/editorScope.ts",
     "./ui/icon-button": "./src/ui/icon-button.tsx",
     "./ui/input": "./src/ui/input.tsx",
     "./ui/label": "./src/ui/label.tsx",
