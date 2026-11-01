@@ -91,12 +91,9 @@ jobs:
         uses: oven-sh/setup-bun@v2
       # Its own workspace file makes this folder the root, so pnpm does not climb to the
       # repository's. Isolated and without hoisting, a package sees only what it declares.
-      # The host declares @types/node: undici-types, pulled in by pptxgenjs, cannot see it
-      # otherwise (#119).
       - name: Install with pnpm (isolated, no hoisting)
         if: matrix.manager == 'pnpm'
         run: |
-          npm pkg set 'devDependencies[@types/node]=^22'
           cat > pnpm-workspace.yaml <<'EOF'
           nodeLinker: isolated
           hoist: false
