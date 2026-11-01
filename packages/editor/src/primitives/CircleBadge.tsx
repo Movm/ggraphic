@@ -11,7 +11,7 @@
  * - Inline text editing on double-click per text line
  */
 
-import { type Bindings } from '@ggraphic/core';
+import { type CircleBadgeTextLine } from '@ggraphic/core';
 import { useRef, useCallback, useEffect, useState, memo } from 'react';
 import { Group, Circle, Text, Rect, Transformer } from 'react-konva';
 
@@ -31,31 +31,10 @@ import { useTextEditorOpener } from '../utils/textEditorOpeners.js';
 import type { SnapTarget } from '@ggraphic/editor/utils/snapping';
 import type Konva from 'konva';
 
+export { type CircleBadgeInstance, type CircleBadgeTextLine } from '@ggraphic/core';
+
 // Rahmen für Snap und Geometrie-Meldung, pro Aufruf neu beschrieben (synchron, ohne Allokation).
 const dragFrame = createBoxFrame();
-
-export interface CircleBadgeTextLine {
-  text: string;
-  yOffset: number;
-  fontFamily: string;
-  fontSize: number;
-  fontWeight?: 'normal' | 'bold';
-}
-
-export interface CircleBadgeInstance {
-  id: string;
-  /** Fields that follow a brand role; see `@ggraphic/core` bindings. */
-  bind?: Bindings;
-  x: number;
-  y: number;
-  radius: number;
-  backgroundColor: string;
-  textColor: string;
-  rotation: number;
-  scale: number;
-  opacity?: number;
-  textLines: CircleBadgeTextLine[];
-}
 
 export interface CircleBadgeProps {
   id: string;

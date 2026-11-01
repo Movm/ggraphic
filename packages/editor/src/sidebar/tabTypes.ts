@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
-import type { BindingRef } from '@ggraphic/core';
 import type { IconType } from 'react-icons';
+
+export { type BackgroundColorOption } from '@ggraphic/core';
 
 /**
  * The sidebar tab ids the editor itself knows.
@@ -50,12 +51,4 @@ export interface SidebarTab {
   icon: IconType;
   label: string;
   ariaLabel: string;
-}
-
-export interface BackgroundColorOption {
-  id: string;
-  label: string;
-  color: string;
-  /** The role the swatch stands for; picking it binds the background to the brand. */
-  ref?: BindingRef;
 }
