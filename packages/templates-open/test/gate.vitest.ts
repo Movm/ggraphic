@@ -6,15 +6,20 @@ import { checkFile } from './gateRun.js';
 import { testBrandPacks } from './testBrands.js';
 
 describe('render gate stage 1 over the pack', () => {
-  it('every template of the pack passes stage 1', () => {
-    const problems = OPEN_TEMPLATES.flatMap((raw) => checkFile(raw));
-    const lines = problems.map(
-      (p) =>
-        `${p.templateId} [${p.rule}] ${p.brand ?? ''} ${p.scheme ?? ''} ${p.format ?? ''}: ${p.detail}`
-    );
-    expect(lines).toEqual([]);
-    // Every template × brand × scheme × format: ~3 s locally, ~8 s on CI, and the pack keeps growing.
-  }, 60_000);
+  // One test per template: each gets its own budget, and a failure names the template. The
+  // contrast check over photos runs every brand × scheme × format × 256 photo colours; at 79
+  // templates the whole pack took 82 s on CI in one test (01.11.2026), over a single 60 s budget.
+  it.each(OPEN_TEMPLATES.map((raw) => [(raw as { id?: string }).id ?? '(no id)', raw] as const))(
+    '%s passes stage 1',
+    (_id, raw) => {
+      const lines = checkFile(raw).map(
+        (p) =>
+          `${p.templateId} [${p.rule}] ${p.brand ?? ''} ${p.scheme ?? ''} ${p.format ?? ''}: ${p.detail}`
+      );
+      expect(lines).toEqual([]);
+    },
+    60_000
+  );
 
   it('testBrandPacks has brandDefault plus the 11 ids', () => {
     const packs = testBrandPacks();
