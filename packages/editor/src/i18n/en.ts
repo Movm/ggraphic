@@ -138,6 +138,7 @@ export const en: Messages = {
   textFormat: {
     toolbar: 'Text formatting',
     bold: 'Bold (⌘B)',
+    boldNeedsItalicCut: 'Bold – this font has no bold italic cut',
     italic: 'Italic (⌘I)',
     underline: 'Underline (⌘U)',
     accent: 'Accent',

@@ -147,6 +147,7 @@ export const de = {
   textFormat: {
     toolbar: 'Textformatierung',
     bold: 'Fett (⌘B)',
+    boldNeedsItalicCut: 'Fett – diese Schrift hat keinen fett-kursiven Schnitt',
     italic: 'Kursiv (⌘I)',
     underline: 'Unterstrichen (⌘U)',
     accent: 'Akzent',

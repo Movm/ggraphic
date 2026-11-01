@@ -197,11 +197,11 @@ export function CombinedTextSection({
               <span className="text-xs text-foreground-muted shrink-0 w-5">
                 {getTextTypeIcon(text.type)}
               </span>
-              <input
-                type="text"
+              <textarea
                 value={text.text}
+                rows={text.text.split('\n').length}
                 onChange={(e) => onUpdateText(text.id, { text: e.target.value })}
-                className={`flex-1 min-w-0 bg-transparent border-none outline-none text-sm text-foreground placeholder:text-foreground-muted max-canvas-mobile:text-[var(--editor-text)] ${MOBILE_INPUT_TEXT}`}
+                className={`flex-1 min-w-0 resize-none [field-sizing:content] bg-transparent border-none outline-none text-sm text-foreground placeholder:text-foreground-muted max-canvas-mobile:text-[var(--editor-text)] ${MOBILE_INPUT_TEXT}`}
                 placeholder={getTextTypePlaceholder(text.type)}
               />
               <button

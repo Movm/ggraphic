@@ -3,6 +3,7 @@ import { Popover as PopoverPrimitive } from 'radix-ui';
 import * as React from 'react';
 
 import { cn } from '../utils/cn.js';
+import { EDITOR_SCOPE } from './editorScope.js';
 
 function Popover({ ...props }: React.ComponentProps<typeof PopoverPrimitive.Root>) {
   return <PopoverPrimitive.Root data-slot="popover" {...props} />;
@@ -21,6 +22,7 @@ function PopoverContent({
   return (
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Content
+        {...EDITOR_SCOPE}
         data-slot="popover-content"
         align={align}
         sideOffset={sideOffset}

@@ -10,11 +10,11 @@
 import { type TextAccent, type TextMarker } from '@ggraphic/core';
 import { layoutRichTextBlock, wrapLines, type MeasureRun, type RunStyle } from '@ggraphic/schema';
 
-import { brandCuts, registeredBrands } from '@ggraphic/editor/brand/brandRegistry';
+import { registeredBrands } from '@ggraphic/editor/brand/brandRegistry';
 import { notifyFontLoaded } from '@ggraphic/editor/hooks/useFontGeneration';
 
 import { aliasFontFamily, resolveFontFamily } from './fontAliases.js';
-import { primaryFontFamily } from './fontMarkSupport.js';
+import { hasRealBoldItalic, primaryFontFamily } from './fontMarkSupport.js';
 
 export { type TextAccent, type TextMarker } from '@ggraphic/core';
 
@@ -187,20 +187,6 @@ export function effectiveAccent(text: {
   const { accent, accentFill } = text;
   if (!accentFill) return accent ?? undefined;
   return { ...accent, fill: accentFill };
-}
-
-/**
- * Familien, deren `bold italic` in `typography.css` ein echter Schnitt ist:
- * Fraunces trägt dort Bold Italic als `italic` und Black Italic als
- * `bold italic`. Nur hier gilt „kursiv schlägt fett" nicht — der Browser
- * fettet nichts synthetisch, er lädt den Black-Schnitt. Den braucht die
- * Betonung einiger Markenpakete.
- */
-const REAL_BOLD_ITALIC: ReadonlySet<string> = new Set(['Fraunces']);
-
-/** Built in, or declared by a registered brand (`BrandFonts.cuts`). */
-function hasRealBoldItalic(family: string): boolean {
-  return REAL_BOLD_ITALIC.has(family) || brandCuts(family)?.boldItalic === true;
 }
 
 /**

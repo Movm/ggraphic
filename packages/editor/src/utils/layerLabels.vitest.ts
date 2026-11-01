@@ -27,6 +27,18 @@ const element = (data: Record<string, unknown>) =>
 
 const state = { headline: 'Klimaschutz', currentImageSrc: 'foto.jpg' };
 
+describe('layerLabel inline marks', () => {
+  it.each([
+    ['_schräg_', 'Text: schräg'],
+    ['**fett** und ==marker== ++akzent++', 'Text: fett und marker akzent'],
+    ['<u>unter</u> gestrichen', 'Text: unter gestrichen'],
+  ])('strips the markers of %s', (text, expected) => {
+    expect(
+      layerLabel(element({ id: 'headline', type: 'text', textKey: 'headline' }), { headline: text })
+    ).toBe(expected);
+  });
+});
+
 describe('layerLabel', () => {
   it.each<[string, CanvasItem, string]>([
     [

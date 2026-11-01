@@ -28,7 +28,7 @@ describe('font aliases', () => {
 
   it('resolves for marks, loading and PPTX export', () => {
     expect(primaryFontFamily('PT Sans, Arial')).toBe('Instrument Sans');
-    expect(fontMarkSupport('Vollkorn')).toEqual({ bold: true, italic: true });
+    expect(fontMarkSupport('Vollkorn')).toEqual({ bold: true, italic: true, boldItalic: true });
     expect(styledFontSpecs('PT Sans', 60)).toEqual([
       'bold 60px Instrument Sans',
       'italic 60px Instrument Sans',

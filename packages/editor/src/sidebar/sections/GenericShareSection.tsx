@@ -25,6 +25,7 @@ import {
   withAltText,
 } from '@ggraphic/editor/sidebar/components/AltTextField';
 import { SubsectionTabBar } from '../SubsectionTabBar.js';
+import { EDITOR_SCOPE } from '../../ui/editorScope.js';
 
 export interface GenericShareSectionProps {
   exportedImage: string | null;
@@ -305,6 +306,7 @@ function DownloadShareSubsection({
             isMultiPage &&
             createPortal(
               <div
+                {...EDITOR_SCOPE}
                 ref={dlDropdown.menuRef}
                 className={dropdownMenu}
                 style={dlDropdown.style}
@@ -370,6 +372,7 @@ function DownloadShareSubsection({
               onShareAllPages &&
               createPortal(
                 <div
+                  {...EDITOR_SCOPE}
                   ref={shareDropdown.menuRef}
                   className={dropdownMenu}
                   style={shareDropdown.style}
