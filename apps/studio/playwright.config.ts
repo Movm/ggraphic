@@ -27,7 +27,8 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],
   webServer: {
-    command: `pnpm exec vite --host 127.0.0.1 --port ${PORT} --strictPort`,
+    // compiled.html (e2e/compiledCss.spec.ts) loads the editor's built stylesheet.
+    command: `pnpm --filter @ggraphic/editor build:css && pnpm exec vite --host 127.0.0.1 --port ${PORT} --strictPort`,
     url: `http://127.0.0.1:${PORT}/gate.html?list=1`,
     reuseExistingServer: false,
     timeout: 120_000,

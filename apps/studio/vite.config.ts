@@ -41,7 +41,7 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    // One page. `gate.html` (the render gate) is a dev and test entry served by the dev server;
+    // One page. `gate.html` (the render gate) and `compiled.html` are dev and test entries served by the dev server;
     // naming the input keeps it out of the build, and `e2e/renderGate.spec.ts` builds to prove it.
     rollupOptions: { input: path.resolve(import.meta.dirname, 'index.html') },
     // The editor is one large chunk by design; it loads only on the editor route.

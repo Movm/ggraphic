@@ -8,6 +8,7 @@ import type {
   CanvasMenuEntry,
 } from '@ggraphic/editor/components/CanvasContextMenu/canvasMenuModel';
 import type { CanvasCommandId } from '@ggraphic/editor/utils/canvasCommandRegistry';
+import { EDITOR_SCOPE } from '../../ui/editorScope.js';
 
 export interface CanvasMenuRequest {
   point: { clientX: number; clientY: number };
@@ -161,7 +162,7 @@ export function CanvasContextMenu({
               <PiCaretRight size={14} className="ml-auto" aria-hidden />
             </ContextMenu.SubTrigger>
             <ContextMenu.Portal>
-              <ContextMenu.SubContent className={CONTENT} sideOffset={4}>
+              <ContextMenu.SubContent {...EDITOR_SCOPE} className={CONTENT} sideOffset={4}>
                 {entry.entries.map(renderEntry)}
               </ContextMenu.SubContent>
             </ContextMenu.Portal>
@@ -196,6 +197,7 @@ export function CanvasContextMenu({
       <ContextMenu.Portal>
         {request && (
           <ContextMenu.Content
+            {...EDITOR_SCOPE}
             ref={contentRef}
             className={CONTENT}
             aria-label={request.menu.label}
