@@ -61,8 +61,16 @@ const BUILT_IN_GROUPS: ReadonlyArray<BuiltInCanvasFormatGroup> = [
   'print',
 ];
 
-/** The picker groups. Print stays out: a host lists its print formats where it creates print canvases. */
-const PICKER_GROUPS: ReadonlyArray<BuiltInCanvasFormatGroup> = ['post', 'square', 'slides'];
+/**
+ * Where the built-in picker groups sit, with gaps so a host group can go between them
+ * (`CanvasFormatGroupDef.order`, e.g. `CANVAS_FORMAT_GROUP_ORDER.post + 50` for right after posts).
+ * Print stays out: a host lists its print formats where it creates print canvases.
+ */
+export const CANVAS_FORMAT_GROUP_ORDER: Readonly<Record<'post' | 'square' | 'slides', number>> = {
+  post: 100,
+  square: 200,
+  slides: 300,
+};
 
 /**
  * The built-in formats: a 4:5 post, a square and a 16:9 slide. Everything else
@@ -140,6 +148,11 @@ export function registerCanvasFormats(formats: ReadonlyArray<CanvasFormat>): voi
 export interface CanvasFormatGroupDef {
   id: string;
   label: string;
+  /**
+   * Position in the picker, against `CANVAS_FORMAT_GROUP_ORDER`. Without it the group follows all
+   * positioned ones, in registration order. Equal positions keep registration order.
+   */
+  order?: number;
 }
 
 /** Host groups: module-level like the formats, read in non-React code. */
@@ -161,6 +174,9 @@ export function registerCanvasFormatGroups(groups: ReadonlyArray<CanvasFormatGro
   const seen = new Set<string>(BUILT_IN_GROUPS);
   for (const g of groups) {
     if (seen.has(g.id)) throw new Error(`Canvas format group id '${g.id}' is already taken`);
+    if (g.order !== undefined && !Number.isFinite(g.order)) {
+      throw new Error(`Canvas format group '${g.id}' has no finite order`);
+    }
     seen.add(g.id);
   }
   for (const f of hostFormats) {
@@ -173,9 +189,14 @@ export function registerCanvasFormatGroups(groups: ReadonlyArray<CanvasFormatGro
   hostGroups = [...groups];
 }
 
-/** The picker groups, host groups after the built-ins. Read lazily. */
+/** The picker groups by position: the built-ins, host groups where their `order` puts them, unpositioned ones last. Read lazily. */
 export function canvasFormatGroupOrder(): ReadonlyArray<CanvasFormatGroup> {
-  return [...PICKER_GROUPS, ...hostGroups.map((g) => g.id)];
+  const builtIn = Object.entries(CANVAS_FORMAT_GROUP_ORDER).map(([id, order]) => ({ id, order }));
+  const host = hostGroups.map((g) => ({ id: g.id, order: g.order ?? Number.POSITIVE_INFINITY }));
+  // Array#sort is stable: equal positions keep built-ins first, then registration order.
+  return [...builtIn, ...host]
+    .sort((a, b) => (a.order === b.order ? 0 : a.order - b.order))
+    .map((g) => g.id);
 }
 
 /** Display label of a group: the active catalogue for built-ins, the host's label otherwise. */

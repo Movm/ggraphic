@@ -110,6 +110,8 @@ pnpm lint && pnpm format:check
 pnpm check:licences && pnpm check:esm
 ```
 
+To try a package in another app before a release, build it and pack it (`pnpm --filter @ggraphic/<package> build`, then `pnpm pack` in its directory). The builds are incremental: after `rm -rf dist`, also delete the package's `*.tsbuildinfo`, otherwise tsc reports nothing, emits nothing, and the tarball ships without `dist`.
+
 A bug fix comes with a test that fails without it. Tests live next to the code (`*.vitest.ts`, `*.vitest.tsx`, `*.test.ts`).
 
 ## Render gate goldens

@@ -42,7 +42,7 @@ function itemOf(block: LibraryBlock): ElementItem {
 function useStudioBlocks(): ElementBlocks | null {
   const api = useBlockInsert();
   if (!api) return null;
-  const blocks = api.bloecke as LibraryBlock[];
+  const blocks = api.blocks as LibraryBlock[];
   const groups: { label: string; keys: string[] }[] = [];
   for (const block of blocks) {
     const label = familyLabel(block.family);

@@ -23,6 +23,7 @@ export {
   type CanvasFormatGroup,
   type CanvasFormatGroupDef,
   canvasFormatGroupLabel,
+  CANVAS_FORMAT_GROUP_ORDER,
   canvasFormatGroupOrder,
   type CanvasFormatIconKey,
   canvasFormats,
