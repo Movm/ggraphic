@@ -61,3 +61,33 @@ test('the embedded editor mounts, takes a text and exports a PNG', async ({ page
 
   expect(errors).toEqual([]);
 });
+
+test.describe('on a phone', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+
+  test('the page stays reachable above an open sheet', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('[data-ggraphic] canvas').first()).toBeVisible();
+
+    await page.getByRole('button', { name: /^Elements/ }).click();
+    await expect(page.locator('.canvas-editor-layout__main[data-sheet-open]')).toBeVisible();
+
+    // The stage bottom is either visible above the sheet or the canvas area scrolls down to it.
+    const unreachable = () =>
+      page.evaluate(() => {
+        const main = document.querySelector('.canvas-editor-layout__main')!;
+        const stage = document.querySelector('.konvajs-content')!.getBoundingClientRect();
+        const below = stage.bottom - main.getBoundingClientRect().bottom;
+        const scrolls = ['auto', 'scroll'].includes(getComputedStyle(main).overflowY);
+        const scrollRoom = scrolls ? main.scrollHeight - main.clientHeight - main.scrollTop : 0;
+        return Math.max(0, below - scrollRoom);
+      });
+    await expect.poll(unreachable).toBeLessThanOrEqual(1);
+    // ...and the host page itself does not grow under the sheet.
+    const pageOverflow = () =>
+      page.evaluate(
+        () => document.scrollingElement!.scrollHeight - document.scrollingElement!.clientHeight
+      );
+    await expect.poll(pageOverflow).toBe(0);
+  });
+});
