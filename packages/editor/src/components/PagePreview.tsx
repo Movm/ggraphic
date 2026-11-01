@@ -94,6 +94,7 @@ export function PagePreview({
         onCancel={noop}
         callbacks={{}}
         preview
+        previewCaptureRatio={width / stageWidth}
         readOnly
       />
     </AutoSaveStoreProvider>

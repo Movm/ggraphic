@@ -33,7 +33,7 @@ import {
 } from '@ggraphic/editor/utils/coverFit';
 import { isGroupDrag } from '@ggraphic/editor/utils/multiSelect';
 import { ELEMENT_TRANSFORMER, normalizeRotation } from '@ggraphic/editor/utils/orientation';
-import { cacheFiltered, useIsPreviewRender } from '../utils/filterCache.js';
+import { cacheFiltered, usePreviewCaptureRatio } from '../utils/filterCache.js';
 import { recacheNextFrame } from '@ggraphic/editor/utils/recacheNextFrame';
 import {
   boxFrame,
@@ -166,7 +166,7 @@ function CanvasImageInner({
 }: CanvasImageProps) {
   const locked = useIsItemLocked();
   const imageRef = useRef<Konva.Image>(null);
-  const preview = useIsPreviewRender();
+  const captureRatio = usePreviewCaptureRatio();
   // Drag of a cover-fitted photo: the node under the pointer at drag start, and the pan so far
   // (begradigt: die Lage des gedrehten Fotos).
   const panStartRef = useRef<{ part: Rect; dx: number; dy: number; photo: Rect | null } | null>(
@@ -241,7 +241,7 @@ function CanvasImageInner({
     const node = imageRef.current;
     if (!node || !image) return;
     if (color || adjustmentFilters.length > 0) {
-      cacheFiltered(node, preview);
+      cacheFiltered(node, captureRatio);
     } else {
       node.clearCache();
     }
@@ -259,7 +259,7 @@ function CanvasImageInner({
     color,
     adjustments,
     adjustmentFilters.length,
-    preview,
+    captureRatio,
   ]);
 
   const handleTouchStart = useCallback(
