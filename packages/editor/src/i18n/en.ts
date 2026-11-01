@@ -70,6 +70,7 @@ export const en: Messages = {
     background: 'Background',
     backgroundImage: 'Background image …',
     layer: 'Layer',
+    back: 'Back',
   },
 
   announce: {
@@ -513,6 +514,9 @@ export const en: Messages = {
       uploadingN: (n: number) => `Uploading ${n} images…`,
       loadingN: (n: number) => `Loading ${n}…`,
     },
+    effects: {
+      title: 'Effects',
+    },
     layers: {
       title: 'Layers',
       tabAriaLabel: 'Layers: all elements on the page',
@@ -880,7 +884,7 @@ export const en: Messages = {
     aiDiscard: (noun) => `Discard ${noun.toLowerCase()}`,
     aiDiscardUndo: (noun) => `Discard ${noun.toLowerCase()} (undo)`,
     aiKeep: (noun) => `Keep ${noun.toLowerCase()}`,
-    backgroundImageNamed: (label) => `Background image: ${label}`,
+    backgroundImageNamed: (label) => `${label} (background image)`,
     editSelection: 'Edit selection',
     nothingDeletable: 'None of this can be deleted',
     clearSelection: 'Clear selection (Esc)',
@@ -916,9 +920,6 @@ export const en: Messages = {
     undoWin: 'Undo (Ctrl+Z)',
     redoMac: 'Redo (⌘⇧Z)',
     redoWin: 'Redo (Ctrl+Y)',
-    editShadow: 'Edit shadow',
-    editOutline: 'Edit text outline',
-    editGradient: 'Edit gradient',
     background: {
       uploadFailed: 'The image could not be uploaded. Please try again.',
       imageLoadError: 'Could not load the image',
@@ -972,6 +973,15 @@ export const en: Messages = {
     outline: 'Outline',
     outlineWidth: 'Outline width',
     position: 'Position',
+    effects: 'Effects',
+    tiles: {
+      color: 'Color',
+      fontSize: 'Size',
+      fontRole: 'Font',
+      textFormat: 'Format',
+      textAlign: 'Align',
+      remove: 'Remove',
+    },
     shadow: 'Shadow',
     strength: 'Strength',
     shape: 'Shape',

@@ -87,6 +87,7 @@ describe('buildCanvasMenu', () => {
   });
 
   it('bietet Ausrichten im Element- und Mehrfachmenü, Verteilen nur bei mehreren', () => {
+    // Waagerecht und senkrecht getrennt: das Sheet zeigt sonst sechs gleiche Zeilen.
     const sub = (entries: CanvasMenuEntry[]) => {
       const entry = find(entries, 'Ausrichten');
       return entry?.kind === 'sub' ? entry.entries : null;
@@ -96,6 +97,7 @@ describe('buildCanvasMenu', () => {
       'alignLeft',
       'alignCenterH',
       'alignRight',
+      'separator',
       'alignTop',
       'alignMiddle',
       'alignBottom',

@@ -131,7 +131,10 @@ export function CanvasEditorLayout({
         <div className="pointer-events-none sticky top-[var(--editor-topbar-height)] z-[90] h-14 w-full shrink-0 max-canvas-mobile:hidden">
           {contextBar && (
             <div className="absolute inset-x-0 top-0 flex justify-center px-3 pt-3">
-              <div className="pointer-events-auto max-w-full">{contextBar}</div>
+              {/* SelectionPill misst die Unterkante und bleibt darunter. */}
+              <div className="pointer-events-auto max-w-full" data-canvas-context-bar="">
+                {contextBar}
+              </div>
             </div>
           )}
         </div>
