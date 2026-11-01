@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
+import { brandCuts } from '@ggraphic/editor/brand/brandRegistry';
+
 import { aliasFontFamily } from './fontAliases.js';
 /**
  * Welche Auszeichnung eine Schrift tragen kann — abgeleitet aus den
@@ -48,6 +50,10 @@ export function primaryFontFamily(fontFamily: string): string {
   return aliasFontFamily((fontFamily.split(',')[0] ?? '').trim().replace(/^['"]|['"]$/g, ''));
 }
 
+/** A registered brand's `cuts` win over the built-in table: the host loads that family. */
 export function fontMarkSupport(fontFamily: string): FontMarkSupport {
-  return FACES[primaryFontFamily(fontFamily)] ?? NONE;
+  const family = primaryFontFamily(fontFamily);
+  const cuts = brandCuts(family);
+  if (cuts) return { bold: cuts.bold === true, italic: cuts.italic === true };
+  return FACES[family] ?? NONE;
 }

@@ -95,11 +95,19 @@ export interface BrandFonts {
   /** Families whose bold cut is declared as a family of its own, regular → bold. */
   boldFamilies?: Readonly<Record<string, string>>;
   /**
-   * Families whose `bold italic` is a real cut the host loads (for example a
-   * Black Italic). For every other family a bold italic run draws italic,
-   * so the browser fakes no weight.
+   * The real cuts of families the host loads itself (its `fontFaces` may be
+   * empty). Bold and italic are offered only where a real cut exists, and a
+   * bold italic run keeps `bold italic` only where `boldItalic` is set (for
+   * example a Black Italic). Without an entry, a family keeps the editor's
+   * built-in table.
    */
-  boldItalicFamilies?: readonly string[];
+  cuts?: Readonly<Record<string, FontCuts>>;
+}
+
+export interface FontCuts {
+  bold?: boolean;
+  italic?: boolean;
+  boldItalic?: boolean;
 }
 
 export interface BrandFontFace {

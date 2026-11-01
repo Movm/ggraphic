@@ -7,6 +7,7 @@ export {
   type BrandColors,
   type BrandEffects,
   type BrandFontFace,
+  type FontCuts,
   type BrandFonts,
   type BrandImage,
   type BrandLogoAlt,

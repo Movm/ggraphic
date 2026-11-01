@@ -8,7 +8,7 @@
  * and offscreen roots that have no React context. Without a host the editor
  * renders `brandDefault`.
  */
-import { brandDefault, type BrandPack } from '@ggraphic/core';
+import { brandDefault, type BrandPack, type FontCuts } from '@ggraphic/core';
 
 let registered: readonly [BrandPack, ...BrandPack[]] = [brandDefault];
 let declared: ReadonlySet<string> | null = null;
@@ -45,4 +45,13 @@ function packFamilies(pack: BrandPack): string[] {
 /** The active brand's headline family as a CSS stack, for canvas and SVG text a tool draws itself. */
 export function headlineFontStack(): string {
   return `"${activeBrand().fonts.headline}", sans-serif`;
+}
+
+/** The real cuts a registered pack declares for `family`, or null. */
+export function brandCuts(family: string): FontCuts | null {
+  for (const brand of registered) {
+    const cuts = brand.fonts.cuts?.[family];
+    if (cuts) return cuts;
+  }
+  return null;
 }

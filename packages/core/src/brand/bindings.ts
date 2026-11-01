@@ -12,7 +12,7 @@ import {
 } from './schemes.js';
 
 export type BrandColorRole = keyof BrandColors;
-export type BrandFontRole = Exclude<keyof BrandFonts, 'boldFamilies' | 'boldItalicFamilies'>;
+export type BrandFontRole = Exclude<keyof BrandFonts, 'boldFamilies' | 'cuts'>;
 
 /** What a page field follows: a colour of the page's world, a brand colour, a brand font or the logo. */
 export type BindingRef =

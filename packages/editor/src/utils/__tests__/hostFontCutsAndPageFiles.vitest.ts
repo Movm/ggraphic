@@ -7,6 +7,7 @@ import type { RunStyle } from '@ggraphic/schema';
 
 import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
 import { registerMessages } from '@ggraphic/editor/i18n/messages';
+import { fontMarkSupport } from '@ggraphic/editor/utils/fontMarkSupport';
 import { runFont } from '@ggraphic/editor/utils/textUtils';
 import { zipPageImages } from '@ggraphic/editor/utils/zipPageImages';
 
@@ -21,7 +22,15 @@ const BOLD_ITALIC: RunStyle = {
 
 const PACK: BrandPack = {
   ...brandDefault,
-  fonts: { ...brandDefault.fonts, quoteEmphasis: 'Vollkorn', boldItalicFamilies: ['Vollkorn'] },
+  fonts: {
+    ...brandDefault.fonts,
+    body: 'PT Sans',
+    quoteEmphasis: 'Vollkorn',
+    cuts: {
+      'PT Sans': { bold: true, italic: true },
+      Vollkorn: { bold: true, boldItalic: true },
+    },
+  },
 };
 
 afterEach(() => {
@@ -44,6 +53,19 @@ describe('a bold italic run', () => {
 
   it('keeps the built-in real cut', () => {
     expect(runFont('Fraunces', 'normal', BOLD_ITALIC, null).fontStyle).toBe('bold italic');
+  });
+});
+
+describe('the marks a family is offered', () => {
+  it('follow the cuts a registered pack declares', () => {
+    registerBrandPacks([PACK]);
+    expect(fontMarkSupport('PT Sans, Arial, sans-serif')).toEqual({ bold: true, italic: true });
+    expect(fontMarkSupport('Vollkorn')).toEqual({ bold: true, italic: false });
+  });
+
+  it('keep the built-in table where no pack declares the family', () => {
+    expect(fontMarkSupport('Fraunces')).toEqual({ bold: true, italic: true });
+    expect(fontMarkSupport('Raleway')).toEqual({ bold: false, italic: false });
   });
 });
 
