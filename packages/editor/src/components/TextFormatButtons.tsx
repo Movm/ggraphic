@@ -43,6 +43,7 @@ import { type FontMarkSupport } from '../utils/fontMarkSupport.js';
 import { defaultTextMarker, markerSwatches } from '../utils/markerColors.js';
 
 import { CustomColorSwatch } from './CustomColorSwatch.js';
+import { EDITOR_SCOPE } from '../ui/editorScope.js';
 
 export type TextFormatVariant = 'floating' | 'contextBar';
 
@@ -373,6 +374,7 @@ function MarkColorButton({
       {position &&
         createPortal(
           <div
+            {...EDITOR_SCOPE}
             ref={popoverRef}
             {...{ [KEEP_EDITING_ATTR]: '' }}
             role="dialog"

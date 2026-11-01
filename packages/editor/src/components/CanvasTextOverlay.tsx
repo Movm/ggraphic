@@ -101,6 +101,7 @@ import type { RichTextField } from './RichTextField.js';
 import type { OfferedMarks, TextFormatControls } from './TextFormatControls.js';
 import type { Editor } from '@tiptap/react';
 import type Konva from 'konva';
+import { EDITOR_SCOPE } from '../ui/editorScope.js';
 
 export interface OverlayBox {
   top: number;
@@ -665,6 +666,7 @@ function TextEditorRoot({ children }: { children: ReactNode }) {
         // oberen Rand aus dem Sujet heraus.
         createPortal(
           <div
+            {...EDITOR_SCOPE}
             style={{
               position: 'absolute',
               top: box.top,
@@ -703,6 +705,7 @@ function TextEditorRoot({ children }: { children: ReactNode }) {
       {loadFailed &&
         createPortal(
           <div
+            {...EDITOR_SCOPE}
             role="alert"
             className="fixed bottom-4 left-1/2 z-[10000] max-w-[min(420px,calc(100vw-32px))] -translate-x-1/2 rounded-md bg-[var(--editor-surface)] px-4 py-3 text-sm text-[var(--editor-text)] shadow-lg"
           >

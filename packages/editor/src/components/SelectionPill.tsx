@@ -23,6 +23,7 @@ import {
 import { cn } from '@ggraphic/editor/utils/cn';
 
 import type { SelectionBox } from '@ggraphic/editor/components/GenericCanvas';
+import { EDITOR_SCOPE } from '../ui/editorScope.js';
 
 /**
  * Finger (`touch`) oder Maus (`pointer`). Am Desktop ist die Pille kleiner und
@@ -214,6 +215,7 @@ export function SelectionPill({
 
   return createPortal(
     <div
+      {...EDITOR_SCOPE}
       ref={pillRef}
       onKeyDown={onKeyDown}
       onFocus={onFocus}

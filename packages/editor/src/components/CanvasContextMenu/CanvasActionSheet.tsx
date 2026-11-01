@@ -51,6 +51,7 @@ import { cn } from '@ggraphic/editor/utils/cn';
 
 import type { CanvasCommandId } from '@ggraphic/editor/utils/canvasCommandRegistry';
 import type { IconType } from 'react-icons';
+import { EDITOR_SCOPE } from '../../ui/editorScope.js';
 
 type ItemEntry = Extract<CanvasMenuEntry, { kind: 'item' }>;
 type SubEntry = Extract<CanvasMenuEntry, { kind: 'sub' }>;
@@ -260,8 +261,9 @@ export function CanvasActionSheet({
   return (
     <Dialog.Root open={open} onOpenChange={setOpen}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-[1010] bg-black/30" />
+        <Dialog.Overlay {...EDITOR_SCOPE} className="fixed inset-0 z-[1010] bg-black/30" />
         <Dialog.Content
+          {...EDITOR_SCOPE}
           aria-describedby={undefined}
           className="fixed inset-x-0 bottom-0 z-[1010] flex max-h-[75dvh] flex-col rounded-t-2xl bg-[var(--editor-surface)] pb-[env(safe-area-inset-bottom)] text-[var(--editor-text)] shadow-[0_-8px_24px_rgba(0,0,0,0.16)] outline-none"
           onCloseAutoFocus={(e) => {
