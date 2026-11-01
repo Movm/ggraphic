@@ -23,9 +23,15 @@ RUN pip install --no-cache-dir "rembg[cpu]==${REMBG_VERSION}" \
       "sniffio>=1.3.1,<2" "uvicorn>=0.40.0,<0.41.0" "watchdog>=6.0.0,<7"
 
 # The model is downloaded (and its checksum checked) now, so the container needs no network.
+# The download leaves directories only root can read, so the model is opened up for reading.
+# Importing rembg also compiles pymatting's numba functions into NUMBA_CACHE_DIR. numba refuses
+# to start without a cache directory it can write to, so the server's user gets this one.
 ENV U2NET_HOME=/models \
-    NUMBA_CACHE_DIR=/tmp/numba
-RUN rembg d u2net
+    NUMBA_CACHE_DIR=/var/cache/numba
+RUN mkdir -p "$NUMBA_CACHE_DIR" \
+ && rembg d u2net \
+ && chmod -R a+rX "$U2NET_HOME" \
+ && chown -R nobody:nogroup "$NUMBA_CACHE_DIR"
 
 USER nobody
 EXPOSE 7000
