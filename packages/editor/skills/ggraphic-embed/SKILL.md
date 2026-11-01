@@ -60,7 +60,7 @@ Things to know:
 
 - **Client only, SSR-safe import.** Importing `@ggraphic/editor/embed` touches no browser global, so a server-rendered page (Next.js app router, Remix …) can import it. It renders nothing on the server and loads the editor in the browser after hydration. No `dynamic(..., { ssr: false })` needed.
 - **React Server Components.** The entry (and the package root) is marked `'use client'`, so importing it from a server component gives a client reference instead of failing on `createContext`. Render the editor from your own `'use client'` component that builds the brand and the template pack: props passed from a server component must be serialisable, and a template pack holds functions. Rendering `<GgraphicEditor>` straight from a server component therefore only works if every prop you pass is plain data.
-- **Give it room.** Put it in a container with a height; the Studio gives its editor the full viewport (`min-height: 100dvh`, flex column).
+- **Give it a box with a height.** The editor fills exactly the container it is rendered in (`height: 100%`): top bar, sidebar, panel and bottom bar sit inside it, and the pages scroll inside it, so your own header or sidebar can sit next to it. The container needs a definite height (`height: calc(100dvh - 56px)`, or a flex item that is stretched to one); a container that only has a `min-height` gives the editor nothing to fill.
 - **One brand and locale per page.** The registers are module-level: two `GgraphicEditor`s on one page share the brand and locale of the one rendered last. Template ids are stored in documents and never re-registered: a second pack that reuses an id keeps the first one's template.
 - **No collaboration** unless you use the low-level path below.
 
@@ -139,6 +139,8 @@ npm install --save-exact @ggraphic/collab@alpha
 - The packages are **ESM-only** and need Node ≥ 22 for anything that imports them on the server.
 - `konva`, `react`, `react-dom` and `react-konva` are peers. Make sure the host resolves **one** React copy (Vite: `resolve.dedupe: ['react', 'react-dom']`), or hooks fail with "Cannot read properties of null (reading 'useContext')".
 - pnpm with `minimumReleaseAge`: a freshly published alpha is refused for that window. Add exact `@ggraphic/<pkg>@<version>` entries to `minimumReleaseAgeExclude` (and remove them once the version is old enough).
+- pnpm 12 and later print "Agent skills awaiting approval: @ggraphic/editor" on every install: the package ships this skill, and pnpm links it into `.claude/skills/` only once the host approves it (`pnpm approve`). Without approval nothing is linked and the editor works the same.
+- A host that type-checks Node-facing files (`vite.config.ts`, `playwright.config.ts`) declares `@types/node` itself. Without it, a strict pnpm host (`hoist: false`) fails tsc with `TS2688: Cannot find type definition file for 'node'` in `undici-types`; with hoisting, the copy one of the editor's dependencies brings in hides the gap.
 
 ## Styles
 
@@ -240,6 +242,7 @@ A template is a `FullCanvasConfig` (canvas size, sidebar tabs and sections, elem
 - `formatId` is a built-in format (`post-portrait`, `profile-square`, `slide-16-9`) or one the host added with `registerCanvasFormatGroups` / `registerCanvasFormats` from `@ggraphic/editor/templates`. A format joins the `slides` group to become a slide deck; print formats go in `print`.
 - Pass `initialPages` to open a stored multi-page document; `onPagesChange` to hear every change; `exportApiRef` for programmatic export and `getPages()`; `readOnly` to lock it; `chromeLeft` / `chromeCenter` / `chromeRight` for your own top bar items.
 - `collaborative` connects a page to a Yjs room (`@ggraphic/collab`); without it the host saves the document itself.
+- `CanvasEditorShell` is as tall as the viewport (`--editor-height: 100dvh`), as a full-screen host expects. To make it fill a container of yours instead, set `--editor-height: 100%` on an element around it; the chrome is positioned inside the editor either way.
 - Konva needs `window`: in Next.js and other SSR frameworks render the shell client-only (`'use client'` plus a dynamic import with `ssr: false`).
 
 ### Per-document brand

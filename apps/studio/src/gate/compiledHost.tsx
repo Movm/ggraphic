@@ -5,8 +5,7 @@
  * computed styles. A dev and test entry only, like `gate.html`.
  */
 import '@ggraphic/editor/styles/compiled';
-import { CanvasEditorProvider } from '@ggraphic/editor/CanvasEditorProvider';
-import { CanvasEditorShell } from '@ggraphic/editor/components/CanvasEditor/CanvasEditorShell';
+import { CanvasEditorProvider, CanvasEditorShell } from '@ggraphic/editor/shell';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createRoot } from 'react-dom/client';
 

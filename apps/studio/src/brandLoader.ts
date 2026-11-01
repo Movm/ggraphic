@@ -6,8 +6,8 @@
  * Without a pack the editor runs on `studioBrand` alone.
  */
 import { type BrandFontFace, type BrandPack } from '@ggraphic/core';
-import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
-import { measureLogo } from '@ggraphic/editor/page/logoSize';
+import { registerBrandPacks } from '@ggraphic/editor/brand';
+import { measureLogo } from '@ggraphic/editor/page';
 
 import { studioBrand } from './brand';
 

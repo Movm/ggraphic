@@ -5,9 +5,9 @@
  * that does not read is reported and skipped, never half-loaded.
  */
 import { offeredSchemes, type BrandPack, type SchemeId } from '@ggraphic/core';
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { activeBrand } from '@ggraphic/editor/brand';
+import { TEMPLATE_GATE_ADAPTER } from '@ggraphic/editor/templates';
 import { readTemplateFile, type TemplateFile, type TemplateFormat } from '@ggraphic/schema';
-import { TEMPLATE_GATE_ADAPTER } from '@ggraphic/editor/templates/templateGeometry';
 import { OPEN_TEMPLATES, OPEN_TEMPLATE_MANIFEST } from '@ggraphic/templates-open';
 
 export type CatalogSource = 'pack' | 'organisation';

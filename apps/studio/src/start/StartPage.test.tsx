@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { rememberLogoSize } from '@ggraphic/editor/page/logoSize';
+import { rememberLogoSize } from '@ggraphic/editor/page';
+import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
-
-import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
 
 import { type StudioConfig } from '../api/client';
 import { studioBrand } from '../brand';
@@ -32,9 +31,10 @@ vi.mock('@ggraphic/templates-open', async (importOriginal) => {
 
 // The preview canvas is not drawn here: the test reads the page it is asked to draw.
 const drawn = vi.hoisted(() => ({ states: [] as Record<string, unknown>[] }));
-vi.mock('@ggraphic/editor/components/PagePreview', async () => {
+vi.mock('@ggraphic/editor/shell', async (importOriginal) => {
   const { useEffect } = await import('react');
   return {
+    ...(await importOriginal<object>()),
     PagePreview: ({
       state,
       onRendered,
@@ -50,7 +50,8 @@ vi.mock('@ggraphic/editor/components/PagePreview', async () => {
     },
   };
 });
-vi.mock('@ggraphic/editor/configs/configLoader', () => ({
+vi.mock('@ggraphic/editor/config', async (importOriginal) => ({
+  ...(await importOriginal<object>()),
   loadCanvasConfig: async () => ({ id: 'studio-blank', canvas: { width: 1080, height: 1350 } }),
 }));
 

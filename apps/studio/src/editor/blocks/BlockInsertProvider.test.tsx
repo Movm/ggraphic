@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { useBlockInsert } from '@ggraphic/editor/components/CanvasEditor/blockInsertContext';
+import { useBlockInsert } from '@ggraphic/editor/shell';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';

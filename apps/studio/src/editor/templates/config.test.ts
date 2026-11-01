@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { registerBrandPacks, activeBrand } from '@ggraphic/editor/brand/brandRegistry';
-import { registerMessages } from '@ggraphic/editor/i18n/messages';
-import { createPageActions } from '@ggraphic/editor/page/actions';
-import { type PageState } from '@ggraphic/editor/page/pageState';
+import { registerBrandPacks, activeBrand } from '@ggraphic/editor/brand';
+import { registerMessages } from '@ggraphic/editor/i18n';
+import { createPageActions, type PageState } from '@ggraphic/editor/page';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { studioBrand } from '../../brand';
