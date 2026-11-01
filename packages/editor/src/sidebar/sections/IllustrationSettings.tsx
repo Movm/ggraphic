@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 import { bindPatch } from '../../brand/bindPick.js';
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
 import { CustomColorSwatch } from '@ggraphic/editor/components/CustomColorSwatch';
 import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { cn } from '@ggraphic/editor/utils/cn';
@@ -43,6 +43,7 @@ export function IllustrationSettings({
   onDuplicateIllustration,
 }: IllustrationSettingsProps) {
   const t = useMessages();
+  const brand = useDocumentBrand();
   const isKawaiiSelected = selectedIllustration.source === 'kawaii';
   const kawaiiInstance = isKawaiiSelected ? (selectedIllustration as KawaiiInstance) : null;
 
@@ -102,7 +103,7 @@ export function IllustrationSettings({
             {t.sidebar.chart.color}
           </span>
           <div className="flex gap-[var(--spacing-small)] flex-wrap">
-            {activeBrand().palette.map((color) => (
+            {brand.palette.map((color) => (
               <button
                 key={color.id}
                 className={cn(
@@ -122,7 +123,7 @@ export function IllustrationSettings({
             ))}
             <CustomColorSwatch
               value={selectedIllustration.color}
-              presets={activeBrand().palette.map((color) => color.color)}
+              presets={brand.palette.map((color) => color.color)}
               onPick={(color) =>
                 onUpdateIllustration(selectedIllustration.id, {
                   color,

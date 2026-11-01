@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MPL-2.0
+import { type BrandPack } from '@ggraphic/core';
 import { CustomColorSwatch } from '@ggraphic/editor/components/CustomColorSwatch';
 import { headlineFontStack } from '@ggraphic/editor/brand/brandRegistry';
+import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
 import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { brandColors } from '@ggraphic/editor/utils/colorOptions';
 import Konva from 'konva';
@@ -20,8 +22,8 @@ export interface TextPathCreatorToolProps {
   onPlaceImageUrl?: (url: string, fileName: string) => void;
 }
 
-/** The brand's first colour, read when the tool opens. */
-const defaultColor = () => brandColors()[0]?.value ?? '#000000';
+/** The document brand's first colour, read when the tool opens. */
+const defaultColor = (brand: BrandPack) => () => brandColors(brand)[0]?.value ?? '#000000';
 
 interface PathVariant {
   id: string;
@@ -50,14 +52,15 @@ async function renderTextPath(
   data: string,
   fontSize: number,
   color: string,
-  pixelRatio: number
+  pixelRatio: number,
+  fontStack: string
 ): Promise<string | null> {
   const container = document.createElement('div');
   const stage = new Konva.Stage({ container, width: 10, height: 10 });
   const layer = new Konva.Layer();
   stage.add(layer);
 
-  const font = `bold ${fontSize}px ${headlineFontStack()}`;
+  const font = `bold ${fontSize}px ${fontStack}`;
   try {
     await document.fonts.load(font, text);
   } catch {
@@ -68,7 +71,7 @@ async function renderTextPath(
     text,
     data,
     fontSize,
-    fontFamily: headlineFontStack(),
+    fontFamily: fontStack,
     fontStyle: 'bold',
     fill: color,
   });
@@ -97,12 +100,14 @@ export function TextPathCreatorTool({
   onPlaceImageUrl,
 }: TextPathCreatorToolProps) {
   const t = useMessages();
+  const brand = useDocumentBrand();
+  const fontStack = headlineFontStack(brand);
   const { finish, isUploading } = useToolImagePlacement({ onPlaceImageUrl, onJumpToUploads });
 
   const [value, setValue] = useState('');
   const [variant, setVariant] = useState<PathVariant>(VARIANTS[0]);
   const [fontSize, setFontSize] = useState(48);
-  const [color, setColor] = useState(defaultColor);
+  const [color, setColor] = useState(defaultColor(brand));
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -114,13 +119,13 @@ export function TextPathCreatorTool({
   // Preview mirrors the exact export pipeline (lower resolution).
   useEffect(() => {
     let cancelled = false;
-    void renderTextPath(previewText, variant.data, fontSize, color, 1).then((url) => {
+    void renderTextPath(previewText, variant.data, fontSize, color, 1, fontStack).then((url) => {
       if (!cancelled) setPreviewUrl(url);
     });
     return () => {
       cancelled = true;
     };
-  }, [previewText, variant.data, fontSize, color]);
+  }, [previewText, variant.data, fontSize, color, fontStack]);
 
   const disabled = isBusy || isUploading;
 
@@ -131,7 +136,7 @@ export function TextPathCreatorTool({
     setIsBusy(true);
 
     try {
-      const dataUrl = await renderTextPath(trimmed, variant.data, fontSize, color, 3);
+      const dataUrl = await renderTextPath(trimmed, variant.data, fontSize, color, 3, fontStack);
       if (!dataUrl) throw new Error(t.sidebar.tools.previewFailed);
       const blob = await (await fetch(dataUrl)).blob();
       const file = new File([blob], `pfadtext_${Date.now()}.png`, { type: 'image/png' });
@@ -143,7 +148,7 @@ export function TextPathCreatorTool({
     } finally {
       setIsBusy(false);
     }
-  }, [t, trimmed, variant.data, fontSize, color, finish]);
+  }, [t, trimmed, variant.data, fontSize, color, finish, fontStack]);
 
   return (
     <ToolPanel
@@ -193,7 +198,7 @@ export function TextPathCreatorTool({
           <div className="flex flex-col gap-1.5">
             <span className="text-xs text-foreground-muted">{t.sidebar.chart.color}</span>
             <div className="flex flex-wrap items-center gap-1.5">
-              {brandColors().map((c) => (
+              {brandColors(brand).map((c) => (
                 <button
                   key={c.id}
                   type="button"
@@ -210,7 +215,7 @@ export function TextPathCreatorTool({
               ))}
               <CustomColorSwatch
                 value={color}
-                presets={brandColors().map((c) => c.value)}
+                presets={brandColors(brand).map((c) => c.value)}
                 onPick={setColor}
                 className="size-6"
                 disabled={disabled}

@@ -1,5 +1,11 @@
 // SPDX-License-Identifier: MPL-2.0
-import { mixColors, resolveScheme, SCHEME_IDS, type SchemeId } from '@ggraphic/core';
+import {
+  mixColors,
+  resolveScheme,
+  SCHEME_IDS,
+  type BrandPack,
+  type SchemeId,
+} from '@ggraphic/core';
 
 import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
 
@@ -19,12 +25,14 @@ const FALLBACK_ICON = '#8a8a8a';
 export function photoPlaceholderLook(
   brandScheme: string | null | undefined,
   width: number,
-  height: number
+  height: number,
+  /** The pack of the document the slot sits in; the active brand by default. */
+  brand: BrandPack = activeBrand()
 ) {
   const id: SchemeId = (SCHEME_IDS as readonly string[]).includes(brandScheme ?? '')
     ? (brandScheme as SchemeId)
     : 'primary';
-  const roles = resolveScheme(activeBrand(), id)?.roles;
+  const roles = resolveScheme(brand, id)?.roles;
   const size = ICON_SHARE * Math.min(width, height);
   return {
     fill: (roles && mixColors(roles.ground, roles.ink, FILL_INK)) ?? FALLBACK_FILL,

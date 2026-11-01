@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
 import { CustomColorSwatch } from '@ggraphic/editor/components/CustomColorSwatch';
 import { useMessages } from '@ggraphic/editor/i18n/messages';
 import { Switch } from '@ggraphic/editor/ui/switch';
@@ -52,7 +52,8 @@ export function ImageAdjustSection({
   backgroundPhoto = null,
   brandScheme = null,
 }: ImageAdjustSectionProps) {
-  const { tints, shadows } = activeBrand().effects;
+  const brand = useDocumentBrand();
+  const { tints, shadows } = brand.effects;
   const t = useMessages();
   const img = selectedImage;
   const adj: ImageAdjustments | null = img ?? backgroundPhoto?.adjustments ?? null;
@@ -62,7 +63,7 @@ export function ImageAdjustSection({
   // A look other than Duotone ends the duotone and the bindings of its two colours.
   const applyPreset = (preset: ImagePreset) => {
     if (preset.id === 'duotone') {
-      const look = duotoneLook(img ?? undefined, brandScheme);
+      const look = duotoneLook(img ?? undefined, brandScheme, brand);
       // The page background photo has no bindings to carry: it takes the colours only.
       if (!look) return;
       if (img) onUpdateImage(img.id, look);
@@ -177,8 +178,8 @@ export function ImageAdjustSection({
               key={c}
               type="button"
               onClick={() => setTint({ tint: c, tintStrength: adj.tintStrength || 1 })}
-              title={colorName(c)}
-              aria-label={t.sidebar.imageAdjust.tintIn(colorName(c))}
+              title={colorName(c, brand)}
+              aria-label={t.sidebar.imageAdjust.tintIn(colorName(c, brand))}
               aria-pressed={(adj.tint ?? defaultTint()) === c && !!adj.tintStrength}
               className="size-6 rounded-full border border-black/10 transition-transform hover:scale-110"
               style={{
@@ -302,8 +303,8 @@ export function ImageAdjustSection({
                     key={c}
                     type="button"
                     onClick={() => setShadow({ shadowColor: c })}
-                    title={colorName(c)}
-                    aria-label={colorName(c)}
+                    title={colorName(c, brand)}
+                    aria-label={colorName(c, brand)}
                     aria-pressed={img.shadowColor === c}
                     className="size-6 rounded-full border border-black/10 transition-transform hover:scale-110"
                     style={{

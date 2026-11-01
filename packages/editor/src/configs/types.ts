@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { type BindingRef } from '@ggraphic/core';
+import { type BindingRef, type BrandPack } from '@ggraphic/core';
 import type { CanvasStageRef } from '../primitives/CanvasStage.js';
 import type { HostCanvasAiCapabilities } from '@ggraphic/editor/ai/types';
 import type { StockImageAttribution } from '@ggraphic/editor/common/imageSourceTypes';
@@ -432,7 +432,18 @@ export interface FullCanvasConfig<
   ) => TActions;
   /** The background's colour and photo controls for the context bar. */
   background?: (state: TState, actions: TActions) => BackgroundControls;
-  /** Series colours for charts on this page, its country's palette; absent: the active brand's (`chartColors()`). */
+  /**
+   * The brand pack of this page's document: its defaults (swatches, effect presets, marker boxes,
+   * the backdrop behind the page) come from it, not from the first registered pack. Absent: the
+   * active brand (`activeBrand()`). The shell provides it to the page's tree (`useDocumentBrand`);
+   * the action factories take it as their `brand` parameter.
+   */
+  brand?: BrandPack;
+  /**
+   * Series colours for charts on this page; absent: the document brand's `chart`.
+   * @deprecated Put the series on the pack (`BrandPack.chart`) and name it as `brand`; this stays
+   * as the fallback for a page whose chart palette differs from its brand's.
+   */
   chartColors?: readonly string[];
   /** Optional function to determine disabled tabs */
   getDisabledTabs?: (state: TState) => SidebarTabId[];

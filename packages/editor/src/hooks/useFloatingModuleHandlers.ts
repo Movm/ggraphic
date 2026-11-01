@@ -297,10 +297,15 @@ export function useFloatingModuleHandlers<
       if (!img) return;
       actions.updateUserImage?.(
         id,
-        imageLookPatch(look, img, typeof state.brandScheme === 'string' ? state.brandScheme : null)
+        imageLookPatch(
+          look,
+          img,
+          typeof state.brandScheme === 'string' ? state.brandScheme : null,
+          config.brand
+        )
       );
     },
-    [actions, state]
+    [actions, state, config.brand]
   );
 
   const handleGradientSelect = useCallback(

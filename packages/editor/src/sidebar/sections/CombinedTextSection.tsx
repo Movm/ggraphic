@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MPL-2.0
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { useDocumentBrand } from '@ggraphic/editor/brand/documentBrand';
 import { messages, useMessages } from '@ggraphic/editor/i18n/messages';
 import { cn } from '@ggraphic/editor/utils/cn';
 import { PiPlusBold, PiTextAa, PiTextHBold, PiTrash } from 'react-icons/pi';
@@ -59,6 +59,7 @@ export function CombinedTextSection({
   onFontSizeChange,
 }: CombinedTextSectionProps) {
   const t = useMessages();
+  const brand = useDocumentBrand();
   const isMobile = useIsCanvasMobile();
   const hasFreeformText = onAddHeader !== undefined || onAddText !== undefined;
   const hasTemplateFields = textFields !== undefined && textFields.length > 0;
@@ -122,7 +123,7 @@ export function CombinedTextSection({
               >
                 <span
                   className="text-xl font-bold text-foreground"
-                  style={{ fontFamily: `${activeBrand().fonts.headline}, Arial, sans-serif` }}
+                  style={{ fontFamily: `${brand.fonts.headline}, Arial, sans-serif` }}
                 >
                   {t.sidebar.text.labelTitle}
                 </span>
@@ -136,7 +137,7 @@ export function CombinedTextSection({
               >
                 <span
                   className="text-base font-bold text-foreground"
-                  style={{ fontFamily: `${activeBrand().fonts.headline}, Arial, sans-serif` }}
+                  style={{ fontFamily: `${brand.fonts.headline}, Arial, sans-serif` }}
                 >
                   {t.sidebar.text.labelSubtitle}
                 </span>
