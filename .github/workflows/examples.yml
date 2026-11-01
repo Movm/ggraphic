@@ -1,7 +1,7 @@
 name: Examples
 
 # Proof that an outside host can embed ggraphic: the examples install the packages from tarballs
-# packed in this run, with npm, outside the pnpm workspace.
+# packed in this run, outside the pnpm workspace.
 on:
   push:
     branches: [main]
@@ -17,12 +17,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  vite-react:
+  # Builds and packs the packages once; every job below installs these tarballs.
+  pack:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
-    defaults:
-      run:
-        working-directory: examples/vite-react
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -31,13 +29,129 @@ jobs:
           node-version: '22'
           cache: pnpm
       - name: Build the packages
-        working-directory: .
         run: |
           pnpm install --frozen-lockfile --filter "@ggraphic/editor..." --filter "@ggraphic/brand-default..."
           pnpm --filter "@ggraphic/editor..." --filter "@ggraphic/brand-default..." build
-      - run: node scripts/pack.mjs
+      - run: node examples/vite-react/scripts/pack.mjs
+      - uses: actions/upload-artifact@v7
+        with:
+          name: tarballs
+          path: examples/vite-react/tarballs/
+          if-no-files-found: error
+          retention-days: 1
+
+  vite-react:
+    needs: pack
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: examples/vite-react
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v8
+        with:
+          name: tarballs
+          path: examples/vite-react/tarballs
       - run: npm install --no-audit --no-fund
       - name: tsc and vite build
         run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:smoke
+
+  # The same example with the other package managers: install from the tarballs, tsc, vite build.
+  # Each one gets the npm `overrides` pins (core and schema from the tarballs) in its own form.
+  vite-react-package-managers:
+    name: vite-react (${{ matrix.manager }})
+    needs: pack
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        manager: [pnpm, yarn, bun]
+    defaults:
+      run:
+        working-directory: examples/vite-react
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v8
+        with:
+          name: tarballs
+          path: examples/vite-react/tarballs
+      - if: matrix.manager == 'pnpm'
+        uses: pnpm/action-setup@v6
+      - if: matrix.manager == 'bun'
+        uses: oven-sh/setup-bun@v2
+      # Its own workspace file makes this folder the root, so pnpm does not climb to the
+      # repository's. Isolated and without hoisting, a package sees only what it declares.
+      - name: Install with pnpm (isolated, no hoisting)
+        if: matrix.manager == 'pnpm'
+        run: |
+          cat > pnpm-workspace.yaml <<'EOF'
+          nodeLinker: isolated
+          hoist: false
+          overrides:
+            '@ggraphic/core': file:tarballs/ggraphic-core.tgz
+            '@ggraphic/schema': file:tarballs/ggraphic-schema.tgz
+          EOF
+          pnpm install
+      # The empty yarn.lock makes this folder the project root. Yarn does not install missing
+      # peers, so a peer the editor's dependencies need and the editor does not declare breaks
+      # this job (#118). The peer report goes to the log.
+      - name: Install with yarn (berry, node-modules linker)
+        if: matrix.manager == 'yarn'
+        run: |
+          corepack enable
+          npm pkg set packageManager=yarn@4.18.1 \
+            'resolutions[@ggraphic/core]=file:./tarballs/ggraphic-core.tgz' \
+            'resolutions[@ggraphic/schema]=file:./tarballs/ggraphic-schema.tgz'
+          printf 'nodeLinker: node-modules\n' > .yarnrc.yml
+          touch yarn.lock
+          yarn install --no-immutable
+          yarn explain peer-requirements || true
+      # bun reads npm's `overrides`, `$` references included.
+      - name: Install with bun
+        if: matrix.manager == 'bun'
+        run: bun install
+      # A pin the manager ignored shows up as a second copy, nested and from the registry.
+      - name: One copy of each @ggraphic package
+        run: |
+          copies=$(find node_modules -type f -name package.json | grep -E '/@ggraphic/[^/]+/package\.json$')
+          echo "$copies"
+          test "$(echo "$copies" | wc -l)" -eq 4
+      - name: tsc and vite build
+        run: ${{ matrix.manager }} run build
+
+  next:
+    needs: pack
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: '1'
+    defaults:
+      run:
+        working-directory: examples/next
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v8
+        with:
+          name: tarballs
+          path: examples/next/tarballs
+      - run: npm install --no-audit --no-fund
+      - name: next build (runs tsc)
+        run: npm run build
+      - name: Import the embed entry in plain Node
+        run: npm run test:ssr
+      - run: npx playwright install --with-deps chromium
+      - name: Server HTML and smoke test
+        run: npm run test:smoke

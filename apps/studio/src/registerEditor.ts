@@ -6,10 +6,10 @@
  * (`assetCatalog.ts`).
  */
 import { studioBrand } from './brand';
-import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
-import { registerMessages } from '@ggraphic/editor/i18n/messages';
-import { registerAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
-import { registerToast } from '@ggraphic/editor/utils/editorToast';
+import { registerBrandPacks } from '@ggraphic/editor/brand';
+import { registerMessages } from '@ggraphic/editor/i18n';
+import { registerAssetCatalog } from '@ggraphic/editor/elements';
+import { registerToast } from '@ggraphic/editor/services';
 
 import { studioAssetCatalog } from './editor/assetCatalog';
 import { registerStudioEditorShell } from './editor/shell';

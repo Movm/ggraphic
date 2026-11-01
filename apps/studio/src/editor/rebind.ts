@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { rebindPages, type RebindContext } from '@ggraphic/core';
-import { fittedFontSize } from '@ggraphic/editor/page/fitting';
-import { withHuggedPlates } from '@ggraphic/editor/page/hug';
+import { fittedFontSize, withHuggedPlates } from '@ggraphic/editor/page';
 
 import { formatSize, type StudioDocument } from './document';
 import { templateFileOf } from './templates/catalog';

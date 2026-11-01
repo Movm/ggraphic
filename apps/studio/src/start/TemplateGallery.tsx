@@ -5,7 +5,7 @@
  * page and by the page picker; what a pick does is the caller's.
  */
 import { offeredSchemes, type BrandPack, type SchemeId } from '@ggraphic/core';
-import { activeBrand } from '@ggraphic/editor/brand/brandRegistry';
+import { activeBrand } from '@ggraphic/editor/brand';
 import { ChipGroup, Select, Tile, TileList } from '@ggraphic/ui';
 import { useMemo, useState } from 'react';
 import { PiFile } from 'react-icons/pi';

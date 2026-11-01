@@ -21,6 +21,8 @@
   --editor-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --editor-ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --editor-topbar-height: 56px;
+  /* The editor's height. A host box of its own: `100%` (GgraphicEditor sets it). */
+  --editor-height: 100dvh;
 
   --editor-bg: #f4f4f3;
   --editor-surface-hover: #eeeeec;
@@ -116,9 +118,8 @@
   --border-radius-small: 4px;
   --border-radius-md: 8px;
 
-  /* Layout hooks: where the editor sits in the host page */
+  /* Layout hooks */
   --image-studio-tab-bar-width: 76px;
-  --canvas-host-inset-left: 0px;
 }
 
 /* ── Neutral token defaults (dark) ──

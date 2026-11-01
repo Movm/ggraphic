@@ -8,7 +8,7 @@
  * most every half minute; a save inside that window gets its thumbnail when the window ends, or on
  * leaving, whichever comes first.
  */
-import { type CanvasEditorExportApi } from '@ggraphic/editor/components/CanvasEditor/types';
+import { type CanvasEditorExportApi } from '@ggraphic/editor/shell';
 import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 
 import { api, ApiError } from '../api/client';
