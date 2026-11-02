@@ -1,7 +1,7 @@
 {
   "name": "ggraphic-example-expo",
   "private": true,
-  "license": "MPL-2.0",
+  "license": "MIT",
   "main": "index.ts",
   "scripts": {
     "pack:local": "node scripts/pack.mjs",

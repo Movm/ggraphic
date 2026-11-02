@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Das Hintergrundfoto steht fest wie in Canva: ausgewählt zeigt es keine
  * Griffe und zieht nicht; erst der Ausschnitt-Modus (Doppelklick/Doppeltipp)

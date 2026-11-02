@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Which fields of each element kind may carry a brand binding (`bind`), and
  * which colour fields are left out on purpose. `bindableFields.vitest.ts`

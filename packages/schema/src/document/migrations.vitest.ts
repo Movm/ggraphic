@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { describe, expect, it } from 'vitest';
 
 import { STAMP_STATE_KEY, STAMP_V2_STEP, V2_CORE_STEP } from './__fixtures__/v2Fixture.js';

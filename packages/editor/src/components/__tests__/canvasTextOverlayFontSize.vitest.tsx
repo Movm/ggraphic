@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * iOS Safari zoomt in Eingabefelder mit weniger als 16px Schrift. Der Editor
  * rendert deshalb mindestens mit 16px und nimmt die Größe per `transform`

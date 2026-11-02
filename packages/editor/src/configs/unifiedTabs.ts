@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Shared types of the former unified tab system: the text-field descriptor the
  * Text section renders from, and the template background kind.

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * tiptap wird erst nachgeladen (#4384). Bis dahin steht derselbe Rahmen mit
  * dem reinen Text; danach übernimmt der echte Editor an derselben Stelle.

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Hilfslinien: gezeichnet wird genau, was der Snap meldet — keine Mittellinie
  * neben einer Element-Linie, und ein Sprung auf eine andere Linie gleicher

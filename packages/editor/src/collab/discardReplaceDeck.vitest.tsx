@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * "Vorlage verwerfen" / "Vorschlag verwerfen" after a replaced deck: the deck
  * returns to before the replacement and stays there — Redo must not re-apply

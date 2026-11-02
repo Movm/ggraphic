@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { TOUCH_TAP_SLOP } from '../../../utils/touchInput.js';
 import { useCallback, useEffect, useRef } from 'react';
 

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Ein Wort, das breiter ist als das Feld, wird mit Trennstrich an Silbengrenzen
  * umbrochen — nicht von Konva mitten im Wort ("Gemeinschaftsga / rten").

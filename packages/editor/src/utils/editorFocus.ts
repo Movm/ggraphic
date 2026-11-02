@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Wohin der Fokus geht, wenn das, was ihn hatte, verschwindet — ein
  * geschlossener Text-Editor, ein gelöschtes Element, ein Knopf, der sich

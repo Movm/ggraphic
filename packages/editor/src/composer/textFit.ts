@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Greedy word wrap; a single over-long word keeps its own line. */
 export function wrapWords(
   text: string,

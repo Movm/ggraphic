@@ -12,7 +12,7 @@ ggraphic is maintained by Moritz Wächter ([@Movm](https://github.com/Movm)), wh
 
 ## Licensing
 
-Packages are MPL-2.0, the open template pack CC0-1.0, Studio AGPL-3.0. Contributions come under the DCO and the licence of the part they change; there is no CLA. Moving code between parts with different licences (for example from Studio into a package) needs the copyright holder's explicit approval in the pull request.
+Packages and Studio are AGPL-3.0-only, the open template pack CC0-1.0, the host examples MIT. There is no commercial licence for now. Contributions come under the DCO and the licence of the part they change; there is no CLA. Moving code between parts with different licences (for example into the CC0 template pack) needs the copyright holder's explicit approval in the pull request.
 
 ## Releases
 

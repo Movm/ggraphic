@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Umschalt beim Ziehen sperrt die Bewegung auf eine Achse — die, auf der der
  * Zeiger seit dem Zugbeginn weiter gewandert ist. Eine Stelle für jedes

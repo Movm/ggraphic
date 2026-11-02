@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Licence gate for the packages that will be published as @ggraphic/* under
- * MPL-2.0 (packages/schema, core, editor). Walks the production
+ * Licence gate for the packages published as @ggraphic/*. Our own code is
+ * AGPL-3.0-only (packages/*, apps/*), CC0-1.0 (packages/templates-open) and MIT
+ * (examples/*); `ownLicenceProblems` enforces that. Walks the production
  * dependency tree (dependencies, peerDependencies, optionalDependencies — not
  * devDependencies) from the installed node_modules and fails when any package
  * declares a licence outside ALLOWED, or none. @iconify-json/* sets must also
@@ -49,6 +50,41 @@ export const ALLOWED = new Set([
   'OFL-1.1',
   'Zlib',
 ]);
+
+/**
+ * The licence each part of this repository declares in its package.json and in its source
+ * headers. MPL-2.0 stays in ALLOWED below because third-party dependencies may carry it; it is
+ * no longer one of ours (versions published before the AGPL relicensing keep it).
+ */
+export function expectedOwnLicence(dir) {
+  if (dir === 'packages/templates-open') return 'CC0-1.0';
+  if (dir.startsWith('packages/') || dir.startsWith('apps/')) return 'AGPL-3.0-only';
+  if (dir.startsWith('examples/')) return 'MIT';
+  return null;
+}
+
+/** Workspace package.json files whose declared licence is not the one this repository promises. */
+export function ownLicenceProblems(root) {
+  const problems = [];
+  for (const top of ['packages', 'apps', 'examples']) {
+    const base = join(root, top);
+    if (!existsSync(base)) continue;
+    for (const entry of readdirSync(base, { withFileTypes: true })) {
+      if (!entry.isDirectory()) continue;
+      const dir = `${top}/${entry.name}`;
+      const pkg = readJson(join(base, entry.name, 'package.json'));
+      if (!pkg) continue;
+      const expected = expectedOwnLicence(dir);
+      const declared = declaredLicense(pkg);
+      if (declared !== expected)
+        problems.push({
+          path: dir,
+          message: `${dir}/package.json: license is "${declared ?? 'missing'}", expected "${expected}"`,
+        });
+    }
+  }
+  return problems;
+}
 
 export const ROOT_PACKAGES = [
   'schema',
@@ -153,7 +189,15 @@ export function checkLicenses(rootDirs) {
     seen.add(dir);
     const label = trail.join(' > ');
     const isRoot = trail.length === 1;
-    if (!isRoot) {
+    if (!isRoot && pkg.name?.startsWith('@ggraphic/')) {
+      // Our own packages are checked by ownLicenceProblems, not against the dependency list.
+      const own = declaredLicense(pkg);
+      if (own !== 'AGPL-3.0-only' && own !== 'CC0-1.0')
+        problems.push({
+          path: label,
+          message: `${id}: own licence "${own ?? 'missing'}" is unexpected`,
+        });
+    } else if (!isRoot) {
       const license = declaredLicense(pkg) ?? VERIFIED_LICENSES.get(id) ?? null;
       if (!license) problems.push({ path: label, message: `${id}: no license field` });
       else if (!expressionAllowed(license))
@@ -415,7 +459,7 @@ function selfTest() {
     write(join(root, 'package.json'), {
       name: 'root',
       version: '1.0.0',
-      license: 'MPL-2.0',
+      license: 'AGPL-3.0-only',
       dependencies: Object.fromEntries(Object.keys(deps).map((d) => [d, '*'])),
     });
     for (const [dep, meta] of Object.entries(deps))
@@ -473,7 +517,11 @@ function selfTest() {
     const vendoredRoot = (name, licence, childLicence, notices) => {
       const root = join(base, name);
       const pkgDir = join(root, 'packages', 'e');
-      write(join(pkgDir, 'package.json'), { name: 'e', version: '1.0.0', license: 'MPL-2.0' });
+      write(join(pkgDir, 'package.json'), {
+        name: 'e',
+        version: '1.0.0',
+        license: 'AGPL-3.0-only',
+      });
       writeFileSync(join(pkgDir, 'NOTICES'), notices);
       const lib = join(pkgDir, 'node_modules', 'lib');
       write(join(lib, 'package.json'), {
@@ -592,7 +640,10 @@ function selfTest() {
 
     const sources = join(base, 'sources');
     mkdirSync(sources, { recursive: true });
-    writeFileSync(join(sources, 'ok.ts'), '// SPDX-License-Identifier: MPL-2.0\nexport {};\n');
+    writeFileSync(
+      join(sources, 'ok.ts'),
+      '// SPDX-License-Identifier: AGPL-3.0-only\nexport {};\n'
+    );
     writeFileSync(join(sources, 'bare.ts'), 'export {};\n');
     writeFileSync(join(sources, 'notes.md'), 'no header needed\n');
     const bare = missingSpdxHeaders(sources, ['ok.ts', 'bare.ts', 'notes.md']);
@@ -600,12 +651,12 @@ function selfTest() {
       failures.push(`spdx: expected only bare.ts, got ${JSON.stringify(bare)}`);
     // A header that names another licence than the package declares.
     const pkgDir = join(base, 'ids', 'packages', 'p');
-    write(join(pkgDir, 'package.json'), { name: 'p', version: '1.0.0', license: 'MPL-2.0' });
-    writeFileSync(join(pkgDir, 'right.ts'), '// SPDX-License-Identifier: MPL-2.0\nexport {};\n');
+    write(join(pkgDir, 'package.json'), { name: 'p', version: '1.0.0', license: 'AGPL-3.0-only' });
     writeFileSync(
-      join(pkgDir, 'wrong.ts'),
+      join(pkgDir, 'right.ts'),
       '// SPDX-License-Identifier: AGPL-3.0-only\nexport {};\n'
     );
+    writeFileSync(join(pkgDir, 'wrong.ts'), '// SPDX-License-Identifier: MPL-2.0\nexport {};\n');
     const wrong = mismatchedSpdxHeaders(join(base, 'ids'), [
       'packages/p/right.ts',
       'packages/p/wrong.ts',
@@ -615,7 +666,7 @@ function selfTest() {
     // The examples are scanned too: a tracked file there without a header, or with another id.
     const repo = join(base, 'repo');
     const example = join(repo, 'examples', 'e');
-    write(join(example, 'package.json'), { name: 'e', private: true, license: 'MPL-2.0' });
+    write(join(example, 'package.json'), { name: 'e', private: true, license: 'MIT' });
     writeFileSync(join(example, 'bare.ts'), 'export {};\n');
     writeFileSync(join(example, 'wrong.ts'), '// SPDX-License-Identifier: CC0-1.0\nexport {};\n');
     execFileSync('git', ['init', '-q'], { cwd: repo });
@@ -631,6 +682,24 @@ function selfTest() {
       failures.push(
         `spdx-examples: expected examples/e/wrong.ts, got ${JSON.stringify(exampleWrong)}`
       );
+    // Our own licences: AGPL in packages and apps, CC0 in templates-open, MIT in examples.
+    const own = join(base, 'own');
+    const ownPkg = (dir, license) => write(join(own, dir, 'package.json'), { name: dir, license });
+    ownPkg('packages/core', 'AGPL-3.0-only');
+    ownPkg('packages/templates-open', 'CC0-1.0');
+    ownPkg('apps/studio', 'AGPL-3.0-only');
+    ownPkg('examples/next', 'MIT');
+    if (ownLicenceProblems(own).length !== 0)
+      failures.push(`own-licences: expected green, got ${JSON.stringify(ownLicenceProblems(own))}`);
+    ownPkg('packages/ui', 'MPL-2.0');
+    ownPkg('examples/vite', 'AGPL-3.0-only');
+    ownPkg('packages/templates-open', 'AGPL-3.0-only');
+    const ownRed = ownLicenceProblems(own)
+      .map((p) => p.path)
+      .sort()
+      .join();
+    if (ownRed !== 'examples/vite,packages/templates-open,packages/ui')
+      failures.push(`own-licences: expected three red packages, got ${ownRed}`);
   } finally {
     rmSync(base, { recursive: true, force: true });
   }
@@ -645,7 +714,7 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
       for (const f of failures) console.error(`  · ${f}`);
       process.exit(1);
     }
-    console.log('✓ ggraphic licence self-test: 23 probes ok');
+    console.log('✓ ggraphic licence self-test: 25 probes ok');
   } else {
     const root = fileURLToPath(new URL('..', import.meta.url));
     const assetProblems = checkBundledAssets(root);
@@ -662,6 +731,13 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
       console.error('✖ node_modules missing — run pnpm install first');
       process.exit(1);
     }
+    const ownProblems = ownLicenceProblems(root);
+    if (ownProblems.length > 0) {
+      console.error(`\n✖ ${ownProblems.length} own-licence problem(s):\n`);
+      for (const p of ownProblems) console.error(`  ${p.message}`);
+      process.exit(1);
+    }
+    console.log('✓ packages and apps are AGPL-3.0-only (templates-open CC0-1.0), examples MIT');
     const { problems, count } = checkLicenses(dirs);
     if (problems.length > 0) {
       console.error(

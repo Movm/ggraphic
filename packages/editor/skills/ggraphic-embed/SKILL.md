@@ -38,23 +38,23 @@ export function DesignEditor({
 
 What it does for you:
 
-- Fills the editor's registers from the props: brand pack, messages, the pack's templates and a blank page (`ggraphic-blank`).
+- Fills the editor's registers from the props: brand pack, messages, the pack's templates and a blank page, whose page config id is `BLANK_PAGE_ID` (from `@ggraphic/editor/embed`, or from `@ggraphic/editor/host` in a server component).
 - Wraps the editor in a `QueryClientProvider` (its own client unless you pass `queryClient`), a `CanvasEditorProvider` with your `services`, and `CanvasEditorShell`.
 - Feeds the pack's slot budgets to the editor's status line.
 
 Props:
 
-| Prop           | Default                                                      | Notes                                                                                                                                                                                                         |
-| -------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `brand`        | required                                                     | `defaultBrand` from `@ggraphic/brand-default`, or your own from `defineBrand` (below).                                                                                                                        |
-| `templates`    | required                                                     | `loadTemplatePack(files)`, a promise the editor resolves while it loads. Create it once, not per render. Await it to read `problems` (files that were skipped). A pack from `templatePackFromJson` works too. |
-| `document`     | one page of the pack's first template on `post-portrait`     | `{ formatId, pages: [{ configId, state }] }`. Read when the editor mounts; give the component a new `key` to open another document.                                                                           |
-| `onChange`     | none                                                         | The whole document after every change (edits, added or moved pages, undo). Store it as it comes; debounce on your side if saving is expensive.                                                                |
-| `services`     | downloads through the browser, uploads as object URLs, no AI | `CanvasEditorServices` from `@ggraphic/editor/CanvasEditorProvider`. Pass only what you have: a `mediaLibrary` for durable uploads, `aiDraft`, `iconSearch`, `fileDelivery` …                                 |
-| `locale`       | `'en'`                                                       | `'en'` or `'de'`.                                                                                                                                                                                             |
-| `queryClient`  | own client                                                   | Pass yours to share a cache with the rest of the app.                                                                                                                                                         |
-| `title`        | none                                                         | The design's name, used for the PDF and slide-deck downloads.                                                                                                                                                 |
-| `exportApiRef` | none                                                         | A ref that receives `CanvasEditorExportApi` once the editor has loaded (see Export).                                                                                                                          |
+| Prop           | Default                                                      | Notes                                                                                                                                                                                                                |
+| -------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `brand`        | required                                                     | `defaultBrand` from `@ggraphic/brand-default`, or your own from `defineBrand` (below).                                                                                                                               |
+| `templates`    | required                                                     | `loadTemplatePack(files)`, a promise the editor resolves while it loads. Create it once, not per render. Await it to read `problems` (files that were skipped). A pack from `templatePackFromJson` works too.        |
+| `document`     | one page of the pack's first template on `post-portrait`     | `{ formatId, pages: [{ configId, state }] }`. Read when the editor mounts; give the component a new `key` to open another document. A new design is `state: {}` with a template id or `BLANK_PAGE_ID` as `configId`. |
+| `onChange`     | none                                                         | The whole document after every change (edits, added or moved pages, undo). Store it as it comes; debounce on your side if saving is expensive.                                                                       |
+| `services`     | downloads through the browser, uploads as object URLs, no AI | `CanvasEditorServices` from `@ggraphic/editor/CanvasEditorProvider`. Pass only what you have: a `mediaLibrary` for durable uploads, `aiDraft`, `iconSearch`, `fileDelivery` …                                        |
+| `locale`       | `'en'`                                                       | `'en'` or `'de'`.                                                                                                                                                                                                    |
+| `queryClient`  | own client                                                   | Pass yours to share a cache with the rest of the app.                                                                                                                                                                |
+| `title`        | none                                                         | The design's name, used for the PDF and slide-deck downloads.                                                                                                                                                        |
+| `exportApiRef` | none                                                         | A ref that receives `CanvasEditorExportApi` once the editor has loaded (see Export).                                                                                                                                 |
 
 Things to know:
 
@@ -179,7 +179,7 @@ Documents carry a schema version (`meta.schemaVersion`). A newer editor upgrades
 
 ## Advanced: low-level setup
 
-Use this when `GgraphicEditor` is not enough: your own page logic (a `FullCanvasConfig` per template), collaboration, your own page picker or document tabs, several brands per document. ggraphic Studio (`apps/studio` in the ggraphic repository) is a complete host on this path. It is **AGPL-3.0**: read it to understand, but do not copy its code into a host that is not AGPL. The packages themselves are MPL-2.0.
+Use this when `GgraphicEditor` is not enough: your own page logic (a `FullCanvasConfig` per template), collaboration, your own page picker or document tabs, several brands per document. ggraphic Studio (`apps/studio` in the ggraphic repository) is a complete host on this path. It is **AGPL-3.0-only**, and so are the packages themselves: a host that embeds them and is distributed or offered over a network must make its source available under AGPL-compatible terms. Versions published before the relicensing stay MPL-2.0. The `examples/*` are MIT and free to copy.
 
 ### Imports
 

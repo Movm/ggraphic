@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Image adjustment filters for user images and background photos
  * (Konva.Filters "Multiple Filters" pattern: cache() the node, then apply an
