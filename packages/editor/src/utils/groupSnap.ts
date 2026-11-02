@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Snap beim Gruppenzug: der Umriss aller gezogenen Knoten rastet ein, und jeder
  * Knoten wandert um dieselbe Strecke.

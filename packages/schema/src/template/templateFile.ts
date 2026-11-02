@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The versioned template file: one JSON file describes a template or a block.
  * Design, every key and the growth rules: `TEMPLATE_FORMAT.md` at the package root.

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /** UI texts: the catalogue, registering a locale or host texts, and the hook. */
 export {
   messages,

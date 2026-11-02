@@ -30,24 +30,24 @@ To run Studio with Docker Compose instead, see [docs/self-hosting.md](./docs/sel
 
 ## Repository layout
 
-| Path                                | What                                              | Licence  |
-| ----------------------------------- | ------------------------------------------------- | -------- |
-| `packages/schema`                   | Document schema: types, validation, versions      | MPL-2.0  |
-| `packages/core`                     | Element model, brand packs, operations, rendering | MPL-2.0  |
-| `packages/editor`                   | The editor UI (react-konva)                       | MPL-2.0  |
-| `packages/collab`                   | Real-time collaboration (Yjs, Hocuspocus)         | MPL-2.0  |
-| `packages/ai`                       | AI helpers                                        | MPL-2.0  |
-| `packages/ui`                       | UI kit used by Studio                             | MPL-2.0  |
-| `packages/templates-open`           | Open template pack                                | CC0-1.0  |
-| `apps/studio`, `apps/studio-server` | ggraphic Studio, the hostable app                 | AGPL-3.0 |
-| `examples/*`                        | Host examples built from the packed packages      | MPL-2.0  |
+| Path                                | What                                              | Licence       |
+| ----------------------------------- | ------------------------------------------------- | ------------- |
+| `packages/schema`                   | Document schema: types, validation, versions      | AGPL-3.0-only |
+| `packages/core`                     | Element model, brand packs, operations, rendering | AGPL-3.0-only |
+| `packages/editor`                   | The editor UI (react-konva)                       | AGPL-3.0-only |
+| `packages/collab`                   | Real-time collaboration (Yjs, Hocuspocus)         | AGPL-3.0-only |
+| `packages/ai`                       | AI helpers                                        | AGPL-3.0-only |
+| `packages/ui`                       | UI kit used by Studio                             | AGPL-3.0-only |
+| `packages/templates-open`           | Open template pack                                | CC0-1.0       |
+| `apps/studio`, `apps/studio-server` | ggraphic Studio, the hostable app                 | AGPL-3.0      |
+| `examples/*`                        | Host examples built from the packed packages      | MIT           |
 
 ## Rules that keep the packages usable
 
 - **Brand-neutral packages.** Nothing in `packages/*` names a real organisation or its colours, fonts, logos or wording. Brands come in through brand packs. Host-specific behaviour goes behind a host service or a module augmentation.
 - **One entry point per file.** A host imports `@ggraphic/editor/utils/snapping`, not a barrel.
 - **ESM only.** Relative imports carry the `.js` extension; `pnpm check:esm` checks this.
-- **Licence headers.** Every source file starts with the SPDX id of its package (`// SPDX-License-Identifier: MPL-2.0`); `pnpm check:licences` verifies it. Code moved from `apps/*` into a package changes from AGPL-3.0 to MPL-2.0. Only the copyright holder can approve that, so say so in the pull request.
+- **Licence headers.** Every source file starts with the SPDX id of its package (`// SPDX-License-Identifier: AGPL-3.0-only`; `MIT` in `examples/*`, `CC0-1.0` in `packages/templates-open`); `pnpm check:licences` verifies it. Packages and Studio are both AGPL-3.0-only, so moving code between them needs no header change.
 - **Third-party assets** (fonts, icons, images) need a compatible licence and an entry in the package's `THIRD_PARTY_NOTICES`.
 
 ## Developer Certificate of Origin
@@ -60,7 +60,7 @@ git commit -s -m "feat(core): add layer lock"
 
 This adds a `Signed-off-by: Your Name <you@example.com>` trailer. CI rejects pull requests with unsigned commits.
 
-Your contribution is licensed under the licence of the part you change: MPL-2.0 for `packages/*`, CC0-1.0 for `packages/templates-open`, AGPL-3.0 for `apps/*`. The host examples in `examples/*` are MPL-2.0, like the packages they embed.
+Your contribution is licensed under the licence of the part you change: AGPL-3.0-only for `packages/*` and `apps/*`, CC0-1.0 for `packages/templates-open`, MIT for the host examples in `examples/*`.
 
 ## Commits
 

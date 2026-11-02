@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Which parts of a page's state carry over when adding a page or converting
  * it to another template. One module so every path (add, setPageConfig)

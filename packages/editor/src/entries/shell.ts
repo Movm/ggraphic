@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /** The editor shell: `CanvasEditorShell`, its provider, the shell extension points, layout, skeleton, page preview and announcements. */
 export { CanvasEditorShell } from '../components/CanvasEditor/CanvasEditorShell.js';
 export {

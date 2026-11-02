@@ -1,12 +1,20 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MIT
 // What a design can start from, read on the server. `@ggraphic/editor/host` and
 // `@ggraphic/editor/page` load no React and no editor UI, so a server component can import them;
 // the client component `Editor` reads the same file with `loadTemplatePack`.
-import { BLANK_PAGE_ID, canvasFormats, type CanvasFormat } from '@ggraphic/editor/host';
+import {
+  BLANK_PAGE_ID,
+  canvasFormats,
+  type CanvasFormat,
+  registerMessages,
+} from '@ggraphic/editor/host';
 import { aspectOfSize, templatePackFromJson } from '@ggraphic/editor/page';
 
 import { type NewDesign } from './design';
 import templateFiles from './templates.json';
+
+// The editor's texts default to German; this host speaks English, on the server as in `Editor`.
+registerMessages('en');
 
 /** Parsed once per server process. */
 const pack = templatePackFromJson(templateFiles);

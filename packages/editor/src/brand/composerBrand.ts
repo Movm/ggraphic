@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * What the sharepic composer sets differently per brand, as data. Each field
  * replaces an `isAt` branch in `composer/`; the pack holds the values, the

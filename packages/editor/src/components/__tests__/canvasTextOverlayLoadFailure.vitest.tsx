@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Lädt der Editor nicht, versucht es das Öffnen noch einmal; scheitert auch
  * das, schließt die Sitzung ohne Änderung und sagt, warum (#4384).

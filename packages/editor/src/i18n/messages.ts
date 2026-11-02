@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The message catalogue the editor renders with. A module-level register, like
  * the brand packs and the asset catalogue, because commands, factories and

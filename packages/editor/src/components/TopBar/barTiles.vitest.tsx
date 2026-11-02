@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { BarTilesProvider } from './barTiles.js';
 import { ContextControls } from './ContextControls.js';
 import { render, screen } from '@testing-library/react';

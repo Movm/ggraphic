@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Wie „Text bearbeiten“ (F2, Enter in der Ebenen-Liste, Kontextmenü) den
  * Editor eines Elements öffnet, das auf Doppelklick an einem inneren Knoten

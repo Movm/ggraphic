@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * `PagePreview` draws one page read-only and reports a PNG once the page is
  * settled. Against the real fixture template: the report must come through the

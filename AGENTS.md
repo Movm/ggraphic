@@ -4,7 +4,7 @@ Instructions for coding agents (Claude Code, Codex, Cursor, …) working in this
 
 ## Repository
 
-pnpm monorepo, Node ≥ 22, ESM only. Packages in `packages/*` (MPL-2.0; `templates-open` CC0-1.0), Studio in `apps/studio` and `apps/studio-server` (AGPL-3.0). Every source file of a package is its own entry point; there is no barrel.
+pnpm monorepo, Node ≥ 22, ESM only. Packages in `packages/*` (AGPL-3.0-only; `templates-open` CC0-1.0), Studio in `apps/studio` and `apps/studio-server` (AGPL-3.0-only), examples in `examples/*` (MIT). Every source file of a package is its own entry point; there is no barrel.
 
 ## Rules
 

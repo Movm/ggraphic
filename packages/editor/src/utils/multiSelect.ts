@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import Konva from 'konva';
 
 import { CANVAS_ITEM_ID_ATTR, CANVAS_ITEM_NAME } from './deepSelect.js';

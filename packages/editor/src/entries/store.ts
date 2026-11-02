@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /** The canvas store as a host sees it: the provider, the selector hooks and the auto-save store. The store factory and its state type are internal. */
 export {
   CanvasStoreProvider,

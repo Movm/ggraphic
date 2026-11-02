@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The upgrade test: real-shaped version-1 documents, as stored before
  * versioning existed (no version field), load through `migrateDocument`

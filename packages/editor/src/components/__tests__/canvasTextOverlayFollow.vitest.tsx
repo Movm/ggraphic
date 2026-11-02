@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Der Text-Editor hängt an `document.body`, die Leinwand nicht. Scrollt die
  * Leinwand in ihrem Container, zoomt sie oder schiebt das Mobile-Sheet sie

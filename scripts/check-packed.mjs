@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Package gate on the tarballs npm would receive: `pnpm pack` for every published package under
  * packages/ (so publishConfig and `files` apply), then publint and attw on each tarball. Fails

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MIT
 // The editor page, a server component around the client component `Editor`. From the start page
 // it gets `?format=…&template=…` and opens a new design; without them it opens the stored one.
 import Link from 'next/link';

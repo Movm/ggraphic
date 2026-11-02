@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Templates as data: template files (the `@ggraphic/schema` format) become editor templates.
  * Every template is a free page (`createPageConfig`) seeded with its file, so a host registers its

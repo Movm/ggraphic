@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MIT
 /** Where the browser keeps the one design of this example. */
 export const DESIGN_KEY = 'design';
 

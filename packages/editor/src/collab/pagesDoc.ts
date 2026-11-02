@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Page-document schema + pure helpers. Single source of truth for multi-page
  * canvas structure in BOTH modes (collaborative Hocuspocus doc and the local

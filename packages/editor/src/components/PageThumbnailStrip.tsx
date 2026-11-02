@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { cn } from '../utils/cn.js';
 import { useMessages } from '../i18n/messages.js';
 import { memo, useCallback, useRef, useState } from 'react';

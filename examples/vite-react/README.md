@@ -16,4 +16,4 @@ npm run test:smoke           # mount, add a text, export a PNG
 
 The `Examples` workflow runs the same steps on every change under `packages/` or `examples/`.
 
-Licence: MPL-2.0, like the packages. The two templates in `src/templates.json` stay CC0-1.0, as in templates-open.
+Licence: MIT. The two templates in `src/templates.json` stay CC0-1.0, as in templates-open.

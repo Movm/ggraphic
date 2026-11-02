@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /** The element model the editor adds to core: instance factories and types for shapes, charts, badges, frames, user images, icons, illustrations and assets; duplicating; lifted blocks. */
 export {
   BLOCK_COLLECTIONS,

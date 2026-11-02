@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * `imagesSettled()` hält die Offscreen-Vorschau im Chat zurück, bis das
  * Hintergrundbild geladen ist. Ohne das fotografierte sie den Dreizeiler nach

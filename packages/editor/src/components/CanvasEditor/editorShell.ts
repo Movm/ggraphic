@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import type { CanvasEditorServices, CanvasSpecEditBridge } from '../../CanvasEditorProvider.js';
 import type { GenericCanvasRef } from '../GenericCanvas.js';
 import type { PageInheritance } from '../../configs/pageInheritance.js';
