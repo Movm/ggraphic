@@ -721,6 +721,17 @@ export function createUserImageActions<TState extends { userImageInstances: User
   // The blob preview of each placed file, until its durable URL arrives: an undo during the upload
   // takes the image off the canvas, but the redo entries still hold the preview.
   const previews = new Map<string, string>();
+  const removeUserImage = (id: string) => {
+    const images = getState().userImageInstances;
+    const instance = images.find((u) => u.id === id);
+    if (instance?.src.startsWith('blob:') && isLastHolder(images, (u) => u.src, instance.src)) {
+      URL.revokeObjectURL(instance.src);
+    }
+    commit((s) => ({
+      ...s,
+      userImageInstances: s.userImageInstances.filter((u) => u.id !== id),
+    }));
+  };
 
   return {
     addUserImage: (file: File, objectUrl: string) => {
@@ -790,16 +801,39 @@ export function createUserImageActions<TState extends { userImageInstances: User
       setState(change);
       debouncedSaveToHistory(change(getState()));
     },
-    removeUserImage: (id: string) => {
-      const images = getState().userImageInstances;
-      const instance = images.find((u) => u.id === id);
-      if (instance?.src.startsWith('blob:') && isLastHolder(images, (u) => u.src, instance.src)) {
-        URL.revokeObjectURL(instance.src);
+    removeUserImage,
+    /**
+     * Takes back a placement whose upload failed (#170): the image leaves the canvas and every
+     * history entry, so no undo brings back its revoked preview. A user's delete stays
+     * `removeUserImage`, which undo reverts.
+     */
+    discardPlacedUserImage: (id: string) => {
+      if (!history) {
+        removeUserImage(id);
+        return;
       }
-      commit((s) => ({
+      const images = getState().userImageInstances;
+      const preview = previews.get(id) ?? images.find((u) => u.id === id)?.src;
+      previews.delete(id);
+      if (preview?.startsWith('blob:') && isLastHolder(images, (u) => u.src, preview)) {
+        URL.revokeObjectURL(preview);
+      }
+      const drop = (s: TState): TState => ({
         ...s,
         userImageInstances: s.userImageInstances.filter((u) => u.id !== id),
-      }));
+      });
+      setState(drop);
+      // The oldest entry that holds the image is its placement: that step goes. Later entries keep
+      // their other edits.
+      let placement = true;
+      history.rewriteHistory((s: TState) => {
+        if (!s.userImageInstances?.some((u) => u.id === id)) return s;
+        if (placement) {
+          placement = false;
+          return null;
+        }
+        return drop(s);
+      });
     },
   };
 }
