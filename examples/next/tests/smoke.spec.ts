@@ -13,8 +13,11 @@ test('a design starts on the start page; the editor takes a text and exports a P
 
   // Start page: a format, then a template. Both are links rendered on the server.
   await page.goto('/');
-  await page.getByRole('link', { name: /^4:5/ }).click();
-  await expect(page.getByRole('link', { name: /^4:5/ })).toHaveAttribute('aria-current', 'true');
+  await page.getByRole('link', { name: /^Post 4:5/ }).click();
+  await expect(page.getByRole('link', { name: /^Post 4:5/ })).toHaveAttribute(
+    'aria-current',
+    'true'
+  );
   await page.getByRole('link', { name: /^Quote/ }).click();
 
   // The editor opens the new design and stores it; a reload of /edit opens it again.

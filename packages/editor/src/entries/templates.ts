@@ -29,6 +29,8 @@ export {
   canvasFormats,
   type CanvasPrintSpec,
   DEFAULT_FORMAT_ID,
+  formatDescription,
+  formatLabel,
   getCanvasFormat,
   getCanvasFormatOrDefault,
   insertScaleFor,

@@ -40,6 +40,8 @@ export {
   CANVAS_FORMAT_GROUP_ORDER,
   type CanvasFormatGroupDef,
   canvasFormats,
+  formatDescription,
+  formatLabel,
   getCanvasFormat,
   getCanvasFormatOrDefault,
   registerCanvasFormatGroups,

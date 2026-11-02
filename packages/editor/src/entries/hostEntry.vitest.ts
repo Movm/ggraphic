@@ -85,6 +85,28 @@ describe('@ggraphic/editor/host', () => {
     expect(fromEmbed.BLANK_PAGE_ID).toBe(fromHost.BLANK_PAGE_ID);
   });
 
+  it("names a format in the catalogue's language, as the templates entry does (#159)", async () => {
+    const [fromHost, fromTemplates] = await Promise.all([
+      import('./host.js'),
+      import('./templates.js'),
+    ]);
+    expect(fromHost.formatLabel).toBe(fromTemplates.formatLabel);
+    expect(fromHost.formatDescription).toBe(fromTemplates.formatDescription);
+    const portrait = fromHost.getCanvasFormatOrDefault('post-portrait');
+    const slides = fromHost.getCanvasFormatOrDefault('slide-16-9');
+    try {
+      fromHost.registerMessages('en');
+      expect(fromHost.formatLabel(portrait)).toBe('Post 4:5');
+      expect(fromHost.formatDescription(slides)).toBe('1920 × 1080 · 16:9 · Slides');
+      // German stays the host's choice, through the same catalogue.
+      fromHost.registerMessages('de');
+      expect(fromHost.formatLabel(portrait)).toBe('Beitrag 4:5');
+      expect(fromHost.formatDescription(slides)).toBe('1920 × 1080 · 16:9 · Folien');
+    } finally {
+      fromHost.registerMessages('de');
+    }
+  });
+
   it('carries the interfaces a host augments, identical to their domain entries', () => {
     expectTypeOf<host.CanvasAiHostTypes>().toEqualTypeOf<ai.CanvasAiHostTypes>();
     expectTypeOf<host.HostElementKinds>().toEqualTypeOf<kinds.HostElementKinds>();
