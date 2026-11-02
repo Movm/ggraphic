@@ -420,6 +420,7 @@ function GenericCanvasWithRef<
   const stageRef = useRef<CanvasStageRef>(null);
   const getStage = useCallback(() => stageRef.current?.getStage() ?? null, []);
   const [imageLoads] = useState<ImageLoads>(() => ({ pending: new Set(), failed: new Set() }));
+  // Never pruned: one entry per retried element is bounded; pruning on cleanup would remount it.
   const [imageRetries, setImageRetries] = useState<ReadonlyMap<string, number>>(() => new Map());
 
   // Export state (used by auto-save and attribution overlay)
