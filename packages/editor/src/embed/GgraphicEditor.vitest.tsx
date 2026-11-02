@@ -91,7 +91,16 @@ const pack = templatePackFromJson(files);
 const textsOf = (doc: GgraphicDocument | undefined) =>
   (doc?.pages[0]?.state['additionalTexts'] as { id: string }[] | undefined) ?? [];
 
-describe('GgraphicEditor', () => {
+/**
+ * How long a test waits for the editor to mount. The first mount loads the lazy `EmbeddedEditor`
+ * chunk and its module graph: about 1 s warm, more than 10 s on a cold first run in a fresh
+ * worktree under memory pressure (#177). Waiting costs nothing once the editor is there.
+ */
+const MOUNT_WAIT = 20_000;
+
+// Each test waits up to MOUNT_WAIT and then still clicks and waits for `onChange`. Under vitest's
+// default 5 s timeout the first test failed on cold runs before its own wait ran out (#177).
+describe('GgraphicEditor', { timeout: 2 * MOUNT_WAIT }, () => {
   it("opens on the pack's template and reports an added text through onChange", async () => {
     expect(pack.problems).toEqual([]);
     const changes: GgraphicDocument[] = [];
@@ -100,7 +109,7 @@ describe('GgraphicEditor', () => {
     );
 
     // English by default, the free page's tabs.
-    const textTab = await screen.findByRole('button', { name: /^Text/ }, { timeout: 10_000 });
+    const textTab = await screen.findByRole('button', { name: /^Text/ }, { timeout: MOUNT_WAIT });
     await userEvent.click(textTab);
     const before = changes.length;
     await userEvent.click(await screen.findByText(messages().sidebar.text.labelTitle));
@@ -122,7 +131,7 @@ describe('GgraphicEditor', () => {
       <GgraphicEditor brand={brandDefault} templates={pack} exportApiRef={api} />
     );
 
-    await waitFor(() => expect(api.current).not.toBeNull(), { timeout: 10_000 });
+    await waitFor(() => expect(api.current).not.toBeNull(), { timeout: MOUNT_WAIT });
     expect(api.current?.getPages().map((p) => p.configId)).toEqual(['embed-headline']);
     // jsdom cannot rasterise a stage, so the PNG itself is not checked here.
     expect(typeof api.current?.captureActivePage).toBe('function');
@@ -141,7 +150,7 @@ describe('GgraphicEditor', () => {
     });
 
     await expect(loading).resolves.toMatchObject({ problems: [] });
-    await waitFor(() => expect(api.current).not.toBeNull(), { timeout: 10_000 });
+    await waitFor(() => expect(api.current).not.toBeNull(), { timeout: MOUNT_WAIT });
     expect(api.current?.getPages().map((p) => p.configId)).toEqual(['embed-headline']);
   });
 
@@ -158,7 +167,7 @@ describe('GgraphicEditor', () => {
       />
     );
 
-    await waitFor(() => expect(api.current).not.toBeNull(), { timeout: 10_000 });
+    await waitFor(() => expect(api.current).not.toBeNull(), { timeout: MOUNT_WAIT });
     expect(BLANK_PAGE_ID).toBe('ggraphic-blank');
     expect(api.current?.getPages().map((p) => p.configId)).toEqual([BLANK_PAGE_ID]);
 
