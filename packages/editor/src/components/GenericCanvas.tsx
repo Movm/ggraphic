@@ -106,7 +106,12 @@ const EMPTY_CALLBACKS: Record<string, ((val: unknown) => void) | undefined> = {}
 const hostLayoutKeys = fromHostKinds((kinds) => kinds.flatMap((k) => k.layoutStateKeys ?? []));
 
 import type { BaseCanvasState } from '../configs/factory/baseTypes.js';
-import type { CanvasElementConfig, FullCanvasConfig, LayoutResult } from '../configs/types.js';
+import type {
+  CanvasActionHistory,
+  CanvasElementConfig,
+  FullCanvasConfig,
+  LayoutResult,
+} from '../configs/types.js';
 import type { OptionalCanvasActions } from '../hooks/useCanvasElementHandlers.js';
 import type { ShadowPatch } from '../hooks/useFloatingModuleHandlers.js';
 import type { FloatingModuleState } from '../hooks/useFloatingModuleState.js';
@@ -572,6 +577,7 @@ function GenericCanvasWithRef<
     checkpoint,
     flushPendingSaves,
     replaceInHistory,
+    rewriteHistory,
     undo,
     redo,
     canUndo,
@@ -599,7 +605,12 @@ function GenericCanvasWithRef<
         saveToHistory,
         debouncedSaveToHistory,
         callbacks,
-        { replaceInHistory }
+        {
+          replaceInHistory,
+          // The actions see the history entries as their own state type; the store keeps them
+          // as `TState`, which they are.
+          rewriteHistory: rewriteHistory as CanvasActionHistory['rewriteHistory'],
+        }
       ),
       runHistoryBatch,
     }),
@@ -612,6 +623,7 @@ function GenericCanvasWithRef<
       runHistoryBatch,
       callbacks,
       replaceInHistory,
+      rewriteHistory,
     ]
   );
 

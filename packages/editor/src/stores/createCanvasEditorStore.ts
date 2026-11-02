@@ -120,6 +120,13 @@ export interface CanvasEditorActions<
    * `from` back: an upload's `blob:` preview once its durable URL is known.
    */
   replaceInHistory: (from: string, to: string) => void;
+  /**
+   * Rewrites every history entry with `rewrite`, oldest first, without a step of its own: a
+   * placement whose upload failed leaves the history as if it never happened. `null` drops the
+   * entry, so does becoming the same as the entry before it; a dropped current step hands over to
+   * the step before it.
+   */
+  rewriteHistory: (rewrite: (componentState: TComponentState) => TComponentState | null) => void;
   setStateRestorationCallback: (callback: ((state: TComponentState) => void) | null) => void;
 
   setSelectedElement: (id: string | null) => void;
@@ -397,6 +404,30 @@ export function createCanvasEditorStore<
               entry.componentState = JSON.parse(json.split(fromJson).join(toJson));
             }
           }
+        }),
+
+      rewriteHistory: (rewrite) =>
+        set((state) => {
+          const kept: typeof state.history = [];
+          let index = -1;
+          let previous: string | undefined;
+          state.history.forEach((entry, i) => {
+            if (entry.componentState) {
+              const plain = JSON.parse(JSON.stringify(entry.componentState)) as TComponentState;
+              const next = rewrite(plain);
+              if (next === null) {
+                if (i === state.historyIndex) index = kept.length - 1;
+                return;
+              }
+              entry.componentState = JSON.parse(JSON.stringify(next));
+            }
+            const json = JSON.stringify(entry.componentState ?? null);
+            if (json !== previous) kept.push(entry);
+            previous = json;
+            if (i === state.historyIndex) index = kept.length - 1;
+          });
+          state.history = kept;
+          state.historyIndex = index;
         }),
 
       setStateRestorationCallback: (callback) =>
