@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { PiTextAlignCenter, PiTextAlignLeft, PiTextAlignRight } from 'react-icons/pi';
 
 import { TILE, TileCaption, useBarTiles } from '../barTiles.js';

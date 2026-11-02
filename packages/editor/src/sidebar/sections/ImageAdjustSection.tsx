@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useDocumentBrand } from '../../brand/documentBrand.js';
 import { CustomColorSwatch } from '../../components/CustomColorSwatch.js';
 import { useMessages } from '../../i18n/messages.js';

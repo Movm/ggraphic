@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * React Kawaii Illustration Definitions
  * 11 cute React Kawaii components with German names and tags

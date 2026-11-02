@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Wo ein aus den Uploads gezogenes Bild landet. Die Seite ist doppelt skaliert:
  * die Bühne auf die Anzeigegröße (`displayScale`), darin eine Gruppe vom

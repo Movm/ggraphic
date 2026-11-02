@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useEffect, useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { useStore } from 'zustand';

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { createContext, useContext } from 'react';
 
 /** Where a block goes: a page (default the active one), centred on the drop point if any. */

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The one page config for templates as data: a colour ground and the editor's free elements, with
  * the Text, Elements, Uploads and Tools tabs. Templates differ only in what a fresh page starts

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * PagePreview — one page drawn read-only through GenericCanvas, reported as a
  * PNG data URL once it has settled.

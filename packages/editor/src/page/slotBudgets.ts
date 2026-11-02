@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The text budget of a template element, for the editor's status line
  * (`CanvasEditorServices.slotBudgets`) and for fitting. A page made from a catalogue template

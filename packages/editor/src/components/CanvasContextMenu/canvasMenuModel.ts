@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Was das Kontextmenü zeigt, als reine Funktion des Ziels. Die Namen und
  * Kürzel kommen aus dem Befehlsregister, die Fähigkeiten aus denselben Fragen,

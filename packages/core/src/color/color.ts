@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 
 /** An sRGB colour: r, g, b in 0–255, a in 0–1. */
 export interface Rgba {

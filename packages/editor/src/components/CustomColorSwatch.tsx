@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * „Eigene Farbe" — der letzte Swatch jeder Farbpalette im Editor. Die
  * Markenfarben davor bleiben die Vorgabe; dieser Swatch öffnet den nativen

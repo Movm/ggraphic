@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Gesperrte Elemente: `lockedLayerIds` auf der Seite, eine Liste von Ids wie
  * `layerOrder`. Sie gilt für Instanzen und Vorlagen-Elemente gleich; Kopien

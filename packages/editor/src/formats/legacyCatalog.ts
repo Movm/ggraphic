@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The formats, the group and the template pinning the editor shipped built in
  * up to 0.1.0-alpha.1, kept unchanged so a host that relied on them can

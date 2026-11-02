@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 'use client';
 /**
  * The React parts of `@ggraphic/editor/host`: the services hook and the block-insert context a host

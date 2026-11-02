@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Ein Text, der gerade getippt wird, steht auf der Zeichenfläche so, wie die Übernahme ihn
  * hinterlässt (Schrift, anliegende Platten) — aber nicht in der Seite: kein Seitenzustand, kein

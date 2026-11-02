@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 // Begradigen. Gedrehte Fotos sind Rechtecke ihrer ungedrehten Lage, gedreht um die Mitte (Grad, wie Konva).
 
 import { cornersOf, hasCorners, traceRoundedRect, type CornerRadius } from './cornerRadius.js';

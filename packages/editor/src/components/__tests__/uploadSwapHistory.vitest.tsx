@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * An upload's durable URL is not an undo step (#161). The file is placed at once with a `blob:`
  * preview, and the upload's URL arrives later. Undo and redo must never bring the preview back:

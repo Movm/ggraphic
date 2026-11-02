@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import type Konva from 'konva';
 
 /** Pixels below this alpha (0-255) count as transparent for pointer hits. */

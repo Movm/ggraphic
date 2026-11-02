@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Ein Textblock mit Auszeichnung wird auf React-Seite vermessen und das
  * Ergebnis im Memo gehalten. Misst der erste Durchlauf, bevor der Fettschnitt

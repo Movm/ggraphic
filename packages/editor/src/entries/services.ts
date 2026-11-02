@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Host services: the service types `CanvasEditorProvider` takes, their browser defaults, toasts, storage keys and screen-corner reservations. */
 export {
   type CanvasEditorServices,

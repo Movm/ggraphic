@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * A host's whole embedding: a brand, a template pack and a change listener. The editor comes up
  * on the pack's template, and an added text reaches the host through `onChange`.
@@ -14,6 +14,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { messages } from '../i18n/messages.js';
 
 import {
+  BLANK_PAGE_ID,
   type CanvasEditorExportApi,
   GgraphicEditor,
   loadTemplatePack,
@@ -142,5 +143,30 @@ describe('GgraphicEditor', () => {
     await expect(loading).resolves.toMatchObject({ problems: [] });
     await waitFor(() => expect(api.current).not.toBeNull(), { timeout: 10_000 });
     expect(api.current?.getPages().map((p) => p.configId)).toEqual(['embed-headline']);
+  });
+
+  it('opens a blank page on the format a host asks for (BLANK_PAGE_ID)', async () => {
+    const api = createRef<CanvasEditorExportApi>();
+    const changes: GgraphicDocument[] = [];
+    render(
+      <GgraphicEditor
+        brand={brandDefault}
+        templates={pack}
+        document={{ formatId: 'slide-16-9', pages: [{ configId: BLANK_PAGE_ID, state: {} }] }}
+        exportApiRef={api}
+        onChange={(d) => changes.push(d)}
+      />
+    );
+
+    await waitFor(() => expect(api.current).not.toBeNull(), { timeout: 10_000 });
+    expect(BLANK_PAGE_ID).toBe('ggraphic-blank');
+    expect(api.current?.getPages().map((p) => p.configId)).toEqual([BLANK_PAGE_ID]);
+
+    await userEvent.click(await screen.findByRole('button', { name: /^Text/ }));
+    await userEvent.click(await screen.findByText(messages().sidebar.text.labelTitle));
+    await waitFor(() => {
+      expect(changes.at(-1)?.formatId).toBe('slide-16-9');
+      expect(textsOf(changes.at(-1)).map((t) => t.id)).toHaveLength(1);
+    });
   });
 });

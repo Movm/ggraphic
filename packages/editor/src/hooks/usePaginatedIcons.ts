@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useState, useMemo, useCallback, useEffect } from 'react';
 
 import { type IconDef } from '../utils/canvasIcons.js';
