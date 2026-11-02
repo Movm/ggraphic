@@ -148,6 +148,10 @@ jobs:
           name: tarballs
           path: examples/next/tarballs
       - run: npm install --no-audit --no-fund
+      # Next 15 and other webpack hosts build with webpack; it rejects `node:` imports in a
+      # browser chunk, even a lazy one (#133). The Turbopack build below is the one the tests run.
+      - name: next build with webpack
+        run: npx next build --webpack
       - name: next build (runs tsc)
         run: npm run build
       - name: Import the embed entry in plain Node

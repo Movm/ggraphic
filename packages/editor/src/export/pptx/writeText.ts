@@ -15,12 +15,63 @@ import { pptxFont } from './pptxFonts.js';
 import { parseColor, pptxRotation, transparencyOf, type PptxUnits } from './pptxUnits.js';
 
 import type { PptxShadow, PptxTextItem, PptxTextRun } from './types.js';
-import type PptxGenJS from 'pptxgenjs';
+
+// Was dieser Schreiber an pptxgenjs gibt, lokal typisiert: so nennen die veröffentlichten
+// Deklarationen pptxgenjs nicht (das Paket ist gebündelt, `#pptxgenjs` löst `node10` nicht auf).
+// `writePptx` reicht die Werte an `slide.addText`/`addShape`, wo tsc sie gegen pptxgenjs prüft.
+
+export interface PptxShadowProps {
+  type: 'outer';
+  color: string;
+  opacity: number;
+  blur: number;
+  offset: number;
+  angle: number;
+}
+
+export interface PptxRunOptions {
+  fontFace?: string;
+  bold?: boolean;
+  italic?: boolean;
+  charSpacing?: number;
+  underline?: { style: 'sng' };
+  strike?: 'sngStrike';
+  color?: string;
+  transparency?: number;
+  highlight?: string;
+  outline?: { color: string; size: number };
+  softBreakBefore?: boolean;
+  bullet?: { type: 'number'; numberStartAt: number; indent: number } | { indent: number };
+  breakLine?: boolean;
+}
+
+export interface PptxTextRunProps {
+  text: string;
+  options: PptxRunOptions;
+}
+
+export interface PptxTextBoxOptions {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  rotate?: number;
+  objectName: string;
+  fontSize: number;
+  align: PptxTextItem['align'];
+  valign: PptxTextItem['valign'];
+  lineSpacing: number;
+  margin: number;
+  wrap: boolean;
+  fit: 'none';
+  isTextBox: boolean;
+  shadow?: PptxShadowProps;
+}
 
 /** Hängender Einzug der Aufzählung, wie `BULLET_INDENT` in `textModel.ts`. */
 const BULLET_INDENT_EM = 1.2;
 
-export function shadowProps(shadow: PptxShadow, units: PptxUnits): PptxGenJS.ShadowProps | null {
+export function shadowProps(shadow: PptxShadow, units: PptxUnits): PptxShadowProps | null {
   const color = parseColor(shadow.color);
   if (!color) return null;
   const angle = (Math.atan2(shadow.offsetY, shadow.offsetX) * 180) / Math.PI;
@@ -34,11 +85,7 @@ export function shadowProps(shadow: PptxShadow, units: PptxUnits): PptxGenJS.Sha
   };
 }
 
-function runOptions(
-  run: PptxTextRun,
-  item: PptxTextItem,
-  units: PptxUnits
-): PptxGenJS.TextPropsOptions {
+function runOptions(run: PptxTextRun, item: PptxTextItem, units: PptxUnits): PptxRunOptions {
   const color = parseColor(run.color);
   const highlight = parseColor(run.highlight);
   const alpha = (color?.alpha ?? 1) * item.opacity;
@@ -60,12 +107,12 @@ function runOptions(
 }
 
 /** Die Läufe eines Textfelds, Absatz für Absatz. */
-export function textRuns(item: PptxTextItem, units: PptxUnits): PptxGenJS.TextProps[] {
+export function textRuns(item: PptxTextItem, units: PptxUnits): PptxTextRunProps[] {
   const fontSizePt = units.pt(item.fontSize);
-  const out: PptxGenJS.TextProps[] = [];
+  const out: PptxTextRunProps[] = [];
   item.paragraphs.forEach((paragraph, index) => {
     const isLast = index === item.paragraphs.length - 1;
-    const runs: PptxGenJS.TextProps[] = [];
+    const runs: PptxTextRunProps[] = [];
     const empty = () => ({
       text: '',
       options: { fontFace: pptxFont(item.fontFace, false, false).fontFace },
@@ -106,7 +153,7 @@ export function textRuns(item: PptxTextItem, units: PptxUnits): PptxGenJS.TextPr
 }
 
 /** Die Feldoptionen: Lage, Größe, Absatzformat — keine Laufattribute (siehe oben). */
-export function textBoxOptions(item: PptxTextItem, units: PptxUnits): PptxGenJS.TextPropsOptions {
+export function textBoxOptions(item: PptxTextItem, units: PptxUnits): PptxTextBoxOptions {
   const fontSizePt = units.pt(item.fontSize);
   const shadow = item.shadow ? shadowProps(item.shadow, units) : null;
   return {

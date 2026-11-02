@@ -4,7 +4,10 @@
  * bearbeitbares PowerPoint-Objekt; jede Raster-Anfrage holt der Aufrufer als
  * PNG vom Stage (`rasterize`). Bilder lädt der Aufrufer (`loadImage`), weil
  * nur er an die Quellen kommt; ein Bild, das nicht lädt, wird gerastert.
- * pptxgenjs kommt erst hier per dynamischem `import()`.
+ * pptxgenjs kommt erst hier per dynamischem `import()`, über `#pptxgenjs`: in der
+ * Entwicklung das npm-Paket, im veröffentlichten Paket der Browser-Build aus
+ * `dist/vendor` (`scripts/bundle-pptxgen.mjs`, #133). pptxgenjs selbst lädt die
+ * Node-Module fs und https (mit `node:`-Präfix) per `import()`, und webpack bricht daran ab.
  */
 
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
@@ -26,7 +29,7 @@ import type {
   PptxRasterRequest,
   PptxShapeItem,
 } from './types.js';
-import type PptxGenJS from 'pptxgenjs';
+import type PptxGenJS from '#pptxgenjs';
 
 export const PPTX_MIME_TYPE =
   'application/vnd.openxmlformats-officedocument.presentationml.presentation';
@@ -214,7 +217,7 @@ export async function writePptx(
   model: PptxDeckModel,
   deps: WritePptxDeps
 ): Promise<WritePptxResult> {
-  const { default: PptxGenJSClass } = await import('pptxgenjs');
+  const { default: PptxGenJSClass } = await import('#pptxgenjs');
   const pres = new PptxGenJSClass();
   pres.layout = 'LAYOUT_WIDE';
   if (deps.title) pres.title = deps.title;
