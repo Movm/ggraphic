@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import type { CanvasEditorServices, CanvasSpecEditBridge } from '../../CanvasEditorProvider.js';
 import type { GenericCanvasRef } from '../GenericCanvas.js';
+import type { PageInheritance } from '../../configs/pageInheritance.js';
 import type { HeterogeneousPage } from '../../configs/types.js';
 import type { SidebarTab, SidebarTabId } from '../../sidebar/types.js';
 import type React from 'react';
@@ -50,10 +51,15 @@ export interface EditorShellProviderProps {
   children: React.ReactNode;
 }
 
-/** Appends a page; `inheritBackground` carries the active page's background over. */
+/**
+ * Appends a page. `inherit` says what it takes from the active page: `true`
+ * its background and brand, `false` nothing, or each part on its own. A blank
+ * page asks for `{ brand: true, background: false }`: it stays bound to the
+ * deck's brand without the photo.
+ */
 export type EditorAddPage = (
   configId: string,
-  inheritBackground: boolean,
+  inherit: boolean | PageInheritance,
   state?: Record<string, unknown>
 ) => Promise<void>;
 
