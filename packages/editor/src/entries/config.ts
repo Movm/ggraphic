@@ -4,6 +4,7 @@ export {
   type AdditionalText,
   type AnyCanvasConfig,
   type BackgroundElementConfig,
+  type CanvasActionHistory,
   type CanvasElementConfig,
   type FullCanvasConfig,
   type HeterogeneousPage,

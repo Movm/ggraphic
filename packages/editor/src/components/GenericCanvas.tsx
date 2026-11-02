@@ -575,6 +575,7 @@ function GenericCanvasWithRef<
     runHistoryBatch,
     checkpoint,
     flushPendingSaves,
+    replaceInHistory,
     undo,
     redo,
     canUndo,
@@ -601,7 +602,8 @@ function GenericCanvasWithRef<
         setActionState,
         saveToHistory,
         debouncedSaveToHistory,
-        callbacks
+        callbacks,
+        { replaceInHistory }
       ),
       runHistoryBatch,
     }),
@@ -613,6 +615,7 @@ function GenericCanvasWithRef<
       debouncedSaveToHistory,
       runHistoryBatch,
       callbacks,
+      replaceInHistory,
     ]
   );
 
