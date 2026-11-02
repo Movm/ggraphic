@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Corner radii of a rounded box: one number for all four corners, or one per corner in CSS
  * order (top-left, top-right, bottom-right, bottom-left), as Konva's `cornerRadius` takes them.

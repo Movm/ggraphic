@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MIT
 import { defaultBrand } from '@ggraphic/brand-default';
 import '@ggraphic/brand-default/fonts';
 import '@ggraphic/editor/styles/compiled.css';

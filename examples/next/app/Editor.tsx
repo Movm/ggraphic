@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MIT
 // GgraphicEditor uses hooks, so whatever renders it is a client component. Next.js still renders
 // it on the server, where GgraphicEditor renders nothing; the editor loads after hydration.
 'use client';

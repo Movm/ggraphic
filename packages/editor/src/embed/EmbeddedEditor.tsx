@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * What `GgraphicEditor` renders in the browser: the editor's registers filled from the props,
  * a React Query client, the host services and the editor shell.

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * „Ebenen": jedes Element der aktiven Seite als Eintrag, vorderstes zuerst —
  * der Weg zu allem auf der Fläche ohne Maus und für Screenreader (#4953).

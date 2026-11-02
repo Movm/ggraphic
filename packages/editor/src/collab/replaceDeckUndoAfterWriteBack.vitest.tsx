@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Verwerfen of a spec edit is the page-level undo of one replaceDeck. Right
  * after the replacement every mounted canvas — this client's and each

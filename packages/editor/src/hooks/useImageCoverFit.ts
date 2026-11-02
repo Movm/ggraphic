@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * useImageCoverFit - Calculate image dimensions for cover-fit display
  * Computes dimensions to cover a container while maintaining aspect ratio

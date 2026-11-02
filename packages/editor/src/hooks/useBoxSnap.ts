@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Snap und Snap-Ziel eines Elements, dessen sichtbare Box aus seinen Props
  * folgt — dasselbe Muster wie Icon, Asset und Text, für Formen, Rahmen,

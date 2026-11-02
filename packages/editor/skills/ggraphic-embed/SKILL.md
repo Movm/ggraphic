@@ -179,7 +179,7 @@ Documents carry a schema version (`meta.schemaVersion`). A newer editor upgrades
 
 ## Advanced: low-level setup
 
-Use this when `GgraphicEditor` is not enough: your own page logic (a `FullCanvasConfig` per template), collaboration, your own page picker or document tabs, several brands per document. ggraphic Studio (`apps/studio` in the ggraphic repository) is a complete host on this path. It is **AGPL-3.0**: read it to understand, but do not copy its code into a host that is not AGPL. The packages themselves are MPL-2.0.
+Use this when `GgraphicEditor` is not enough: your own page logic (a `FullCanvasConfig` per template), collaboration, your own page picker or document tabs, several brands per document. ggraphic Studio (`apps/studio` in the ggraphic repository) is a complete host on this path. It is **AGPL-3.0-only**, and so are the packages themselves: a host that embeds them and is distributed or offered over a network must make its source available under AGPL-compatible terms. Versions published before the relicensing stay MPL-2.0. The `examples/*` are MIT and free to copy.
 
 ### Imports
 

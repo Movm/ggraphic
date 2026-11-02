@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { type FormEvent, type InputHTMLAttributes, forwardRef, useId } from 'react';
 
 import { cx } from '../cx.js';

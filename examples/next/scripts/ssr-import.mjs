@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MIT
 /**
  * A server that does not bundle its dependencies (plain Node, or Vite's SSR, which leaves
  * node_modules external) loads the embed entry as published. It must import there and render

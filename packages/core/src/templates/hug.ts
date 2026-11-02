@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Hugging plates: a plate (a `rect` in `shapeInstances`) that carries `hug` is as tall as the
  * lines of its text plus padding, and with `width: 'text'` as wide as the longest line. Placing a

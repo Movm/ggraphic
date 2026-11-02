@@ -23,4 +23,4 @@ npm run test:smoke           # the server HTML, then start page → editor, add 
 
 The `Examples` workflow runs the same steps on every change under `packages/` or `examples/`.
 
-Licence: MPL-2.0, like the packages. The two templates in `app/templates.json` stay CC0-1.0, as in templates-open.
+Licence: MIT. The two templates in `app/templates.json` stay CC0-1.0, as in templates-open.

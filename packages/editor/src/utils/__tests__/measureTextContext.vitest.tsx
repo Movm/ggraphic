@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Word-wrap loops measure per word candidate. A fresh <canvas> + 2D context
  * per call made each keystroke allocate hundreds of them; the measurement now

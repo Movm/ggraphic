@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Pick a template and a colour world for a brief and fill the template's text
  * slots. The model only ever chooses ids it was shown; `validate` rejects the

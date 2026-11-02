@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 // The writer end to end: the model becomes a .pptx through `#pptxgenjs` (the npm package here,
 // the bundled browser build in the published package, #133).
 import { strFromU8, unzipSync } from 'fflate';

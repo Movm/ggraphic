@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * „Eigene Farbe": übernimmt erst beim nativen `change` (ein Rückgängig-Schritt
  * je Wahl), zeigt eine eigene Farbe gefüllt und lässt die Vorgaben Vorgaben sein.

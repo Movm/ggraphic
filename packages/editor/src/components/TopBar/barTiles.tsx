@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import React, { createContext, useContext } from 'react';
 
 import { cn } from '../../utils/cn.js';

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 // Types for the matchers vitest.setup.ts registers at runtime via expect.extend —
 // jest-dom's (toBeInTheDocument, …) and vitest-axe's (toHaveNoViolations). This file exists so `tsc` sees them
 // (the setup file lives outside the src tsconfig include).

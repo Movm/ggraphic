@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The history-synced capture (pixelRatio-2 PNG, 1500 ms after each history
  * step) only feeds auto-save. With `autoSave={false}` — collab and multi-page

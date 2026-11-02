@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 
 /** Smallest text size a template text may be set at, as a share of the canvas height. */
 export const MIN_TEXT_SHARE = 0.035;
