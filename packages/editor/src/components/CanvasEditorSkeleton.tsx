@@ -85,7 +85,7 @@ export function CanvasEditorSkeleton({
       aria-live="polite"
       aria-busy="true"
       aria-label={t.shell.loadingEditor}
-      className="flex flex-col h-[var(--editor-height)] min-h-[500px] bg-[var(--editor-bg)]"
+      className="flex flex-col h-[var(--editor-height,100dvh)] min-h-[500px] bg-[var(--editor-bg)]"
     >
       {topBar && (
         <div className="relative w-full h-[var(--editor-topbar-height)] shrink-0 bg-[image:var(--editor-menubar-gradient)] px-4 flex items-center gap-1 max-canvas-mobile:h-[52px] max-canvas-mobile:px-2.5">
