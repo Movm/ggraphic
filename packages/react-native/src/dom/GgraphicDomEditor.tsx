@@ -45,6 +45,12 @@ interface Opened {
   templates: TemplatePack | Promise<TemplatePack>;
 }
 
+/**
+ * How long an export waits for fonts. WKWebView leaves a face it cannot fetch loading for good,
+ * and the brand fonts cannot be fetched in an Expo DOM component yet (#151).
+ */
+const FONT_WAIT_MS = 3_000;
+
 const message = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
 const idOf = (raw: unknown): number | null => {
@@ -59,6 +65,7 @@ async function run(
   switch (command.type) {
     case 'exportPng': {
       const url = await api.captureActivePage({
+        fontWaitMs: FONT_WAIT_MS,
         ...(command.pixelRatio === undefined ? {} : { pixelRatio: command.pixelRatio }),
         ...(command.transparent === undefined ? {} : { transparent: command.transparent }),
       });

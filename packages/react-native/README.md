@@ -87,8 +87,9 @@ whose answer had not reached the app yet, runs a second time.
 ### Fonts
 
 Expo's Metro does not rewrite `url()` in CSS, so the font files of `@ggraphic/brand-default/fonts`
-do not load in the web view: the editor and its PNGs use fallback faces. An export waits at most
-3 s for fonts.
+do not load in the web view: the editor and its PNGs use fallback faces. `GgraphicDomEditor`
+exports with `fontWaitMs: 3000`, so an export waits at most 3 s for fonts; elsewhere the editor
+waits until they settle.
 
 `src/bridge.ts` defines the messages and reads them (`parseEditorCommand`, `parseEditorEvent`) on
 both sides; `src/client.ts` is the app side without React. Nothing in the native entry loads the

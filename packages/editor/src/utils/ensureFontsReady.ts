@@ -1,7 +1,4 @@
 // SPDX-License-Identifier: MPL-2.0
-/** How long an export waits for fonts that have not loaded. */
-const FONT_WAIT_MS = 3_000;
-
 /**
  * Awaits every declared @font-face load before a stage export rasterizes.
  *
@@ -11,20 +8,23 @@ const FONT_WAIT_MS = 3_000;
  * heaviest brand font sets are the most visible offenders). Gating the
  * user-facing export paths on this makes the snapshot deterministic. Cheap and
  * idempotent after the first call (faces are cached), and best-effort: an
- * export must never hang or fail on font loading.
+ * export must never fail on font loading.
+ *
+ * `timeoutMs` bounds the wait, for a host whose web view can leave a face it cannot fetch pending
+ * for good (WKWebView in an Expo DOM component); the export then uses the fallback face. Without
+ * it the wait lasts until the fonts settle.
  */
-export async function ensureFontsReady(): Promise<void> {
+export async function ensureFontsReady(options: { timeoutMs?: number } = {}): Promise<void> {
   if (typeof document === 'undefined' || !document.fonts) return;
   const fonts = document.fonts;
   const loaded = (async () => {
     await Promise.all(Array.from(fonts, (face) => face.load().catch(() => undefined)));
     await fonts.ready;
-  })().catch(() => undefined); // best-effort — never block an export on font loading
-  // A web view can leave a face it cannot fetch pending for good (WKWebView in an Expo DOM
-  // component), so the wait has an end; the export then uses the fallback face.
+  })().catch(() => undefined); // best-effort — never fail an export on font loading
+  if (options.timeoutMs === undefined) return loaded;
   let timer: ReturnType<typeof setTimeout> | undefined;
   const limit = new Promise<void>((resolve) => {
-    timer = setTimeout(resolve, FONT_WAIT_MS);
+    timer = setTimeout(resolve, options.timeoutMs);
   });
   await Promise.race([loaded, limit]);
   clearTimeout(timer);

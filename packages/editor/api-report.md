@@ -14,7 +14,7 @@ Source: `src/entries/embed.ts`
 
 ```ts
 interface CanvasEditorExportApi {  // from packages/editor/src/components/CanvasEditor/types.ts (type-only export)
-  captureActivePage: (options?: { pixelRatio?: number; transparent?: boolean; }) => Promise<string | null>
+  captureActivePage: (options?: { pixelRatio?: number; transparent?: boolean; fontWaitMs?: number; }) => Promise<string | null>
   capturePages: (options?: { pixelRatio?: number; }) => Promise<string[]>
   exportPptx: () => Promise<Blob>
   getPages: () => { configId: string; state: Record<string, unknown>; }[]
@@ -1132,7 +1132,7 @@ Source: `src/components/CanvasEditor/types.ts`
 
 ```ts
 interface CanvasEditorExportApi {
-  captureActivePage: (options?: { pixelRatio?: number; transparent?: boolean; }) => Promise<string | null>
+  captureActivePage: (options?: { pixelRatio?: number; transparent?: boolean; fontWaitMs?: number; }) => Promise<string | null>
   capturePages: (options?: { pixelRatio?: number; }) => Promise<string[]>
   exportPptx: () => Promise<Blob>
   getPages: () => { configId: string; state: Record<string, unknown>; }[]
@@ -3370,7 +3370,7 @@ Source: `src/entries/embed.ts`
 
 ```ts
 interface CanvasEditorExportApi {  // from packages/editor/src/components/CanvasEditor/types.ts (type-only export)
-  captureActivePage: (options?: { pixelRatio?: number; transparent?: boolean; }) => Promise<string | null>
+  captureActivePage: (options?: { pixelRatio?: number; transparent?: boolean; fontWaitMs?: number; }) => Promise<string | null>
   capturePages: (options?: { pixelRatio?: number; }) => Promise<string[]>
   exportPptx: () => Promise<Blob>
   getPages: () => { configId: string; state: Record<string, unknown>; }[]
@@ -3426,7 +3426,7 @@ Source: `src/embed/index.ts`
 
 ```ts
 interface CanvasEditorExportApi {  // from packages/editor/src/components/CanvasEditor/types.ts (type-only export)
-  captureActivePage: (options?: { pixelRatio?: number; transparent?: boolean; }) => Promise<string | null>
+  captureActivePage: (options?: { pixelRatio?: number; transparent?: boolean; fontWaitMs?: number; }) => Promise<string | null>
   capturePages: (options?: { pixelRatio?: number; }) => Promise<string[]>
   exportPptx: () => Promise<Blob>
   getPages: () => { configId: string; state: Record<string, unknown>; }[]
@@ -6461,7 +6461,7 @@ interface CanvasAiEditBridge {  // from packages/editor/src/CanvasEditorProvider
   applyOperations: (ops: HostCanvasAiOperation[]) => ApplyResult[]
 }
 interface CanvasEditorExportApi {  // from packages/editor/src/components/CanvasEditor/types.ts (type-only export)
-  captureActivePage: (options?: { pixelRatio?: number; transparent?: boolean; }) => Promise<string | null>
+  captureActivePage: (options?: { pixelRatio?: number; transparent?: boolean; fontWaitMs?: number; }) => Promise<string | null>
   capturePages: (options?: { pixelRatio?: number; }) => Promise<string[]>
   exportPptx: () => Promise<Blob>
   getPages: () => { configId: string; state: Record<string, unknown>; }[]
@@ -8331,7 +8331,7 @@ Source: `src/entries/text.ts`
 ```ts
 function aliasFontFamily(family: string) => string  // from packages/editor/src/utils/fontAliases.ts
 function balancedWrap(text: string, width: number, measureLine: (line: string) => number) => string[]  // from packages/editor/src/composer/textFit.ts
-function ensureFontsReady() => Promise<void>  // from packages/editor/src/utils/ensureFontsReady.ts
+function ensureFontsReady(options?: { timeoutMs?: number; }) => Promise<void>  // from packages/editor/src/utils/ensureFontsReady.ts
 const FONT_FAMILY_ALIASES: Readonly<Record<string, string>>  // from packages/core/src/brand/fontAliases.ts
 function largestSizeWordsFit(texts: string[], size: number, width: number, indent: number, measureWord: (word: string, size: number) => number, minSize?: number) => number  // from packages/editor/src/composer/textFit.ts
 function measureTextWidthWithFont(text: string, fontSize: number, fontFamily: string, fontStyle?: string) => number  // from packages/editor/src/utils/textUtils.ts
@@ -9348,7 +9348,7 @@ function withTone(entry: EmojiCatalogEntry, tone: number) => EmojiCatalogEntry
 Source: `src/utils/ensureFontsReady.ts`
 
 ```ts
-function ensureFontsReady() => Promise<void>
+function ensureFontsReady(options?: { timeoutMs?: number; }) => Promise<void>
 ```
 
 ## `@ggraphic/editor/utils/expandImage`

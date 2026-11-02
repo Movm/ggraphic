@@ -10,6 +10,7 @@ import { type EditorCommand, type EditorEvent } from '../bridge.js';
 // that names the design it shows, counts undo, throws on a design called `crash`, and reads its
 // template pack the way the editor does.
 const undo = vi.hoisted(() => vi.fn());
+const captureOptions = vi.hoisted(() => [] as unknown[]);
 // Hands the bridge a new api object without a remount, as the editor does when its handlers change.
 const renewApi = vi.hoisted(() => ({ current: () => undefined as void }));
 vi.mock('@ggraphic/editor', () => ({
@@ -38,8 +39,10 @@ function FakeEditor({
   useImperativeHandle(
     exportApiRef,
     () => ({
-      captureActivePage: () =>
-        Promise.resolve(`data:image/png;base64,${document?.formatId ?? 'blank'}`),
+      captureActivePage: (options: unknown) => {
+        captureOptions.push(options);
+        return Promise.resolve(`data:image/png;base64,${document?.formatId ?? 'blank'}`);
+      },
       undo,
       redo: () => undefined,
     }),
@@ -141,6 +144,14 @@ describe('GgraphicDomEditor', () => {
     expect(editor.events.filter((event) => event.type === 'ready')).toHaveLength(1);
     await editor.send([{ type: 'load', id: 1, document: design('second') }]);
     expect(editor.events.filter((event) => event.type === 'ready')).toHaveLength(2);
+  });
+
+  // WKWebView can leave a font it cannot fetch loading for good (#151); the export must not wait.
+  it('bounds the font wait of an export', async () => {
+    captureOptions.length = 0;
+    const editor = await mount(design('first'));
+    await editor.send([{ type: 'exportPng', id: 1, pixelRatio: 2 }]);
+    expect(captureOptions).toEqual([{ pixelRatio: 2, fontWaitMs: 3_000 }]);
   });
 
   it('answers a malformed command that carries an id', async () => {
