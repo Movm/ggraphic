@@ -2,9 +2,9 @@
 import { useIconCatalog } from '../../hooks/useIconCatalog.js';
 import { usePaginatedIcons } from '../../hooks/usePaginatedIcons.js';
 import { Skeleton } from '../../ui/skeleton.js';
-import { type IconDef, onIconSetLoaded } from '../../utils/canvasIcons.js';
+import { type IconDef } from '../../utils/canvasIcons.js';
 import { cn } from '../../utils/cn.js';
-import { addCollection, Icon } from '@iconify/react';
+import { Icon } from '@iconify/react';
 import { useCallback, useMemo, useRef, useEffect } from 'react';
 import { PiCheck } from 'react-icons/pi';
 
@@ -17,8 +17,7 @@ import {
   SIDEBAR_SECTION,
 } from '../sidebarStyles.js';
 
-// `<Icon icon="prefix:…">` renders offline from the sets the catalogue has loaded.
-onIconSetLoaded(addCollection);
+import { registerBundledIconSets } from './registerBundledIconSets.js';
 
 export interface IconsSectionProps {
   selectedIcons: string[];
@@ -42,6 +41,7 @@ export function IconsSection({
   isExpanded = false,
   searchQuery = '',
 }: IconsSectionProps) {
+  registerBundledIconSets();
   const sentinelRef = useRef<HTMLDivElement>(null);
   // Browsing shows the default set; search spans all bundled sets.
   const { data: allIcons = [], isLoading: iconsLoading } = useIconCatalog();
