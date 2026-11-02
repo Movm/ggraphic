@@ -29,6 +29,8 @@ const imageStatus = vi.hoisted(() => {
   let current: Status = 'loading';
   const listeners = new Set<() => void>();
   return {
+    /** How often an element mounted a load of the stock photo. */
+    attempts: 0,
     get: () => current,
     set(next: Status) {
       current = next;
@@ -50,7 +52,12 @@ vi.mock('use-image', async () => {
   const { Image, createCanvas } = await import('@napi-rs/canvas');
   const bitmap = new Image();
   bitmap.src = createCanvas(4, 4).toBuffer('image/png');
+  const { useState } = await import('react');
   const useImage = (url: string) => {
+    useState(() => {
+      if (url.includes(STOCK)) imageStatus.attempts++;
+      return null;
+    });
     const status = useSyncExternalStore(imageStatus.subscribe, imageStatus.get);
     if (!url) return [undefined, 'loading'];
     if (!url.includes(STOCK)) return [bitmap, 'loaded'];
@@ -154,6 +161,44 @@ describe('GenericCanvasRef.imagesSettled', () => {
     expect(ref.current!.imageLoadState()).toEqual({ pending: 0, failed: 1 });
   });
 
+  // `use-image` loads again only for a new url, so re-rendering a failed
+  // element left it failed for good. A retry mounts a fresh load.
+  it('loads a failed image again on retryFailedImages', async () => {
+    const { ref } = await mount({
+      ...SLOGAN,
+      currentImageSrc: `${STOCK}wind.jpg`,
+    });
+    await act(async () => {
+      imageStatus.set('failed');
+    });
+    const attempts = imageStatus.attempts;
+
+    let retried = 0;
+    await act(async () => {
+      retried = ref.current!.retryFailedImages();
+      // Pending at once: a host polling right after the call must not read settled.
+      expect(ref.current!.imageLoadState()).toEqual({ pending: 1, failed: 0 });
+      expect(ref.current!.imagesSettled()).toBe(false);
+    });
+    expect(retried).toBe(1);
+    expect(imageStatus.attempts).toBe(attempts + 1);
+
+    await act(async () => {
+      imageStatus.set('loaded');
+    });
+    expect(ref.current!.imageLoadState()).toEqual({ pending: 0, failed: 0 });
+  });
+
+  it('has nothing to retry when no image failed', async () => {
+    const { ref } = await mount({ ...SLOGAN, currentImageSrc: `${STOCK}wind.jpg` });
+    let retried = -1;
+    await act(async () => {
+      retried = ref.current!.retryFailedImages();
+    });
+    expect(retried).toBe(0);
+    expect(ref.current!.imageLoadState()).toEqual({ pending: 1, failed: 0 });
+  });
+
   it('has nothing to wait for without a background image', async () => {
     const { ref } = await mount(SLOGAN);
     expect(ref.current!.imagesSettled()).toBe(true);
@@ -231,5 +276,26 @@ describe('GenericCanvasRef.imagesSettled with assets', () => {
     });
     expect(ref.current!.imagesSettled()).toBe(true);
     expect(ref.current!.imageLoadState()).toEqual({ pending: 0, failed: 1 });
+  });
+
+  it('loads a failed sticker again on retryFailedImages', async () => {
+    const { ref } = await mount({ ...SLOGAN, assetInstances: [STICKER] });
+    const loads = () => created.filter((img) => img.src.includes(FIXTURE_ASSET_ID));
+    await act(async () => {
+      loads().at(-1)!.onerror?.();
+    });
+    const attempts = loads().length;
+
+    await act(async () => {
+      ref.current!.retryFailedImages();
+    });
+    expect(loads()).toHaveLength(attempts + 1);
+    expect(ref.current!.imageLoadState()).toEqual({ pending: 1, failed: 0 });
+
+    await act(async () => {
+      loads().at(-1)!.onload?.();
+    });
+    expect(ref.current!.imageLoadState()).toEqual({ pending: 0, failed: 0 });
+    await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
   });
 });

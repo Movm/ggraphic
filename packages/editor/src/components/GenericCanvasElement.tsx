@@ -19,7 +19,7 @@ import {
   useIsElementSelected,
 } from '../stores/CanvasStoreProvider.js';
 import { backgroundAdjustments } from '../utils/imageFilters.js';
-import { useTrackPendingImage } from '../utils/pendingImages.js';
+import { useImageRetry, useTrackPendingImage } from '../utils/pendingImages.js';
 import {
   assertAsString,
   assertAsNumber,
@@ -580,6 +580,8 @@ export const GenericCanvasElement = memo(function GenericCanvasElement<
   getSnapTargets,
 }: GenericCanvasElementProps<TState>) {
   const selected = useIsElementSelected(config.id);
+  // A retry remounts the image element: its `use-image` then loads afresh.
+  const imageRetry = useImageRetry(config.id);
 
   // Check visibility
   if (config.visible && !config.visible(state)) {
@@ -611,6 +613,7 @@ export const GenericCanvasElement = memo(function GenericCanvasElement<
     case 'image':
       return (
         <MemoizedImageElement
+          key={imageRetry}
           config={config as ImageElementConfig<Record<string, unknown>>}
           state={state as Record<string, unknown>}
           layout={layout}

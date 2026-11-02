@@ -18,6 +18,17 @@ export interface ImageLoads {
 
 export const PendingImagesContext = createContext<ImageLoads | null>(null);
 
+/**
+ * How often each element's load was retried (`GenericCanvasRef.retryFailedImages`).
+ * A loader starts a fresh load when its number moves on: `use-image` loads
+ * again only for a new url, so a re-render alone leaves a failed image failed.
+ */
+export const ImageRetryContext = createContext<ReadonlyMap<string, number>>(new Map());
+
+export function useImageRetry(id: string): number {
+  return useContext(ImageRetryContext).get(id) ?? 0;
+}
+
 export function useTrackPendingImage(
   id: string,
   url: string,
@@ -29,10 +40,12 @@ export function useTrackPendingImage(
   const state = url === '' || status === 'loaded' ? null : status;
   useEffect(() => {
     if (!loads || !state) return undefined;
-    const set = state === 'loading' ? loads.pending : loads.failed;
-    set.add(id);
+    (state === 'loading' ? loads.pending : loads.failed).add(id);
     return () => {
-      set.delete(id);
+      // Both sets: a retry moves a failed id to `pending` before the element
+      // re-renders, and an element removed meanwhile must not stay pending.
+      loads.pending.delete(id);
+      loads.failed.delete(id);
     };
   }, [loads, id, state]);
 }

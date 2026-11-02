@@ -27,7 +27,7 @@ import {
 import { cropAspectRatio, frameForAspect, type CropAspectId } from '../utils/cropAspect.js';
 import { notchPx, traceNotch } from '../utils/notch.js';
 import { ELEMENT_TRANSFORMER } from '../utils/orientation.js';
-import { useTrackPendingImage } from '../utils/pendingImages.js';
+import { useImageRetry, useTrackPendingImage } from '../utils/pendingImages.js';
 import { cacheFiltered, usePreviewCaptureRatio } from '../utils/filterCache.js';
 import { recacheNextFrame } from '../utils/recacheNextFrame.js';
 import {
@@ -119,7 +119,9 @@ function UserImagePrimitiveInner({
   const captureRatio = usePreviewCaptureRatio();
   const transformerRef = useRef<Konva.Transformer>(null);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
-  const [settled, setSettled] = useState<{ src: string; ok: boolean } | null>(null);
+  const [settled, setSettled] = useState<{ src: string; retry: number; ok: boolean } | null>(null);
+  // A retry (`retryFailedImages`) loads the same source again.
+  const retry = useImageRetry(userImage.id);
   const appliedAspectRef = useRef<CropAspectId>('free');
 
   useEffect(() => {
@@ -129,19 +131,23 @@ function UserImagePrimitiveInner({
     img.src = src;
     img.onload = () => {
       setImage(img);
-      setSettled({ src, ok: true });
+      setSettled({ src, retry, ok: true });
     };
-    img.onerror = () => setSettled({ src, ok: false });
+    img.onerror = () => setSettled({ src, retry, ok: false });
 
     return () => {
       img.onload = null;
       img.onerror = null;
     };
-  }, [userImage.src]);
+  }, [userImage.src, retry]);
   useTrackPendingImage(
     userImage.id,
     userImage.src,
-    settled?.src !== userImage.src ? 'loading' : settled.ok ? 'loaded' : 'failed'
+    settled?.src !== userImage.src || settled.retry !== retry
+      ? 'loading'
+      : settled.ok
+        ? 'loaded'
+        : 'failed'
   );
 
   useEffect(() => {
@@ -324,7 +330,8 @@ function UserImagePrimitiveInner({
       node
     );
 
-  const noPhoto = !userImage.src || (settled?.src === userImage.src && !settled.ok);
+  const noPhoto =
+    !userImage.src || (settled?.src === userImage.src && settled.retry === retry && !settled.ok);
   if (!image && !noPhoto) return null;
 
   if (!image || noPhoto) {
