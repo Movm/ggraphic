@@ -86,3 +86,22 @@ describe('@ggraphic/editor/host', () => {
     expectTypeOf<host.CanvasEditorHostServices>().toEqualTypeOf<services.CanvasEditorHostServices>();
   });
 });
+
+describe('@ggraphic/editor/host-react', () => {
+  const graph = moduleGraph(resolve(SRC, 'entries/hostReact.ts'));
+
+  it('loads the two contexts and nothing they render', () => {
+    expect(graph).toEqual([
+      'CanvasEditorProvider.tsx',
+      'components/CanvasEditor/blockInsertContext.ts',
+      'entries/hostReact.ts',
+    ]);
+  });
+
+  it('imports no package but React: no Konva, store or icons', () => {
+    const packages = graph.flatMap((f) =>
+      runtimeSpecifiers(resolve(SRC, f)).filter((spec) => !spec.startsWith('.'))
+    );
+    expect([...new Set(packages)]).toEqual(['react']);
+  });
+});

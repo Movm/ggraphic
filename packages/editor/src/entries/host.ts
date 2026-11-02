@@ -8,9 +8,10 @@
  * is also in its domain entry.
  *
  * The React parts a host reads at render time, `useCanvasEditorServices` and the block-insert
- * context, are in `@ggraphic/editor/shell`: they create a React context when evaluated, which
- * fails in a server component (#136). `registerKindRenderers` is not here either: it is the drawing
- * side of a kind and loads the canvas (`@ggraphic/editor/kinds`).
+ * context, are in the client entry `@ggraphic/editor/host-react`, as light as this one: they create
+ * a React context when evaluated, which fails in a server component (#136).
+ * `registerKindRenderers` is not here either: it is the drawing side of a kind and loads the canvas
+ * (`@ggraphic/editor/kinds`).
  */
 export {
   type CanvasEditorHostServices,

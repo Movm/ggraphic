@@ -34,6 +34,7 @@
     "./store": "./src/entries/store.ts",
     "./services": "./src/entries/services.ts",
     "./host": "./src/entries/host.ts",
+    "./host-react": "./src/entries/hostReact.ts",
     "./brand": "./src/entries/brand.ts",
     "./templates": "./src/entries/templates.ts",
     "./elements": "./src/entries/elements.ts",
@@ -608,6 +609,11 @@
         "types": "./dist/entries/host.d.ts",
         "import": "./dist/entries/host.js",
         "default": "./dist/entries/host.js"
+      },
+      "./host-react": {
+        "types": "./dist/entries/hostReact.d.ts",
+        "import": "./dist/entries/hostReact.js",
+        "default": "./dist/entries/hostReact.js"
       },
       "./brand": {
         "types": "./dist/entries/brand.d.ts",
