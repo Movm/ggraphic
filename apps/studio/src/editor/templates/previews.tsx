@@ -14,7 +14,7 @@ import { type BrandPack, brandFingerprint, type SchemeId } from '@ggraphic/core'
 import { PagePreview } from '@ggraphic/editor/shell';
 import { activeBrand } from '@ggraphic/editor/brand';
 import { loadCanvasConfig, type FullCanvasConfig } from '@ggraphic/editor/config';
-import { SAMPLE_PHOTOS } from '@ggraphic/templates-open';
+import { SAMPLE_PHOTOS } from '@ggraphic/templates-open/photos';
 import {
   Component,
   type ReactNode,

@@ -18,6 +18,12 @@
       "types": "./src/index.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./photos": {
+      "development": "./src/samples/index.ts",
+      "types": "./src/samples/index.ts",
+      "import": "./dist/samples/index.js",
+      "default": "./dist/samples/index.js"
     }
   },
   "scripts": {
@@ -45,6 +51,11 @@
         "types": "./dist/index.d.ts",
         "import": "./dist/index.js",
         "default": "./dist/index.js"
+      },
+      "./photos": {
+        "types": "./dist/samples/index.d.ts",
+        "import": "./dist/samples/index.js",
+        "default": "./dist/samples/index.js"
       }
     }
   }
