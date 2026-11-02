@@ -7,11 +7,11 @@ The brand-neutral canvas editor of ggraphic, built on react-konva: the editor sh
 ## Install
 
 ```bash
-npm install --save-exact @ggraphic/editor@0.1.0-alpha.0 @ggraphic/core@0.1.0-alpha.0 @ggraphic/schema@0.1.0-alpha.0
-npm install react react-dom konva react-konva @tanstack/react-query
+npm install --save-exact @ggraphic/editor@alpha @ggraphic/core@alpha @ggraphic/schema@alpha
+npm install react@^19.3.0 react-dom@^19.3.0 konva react-konva @tanstack/react-query
 ```
 
-Releases are published under the npm dist-tag `alpha`. The package is ESM-only.
+Releases are published under the npm dist-tag `alpha`. `--save-exact` pins the versions the tag points at today; the packages are versioned independently, so check that core and schema match what the editor expects (`npm view @ggraphic/editor@alpha dependencies`). React and React DOM must be 19.3 or later: react-konva 19.3 requires it. The package is ESM-only.
 
 ## Embedding
 
