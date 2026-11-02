@@ -11,9 +11,11 @@
     "@ggraphic/schema": "0.0.0",
     "@ggraphic/templates-open": "0.0.0",
     "@ggraphic/ui": "0.0.0",
-    "@ggraphic/brand-default": "0.0.0"
+    "@ggraphic/brand-default": "0.0.0",
+    "@ggraphic/react-native": "0.0.0"
   },
   "changesets": [
+    "add-page-brand-only",
     "ai-pick-and-fill",
     "block-bounds-pill-badges",
     "brand-bindings-followups",
@@ -25,6 +27,7 @@
     "canvas-fills-area",
     "circle-badge-outline",
     "collab-first-release",
+    "collab-undo-keeps-remote-edits",
     "compact-context-bar",
     "compiled-css",
     "core-dist-exports",
@@ -40,6 +43,7 @@
     "editor-element-types-from-core",
     "editor-embed-skill",
     "editor-fills-host-box",
+    "editor-height-fallback",
     "editor-host-entry",
     "editor-page-model",
     "editor-public-entries",
@@ -49,10 +53,12 @@
     "embed-skill-photos-subpath",
     "embed-skill-versions",
     "embed-use-client",
+    "export-blank-page-id",
     "fit-bold-words",
     "font-alias-yields-to-brand",
     "font-roles-core",
     "font-roles-editor",
+    "fonts-wait-has-an-end",
     "gate-photo-contrast",
     "ggraphic-editor-component",
     "host-entry-server-safe",
@@ -61,6 +67,7 @@
     "host-svg-sources",
     "hyphenate-long-words",
     "icon-sets-register-on-render",
+    "image-load-state",
     "image-look-control",
     "initial-import",
     "insert-on-top",
@@ -70,10 +77,14 @@
     "open-asset-packs",
     "page-groups",
     "photo-placeholder",
+    "pill-badge-escape-commits",
     "pptx-browser-bundle",
     "preload-sidebar-panels",
+    "public-format-labels",
     "react-peer-floor",
+    "relicense-agpl",
     "replace-pt-sans-vollkorn",
+    "select-inserted-element",
     "shade-shapes",
     "slot-budget-status",
     "slot-budget",
@@ -87,6 +98,7 @@
     "text-format-and-labels",
     "text-format-on-select",
     "ui-kit",
-    "ui-menu"
+    "ui-menu",
+    "upload-swap-not-undoable"
   ]
 }

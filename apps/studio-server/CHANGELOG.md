@@ -1,5 +1,14 @@
 # @ggraphic/studio-server
 
+## 0.1.0-alpha.3
+
+### Patch Changes
+
+- Updated dependencies [cfeca71]
+  - @ggraphic/ai@0.1.0-alpha.1
+  - @ggraphic/core@0.1.0-alpha.2
+  - @ggraphic/schema@0.1.0-alpha.2
+
 ## 0.1.0-alpha.2
 
 ### Patch Changes
