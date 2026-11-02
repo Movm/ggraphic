@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Undo reverts this client's own steps only (#160). Another client's edit that
  * arrived in between must survive it, in this canvas and in the shared

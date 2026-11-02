@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Writes another client's edit into the history snapshots, as if it had always
  * been there (#160). Undo restores whole snapshots; a snapshot taken before
