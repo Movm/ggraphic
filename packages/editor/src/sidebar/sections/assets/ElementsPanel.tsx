@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
 import { useDebounce } from '../../../hooks/useDebounce.js';
 import { messages, useMessages } from '../../../i18n/messages.js';

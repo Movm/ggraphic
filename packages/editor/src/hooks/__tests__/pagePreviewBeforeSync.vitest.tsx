@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * A freshly minted canvas shows its initial pages before the collab doc has
  * synced; a reopened one (no `previewBeforeSync`) must not, its initial_state

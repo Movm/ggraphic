@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Wie groß Icon- und Illustrationsprimitive ihr Motiv zeichnen: das Bild in
  * `MOTIF_BASE_SIZE`, die Gruppe auf die Zielgröße skaliert. Eigene Datei, weil

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * An element added from the sidebar is selected, and only it (#162): before, the previous selection
  * stayed and the new element had to be found and clicked first.

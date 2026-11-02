@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MIT
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 

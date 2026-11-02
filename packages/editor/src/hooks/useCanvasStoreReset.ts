@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * useCanvasStoreReset - setzt den Store einer Flaeche zurueck, wenn sie
  * verschwindet oder ihre Vorlage wechselt.

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Entf über die Tastatur: ging der Fokus mit dem Gelöschten verloren, landet
  * er auf dem Knopf der Seite, nicht auf `<body>`. Aus der Ebenen-Liste heraus

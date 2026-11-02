@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { Dialog } from 'radix-ui';
 import React, { useImperativeHandle, useRef, useState } from 'react';
 import {

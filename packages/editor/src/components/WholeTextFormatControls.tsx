@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * WholeTextFormatControls — dieselben Knöpfe wie im Editor (`TextFormatButtons`),
  * für einen Text, der nur ausgewählt ist. Es gibt keine Auswahl IM Text, also

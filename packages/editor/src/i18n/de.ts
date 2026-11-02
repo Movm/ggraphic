@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The German message catalogue — the source of truth for every user-visible
  * string of the editor core, and the shape `en.ts` (and any host catalogue)

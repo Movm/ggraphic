@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Umrechnung Seiten-px → PowerPoint-Einheiten und Farben → pptxgenjs-Hex.
  * Die Folie ist `LAYOUT_WIDE` (13,333 × 7,5 in): `inch = px * 13.333 / page.width`.

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Writes `dist/vendor/pptxgen.js`: pptxgenjs and what it pulls in (JSZip and its dependencies),
  * bundled for the browser into one ESM file (#133). The published package maps `#pptxgenjs`

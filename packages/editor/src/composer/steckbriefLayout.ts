@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Geometry of the `steckbrief` item: a person in the middle, short traits
  * around them, each with a hand-drawn arrow to the person. Pure and

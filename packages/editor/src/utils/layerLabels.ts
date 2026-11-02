@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Namen der Elemente einer Seite, wie Screenreader und die Ebenen-Liste sie
  * nennen: deutsche Art plus Inhalt („Text: Klimaschutz“, „Form: Kreis“,

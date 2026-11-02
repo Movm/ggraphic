@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Ein ++Marker++ auf einem Foto: weißer Kasten, dunkle Schrift, KEIN Schatten
  * des Fototexts darin (Live-Befund: weiße Schrift auf weißem Kasten, mit Halo).

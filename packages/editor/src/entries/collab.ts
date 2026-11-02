@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Collaboration over Yjs: canvas and pages bindings, selection awareness and the page-doc helpers. */
 export { useYjsCanvasBinding } from '../collab/useYjsCanvasBinding.js';
 export { useYjsPages, type YjsPagesApi, type YjsPageView } from '../collab/useYjsPages.js';

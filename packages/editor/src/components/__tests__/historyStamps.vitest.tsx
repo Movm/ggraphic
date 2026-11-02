@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * A page reports the stamps of the steps its Undo and Redo would reach, so the
  * shell can weigh them against the page-level history (`utils/historyStamp`).

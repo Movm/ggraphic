@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The notch: a square cut from the top-right corner of a rect or a photo. One outline
  * serves the fill, the photo clip and the texture clip, so they cannot drift apart.

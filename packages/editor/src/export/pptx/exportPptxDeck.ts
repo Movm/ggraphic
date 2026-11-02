@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Browser-Seite des PPTX-Exports: Seitenzustände → Modell → Datei. Texte
  * werden mit derselben Messung wie auf dem Canvas vermessen, Raster-Anfragen

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * useElementSnapping - Reusable hook for managing element-to-element snapping
  * Tracks element positions and provides snap targets for each element

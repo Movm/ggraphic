@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 
 /**
  * Data-URL-Parsing — die einzige Stelle, an der `data:<mime>;base64,<payload>`

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { loadCanvasConfig, preloadCanvasTemplate } from '../configLoader.js';
 import '../../testing/fixtureTemplates';
 import { canvasFontFamilies } from '../../utils/canvasFontFamilies.js';

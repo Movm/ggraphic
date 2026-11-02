@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useMessages, type Messages } from '../../i18n/messages.js';
 import { useCanvasStoreSelector } from '../../stores/CanvasStoreProvider.js';
 import { cn } from '../../utils/cn.js';

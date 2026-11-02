@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Die eine Live-Region des Editors (WCAG 4.1.3): leer eingehängt, damit
  * Screenreader sie vor der ersten Ansage kennen; unsichtbar, aber nicht

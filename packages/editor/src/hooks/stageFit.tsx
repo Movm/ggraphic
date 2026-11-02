@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { createContext, useContext, useEffect, useState } from 'react';
 
 /** The largest size a page's stage may take, in CSS px at zoom 100 %. */

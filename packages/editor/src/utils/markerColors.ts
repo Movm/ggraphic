@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Farben des Textmarkers — für die Box hinter `++Passagen++`, die Textmarker-
  * Formen im Formen-Katalog und den Farbwähler im Text. Sie kommen aus dem

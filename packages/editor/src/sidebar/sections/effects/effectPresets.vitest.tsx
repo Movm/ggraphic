@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The outline and shadow swatches in the Effekte area come from the brand of the document that is
  * open, not from the first registered pack: the registry is one list for every

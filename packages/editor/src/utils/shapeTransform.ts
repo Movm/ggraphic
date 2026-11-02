@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /** SVG paths are designed in a 100x100 viewBox. Renderer rescales to shape.width/height. */
 export const PATH_VIEWBOX = 100;
 

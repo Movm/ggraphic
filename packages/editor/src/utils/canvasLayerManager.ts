@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { ELEMENT_KINDS, hostElementKinds, kindItem, kindList } from './elementKinds.js';
 
 import type { AssetInstance } from './canvasAssets.js';

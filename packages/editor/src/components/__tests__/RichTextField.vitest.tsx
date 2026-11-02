@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Die Werkzeugleiste des Sharepic-Text-Editors: was sie je Schrift anbietet
  * und was ihre Knöpfe in den flachen Feldtext schreiben.

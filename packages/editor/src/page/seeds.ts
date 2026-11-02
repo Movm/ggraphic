@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /** What a fresh page starts with: a template placed on the sheet, and that seed as stored state. */
 import { type TemplateFile, type TemplateFormat } from '@ggraphic/schema';
 

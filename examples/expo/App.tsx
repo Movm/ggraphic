@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MIT
 import { useGgraphicEditor, type GgraphicDocument } from '@ggraphic/react-native';
 import { useState } from 'react';
 import { Button, Image, SafeAreaView, StyleSheet, Text, View } from 'react-native';

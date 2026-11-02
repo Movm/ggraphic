@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useEditorBoxRef } from '../hooks/editorBox.js';
 import { useIsCanvasMobile } from '../hooks/useIsCanvasMobile.js';
 import { useMessages } from '../i18n/messages.js';

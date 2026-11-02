@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * What a free page can do with its elements: texts, shapes, icons, emoji,
  * illustrations, placed images and the background colour. The editor calls these by name

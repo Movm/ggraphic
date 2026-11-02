@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The default marker of a text without a marker style comes from the brand of
  * the DOCUMENT, in the toolbar swatch and on the canvas alike. The toolbar read

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import type { SidebarTabId } from '../../sidebar/types.js';
 import type { GenericCanvasRef, ToolbarStateReport } from '../GenericCanvas.js';
 import type { FullCanvasConfig } from '../../configs/types.js';

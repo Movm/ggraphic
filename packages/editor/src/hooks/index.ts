@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 export { useElementSnapping } from './useElementSnapping.js';
 export type { UseElementSnappingResult } from './useElementSnapping.js';
 export { useCanvasUndoRedo } from './useCanvasUndoRedo.js';
