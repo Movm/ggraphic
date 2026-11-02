@@ -25,6 +25,7 @@ export {
   type EditorShellExtensions,
   type EditorTabDropHandle,
 } from '../components/CanvasEditor/editorShell.js';
+export { type PageInheritance } from '../configs/pageInheritance.js';
 export {
   type BlockInsertApi,
   BlockInsertContext,

@@ -10,8 +10,8 @@ import { COMPOSER_PLANE_IDS, type ShapeInstance } from '../utils/shapes.js';
 /** Templates that draw the composer's background planes as free shapes. */
 const PLANE_TEMPLATES: readonly string[] = ['freeform', 'freeform-at'];
 
-/** Value-carrying keys copied verbatim when present on the source page. */
-const INHERITABLE_KEYS = [
+/** Background keys copied verbatim when present on the source page. */
+const BACKGROUND_KEYS = [
   'backgroundColor',
   'imageOffset',
   'imageScale',
@@ -19,9 +19,13 @@ const INHERITABLE_KEYS = [
   'backgroundImageRotation',
   'backgroundImageOpacity',
   'imageAttribution',
+  'backgroundMode',
+] as const;
+
+/** Brand keys copied verbatim when present on the source page. */
+const BRAND_KEYS = [
   'colorScheme',
   'colorSchemeId',
-  'backgroundMode',
   // Brand bindings (F0): an added or converted page stays bound to its brand.
   'bind',
   'brandScheme',
@@ -30,12 +34,37 @@ const INHERITABLE_KEYS = [
   // describe one page's origin and its element groups, not a style to carry on.
 ] as const;
 
+/**
+ * What a new page takes from the active one: its brand (scheme and brand
+ * bindings) and its background (photo, colour, composer planes). A host's
+ * blank page wants the brand without the background (#166).
+ */
+export interface PageInheritance {
+  brand: boolean;
+  background: boolean;
+}
+
+const copyPresent = (
+  state: Record<string, unknown>,
+  keys: readonly string[],
+  into: Record<string, unknown>
+) => {
+  for (const key of keys) {
+    if (state[key] !== undefined && state[key] !== null && state[key] !== '') {
+      into[key] = state[key];
+    }
+  }
+};
+
 export function extractInheritablePageState(
   state: Record<string, unknown>,
   /** The template the new page uses; decides what happens to composer planes. */
-  targetConfigId?: string
+  targetConfigId?: string,
+  parts: PageInheritance = { brand: true, background: true }
 ): Record<string, unknown> {
   const inherited: Record<string, unknown> = {};
+  if (parts.brand) copyPresent(state, BRAND_KEYS, inherited);
+  if (!parts.background) return inherited;
 
   // Image background source — templates read it under either key, so mirror
   // whichever one is set into both.
@@ -45,11 +74,7 @@ export function extractInheritablePageState(
     inherited.imageSrc = imageSrc;
   }
 
-  for (const key of INHERITABLE_KEYS) {
-    if (state[key] !== undefined && state[key] !== null && state[key] !== '') {
-      inherited[key] = state[key];
-    }
-  }
+  copyPresent(state, BACKGROUND_KEYS, inherited);
 
   // Cross-template rule: a source with an image background but no explicit
   // mode (zitat, …) lands in mode-aware templates (freeform) as
