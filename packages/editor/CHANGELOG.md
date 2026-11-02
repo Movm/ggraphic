@@ -1,5 +1,38 @@
 # @ggraphic/editor
 
+## 0.1.0-alpha.3
+
+### Minor Changes
+
+- 532ecff: `addPage` and the host's `EditorAddPage` take `inherit: boolean | PageInheritance`. `{ brand: true, background: false }` adds a page that keeps the active page's scheme and brand bindings (`colorScheme`, `colorSchemeId`, `bind`, `brandScheme`, `brandStamp`) without its background (photo, colour, composer planes). Such a page drops the bindings of background fields (for example `bind.backgroundColor`), since it carries none of those fields. `{ brand: false, background: true }` is the reverse. `true` and `false` mean what they meant before. `PageInheritance` is exported from `@ggraphic/editor/shell`, and `extractInheritablePageState` takes it as an optional third argument.
+- 5be7dcc: Export `BLANK_PAGE_ID` from `@ggraphic/editor/embed` and `@ggraphic/editor/host`: the page config id of the empty page `GgraphicEditor` registers, for a host that starts a blank design (`pages: [{ configId: BLANK_PAGE_ID, state: {} }]`). The host entry loads no React, so a server component can read it too.
+- 24a0d79: `captureActivePage` takes `fontWaitMs`: the longest wait for fonts before the export, after which the fallback faces are used. Without it the export waits until the fonts settle, as before.
+
+  A web view that cannot fetch a font file can leave its faces loading for good (WKWebView in an Expo DOM component), and `captureActivePage` then never returned. `@ggraphic/react-native` passes 3000.
+
+- 34c88be: `GenericCanvasRef.imageLoadState()` returns how many image elements are still loading (`pending`) and how many failed to load (`failed`). A capture is complete only when both are 0. `imagesSettled()` is also true after a failed load, so a host could not tell a complete capture from one without its photo.
+
+  `GenericCanvasRef.retryFailedImages()` loads every failed image element again and returns how many. They count as pending at once. Before, a failed image stayed failed: `use-image` loads again only for a new url.
+
+  **Breaking for direct importers of `utils/pendingImages`** (the deep path under the `./*` export): `PendingImagesContext` now holds `ImageLoads` (`{ pending, failed }`) instead of one `Set<string>`, and the module adds `ImageRetryContext` and `useImageRetry`. The public entries are unchanged.
+
+- 8b286ef: Export `formatLabel` and `formatDescription` from `@ggraphic/editor/host` and `@ggraphic/editor/templates`: a format's name and size line in the language of the message catalogue (`registerMessages('en' | 'de')`). The built-in formats' `label` and `description` fields stay in their original language (German); show these functions instead. The host entry loads no React, so a server component can list formats in English after `registerMessages('en')`.
+- cfeca71: Relicensed from MPL-2.0 to AGPL-3.0-only. Versions published before this change remain available under MPL-2.0.
+- 73f7316: An uploaded photo's durable URL replaces its `blob:` preview in the whole undo history instead of becoming an undo step of its own. Before, undo after a slow upload could bring back the revoked preview and save it, so the photo was lost for everyone. `createActions` gets an optional sixth argument, `history` (`CanvasActionHistory`), which `createUserImageActions` and `createElementActions` take as their last argument. A template that builds its own actions passes it on; without it the swap stays an undo step as before.
+
+### Patch Changes
+
+- 49f3140: Undo in a collaborative session no longer reverts other people's edits. An edit that arrives from another client is written into this client's undo history, so undo and redo only revert this client's own steps. They are patched per element and property, so an own change to another element in the same collection still undoes.
+
+  The edit is measured from the value its writer started from, so an own step that lost a simultaneous write to the same key stays in the history and can be redone. Layer order and locked layers merge per id, so undo of a reorder still works after someone adds a layer. Undo of an own add removes the element even after someone else changed it. `useYjsPageStateSync` passes that starting value to `onRemoteState` as a second argument.
+
+- 74f0c84: The editor is as tall as the viewport again in hosts that import `@ggraphic/editor/styles/editor` without `tokens.css` and don't declare `--editor-height` themselves (#152). Its root used to read the token without a fallback, so its height became `auto`, the editor grew with its content and the canvas fit grew with it. The root now falls back to `100dvh`, the default of `tokens.css`.
+- 6fad500: Escape ends a pill-badge edit the way it ends a normal text edit: the typed text is kept. Before, Escape discarded the edit on badges while it committed on normal text.
+- 137096d: A newly inserted element (text, shape, icon, chart, ...) is selected, and only it. Before, the previous selection stayed, and the new element had to be found and clicked first, which was awkward when it landed on top of other elements.
+- Updated dependencies [cfeca71]
+  - @ggraphic/core@0.1.0-alpha.2
+  - @ggraphic/schema@0.1.0-alpha.2
+
 ## 0.1.0-alpha.2
 
 ### Minor Changes

@@ -1,5 +1,16 @@
 # @ggraphic/brand-default
 
+## 0.1.0-alpha.2
+
+### Minor Changes
+
+- cfeca71: Relicensed from MPL-2.0 to AGPL-3.0-only. Versions published before this change remain available under MPL-2.0.
+
+### Patch Changes
+
+- Updated dependencies [cfeca71]
+  - @ggraphic/core@0.1.0-alpha.2
+
 ## 0.1.0-alpha.1
 
 ### Patch Changes

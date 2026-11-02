@@ -1,6 +1,6 @@
 {
   "name": "@ggraphic/studio-server",
-  "version": "0.1.0-alpha.2",
+  "version": "0.1.0-alpha.3",
   "private": true,
   "description": "ggraphic Studio backend: projects, uploads and AI drafts for self-hosting",
   "license": "AGPL-3.0-only",
