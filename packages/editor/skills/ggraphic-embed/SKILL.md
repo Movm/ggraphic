@@ -183,22 +183,25 @@ Use this when `GgraphicEditor` is not enough: your own page logic (a `FullCanvas
 
 ### Imports
 
-Every source file is its own entry point; there is no barrel. Import the file you mean:
+Import from the entry points (`@ggraphic/editor/host`, `/shell`, `/services`, `/page`, `/config`, … — the API report lists them). They are the whole published surface. `@ggraphic/editor/internal/*` reaches any other compiled file, with no semver promise: it can change in any release.
 
 ```ts
-import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
-import { registerMessages } from '@ggraphic/editor/i18n/messages';
-import { defineTemplate, registerTemplates } from '@ggraphic/editor/templates/registry';
-import { createPageConfig } from '@ggraphic/editor/page/config';
-import { makeSectionDefiner } from '@ggraphic/editor/configs/factory/defineSection';
 import {
-  CanvasEditorProvider,
+  defineTemplate,
+  registerAssetCatalog,
+  registerBrandPacks,
+  registerMessages,
+  registerTemplates,
+  registerToast,
+} from '@ggraphic/editor/host';
+import { createPageConfig } from '@ggraphic/editor/page';
+import { makeSectionDefiner } from '@ggraphic/editor/config';
+import { CanvasEditorProvider, CanvasEditorShell } from '@ggraphic/editor/shell';
+import {
+  browserFileDelivery,
+  plainImageUrls,
   type CanvasEditorServices,
-} from '@ggraphic/editor/CanvasEditorProvider';
-import { CanvasEditorShell } from '@ggraphic/editor/components/CanvasEditor/CanvasEditorShell';
-import { browserFileDelivery, plainImageUrls } from '@ggraphic/editor/hostServices';
-import { registerAssetCatalog } from '@ggraphic/editor/utils/canvasAssets';
-import { registerToast } from '@ggraphic/editor/utils/editorToast';
+} from '@ggraphic/editor/services';
 ```
 
 ### Startup order
@@ -215,7 +218,7 @@ registerAssetCatalog(myAssetCatalog); // optional; illustrations, emoji, blocks
 
 Registering brand packs is not optional decoration: the packs carry the default colours, the bold families and the font cuts every render reads. A test harness or server renderer that skips it draws something no user sees (for example a synthetic bold of a regular cut).
 
-A template is a `FullCanvasConfig` (canvas size, sidebar tabs and sections, elements, page state, actions). `createPageConfig` from `@ggraphic/editor/page/config` builds the free page `GgraphicEditor` uses (colour ground, Text/Elements/Uploads/Tools tabs, the free elements) from a seed; write your own config only for page logic of your own.
+A template is a `FullCanvasConfig` (canvas size, sidebar tabs and sections, elements, page state, actions). `createPageConfig` from `@ggraphic/editor/page` builds the free page `GgraphicEditor` uses (colour ground, Text/Elements/Uploads/Tools tabs, the free elements) from a seed; write your own config only for page logic of your own.
 
 ### Mounting
 
@@ -261,6 +264,6 @@ A document can carry its own brand: set `brand` on the template's `FullCanvasCon
   }
   ```
 
-  Recolour hints go into `illustrations.recolor` of the asset catalogue you pass to `registerAssetCatalog` (`IllustrationSources` in `@ggraphic/editor/utils/canvasAssets`).
+  Recolour hints go into `illustrations.recolor` of the asset catalogue you pass to `registerAssetCatalog` (`IllustrationSources` in `@ggraphic/editor/host`).
 
-- Extra host services: augment `CanvasEditorHostServices` from `@ggraphic/editor/CanvasEditorProvider`.
+- Extra host services: augment `CanvasEditorHostServices` (`declare module '@ggraphic/editor/services'`).

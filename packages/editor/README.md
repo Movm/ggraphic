@@ -19,4 +19,4 @@ The editor needs a host: a brand pack, at least one template (page config), host
 
 ## Entry points
 
-Each source file is its own entry point (a host imports `@ggraphic/editor/utils/snapping`, not a barrel), so a module keeps its identity and a test can mock it by that path. The CSS entries are `@ggraphic/editor/styles` (token defaults and editor rules) and `@ggraphic/editor/styles/tailwind` (for Tailwind v4 hosts).
+The published entry points are the facades under `src/entries/` (`@ggraphic/editor/embed`, `/host`, `/shell`, `/page`, …; `api-report.md` lists every name) and the stylesheets. `@ggraphic/editor/internal/*` reaches any other compiled file, with no semver promise. The CSS entries are `@ggraphic/editor/styles` (token defaults and editor rules) and `@ggraphic/editor/styles/tailwind` (for Tailwind v4 hosts).

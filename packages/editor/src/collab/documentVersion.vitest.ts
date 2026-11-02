@@ -1,10 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 import { createMigrationRegistry, type CoreMigration } from '@ggraphic/schema';
-import {
-  STAMP_STATE_KEY,
-  STAMP_V2_STEP,
-  V2_CORE_STEP,
-} from '@ggraphic/schema/document/__fixtures__/v2Fixture';
+import { STAMP_STATE_KEY, STAMP_V2_STEP, V2_CORE_STEP } from '@ggraphic/schema/testing/v2Fixture';
 import { describe, expect, it } from 'vitest';
 import * as Y from 'yjs';
 

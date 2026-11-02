@@ -95,7 +95,9 @@ function entriesOf(pkgDir, manifest, { options, fileNames }) {
   for (const [key, value] of Object.entries(map)) {
     const target = targetOf(value);
     if (!target) continue;
-    if (target.endsWith('.css')) {
+    // A stylesheet, also with a `types` stub next to its `.css` file (#137).
+    const runtime = typeof value === 'string' ? value : (value.import ?? value.default);
+    if (runtime?.endsWith('.css')) {
       entries.push([key, null]);
       continue;
     }

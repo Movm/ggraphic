@@ -45,7 +45,7 @@ To run Studio with Docker Compose instead, see [docs/self-hosting.md](./docs/sel
 ## Rules that keep the packages usable
 
 - **Brand-neutral packages.** Nothing in `packages/*` names a real organisation or its colours, fonts, logos or wording. Brands come in through brand packs. Host-specific behaviour goes behind a host service or a module augmentation.
-- **One entry point per file.** A host imports `@ggraphic/editor/utils/snapping`, not a barrel.
+- **Public entries are facades.** A host imports `@ggraphic/editor/host`, `/shell`, `/page` …, each one a module under `packages/editor/src/entries/` that re-exports explicit names (no `export *`). Anything else is `@ggraphic/editor/internal/*`, without a semver promise; a name moves into a facade when a real host needs it.
 - **ESM only.** Relative imports carry the `.js` extension; `pnpm check:esm` checks this.
 - **Licence headers.** Every source file starts with the SPDX id of its package (`// SPDX-License-Identifier: MPL-2.0`); `pnpm check:licences` verifies it. Code moved from `apps/*` into a package changes from AGPL-3.0 to MPL-2.0. Only the copyright holder can approve that, so say so in the pull request.
 - **Third-party assets** (fonts, icons, images) need a compatible licence and an entry in the package's `THIRD_PARTY_NOTICES`.

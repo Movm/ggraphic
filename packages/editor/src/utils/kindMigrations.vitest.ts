@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 import { documentMigrations, migrateDocument } from '@ggraphic/schema';
-import { STAMP_V2_STEP } from '@ggraphic/schema/document/__fixtures__/v2Fixture';
+import { STAMP_V2_STEP } from '@ggraphic/schema/testing/v2Fixture';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { STAMP_KIND } from '../testing/stampKind.js';

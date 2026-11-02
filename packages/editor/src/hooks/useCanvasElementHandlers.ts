@@ -33,7 +33,7 @@ import type { StickerRef } from '@ggraphic/schema';
 /**
  * The actions of the host's element kinds (`registerElementKind`), under the
  * names their registrations give. Empty in the core; a host augments it
- * (`declare module '@ggraphic/editor/hooks/useCanvasElementHandlers'`).
+ * (`declare module '@ggraphic/editor/host'`).
  */
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface HostCanvasActions {}

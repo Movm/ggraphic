@@ -4,7 +4,7 @@
  * editor unmounts in between, that queued lift must not write to the doc.
  */
 import { documentMigrations } from '@ggraphic/schema';
-import { STAMP_STATE_KEY, STAMP_V2_STEP } from '@ggraphic/schema/document/__fixtures__/v2Fixture';
+import { STAMP_STATE_KEY, STAMP_V2_STEP } from '@ggraphic/schema/testing/v2Fixture';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import * as Y from 'yjs';
