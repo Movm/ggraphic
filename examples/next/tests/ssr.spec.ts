@@ -9,6 +9,8 @@ test('the server renders the host page without the editor and without an error',
   const html = await response.text();
 
   expect(html).toContain('My host app');
+  // The page, a server component, read the formats through `@ggraphic/editor/host` (#136).
+  expect(html).toMatch(/\d+(<!-- -->)? canvas formats/);
   // GgraphicEditor renders nothing on the server; its root appears only in the browser.
   expect(html).not.toContain('data-ggraphic');
   // Next.js's error document, and React's marker for a boundary that failed on the server and

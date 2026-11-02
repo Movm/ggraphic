@@ -35,3 +35,9 @@ describe('the embed entry is a client boundary (React Server Components)', () =>
     expect(directives(emitted('./embed.ts'))).toEqual(['use client']);
   });
 });
+
+describe('the host-react entry is a client boundary (React Server Components)', () => {
+  it("keeps 'use client' as the first statement of the compiled module", () => {
+    expect(directives(emitted('./hostReact.ts'))).toEqual(['use client']);
+  });
+});

@@ -47,6 +47,8 @@ describe('data entries without React or Konva', () => {
     ['templates', () => import('./templates.js')],
     ['text', () => import('./text.js')],
     ['config', () => import('./config.js')],
+    // A host's start-up code may run in a server component, where `createContext` is missing (#136).
+    ['host', () => import('./host.js')],
   ])('%s loads', async (_name, load) => {
     expect(Object.keys(await load()).length).toBeGreaterThan(0);
   });

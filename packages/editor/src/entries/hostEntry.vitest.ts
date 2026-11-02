@@ -70,12 +70,7 @@ describe('@ggraphic/editor/host', () => {
   const graph = moduleGraph(resolve(SRC, 'entries/host.ts'));
 
   it('loads no editor UI, store or primitive', () => {
-    const ui = graph.filter(
-      (f) =>
-        /^(components|sidebar|layouts|primitives|stores|ui)\//.test(f) &&
-        // A React context and its hook, nothing rendered.
-        f !== 'components/CanvasEditor/blockInsertContext.ts'
-    );
+    const ui = graph.filter((f) => /^(components|sidebar|layouts|primitives|stores|ui)\//.test(f));
     expect(ui).toEqual([]);
   });
 
@@ -89,5 +84,24 @@ describe('@ggraphic/editor/host', () => {
     expectTypeOf<host.HostElementKinds>().toEqualTypeOf<kinds.HostElementKinds>();
     expectTypeOf<host.HostCanvasActions>().toEqualTypeOf<kinds.HostCanvasActions>();
     expectTypeOf<host.CanvasEditorHostServices>().toEqualTypeOf<services.CanvasEditorHostServices>();
+  });
+});
+
+describe('@ggraphic/editor/host-react', () => {
+  const graph = moduleGraph(resolve(SRC, 'entries/hostReact.ts'));
+
+  it('loads the two contexts and nothing they render', () => {
+    expect(graph).toEqual([
+      'CanvasEditorProvider.tsx',
+      'components/CanvasEditor/blockInsertContext.ts',
+      'entries/hostReact.ts',
+    ]);
+  });
+
+  it('imports no package but React: no Konva, store or icons', () => {
+    const packages = graph.flatMap((f) =>
+      runtimeSpecifiers(resolve(SRC, f)).filter((spec) => !spec.startsWith('.'))
+    );
+    expect([...new Set(packages)]).toEqual(['react']);
   });
 });
