@@ -15,7 +15,7 @@
  * anything (a `node:` specifier or a bare import), or a bundled package has a licence outside
  * the allow-list of scripts/check-licences.mjs or ships no licence text.
  */
-import { copyFileSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -116,9 +116,20 @@ const banner =
 
 mkdirSync(outDir, { recursive: true });
 writeFileSync(path.join(outDir, 'pptxgen.js'), banner + chunk.code);
-copyFileSync(
-  path.join(path.dirname(entry), '../types/index.d.ts'),
-  path.join(outDir, 'pptxgen.d.ts')
+// pptxgenjs's types are one self-contained file: no statement in it loads another module. Its doc
+// comments quote the upstream source (`from './core-enums'`); those specifiers get the `.js` that
+// check-esm-specifiers asks of every relative specifier in dist. A real import would fail here.
+const types = readFileSync(path.join(path.dirname(entry), '../types/index.d.ts'), 'utf8');
+const statements = types
+  .split('\n')
+  .filter((line) => /^\s*(?:import|export)\b.*\bfrom\s/.test(line));
+if (statements.length > 0)
+  throw new Error(
+    `bundle-pptxgen: the pptxgenjs types load other modules: ${statements.join(' | ')}`
+  );
+writeFileSync(
+  path.join(outDir, 'pptxgen.d.ts'),
+  types.replace(/(["'])(\.{1,2}\/[^"']+?)(?<!\.js)\1/g, '$1$2.js$1')
 );
 writeFileSync(
   path.join(outDir, 'pptxgen.LICENSES.txt'),
