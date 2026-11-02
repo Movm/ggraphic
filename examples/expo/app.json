@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "ggraphic example",
+    "slug": "ggraphic-example-expo",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "ios": { "bundleIdentifier": "dev.ggraphic.example" },
+    "android": { "package": "dev.ggraphic.example" }
+  }
+}
