@@ -123,4 +123,32 @@ describe('the base of a remote write', () => {
     write(me, 'deck', 'deck-op');
     expect(reports()).toEqual([{ value: 'deck', base: 'v0' }]);
   });
+
+  it('stops at the value the own run replaced, not at an older own write', async () => {
+    const { me, high, write, send, reports } = setup();
+    write(me, 'm0', PAGES_STATE_ORIGIN);
+    await send(me, high);
+    write(high, 'x');
+    await send(high, me);
+    write(me, 'm1', PAGES_STATE_ORIGIN);
+    write(high, 'theirs');
+    await send(high, me);
+    expect(reports()).toEqual([
+      { value: 'x', base: 'm0' },
+      { value: 'theirs', base: 'x' },
+    ]);
+  });
+
+  it('falls back to the value the own run replaced when the seen own write is long gone', async () => {
+    const { me, high, write, send, reports } = setup();
+    write(high, 'x');
+    await send(high, me);
+    write(me, 'own-0', PAGES_STATE_ORIGIN);
+    await send(me, high);
+    for (let i = 1; i <= 40; i++) write(me, `own-${i}`, PAGES_STATE_ORIGIN);
+    write(high, 'theirs');
+    await send(high, me);
+    // `own-0` is past the window of kept own values; never the own current value.
+    expect(reports()[1]).toEqual({ value: 'theirs', base: 'x' });
+  });
 });

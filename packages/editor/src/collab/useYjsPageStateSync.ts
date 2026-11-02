@@ -48,19 +48,22 @@ export function useYjsPageStateSync(options: {
   useEffect(() => {
     if (!pageYMap || !isSynced) return undefined;
 
-    const me = pageYMap.doc?.clientID;
+    // Read per use: Yjs gives a doc a new client id when it finds its own in use.
+    const me = () => pageYMap.doc?.clientID;
     const idOf = (id: Y.ID) => `${id.client}:${id.clock}`;
     // Per key: whether the value held now is an own write, the values of the
-    // latest own writes by item id, and the value the current run of own writes replaced.
+    // latest own writes by item id, and the value (with its item) the current
+    // run of own writes replaced.
     const holdsOwn = new Map<string, boolean>();
     const ownValues = new Map<string, Map<string, unknown>>();
-    const beforeOwn = new Map<string, unknown>();
+    const runStart = new Map<string, { item: string | null; value: unknown }>();
 
     const track = (stateY: Y.Map<unknown>, key: string, replaced: unknown) => {
       const item = stateY._map.get(key);
-      const own = !!item && !item.deleted && item.id.client === me;
+      const own = !!item && !item.deleted && item.id.client === me();
       if (own) {
-        if (!holdsOwn.get(key)) beforeOwn.set(key, replaced);
+        if (!holdsOwn.get(key))
+          runStart.set(key, { item: item.origin && idOf(item.origin), value: replaced });
         const values = ownValues.get(key) ?? new Map<string, unknown>();
         values.set(idOf(item.id), stateY.get(key));
         if (values.size > OWN_VALUES_PER_KEY) values.delete(values.keys().next().value!);
@@ -72,20 +75,24 @@ export function useYjsPageStateSync(options: {
     if (initial instanceof Y.Map)
       for (const key of initial.keys()) track(initial, key, initial.get(key));
 
-    /** The base of `item`'s write, which replaced an own write it may not have seen. */
-    const baseOverOwn = (stateY: Y.Map<unknown>, key: string, item: Y.Item, replaced: unknown) => {
+    /**
+     * The base of `item`'s write, which replaced an own write it may not have
+     * seen: the last own value on its way back, or what the own run replaced
+     * once the walk reaches that — also when the own value seen is no longer kept.
+     */
+    const baseOverOwn = (stateY: Y.Map<unknown>, key: string, item: Y.Item) => {
       const store = stateY.doc!.store;
+      const start = runStart.get(key);
+      const values = ownValues.get(key);
       for (let id = item.origin; id;) {
-        if (id.client === me) {
-          const values = ownValues.get(key);
-          return values?.has(idOf(id)) ? values.get(idOf(id)) : replaced;
-        }
+        const at = idOf(id);
+        if (at === start?.item) break;
+        if (id.client === me() && values?.has(at)) return values.get(at);
         const struct = Y.getItem(store, id);
         if (!(struct instanceof Y.Item)) break;
         id = struct.origin;
       }
-      // The writer saw none of the own writes: it started from what they replaced.
-      return beforeOwn.get(key);
+      return start?.value;
     };
 
     const handler = (events: Y.YEvent<Y.AbstractType<unknown>>[]) => {
@@ -100,9 +107,9 @@ export function useYjsPageStateSync(options: {
           if (!own) {
             const item = stateY._map.get(key);
             const overOwn =
-              holdsOwn.get(key) === true && !!item && !item.deleted && item.id.client !== me;
+              holdsOwn.get(key) === true && !!item && !item.deleted && item.id.client !== me();
             partial[key] = stateY.get(key);
-            base[key] = overOwn ? baseOverOwn(stateY, key, item, change.oldValue) : change.oldValue;
+            base[key] = overOwn ? baseOverOwn(stateY, key, item) : change.oldValue;
           }
           track(stateY, key, change.oldValue);
         }
