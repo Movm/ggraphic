@@ -20,6 +20,7 @@ import { createStore } from 'zustand/vanilla';
 
 import { activeBrand } from '../brand/brandRegistry.js';
 import { nextHistoryStamp } from '../utils/historyStamp.js';
+import { rebaseHistoryState } from '../utils/rebaseHistoryState.js';
 
 import { DEFAULT_FORMAT_ID, getCanvasFormatOrDefault } from '../formats/index.js';
 
@@ -101,6 +102,12 @@ export interface CanvasEditorActions<
   deselectAll: () => void;
 
   saveToHistory: (componentState?: TComponentState) => void;
+  /**
+   * Another client changed the page from `prev` to `next`: write that change
+   * into every entry, so undo and redo only ever revert this client's own
+   * steps (#160).
+   */
+  rebaseHistory: (prev: TComponentState, next: TComponentState) => void;
   undo: () => void;
   redo: () => void;
   /** Merkt den aktuellen Verlaufsstand als Beginn einer Sitzung; `null` ohne Verlauf. */
@@ -317,6 +324,20 @@ export function createCanvasEditorStore<
             state.history.shift();
           } else {
             state.historyIndex++;
+          }
+        }),
+
+      rebaseHistory: (prev, next) =>
+        set((state) => {
+          for (const entry of state.history) {
+            if (!entry.componentState) continue;
+            // Immer's Draft<T> conditional cannot resolve for a generic
+            // `TComponentState` (see saveToHistory); the runtime values match.
+            entry.componentState = rebaseHistoryState(
+              entry.componentState as Record<string, unknown>,
+              prev,
+              next
+            ) as (typeof entry)['componentState'];
           }
         }),
 
