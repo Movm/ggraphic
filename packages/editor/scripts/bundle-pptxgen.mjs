@@ -50,7 +50,10 @@ if (rest.some((file) => file.type === 'chunk') || chunk.type !== 'chunk')
 
 // Whatever the bundle still loads would be resolved by the host's bundler, which is the problem.
 const loads = [
-  ...chunk.code.matchAll(/(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*)["']([^"']+)["']/g),
+  // `__require` is the shim rolldown puts in for a CommonJS `require`.
+  ...chunk.code.matchAll(
+    /(?:\bfrom\s*|\bimport\s*\(\s*|\b(?:__)?require\s*\(\s*)["']([^"']+)["']/g
+  ),
 ].map((match) => match[1]);
 if (loads.length > 0)
   throw new Error(`bundle-pptxgen: the bundle still loads ${[...new Set(loads)].join(', ')}`);

@@ -6,8 +6,8 @@
  * nur er an die Quellen kommt; ein Bild, das nicht lädt, wird gerastert.
  * pptxgenjs kommt erst hier per dynamischem `import()`, über `#pptxgenjs`: in der
  * Entwicklung das npm-Paket, im veröffentlichten Paket der Browser-Build aus
- * `dist/vendor` (`scripts/bundle-pptxgen.mjs`, #133). pptxgenjs selbst lädt
- * `node:fs`/`node:https` per `import()`, und webpack bricht daran ab.
+ * `dist/vendor` (`scripts/bundle-pptxgen.mjs`, #133). pptxgenjs selbst lädt die
+ * Node-Module fs und https (mit `node:`-Präfix) per `import()`, und webpack bricht daran ab.
  */
 
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';

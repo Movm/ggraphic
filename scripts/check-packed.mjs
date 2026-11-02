@@ -11,12 +11,14 @@
  *   Stylesheet entries are excluded: attw looks for type declarations behind every entry, and
  *   a `.css` file has none. A `./*` wildcard entry is listed by attw but not analysed.
  * - Our own check on the unpacked files (#133):
- *   - No JavaScript file under dist names a `node:` module (statically, with `import()` or
- *     `require()`). webpack rejects the `node:` scheme in a browser build, even in a lazy chunk.
+ *   - No JavaScript file under dist contains a `node:` string (an import, `import()`, `require()`
+ *     or rolldown's `__require()` shim, or a specifier built elsewhere). webpack rejects the
+ *     `node:` scheme in a browser build, even in a lazy chunk.
  *   - Every bare import under dist names the package itself or one of its dependencies or peers.
  *     A dependency that moved to devDependencies, as pptxgenjs did when it was bundled into
- *     dist/vendor, would otherwise still be imported and fail in every host. dist/vendor is
- *     skipped here: scripts that write it check that it loads nothing.
+ *     dist/vendor, would otherwise still be imported and fail in every host.
+ *   - Files under dist/vendor are bundles: they may load nothing at all, not even a declared
+ *     package or a Node built-in by its bare name (`fs`, `https`).
  *   - Every target of the manifest's `imports` map is in the tarball.
  *
  * Needs the packages built (`pnpm build`) and node_modules.
@@ -40,7 +42,7 @@ const cssEntries = (manifest) =>
     .filter(([, value]) => typeof value === 'string' && value.endsWith('.css'))
     .map(([key]) => key);
 
-const NODE_SPECIFIER = /(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*)["']node:[^"']*["']/;
+const NODE_STRING = /["'`]node:[a-z][a-z_/]*/;
 
 /** The module specifiers a compiled ES module loads, read in the shape tsc emits them. */
 function specifiers(code) {
@@ -49,6 +51,7 @@ function specifiers(code) {
     /^\s*(?:import|export)\s[^;'"=]*?\bfrom\s*["']([^"']+)["']/gm,
     /^\s*import\s*["']([^"']+)["']/gm,
     /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g,
+    /\b(?:__)?require\s*\(\s*["']([^"']+)["']\s*\)/g,
   ];
   return patterns.flatMap((pattern) => [...code.matchAll(pattern)].map((match) => match[1]));
 }
@@ -82,9 +85,13 @@ function checkUnpacked(tarball) {
   const problems = [];
   for (const file of files.filter((f) => f.startsWith('dist/') && /\.m?js$/.test(f))) {
     const code = readFileSync(join(pkg, file), 'utf8');
-    const node = NODE_SPECIFIER.exec(code);
-    if (node) problems.push(`${file} loads ${node[0]}`);
-    if (file.startsWith('dist/vendor/')) continue;
+    const node = NODE_STRING.exec(code);
+    if (node) problems.push(`${file} names ${node[0]}`);
+    if (file.startsWith('dist/vendor/')) {
+      for (const specifier of specifiers(code))
+        problems.push(`${file} is a bundle but loads ${specifier}`);
+      continue;
+    }
     for (const specifier of specifiers(code)) {
       if (/^[.#/]|^node:/.test(specifier)) continue;
       if (!declared.has(packageName(specifier)))
