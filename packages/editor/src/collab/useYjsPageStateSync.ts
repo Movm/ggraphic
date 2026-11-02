@@ -22,14 +22,19 @@ import { PAGES_STATE_ORIGIN } from './useYjsPages.js';
  *
  * Next to each changed value the hook reports the value the writer started
  * from (`base`), so the canvas can tell which part of a write is the other
- * client's edit (#160). That is the value the write replaced in this doc —
- * unless the writer had not seen this client's latest write to the key yet.
- * Then its write replaced the value before that one, and the difference to it
- * is all the writer changed; the difference to this client's own write would
- * also contain that write's undoing (#176, last writer wins per key).
+ * client's edit (#160). That is the value the write replaced here — except
+ * when it replaced this client's own write without having seen it (#176,
+ * last writer wins per key). Then the own write is no part of the remote
+ * edit: the base is the last own value the writer did see, or else the value
+ * the own writes replaced. The writer's history is read from the items
+ * themselves: a Y.Map set records the item it replaced as its `origin`.
+ *
+ * Own writes with another origin (a deck op, a deck undo's restore, a version
+ * lift) reach the canvas like remote ones: another stack owns them or they
+ * are not undoable, so the canvas history takes them in.
  */
-/** Enough to find the value a write started from while a few writes cross in flight. */
-const SEEN_PER_KEY = 8;
+/** Own values kept per key, to name the one a remote write started from. */
+const OWN_VALUES_PER_KEY = 32;
 
 export function useYjsPageStateSync(options: {
   pageYMap: Y.Map<unknown> | null;
@@ -43,18 +48,45 @@ export function useYjsPageStateSync(options: {
   useEffect(() => {
     if (!pageYMap || !isSynced) return undefined;
 
-    // The last values each key held, by the id of the Yjs item that wrote them.
-    const seen = new Map<string, { item: string; value: unknown }[]>();
+    const me = pageYMap.doc?.clientID;
     const idOf = (id: Y.ID) => `${id.client}:${id.clock}`;
-    const remember = (stateY: Y.Map<unknown>, key: string) => {
+    // Per key: whether the value held now is an own write, the values of the
+    // latest own writes by item id, and the value the current run of own writes replaced.
+    const holdsOwn = new Map<string, boolean>();
+    const ownValues = new Map<string, Map<string, unknown>>();
+    const beforeOwn = new Map<string, unknown>();
+
+    const track = (stateY: Y.Map<unknown>, key: string, replaced: unknown) => {
       const item = stateY._map.get(key);
-      if (!item || item.deleted) return;
-      const values = seen.get(key) ?? [];
-      values.push({ item: idOf(item.id), value: stateY.get(key) });
-      seen.set(key, values.slice(-SEEN_PER_KEY));
+      const own = !!item && !item.deleted && item.id.client === me;
+      if (own) {
+        if (!holdsOwn.get(key)) beforeOwn.set(key, replaced);
+        const values = ownValues.get(key) ?? new Map<string, unknown>();
+        values.set(idOf(item.id), stateY.get(key));
+        if (values.size > OWN_VALUES_PER_KEY) values.delete(values.keys().next().value!);
+        ownValues.set(key, values);
+      }
+      holdsOwn.set(key, own);
     };
     const initial = pageYMap.get(YDOC_KEYS.state);
-    if (initial instanceof Y.Map) for (const key of initial.keys()) remember(initial, key);
+    if (initial instanceof Y.Map)
+      for (const key of initial.keys()) track(initial, key, initial.get(key));
+
+    /** The base of `item`'s write, which replaced an own write it may not have seen. */
+    const baseOverOwn = (stateY: Y.Map<unknown>, key: string, item: Y.Item, replaced: unknown) => {
+      const store = stateY.doc!.store;
+      for (let id = item.origin; id;) {
+        if (id.client === me) {
+          const values = ownValues.get(key);
+          return values?.has(idOf(id)) ? values.get(idOf(id)) : replaced;
+        }
+        const struct = Y.getItem(store, id);
+        if (!(struct instanceof Y.Item)) break;
+        id = struct.origin;
+      }
+      // The writer saw none of the own writes: it started from what they replaced.
+      return beforeOwn.get(key);
+    };
 
     const handler = (events: Y.YEvent<Y.AbstractType<unknown>>[]) => {
       const stateY = pageYMap.get(YDOC_KEYS.state);
@@ -66,13 +98,13 @@ export function useYjsPageStateSync(options: {
         const own = event.transaction.origin === PAGES_STATE_ORIGIN;
         for (const [key, change] of (event as Y.YMapEvent<unknown>).changes.keys) {
           if (!own) {
-            // A set's item records the item it replaced as its origin (Y.Map: `left.lastId`).
-            const origin = change.action === 'delete' ? null : stateY._map.get(key)?.origin;
-            const from = origin && seen.get(key)?.find((v) => v.item === idOf(origin));
+            const item = stateY._map.get(key);
+            const overOwn =
+              holdsOwn.get(key) === true && !!item && !item.deleted && item.id.client !== me;
             partial[key] = stateY.get(key);
-            base[key] = from ? from.value : change.oldValue;
+            base[key] = overOwn ? baseOverOwn(stateY, key, item, change.oldValue) : change.oldValue;
           }
-          remember(stateY, key);
+          track(stateY, key, change.oldValue);
         }
       }
       if (Object.keys(partial).length > 0) onRemoteStateRef.current(partial, base);

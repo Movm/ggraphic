@@ -147,7 +147,32 @@ async function mountTwoClients(seed: Record<string, unknown>, hostKeys: string[]
     await vi.waitFor(() => expect(store.getState().historyIndex).toBe(before + 1));
   };
 
-  return { docA, docB, ref, live, store, remoteEdit, localEdit, disconnect, reconnect };
+  /** Client C: a third Y.Doc as B's peer; its updates reach B only through `sendFromC`. */
+  const docC = new Y.Doc();
+  docC.clientID = 3;
+  Y.applyUpdate(docC, Y.encodeStateAsUpdate(docB));
+  const editC = (edit: (state: Record<string, unknown>) => Record<string, unknown>) =>
+    docC.transact(() => updatePageStateById(docC, PAGE_ID, edit(pageState(docC))), REMOTE);
+  const syncC = () => Y.applyUpdate(docC, Y.encodeStateAsUpdate(docB, Y.encodeStateVector(docC)));
+  const sendFromC = () =>
+    act(async () => {
+      Y.applyUpdate(docB, Y.encodeStateAsUpdate(docC, Y.encodeStateVector(docB)), REMOTE);
+    });
+
+  return {
+    docA,
+    docB,
+    ref,
+    live,
+    store,
+    remoteEdit,
+    localEdit,
+    disconnect,
+    reconnect,
+    editC,
+    syncC,
+    sendFromC,
+  };
 }
 
 const undo = (ref: RefObject<GenericCanvasRef | null>) =>
@@ -351,6 +376,46 @@ describe("undo keeps another client's edits", () => {
     await redo(ref);
     for (const state of [live.state, pageState(docA)]) {
       expect(shapeOrder(state)).toEqual(['s2', 's1', 's3']);
+    }
+  }, 90_000);
+
+  it('a third client’s overwrite of A’s edit is not undone by B (separate updates)', async () => {
+    const {
+      docB,
+      ref,
+      live,
+      remoteEdit,
+      localEdit,
+      disconnect,
+      reconnect,
+      editC,
+      syncC,
+      sendFromC,
+    } = await mountTwoClients({ shapeInstances: [shape('s1', 100), shape('s2', 100)] }, []);
+    const updateShape = live.actions.updateShape as (id: string, p: Partial<Shape>) => void;
+    const yOf = (state: Record<string, unknown>, id: string) =>
+      (state.shapeInstances as Shape[]).find((s) => s.id === id)?.y;
+
+    await localEdit(() => updateShape('s1', { y: 300 }));
+    // C starts from the same view as A; both write the array, C (higher id) wins.
+    syncC();
+    disconnect();
+    editC((state) => moveShape(state, 's2', 900));
+    await remoteEdit((state) => moveShape(state, 's1', 500));
+    await reconnect();
+    expect(xOf(live.state, 's1')).toBe(500);
+    await sendFromC();
+    expect(xOf(live.state, 's1')).toBe(100);
+    expect(xOf(live.state, 's2')).toBe(900);
+
+    await undo(ref);
+    expect(yOf(live.state, 's1')).toBe(100);
+    await redo(ref);
+    for (const state of [live.state, pageState(docB)]) {
+      expect(yOf(state, 's1')).toBe(300);
+      // A's move was overwritten by C; neither undo nor redo brings it back.
+      expect(xOf(state, 's1')).toBe(100);
+      expect(xOf(state, 's2')).toBe(900);
     }
   }, 90_000);
 });
