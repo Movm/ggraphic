@@ -49,7 +49,7 @@ import { type ViewportRect, rotaterRects, visibleArea } from '../utils/orientati
 import { PendingImagesContext } from '../utils/pendingImages.js';
 import { PreviewRenderContext } from '../utils/filterCache.js';
 import { stageCssScale } from '../utils/stageCssScale.js';
-import { STAGE_VERTICAL_CHROME, getOptimalContainerWidth } from '../utils/viewport.js';
+import { STAGE_VERTICAL_CHROME, getOptimalContainerWidth, isMobile } from '../utils/viewport.js';
 import { useEditorBox, useMeasuredEditorBox } from '../hooks/editorBox.js';
 import { useStageFit } from '../hooks/stageFit.js';
 
@@ -414,13 +414,17 @@ function GenericCanvasWithRef<
 
   useCanvasStoreReset(preview ? null : config.id);
 
-  // The stage fits the editor's box (the window outside an editor).
-  // The stage fits the canvas area the shell measured (desktop), else the editor's box (mobile;
-  // the window outside an editor).
+  // The stage fits the canvas area the shell measured, else the editor's box (the window outside
+  // an editor). On mobile a page keeps the box's width rule, so the measured area only caps its height.
   const box = useEditorBox();
   const stageFit = useStageFit();
   const fit = preview ? null : stageFit;
-  const maxWidth = fit?.width ?? getOptimalContainerWidth(box.width);
+  const boxWidth = getOptimalContainerWidth(box.width);
+  const maxWidth = fit
+    ? isMobile(box.width)
+      ? Math.min(fit.width, boxWidth)
+      : fit.width
+    : boxWidth;
   const maxHeight = fit?.height ?? box.height - STAGE_VERTICAL_CHROME;
   // Inside an editor the stage's parent is the zoom wrapper, which sizes itself to the stage: a
   // fit capped at it could shrink but never grow back (#112). The max sizes decide there.
