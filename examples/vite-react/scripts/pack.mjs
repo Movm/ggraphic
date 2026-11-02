@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MIT
 /**
  * Packs the built @ggraphic packages into ./tarballs under version-free names, so package.json
  * can point at them. Run `pnpm build` in the repository root first: `pnpm pack` takes `dist` as

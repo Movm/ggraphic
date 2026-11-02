@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Canvas assets: placed graphics and the catalogue they resolve against.
  * The graphics themselves are host data (`registerAssetCatalog`); the editor

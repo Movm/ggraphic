@@ -1,7 +1,7 @@
 {
   "name": "@ggraphic/schema",
   "version": "0.1.0-alpha.1",
-  "license": "MPL-2.0",
+  "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Movm/ggraphic.git",

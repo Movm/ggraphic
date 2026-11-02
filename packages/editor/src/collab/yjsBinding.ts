@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import * as Y from 'yjs';
 
 import { YDOC_KEYS } from './ydocKeys.js';

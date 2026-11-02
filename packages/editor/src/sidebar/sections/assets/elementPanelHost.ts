@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import type { ElementItem, HostElementThumb } from './elementTypes.js';
 import type { HostElementKindName } from '../../../utils/canvasItem.js';
 import type { AssetAudience } from '../../../utils/canvasAssets.js';

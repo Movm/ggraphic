@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Restbild im Zuschneide-Modus: das ganze Foto, abgedunkelt, auch jenseits der
  * Seite. In Konva liegt es als `crop-ghost`-Knoten (Export blendet ihn als

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * A probe host element kind for the core's tests: a stamp placed by an
  * `offset` from a layout point instead of x/y, with a label it edits in its

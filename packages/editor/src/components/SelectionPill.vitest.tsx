@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { SelectionPill, type SelectionPillProps, placePill } from './SelectionPill.js';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

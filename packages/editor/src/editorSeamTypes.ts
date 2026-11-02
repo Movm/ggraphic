@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Types at the seam between the editor core and its host: the multi-page
  * page shape, the spec-edit bridge and the alt-text tool's pages. They sit

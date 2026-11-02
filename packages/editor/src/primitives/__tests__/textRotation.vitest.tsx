@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Freier Text dreht: der Griff schreibt `rotation` mit der Position zurück,
  * die Memo-Vergleiche zeichnen bei reiner Drehung neu, und jeder Editor

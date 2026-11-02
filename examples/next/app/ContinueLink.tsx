@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MIT
 // Only the browser knows whether a design is stored, so this link renders after hydration.
 'use client';
 

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 
 /**
  * Silbentrennung und Einpassen für Überschriften — DOM-frei, wie das Textlayout.

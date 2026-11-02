@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Snap im echten Zug: eine gedrehte Form rastet mit ihrer gedrehten Box ein,
  * ein Gruppenzug mit dem Umriss aller gezogenen Elemente.

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Runs `fn` once the browser is idle (at the latest after 4 s); returns the cancel. */
 export function whenIdle(fn: () => void): () => void {
   if (typeof requestIdleCallback === 'function') {

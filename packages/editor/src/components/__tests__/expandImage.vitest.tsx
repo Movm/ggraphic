@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * „Erweitern" im Zuschneide-Modus: der Dienst des Hosts (hier gemockt) erweitert
  * das Foto auf das Rahmenformat, das Ergebnis wird wie bei „Ersetzen" hochgeladen

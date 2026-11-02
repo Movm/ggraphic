@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MIT
 import { expect, test } from '@playwright/test';
 
 /** Next.js's error document, and React's marker for a boundary that failed on the server. */
@@ -18,6 +18,11 @@ test('the server renders the start page from the formats and the parsed template
   for (const id of ['post-portrait', 'profile-square', 'slide-16-9']) {
     expect(html).toContain(`href="/?format=${id}"`);
   }
+  // The names come from the editor's catalogue in English (`formatLabel`, #159), not from the
+  // formats' German `label` fields.
+  expect(html).toContain('Post 4:5');
+  expect(html).toContain('1920 × 1080 · 16:9 · Slides');
+  expect(html).not.toContain('Beitrag');
   expectNoServerError(html);
 
   // With a format, the templates that fit it, parsed on the server through `@ggraphic/editor/page`.

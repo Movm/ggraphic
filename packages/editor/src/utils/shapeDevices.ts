@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Three shape devices, as pure geometry so the renderer, the gate adapter and the pptx export
  * share one outline: a ring that can show a share (`arc`), a stroked arrow that can bend

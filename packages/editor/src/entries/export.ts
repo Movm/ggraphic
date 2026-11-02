@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Export: PPTX (fonts, model, writer), print and slide PDFs, and zipped page images. */
 export { pptxFamily, type PptxFontMapper, registerPptxFonts } from '../export/pptx/pptxFonts.js';
 export { type PptxPageState } from '../export/pptx/buildPptxModel.js';

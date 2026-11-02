@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The brand of a document comes from the document, not from the registry: a
  * host registers several packs, and `activeBrand()` is always the first. A

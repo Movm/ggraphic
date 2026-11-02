@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * `toDataURLAsync` soll dasselbe Bild liefern wie `toDataURL`, nur ohne den
  * PNG-Encode auf dem Hauptthread. Gefährlich daran ist nicht der Encode,

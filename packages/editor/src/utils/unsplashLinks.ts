@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useCanvasEditorServices } from '../CanvasEditorProvider.js';
 
 /** The Unsplash home page, tagged with the host's `utm_source` (API Terms). */
