@@ -40,8 +40,13 @@ const measure = (page: Page) =>
       visible: {
         left: m.left,
         right: m.right,
-        top: box(slot).bottom,
-        bottom: Math.min(bar ? box(bar).top : m.bottom, window.innerHeight),
+        // The context bar slot has no layout box on mobile.
+        top: slot.getClientRects().length > 0 ? box(slot).bottom : m.top,
+        // The bottom bar is hidden on mobile (no layout box); the tab bar sits below the main column.
+        bottom: Math.min(
+          bar && bar.getClientRects().length > 0 ? box(bar).top : m.bottom,
+          window.innerHeight
+        ),
       },
     };
   });
@@ -124,6 +129,25 @@ for (const format of ['post-portrait', 'slide-16-9']) {
     });
   }
 }
+
+test.describe('mobile', () => {
+  test.beforeEach(({ page }) => open(page));
+
+  test('a page limited by the height stays above the tab bar (#139)', async ({ page }) => {
+    // 500 × 701: a portrait page as wide as the box rule allows would be taller than the area.
+    const { stages, visible } = await resizeTo(page, 500, 701);
+    const stage = stages[0]!;
+    expect(stage.top).toBeGreaterThanOrEqual(visible.top);
+    expect(stage.bottom).toBeLessThanOrEqual(visible.bottom);
+    expect(visible.bottom - visible.top - stage.height).toBeLessThan(120);
+  });
+
+  test('a page limited by the width keeps the width of the box rule', async ({ page }) => {
+    const { stages } = await resizeTo(page, 390, 844);
+    // `getOptimalContainerWidth`: the box minus 32 px.
+    expect(stages[0]!.width).toBe(390 - 32);
+  });
+});
 
 test('a multi-page document: every page the same full size, each reachable whole by scrolling', async ({
   page,

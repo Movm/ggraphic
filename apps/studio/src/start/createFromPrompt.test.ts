@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { brandFingerprint, resolveScheme } from '@ggraphic/core';
 import { activeBrand, registerBrandPacks } from '@ggraphic/editor/brand';
-import { rememberLogoSize } from '@ggraphic/editor/page';
+import { headlineFont, rememberLogoSize } from '@ggraphic/editor/page';
+import { runMeasurer } from '@ggraphic/editor/text';
+import { PLAIN_STYLE, wrapLines } from '@ggraphic/schema';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api, ApiError } from '../api/client';
@@ -67,6 +69,35 @@ const run = () =>
     formatId: 'post-portrait',
     ai: true,
   });
+
+describe('createFromPrompt without AI', () => {
+  it('fits a long prompt headline above the subline instead of running into it (#5)', async () => {
+    await createFromPrompt({
+      organisationId: 'o1',
+      prompt: 'Gemeinschaftsgartenfest im Nordpark',
+      formatId: 'post-portrait',
+      ai: false,
+    });
+    type Text = {
+      id: string;
+      text: string;
+      y: number;
+      width: number;
+      fontSize: number;
+      lineHeight?: number;
+    };
+    const texts = pageOf(saved()).state['additionalTexts'] as Text[];
+    const headline = texts.find((t) => t.id === 'headline')!;
+    const subline = texts.find((t) => t.id === 'subline')!;
+    expect(headline.text).toBe('Gemeinschaftsgartenfest im Nordpark');
+    const lines = wrapLines(headline.text, headline.width, (t) =>
+      runMeasurer(headline.fontSize, headlineFont(), 'bold')(t, PLAIN_STYLE)
+    );
+    expect(
+      headline.y + lines.length * headline.fontSize * (headline.lineHeight ?? 1)
+    ).toBeLessThanOrEqual(subline.y);
+  });
+});
 
 describe('createFromPrompt with AI', () => {
   it('creates the project with the template and colour world the AI picked', async () => {

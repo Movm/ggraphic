@@ -357,9 +357,13 @@ function CanvasEditorInner({
     [pagesContainerRef]
   );
   useZoomGestures(pagesContainer, setZoom, { leftOrigin: isMobileWeb });
-  // Desktop: every page fills the canvas area it can use (#112). Mobile has its own fit
-  // (`useMobileSheetFit`, the box).
-  const stageFit = useMeasuredStageFit(pagesContainer, !isMobileWeb && !isPreview);
+  // Every page fills the canvas area it can use (#112); on mobile that keeps it above the tab bar
+  // (#139). An open mobile sheet holds the fit and scales the pages instead (`useMobileSheetFit`).
+  const stageFit = useMeasuredStageFit(
+    pagesContainer,
+    !isPreview,
+    isMobileWeb && activeTab !== null
+  );
 
   // Every page binds its config to its page Y.Map — in collab mode
   // that syncs to peers, in local mode it makes duplicate/move/undo carry

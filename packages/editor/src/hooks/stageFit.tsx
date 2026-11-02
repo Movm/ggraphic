@@ -9,10 +9,10 @@ export interface StageFit {
 
 const StageFitContext = createContext<StageFit | null>(null);
 
-/** Set by the editor shell on desktop; the pages inside fit their stage to it. */
+/** Set by the editor shell; the pages inside fit their stage to it. */
 export const StageFitProvider = StageFitContext.Provider;
 
-/** The measured fit, or `null` (mobile, previews, a canvas outside the editor). */
+/** The measured fit, or `null` (previews, a canvas outside the editor). */
 export function useStageFit(): StageFit | null {
   return useContext(StageFitContext);
 }
@@ -53,8 +53,12 @@ export function measureStageFit(container: HTMLElement): StageFit | null {
   return { width: Math.floor(width), height: Math.floor(height) };
 }
 
-/** Measures `measureStageFit` for the pages container while `enabled`, and again on every resize. */
-export function useMeasuredStageFit(container: HTMLElement | null, enabled: boolean) {
+/**
+ * Measures `measureStageFit` for the pages container while `enabled`, and again on every resize.
+ * While `hold`, the last fit stays and nothing is measured: an open mobile sheet takes space from
+ * the main column and shifts the pages, and `useMobileSheetFit` already scales them into what is left.
+ */
+export function useMeasuredStageFit(container: HTMLElement | null, enabled: boolean, hold = false) {
   const [fit, setFit] = useState<StageFit | null>(null);
 
   useEffect(() => {
@@ -62,6 +66,7 @@ export function useMeasuredStageFit(container: HTMLElement | null, enabled: bool
       setFit(null);
       return undefined;
     }
+    if (hold) return undefined;
     const update = () => {
       const next = measureStageFit(container);
       setFit((prev) =>
@@ -80,7 +85,7 @@ export function useMeasuredStageFit(container: HTMLElement | null, enabled: bool
       ?.querySelector('.canvas-editor-layout__bottom-bar');
     if (bar) observer.observe(bar);
     return () => observer.disconnect();
-  }, [container, enabled]);
+  }, [container, enabled, hold]);
 
   return fit;
 }
