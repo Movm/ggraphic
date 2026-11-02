@@ -1,5 +1,144 @@
 # @ggraphic/editor
 
+## 0.1.0-alpha.2
+
+### Minor Changes
+
+- bdd1320: The canvas fills the available area on desktop and follows it when the window grows or shrinks (#112). **This is a visible size change for all hosts.**
+
+  - **Before:** a desktop stage was effectively capped at 400 px wide: 400 × 500 for 4:5 and 400 × 225 for 16:9, at any window size. After the window had been made smaller, the stage never grew back.
+  - **Now:** the stage takes the part of the canvas area that nothing covers. That is the area below the context bar slot and the page toolbar, and above the bottom bar, with the same 24 px gap above and below. Every page of a multi-page document gets that full size and is reached by scrolling.
+  - **Mobile:** the mobile layout, including an open sheet, keeps its own fit and is unchanged.
+  - **`CanvasStage`:** a new prop `fitToParent` (default `true`). Inside the editor it is off, because there the stage's parent sizes itself to the stage.
+  - **Shell measurement:** the shell measures the area with `useMeasuredStageFit` (`hooks/stageFit`).
+
+- 6676a77: New entry `@ggraphic/editor/host`. It holds what a host's start-up code and test setup need, without loading the editor UI:
+
+  - the `register*` seams: element kinds, asset catalogue, formats and format groups, templates, brand packs, messages, toasts, storage keys, PPTX fonts and screen-corner reservations;
+  - the format lookups a host's template registry needs: `canvasFormats`, `getCanvasFormat` and `getCanvasFormatOrDefault`;
+  - `useCanvasEditorServices` and `BlockInsertContext`;
+  - the interfaces a host augments: `CanvasEditorHostServices`, `HostElementKinds`, `HostCanvasActions` and `CanvasAiHostTypes`.
+
+  It loads 17 modules, none of them a component, store or primitive. Each of `shell`, `kinds` and `elements` loads at least 31. A host that `vi.mock`s editor modules can import its start-up code from `host`, and its mocks still apply. Every name is also in its domain entry.
+
+  Also added:
+
+  - `CanvasAiHostTypes` in `@ggraphic/editor/ai`, so a host can augment it through a public path.
+  - `stripMarks` in `@ggraphic/editor/text`.
+  - `surfaceGlow` in `@ggraphic/editor/brand`.
+  - `registerMeasuredCornerReservation` and its types in `@ggraphic/editor/services`.
+
+  **Breaking (alpha):** `BlockInsertApi.bloecke` is now `blocks`. The field only lives in the React context a host provides, nothing persists it, so there is no alias: a host that provides or reads the context renames it (a type error points at each site).
+
+  `CanvasFormatGroupDef` takes an optional `order`. It places a host group among the built-in picker groups, whose positions are in `CANVAS_FORMAT_GROUP_ORDER` (`templates`, `host`): `post` is 100, `square` 200, `slides` 300. A group without `order` follows the positioned ones, as before.
+
+- ef97b05: Public entry points. Each is a facade that re-exports a curated list of names:
+
+  - `@ggraphic/editor` (the same as `./embed`), `./embed`, `./page`, `./config`, `./shell`, `./canvas`, `./kinds`, `./store`, `./services`, `./brand`, `./templates`, `./elements`, `./text`, `./sidebar`, `./collab`, `./ai`, `./export`, `./i18n`;
+  - `./illustrations/<set>` for each of the seven illustration sets.
+
+  `./kinds` carries what a custom element kind needs, with a documented example. `./text` adds the generic text fitting (`wrapWords`, `balancedWrap`, `largestSizeWordsFit`).
+
+  `@ggraphic/editor/internal/*` reaches any compiled module, with no semver promise.
+
+  Deprecated: the deep paths (`@ggraphic/editor/utils/…`, `…/components/…` and the rest). They keep working in this alpha and are removed in the next one; move to the entries above, or to `internal/*` where an entry has no home for a name yet.
+
+- e9a3d1a: `<GgraphicEditor>` takes an `exportApiRef`: once the editor has loaded it receives `CanvasEditorExportApi`, so a host can render the active page or every page as PNG, export the deck as .pptx and read the pages from its own UI. `CanvasEditorExportApi` is exported from `@ggraphic/editor/embed`. The embedding skill has a new Export section.
+- 0a75b5c: New `loadTemplatePack(files)` in `@ggraphic/editor/embed`: `templatePackFromJson` in a chunk of its own, returning a promise of the pack. `<GgraphicEditor templates>` accepts that promise and resolves it while the editor loads. A host that called `templatePackFromJson` at module level carried zod, the XML parser and the page config in its entry chunk; with `loadTemplatePack` they load next to the editor (a minimal Vite host: entry chunk 561 kB → 221 kB minified). `templatePackFromJson` is unchanged.
+- 6dd815a: `GgraphicEditor` (`@ggraphic/editor/embed`): the editor in one component. A host passes a brand pack, a template pack (`templatePackFromJson`, also exported here), the document and an `onChange`; the component fills the brand, message and template registers, provides a React Query client and the host services, and renders the shell. Defaults: browser downloads, object-URL uploads, no AI and no collaboration, English texts (`locale`). The import is SSR-safe; the editor renders in the browser only. `CanvasEditorShell` gets `onPagesChange`, called with every page after each change to the deck.
+- 6c4abd9: `@ggraphic/editor/host` loads no React, so a server component (a Next.js layout, a route handler) can import it and call the `register*` functions. Before, `next build` failed with `createContext is not a function`.
+
+  The three React names left `host` for the new client entry `@ggraphic/editor/host-react` (`'use client'`, three modules, React only). Migration:
+
+  ```diff
+  - import { useCanvasEditorServices, BlockInsertContext, useBlockInsert } from '@ggraphic/editor/host';
+  + import { useCanvasEditorServices, BlockInsertContext, useBlockInsert } from '@ggraphic/editor/host-react';
+  ```
+
+  Everything else in `host` stays where it is. The three names are also still in `@ggraphic/editor/shell`.
+
+- c8b3945: The format catalogue is now the host's. The editor ships three neutral formats; hosts add their own with `registerCanvasFormatGroups` / `registerCanvasFormats`.
+
+  **Breaking for hosts that rely on the built-in formats.** Before this release the editor had 18 formats built in; now it has three.
+
+  - Built in: `post-portrait` (4:5), `profile-square` (1:1) and `slide-16-9` (16:9). Their ids are unchanged.
+  - Built-in groups are now `post`, `square`, `slides` and `print`. They were `sharepic`, `sharepic-tall`, `profilbild`, `praesentation` and `print`.
+    - `isSlideFormat` now checks the `slides` group: a host's slide format joins it.
+    - `print` has no built-in format; it holds a host's print formats.
+  - Moved out: `post-portrait-tall`, the 14 `print-*` formats and the `sharepic-tall` group. A stored document with one of these ids opens again once the host registers it under the same id. Until then, a print id is refused (`UnsupportedCanvasFormatError`) and an unknown digital id falls back to `post-portrait`, as before.
+  - For one alpha the moved catalogue stays unchanged in `@ggraphic/editor/formats/legacyCatalog` (deprecated):
+
+    ```ts
+    registerCanvasFormatGroups(LEGACY_CANVAS_FORMAT_GROUPS);
+    registerCanvasFormats(LEGACY_CANVAS_FORMATS);
+    ```
+
+  - `pinnedFormatId` maps a host's template ids, so it moved to `formats/legacyCatalog` (deprecated). It is still re-exported from `formats/index`, but is no longer in the `templates` entry.
+  - Message catalogue:
+    - `formats.names` holds only the three built-ins, with neutral names ("Post 4:5", "Square 1:1", "Presentation").
+    - `formats.groups` uses the new group ids.
+  - Image looks `gruen` → `tinted` and `grau` → `grayscale`, with the message keys `imageLooks.*` renamed the same way. Look ids are never stored: applying a look writes its values.
+  - `CoreSidebarTabId` no longer lists `'vorlagen'`. The editor has no such tab; a host tab with that id still type-checks as a `SidebarTabId`.
+  - `getCanvasFormatOrDefault` warns once per unknown id (`unknown canvas format 'x', falling back to 'post-portrait'; register it with registerCanvasFormats`), so a host that forgot to register a digital format sees it in its logs instead of shipping 4:5.
+
+- ba99f4f: Neutral names on the public surface. Every German or host-specific name reachable from the entry points is renamed; nothing here is persisted, so documents, template packs and stored state are unaffected.
+
+  - Types and functions (the old name stays as a `@deprecated` alias on its deep path until the next alpha):
+    - `CanvasImpressumService`, `CanvasImpressumParts`, `CanvasImpressumLabels`, `CanvasImpressumLocale` → `CanvasImprintService`, `CanvasImprintParts`, `CanvasImprintLabels`, `CanvasImprintLocale`
+    - `CanvasStudioAssetKind`, `CanvasStudioAssetScope`, `CanvasStudioAssetItem`, `CanvasStudioAssetsFilter`, `CanvasStudioAssetsState`, `UseCanvasStudioAssets`, `useNoStudioAssets` → `CanvasAssetLibraryKind`, `CanvasAssetLibraryScope`, `CanvasAssetLibraryItem`, `CanvasAssetLibraryFilter`, `CanvasAssetLibraryState`, `UseCanvasAssetLibrary`, `useNoAssetLibrary`
+    - `VORLAGE_DRAG_TYPE`, `isVorlageDrag`, `readVorlageDrag` → `TEMPLATE_DRAG_TYPE`, `isTemplateDrag`, `readTemplateDrag`
+    - `DiagrammeSection`, `FormenSection` → `ChartsSection`, `ShapesSection`; `StudioGalleryGrid` → `AssetGalleryGrid`; `buildSharepicText` → `buildCanvasText`
+  - Files (the old path re-exports the new one until the next alpha): `sidebar/sections/DiagrammeSection`, `FormenSection`, `RahmenSection`, `StudioGallery` → `ChartsSection`, `ShapesSection`, `FramesSection`, `AssetGallery`; `configs/buildSharepicText` → `configs/buildCanvasText`
+  - Props, fields and keys (no alias; rename them in the host):
+    - `CanvasEditorServices.useStudioAssets` → `useAssetLibrary`
+    - `CanvasPrintService.impressum` → `imprint`; `CanvasImprintParts.anschrift` → `address`
+    - `CanvasPrintSpec.seiten` → `pageCount`; `CanvasPrintSpec.impressum` → `imprint`, with the values `'jede-seite' | 'erste-seite' | 'letzte-seite'` → `'every-page' | 'first-page' | 'last-page'`
+    - `PageWrapperProps.onDropVorlage` → `onDropTemplate`
+    - `ChatSectionContentProps.getSharepicText` → `getCanvasText`
+    - `PendingAiSuggestion.source: 'vorlage'` → `'template'`
+    - Messages: `sharepicText` → `canvasText`, `sidebar.studio` → `sidebar.assetLibrary`, `shell.downloadPanel.impressum*` → `shell.downloadPanel.imprint*`
+  - The template drag type is now `application/x-ggraphic-template` (it only ever lives in a drag's `DataTransfer`).
+
+### Patch Changes
+
+- 01c1fab: The data entries `page`, `elements`, `templates`, `text` and `config` load without React, Konva or React-dependent packages, so they work in React Server Components and plain Node. As a side effect, the `embed` entry loads under React's server build too (the editor itself stays lazy).
+
+  - No exported name changes. Only the internal module graph does: React-free core modules sit next to the old ones, and the old modules re-export them.
+    - `i18n/catalogue` (`messages()` and the registers, without `useMessages`);
+    - `utils/fontGeneration`;
+    - `utils/fontSpecs`;
+    - `utils/framePresets`;
+    - `sidebar/coreSidebar`.
+  - `createPageConfig` and `createShareSection` name the core sidebar sections and tab icons by id. The editor shell provides them when its module loads. Reading a section's `component` or a tab's `icon` outside `CanvasEditorShell` throws a `coreSidebar:` error.
+  - `shareTab.icon` is now a getter, so its type is `readonly`.
+  - `canvasIcons` no longer registers icon sets with `@iconify/react` itself. The sidebar does that through `onIconSetLoaded`.
+  - `sideEffects` now names `utils/fontGeneration` (the `document.fonts` listener moved there) instead of `hooks/useFontGeneration`.
+
+- 0b8da42: The mobile layout and the canvas fit follow the editor's box instead of the window (#106). An editor embedded in a box narrower than 900 px uses the phone layout also in a wide window, and its pages are sized to the box's width and height. The editor root measures itself and carries `data-canvas-mobile` while it is narrow; the `max-canvas-mobile:` / `canvas-mobile:` variants of `@ggraphic/editor/styles/tailwind` and the mobile rules of the editor stylesheet key on it. Dialogs and menus, which open over the page, still follow the window. A full-screen host measures exactly the window, so nothing changes there. `isMobile()` and `getOptimalContainerWidth()` of `@ggraphic/editor/utils/viewport` take an optional width (the window's by default).
+- 3211079: Declare `@tiptap/pm`, `react-is` and `y-protocols` as dependencies. The editor's tiptap packages, recharts and `@hocuspocus/provider` need them as peers; package managers that don't install missing peers (yarn) failed to build a host.
+- d101d84: The editor's chrome sits inside the editor instead of the viewport, so a host can put its own bar or sidebar next to it (#100). The sidebar, the panel and the bottom bar are positioned against the editor's root, and the pages scroll inside the editor instead of the host page. Its height is the new token `--editor-height`: `100dvh` by default, as before, and `100%` in `GgraphicEditor`, which now fills exactly the box the host gives it. `--canvas-host-inset-left` is no longer read; a host that set it to clear its own sidebar can drop it.
+- a95f304: Internal imports are relative; no API change.
+- 89a7b84: The embedding skill notes that `@ggraphic/templates-open` ships its sample photos only from the `./photos` subpath.
+- bd40ea0: The `ggraphic-embed` skill no longer asks for one shared version across `@ggraphic/*`: the packages are versioned independently, so a host pins each one to the version under the `alpha` tag and takes core and schema at the versions the editor depends on.
+- feb274d: The `embed` entry (and the package root, its alias) starts with `'use client'`. A React Server Component that imports it now gets a client reference instead of failing with `createContext is not a function`. `templatePackFromJson` and `loadTemplatePack` are not server APIs: the skill now says so and shows the App Router setup.
+- fe90a3b: Auto-fit measures a bold word in bold. Words in `**bold**` runs were measured in the regular face, so a bold word that only fit in regular weight ran past the edge of its box. `SlotFit` gets an optional `widestWord` for callers that know the widest word better than `measureAt`, as `countLines` already does for the line count.
+- facbe6b: Importing the sidebar no longer registers the bundled icon sets with `@iconify/react`. The registration now runs when an icon first renders, so a host's `@iconify/react` mock without `addCollection` no longer fails at import.
+- 45b8f3a: On mobile, a page that the height limits now fits above the tab bar (#139). The mobile fit used to take the box height minus a fixed 120 px, too little for the header, page toolbar and tab bar, so a portrait page at 500 × 701 ran 38 px under the tab bar. The shell now measures the free canvas area on mobile too (`useMeasuredStageFit`), as it does on desktop. Pages the width limits, as on most phones, keep their size.
+
+  - **`useMeasuredStageFit(container, enabled, hold?)`:** new optional `hold`. While it is true, the last fit stays and nothing is measured. The shell sets it while a mobile sheet is open: the sheet takes space from the main column, and `useMobileSheetFit` scales the pages into what is left.
+
+- bbede91: webpack hosts can build the embed entry again (#133). `next build --webpack` and other webpack builds stopped with `UnhandledSchemeError: Reading from "node:https"`: pptxgenjs, the writer behind the PPTX export, loads `node:fs` and `node:https` with `import()`, and webpack rejects the `node:` scheme in a browser build even inside a lazy chunk.
+
+  - **The fix:** the package now ships a browser build of pptxgenjs 4.0.1 in `dist/vendor/pptxgen.js`, with JSZip and its dependencies. The PPTX export loads it through the package's `imports` map (`#pptxgenjs`), still lazily, and it loads no `node:` module. The licence texts of every bundled package are in `dist/vendor/pptxgen.LICENSES.txt`; JSZip is used under MIT.
+  - **Dependencies:** pptxgenjs is no longer a dependency of `@ggraphic/editor`, so hosts no longer install it.
+  - **Unchanged:** the export itself. Turbopack and Vite hosts were not affected.
+
+- 7a3bf1b: The editor shell preloads the Elements and Tools panels while the browser is idle, so their first open renders directly instead of suspending behind the chunk import. Any section of the config's tabs built with `lazyWithPreload` is warmed the same way.
+- 88aa4d8: The `react` and `react-dom` peer ranges now start at `^19.3.0` instead of `^19.0.0` (#134). The editor's `react-konva ^19.3.2` peer already required React 19.3, so a host on React 19.0–19.2 got `ERESOLVE` from npm naming react-konva, not the editor. Nothing changes for hosts on 19.3 or later. The README install line now uses the `alpha` dist-tag instead of a fixed version.
+- 555a2e6: The stylesheet entries get a second export key with the `.css` extension: `styles/compiled.css`, `styles/index.css`, `styles/editor.css`, `styles/tokens.css` and `styles/tailwind.css`. TypeScript 6 rejects a JavaScript side-effect import of a key without the extension (TS2882), because the bundler's `declare module '*.css'` does not match it. Import the `.css` keys from JavaScript; the old keys stay and resolve to the same files.
+- Updated dependencies [fe90a3b]
+  - @ggraphic/schema@0.1.0-alpha.1
+
 ## 0.1.0-alpha.1
 
 ### Minor Changes
