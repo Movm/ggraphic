@@ -27,7 +27,7 @@ import {
 import { v4 as uuid } from 'uuid';
 
 import type { IconState, BaseCanvasState } from './baseTypes.js';
-import type { AdditionalText } from '../types.js';
+import type { AdditionalText, CanvasActionHistory } from '../types.js';
 import type { AssetInstance } from '../../utils/canvasAssets.js';
 import type { CircleBadgeInstance } from '../../utils/circleBadgeUtils.js';
 import type { ExternalIconPayload } from '../../utils/externalIcons.js';
@@ -704,7 +704,9 @@ export function createUserImageActions<TState extends { userImageInstances: User
   saveToHistory: HistorySaver<TState>,
   debouncedSaveToHistory: HistorySaver<TState>,
   canvasWidth: number,
-  canvasHeight: number
+  canvasHeight: number,
+  /** `createActions`' history argument; without it the URL swap is an undo step of its own. */
+  history?: CanvasActionHistory
 ) {
   // `getState` is the render-time state (GenericCanvas), so `saveToHistory(getState())`
   // after a setState snapshots the canvas WITHOUT the change: history records
@@ -716,6 +718,9 @@ export function createUserImageActions<TState extends { userImageInstances: User
   const appendImage =
     (instance: UserImageInstance) =>
     (s: TState): TState => ({ ...s, userImageInstances: [...s.userImageInstances, instance] });
+  // The blob preview of each placed file, until its durable URL arrives: an undo during the upload
+  // takes the image off the canvas, but the redo entries still hold the preview.
+  const previews = new Map<string, string>();
 
   return {
     addUserImage: (file: File, objectUrl: string) => {
@@ -741,22 +746,22 @@ export function createUserImageActions<TState extends { userImageInstances: User
       return createUserImageInstance(file, objectUrl, canvasWidth, canvasHeight).then(
         (instance) => {
           commit(appendImage(instance));
+          previews.set(instance.id, objectUrl);
           return instance.id;
         }
       );
     },
     updateUserImage: (id: string, partial: Partial<UserImageInstance>) => {
+      const images = getState().userImageInstances;
+      const prevSrc = images.find((u) => u.id === id)?.src;
+      // Off the canvas, the preview can only be swapped where it is: in the history.
+      const preview = prevSrc?.startsWith('blob:') ? prevSrc : history && previews.get(id);
+      const nextSrc = partial.src;
+      const blob = nextSrc && preview !== nextSrc ? preview : undefined;
+      if (blob) previews.delete(id);
       // Free the optimistic blob once it's swapped for a durable URL.
-      if (partial.src) {
-        const images = getState().userImageInstances;
-        const prevInstance = images.find((u) => u.id === id);
-        if (
-          prevInstance?.src.startsWith('blob:') &&
-          prevInstance.src !== partial.src &&
-          isLastHolder(images, (u) => u.src, prevInstance.src)
-        ) {
-          URL.revokeObjectURL(prevInstance.src);
-        }
+      if (blob && isLastHolder(images, (u) => u.src, blob)) {
+        URL.revokeObjectURL(blob);
       }
       const change = (s: TState): TState => ({
         ...s,
@@ -765,6 +770,12 @@ export function createUserImageActions<TState extends { userImageInstances: User
         ),
       });
       setState(change);
+      // An upload's durable URL replaces its preview everywhere, the history included: a step of
+      // its own would let undo bring back the revoked blob, and save it (#161).
+      if (blob && nextSrc && history && Object.keys(partial).length === 1) {
+        history.replaceInHistory(blob, nextSrc);
+        return;
+      }
       debouncedSaveToHistory(change(getState()));
     },
     /** The template background photo's "Bearbeiten" look; merges like `updateUserImage`. */
@@ -813,7 +824,9 @@ export function createElementActions<TState extends BaseCanvasState>(
    * colours and fonts from. Last, and a `BrandPack`, so it cannot be bound to `chartColors`
    * (a string list) or `insertScale` (a number). The active brand by default.
    */
-  brand: BrandPack = activeBrand()
+  brand: BrandPack = activeBrand(),
+  /** `createActions`' history argument (`createUserImageActions`). */
+  history?: CanvasActionHistory
 ) {
   return {
     ...createAssetActions(
@@ -896,7 +909,8 @@ export function createElementActions<TState extends BaseCanvasState>(
       saveToHistory,
       debouncedSaveToHistory,
       canvasWidth,
-      canvasHeight
+      canvasHeight,
+      history
     ),
   };
 }

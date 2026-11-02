@@ -22,6 +22,8 @@ export interface UseCanvasHistorySetupResult<T extends Record<string, unknown>> 
   checkpoint: () => void;
   /** Writes pending saves, so the history's newest entry is the newest edit. */
   flushPendingSaves: () => void;
+  /** Replaces a string value in every history entry, without a step of its own. */
+  replaceInHistory: (from: string, to: string) => void;
   undo: () => void;
   redo: () => void;
   canUndo: boolean;
@@ -60,6 +62,7 @@ export function useCanvasHistorySetup<T extends Record<string, unknown>>(
     saveNow,
     commitPendingSave,
     flushPendingSaves,
+    replaceInHistory,
     undo,
     redo,
     canUndo,
@@ -150,6 +153,7 @@ export function useCanvasHistorySetup<T extends Record<string, unknown>>(
     runHistoryBatch,
     checkpoint,
     flushPendingSaves,
+    replaceInHistory,
     undo,
     redo,
     canUndo,
