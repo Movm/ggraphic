@@ -1,0 +1,78 @@
+{
+  "name": "@ggraphic/react-native",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The ggraphic editor in a React Native / Expo app, as an Expo DOM component with a typed bridge.",
+  "license": "MPL-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Movm/ggraphic.git",
+    "directory": "packages/react-native"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "development": "./src/index.ts",
+      "types": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./dom": {
+      "development": "./src/dom/index.ts",
+      "types": "./src/dom/index.ts",
+      "import": "./dist/dom/index.js",
+      "default": "./dist/dom/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.build.json",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ggraphic/core": "workspace:*",
+    "@ggraphic/editor": "workspace:*"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "jsdom": "30.1.3",
+    "konva": "^10.9.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-konva": "^19.3.2",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.5"
+  },
+  "peerDependencies": {
+    "konva": "^10.9.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-konva": "^19.3.2"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "publishConfig": {
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js",
+        "default": "./dist/index.js"
+      },
+      "./dom": {
+        "types": "./dist/dom/index.d.ts",
+        "import": "./dist/dom/index.js",
+        "default": "./dist/dom/index.js"
+      }
+    }
+  }
+}

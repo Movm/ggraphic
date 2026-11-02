@@ -128,6 +128,8 @@ export interface CanvasEditorExportApi {
   captureActivePage: (options?: {
     pixelRatio?: number;
     transparent?: boolean;
+    /** The longest wait for fonts, in ms; then the fallback faces are used. Default: no limit. */
+    fontWaitMs?: number;
   }) => Promise<string | null>;
   /** Every page as a PNG data URL, in page order; throws when a page cannot be rendered. */
   capturePages: (options?: { pixelRatio?: number }) => Promise<string[]>;

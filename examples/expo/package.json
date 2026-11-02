@@ -1,0 +1,39 @@
+{
+  "name": "ggraphic-example-expo",
+  "private": true,
+  "license": "MPL-2.0",
+  "main": "index.ts",
+  "scripts": {
+    "pack:local": "node scripts/pack.mjs",
+    "start": "expo start",
+    "ios": "expo run:ios",
+    "android": "expo run:android",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@expo/dom-webview": "~58.0.2",
+    "@expo/metro-runtime": "~58.0.16",
+    "@ggraphic/brand-default": "file:tarballs/ggraphic-brand-default.tgz",
+    "@ggraphic/core": "file:tarballs/ggraphic-core.tgz",
+    "@ggraphic/editor": "file:tarballs/ggraphic-editor.tgz",
+    "@ggraphic/react-native": "file:tarballs/ggraphic-react-native.tgz",
+    "@ggraphic/schema": "file:tarballs/ggraphic-schema.tgz",
+    "@tanstack/react-query": "^5.104.1",
+    "expo": "~58.0.19",
+    "konva": "^10.9.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "react-konva": "^19.3.2",
+    "react-native": "0.88.0",
+    "react-native-web": "^0.21.4"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "typescript": "~6.0.3"
+  },
+  "overrides": {
+    "@ggraphic/core": "$@ggraphic/core",
+    "@ggraphic/editor": "$@ggraphic/editor",
+    "@ggraphic/schema": "$@ggraphic/schema"
+  }
+}

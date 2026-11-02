@@ -687,8 +687,8 @@ function CanvasEditorInner({
   useImperativeHandle(
     exportApiRef,
     () => ({
-      captureActivePage: async ({ pixelRatio = 1, transparent = false } = {}) => {
-        await ensureFontsReady();
+      captureActivePage: async ({ pixelRatio = 1, transparent = false, fontWaitMs } = {}) => {
+        await ensureFontsReady(fontWaitMs === undefined ? {} : { timeoutMs: fontWaitMs });
         return handleCaptureCanvas({ format: 'png', pixelRatio, includeBackground: !transparent });
       },
       capturePages: async ({ pixelRatio = 1 } = {}) => {
