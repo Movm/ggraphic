@@ -38,7 +38,9 @@ export type PrintImprintPlacement = 'every-page' | 'first-page' | 'last-page';
 
 export interface CanvasFormat {
   id: string;
+  /** The name in the format's original language; show `formatLabel(format)`, which follows the catalogue. */
   label: string;
+  /** The size line in the original language; show `formatDescription(format)`. */
   description: string;
   group: CanvasFormatGroup;
   category: CanvasFormatCategory;

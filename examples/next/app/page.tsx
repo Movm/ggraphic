@@ -2,7 +2,12 @@
 // The start page, a server component: pick a format, then a blank page or a template. Every choice
 // is a link, so the page works before the browser has loaded any JavaScript; the editor loads only
 // on /edit.
-import { canvasFormats, type CanvasFormat } from '@ggraphic/editor/host';
+import {
+  canvasFormats,
+  type CanvasFormat,
+  formatDescription,
+  formatLabel,
+} from '@ggraphic/editor/host';
 import Link from 'next/link';
 
 import { aspectOf, BLANK, formatById, templatesFor } from './catalog';
@@ -44,10 +49,8 @@ export default async function StartPage({
                   aria-current={f.id === format?.id ? 'true' : undefined}
                 >
                   <Shape width={f.width} height={f.height} />
-                  <span className="card-title">{aspectOf(f)}</span>
-                  <span className="card-meta">
-                    {f.width} × {f.height} px
-                  </span>
+                  <span className="card-title">{formatLabel(f)}</span>
+                  <span className="card-meta">{formatDescription(f)}</span>
                 </Link>
               </li>
             ))}
