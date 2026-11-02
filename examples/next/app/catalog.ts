@@ -2,14 +2,16 @@
 // What a design can start from, read on the server. `@ggraphic/editor/host` and
 // `@ggraphic/editor/page` load no React and no editor UI, so a server component can import them;
 // the client component `Editor` reads the same file with `loadTemplatePack`.
-import { canvasFormats, type CanvasFormat, registerMessages } from '@ggraphic/editor/host';
+import {
+  BLANK_PAGE_ID,
+  canvasFormats,
+  type CanvasFormat,
+  registerMessages,
+} from '@ggraphic/editor/host';
 import { aspectOfSize, templatePackFromJson } from '@ggraphic/editor/page';
 
 import { type NewDesign } from './design';
 import templateFiles from './templates.json';
-
-/** The empty page `GgraphicEditor` registers next to the pack's templates. */
-export const BLANK = 'ggraphic-blank';
 
 // The editor's texts default to German; this host speaks English, on the server as in `Editor`.
 registerMessages('en');
@@ -41,6 +43,6 @@ export function newDesign(formatId: unknown, configId: unknown): NewDesign | nul
   const format = typeof formatId === 'string' ? formatById(formatId) : null;
   if (!format || typeof configId !== 'string') return null;
   const known =
-    configId === BLANK || templatesFor(format).some((template) => template.id === configId);
+    configId === BLANK_PAGE_ID || templatesFor(format).some((template) => template.id === configId);
   return known ? { formatId: format.id, configId } : null;
 }

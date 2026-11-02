@@ -54,6 +54,7 @@ export {
   type TemplateId,
   type TemplatePickerInfo,
 } from '../templates/registry.js';
+export { BLANK_PAGE_ID } from '../embed/blankPage.js';
 export { registerBrandPacks } from '../brand/brandRegistry.js';
 export { registerHostMessages, registerMessages } from '../i18n/catalogue.js';
 export { type HostMessages } from '../i18n/messages.js';

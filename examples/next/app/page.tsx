@@ -3,6 +3,7 @@
 // is a link, so the page works before the browser has loaded any JavaScript; the editor loads only
 // on /edit.
 import {
+  BLANK_PAGE_ID,
   canvasFormats,
   type CanvasFormat,
   formatDescription,
@@ -10,7 +11,7 @@ import {
 } from '@ggraphic/editor/host';
 import Link from 'next/link';
 
-import { aspectOf, BLANK, formatById, templatesFor } from './catalog';
+import { aspectOf, formatById, templatesFor } from './catalog';
 import { ContinueLink } from './ContinueLink';
 
 /** The format's shape; the SVG scales it into the card's frame. */
@@ -74,7 +75,7 @@ function StartChoices({ format }: { format: CanvasFormat }) {
       <h2 id="start-heading">Start blank or from a template</h2>
       <ul className="cards">
         <li>
-          <Link className="card" href={edit(BLANK)}>
+          <Link className="card" href={edit(BLANK_PAGE_ID)}>
             <Shape width={format.width} height={format.height} />
             <span className="card-title">Blank</span>
             <span className="card-meta">An empty page</span>
