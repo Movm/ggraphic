@@ -47,9 +47,11 @@ export function filledDocument(
   const page = doc.pages[0]!;
   const texts = page.state['additionalTexts'] as AdditionalText[];
   const headline = prompt.trim().slice(0, HEADLINE_MAX);
+  const height = formatSize(formatId).height;
+  // The prompt is fitted like a draft's headline, so a long one ends above the subline (#5).
   const filled = draft
-    ? fillTexts(texts, draft, formatSize(formatId).height)
-    : texts.map((t) => (t.id === 'headline' ? { ...t, text: headline } : t));
+    ? fillTexts(texts, draft, height)
+    : fillById(texts, new Map([['headline', headline]]), height);
   return {
     ...doc,
     pages: [{ ...page, state: { ...page.state, additionalTexts: filled ?? texts } }],
