@@ -506,12 +506,29 @@ function GenericCanvasWithRef<
   // derives is the template's own knowledge, and `createInitialState` is where
   // it already lives.
   const [remoteStateCount, setRemoteStateCount] = useState(0);
+  const committedStateRef = useRef(state);
+  useLayoutEffect(() => {
+    committedStateRef.current = state;
+  }, [state]);
+  const store = useCanvasStore();
+  // The edit is not this client's step: the history takes it in as well, so
+  // undo cannot write the value from before it back (#160). What it changed
+  // is measured from the values its writer started from, not from this
+  // canvas: an own value not yet written, or one the write overrode, is no
+  // part of the other client's edit.
   const handleRemotePageState = useCallback(
-    (partial: Record<string, unknown>) => {
+    (partial: Record<string, unknown>, base: Record<string, unknown>) => {
+      const committed = committedStateRef.current as Record<string, unknown>;
+      store
+        .getState()
+        .rebaseHistory(
+          config.createInitialState({ ...committed, ...base }) as TState,
+          config.createInitialState({ ...committed, ...partial }) as TState
+        );
       setStateRaw((prev) => config.createInitialState({ ...prev, ...partial }) as TState);
       setRemoteStateCount((n) => n + 1);
     },
-    [config]
+    [store, config]
   );
 
   // Measured fits need the brand fonts, so normalization waits for them. The
@@ -535,10 +552,6 @@ function GenericCanvasWithRef<
   });
 
   const collectState = useCallback(() => state, [state]);
-  const committedStateRef = useRef(state);
-  useLayoutEffect(() => {
-    committedStateRef.current = state;
-  }, [state]);
   // Text fields reach the page document only through their `on<Key>Change`
   // callback, so a restore reports each one it changed (#4247). The emitted
   // keys are left to useEmitHostStateChanges, which already reports them.
@@ -686,7 +699,6 @@ function GenericCanvasWithRef<
     getSnapTargets,
   } = useCanvasInteractions({ stageRef, marqueeEnabled: interactive, getGroups });
 
-  const store = useCanvasStore();
   const { setSnapLines, updateElementPosition } = store.getState();
   // Before the deep select: a ⌃-click on a Mac is a right-click, not a pick.
   useContextPress(stageRef, interactive);
