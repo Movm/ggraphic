@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * What a host calls at start-up and augments, without the editor UI or React: the register
  * functions with the format lookups its template registry needs, and the interfaces a host extends

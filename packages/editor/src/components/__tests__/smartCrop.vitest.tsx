@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * „Automatisch" im Zuschneide-Modus (Hintergrundfoto und eigenes Bild): smartcrop
  * (hier gemockt) schlägt den Ausschnitt vor, die Bühne zeigt ihn, Abbrechen nimmt

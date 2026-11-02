@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Characterization of the per-kind selection lookups — the floating module,
  * the orientation door and duplication — for every kind in `ELEMENT_KINDS`

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Der Bearbeiten-Overlay für Leinwand-Text — EINE Erscheinung für beide
  * Renderer, und zwar auf der DOM-Seite der Bühne.

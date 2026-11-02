@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * A block: a group of canvas items already built for a page (texts, shapes,
  * assets, charts, images, badges, icons), carried with their layer order and

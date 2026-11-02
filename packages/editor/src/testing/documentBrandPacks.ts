@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Two neutral packs for the tests of the document brand: `PACK_A` is the
  * editor's default, `PACK_B` shares nothing with it a test could mistake for it

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The data shapes of the canvas elements, as they stand in a page's state. Types and two
  * constants only: no editor, no React, no Konva, so a server can build, read and change pages.

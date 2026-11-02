@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { type BrandPack } from '@ggraphic/core';
 import { defaultTextMarker, markerInkOn } from '../../utils/markerColors.js';
 import { markdownLiteToRichText, type CanvasRichTextDoc } from '@ggraphic/schema';

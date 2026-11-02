@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 // Worauf die Zuschneide-Werkzeuge (Begradigen, Automatisch, Erweitern) wirken: eine Tür für alle drei.
 
 import { canCropBackgroundPhoto } from './backgroundPhotoCrop.js';

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MIT
 // The start page, a server component: pick a format, then a blank page or a template. Every choice
 // is a link, so the page works before the browser has loaded any JavaScript; the editor loads only
 // on /edit.

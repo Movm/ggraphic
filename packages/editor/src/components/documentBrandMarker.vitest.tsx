@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * A text without a marker style of its own draws the default marker of the
  * brand of its DOCUMENT. The registry's first pack is the other one in the

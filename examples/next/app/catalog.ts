@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MIT
 // What a design can start from, read on the server. `@ggraphic/editor/host` and
 // `@ggraphic/editor/page` load no React and no editor UI, so a server component can import them;
 // the client component `Editor` reads the same file with `loadTemplatePack`.

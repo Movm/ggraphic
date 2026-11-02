@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The element data model lives in `@ggraphic/core`; the editor's modules hand out the very same
  * types and constants under their old paths. The shapes are stored in canvas documents, so a

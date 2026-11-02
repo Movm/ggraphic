@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Families that were replaced by an open successor. Saved designs and brand
  * packs may still name the old family; everything that loads, paints, measures

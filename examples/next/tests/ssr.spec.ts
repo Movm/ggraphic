@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MIT
 import { expect, test } from '@playwright/test';
 
 /** Next.js's error document, and React's marker for a boundary that failed on the server. */

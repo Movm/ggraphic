@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { documentMigrations, migrateDocument } from '@ggraphic/schema';
 import { STAMP_V2_STEP } from '@ggraphic/schema/document/__fixtures__/v2Fixture';
 import { afterEach, describe, expect, it } from 'vitest';

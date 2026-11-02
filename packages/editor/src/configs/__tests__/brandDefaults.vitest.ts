@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * A NEW element takes its defaults from the document's brand, not from the
  * first registered pack. The tests register `[PACK_A, PACK_B]`, so

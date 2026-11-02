@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Der Rahmen speichert seine Drehung wie jedes andere Element in (−180, 180]
  * — auch wenn eine Gruppendrehung den Knoten über ±180° hinaus dreht.

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The brand packs the host renders. The first supplies what a new element
  * starts with (picker palettes, marker boxes, chart series, default colours

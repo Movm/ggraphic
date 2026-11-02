@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Templates and formats: defining and registering templates, template geometry and the render-gate adapter, canvas formats. */
 export {
   defineTemplate,

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { hostElementKind, type HostElementAction } from './elementKinds.js';
 
 import type { StockImageAttribution } from '../common/imageSourceTypes.js';

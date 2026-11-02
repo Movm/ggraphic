@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The editor side of the bridge: `<GgraphicEditor>` driven by the host's `commands`, answering
  * through `onEvent`. Render it from the host's own `'use dom'` file, so that Expo bundles it for

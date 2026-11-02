@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * PPTX-Modell → .pptx mit pptxgenjs. Was das Modell nativ beschreibt, wird ein
  * bearbeitbares PowerPoint-Objekt; jede Raster-Anfrage holt der Aufrufer als

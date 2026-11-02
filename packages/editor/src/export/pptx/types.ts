@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Das PPTX-Modell einer Präsentation: was der Writer (pptxgenjs) je Folie
  * zeichnet. Rein und ohne pptxgenjs/Konva, damit die Abbildung testbar bleibt.

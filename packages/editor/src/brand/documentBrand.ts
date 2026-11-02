@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The brand of the document that is open, for the panels that offer defaults
  * (swatches, effect presets, text tiles) and for the canvas that draws one (the

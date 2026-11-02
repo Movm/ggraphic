@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { CANVAS_ITEM_NAME } from './deepSelect.js';
 
 import type { CanvasStageRef } from '../primitives/CanvasStage.js';
