@@ -19,7 +19,7 @@ export type MessageLocale = 'de' | 'en';
 /**
  * Texts a host adds for its own parts of the editor (its element kinds, their
  * sections). Empty in the core; a host augments it
- * (`declare module '@ggraphic/editor/i18n/messages'`) and registers the texts
+ * (`declare module '@ggraphic/editor/host'`) and registers the texts
  * per locale with `registerHostMessages`. They nest into the catalogue, so a
  * host text is read like a core one (`t.layers.…`).
  */
