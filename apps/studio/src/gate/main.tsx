@@ -26,7 +26,7 @@ import { loadCanvasConfig, type FullCanvasConfig } from '@ggraphic/editor/config
 import { getCanvasFormatOrDefault } from '@ggraphic/editor/templates';
 import { ensureFontsReady, runMeasurer } from '@ggraphic/editor/text';
 import { layoutRichTextBlock } from '@ggraphic/schema';
-import { SAMPLE_PHOTOS } from '@ggraphic/templates-open';
+import { SAMPLE_PHOTOS } from '@ggraphic/templates-open/photos';
 import { testBrandPacks } from '@ggraphic/templates-open/test/testBrands';
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';

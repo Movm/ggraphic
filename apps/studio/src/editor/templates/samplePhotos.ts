@@ -4,7 +4,7 @@
  * places: `PreviewJobView` and the gate page. Its output is drawn and thrown away; it must never
  * reach the editor's document store, an export or a saved document.
  */
-import { type SamplePhoto, type SamplePhotoRole } from '@ggraphic/templates-open';
+import { type SamplePhoto, type SamplePhotoRole } from '@ggraphic/templates-open/photos';
 
 type Obj = Record<string, unknown>;
 export type PageSize = { width: number; height: number };

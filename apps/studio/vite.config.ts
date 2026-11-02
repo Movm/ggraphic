@@ -11,6 +11,10 @@ const templatesOpenSrc = path.resolve(
   import.meta.dirname,
   '../../packages/templates-open/src/index.ts'
 );
+const templatesOpenPhotosSrc = path.resolve(
+  import.meta.dirname,
+  '../../packages/templates-open/src/samples/index.ts'
+);
 // The test brands the render gate draws with; reachable only through this alias, which the
 // production build never imports (nothing in `src/` outside `src/gate/` names it).
 const testBrandsSrc = path.resolve(
@@ -36,6 +40,7 @@ export default defineConfig(({ mode }) => ({
       { find: /^@ggraphic\/schema(\/.*)?$/, replacement: `${schemaSrc}$1` },
       { find: /^@ggraphic\/ui$/, replacement: uiSrc },
       { find: /^@ggraphic\/templates-open$/, replacement: templatesOpenSrc },
+      { find: /^@ggraphic\/templates-open\/photos$/, replacement: templatesOpenPhotosSrc },
       { find: /^@ggraphic\/templates-open\/test\/testBrands$/, replacement: testBrandsSrc },
     ],
     // One React: @tanstack/react-query and the editor must not bring their own copy.

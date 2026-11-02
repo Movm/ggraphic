@@ -122,7 +122,7 @@ The other five colour roles, the grounds and every picker are derived with WCAG 
 
 `loadTemplatePack(files)` returns a promise of the pack and loads the parser (the schema validators and the page config, several hundred kB) in a chunk of its own, next to the editor. `templatePackFromJson(files)` does the same work synchronously, but whatever imports it carries that code: called at module level, it more than doubles a host's entry chunk. Use it where you need the pack before rendering. Neither is a server API: both are exported from the `'use client'` entry, so a server component that imports them gets a client reference, not the function, and the pack they return holds functions that cannot cross to the client.
 
-Both take an array of template files (or one file) in the `@ggraphic/schema` format. `@ggraphic/templates-open` is a CC0 pack to start from. Every template becomes a page the editor opens under the template's id. A file that does not read, was written by a newer version or repeats an id is skipped and listed in `problems`; blocks are left out (they are not pages).
+Both take an array of template files (or one file) in the `@ggraphic/schema` format. `@ggraphic/templates-open` is a CC0 pack to start from; its root entry ships no images, and its sample photos for previews (`SAMPLE_PHOTOS`) load only from `@ggraphic/templates-open/photos`. Every template becomes a page the editor opens under the template's id. A file that does not read, was written by a newer version or repeats an id is skipped and listed in `problems`; blocks are left out (they are not pages).
 
 ## Install
 
