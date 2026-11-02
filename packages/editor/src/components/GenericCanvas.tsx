@@ -46,7 +46,11 @@ import { applyLayerSelection, type LayerSelectionChange } from '../utils/layerSe
 import { locateDrop, type ElementDragPayload, type MediaDragPayload } from '../utils/mediaDrop.js';
 import { selectableItemIds } from '../utils/multiSelect.js';
 import { type ViewportRect, rotaterRects, visibleArea } from '../utils/orientation.js';
-import { PendingImagesContext } from '../utils/pendingImages.js';
+import {
+  ImageRetryContext,
+  PendingImagesContext,
+  type ImageLoads,
+} from '../utils/pendingImages.js';
 import { PreviewRenderContext } from '../utils/filterCache.js';
 import { stageCssScale } from '../utils/stageCssScale.js';
 import { STAGE_VERTICAL_CHROME, getOptimalContainerWidth, isMobile } from '../utils/viewport.js';
@@ -306,6 +310,14 @@ export interface GenericCanvasRef {
   /** False while an image element's source is still loading — a capture
    *  taken then is missing that image. */
   imagesSettled: () => boolean;
+  /** How many image elements are still loading and how many failed to load.
+   *  A capture is complete only when both are 0: `imagesSettled()` is also
+   *  true when an image failed, and a host that captures at a deadline gets
+   *  a picture without the images still pending. */
+  imageLoadState: () => { pending: number; failed: number };
+  /** Loads every failed image element again and returns how many. They count
+   *  as pending at once; `use-image` alone loads only for a new url. */
+  retryFailedImages: () => number;
   /** Lightweight JPEG capture for sending the canvas to vision models. */
   captureCanvasForAi: () => Promise<string | null>;
   /** The page's visible texts in reading order, for alt texts. */
@@ -407,7 +419,8 @@ function GenericCanvasWithRef<
 
   const stageRef = useRef<CanvasStageRef>(null);
   const getStage = useCallback(() => stageRef.current?.getStage() ?? null, []);
-  const [pendingImages] = useState(() => new Set<string>());
+  const [imageLoads] = useState<ImageLoads>(() => ({ pending: new Set(), failed: new Set() }));
+  const [imageRetries, setImageRetries] = useState<ReadonlyMap<string, number>>(() => new Map());
 
   // Export state (used by auto-save and attribution overlay)
   const [exportedImage, setExportedImage] = useState<string | null>(null);
@@ -1008,7 +1021,27 @@ function GenericCanvasWithRef<
         return stageRef.current?.toTileJpeg({ ...tile, pixelRatio, quality }) ?? null;
       },
       getPrintImages: () => stageRef.current?.getPrintImages() ?? [],
-      imagesSettled: () => pendingImages.size === 0,
+      imagesSettled: () => imageLoads.pending.size === 0,
+      imageLoadState: () => ({
+        pending: imageLoads.pending.size,
+        failed: imageLoads.failed.size,
+      }),
+      retryFailedImages: () => {
+        const failed = [...imageLoads.failed];
+        if (failed.length === 0) return 0;
+        // Pending at once, before the elements re-render: a host polling right
+        // after the call must not read a settled canvas.
+        for (const id of failed) {
+          imageLoads.failed.delete(id);
+          imageLoads.pending.add(id);
+        }
+        setImageRetries((prev) => {
+          const next = new Map(prev);
+          for (const id of failed) next.set(id, (prev.get(id) ?? 0) + 1);
+          return next;
+        });
+        return failed.length;
+      },
       captureCanvasForAi: async () =>
         captureStageImage(stageRef.current, { format: 'jpeg', pixelRatio: 1, quality: 0.85 }),
       getVisibleTexts: () => visibleStageTexts(stageRef.current?.getStage() ?? null),
@@ -1238,7 +1271,7 @@ function GenericCanvasWithRef<
       elementHandlers.handleTextFormatChange,
       setSelectedElement,
       beginMarquee,
-      pendingImages,
+      imageLoads,
       store,
       actions,
       stageWidth,
@@ -1251,80 +1284,82 @@ function GenericCanvasWithRef<
   );
 
   return (
-    <PendingImagesContext.Provider value={pendingImages}>
-      <PreviewRenderContext.Provider value={preview ? (previewCaptureRatio ?? 0) : null}>
-        <CanvasStage
-          ref={stageRef}
-          width={stageWidth}
-          height={stageHeight}
-          logicalWidth={referenceWidth}
-          logicalHeight={referenceHeight}
-          responsive
-          maxContainerWidth={maxWidth}
-          maxContainerHeight={maxHeight}
-          fitToParent={fitToParent}
-          onStageClick={handleStageClick}
-          listening={interactive}
-          ariaLabel={stageLabel}
-          className={`${config.id}-stage`}
-          overlay={
-            interactive ? (
-              <>
-                <CropGhostOverlay getStage={getStage} />
-                <SlotBudgetStatus
-                  state={state as Record<string, unknown>}
-                  canvasWidth={referenceWidth}
-                  canvasHeight={referenceHeight}
-                />
-              </>
-            ) : null
-          }
-        >
-          <CanvasRenderLayer
-            sortedRenderList={sortedRenderList}
-            canRotateSelection={canRotateSelection}
-            config={config}
-            state={drawnState}
-            layout={layout}
-            handlers={elementHandlers}
-            getSnapTargets={getSnapTargets}
-            registerGeometry={updateElementPosition}
-            handleSnapChange={handleSnapChange}
-            setSnapLines={setSnapLines}
-            stageWidth={config.canvas.width}
-            stageHeight={config.canvas.height}
-            isFontAvailable={isFontAvailable}
-            remoteSelections={remoteSelections}
-            {...(pageNumber === undefined ? {} : { pageNumber })}
-          />
+    <PendingImagesContext.Provider value={imageLoads}>
+      <ImageRetryContext.Provider value={imageRetries}>
+        <PreviewRenderContext.Provider value={preview ? (previewCaptureRatio ?? 0) : null}>
+          <CanvasStage
+            ref={stageRef}
+            width={stageWidth}
+            height={stageHeight}
+            logicalWidth={referenceWidth}
+            logicalHeight={referenceHeight}
+            responsive
+            maxContainerWidth={maxWidth}
+            maxContainerHeight={maxHeight}
+            fitToParent={fitToParent}
+            onStageClick={handleStageClick}
+            listening={interactive}
+            ariaLabel={stageLabel}
+            className={`${config.id}-stage`}
+            overlay={
+              interactive ? (
+                <>
+                  <CropGhostOverlay getStage={getStage} />
+                  <SlotBudgetStatus
+                    state={state as Record<string, unknown>}
+                    canvasWidth={referenceWidth}
+                    canvasHeight={referenceHeight}
+                  />
+                </>
+              ) : null
+            }
+          >
+            <CanvasRenderLayer
+              sortedRenderList={sortedRenderList}
+              canRotateSelection={canRotateSelection}
+              config={config}
+              state={drawnState}
+              layout={layout}
+              handlers={elementHandlers}
+              getSnapTargets={getSnapTargets}
+              registerGeometry={updateElementPosition}
+              handleSnapChange={handleSnapChange}
+              setSnapLines={setSnapLines}
+              stageWidth={config.canvas.width}
+              stageHeight={config.canvas.height}
+              isFontAvailable={isFontAvailable}
+              remoteSelections={remoteSelections}
+              {...(pageNumber === undefined ? {} : { pageNumber })}
+            />
 
-          <PrintGuides format={format} />
+            <PrintGuides format={format} />
 
-          <SnapGuidelines />
-        </CanvasStage>
+            <SnapGuidelines />
+          </CanvasStage>
 
-        {/* Renderless bridge: owns all selectedElement-derived computation.
+          {/* Renderless bridge: owns all selectedElement-derived computation.
           Re-renders only this component (returns null) on selection change,
           NOT GenericCanvasInner or the Konva tree. */}
-        <ToolbarStateBridge
-          bridgeRef={bridgeRef}
-          config={config}
-          state={state}
-          layout={layout}
-          actions={actions}
-          sortedRenderList={sortedRenderList}
-          setState={setStateWrapper}
-          debouncedSaveToHistory={debouncedSaveToHistory}
-          canUndo={canUndo}
-          canRedo={canRedo}
-          readOnly={!interactive}
-          saveToHistory={saveToHistory}
-          runHistoryBatch={runHistoryBatch}
-          cropCancelCount={cropSession.cancelCount}
-          getStage={getStage}
-          onToolbarStateChange={onToolbarStateChange}
-        />
-      </PreviewRenderContext.Provider>
+          <ToolbarStateBridge
+            bridgeRef={bridgeRef}
+            config={config}
+            state={state}
+            layout={layout}
+            actions={actions}
+            sortedRenderList={sortedRenderList}
+            setState={setStateWrapper}
+            debouncedSaveToHistory={debouncedSaveToHistory}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            readOnly={!interactive}
+            saveToHistory={saveToHistory}
+            runHistoryBatch={runHistoryBatch}
+            cropCancelCount={cropSession.cancelCount}
+            getStage={getStage}
+            onToolbarStateChange={onToolbarStateChange}
+          />
+        </PreviewRenderContext.Provider>
+      </ImageRetryContext.Provider>
     </PendingImagesContext.Provider>
   );
 }

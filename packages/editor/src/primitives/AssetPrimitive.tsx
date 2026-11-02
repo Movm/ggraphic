@@ -8,7 +8,7 @@ import { useGeometryReporter, type GeometryReporter } from '../hooks/useGeometry
 import { useSnapScheduler } from '../hooks/useSnapScheduler.js';
 import { isGroupDrag } from '../utils/multiSelect.js';
 import { ELEMENT_TRANSFORMER, signedScale } from '../utils/orientation.js';
-import { useTrackPendingImage } from '../utils/pendingImages.js';
+import { useImageRetry, useTrackPendingImage } from '../utils/pendingImages.js';
 import { applyPixelHitArea } from '../utils/pixelHitArea.js';
 import { boxFrame, createBoxFrame, frameBounds, snapByBounds } from '../utils/snapping.js';
 
@@ -66,7 +66,9 @@ function AssetPrimitiveInner({
   const src = resolveAssetInstanceSrc(asset);
   const stickerLike = isStickerLikeInstance(asset);
 
-  const [settled, setSettled] = useState<{ src: string; ok: boolean } | null>(null);
+  const [settled, setSettled] = useState<{ src: string; retry: number; ok: boolean } | null>(null);
+  // A retry (`retryFailedImages`) loads the same source again.
+  const retry = useImageRetry(asset.id);
 
   useEffect(() => {
     if (!src) return;
@@ -77,21 +79,21 @@ function AssetPrimitiveInner({
     img.onload = () => {
       setImage(img);
       setImageSize({ width: img.naturalWidth, height: img.naturalHeight });
-      setSettled({ src, ok: true });
+      setSettled({ src, retry, ok: true });
     };
-    img.onerror = () => setSettled({ src, ok: false });
+    img.onerror = () => setSettled({ src, retry, ok: false });
 
     return () => {
       img.onload = null;
       img.onerror = null;
     };
-  }, [src]);
+  }, [src, retry]);
   // Logos and stickers are assets too: the chat preview must not capture
   // before they have arrived (#4834).
   useTrackPendingImage(
     asset.id,
     src ?? '',
-    settled?.src !== src ? 'loading' : settled.ok ? 'loaded' : 'failed'
+    settled?.src !== src || settled.retry !== retry ? 'loading' : settled.ok ? 'loaded' : 'failed'
   );
 
   // Attach transformer when selected
