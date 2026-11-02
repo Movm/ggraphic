@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The page config of an empty page. `GgraphicEditor` registers it next to the pack's templates; a
  * host starts a blank design with `pages: [{ configId: BLANK_PAGE_ID, state: {} }]`. Its own module,
