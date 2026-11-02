@@ -197,6 +197,52 @@ export function checkLicenses(rootDirs) {
   return { problems, count: seen.size };
 }
 
+/**
+ * devDependencies a package bundles into its own dist (#133). The dependency walk above skips
+ * devDependencies, so these are walked here: the package itself and everything under it must
+ * carry an allowed licence, and the shipping package's notices file must name each work.
+ */
+export const VENDORED = [
+  {
+    package: 'editor',
+    dependency: 'pptxgenjs',
+    notices: 'THIRD_PARTY_NOTICES',
+    names: ['pptxgenjs', 'JSZip'],
+  },
+];
+
+/** Problems of the vendored dependencies: a list of { path, message }. */
+export function checkVendoredDependencies(root, vendored = VENDORED) {
+  const problems = [];
+  for (const v of vendored) {
+    const pkgDir = join(root, 'packages', v.package);
+    const label = `packages/${v.package} bundles ${v.dependency}`;
+    const dir = resolveDep(pkgDir, v.dependency);
+    if (!dir) {
+      problems.push({ path: label, message: `${v.dependency} is not installed` });
+      continue;
+    }
+    const pkg = readJson(join(dir, 'package.json'));
+    const license = declaredLicense(pkg ?? {});
+    if (!license || !expressionAllowed(license))
+      problems.push({
+        path: label,
+        message: `${pkg?.name}@${pkg?.version}: license "${license ?? 'missing'}" is not allowed`,
+      });
+    for (const p of checkLicenses([dir]).problems)
+      problems.push({ path: `${label}: ${p.path}`, message: p.message });
+    const notices = join(pkgDir, v.notices);
+    const text = existsSync(notices) ? readFileSync(notices, 'utf8') : '';
+    for (const name of v.names)
+      if (!text.includes(name))
+        problems.push({
+          path: `packages/${v.package}/${v.notices}`,
+          message: `${name} is bundled but not named in packages/${v.package}/${v.notices}`,
+        });
+  }
+  return problems;
+}
+
 const NOTICES_FILE = 'THIRD_PARTY_NOTICES.md';
 // Never bundled, whatever a notices row says.
 const FORBIDDEN_SETS = ['undraw', 'unsplash', 'fontawesome', 'font-awesome'];
@@ -423,6 +469,59 @@ function selfTest() {
     });
     expect('iconify-info-good', good, false);
 
+    // A vendored devDependency: its own licence, its tree and the notices are checked.
+    const vendoredRoot = (name, licence, childLicence, notices) => {
+      const root = join(base, name);
+      const pkgDir = join(root, 'packages', 'e');
+      write(join(pkgDir, 'package.json'), { name: 'e', version: '1.0.0', license: 'MPL-2.0' });
+      writeFileSync(join(pkgDir, 'NOTICES'), notices);
+      const lib = join(pkgDir, 'node_modules', 'lib');
+      write(join(lib, 'package.json'), {
+        name: 'lib',
+        version: '1.0.0',
+        license: licence,
+        dependencies: { zip: '*' },
+      });
+      write(join(lib, 'node_modules', 'zip', 'package.json'), {
+        name: 'zip',
+        version: '1.0.0',
+        license: childLicence,
+      });
+      return root;
+    };
+    const vendored = [
+      { package: 'e', dependency: 'lib', notices: 'NOTICES', names: ['lib', 'Zip'] },
+    ];
+    const expectVendored = (label, root, wantRed, needle) => {
+      const problems = checkVendoredDependencies(root, vendored);
+      if (
+        problems.length > 0 !== wantRed ||
+        (needle && !problems.some((p) => p.message.includes(needle)))
+      )
+        failures.push(
+          `${label}: expected ${wantRed ? 'red' : 'green'}, got ${JSON.stringify(problems)}`
+        );
+    };
+    expectVendored('vendored-ok', vendoredRoot('v1', 'MIT', '(MIT OR GPL-3.0)', 'lib, Zip'), false);
+    expectVendored(
+      'vendored-own-licence',
+      vendoredRoot('v2', 'GPL-3.0-only', 'MIT', 'lib, Zip'),
+      true,
+      'GPL-3.0-only'
+    );
+    expectVendored(
+      'vendored-transitive',
+      vendoredRoot('v3', 'MIT', 'AGPL-3.0', 'lib, Zip'),
+      true,
+      'AGPL-3.0'
+    );
+    expectVendored(
+      'vendored-not-named',
+      vendoredRoot('v4', 'MIT', 'MIT', 'lib only'),
+      true,
+      'Zip is bundled'
+    );
+
     const assetRoot = (name, notices, dirs) => {
       const root = join(base, name);
       for (const d of dirs) mkdirSync(join(root, d), { recursive: true });
@@ -546,7 +645,7 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
       for (const f of failures) console.error(`  · ${f}`);
       process.exit(1);
     }
-    console.log('✓ ggraphic licence self-test: 19 probes ok');
+    console.log('✓ ggraphic licence self-test: 23 probes ok');
   } else {
     const root = fileURLToPath(new URL('..', import.meta.url));
     const assetProblems = checkBundledAssets(root);
@@ -572,6 +671,15 @@ if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.me
       process.exit(1);
     }
     console.log(`✓ ${count} package(s) in the @ggraphic dependency tree have allowed licences`);
+    const vendoredProblems = checkVendoredDependencies(root);
+    if (vendoredProblems.length > 0) {
+      console.error(`\n✖ ${vendoredProblems.length} vendored dependency problem(s):\n`);
+      for (const p of vendoredProblems) console.error(`  ${p.message}\n    via ${p.path}`);
+      process.exit(1);
+    }
+    console.log(
+      `✓ vendored: ${VENDORED.map((v) => `${v.dependency} in packages/${v.package}`).join(', ')}`
+    );
     const bare = missingSpdxHeaders(root, trackedSources(root));
     if (bare.length > 0) {
       console.error(

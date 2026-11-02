@@ -10,11 +10,19 @@
  *   entry, so a `require()` of them failing (node10, node16 from CJS) is by design, not a bug.
  *   Stylesheet entries are excluded: attw looks for type declarations behind every entry, and
  *   a `.css` file has none. A `./*` wildcard entry is listed by attw but not analysed.
+ * - Our own check on the unpacked files (#133):
+ *   - No JavaScript file under dist names a `node:` module (statically, with `import()` or
+ *     `require()`). webpack rejects the `node:` scheme in a browser build, even in a lazy chunk.
+ *   - Every bare import under dist names the package itself or one of its dependencies or peers.
+ *     A dependency that moved to devDependencies, as pptxgenjs did when it was bundled into
+ *     dist/vendor, would otherwise still be imported and fail in every host. dist/vendor is
+ *     skipped here: scripts that write it check that it loads nothing.
+ *   - Every target of the manifest's `imports` map is in the tarball.
  *
  * Needs the packages built (`pnpm build`) and node_modules.
  */
 import { execFileSync, spawnSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -31,6 +39,66 @@ const cssEntries = (manifest) =>
   Object.entries(manifest.publishConfig?.exports ?? manifest.exports ?? {})
     .filter(([, value]) => typeof value === 'string' && value.endsWith('.css'))
     .map(([key]) => key);
+
+const NODE_SPECIFIER = /(?:\bfrom\s*|\bimport\s*\(\s*|\brequire\s*\(\s*)["']node:[^"']*["']/;
+
+/** The module specifiers a compiled ES module loads, read in the shape tsc emits them. */
+function specifiers(code) {
+  const patterns = [
+    // No quote or `=` before `from`: `export const x = { a: 'from' }` is no import.
+    /^\s*(?:import|export)\s[^;'"=]*?\bfrom\s*["']([^"']+)["']/gm,
+    /^\s*import\s*["']([^"']+)["']/gm,
+    /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g,
+  ];
+  return patterns.flatMap((pattern) => [...code.matchAll(pattern)].map((match) => match[1]));
+}
+
+const packageName = (specifier) =>
+  specifier
+    .split('/')
+    .slice(0, specifier.startsWith('@') ? 2 : 1)
+    .join('/');
+
+/** Every file under `dir`, as paths relative to it. */
+const filesIn = (dir) =>
+  readdirSync(dir, { recursive: true, withFileTypes: true })
+    .filter((entry) => entry.isFile())
+    .map((entry) => join(entry.parentPath, entry.name).slice(dir.length + 1));
+
+/** Problems of the unpacked tarball: see the third point at the top. */
+function checkUnpacked(tarball) {
+  const dir = `${tarball}.d`;
+  mkdirSync(dir);
+  execFileSync('tar', ['-xzf', tarball, '-C', dir]);
+  const pkg = join(dir, 'package');
+  const files = filesIn(pkg);
+  const manifest = JSON.parse(readFileSync(join(pkg, 'package.json'), 'utf8'));
+  const declared = new Set([
+    manifest.name,
+    ...Object.keys(manifest.dependencies ?? {}),
+    ...Object.keys(manifest.peerDependencies ?? {}),
+    ...Object.keys(manifest.optionalDependencies ?? {}),
+  ]);
+  const problems = [];
+  for (const file of files.filter((f) => f.startsWith('dist/') && /\.m?js$/.test(f))) {
+    const code = readFileSync(join(pkg, file), 'utf8');
+    const node = NODE_SPECIFIER.exec(code);
+    if (node) problems.push(`${file} loads ${node[0]}`);
+    if (file.startsWith('dist/vendor/')) continue;
+    for (const specifier of specifiers(code)) {
+      if (/^[.#/]|^node:/.test(specifier)) continue;
+      if (!declared.has(packageName(specifier)))
+        problems.push(`${file} imports ${specifier}, which the manifest does not declare`);
+    }
+  }
+  const targets = (value) =>
+    typeof value === 'string' ? [value] : Object.values(value ?? {}).flatMap(targets);
+  for (const [key, value] of Object.entries(manifest.imports ?? {}))
+    for (const target of targets(value))
+      if (target.startsWith('./') && !files.includes(target.slice(2)))
+        problems.push(`imports ${key} → ${target} is not in the tarball`);
+  return { ok: problems.length === 0, output: problems.join('\n') };
+}
 
 const outDir = mkdtempSync(join(tmpdir(), 'ggraphic-packed-'));
 const failures = [];
@@ -57,12 +125,15 @@ try {
       'ascii',
       ...(css.length ? ['--exclude-entrypoints', ...css] : []),
     ]);
+    const unpacked = checkUnpacked(tarball);
     console.log(
-      `${manifest.name}: publint ${publint.ok ? 'ok' : 'FAILED'}, attw ${attw.ok ? 'ok' : 'FAILED'}`
+      `${manifest.name}: publint ${publint.ok ? 'ok' : 'FAILED'}, attw ${attw.ok ? 'ok' : 'FAILED'}, ` +
+        `files ${unpacked.ok ? 'ok' : 'FAILED'}`
     );
     for (const [tool, result] of [
       ['publint', publint],
       ['attw', attw],
+      ['files', unpacked],
     ]) {
       if (result.ok) continue;
       console.log(result.output);

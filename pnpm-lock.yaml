@@ -534,9 +534,6 @@ importers:
       pdf-lib:
         specifier: ^1.17.1
         version: 1.17.1
-      pptxgenjs:
-        specifier: ~4.0.1
-        version: 4.0.1
       qrcode.react:
         specifier: ^4.2.0
         version: 4.2.0(react@19.3.1)
@@ -628,9 +625,15 @@ importers:
       lightningcss:
         specifier: 1.33.0
         version: 1.33.0
+      pptxgenjs:
+        specifier: 4.0.1
+        version: 4.0.1
       react-konva:
         specifier: ^19.3.2
         version: 19.3.2(@types/react@19.3.0)(konva@10.9.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      rolldown:
+        specifier: 1.2.15
+        version: 1.2.15
       tailwindcss:
         specifier: 4.3.3
         version: 4.3.3
