@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MPL-2.0
 import { useCallback, useSyncExternalStore } from 'react';
 
-/** Mirrors `--breakpoint-canvas-mobile` (900px) — the `max-canvas-mobile:` variant in JS. */
+import { MOBILE_BREAKPOINT } from '../utils/viewport.js';
+import { useMeasuredEditorBox } from './editorBox.js';
+
+/** Mirrors the `max-canvas-mobile:` variant for a window without a measured editor box. */
 export const CANVAS_MOBILE_QUERY = '(max-width: 899px)';
 
 // A `useMediaQuery` kept here so the editor needs nothing from the host.
@@ -22,6 +25,12 @@ function useMediaQuery(query: string): boolean {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
+/**
+ * Mobile layout: the editor's box (`EditorBoxProvider`) is narrower than 900px. Outside an editor,
+ * or before its root mounted, the window decides, like the `max-canvas-mobile:` media fallback.
+ */
 export function useIsCanvasMobile(): boolean {
-  return useMediaQuery(CANVAS_MOBILE_QUERY);
+  const box = useMeasuredEditorBox();
+  const narrowWindow = useMediaQuery(CANVAS_MOBILE_QUERY);
+  return box ? box.width < MOBILE_BREAKPOINT : narrowWindow;
 }

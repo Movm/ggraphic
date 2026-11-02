@@ -49,7 +49,9 @@ import { type ViewportRect, rotaterRects, visibleArea } from '../utils/orientati
 import { PendingImagesContext } from '../utils/pendingImages.js';
 import { PreviewRenderContext } from '../utils/filterCache.js';
 import { stageCssScale } from '../utils/stageCssScale.js';
-import { getOptimalContainerWidth } from '../utils/viewport.js';
+import { STAGE_VERTICAL_CHROME, getOptimalContainerWidth } from '../utils/viewport.js';
+import { useEditorBox, useMeasuredEditorBox } from '../hooks/editorBox.js';
+import { useStageFit } from '../hooks/stageFit.js';
 
 import { blockElementIds, placeBlock, type LiftedBlock } from '../blocks/liftedBlock.js';
 import { hostEmittedStateKeys } from '../collab/pageElementStateKeys.js';
@@ -412,14 +414,18 @@ function GenericCanvasWithRef<
 
   useCanvasStoreReset(preview ? null : config.id);
 
-  // Dynamic maxContainerWidth for responsive rendering
-  const [maxWidth, setMaxWidth] = useState(getOptimalContainerWidth());
-
-  useEffect(() => {
-    const handleResize = () => setMaxWidth(getOptimalContainerWidth());
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  // The stage fits the editor's box (the window outside an editor).
+  // The stage fits the canvas area the shell measured (desktop), else the editor's box (mobile;
+  // the window outside an editor).
+  const box = useEditorBox();
+  const stageFit = useStageFit();
+  const fit = preview ? null : stageFit;
+  const maxWidth = fit?.width ?? getOptimalContainerWidth(box.width);
+  const maxHeight = fit?.height ?? box.height - STAGE_VERTICAL_CHROME;
+  // Inside an editor the stage's parent is the zoom wrapper, which sizes itself to the stage: a
+  // fit capped at it could shrink but never grow back (#112). The max sizes decide there.
+  const measuredBox = useMeasuredEditorBox();
+  const fitToParent = preview || measuredBox === null;
 
   // Track config ID to detect actual config changes (not just reference changes)
   const configIdRef = useRef(config.id);
@@ -1224,6 +1230,8 @@ function GenericCanvasWithRef<
           logicalHeight={referenceHeight}
           responsive
           maxContainerWidth={maxWidth}
+          maxContainerHeight={maxHeight}
+          fitToParent={fitToParent}
           onStageClick={handleStageClick}
           listening={interactive}
           ariaLabel={stageLabel}
