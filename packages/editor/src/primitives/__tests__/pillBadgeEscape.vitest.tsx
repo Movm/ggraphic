@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Escape ends a pill-badge edit the way it ends a text edit: the typed text is kept (#163).
  * Before, Escape reset the field and the edit was lost, while the rich-text editor committed.
