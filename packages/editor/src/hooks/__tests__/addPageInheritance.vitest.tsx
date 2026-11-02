@@ -20,8 +20,12 @@ import '../../testing/fixtureTemplates';
 
 const PHOTO = 'https://example.org/photo.jpg';
 
+/** A page-level binding of a background field, and one of a field that is not. */
+const BACKGROUND_BINDING = { backgroundColor: { ref: 'color.surface', value: '#123456' } };
+const TEXT_BINDING = { textColor: { ref: 'color.ink', value: '#111111' } };
+
 const BRAND = {
-  bind: { backgroundColor: { ref: 'surface', value: '#ffffff' } },
+  bind: { ...BACKGROUND_BINDING, ...TEXT_BINDING },
   brandScheme: 'light',
   brandStamp: 'a1b2c3d4',
   colorScheme: 'dark',
@@ -89,8 +93,26 @@ describe('addPage inheritance', () => {
 
   it('carries the brand without the background when asked to', async () => {
     const props = await seedOfAddedPage({ brand: true, background: false });
-    expect(props).toMatchObject(BRAND);
+    const { bind: _bind, ...brandWithoutBind } = BRAND;
+    expect(props).toMatchObject(brandWithoutBind);
     for (const key of [...Object.keys(BACKGROUND), 'imageSrc']) {
+      expect(props).not.toHaveProperty(key);
+    }
+  });
+
+  // The page keeps no background field, so a binding of one would describe a
+  // value it does not have. Rebinding would not recolour it (the template's
+  // colour reads as a hand edit and drops the binding), but under the
+  // inherited brandStamp the stale binding stayed until the brand changed.
+  it('keeps only the bindings of fields it carries when the background stays behind', async () => {
+    const props = await seedOfAddedPage({ brand: true, background: false });
+    expect(props.bind).toEqual(TEXT_BINDING);
+  });
+
+  it('carries the background without the brand when asked to', async () => {
+    const props = await seedOfAddedPage({ brand: false, background: true });
+    expect(props).toMatchObject({ ...BACKGROUND, imageSrc: PHOTO });
+    for (const key of Object.keys(BRAND)) {
       expect(props).not.toHaveProperty(key);
     }
   });

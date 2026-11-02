@@ -22,6 +22,13 @@ const BACKGROUND_KEYS = [
   'backgroundMode',
 ] as const;
 
+/** Every page field the background part carries, for filtering its bindings. */
+const BACKGROUND_FIELDS: ReadonlySet<string> = new Set([
+  ...BACKGROUND_KEYS,
+  'currentImageSrc',
+  'imageSrc',
+]);
+
 /** Brand keys copied verbatim when present on the source page. */
 const BRAND_KEYS = [
   'colorScheme',
@@ -64,7 +71,20 @@ export function extractInheritablePageState(
 ): Record<string, unknown> {
   const inherited: Record<string, unknown> = {};
   if (parts.brand) copyPresent(state, BRAND_KEYS, inherited);
-  if (!parts.background) return inherited;
+  if (!parts.background) {
+    // The page takes none of the background fields, so it takes none of their
+    // bindings either: a binding of a value the page does not have would wait,
+    // under the inherited brand stamp, until the next brand change dropped it.
+    const bind = inherited.bind;
+    if (bind && typeof bind === 'object' && !Array.isArray(bind)) {
+      const kept = Object.fromEntries(
+        Object.entries(bind).filter(([field]) => !BACKGROUND_FIELDS.has(field))
+      );
+      if (Object.keys(kept).length > 0) inherited.bind = kept;
+      else delete inherited.bind;
+    }
+    return inherited;
+  }
 
   // Image background source — templates read it under either key, so mirror
   // whichever one is set into both.
