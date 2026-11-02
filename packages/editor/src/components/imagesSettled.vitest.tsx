@@ -127,6 +127,33 @@ describe('GenericCanvasRef.imagesSettled', () => {
     expect(ref.current!.imagesSettled()).toBe(true);
   });
 
+  // A capture after the deadline, or after a failed load, misses the photo.
+  // `imagesSettled` alone cannot tell the host which: both read as settled
+  // or both as a capture to take, so a host cached a photo-less preview as final.
+  it('reports a loading image as pending and a loaded one as neither', async () => {
+    const { ref } = await mount({
+      ...SLOGAN,
+      currentImageSrc: `${STOCK}wind.jpg`,
+    });
+    expect(ref.current!.imageLoadState()).toEqual({ pending: 1, failed: 0 });
+
+    await act(async () => {
+      imageStatus.set('loaded');
+    });
+    expect(ref.current!.imageLoadState()).toEqual({ pending: 0, failed: 0 });
+  });
+
+  it('reports a failed image as failed', async () => {
+    const { ref } = await mount({
+      ...SLOGAN,
+      currentImageSrc: `${STOCK}wind.jpg`,
+    });
+    await act(async () => {
+      imageStatus.set('failed');
+    });
+    expect(ref.current!.imageLoadState()).toEqual({ pending: 0, failed: 1 });
+  });
+
   it('has nothing to wait for without a background image', async () => {
     const { ref } = await mount(SLOGAN);
     expect(ref.current!.imagesSettled()).toBe(true);
@@ -197,11 +224,12 @@ describe('GenericCanvasRef.imagesSettled with assets', () => {
     await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
   });
 
-  it('does not wait on a sticker that fails to load', async () => {
+  it('does not wait on a sticker that fails to load, and reports it as failed', async () => {
     const { ref } = await mount({ ...SLOGAN, assetInstances: [STICKER] });
     await act(async () => {
       created.find((img) => img.src.includes(FIXTURE_ASSET_ID))!.onerror?.();
     });
     expect(ref.current!.imagesSettled()).toBe(true);
+    expect(ref.current!.imageLoadState()).toEqual({ pending: 0, failed: 1 });
   });
 });

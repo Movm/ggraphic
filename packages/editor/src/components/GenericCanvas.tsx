@@ -46,7 +46,7 @@ import { applyLayerSelection, type LayerSelectionChange } from '../utils/layerSe
 import { locateDrop, type ElementDragPayload, type MediaDragPayload } from '../utils/mediaDrop.js';
 import { selectableItemIds } from '../utils/multiSelect.js';
 import { type ViewportRect, rotaterRects, visibleArea } from '../utils/orientation.js';
-import { PendingImagesContext } from '../utils/pendingImages.js';
+import { PendingImagesContext, type ImageLoads } from '../utils/pendingImages.js';
 import { PreviewRenderContext } from '../utils/filterCache.js';
 import { stageCssScale } from '../utils/stageCssScale.js';
 import { STAGE_VERTICAL_CHROME, getOptimalContainerWidth, isMobile } from '../utils/viewport.js';
@@ -305,6 +305,11 @@ export interface GenericCanvasRef {
   /** False while an image element's source is still loading — a capture
    *  taken then is missing that image. */
   imagesSettled: () => boolean;
+  /** How many image elements are still loading and how many failed to load.
+   *  A capture is complete only when both are 0: `imagesSettled()` is also
+   *  true when an image failed, and a host that captures at a deadline gets
+   *  a picture without the images still pending. */
+  imageLoadState: () => { pending: number; failed: number };
   /** Lightweight JPEG capture for sending the canvas to vision models. */
   captureCanvasForAi: () => Promise<string | null>;
   /** The page's visible texts in reading order, for alt texts. */
@@ -406,7 +411,7 @@ function GenericCanvasWithRef<
 
   const stageRef = useRef<CanvasStageRef>(null);
   const getStage = useCallback(() => stageRef.current?.getStage() ?? null, []);
-  const [pendingImages] = useState(() => new Set<string>());
+  const [imageLoads] = useState<ImageLoads>(() => ({ pending: new Set(), failed: new Set() }));
 
   // Export state (used by auto-save and attribution overlay)
   const [exportedImage, setExportedImage] = useState<string | null>(null);
@@ -981,7 +986,11 @@ function GenericCanvasWithRef<
         return stageRef.current?.toTileJpeg({ ...tile, pixelRatio, quality }) ?? null;
       },
       getPrintImages: () => stageRef.current?.getPrintImages() ?? [],
-      imagesSettled: () => pendingImages.size === 0,
+      imagesSettled: () => imageLoads.pending.size === 0,
+      imageLoadState: () => ({
+        pending: imageLoads.pending.size,
+        failed: imageLoads.failed.size,
+      }),
       captureCanvasForAi: async () =>
         captureStageImage(stageRef.current, { format: 'jpeg', pixelRatio: 1, quality: 0.85 }),
       getVisibleTexts: () => visibleStageTexts(stageRef.current?.getStage() ?? null),
@@ -1211,7 +1220,7 @@ function GenericCanvasWithRef<
       elementHandlers.handleTextFormatChange,
       setSelectedElement,
       beginMarquee,
-      pendingImages,
+      imageLoads,
       store,
       actions,
       stageWidth,
@@ -1224,7 +1233,7 @@ function GenericCanvasWithRef<
   );
 
   return (
-    <PendingImagesContext.Provider value={pendingImages}>
+    <PendingImagesContext.Provider value={imageLoads}>
       <PreviewRenderContext.Provider value={preview ? (previewCaptureRatio ?? 0) : null}>
         <CanvasStage
           ref={stageRef}
