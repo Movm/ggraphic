@@ -508,13 +508,19 @@ function GenericCanvasWithRef<
   }, [state]);
   const store = useCanvasStore();
   // The edit is not this client's step: the history takes it in as well, so
-  // undo cannot write the value from before it back (#160).
+  // undo cannot write the value from before it back (#160). What it changed
+  // is measured from the values its writer started from, not from this
+  // canvas: an own value not yet written, or one the write overrode, is no
+  // part of the other client's edit.
   const handleRemotePageState = useCallback(
-    (partial: Record<string, unknown>) => {
-      const prev = committedStateRef.current as Record<string, unknown>;
+    (partial: Record<string, unknown>, base: Record<string, unknown>) => {
+      const committed = committedStateRef.current as Record<string, unknown>;
       store
         .getState()
-        .rebaseHistory(prev, config.createInitialState({ ...prev, ...partial }) as TState);
+        .rebaseHistory(
+          config.createInitialState({ ...committed, ...base }) as TState,
+          config.createInitialState({ ...committed, ...partial }) as TState
+        );
       setStateRaw((prev) => config.createInitialState({ ...prev, ...partial }) as TState);
       setRemoteStateCount((n) => n + 1);
     },

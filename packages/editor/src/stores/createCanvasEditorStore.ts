@@ -20,7 +20,7 @@ import { createStore } from 'zustand/vanilla';
 
 import { activeBrand } from '../brand/brandRegistry.js';
 import { nextHistoryStamp } from '../utils/historyStamp.js';
-import { rebaseHistoryState } from '../utils/rebaseHistoryState.js';
+import { applyHistoryRebase, planHistoryRebase } from '../utils/rebaseHistoryState.js';
 
 import { DEFAULT_FORMAT_ID, getCanvasFormatOrDefault } from '../formats/index.js';
 
@@ -327,19 +327,38 @@ export function createCanvasEditorStore<
           }
         }),
 
-      rebaseHistory: (prev, next) =>
+      rebaseHistory: (prev, next) => {
+        const plan = planHistoryRebase(prev, next);
+        if (plan.length === 0) return;
+        const { history } = get();
+        const rebased = history.map((entry) =>
+          entry.componentState ? applyHistoryRebase(entry.componentState, plan) : null
+        );
+        if (rebased.every((componentState, i) => componentState === history[i].componentState))
+          return;
         set((state) => {
-          for (const entry of state.history) {
-            if (!entry.componentState) continue;
+          rebased.forEach((componentState, i) => {
+            if (componentState === history[i].componentState) return;
             // Immer's Draft<T> conditional cannot resolve for a generic
             // `TComponentState` (see saveToHistory); the runtime values match.
-            entry.componentState = rebaseHistoryState(
-              entry.componentState as Record<string, unknown>,
-              prev,
-              next
-            ) as (typeof entry)['componentState'];
+            state.history[i].componentState =
+              componentState as (typeof state.history)[number]['componentState'];
+          });
+          // Two neighbours the edit made equal would be an undo step that changes nothing;
+          // saveToHistory never keeps such a pair either.
+          const touched = rebased.map(
+            (componentState, i) => componentState !== history[i].componentState
+          );
+          const json: (string | undefined)[] = [];
+          const jsonAt = (i: number) => (json[i] ??= JSON.stringify(rebased[i]));
+          for (let i = rebased.length - 1; i > 0; i--) {
+            if (!touched[i] && !touched[i - 1]) continue;
+            if (jsonAt(i) !== jsonAt(i - 1)) continue;
+            state.history.splice(i, 1);
+            if (state.historyIndex >= i) state.historyIndex--;
           }
-        }),
+        });
+      },
 
       undo: () => {
         const state = get();

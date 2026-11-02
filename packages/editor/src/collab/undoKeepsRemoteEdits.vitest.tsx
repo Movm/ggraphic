@@ -15,7 +15,7 @@ import '../testing/fixtureTemplates';
 import { AutoSaveStoreProvider } from '../stores/AutoSaveStoreProvider.js';
 
 import { act, render } from '@testing-library/react';
-import { createRef } from 'react';
+import { createRef, type RefObject } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import * as Y from 'yjs';
 
@@ -70,15 +70,30 @@ const xOf = (state: Record<string, unknown>, id: string): number | undefined =>
 async function mountTwoClients(seed: Record<string, unknown>, hostKeys: string[]) {
   const config = await loadCanvasConfig('fixture-poster');
   const docB = new Y.Doc();
+  // A wins a concurrent write to the same key: Y.Map keeps the higher client id.
+  docB.clientID = 1;
   seedPagesIfEmpty(docB, [{ id: PAGE_ID, configId: 'fixture-poster', state: seed }]);
   const docA = new Y.Doc();
+  docA.clientID = 2;
   Y.applyUpdate(docA, Y.encodeStateAsUpdate(docB));
+  // While `held` is set, updates wait in it: both clients edit without seeing each other.
+  let held: (() => void)[] | null = null;
+  const deliver = (send: () => void) => (held ? held.push(send) : send());
   docB.on('update', (update: Uint8Array, origin: unknown) => {
-    if (origin !== REMOTE) Y.applyUpdate(docA, update, 'from-b');
+    if (origin !== REMOTE) deliver(() => Y.applyUpdate(docA, update, 'from-b'));
   });
   docA.on('update', (update: Uint8Array, origin: unknown) => {
-    if (origin !== 'from-b') Y.applyUpdate(docB, update, REMOTE);
+    if (origin !== 'from-b') deliver(() => Y.applyUpdate(docB, update, REMOTE));
   });
+  const disconnect = () => {
+    held = [];
+  };
+  const reconnect = () =>
+    act(async () => {
+      const queued = held ?? [];
+      held = null;
+      for (const send of queued) send();
+    });
 
   const page = readPages(docB)[0];
   const hostCallbacks = Object.fromEntries(hostKeys.map((name) => [name, () => {}]));
@@ -132,8 +147,24 @@ async function mountTwoClients(seed: Record<string, unknown>, hostKeys: string[]
     await vi.waitFor(() => expect(store.getState().historyIndex).toBe(before + 1));
   };
 
-  return { docA, docB, ref, live, remoteEdit, localEdit };
+  return { docA, docB, ref, live, store, remoteEdit, localEdit, disconnect, reconnect };
 }
+
+const undo = (ref: RefObject<GenericCanvasRef | null>) =>
+  act(async () => {
+    ref.current!.undo!();
+  });
+const redo = (ref: RefObject<GenericCanvasRef | null>) =>
+  act(async () => {
+    ref.current!.redo!();
+  });
+
+const ids = (state: Record<string, unknown>): string[] =>
+  ((state.shapeInstances as Shape[] | undefined) ?? []).map((s) => s.id);
+
+/** The shapes' order in `layerOrder`, which also lists the template's own layers. */
+const shapeOrder = (state: Record<string, unknown>): string[] =>
+  ((state.layerOrder as string[] | undefined) ?? []).filter((id) => /^s\d$/.test(id));
 
 const moveShape = (state: Record<string, unknown>, id: string, x: number) => ({
   shapeInstances: (state.shapeInstances as Shape[]).map((s) => (s.id === id ? { ...s, x } : s)),
@@ -208,5 +239,118 @@ describe("undo keeps another client's edits", () => {
     expect(live.state.line2).toBe('von A');
     expect(pageState(docA).line1).toBe('alt');
     expect(pageState(docA).line2).toBe('von A');
+  }, 90_000);
+
+  it('a write from a stale view: B loses its own step to A on the key but can redo it', async () => {
+    const { docA, docB, ref, live, remoteEdit, localEdit, disconnect, reconnect } =
+      await mountTwoClients({ shapeInstances: [shape('s1', 100), shape('s2', 100)] }, []);
+    const updateShape = live.actions.updateShape as (id: string, p: Partial<Shape>) => void;
+
+    disconnect();
+    await localEdit(() => updateShape('s1', { x: 500 }));
+    await remoteEdit((state) => moveShape(state, 's2', 900));
+    await reconnect();
+    // #176: A's whole-array write wins, B's move is gone from the page.
+    expect(xOf(live.state, 's1')).toBe(100);
+    expect(xOf(live.state, 's2')).toBe(900);
+
+    // B's step is still in its history: undo is a no-op, redo brings the move back.
+    await undo(ref);
+    await redo(ref);
+    for (const state of [live.state, pageState(docB), pageState(docA)]) {
+      expect(xOf(state, 's1')).toBe(500);
+      expect(xOf(state, 's2')).toBe(900);
+    }
+  }, 90_000);
+
+  it('a remote delete survives undo and redo of an own step', async () => {
+    const { docA, ref, live, remoteEdit, localEdit } = await mountTwoClients(
+      { shapeInstances: [shape('s1', 100), shape('s2', 100)] },
+      []
+    );
+    const updateShape = live.actions.updateShape as (id: string, p: Partial<Shape>) => void;
+
+    await localEdit(() => updateShape('s1', { x: 500 }));
+    await remoteEdit((state) => ({
+      shapeInstances: (state.shapeInstances as Shape[]).filter((s) => s.id !== 's2'),
+    }));
+    expect(ids(live.state)).toEqual(['s1']);
+
+    await undo(ref);
+    expect(ids(live.state)).toEqual(['s1']);
+    expect(xOf(live.state, 's1')).toBe(100);
+    await redo(ref);
+    for (const state of [live.state, pageState(docA)]) {
+      expect(ids(state)).toEqual(['s1']);
+      expect(xOf(state, 's1')).toBe(500);
+    }
+  }, 90_000);
+
+  it('a remote edit made while B is undone survives the redo', async () => {
+    const { docA, ref, live, remoteEdit, localEdit } = await mountTwoClients(
+      { shapeInstances: [shape('s1', 100), shape('s2', 100)] },
+      []
+    );
+    const updateShape = live.actions.updateShape as (id: string, p: Partial<Shape>) => void;
+
+    await localEdit(() => updateShape('s1', { x: 500 }));
+    await undo(ref);
+    await remoteEdit((state) => moveShape(state, 's2', 900));
+    await redo(ref);
+    for (const state of [live.state, pageState(docA)]) {
+      expect(xOf(state, 's1')).toBe(500);
+      expect(xOf(state, 's2')).toBe(900);
+    }
+  }, 90_000);
+
+  it('undo of an own add removes the element even after A moved it', async () => {
+    const { docA, ref, live, remoteEdit, localEdit } = await mountTwoClients(
+      { shapeInstances: [shape('s1', 100)] },
+      []
+    );
+
+    await localEdit(() => (live.actions.addShape as (type: string) => void)('rect'));
+    const added = ids(live.state).find((id) => id !== 's1')!;
+    await remoteEdit((state) => moveShape(state, added, 900));
+
+    await undo(ref);
+    for (const state of [live.state, pageState(docA)]) expect(ids(state)).toEqual(['s1']);
+    await redo(ref);
+    // Redo brings the element back with A's move.
+    for (const state of [live.state, pageState(docA)]) {
+      expect(ids(state)).toEqual(['s1', added]);
+      expect(xOf(state, added)).toBe(900);
+    }
+  }, 90_000);
+
+  it('undo of an own reorder still works after A added a layer', async () => {
+    const { docA, ref, live, store, remoteEdit, localEdit } = await mountTwoClients(
+      {
+        shapeInstances: [shape('s1', 100), shape('s2', 100)],
+        layerOrder: ['s1', 's2'],
+      },
+      []
+    );
+
+    await localEdit(() => {
+      store.getState().setSelectedElement('s2');
+      ref.current!.handleMoveLayer!('down');
+    });
+    expect(shapeOrder(live.state)).toEqual(['s2', 's1']);
+    await remoteEdit((state) => ({
+      shapeInstances: [...(state.shapeInstances as Shape[]), shape('s3', 300)],
+      layerOrder: [...(state.layerOrder as string[]), 's3'],
+    }));
+    expect(shapeOrder(live.state)).toEqual(['s2', 's1', 's3']);
+
+    await undo(ref);
+    for (const state of [live.state, pageState(docA)]) {
+      expect(shapeOrder(state)).toEqual(['s1', 's2', 's3']);
+      expect(ids(state)).toEqual(['s1', 's2', 's3']);
+    }
+    await redo(ref);
+    for (const state of [live.state, pageState(docA)]) {
+      expect(shapeOrder(state)).toEqual(['s2', 's1', 's3']);
+    }
   }, 90_000);
 });
