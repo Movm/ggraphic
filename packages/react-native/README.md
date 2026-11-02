@@ -13,6 +13,12 @@ Private for now: not published to npm yet.
 
 ## Use
 
+Expo DOM components need these in the app, next to `@expo/dom-webview`:
+
+```sh
+npx expo install react-dom react-native-web @expo/metro-runtime
+```
+
 The DOM side is a file of your own that starts with `'use dom'`, so that Expo bundles it for the
 web view. It imports the brand, the stylesheets and the templates:
 
@@ -60,6 +66,29 @@ app. The bridge uses exactly that, in both directions:
   The editor runs every id it has not run yet and answers each one exactly once. A reloaded web
   view runs what is still pending again.
 - **Editor → app:** one function prop (`onEvent`) carries `ready`, `change` and `result`.
+
+Commands run in the order they were sent. A command after a `load` runs on the design that load
+opened; a `load` whose template pack fails is answered with the error and leaves the open design
+as it is. If the editor throws (a broken design or pack), every command is answered with that
+error until a `load` opens another design. `ready` comes once per mount, so after every `load`.
+
+`exportPng` takes a `pixelRatio` up to 4 and fails for a PNG over 32 MiB of base64 instead of
+sending it.
+
+### When the web view reloads
+
+The editor starts again from the `document` prop, with an empty undo history. To keep the user's
+work, pass the last design from `onChange` as `document`; the editor reads it only when it mounts.
+Do not call `load` on `ready`: every `load` remounts the editor, which sends `ready` again.
+
+The commands still pending are run again. An undo or redo that ran just before the reload, but
+whose answer had not reached the app yet, runs a second time.
+
+### Fonts
+
+Expo's Metro does not rewrite `url()` in CSS, so the font files of `@ggraphic/brand-default/fonts`
+do not load in the web view: the editor and its PNGs use fallback faces. An export waits at most
+3 s for fonts.
 
 `src/bridge.ts` defines the messages and reads them (`parseEditorCommand`, `parseEditorEvent`) on
 both sides; `src/client.ts` is the app side without React. Nothing in the native entry loads the

@@ -49,9 +49,15 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const isId = (value: unknown): value is number =>
   typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
 
-/** A finite positive number, or absent. */
+/** The largest `pixelRatio` an export takes: a 1080 px page at 4 is already 4320 px wide. */
+export const MAX_PIXEL_RATIO = 4;
+
+/** The longest PNG (as base64) an export sends back; larger images fail instead of the bridge. */
+export const MAX_PNG_BASE64 = 32 * 1024 * 1024;
+
+/** A positive number up to `MAX_PIXEL_RATIO`, or absent. */
 const isOptionalScale = (value: unknown): boolean =>
-  value === undefined || (typeof value === 'number' && Number.isFinite(value) && value > 0);
+  value === undefined || (typeof value === 'number' && value > 0 && value <= MAX_PIXEL_RATIO);
 
 /** The document shape the editor stores; the page states are the editor's to read. */
 export function isGgraphicDocument(value: unknown): value is GgraphicDocument {

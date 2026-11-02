@@ -42,6 +42,7 @@ describe('parseEditorCommand', () => {
       { id: 1, type: 'load', document: { formatId: 'x' } },
       { id: 1, type: 'exportPng', pixelRatio: 0 },
       { id: 1, type: 'exportPng', pixelRatio: Number.NaN },
+      { id: 1, type: 'exportPng', pixelRatio: 5 },
       { id: 1, type: 'exportPng', transparent: 'yes' },
     ]) {
       expect(parseEditorCommand(value)).toBeNull();
