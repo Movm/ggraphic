@@ -86,6 +86,7 @@ import { canvasFontFamilies } from '../utils/canvasFontFamilies.js';
 import {
   buildCanvasItems,
   buildSortedRenderList,
+  insertedItemIds,
   withInsertsOnTop,
 } from '../utils/canvasLayerManager.js';
 import { addHostElement, fromHostKinds } from '../utils/elementKinds.js';
@@ -492,12 +493,15 @@ function GenericCanvasWithRef<
   }, []);
 
   // The setter the element actions get: whatever an action inserts is drawn on top of the page,
-  // regardless of its kind. The canvas commands (paste, duplicate, reorder) place their own
-  // elements and keep the plain setter.
+  // regardless of its kind, and selected once committed (#162). The canvas commands (paste,
+  // duplicate, reorder) place and select their own elements and keep the plain setter.
+  const insertedRef = useRef<string[] | null>(null);
   const setActionState = useCallback(
     (partial: Partial<TState> | ((prev: TState) => TState)) => {
       setStateRaw((prev) => {
         const next = typeof partial === 'function' ? partial(prev) : { ...prev, ...partial };
+        const inserted = insertedItemIds(config, prev, next);
+        if (inserted.length > 0) insertedRef.current = inserted;
         return withInsertsOnTop(config, prev, next);
       });
     },
@@ -515,12 +519,29 @@ function GenericCanvasWithRef<
   // derives is the template's own knowledge, and `createInitialState` is where
   // it already lives.
   const [remoteStateCount, setRemoteStateCount] = useState(0);
+  const committedStateRef = useRef(state);
+  useLayoutEffect(() => {
+    committedStateRef.current = state;
+  }, [state]);
+  const store = useCanvasStore();
+  // The edit is not this client's step: the history takes it in as well, so
+  // undo cannot write the value from before it back (#160). What it changed
+  // is measured from the values its writer started from, not from this
+  // canvas: an own value not yet written, or one the write overrode, is no
+  // part of the other client's edit.
   const handleRemotePageState = useCallback(
-    (partial: Record<string, unknown>) => {
+    (partial: Record<string, unknown>, base: Record<string, unknown>) => {
+      const committed = committedStateRef.current as Record<string, unknown>;
+      store
+        .getState()
+        .rebaseHistory(
+          config.createInitialState({ ...committed, ...base }) as TState,
+          config.createInitialState({ ...committed, ...partial }) as TState
+        );
       setStateRaw((prev) => config.createInitialState({ ...prev, ...partial }) as TState);
       setRemoteStateCount((n) => n + 1);
     },
-    [config]
+    [store, config]
   );
 
   // Measured fits need the brand fonts, so normalization waits for them. The
@@ -544,10 +565,6 @@ function GenericCanvasWithRef<
   });
 
   const collectState = useCallback(() => state, [state]);
-  const committedStateRef = useRef(state);
-  useLayoutEffect(() => {
-    committedStateRef.current = state;
-  }, [state]);
   // Text fields reach the page document only through their `on<Key>Change`
   // callback, so a restore reports each one it changed (#4247). The emitted
   // keys are left to useEmitHostStateChanges, which already reports them.
@@ -584,6 +601,7 @@ function GenericCanvasWithRef<
     runHistoryBatch,
     checkpoint,
     flushPendingSaves,
+    replaceInHistory,
     undo,
     redo,
     canUndo,
@@ -610,7 +628,8 @@ function GenericCanvasWithRef<
         setActionState,
         saveToHistory,
         debouncedSaveToHistory,
-        callbacks
+        callbacks,
+        { replaceInHistory }
       ),
       runHistoryBatch,
     }),
@@ -622,6 +641,7 @@ function GenericCanvasWithRef<
       debouncedSaveToHistory,
       runHistoryBatch,
       callbacks,
+      replaceInHistory,
     ]
   );
 
@@ -692,7 +712,6 @@ function GenericCanvasWithRef<
     getSnapTargets,
   } = useCanvasInteractions({ stageRef, marqueeEnabled: interactive, getGroups });
 
-  const store = useCanvasStore();
   const { setSnapLines, updateElementPosition } = store.getState();
   // Before the deep select: a ⌃-click on a Mac is a right-click, not a pick.
   useContextPress(stageRef, interactive);
@@ -702,6 +721,14 @@ function GenericCanvasWithRef<
   useEffect(() => {
     if (!isActivePage) setSelectedElement(null);
   }, [isActivePage, setSelectedElement]);
+
+  // What an action inserted is selected, and only it (`setActionState`).
+  useLayoutEffect(() => {
+    const inserted = insertedRef.current;
+    if (!inserted) return;
+    insertedRef.current = null;
+    if (isActivePage) store.getState().setSelectedLayers(inserted);
+  }, [state, isActivePage, store]);
 
   // Output canvas dimensions are driven by the chosen format. Layout calculators
   // continue to operate in the template's reference space (config.canvas.{width,height});
