@@ -26,6 +26,8 @@ interface UseCanvasUndoRedoReturn<
   commitPendingSave: () => void;
   /** Writes pending (immediate and debounced) saves, as Undo does before it steps back. */
   flushPendingSaves: () => void;
+  /** Replaces a string value in every history entry (the store's `replaceInHistory`). */
+  replaceInHistory: (from: string, to: string) => void;
 }
 
 // Stable selectors defined outside component
@@ -251,6 +253,10 @@ export function useCanvasUndoRedo<
     [debounceMs]
   );
 
+  const replaceInHistory = useCallback((from: string, to: string) => {
+    getStore().replaceInHistory(from, to);
+  }, []);
+
   return {
     undo,
     redo,
@@ -261,5 +267,6 @@ export function useCanvasUndoRedo<
     saveNow,
     commitPendingSave,
     flushPendingSaves,
+    replaceInHistory,
   };
 }

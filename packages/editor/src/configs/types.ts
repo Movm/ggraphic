@@ -380,6 +380,15 @@ export interface BackgroundControls {
 // ============================================================================
 
 /** A design as the host's gallery describes it (`FullCanvasConfig.shareMetadata`). */
+/** History operations an action may need besides saving (`createActions`' last argument). */
+export interface CanvasActionHistory {
+  /**
+   * Replaces the string value `from` with `to` in every history entry, without a step of its own:
+   * an upload's `blob:` preview once its durable URL is known.
+   */
+  replaceInHistory: (from: string, to: string) => void;
+}
+
 export interface ShareDescription {
   content: Record<string, unknown>;
   styling: Record<string, unknown>;
@@ -424,7 +433,8 @@ export interface FullCanvasConfig<
     setState: (partial: Partial<TState> | ((prev: TState) => TState)) => void,
     saveToHistory: (state?: TState) => void,
     debouncedSaveToHistory: (state?: TState) => void,
-    callbacks: Record<string, ((val: unknown) => void) | undefined>
+    callbacks: Record<string, ((val: unknown) => void) | undefined>,
+    history?: CanvasActionHistory
   ) => TActions;
   /** The background's colour and photo controls for the context bar. */
   background?: (state: TState, actions: TActions) => BackgroundControls;
