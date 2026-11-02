@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Every default an editor panel or factory offers comes from the brand of the
  * DOCUMENT, not from the first registered pack: shape tiles, chart tiles,

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * A text with `counter: 'page'` shows the number of the page it sits on instead of its own
  * text (the "ghost numeral" of a carousel). The stored text is only what is drawn where no page

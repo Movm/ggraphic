@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The native side: what runs in the React Native app. Nothing here loads the editor; the editor
  * runs in an Expo DOM component, which answers the commands with the events of `./bridge`.

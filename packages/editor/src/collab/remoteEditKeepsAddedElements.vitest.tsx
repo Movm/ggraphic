@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Eine Fernbearbeitung darf nichts abräumen, was die Person selbst gebaut hat.
  *

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { type Corners, type CornerRadius } from '@ggraphic/core';
 
 export { type Corners, type CornerRadius } from '@ggraphic/core';

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Canvas AI: applying operations, describing the canvas to a model, the illustration capability and the capability types. */
 export {
   applyOperation,

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Zieht man einen Textblock am Seitengriff, soll der Text unter dem Zeiger
  * neu umbrechen statt gestaucht zu werden und beim Loslassen zu springen.

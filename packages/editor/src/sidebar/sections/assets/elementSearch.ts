@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { rankByQuery } from '../../../utils/filterUtils.js';
 
 import type { ElementItem } from './elementTypes.js';

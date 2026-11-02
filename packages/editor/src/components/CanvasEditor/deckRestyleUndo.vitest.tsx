@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * A host's document tab (a Vorlage for all slides, a multi-page Vorlage)
  * replaces the whole deck in ONE `replaceDeck`. Undo in the toolbar must take

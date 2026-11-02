@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The state of a free page: what a template seeds, what the editor stores and reads back. Every
  * page of a host that offers templates as data (`createPageConfig`) has this shape.

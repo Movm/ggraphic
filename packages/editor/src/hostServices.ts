@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * What the editor needs from its host for data it does not own: the media
  * library, image shares, image URLs, file delivery, the asset library, the

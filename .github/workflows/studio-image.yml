@@ -168,7 +168,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       # The defaults would take title, description and licence from the repository, whose root
-      # licence is the packages' MPL-2.0; Studio is AGPL-3.0.
+      # licence is AGPL-3.0; the image is Studio, also AGPL-3.0-only.
       - id: meta
         uses: docker/metadata-action@v6
         env:

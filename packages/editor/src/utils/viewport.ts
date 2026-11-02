@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Viewport utilities for responsive canvas rendering. `width` is the editor's box
  * (`useEditorBox`); it defaults to the window.

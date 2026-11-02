@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 // @vitest-environment jsdom
 import { act, cleanup, render } from '@testing-library/react';
 import { Suspense, use, useImperativeHandle, useReducer, type Ref } from 'react';

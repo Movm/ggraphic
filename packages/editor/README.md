@@ -2,7 +2,7 @@
 
 > **Alpha, untested.** Early work in progress: the API and the document format can change without notice. See the [repository README](../../README.md#ggraphic).
 
-The brand-neutral canvas editor of ggraphic, built on react-konva: the editor shell with its sidebar, stage, text editing, elements (shapes, icons, illustrations, charts, badges, images), multi-page documents, undo, export (PNG, PDF, PPTX) and the Yjs page document for collaboration. Licensed under the [Mozilla Public License 2.0](./LICENSE).
+The brand-neutral canvas editor of ggraphic, built on react-konva: the editor shell with its sidebar, stage, text editing, elements (shapes, icons, illustrations, charts, badges, images), multi-page documents, undo, export (PNG, PDF, PPTX) and the Yjs page document for collaboration. Licensed under [AGPL-3.0-only](./LICENSE). Versions published before the relicensing remain available under MPL-2.0.
 
 ## Install
 

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * A host's whole embedding: a brand, a template pack and a change listener. The editor comes up
  * on the pack's template, and an added text reaches the host through `onChange`.

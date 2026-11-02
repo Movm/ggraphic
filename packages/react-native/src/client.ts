@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The native side of the bridge, without React: queues commands for the `commands` prop and
  * settles each one's promise when its `result` arrives through `onEvent`.

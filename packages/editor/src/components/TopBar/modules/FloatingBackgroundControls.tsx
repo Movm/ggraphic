@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { Slider } from 'radix-ui';
 import { useEffect, useId, useRef, useState, type ChangeEvent } from 'react';
 import {

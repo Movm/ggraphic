@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { type NodeFrame, normalizeRotation } from './orientation.js';
 
 /** Text of the angle/size badge shown while a Transformer is active; null when nothing to show. */

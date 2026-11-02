@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Erreichbarkeit: Ein Doppelklick auf ein bearbeitbares Textfeld öffnet den
  * Rich-Text-Editor mit seiner Werkzeugleiste — auf JEDER Schrift und auch auf

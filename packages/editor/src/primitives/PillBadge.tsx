@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * PillBadge - Reusable Konva component for rendering a pill-shaped badge with text
  *

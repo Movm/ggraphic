@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 // The families of the neutral brand (`brandDefault.fonts`), all under the SIL Open Font License 1.1.
 import '@fontsource/bricolage-grotesque/400.css';
 import '@fontsource/bricolage-grotesque/500.css';

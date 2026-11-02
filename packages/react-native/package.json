@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "description": "The ggraphic editor in a React Native / Expo app, as an Expo DOM component with a typed bridge.",
-  "license": "MPL-2.0",
+  "license": "AGPL-3.0-only",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Movm/ggraphic.git",

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Vergleich der Render-Eingaben eines Bild-Elements für React.memo.
  *

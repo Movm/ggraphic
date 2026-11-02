@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Plates that hug their text (`hug` on a shape), kept in step with the text wherever a page
  * changes a text's geometry after placing: a committed edit, a brand rebind, an AI fill.

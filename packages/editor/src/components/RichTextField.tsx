@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * RichTextField — der Text-Editor für Sharepic-Felder mit Auszeichnung.
  *
