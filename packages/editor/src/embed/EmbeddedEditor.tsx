@@ -22,10 +22,10 @@ import {
   type TemplateDefinition,
 } from '../templates/registry.js';
 
+import { BLANK_PAGE_ID } from './blankPage.js';
 import { type GgraphicDocument, type GgraphicEditorProps } from './types.js';
 
-/** The config of a page that starts empty; a document without templates opens on one. */
-export const BLANK_PAGE_ID = 'ggraphic-blank';
+export { BLANK_PAGE_ID };
 
 const BLANK_PAGE = defineTemplate({
   id: BLANK_PAGE_ID,

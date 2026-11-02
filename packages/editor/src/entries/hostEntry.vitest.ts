@@ -79,6 +79,12 @@ describe('@ggraphic/editor/host', () => {
     expect(graph.length).toBeLessThanOrEqual(20);
   });
 
+  it('names the blank page as the embed entry does, so a server component can read it', async () => {
+    const [fromHost, fromEmbed] = await Promise.all([import('./host.js'), import('./embed.js')]);
+    expect(fromHost.BLANK_PAGE_ID).toBe('ggraphic-blank');
+    expect(fromEmbed.BLANK_PAGE_ID).toBe(fromHost.BLANK_PAGE_ID);
+  });
+
   it('carries the interfaces a host augments, identical to their domain entries', () => {
     expectTypeOf<host.CanvasAiHostTypes>().toEqualTypeOf<ai.CanvasAiHostTypes>();
     expectTypeOf<host.HostElementKinds>().toEqualTypeOf<kinds.HostElementKinds>();

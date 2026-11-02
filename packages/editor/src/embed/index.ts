@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 /** The embedding surface: one component, its props and the document it stores. */
+export { BLANK_PAGE_ID } from './blankPage.js';
 export { GgraphicEditor } from './GgraphicEditor.js';
 export { loadTemplatePack } from './loadTemplatePack.js';
 export { type GgraphicDocument, type GgraphicEditorProps } from './types.js';
