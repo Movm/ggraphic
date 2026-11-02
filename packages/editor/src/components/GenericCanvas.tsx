@@ -82,6 +82,7 @@ import { canvasFontFamilies } from '../utils/canvasFontFamilies.js';
 import {
   buildCanvasItems,
   buildSortedRenderList,
+  insertedItemIds,
   withInsertsOnTop,
 } from '../utils/canvasLayerManager.js';
 import { addHostElement, fromHostKinds } from '../utils/elementKinds.js';
@@ -479,12 +480,15 @@ function GenericCanvasWithRef<
   }, []);
 
   // The setter the element actions get: whatever an action inserts is drawn on top of the page,
-  // regardless of its kind. The canvas commands (paste, duplicate, reorder) place their own
-  // elements and keep the plain setter.
+  // regardless of its kind, and selected once committed (#162). The canvas commands (paste,
+  // duplicate, reorder) place and select their own elements and keep the plain setter.
+  const insertedRef = useRef<string[] | null>(null);
   const setActionState = useCallback(
     (partial: Partial<TState> | ((prev: TState) => TState)) => {
       setStateRaw((prev) => {
         const next = typeof partial === 'function' ? partial(prev) : { ...prev, ...partial };
+        const inserted = insertedItemIds(config, prev, next);
+        if (inserted.length > 0) insertedRef.current = inserted;
         return withInsertsOnTop(config, prev, next);
       });
     },
@@ -704,6 +708,14 @@ function GenericCanvasWithRef<
   useEffect(() => {
     if (!isActivePage) setSelectedElement(null);
   }, [isActivePage, setSelectedElement]);
+
+  // What an action inserted is selected, and only it (`setActionState`).
+  useLayoutEffect(() => {
+    const inserted = insertedRef.current;
+    if (!inserted) return;
+    insertedRef.current = null;
+    if (isActivePage) store.getState().setSelectedLayers(inserted);
+  }, [state, isActivePage, store]);
 
   // Output canvas dimensions are driven by the chosen format. Layout calculators
   // continue to operate in the template's reference space (config.canvas.{width,height});
