@@ -10,6 +10,7 @@ export function App() {
   const [png, setPng] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Store `design` wherever the app keeps its data; `editor.load({ document })` opens it again.
+  // As `document` it also brings the design back when the web view reloads.
   const { editor, commands, onEvent } = useGgraphicEditor({ onChange: setDesign });
 
   const exportPng = () => {
@@ -28,7 +29,12 @@ export function App() {
         {error ?? `${design?.pages.length ?? 0} page(s), ${commands.length} pending`}
       </Text>
       <View style={styles.editor}>
-        <EditorDom commands={commands} onEvent={onEvent} dom={{ style: { flex: 1 } }} />
+        <EditorDom
+          document={design}
+          commands={commands}
+          onEvent={onEvent}
+          dom={{ style: { flex: 1 } }}
+        />
       </View>
       {png ? (
         <Image style={styles.preview} source={{ uri: `data:image/png;base64,${png}` }} />
