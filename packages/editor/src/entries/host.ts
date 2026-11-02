@@ -1,24 +1,24 @@
 // SPDX-License-Identifier: MPL-2.0
 /**
- * What a host calls at start-up, reads from its services, and augments, without the editor UI: the
- * register functions with the format lookups its template registry needs, the services hook, the
- * block-insert context and the interfaces a host extends with `declare module`. Its module graph holds no component, sidebar, store or primitive
- * (`hostEntry.vitest.ts` keeps it that way), so a host's start-up code and its test setup can import
- * it without loading the editor. Every name here is also in its domain entry.
+ * What a host calls at start-up and augments, without the editor UI or React: the register
+ * functions with the format lookups its template registry needs, and the interfaces a host extends
+ * with `declare module`. Its module graph holds no component, sidebar, store or primitive
+ * (`hostEntry.vitest.ts`) and no React (`dataEntriesNoReact.vitest.ts`), so a host's start-up code,
+ * its test setup and a server component can import it without loading the editor. Every name here
+ * is also in its domain entry.
  *
- * `registerKindRenderers` is not here: it is the drawing side of a kind and loads the canvas
- * (`@ggraphic/editor/kinds`).
+ * The React parts a host reads at render time, `useCanvasEditorServices` and the block-insert
+ * context, are in `@ggraphic/editor/shell`: they create a React context when evaluated, which
+ * fails in a server component (#136). `registerKindRenderers` is not here either: it is the drawing
+ * side of a kind and loads the canvas (`@ggraphic/editor/kinds`).
  */
 export {
   type CanvasEditorHostServices,
   type CanvasEditorServices,
-  useCanvasEditorServices,
 } from '../CanvasEditorProvider.js';
 export {
-  BlockInsertContext,
   type BlockInsertApi,
   type BlockTarget,
-  useBlockInsert,
 } from '../components/CanvasEditor/blockInsertContext.js';
 export { registerElementKind, type ElementKindRegistration } from '../utils/elementKinds.js';
 export { type HostElementKinds } from '../utils/canvasItem.js';
@@ -52,7 +52,8 @@ export {
   type TemplatePickerInfo,
 } from '../templates/registry.js';
 export { registerBrandPacks } from '../brand/brandRegistry.js';
-export { type HostMessages, registerHostMessages, registerMessages } from '../i18n/messages.js';
+export { registerHostMessages, registerMessages } from '../i18n/catalogue.js';
+export { type HostMessages } from '../i18n/messages.js';
 export {
   type EditorToast,
   type EditorToastAction,
