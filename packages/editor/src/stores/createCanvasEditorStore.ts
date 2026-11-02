@@ -122,6 +122,11 @@ export interface CanvasEditorActions<
     mark: HistorySessionMark<TComponentState>,
     outcome: 'discard' | 'squash'
   ) => boolean;
+  /**
+   * Replaces the string value `from` with `to` in every history entry, so undo and redo never bring
+   * `from` back: an upload's `blob:` preview once its durable URL is known.
+   */
+  replaceInHistory: (from: string, to: string) => void;
   setStateRestorationCallback: (callback: ((state: TComponentState) => void) | null) => void;
 
   setSelectedElement: (id: string | null) => void;
@@ -420,6 +425,19 @@ export function createCanvasEditorStore<
         }
         return true;
       },
+
+      replaceInHistory: (from, to) =>
+        set((state) => {
+          const fromJson = JSON.stringify(from);
+          const toJson = JSON.stringify(to);
+          for (const entry of state.history) {
+            if (!entry.componentState) continue;
+            const json = JSON.stringify(entry.componentState);
+            if (json.includes(fromJson)) {
+              entry.componentState = JSON.parse(json.split(fromJson).join(toJson));
+            }
+          }
+        }),
 
       setStateRestorationCallback: (callback) =>
         set((state) => {
