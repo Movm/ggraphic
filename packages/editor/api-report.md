@@ -4172,7 +4172,7 @@ interface StageFit {
   height: number
 }
 const StageFitProvider: Provider<StageFit | null>
-function useMeasuredStageFit(container: HTMLElement | null, enabled: boolean) => StageFit | null
+function useMeasuredStageFit(container: HTMLElement | null, enabled: boolean, hold?: boolean) => StageFit | null
 function useStageFit() => StageFit | null
 ```
 
