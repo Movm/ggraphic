@@ -128,6 +128,30 @@ describe('core editor stylesheet', () => {
   });
 });
 
+// A host with its own token layer imports editor.css alone and may not declare
+// `--editor-height` (#152). Without it the root's height is invalid, the editor
+// grows with its content and the measured stage fit grows with it, so every read
+// carries the default of tokens.css as its fallback.
+describe('editor height', () => {
+  it('falls back to the tokens.css default wherever the core reads --editor-height', () => {
+    const tokenDefault = /--editor-height\s*:\s*([^;]+);/.exec(
+      stripComments(readFileSync(TOKENS, 'utf8'))
+    )?.[1];
+    expect(tokenDefault).toBe('100dvh');
+    const unguarded: string[] = [];
+    let readsFound = 0;
+    for (const file of sourceFiles(SRC)) {
+      const text = stripComments(readFileSync(file, 'utf8'));
+      for (const m of text.matchAll(/var\(\s*--editor-height\s*(?:,\s*([^)]*))?\)/g)) {
+        readsFound++;
+        if (m[1]?.trim() !== tokenDefault) unguarded.push(`${path.relative(SRC, file)}: ${m[0]}`);
+      }
+    }
+    expect(readsFound).toBeGreaterThan(0);
+    expect(unguarded).toEqual([]);
+  });
+});
+
 // The Tailwind entry for hosts on Tailwind v4: the core's classes need a
 // theme mapping, two utilities and a variant that no stock Tailwind has.
 describe('core tailwind entry', () => {
