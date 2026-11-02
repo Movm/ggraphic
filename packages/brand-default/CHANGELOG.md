@@ -1,5 +1,11 @@
 # @ggraphic/brand-default
 
+## 0.1.0-alpha.1
+
+### Patch Changes
+
+- 8b1674f: Republish through trusted publishing. No code change.
+
 ## 0.1.0-alpha.0
 
 ### Minor Changes
