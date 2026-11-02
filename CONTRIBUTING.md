@@ -91,13 +91,15 @@ The release workflow publishes through npm trusted publishing (OIDC) and then po
    npx -y npm@11 trust github @ggraphic/<pkg> --file release.yml --repo Movm/ggraphic --allow-publish -y
    ```
 
-3. Allow that trusted publisher to set dist-tags: on `https://www.npmjs.com/package/@ggraphic/<pkg>/access` (the package's Settings tab), under Trusted publishing, enable **Allow npm dist-tag**. `npm trust` has no flag for this.
+3. Optional: allow that trusted publisher to set dist-tags. On `https://www.npmjs.com/package/@ggraphic/<pkg>/access` (the package's Settings tab), under Trusted publishing, enable **Allow npm dist-tag**. `npm trust` has no flag for this, and as of November 2026 the edit form did not save in Chrome or Firefox, so the project currently runs without it (see below).
 
 **`latest` after a release.** In pre mode, `changeset publish` publishes with the `alpha` tag only. The release workflow's step "Point latest at the published versions" then moves `latest` to each published public package; without that, a plain `npm install @ggraphic/<pkg>` would get an outdated version or one of the deprecated `0.0.0` placeholders. If the step cannot set a tag (usually because step 3 is missing), the release stays green and the run shows a warning that names the package and the command to run by hand:
 
 ```bash
 npm dist-tag add @ggraphic/<pkg>@<version> latest
 ```
+
+To move every package at once, run `scripts/move-latest.sh` after the release. It sets `latest` to the newest `alpha` wherever `alpha` is ahead, and skips the rest.
 
 ## Tests and checks
 
