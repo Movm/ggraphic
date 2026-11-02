@@ -37,7 +37,7 @@ export type { ShapesSectionProps as FormenSectionProps } from './ShapesSection.j
 // LAZY EXPORTS - Heavy sections loaded on-demand
 // =============================================================================
 
-// Preloaded while the editor is idle (usePreloadElements), so the first open is instant.
+// Preloaded while the editor is idle (usePreloadSections in the shell), so the first open is instant.
 export const AssetsSection = lazyWithPreload(() =>
   import('./assets/index.js').then((m) => m.AssetsSection)
 );
@@ -56,7 +56,7 @@ export const UploadsSection = lazy(() =>
 );
 export type { UploadsSectionProps } from './UploadsSection.js';
 
-// Preloaded while the editor is idle (usePreloadTools), so the first open is instant.
+// Preloaded while the editor is idle (usePreloadSections in the shell), so the first open is instant.
 export const ToolsSection = lazyWithPreload(() =>
   import('./tools/index.js').then((m) => m.ToolsSection)
 );

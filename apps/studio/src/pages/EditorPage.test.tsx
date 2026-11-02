@@ -324,9 +324,10 @@ describe('EditorPage', () => {
     const view = renderEditor();
 
     await waitFor(() => expect(document.querySelector('.konvajs-content canvas')).not.toBeNull());
-    // The Elements panel is a lazy chunk, and nothing in Studio preloads it: its first open
-    // suspends, and React holds the reveal back ~300 ms on top of the import, which on a busy
-    // runner ate findByRole's 1 s. Loaded first, the panel renders directly (lazyWithPreload).
+    // The Elements panel is a lazy chunk. The shell warms it once the browser is idle, but the
+    // test clicks before that: unwarmed, the first open suspends, and React holds the reveal back
+    // ~300 ms on top of the import, which on a busy runner ate findByRole's 1 s (#34).
+    // Loaded first, the panel renders directly (lazyWithPreload).
     await AssetsSection.preload();
     await user.click(await screen.findByRole('button', { name: /^Elements/ }));
     await user.click(await screen.findByRole('button', { name: /^Blocks/ }));

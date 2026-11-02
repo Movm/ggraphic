@@ -32,6 +32,7 @@ import { useCanvasEditorServices } from '../../CanvasEditorProvider.js';
 import { messages, useMessages } from '../../i18n/messages.js';
 import { provideCoreSidebar } from '../../sidebar/coreSidebar.js';
 import { CORE_SIDEBAR_PARTS } from '../../sidebar/coreSidebarParts.js';
+import { usePreloadSections } from '../../sidebar/sections/usePreloadSections.js';
 import { pagePersistedStateKeys } from '../../collab/pageElementStateKeys.js';
 import { serializeDeck } from '../../collab/pagesDoc.js';
 import { createPageSyncedCallbacks } from '../../collab/wrapCallbacksWithPageSync.js';
@@ -1042,6 +1043,8 @@ function CanvasEditorInner({
     return withEditorTabs(withLayersTab(tabs), availableEditorTabs);
   }, [activeConfig, activeState, activeSelectedElement, availableEditorTabs, isMobileWeb]);
   const configTabIds = useMemo(() => activeConfig?.tabs.map((tab) => tab.id) ?? [], [activeConfig]);
+  // Elements and Tools are lazy chunks: warm them while idle, so their first open does not suspend.
+  usePreloadSections(activeConfig);
 
   // Compute disabled tabs for active config
   const disabledTabs = useMemo(() => {
