@@ -531,13 +531,14 @@ function GenericCanvasWithRef<
   // canvas: an own value not yet written, or one the write overrode, is no
   // part of the other client's edit.
   const handleRemotePageState = useCallback(
-    (partial: Record<string, unknown>, base: Record<string, unknown>) => {
+    (partial: Record<string, unknown>, base: Record<string, unknown>, own: boolean) => {
       const committed = committedStateRef.current as Record<string, unknown>;
       store
         .getState()
         .rebaseHistory(
           config.createInitialState({ ...committed, ...base }) as TState,
-          config.createInitialState({ ...committed, ...partial }) as TState
+          config.createInitialState({ ...committed, ...partial }) as TState,
+          own
         );
       setStateRaw((prev) => config.createInitialState({ ...prev, ...partial }) as TState);
       setRemoteStateCount((n) => n + 1);

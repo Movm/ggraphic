@@ -419,3 +419,34 @@ describe("undo keeps another client's edits", () => {
     }
   }, 90_000);
 });
+
+describe('own writes from another stack', () => {
+  // A deck op and its undo by the page-level Y.UndoManager write the page
+  // state with their own origin. Undoing the deck op must not take this
+  // client's older step along (the step before a "Vorlage für alle Folien").
+  it('an own deck op and its undo leave the older own step undoable', async () => {
+    const { docB, ref, live, localEdit } = await mountTwoClients(
+      { shapeInstances: [shape('s1', 100), shape('s2', 100)] },
+      []
+    );
+    const updateShape = live.actions.updateShape as (id: string, p: Partial<Shape>) => void;
+    const DECK = Symbol('deck-op');
+    const deckWrite = (x: number) =>
+      act(async () => {
+        docB.transact(
+          () => updatePageStateById(docB, PAGE_ID, moveShape(pageState(docB), 's1', x)),
+          DECK
+        );
+      });
+
+    await localEdit(() => updateShape('s1', { x: 500 }));
+    await deckWrite(700);
+    expect(xOf(live.state, 's1')).toBe(700);
+    // The deck undo restores the value the deck op replaced.
+    await deckWrite(500);
+    expect(xOf(live.state, 's1')).toBe(500);
+
+    await undo(ref);
+    for (const state of [live.state, pageState(docB)]) expect(xOf(state, 's1')).toBe(100);
+  }, 90_000);
+});
