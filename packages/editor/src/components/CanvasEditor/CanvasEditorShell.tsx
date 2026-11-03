@@ -277,9 +277,9 @@ function CanvasEditorInner({
     pageCallbackKeys = NO_CALLBACK_KEYS,
     deckLocale: deckLocaleOf = DEFAULT_DECK_LOCALE,
   } = shellExtensions;
-  // Only a host that registered `deckLocale` names the document's audience;
+  // Only a host that registered `documentAudience` names the document's audience;
   // without one the Elemente tab keeps following the user's locale.
-  const documentAudience = shellExtensions.deckLocale?.(pages) ?? null;
+  const documentAudience = shellExtensions.documentAudience?.(pages) ?? null;
 
   // Template-field callbacks dual-write into the page's `state` map so other
   // clients (useYjsPageStateSync), page duplication and reloads see the

@@ -982,6 +982,7 @@ interface EditorShellExtensions {
   pagePicker?: EditorPagePicker | undefined
   pageCallbackKeys?: ((configId: string) => readonly string[]) | undefined
   deckLocale?: ((pages: readonly HeterogeneousPage[]) => "de-DE" | "de-AT") | undefined
+  documentAudience?: ((pages: readonly HeterogeneousPage[]) => AssetAudience | null) | undefined
 }
 interface EditorShellProviderProps {
   pages: readonly { configId: string; }[]
@@ -6642,6 +6643,7 @@ interface EditorShellExtensions {  // from packages/editor/src/components/Canvas
   pagePicker?: EditorPagePicker | undefined
   pageCallbackKeys?: ((configId: string) => readonly string[]) | undefined
   deckLocale?: ((pages: readonly HeterogeneousPage[]) => "de-DE" | "de-AT") | undefined
+  documentAudience?: ((pages: readonly HeterogeneousPage[]) => AssetAudience | null) | undefined
 }
 interface EditorShellProviderProps {  // from packages/editor/src/components/CanvasEditor/editorShell.ts (type-only export)
   pages: readonly { configId: string; }[]

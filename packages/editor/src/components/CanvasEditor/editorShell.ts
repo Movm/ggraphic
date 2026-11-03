@@ -3,6 +3,7 @@ import type { CanvasEditorServices, CanvasSpecEditBridge } from '../../CanvasEdi
 import type { GenericCanvasRef } from '../GenericCanvas.js';
 import type { PageInheritance } from '../../configs/pageInheritance.js';
 import type { HeterogeneousPage } from '../../configs/types.js';
+import type { AssetAudience } from '../../utils/canvasAssets.js';
 import type { SidebarTab, SidebarTabId } from '../../sidebar/types.js';
 import type React from 'react';
 
@@ -105,6 +106,11 @@ export interface EditorShellExtensions {
   pageCallbackKeys?: (configId: string) => readonly string[];
   /** Whose house fonts a slide deck carries (the PowerPoint font hint). Default `de-DE`. */
   deckLocale?: (pages: readonly HeterogeneousPage[]) => 'de-DE' | 'de-AT';
+  /**
+   * Whose assets (logos, marks) the Elemente tab offers for this document; `null` = the
+   * user's locale. Default: the user's locale.
+   */
+  documentAudience?: (pages: readonly HeterogeneousPage[]) => AssetAudience | null;
 }
 
 /**
