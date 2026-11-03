@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { describe, expect, it } from 'vitest';
 
-import { applyHistoryRebase, planHistoryRebase } from './rebaseHistoryState.js';
+import { applyHistoryRebase, applyOwnWrite, planHistoryRebase } from './rebaseHistoryState.js';
 
 const rebaseHistoryState = (
   entry: Record<string, unknown>,
@@ -140,5 +140,37 @@ describe('rebaseHistoryState', () => {
 
   it('plans nothing when only references changed', () => {
     expect(planHistoryRebase({ shapes: [el('a', 1)] }, { shapes: [el('a', 1)] })).toEqual([]);
+  });
+});
+
+describe('applyOwnWrite', () => {
+  it('reaches only the entries that still hold the replaced value', () => {
+    const prev = { texts: [{ id: 't', fontSize: 62 }], fill: 'band' };
+    const next = { texts: [{ id: 't', fontSize: 80 }], fill: 'cd' };
+    const older = { texts: [{ id: 't', fontSize: 60 }], fill: 'band' };
+    expect(applyOwnWrite(prev, prev, next)).toEqual(next);
+    expect(applyOwnWrite(older, prev, next)).toEqual({
+      texts: [{ id: 't', fontSize: 60 }],
+      fill: 'cd',
+    });
+  });
+
+  it('returns every entry to where it was when its inverse follows', () => {
+    const prev = { texts: [{ id: 't', fontSize: 62 }], fill: 'band', extra: 1 };
+    const next = { texts: [{ id: 't', fontSize: 80 }], fill: 'cd' };
+    const entries = [{ texts: [{ id: 't', fontSize: 60 }], fill: 'band', extra: 1 }, prev];
+    const there = entries.map((e) => applyOwnWrite(e, prev, next));
+    expect(there.map((e) => applyOwnWrite(e, next, prev))).toEqual(entries);
+  });
+
+  it('sets a key the write adds only where the entry lacks it too', () => {
+    expect(applyOwnWrite({}, {}, { a: 1 })).toEqual({ a: 1 });
+    const own = { a: 5 };
+    expect(applyOwnWrite(own, {}, { a: 1 })).toBe(own);
+  });
+
+  it('returns the entry itself when the write does not reach it', () => {
+    const entry = { fill: 'own' };
+    expect(applyOwnWrite(entry, { fill: 'band' }, { fill: 'cd' })).toBe(entry);
   });
 });

@@ -245,3 +245,26 @@ export function applyHistoryRebase(entry: Rec, plan: HistoryRebase): Rec {
   }
   return result ?? entry;
 }
+
+/**
+ * `entry` with an own write from another stack applied (a deck op, its undo
+ * by the page-level Y.UndoManager, a version lift): per key, only where the
+ * entry still holds the value the write replaced. An entry that holds another
+ * value predates an own step, and that step stays undoable. Applied twice,
+ * once for the write and once for its exact inverse, every entry is back
+ * where it was. `entry` itself when the write does not reach it.
+ */
+export function applyOwnWrite(entry: Rec, prev: Rec, next: Rec): Rec {
+  let result: Rec | null = null;
+  for (const key of new Set([...Object.keys(prev), ...Object.keys(next)])) {
+    if (jsonEqual(prev[key], next[key])) continue;
+    const holdsPrev = Object.hasOwn(prev, key)
+      ? Object.hasOwn(entry, key) && jsonEqual(entry[key], prev[key])
+      : !Object.hasOwn(entry, key);
+    if (!holdsPrev) continue;
+    result ??= { ...entry };
+    if (Object.hasOwn(next, key)) result[key] = next[key];
+    else delete result[key];
+  }
+  return result ?? entry;
+}

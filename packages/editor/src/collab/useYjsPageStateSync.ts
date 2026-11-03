@@ -31,7 +31,10 @@ import { PAGES_STATE_ORIGIN } from './useYjsPages.js';
  *
  * Own writes with another origin (a deck op, a deck undo's restore, a version
  * lift) reach the canvas like remote ones: another stack owns them or they
- * are not undoable, so the canvas history takes them in.
+ * are not undoable, so the canvas history takes them in. They are reported
+ * with `own: true` (a local Yjs transaction): the history takes them in only
+ * where it still holds the value they replaced, so undoing a deck op leaves
+ * the steps before it undoable.
  */
 /** Own values kept per key, to name the one a remote write started from. */
 const OWN_VALUES_PER_KEY = 32;
@@ -39,7 +42,11 @@ const OWN_VALUES_PER_KEY = 32;
 export function useYjsPageStateSync(options: {
   pageYMap: Y.Map<unknown> | null;
   isSynced: boolean;
-  onRemoteState: (partial: Record<string, unknown>, base: Record<string, unknown>) => void;
+  onRemoteState: (
+    partial: Record<string, unknown>,
+    base: Record<string, unknown>,
+    own: boolean
+  ) => void;
 }): void {
   const { pageYMap, isSynced, onRemoteState } = options;
   const onRemoteStateRef = useRef(onRemoteState);
@@ -114,7 +121,8 @@ export function useYjsPageStateSync(options: {
           track(stateY, key, change.oldValue);
         }
       }
-      if (Object.keys(partial).length > 0) onRemoteStateRef.current(partial, base);
+      if (Object.keys(partial).length > 0)
+        onRemoteStateRef.current(partial, base, events[0]!.transaction.local);
     };
 
     pageYMap.observeDeep(handler);

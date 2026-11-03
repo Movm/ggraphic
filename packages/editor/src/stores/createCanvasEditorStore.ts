@@ -20,7 +20,11 @@ import { createStore } from 'zustand/vanilla';
 
 import { activeBrand } from '../brand/brandRegistry.js';
 import { nextHistoryStamp } from '../utils/historyStamp.js';
-import { applyHistoryRebase, planHistoryRebase } from '../utils/rebaseHistoryState.js';
+import {
+  applyHistoryRebase,
+  applyOwnWrite,
+  planHistoryRebase,
+} from '../utils/rebaseHistoryState.js';
 
 import { DEFAULT_FORMAT_ID, getCanvasFormatOrDefault } from '../formats/index.js';
 
@@ -105,9 +109,12 @@ export interface CanvasEditorActions<
   /**
    * Another client changed the page from `prev` to `next`: write that change
    * into every entry, so undo and redo only ever revert this client's own
-   * steps (#160).
+   * steps (#160). With `own`, the write is this client's own from another
+   * stack (a deck op or its undo): it reaches only the entries that still hold
+   * the replaced value, so its inverse restores every entry and the steps
+   * before it stay undoable.
    */
-  rebaseHistory: (prev: TComponentState, next: TComponentState) => void;
+  rebaseHistory: (prev: TComponentState, next: TComponentState, own?: boolean) => void;
   undo: () => void;
   redo: () => void;
   /** Merkt den aktuellen Verlaufsstand als Beginn einer Sitzung; `null` ohne Verlauf. */
@@ -332,12 +339,16 @@ export function createCanvasEditorStore<
           }
         }),
 
-      rebaseHistory: (prev, next) => {
-        const plan = planHistoryRebase(prev, next);
-        if (plan.length === 0) return;
+      rebaseHistory: (prev, next, own = false) => {
+        const plan = own ? null : planHistoryRebase(prev, next);
+        if (plan?.length === 0) return;
         const { history } = get();
         const rebased = history.map((entry) =>
-          entry.componentState ? applyHistoryRebase(entry.componentState, plan) : null
+          !entry.componentState
+            ? null
+            : plan
+              ? applyHistoryRebase(entry.componentState, plan)
+              : applyOwnWrite(entry.componentState, prev, next)
         );
         if (rebased.every((componentState, i) => componentState === history[i].componentState))
           return;
