@@ -1,6 +1,6 @@
 {
   "name": "@ggraphic/studio",
-  "version": "0.1.0-alpha.4",
+  "version": "0.1.0-alpha.5",
   "private": true,
   "description": "ggraphic Studio web app: project list and the full editor",
   "license": "AGPL-3.0-only",
