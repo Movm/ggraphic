@@ -349,45 +349,51 @@ export function createIllustrationActions<
 // ADDITIONAL TEXT ACTIONS
 // ============================================================================
 
+/** The page width the text presets are set for; 80 % of it is a preset's width. */
+const TEXT_PRESET_PAGE_WIDTH = 1080;
+const TEXT_PRESET_WIDTH = TEXT_PRESET_PAGE_WIDTH * 0.8;
+
 // Read per call, not at import: the brand packs are registered after the modules load.
 // Every text is born bound to the brand font its family stands for, so a brand change takes it along.
 function additionalTextDefaults(brand: BrandPack) {
   const { fonts } = brand;
   return {
     header: {
-      fontSize: 48,
+      fontSize: 120,
       fontFamily: `${fonts.headline}, Arial, sans-serif`,
       bind: { fontFamily: { ref: 'font.headline', value: fonts.headline } },
       fontStyle: 'normal' as const,
-      width: 400,
+      width: TEXT_PRESET_WIDTH,
     },
     subheader: {
-      fontSize: 36,
+      fontSize: 72,
       fontFamily: `${fonts.headline}, Arial, sans-serif`,
       bind: { fontFamily: { ref: 'font.headline', value: fonts.headline } },
       fontStyle: 'normal' as const,
-      width: 400,
+      width: TEXT_PRESET_WIDTH,
     },
     body: {
-      fontSize: 32,
+      fontSize: 56,
       fontFamily: `${fonts.body}, Arial, sans-serif`,
       bind: { fontFamily: { ref: 'font.body', value: fonts.body } },
-      width: 400,
+      width: TEXT_PRESET_WIDTH,
     },
   } satisfies Record<string, Partial<AdditionalText>>;
 }
 
 /**
- * Voreinstellung einer Textart, mit `insertScale` vergrößert; zentriert über
- * der Seitenmitte. Bei 1 genau die Sharepic-Werte.
+ * Voreinstellung einer Textart, mit der Seitenbreite skaliert — auf jedem
+ * Format, nicht nur auf Folien (ein Text, der kleiner startet als die
+ * Überschriften der Vorlagen, wirkt wie nicht eingefügt); zentriert über der
+ * Seitenmitte. Bei 1080 px genau die Werte oben.
  */
 function textPreset(
   type: keyof ReturnType<typeof additionalTextDefaults>,
   canvasWidth: number,
-  s: number,
   brand: BrandPack
 ) {
   const preset = additionalTextDefaults(brand)[type];
+  const s = canvasWidth / TEXT_PRESET_PAGE_WIDTH;
   const width = preset.width * s;
   return {
     ...preset,
@@ -405,7 +411,6 @@ export function createAdditionalTextActions<TState extends { additionalTexts: Ad
   canvasWidth: number,
   canvasHeight: number,
   fontColor: string = '#ffffff',
-  insertScale = 1,
   /** The pack of the page's document; the active brand by default. */
   brand: BrandPack = activeBrand()
 ) {
@@ -416,7 +421,7 @@ export function createAdditionalTextActions<TState extends { additionalTexts: Ad
         text: messages().sidebar.text.defaultHeader,
         type: 'header',
         y: canvasHeight / 3,
-        ...textPreset('header', canvasWidth, insertScale, brand),
+        ...textPreset('header', canvasWidth, brand),
         fill: fontColor,
       };
       setState((prev) => ({
@@ -431,7 +436,7 @@ export function createAdditionalTextActions<TState extends { additionalTexts: Ad
         text: messages().sidebar.text.defaultSubheader,
         type: 'subheader',
         y: canvasHeight * 0.4,
-        ...textPreset('subheader', canvasWidth, insertScale, brand),
+        ...textPreset('subheader', canvasWidth, brand),
         fill: fontColor,
       };
       setState((prev) => ({
@@ -446,7 +451,7 @@ export function createAdditionalTextActions<TState extends { additionalTexts: Ad
         text: messages().sidebar.text.defaultBody,
         type: 'body',
         y: canvasHeight / 2,
-        ...textPreset('body', canvasWidth, insertScale, brand),
+        ...textPreset('body', canvasWidth, brand),
         fill: fontColor,
       };
       setState((prev) => ({
@@ -465,7 +470,7 @@ export function createAdditionalTextActions<TState extends { additionalTexts: Ad
         text: content,
         type: 'body',
         y: canvasHeight / 2,
-        ...textPreset('body', canvasWidth, insertScale, brand),
+        ...textPreset('body', canvasWidth, brand),
         fill: fontColor,
       };
       setState((prev) => ({
@@ -817,7 +822,7 @@ export function createElementActions<TState extends BaseCanvasState>(
   canvasHeight: number,
   fontColor?: string,
   chartColors?: readonly string[],
-  /** Startgröße neuer Elemente (`insertScaleFor`); 1 = Sharepic-Werte. */
+  /** Startgröße neuer Elemente außer Text (`insertScaleFor`); 1 = Sharepic-Werte. Text wächst selbst mit der Seitenbreite. */
   insertScale = 1,
   /**
    * The pack of the page's document (`FullCanvasConfig.brand`): what new elements take their
@@ -878,7 +883,6 @@ export function createElementActions<TState extends BaseCanvasState>(
       canvasWidth,
       canvasHeight,
       fontColor,
-      insertScale,
       brand
     ),
     ...createPillBadgeActions(getState, setState, saveToHistory, debouncedSaveToHistory, brand),
