@@ -97,6 +97,7 @@
     "templates-open",
     "text-format-and-labels",
     "text-format-on-select",
+    "text-insert-size-follows-width",
     "ui-kit",
     "ui-menu",
     "upload-swap-not-undoable"
