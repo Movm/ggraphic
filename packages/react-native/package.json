@@ -1,6 +1,6 @@
 {
   "name": "@ggraphic/react-native",
-  "version": "0.0.1-alpha.1",
+  "version": "0.0.1-alpha.2",
   "private": true,
   "description": "The ggraphic editor in a React Native / Expo app, as an Expo DOM component with a typed bridge.",
   "license": "AGPL-3.0-only",
