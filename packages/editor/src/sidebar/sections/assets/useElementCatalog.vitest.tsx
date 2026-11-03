@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { CanvasEditorProvider } from '../../../CanvasEditorProvider.js';
 import { registerAssetCatalog } from '../../../utils/canvasAssets.js';
+import { DocumentAudienceContext } from './assetAudience.js';
 
 import { useElementCatalog } from './useElementCatalog.js';
 
@@ -48,5 +49,44 @@ describe('the Elements categories of a host without curated stickers and emoji',
     const emoji = catalogOf({}).find((c) => c.id === 'emoji');
     const { container } = render(<>{emoji?.cover}</>);
     expect(container.querySelector('img')?.getAttribute('src')).toBe('/emoji/emoji_u1f600.svg');
+  });
+});
+
+describe('the audience of the Marke logos', () => {
+  const LOGOS = [
+    { id: 'logo-de', audience: 'de-DE' },
+    { id: 'logo-at', audience: 'de-AT' },
+  ].map((a) => ({ ...a, src: `/${a.id}.svg`, label: a.id, category: 'decoration', tags: [] }));
+  const brandIds = (documentAudience: 'de-DE' | 'de-AT' | null, userLocale: 'de-DE' | 'de-AT') => {
+    registerAssetCatalog({
+      assets: LOGOS as never,
+      isInstanceSrc: () => false,
+    });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>
+        <CanvasEditorProvider services={{ userLocale }}>
+          <DocumentAudienceContext.Provider value={documentAudience}>
+            {children}
+          </DocumentAudienceContext.Provider>
+        </CanvasEditorProvider>
+      </QueryClientProvider>
+    );
+    const { result } = renderHook(
+      () => useElementCatalog({ onAddAsset: () => undefined } as never, LAZY),
+      { wrapper }
+    );
+    return result.current;
+  };
+
+  it('uses the document audience over the user locale', () => {
+    const marke = brandIds('de-AT', 'de-DE').find((c) => c.id === 'marke');
+    expect(JSON.stringify(marke?.items.map((i) => i.key))).toContain('logo-at');
+    expect(JSON.stringify(marke?.items.map((i) => i.key))).not.toContain('logo-de');
+  });
+
+  it('falls back to the user locale without a document audience', () => {
+    const marke = brandIds(null, 'de-DE').find((c) => c.id === 'marke');
+    expect(JSON.stringify(marke?.items.map((i) => i.key))).toContain('logo-de');
   });
 });

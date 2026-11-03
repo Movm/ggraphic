@@ -4,9 +4,9 @@ import { CustomColorSwatch } from '../../components/CustomColorSwatch.js';
 import { useMessages } from '../../i18n/messages.js';
 import { Switch } from '../../ui/switch.js';
 import {
-  defaultTint,
   duotoneLook,
   EMPTY_ADJUSTMENTS,
+  fallbackTintOf,
   IMAGE_PRESETS,
   withoutDuotone,
   type ImagePreset,
@@ -54,6 +54,7 @@ export function ImageAdjustSection({
 }: ImageAdjustSectionProps) {
   const brand = useDocumentBrand();
   const { tints, shadows } = brand.effects;
+  const fallbackTint = fallbackTintOf(brand);
   const t = useMessages();
   const img = selectedImage;
   const adj: ImageAdjustments | null = img ?? backgroundPhoto?.adjustments ?? null;
@@ -180,12 +181,12 @@ export function ImageAdjustSection({
               onClick={() => setTint({ tint: c, tintStrength: adj.tintStrength || 1 })}
               title={colorName(c, brand)}
               aria-label={t.sidebar.imageAdjust.tintIn(colorName(c, brand))}
-              aria-pressed={(adj.tint ?? defaultTint()) === c && !!adj.tintStrength}
+              aria-pressed={(adj.tint ?? fallbackTint) === c && !!adj.tintStrength}
               className="size-6 rounded-full border border-black/10 transition-transform hover:scale-110"
               style={{
                 backgroundColor: c,
                 outline:
-                  (adj.tint ?? defaultTint()) === c && adj.tintStrength
+                  (adj.tint ?? fallbackTint) === c && adj.tintStrength
                     ? '2px solid var(--editor-accent)'
                     : 'none',
                 outlineOffset: '2px',
@@ -202,7 +203,9 @@ export function ImageAdjustSection({
         <SidebarSlider
           label={t.sidebar.imageAdjust.intensity}
           value={adj.tintStrength ?? 0}
-          onValueChange={(v) => set({ tintStrength: v })}
+          onValueChange={(v) =>
+            set({ tintStrength: v, ...(adj.tint ? {} : { tint: fallbackTint }) })
+          }
           min={0}
           max={1}
           step={0.05}
