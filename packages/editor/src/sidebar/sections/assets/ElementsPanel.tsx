@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
+import { useAssetAudience } from './assetAudience.js';
 import { useDebounce } from '../../../hooks/useDebounce.js';
 import { messages, useMessages } from '../../../i18n/messages.js';
 import { registeredAssetCatalog } from '../../../utils/canvasAssets.js';
@@ -145,7 +146,8 @@ function BlockGroups({
 export function ElementsPanel(props: ExtendedAssetsSectionProps) {
   const t = useMessages();
   const isMobile = useIsCanvasMobile();
-  const { userLocale = 'de-DE', searchUnsplashImages, iconSearch } = useCanvasEditorServices();
+  const { searchUnsplashImages, iconSearch } = useCanvasEditorServices();
+  const audience = useAssetAudience();
   // Opened for a selected frame or illustration ("Mehr" on the phone), it starts in that category.
   const [cat, setCat] = useState<CategoryId | null>(() =>
     props.selectedFrameId ? 'rahmen' : props.selectedIllustrationId ? 'illustrationen' : null
@@ -311,7 +313,7 @@ export function ElementsPanel(props: ExtendedAssetsSectionProps) {
   const placeholder = category
     ? t.sidebar.elements.searchIn(category.label)
     : t.sidebar.elements.searchElements;
-  const noResultsHint = panelHost?.noResultsHint?.(userLocale) ?? null;
+  const noResultsHint = panelHost?.noResultsHint?.(audience) ?? null;
   const canDrag = !isMobile;
   const selectedIllustration =
     cat === 'illustrationen' && props.selectedIllustrationId

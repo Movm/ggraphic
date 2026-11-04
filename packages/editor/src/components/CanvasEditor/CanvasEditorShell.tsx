@@ -32,6 +32,7 @@ import { useCanvasEditorServices } from '../../CanvasEditorProvider.js';
 import { messages, useMessages } from '../../i18n/messages.js';
 import { provideCoreSidebar } from '../../sidebar/coreSidebar.js';
 import { CORE_SIDEBAR_PARTS } from '../../sidebar/coreSidebarParts.js';
+import { DocumentAudienceContext } from '../../sidebar/sections/assets/assetAudience.js';
 import { usePreloadSections } from '../../sidebar/sections/usePreloadSections.js';
 import { pagePersistedStateKeys } from '../../collab/pageElementStateKeys.js';
 import { serializeDeck } from '../../collab/pagesDoc.js';
@@ -268,13 +269,17 @@ function CanvasEditorInner({
   // Store loaded configs for rendering
   const loadedConfigs = useLoadedConfigs({ pages, getConfigForPage });
 
+  const shellExtensions = registeredEditorShell();
   const {
     tabs: editorTabs = NO_EDITOR_TABS,
     Provider: ShellProvider = NoShellProvider,
     pagePicker,
     pageCallbackKeys = NO_CALLBACK_KEYS,
     deckLocale: deckLocaleOf = DEFAULT_DECK_LOCALE,
-  } = registeredEditorShell();
+  } = shellExtensions;
+  // Only a host that registered `documentAudience` names the document's audience;
+  // without one the Elemente tab keeps following the user's locale.
+  const documentAudience = shellExtensions.documentAudience?.(pages) ?? null;
 
   // Template-field callbacks dual-write into the page's `state` map so other
   // clients (useYjsPageStateSync), page duplication and reloads see the
@@ -1278,13 +1283,16 @@ function CanvasEditorInner({
 
     return (
       <Suspense fallback={sidebarLoadingFallback}>
-        <SectionComponent {...sectionProps} />
+        <DocumentAudienceContext.Provider value={documentAudience}>
+          <SectionComponent {...sectionProps} />
+        </DocumentAudienceContext.Provider>
       </Suspense>
     );
   }, [
     activeTab,
     sectionSource,
     activeConfig,
+    documentAudience,
     shareProps,
     specEdit,
     activeEditorTab,
