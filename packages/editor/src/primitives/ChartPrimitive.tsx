@@ -20,12 +20,14 @@ import { markTrustedSvgImage } from '../export/scene/trustedSvgImages.js';
 import { useBoxSnap, type SnapProps } from '../hooks/useBoxSnap.js';
 import {
   CHART_INK_DARK,
+  chartColors,
   chartInk,
   chartLegendPosition,
   chartSeries,
   chartSeriesOutlines,
   type ChartInstance,
 } from '../utils/chartUtils.js';
+import { isSafeColor } from '../utils/externalIcons.js';
 import { ELEMENT_TRANSFORMER } from '../utils/orientation.js';
 import { useTrackPendingImage } from '../utils/pendingImages.js';
 
@@ -132,6 +134,18 @@ function layoutLegend(
   };
 }
 
+/**
+ * A series colour that can be written into the chart SVG. The colours are document data and the
+ * SVG is inlined into exports as it is, so `url(https://…)` and the like must not get through: the
+ * brand's colour of the same slot stands in for a colour `isSafeColor` rejects.
+ */
+function safeSeriesColor(color: string, index: number): string {
+  if (isSafeColor(color)) return color;
+  const brand = chartColors();
+  const fallback = brand[index % brand.length];
+  return fallback !== undefined && isSafeColor(fallback) ? fallback : CHART_INK_DARK;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function buildChartElement(recharts: any, chart: ChartInstance) {
   const {
@@ -149,13 +163,14 @@ export function buildChartElement(recharts: any, chart: ChartInstance) {
     CartesianGrid,
     LabelList,
   } = recharts;
-  const { width, height, data, colors, chartType, showGrid, showLegend, showValues } = chart;
+  const { width, height, data, chartType, showGrid, showLegend, showValues } = chart;
+  const colors = chart.colors.map(safeSeriesColor);
   const color = (i: number) => colors[i % colors.length];
   // Auf dunklem Grund (dunkle Folie) stehen Achsen, Legende und Werte weiß.
   const ink = chartInk(chart);
   const tick = { ...AXIS_TICK, fill: ink };
   const valueLabel = { ...VALUE_LABEL, fill: ink };
-  const outlines = chartSeriesOutlines(chart);
+  const outlines = chartSeriesOutlines({ ...chart, colors });
   const outline = (i: number) => {
     const stroke = outlines[i % colors.length];
     return stroke ? { stroke, strokeWidth: OUTLINE_PX / chart.scale } : {};
