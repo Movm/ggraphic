@@ -5,3 +5,4 @@ CODE_OF_CONDUCT.md
 pnpm-lock.yaml
 packages/editor/src/templates/fontWidths.generated.ts
 packages/*/api-report.md
+packages/editor/src/export/svg/__golden__/
