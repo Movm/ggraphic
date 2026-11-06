@@ -139,6 +139,8 @@ export function glyphOutline(
   const y = (fy: number) => 0 - fy * scale;
   return Array.from(text, (char) => {
     const codePoint = char.codePointAt(0) ?? 0;
+    // A soft hyphen is not drawn by a canvas (it only shows at a line break) and is 0 wide.
+    if (codePoint === 0xad) return { advance: 0, path: [] };
     // The shaped glyph, as the browser draws it; one that shapes into several (a decomposition)
     // keeps the glyph of the cmap, which has the whole character in one outline.
     const shapedGlyphs = glyphsFor(font, codePoint);

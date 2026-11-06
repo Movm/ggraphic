@@ -190,6 +190,35 @@ describe('text', () => {
     expect(pdf.ofType('Image')).toHaveLength(0);
   });
 
+  it('a soft hyphen the canvas does not draw neither advances the pen nor writes a glyph', async () => {
+    // Most fonts map U+00AD to a hyphen glyph; this one's latin subset does not, so give it one.
+    const real = set.files[0]!.font;
+    const hyphen = real.glyphForCodePoint(0x2d);
+    const font = Object.create(real) as typeof real;
+    font.hasGlyphForCodePoint = (cp) => cp === 0xad || real.hasGlyphForCodePoint(cp);
+    font.glyphForCodePoint = (cp) => (cp === 0xad ? hyphen : real.glyphForCodePoint(cp));
+    font.layout = (value) => (value === '\u00ad' ? { glyphs: [hyphen] } : real.layout(value));
+    const file = { ...set.files[0]!, font };
+    const withHyphen = new Map([
+      [FACE_KEY, { face: set.face, files: [file], fileFor: () => file }],
+    ]);
+    // As measured in a browser: the soft hyphen is 0 wide, the next letter starts where it does.
+    const xs = xsOf('Worttrennung');
+    xs.splice(4, 0, xs[4]!);
+
+    const { bytes, pdf } = await write(
+      sceneOf(item('a', null, textOp('Wort\u00adtrennung', { xs }))),
+      { fonts: withHyphen }
+    );
+
+    expect((await extractText(bytes)).join('')).toBe('Worttrennung');
+    // 12 glyphs of "Worttrennung", 4 hex digits each: no thirteenth for the hyphen.
+    const hex = [...pdf.content(0).matchAll(/<([0-9a-f]+)>/g)].map((m) => m[1]).join('');
+    expect(hex.length / 4).toBe(12);
+    // And no shift to undo an advance: the letters follow each other.
+    expect(pdf.content(0)).not.toMatch(/\] TJ[\s\S]*\] TJ/);
+  });
+
   it('fonts are embedded as subsets', async () => {
     const { pdf } = await write(sceneOf(item('a', null, text('Hallo Welt'))));
     const descriptors = pdf.ofType('FontDescriptor');

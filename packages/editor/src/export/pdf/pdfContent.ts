@@ -107,6 +107,7 @@ const CAP = { butt: 0, round: 1, square: 2 } as const;
 const JOIN = { miter: 0, round: 1, bevel: 2 } as const;
 
 /** Nothing to see in a run of these: no island for a zero-width space. */
+const SOFT_HYPHEN = 0xad;
 const INVISIBLE = /^[\p{Cc}\p{Cf}\p{Zs}]*$/u;
 
 const rgb = (hex: string): string =>
@@ -388,6 +389,9 @@ export class ContentWriter {
     const parts: (string | number)[] = [];
     Array.from(run.text).forEach((char, index) => {
       const codePoint = char.codePointAt(0) ?? 0;
+      // A soft hyphen is not drawn and 0 wide in a canvas (it only shows at a line break, which
+      // the recorded text never has): no glyph, and the pen stays where it is.
+      if (codePoint === SOFT_HYPHEN) return;
       const x = run.xs[index];
       if (index > 0 && x !== undefined) {
         const shift = Number(formatNumber(((pen - x) * 1000) / size, 2));

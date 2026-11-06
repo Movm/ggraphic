@@ -116,6 +116,17 @@ describe('the glyph of a code point on its own', () => {
 });
 
 describe('glyphOutline', () => {
+  it('draws nothing and advances nothing for a soft hyphen', async () => {
+    const { latin } = await latinOnly();
+    expect(
+      glyphOutline(latin, 'a\u00adb', 100).map((g) => [g.advance === 0, g.path.length])
+    ).toEqual([
+      [false, expect.any(Number)],
+      [true, 0],
+      [false, expect.any(Number)],
+    ]);
+  });
+
   it("'H' at 100px has an advance of advanceWidth*100/unitsPerEm and a closed path", async () => {
     const { latin } = await latinOnly();
     const [h] = glyphOutline(latin, 'H', 100);
