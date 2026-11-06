@@ -127,7 +127,7 @@ const bitmap = (width = 8, height = 8): SceneImageSource => ({
   height,
 });
 
-const GRADIENT_ICON = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 24 24" width="24" height="24" fill="none"><defs><linearGradient id="a"><stop offset="0" stop-color="#ff0000"/><stop offset="1" stop-color="#0000ff"/></linearGradient><clipPath id="c"><rect width="24" height="24"/></clipPath></defs><rect width="24" height="24" fill="url(#a)" clip-path="url(#c)"/><use xlink:href="#a"/><use href="#c"/><style>#a { opacity: 1 } .x { fill: #c; stroke: url(#a) }</style></svg>`;
+const GRADIENT_ICON = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 24 24" width="24" height="24" fill="none"><defs><linearGradient id="a"><stop offset="0" stop-color="#ff0000"/><stop offset="1" stop-color="#0000ff"/></linearGradient><clipPath id="c"><rect width="24" height="24"/></clipPath></defs><rect class="x y" width="24" height="24" fill="url(#a)" clip-path="url(#c)"/><use xlink:href="#a"/><use href="#c"/><style>#a { opacity: 1 } .x { fill: #c; stroke: url(#a) }</style></svg>`;
 
 function svgImage(
   markup: string,
@@ -544,6 +544,7 @@ describe('inlined svg', () => {
       expect(svg).toContain(` href="#${prefix}c"`);
       expect(svg).toContain(`#${prefix}a { opacity: 1 }`);
       expect(svg).toContain(`stroke: url(#${prefix}a)`);
+      expect(svg).toContain(`class="${prefix}x ${prefix}y"`);
     }
     // A hex colour in a declaration is not an id.
     expect(svg).toContain('fill: #c;');
@@ -629,6 +630,134 @@ describe('inlineSvg', () => {
       'p-'
     );
     expect(result!.inner).toBe('<text> a  b </text>');
+  });
+});
+
+describe('css of inlined svg', () => {
+  const NS = 'xmlns="http://www.w3.org/2000/svg"';
+  const sheet = (css: string, body = '<path class="cls-1" d="M0 0"/>', attrs = '') =>
+    `<svg ${NS} viewBox="0 0 10 10"${attrs}><style>${css}</style>${body}</svg>`;
+  /** The style sheet the writer puts for `css`, decoded; null when the svg is not inlined. */
+  const scoped = (css: string, body?: string, attrs?: string): string | null => {
+    const inlined = inlineSvg(sheet(css, body, attrs), 'i0-');
+    if (!inlined) return null;
+    const doc = new DOMParser().parseFromString(
+      `<svg ${NS}>${inlined.inner}</svg>`,
+      'image/svg+xml'
+    );
+    return doc.querySelector('style')!.textContent;
+  };
+
+  it('two inlined svgs that both define .cls-1 each keep their own class and rule', () => {
+    const red = sheet('.cls-1 { fill: #ff0000 }');
+    const blue = sheet('.cls-1 { fill: #0000ff }');
+    const { svg } = run(sceneOf(item('s', null, svgImage(red), svgImage(blue, { dx: 80 }))));
+    const root = parse(svg);
+    const instances = Array.from(root.querySelectorAll('g[id] > svg'));
+    expect(instances.map((instance) => instance.getAttribute('id'))).toEqual([
+      'i0-root',
+      'i1-root',
+    ]);
+    instances.forEach((instance, n) => {
+      expect(instance.querySelector('path')!.getAttribute('class')).toBe(`i${n}-cls-1`);
+    });
+    const styles = Array.from(root.querySelectorAll('style'), (style) => style.textContent);
+    expect(styles).toEqual([
+      '#i0-root .i0-cls-1 { fill: #ff0000 }',
+      '#i1-root .i1-cls-1 { fill: #0000ff }',
+    ]);
+    expect(svg).not.toContain('.cls-1');
+    expect(svg).not.toContain('"cls-1"');
+  });
+
+  it('scopes a type selector under the root id, and the svg selector to the root itself', () => {
+    expect(
+      scoped('path { fill: red } svg { opacity: .5 } svg:hover { opacity: 1 } * { stroke: none }')
+    ).toBe(
+      '#i0-root path { fill: red } #i0-root { opacity: .5 } #i0-root:hover { opacity: 1 } #i0-root * { stroke: none }'
+    );
+  });
+
+  it('rewrites class selectors of every shape and each member of a list', () => {
+    expect(scoped('.a.b:hover, .a > .b path, g .c:nth-child(2n+1)::after { fill: red }')).toBe(
+      '#i0-root .i0-a.i0-b:hover, #i0-root .i0-a > .i0-b path, #i0-root g .i0-c:nth-child(2n+1)::after { fill: red }'
+    );
+    expect(scoped('[fill="none"] { stroke: red }')).toBe('#i0-root [fill="none"] { stroke: red }');
+  });
+
+  it('rewrites each class of a class attribute', () => {
+    const inlined = inlineSvg(sheet('', '<g class="a  b"><path class="c"/></g>'), 'i3-');
+    expect(inlined!.inner).toContain('<g class="i3-a i3-b"><path class="i3-c"/></g>');
+  });
+
+  it('keeps the specificity of the rules among themselves by scoping the id selectors too', () => {
+    // `#r path` names the root: it stays one id deep, as every other rule is made to be.
+    expect(scoped('#r path { fill: red } #g { fill: blue }', undefined, ' id="r"')).toBe(
+      '#i0-r path { fill: red } #i0-r #i0-g { fill: blue }'
+    );
+  });
+
+  it('gives a root without an id one no element of the markup has', () => {
+    const inlined = inlineSvg(sheet('path { fill: red }', '<g id="root"/>'), 'i0-')!;
+    expect(inlined.attrs.id).toBe('i0-root_');
+    expect(inlined.inner).toContain('<g id="i0-root"/>');
+    expect(inlined.inner).toContain('#i0-root_ path');
+  });
+
+  it('keeps @font-face, prefixes @keyframes and what uses them, and recurses into @media', () => {
+    const css =
+      '@font-face { font-family: X; src: url(a.woff2) } ' +
+      '@keyframes spin { from { opacity: 0 } to { opacity: 1 } } ' +
+      '.a { animation: spin 1s linear; animation-name: spin } ' +
+      '@media (min-width: 10px) { .a { fill: red } }';
+    expect(scoped(css)).toBe(
+      '@font-face { font-family: X; src: url(a.woff2) } ' +
+        '@keyframes i0-spin { from { opacity: 0 } to { opacity: 1 } } ' +
+        '#i0-root .i0-a { animation: i0-spin 1s linear; animation-name: i0-spin } ' +
+        '@media (min-width: 10px) { #i0-root .i0-a { fill: red } }'
+    );
+    const attribute = inlineSvg(
+      sheet(css, '<path style="animation: spin 1s; fill: url(#g)"/>'),
+      'i0-'
+    );
+    expect(attribute!.inner).toContain('style="animation: i0-spin 1s; fill: url(#i0-g)"');
+  });
+
+  it('does not inline css it cannot scope safely', () => {
+    for (const css of [
+      '[class~="x"] { fill: red }',
+      '[id=x] { fill: red }',
+      '.a:is(.b, .c) { fill: red }',
+      ':where(.a) { fill: red }',
+      '.a:not(.b) { fill: red }',
+      ':root { fill: red }',
+      'li:nth-child(2n of .a) { fill: red }',
+      '.a\\:b { fill: red }',
+      '.a { .b { fill: red } }',
+      '@import url(x.css);',
+      '@page { margin: 0 }',
+      '> path { fill: red }',
+    ]) {
+      expect(scoped(css), css).toBeNull();
+    }
+    // The nearby shapes that are fine.
+    for (const css of ['path:nth-child(2n+1) { fill: red }', 'a[href^="http"] { fill: red }']) {
+      expect(scoped(css), css).not.toBeNull();
+    }
+  });
+
+  it('embeds an svg whose css cannot be scoped as an image, and does not count it as inlined', () => {
+    const unsafe = sheet(':is(.a, .b) { fill: red }');
+    const { svg } = run(
+      sceneOf(item('u', null, svgImage(unsafe), svgImage(sheet('.a { fill: red }'))))
+    );
+    const root = parse(svg);
+    expect(root.querySelectorAll('g[id] > image')).toHaveLength(1);
+    expect(root.querySelector('g[id] > image')!.getAttribute('xlink:href')).toBe(
+      `data:image/svg+xml;base64,${Buffer.from(unsafe).toString('base64')}`
+    );
+    expect(root.querySelectorAll('g[id] > svg')).toHaveLength(1);
+    expect(root.querySelector('g[id] > svg')!.getAttribute('id')).toBe('i0-root');
   });
 });
 

@@ -11,8 +11,9 @@
  * - Text is glyph outlines, one `<path>` per run of code points a font file covers, placed at the
  *   x the browser measured. A run no file covers, and all text in `editable` mode, is a `<text>`
  *   with the font family: fonts are never embedded.
- * - An SVG source is inlined as a nested `<svg>` with its ids prefixed per instance; any other
- *   image is a data URL.
+ * - An SVG source is inlined as a nested `<svg>` with its ids, classes and style rules scoped to
+ *   the instance (`inlineSvg.ts`); one whose CSS cannot be scoped, and any other image, is a data
+ *   URL.
  *
  * Numbers have three decimals. The linear part of a matrix has six: a rotation that is off by
  * 0.0005 in its cosine moves a point 1000 px from the origin by half a pixel. The output depends
