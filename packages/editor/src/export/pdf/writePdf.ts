@@ -21,6 +21,7 @@ import { loadFontkit } from '../fonts/glyphs.js';
 import { cropMarkLines, MARK_STROKE_PT, pdfPageGeometry, type SizeMm } from '../printPdf.js';
 import { emptyReport, mergeReports } from '../scene/types.js';
 import { SLIDE_PDF_PAGE_PT } from '../slidesPdf.js';
+import { mostUsedFont, svgDefaultsFor } from '../svg/svgImageScene.js';
 import { ContentWriter, type PageEnv, type RasterizeOps } from './pdfContent.js';
 import { fontkitForPdf } from './pdfFontkit.js';
 import { matrixOperands, normalHex, num } from './pdfGeometry.js';
@@ -28,7 +29,7 @@ import { PageResources, PdfAssets, type Ink } from './pdfResources.js';
 
 import type { FontFileSet } from '../fonts/fontFiles.js';
 import type { BoxPt } from '../printPdf.js';
-import type { ExportReport, ExportScene, FontSpec, Matrix, SceneOp } from '../scene/types.js';
+import type { ExportReport, ExportScene, FontSpec, Matrix } from '../scene/types.js';
 
 /** `#rrggbb` (lower case) to the four ink values, 0..100. */
 export type CmykMap = Readonly<Record<string, readonly [number, number, number, number]>>;
@@ -68,10 +69,7 @@ export async function writePdf(
   if (options.title) doc.setTitle(options.title);
 
   const assets = new PdfAssets(lib, doc, inksOf(options.cmyk));
-  const svgDefaults = {
-    font: options.defaultFont ?? mostUsedFont(pages),
-    measure: (text: string, font: FontSpec) => measure(options.fonts, text, font),
-  };
+  const svgDefaults = svgDefaultsFor(options.fonts, options.defaultFont ?? mostUsedFont(pages));
   let report = emptyReport();
 
   for (const [index, scene] of pages.entries()) {
@@ -229,59 +227,4 @@ function inksOf(map: CmykMap | undefined): Map<string, Ink> {
     );
   }
   return inks;
-}
-
-// ---------------------------------------------------------------------------------------------
-// SVG text
-
-const faceKey = (font: FontSpec) => `${font.family}|${font.weight}|${font.style}`;
-
-function* textFonts(ops: readonly SceneOp[]): Generator<FontSpec> {
-  for (const op of ops) {
-    if (op.kind === 'text') yield op.font;
-    else if (op.kind === 'group') yield* textFonts(op.ops);
-  }
-}
-
-/**
- * What an SVG's text inherits where it names nothing: the family (and its fallbacks) the scenes
- * draw most text in, at the default weight and size. Charts say `sans-serif`, which means "the
- * document's font" here.
- */
-function mostUsedFont(pages: readonly ExportScene[]): FontSpec {
-  const counts = new Map<string, { font: FontSpec; count: number }>();
-  for (const scene of pages) {
-    for (const item of scene.items) {
-      for (const font of textFonts(item.ops)) {
-        const known = counts.get(font.family);
-        if (known) known.count++;
-        else counts.set(font.family, { font, count: 1 });
-      }
-    }
-  }
-  let best: { font: FontSpec; count: number } | null = null;
-  for (const entry of counts.values()) if (!best || entry.count > best.count) best = entry;
-  return {
-    family: best?.font.family ?? 'sans-serif',
-    ...(best?.font.fallback && { fallback: best.font.fallback }),
-    weight: 400,
-    style: 'normal',
-    size: 16,
-  };
-}
-
-/**
- * The advance of every code point of `text`, from the font files, in px: svgToScene places SVG
- * text by it, and the PDF then sets the glyphs at those places. A code point no file has gets
- * 0.6 em, the converter's own guess.
- */
-function measure(fonts: ReadonlyMap<string, FontFileSet>, text: string, font: FontSpec): number[] {
-  const set = fonts.get(faceKey(font));
-  return Array.from(text, (char) => {
-    const codePoint = char.codePointAt(0) ?? 0;
-    const file = set?.fileFor(codePoint);
-    return file
-      ? (file.font.glyphForCodePoint(codePoint).advanceWidth * font.size) / file.font.unitsPerEm
-      : font.size * 0.6;
-  });
 }

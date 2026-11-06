@@ -17,7 +17,7 @@
  */
 import { glyphOutline, splitRuns, type GlyphRun } from '../fonts/glyphs.js';
 import { IDENTITY, invert, multiply } from '../scene/matrix.js';
-import { svgToScene, type SvgToSceneDefaults } from '../svg/svgToScene.js';
+import { svgImageGroup, type SvgSource } from '../svg/svgImageScene.js';
 import { formatNumber } from '../svg/xml.js';
 import {
   commandsBounds,
@@ -46,11 +46,11 @@ import type {
   Paint,
   PathCommand,
   RasterReason,
-  SceneImageSource,
   SceneOp,
   Shadow,
   StrokeStyle,
 } from '../scene/types.js';
+import type { SvgToSceneDefaults } from '../svg/svgToScene.js';
 import type { PDFRef } from 'pdf-lib';
 
 /** A box of the page in px. */
@@ -94,7 +94,6 @@ type TextOp = Extract<SceneOp, { kind: 'text' }>;
 type ImageOp = Extract<SceneOp, { kind: 'image' }>;
 type GroupOp = Extract<SceneOp, { kind: 'group' }>;
 type RasterOp = Extract<SceneOp, { kind: 'raster' }>;
-type SvgSource = Extract<SceneImageSource, { kind: 'svg' }>;
 
 const PLAIN_STROKE: StrokeStyle = {
   width: 1,
@@ -583,55 +582,18 @@ export class ContentWriter {
 
   /**
    * An SVG source is drawn as the ops `svgToScene` makes of it, with the image op's alpha, clips
-   * and a crop around them as a group. A source it cannot reproduce completely is one raster
-   * island, as a whole.
+   * and a crop around them as a group (`svgImageGroup`). A source it cannot reproduce completely
+   * is one raster island, as a whole.
    */
   private async svgImage(op: ImageOp, source: SvgSource): Promise<void> {
-    const kx = op.dw / op.sw;
-    const ky = op.dh / op.sh;
-    // The picture at its natural size, stretched onto the destination rect; a crop is a clip.
-    const matrix = multiply(
-      op.matrix,
-      multiply(
-        [1, 0, 0, 1, op.dx, op.dy],
-        multiply([kx, 0, 0, ky, 0, 0], [1, 0, 0, 1, -op.sx, -op.sy])
-      )
-    );
-    const { ops, unsupported } = svgToScene(
-      source.markup,
-      { matrix, width: source.width, height: source.height },
-      this.env.svgDefaults
-    );
+    const { group, unsupported } = svgImageGroup(op, source, this.env.svgDefaults, op.clips);
     if (unsupported.length > 0) {
       const bounds = opBounds({ ...op, clips: [] });
       const box = bounds && this.visible(bounds, op.clips);
       if (box) await this.island([{ ...op, shadow: null }], box, 'svg-unsupported');
       return;
     }
-    const whole =
-      num(op.sx) === '0' &&
-      num(op.sy) === '0' &&
-      num(op.sw) === num(source.width) &&
-      num(op.sh) === num(source.height);
-    const crop: ClipPath = {
-      matrix: op.matrix,
-      commands: [
-        { op: 'M', x: op.dx, y: op.dy },
-        { op: 'L', x: op.dx + op.dw, y: op.dy },
-        { op: 'L', x: op.dx + op.dw, y: op.dy + op.dh },
-        { op: 'L', x: op.dx, y: op.dy + op.dh },
-        { op: 'Z' },
-      ],
-      rule: 'nonzero',
-    };
-    await this.group({
-      kind: 'group',
-      matrix: IDENTITY,
-      alpha: op.alpha,
-      clips: whole ? op.clips : [...op.clips, crop],
-      shadow: null, // made for the image op already
-      ops,
-    });
+    await this.group(group);
   }
 
   private async raster(op: RasterOp): Promise<void> {

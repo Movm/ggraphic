@@ -29,6 +29,7 @@ import {
   type RecordedScene,
   type SceneOp,
 } from './scene/types.js';
+import { mostUsedFont, svgHasText } from './svg/svgImageScene.js';
 import { svgToScene } from './svg/svgToScene.js';
 import { writeSvg } from './svg/writeSvg.js';
 
@@ -118,13 +119,45 @@ function collectFaces(
   }
 }
 
-/** The files of every face the page draws text in. A face no source has comes out with no files. */
+/**
+ * The files of every face the page draws text in: its own, and the text inside its SVG pictures
+ * (the writer draws those as ops in outline mode, which is when fonts are asked for). The font a
+ * picture's text inherits is the one `writeSvg` uses, so the faces match exactly. A face no source
+ * has comes out with no files.
+ */
 export async function fontsOf(
   scene: RecordedScene,
   deps: FontSourceDeps
 ): Promise<Map<string, FontFileSet>> {
-  const faces = new Map<string, FontSpec>();
-  for (const item of scene.items) collectFaces(item.ops, faces);
+  return resolveFaces([scene], mostUsedFont([scene]), deps, false);
+}
+
+/**
+ * The files of every face the scenes' text is drawn in: their own, the text inside their SVG
+ * images (found by converting them, which is what the writers do too, so the faces match
+ * exactly), and, when `withDefault`, the default font.
+ */
+async function resolveFaces(
+  scenes: readonly RecordedScene[],
+  defaultFont: FontSpec,
+  deps: FontSourceDeps,
+  withDefault: boolean
+): Promise<Map<string, FontFileSet>> {
+  const faces = new Map<string, FontSpec>(withDefault ? [[faceKey(defaultFont), defaultFont]] : []);
+  const converted = new Map<string, readonly SceneOp[]>();
+  const textOfSvg = (op: SceneOp): readonly SceneOp[] => {
+    if (op.kind !== 'image' || op.image.kind !== 'svg' || !svgHasText(op.image.markup)) return [];
+    const { markup, width, height } = op.image;
+    let ops = converted.get(markup);
+    if (!ops) {
+      ops = svgToScene(markup, { matrix: IDENTITY, width, height }, { font: defaultFont }).ops;
+      converted.set(markup, ops);
+    }
+    return ops;
+  };
+  for (const scene of scenes) {
+    for (const item of scene.items) collectFaces(item.ops, faces, textOfSvg);
+  }
   const fonts = new Map<string, FontFileSet>();
   for (const [key, face] of faces) fonts.set(key, await resolveFontFiles(face, deps));
   return fonts;
@@ -223,7 +256,7 @@ async function writeVectorPdf(options: PdfExportOptions, deps: PdfExportDeps) {
 
   // What an SVG's text inherits where it names no family (a chart's labels): the body font.
   const defaultFont = bodyFont(brand);
-  const fonts = await pdfFontsOf(scenes, defaultFont, fontDeps);
+  const fonts = await resolveFaces(scenes, defaultFont, fontDeps, true);
   // Islands do not depend on the page they are on: the first page's rasteriser draws them all.
   const shared = deps.resolveDeps(0);
   const trim = isPrintFormat(format) ? format.print.trimMm : null;
@@ -266,36 +299,6 @@ function bodyFont(brand: BrandPack): FontSpec {
     style: 'normal',
     size: 16,
   };
-}
-
-/**
- * The files of every face the pages' text is drawn in: the scenes' own text, the text inside their
- * SVG images (found by converting them, which is what the writer does too, so the faces match
- * exactly), and the default font.
- */
-async function pdfFontsOf(
-  scenes: readonly RecordedScene[],
-  defaultFont: FontSpec,
-  deps: FontSourceDeps
-): Promise<Map<string, FontFileSet>> {
-  const faces = new Map<string, FontSpec>([[faceKey(defaultFont), defaultFont]]);
-  const converted = new Map<string, readonly SceneOp[]>();
-  const textOfSvg = (op: SceneOp): readonly SceneOp[] => {
-    if (op.kind !== 'image' || op.image.kind !== 'svg') return [];
-    const { markup, width, height } = op.image;
-    let ops = converted.get(markup);
-    if (!ops) {
-      ops = svgToScene(markup, { matrix: IDENTITY, width, height }, { font: defaultFont }).ops;
-      converted.set(markup, ops);
-    }
-    return ops;
-  };
-  for (const scene of scenes) {
-    for (const item of scene.items) collectFaces(item.ops, faces, textOfSvg);
-  }
-  const fonts = new Map<string, FontFileSet>();
-  for (const [key, face] of faces) fonts.set(key, await resolveFontFiles(face, deps));
-  return fonts;
 }
 
 /** Every colour of the brand pack that is a hex colour, as `#rrggbb`: its roles, palettes, grounds and glows. */

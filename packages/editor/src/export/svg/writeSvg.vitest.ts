@@ -388,6 +388,136 @@ describe('inlined svg', () => {
   });
 });
 
+describe('svg sources with text of their own', () => {
+  // A Recharts bar chart as the editor makes it: an `@font-face` with the font inside, a root
+  // `style`, labels as `<text>`.
+  const chart = readFileSync(
+    path.join(path.dirname(fileURLToPath(import.meta.url)), '__fixtures__', 'barChart.svg'),
+    'utf8'
+  );
+  const chartImage = (over: Partial<Extract<SceneOp, { kind: 'image' }>> = {}) =>
+    svgImage(chart, {
+      image: { kind: 'svg', markup: chart, width: 480, height: 320 },
+      sx: 0,
+      sy: 0,
+      sw: 480,
+      sh: 320,
+      dx: 0,
+      dy: 0,
+      dw: 240,
+      dh: 160,
+      ...over,
+    });
+  /** The chart's labels are in a family of the chart's own: the test font stands in for it. */
+  const chartFonts = () =>
+    new Map([['Chart Brand Sans|400|normal', fonts.get('Instrument Sans|400|normal')!]]);
+
+  it('outline mode writes its shapes and its text as outlines, and carries no font', () => {
+    const report = emptyReport();
+    const { svg } = run(sceneOf(item('chart', 'Chart', chartImage())), {
+      fonts: chartFonts(),
+      report,
+    });
+
+    const root = parse(svg);
+    expect(svg).not.toContain('<text');
+    expect(svg).not.toContain('@font-face');
+    expect(svg).not.toContain('font/woff2');
+    // Not a nested picture any more: its shapes are the writer's own paths.
+    expect(root.querySelectorAll('svg')).toHaveLength(0);
+    const paths = Array.from(root.querySelectorAll('g[id] path'));
+    // 7 strokes and 4 bars, and a path for each of the 9 labels (A-D, 0-80).
+    expect(paths).toHaveLength(7 + 4 + 9);
+    expect(paths.filter((path) => path.getAttribute('fill') === '#40403f')).toHaveLength(9);
+    expect(report.missingGlyphs).toEqual([]);
+    expect(report.unknownCalls).toEqual([]);
+  });
+
+  it('places the converted shapes where the canvas draws the picture: stretched by the matrix', () => {
+    const { svg } = run(sceneOf(item('chart', null, chartImage({ dx: 10, dy: 20 }))), {
+      fonts: chartFonts(),
+    });
+
+    const bar = Array.from(parse(svg).querySelectorAll('path')).find(
+      (path) => path.getAttribute('fill') === '#1d3557'
+    )!;
+    // 480 x 320 into 240 x 160 at (10, 20).
+    expect(matrixOf(bar)).toEqual([0.5, 0, 0, 0.5, 10, 20]);
+  });
+
+  it('composes the op alpha, its crop, its clips and its shadow around the outlined picture', () => {
+    const clip: ClipPath = { matrix: IDENTITY, commands: rect(0, 0, 300, 200), rule: 'nonzero' };
+    const shadow = { hex: '#000000', alpha: 0.5, blur: 4, offsetX: 2, offsetY: 3 };
+    const op = chartImage({
+      alpha: 0.5,
+      clips: [clip],
+      shadow,
+      // The left half of the picture.
+      sw: 240,
+      dw: 120,
+      matrix: [1, 0, 0, 1, 7, 9],
+    });
+
+    const root = parse(run(sceneOf(item('chart', null, op)), { fonts: chartFonts() }).svg);
+
+    const shadowed = root.querySelector('g[filter]')!;
+    expect(shadowed).not.toBeNull();
+    const opacity = shadowed.querySelector('g[opacity="0.5"]')!;
+    expect(opacity).not.toBeNull();
+    // The op's clip, outside; the crop, inside it: two clip paths, one in the other.
+    expect(root.querySelectorAll('clipPath')).toHaveLength(2);
+    const clipped = opacity.closest('g[clip-path]')!;
+    expect(clipped.parentElement!.closest('g[clip-path]')).not.toBeNull();
+    // The picture's own ops carry the matrix of the op: nothing is moved twice.
+    expect(matrixOf(opacity.querySelector('path')!)).toEqual([0.5, 0, 0, 0.5, 7, 9]);
+    expect(root.querySelectorAll('svg')).toHaveLength(0);
+  });
+
+  it('editable mode still inlines it, with its font and its live text', () => {
+    const { svg } = run(sceneOf(item('chart', null, chartImage())), {
+      text: 'editable',
+      fonts: new Map(),
+    });
+
+    const root = parse(svg);
+    const nested = root.querySelectorAll('g[id] > svg');
+    expect(nested).toHaveLength(1);
+    expect(nested[0]!.querySelectorAll('text')).toHaveLength(9);
+    expect(nested[0]!.querySelector('style')!.textContent).toContain('@font-face');
+  });
+
+  it('an svg without text is inlined in outline mode as before', () => {
+    const { svg } = run(sceneOf(item('icon', null, svgImage(GRADIENT_ICON))));
+
+    expect(parse(svg).querySelectorAll('g[id] > svg')).toHaveLength(1);
+  });
+
+  it('falls back to inlining what the converter cannot read, and says its text was not outlined', () => {
+    const markup =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" font-family="Instrument Sans">' +
+      '<rect width="24" height="24" filter="url(#blur)"/><text x="2" y="12">Hi</text></svg>';
+    const report = emptyReport();
+
+    const { svg } = run(sceneOf(item('odd', null, svgImage(markup))), { report, page: 4 });
+
+    const root = parse(svg);
+    expect(root.querySelectorAll('g[id] > svg text')).toHaveLength(1);
+    expect(report.unknownCalls).toHaveLength(1);
+    expect(report.unknownCalls[0]).toMatchObject({ page: 4, elementId: 'odd' });
+    expect(report.unknownCalls[0]!.call).toContain('filter');
+  });
+
+  it('the root style of an inlined svg is not passed on to the nested one', () => {
+    const { svg } = run(sceneOf(item('chart', null, chartImage())), { text: 'editable' });
+
+    const nested = parse(svg).querySelector('g[id] > svg')!;
+    expect(chart).toContain('style="width: 100%; height: 100%; display: block;"');
+    expect(nested.hasAttribute('style')).toBe(false);
+    // What sizes it is the writer's: the destination rect.
+    expect(['width', 'height'].map((name) => nested.getAttribute(name))).toEqual(['240', '160']);
+  });
+});
+
 describe('inlineSvg', () => {
   it('returns the root attributes and the prefixed content', () => {
     const result = inlineSvg(

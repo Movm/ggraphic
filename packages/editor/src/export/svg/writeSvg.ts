@@ -13,7 +13,10 @@
  *   with the font family: fonts are never embedded.
  * - An SVG source is inlined as a nested `<svg>` with its ids, classes and style rules scoped to
  *   the instance (`inlineSvg.ts`); one whose CSS cannot be scoped, and any other image, is a data
- *   URL.
+ *   URL. In outline mode a source with text of its own (a chart) is not inlined: its shapes and
+ *   text are written as scene ops (`svgImageScene.ts`), so its text is outlined like the page's
+ *   and the `@font-face` it carries stays out of the file. A source the converter cannot read
+ *   completely is inlined after all, and `report.unknownCalls` says its text was not outlined.
  *
  * Numbers have three decimals. The linear part of a matrix has six: a rotation that is off by
  * 0.0005 in its cosine moves a point 1000 px from the origin by half a pixel. The output depends
@@ -22,6 +25,14 @@
 import type { FontFileSet } from '../fonts/fontFiles.js';
 import { glyphOutline, splitRuns } from '../fonts/glyphs.js';
 import { inlineSvg } from './inlineSvg.js';
+import {
+  mostUsedFont,
+  svgDefaultsFor,
+  svgHasText,
+  svgImageGroup,
+  type SvgSource,
+} from './svgImageScene.js';
+import type { SvgToSceneDefaults } from './svgToScene.js';
 import { escapeXml, formatNumber, withoutIllegalXml } from './xml.js';
 
 import type {
@@ -191,8 +202,14 @@ function viewBoxOf(value: string | undefined): [number, number, number, number] 
   return parts as [number, number, number, number];
 }
 
-/** Attributes of an inlined root that the writer sets itself, or that mean nothing nested. */
+/**
+ * Attributes of an inlined root that the writer sets itself, or that mean nothing nested. `style`
+ * is one of them: a chart's `width: 100%; height: 100%` sizes it in CSS terms where it stands
+ * alone, and nested it would fight the `width` and `height` the writer places it with (Firefox
+ * and Illustrator read it).
+ */
 const OWN_ROOT_ATTRS = new Set([
+  'style',
   'x',
   'y',
   'width',
@@ -216,6 +233,7 @@ class SvgWriter {
   private readonly usedIds = new Set<string>();
   private inlined = 0;
   private elementId: string | null = null;
+  private svgTextDefaults: SvgToSceneDefaults | null = null;
 
   constructor(
     private readonly scene: ExportScene,
@@ -439,6 +457,11 @@ class SvgWriter {
     if (image.kind === 'element') return []; // not resolved: nothing to embed
     if (op.sw === 0 || op.sh === 0 || op.dw === 0 || op.dh === 0) return [];
     if (image.kind === 'svg') {
+      const outlined =
+        this.options.text === 'outlines' && svgHasText(image.markup)
+          ? this.outlinedSvg(op, image)
+          : null;
+      if (outlined) return outlined;
       const inlined = inlineSvg(image.markup, `i${this.inlined}-`);
       if (inlined) {
         this.inlined++;
@@ -446,6 +469,26 @@ class SvgWriter {
       }
     }
     return this.embeddedImage(op, image, common);
+  }
+
+  /**
+   * The picture's shapes and text as ops, written like any others, or null when the converter
+   * cannot read all of it: the picture is then inlined as it is, with live text, and the report
+   * says which constructs stopped it. The op's matrix, clips and shadow are the caller's; the
+   * ops carry the matrix themselves, and the group the op's alpha and the crop.
+   */
+  private outlinedSvg(op: ImageOp, source: SvgSource): string[] | null {
+    this.svgTextDefaults ??= svgDefaultsFor(this.options.fonts, mostUsedFont([this.scene]));
+    const { group, unsupported } = svgImageGroup(op, source, this.svgTextDefaults, []);
+    if (unsupported.length > 0) {
+      this.options.report.unknownCalls.push({
+        page: this.options.page,
+        elementId: this.elementId,
+        call: `svg text not outlined: ${unsupported.join(', ')}`,
+      });
+      return null;
+    }
+    return this.ops([group]);
   }
 
   /** The picture as an `<image>`; a source rect smaller than the picture is a clip on a larger one. */

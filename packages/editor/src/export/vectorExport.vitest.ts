@@ -199,6 +199,69 @@ describe('exportPagesSvg', () => {
     expect(fetchBytes).toHaveBeenCalledTimes(1);
   });
 
+  describe('a picture with text of its own (a chart)', () => {
+    const chart = (family: string): SceneOp => ({
+      ...base,
+      kind: 'image',
+      image: {
+        kind: 'svg',
+        markup:
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 50" width="100" height="50">' +
+          `<style>@font-face{font-family:"Instrument Sans";src:url(data:font/woff2;base64,AA==) format("woff2")}</style>` +
+          `<text x="5" y="30" font-size="20" font-family="${family}" fill="#223344">Hi</text></svg>`,
+        width: 100,
+        height: 50,
+      },
+      sx: 0,
+      sy: 0,
+      sw: 100,
+      sh: 50,
+      dx: 10,
+      dy: 10,
+      dw: 100,
+      dh: 50,
+    });
+
+    it('is outlined with the font its text names, and no font travels in the file', async () => {
+      // The page itself has no text: the face is found only through the picture.
+      const { deps, fetchBytes } = depsFor({ scenes: [scene([chart('Instrument Sans')])] });
+
+      const { blob, report } = await exportPagesSvg([0], OPTIONS, deps);
+
+      const svg = await read(blob);
+      expect(svg).not.toContain('<text');
+      expect(svg).not.toContain('@font-face');
+      expect(svg).toContain('fill="#223344"');
+      expect(fetchBytes).toHaveBeenCalledTimes(1);
+      expect(report.missingGlyphs).toEqual([]);
+    });
+
+    it('is set in the font of the page where it names a generic family', async () => {
+      const { deps, fetchBytes } = depsFor({
+        scenes: [scene([text('Hi'), chart('sans-serif')])],
+      });
+
+      const { blob, report } = await exportPagesSvg([0], OPTIONS, deps);
+
+      const svg = await read(blob);
+      expect(svg).not.toContain('<text');
+      expect(svg).not.toContain('@font-face');
+      expect(fetchBytes).toHaveBeenCalledTimes(1);
+      expect(report.missingGlyphs).toEqual([]);
+    });
+
+    it('is left as it is, with no font looked for, when the text is editable', async () => {
+      const { deps, fetchBytes } = depsFor({ scenes: [scene([chart('Instrument Sans')])] });
+
+      const { blob } = await exportPagesSvg([0], { ...OPTIONS, text: 'editable' }, deps);
+
+      const svg = await read(blob);
+      expect(svg).toContain('<text');
+      expect(svg).toContain('@font-face');
+      expect(fetchBytes).not.toHaveBeenCalled();
+    });
+  });
+
   it('keeps text as text, and looks for no font, when it is left editable', async () => {
     const { deps, fetchBytes } = depsFor({ scenes: [scene([text('Hi')])] });
 
