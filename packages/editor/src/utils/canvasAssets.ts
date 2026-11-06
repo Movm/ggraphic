@@ -89,7 +89,11 @@ function emojiAssetFromId(id: string, catalog: CanvasAssetCatalog): UniversalAss
  * a host never renames an entry.
  */
 export interface CanvasAssetCatalog {
-  /** Everything an instance may name, in lookup order: by id and by src, the first match wins. */
+  /**
+   * Everything an instance may name, in lookup order: by id and by src, the first match wins.
+   * SVG assets listed here are treated as host-authored and exported without sanitising, so a host
+   * must not list user uploads here; those belong to instance srcs (`isInstanceSrc`).
+   */
   assets: readonly UniversalAsset[];
   /**
    * Is this an image the host stores for one instance (a shop sticker)? Such
