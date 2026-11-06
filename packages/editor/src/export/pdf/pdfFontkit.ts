@@ -17,6 +17,9 @@
  * fontkit has an encoder for this (`encodeSimple`, made for variable fonts); it leaves out the
  * repeat count of a trailing run of equal flags, which makes the glyph unreadable, so the record is
  * written here. Other fonts (TrueType, OpenType, WOFF) keep fontkit's own copy, exact for them.
+ *
+ * This reaches into fontkit's private parts (`TtfSubset`), so `@pdf-lib/fontkit` is pinned to an
+ * exact version in package.json: a bump is a decision, checked against `pdfFontkit.vitest.ts`.
  */
 import type { FontkitFont } from '../fonts/glyphs.js';
 import type * as FontkitModule from '@pdf-lib/fontkit';

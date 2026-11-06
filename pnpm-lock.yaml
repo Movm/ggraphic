@@ -481,7 +481,7 @@ importers:
         specifier: ^3.1.7
         version: 3.1.7
       '@pdf-lib/fontkit':
-        specifier: ^1.1.1
+        specifier: 1.1.1
         version: 1.1.1
       '@tanstack/react-query':
         specifier: ^5.104.1

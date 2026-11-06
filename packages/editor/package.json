@@ -481,7 +481,7 @@
     "@iconify-json/tabler": "^1.2.43",
     "@iconify/react": "^6.0.3",
     "@iconify/utils": "^3.1.7",
-    "@pdf-lib/fontkit": "^1.1.1",
+    "@pdf-lib/fontkit": "1.1.1",
     "@tanstack/react-query": "^5.104.1",
     "@tiptap/core": "^3.32.1",
     "@tiptap/extension-bold": "^3.32.1",
