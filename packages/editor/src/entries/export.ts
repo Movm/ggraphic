@@ -45,6 +45,11 @@ export {
 } from '../export/scene/types.js';
 export { writeSvg, type WriteSvgOptions } from '../export/svg/writeSvg.js';
 export {
+  createVectorDeps,
+  type CreateVectorDepsOptions,
+  type VectorExportCanvas,
+} from '../export/vectorDeps.js';
+export {
   exportPagesPdf,
   exportPagesSvg,
   type PdfExportDeps,

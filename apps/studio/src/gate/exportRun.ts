@@ -9,14 +9,10 @@
 import { type BrandPack } from '@ggraphic/core';
 import { type GenericCanvasRef } from '@ggraphic/editor/canvas';
 import {
+  createVectorDeps,
   type ExportReport,
   exportPagesPdf,
   exportPagesSvg,
-  fetchImageBytes,
-  pngFromDataUrl,
-  rasterizeOps,
-  reencodeImage,
-  type VectorExportDeps,
 } from '@ggraphic/editor/export';
 import { getCanvasFormatOrDefault, isPrintFormat, isSlideFormat } from '@ggraphic/editor/templates';
 
@@ -45,40 +41,20 @@ function blobDataUrl(blob: Blob): Promise<string> {
   });
 }
 
-/** What `CanvasEditorShell.vectorDeps` gives the export functions, for a page that is the only one. */
-function vectorDeps(canvas: GenericCanvasRef, brand: BrandPack): VectorExportDeps {
-  return {
-    recordPage: async (index, options) =>
-      index === 0 ? ((await canvas.recordScene({ page: 1, ...options })) ?? null) : null,
-    resolveDeps: () => ({
-      page: 1,
-      fetchBytes: fetchImageBytes,
-      reencode: reencodeImage,
-      rasterizeElement: async (elementId, pixelRatio) => {
-        const drawn = await canvas.rasterizeElement(elementId, pixelRatio);
-        const png = drawn ? pngFromDataUrl(drawn.dataUrl) : null;
-        return drawn && png ? { png, box: drawn.box } : null;
-      },
-      rasterizeNode: async (nodeRef, pixelRatio) =>
-        (await canvas.rasterizeNode(nodeRef, pixelRatio)) ?? null,
-      rasterizeOps,
-      // Print formats are the only ones that ask for more; the gate draws none.
-      rasterPixelRatio: 2,
-    }),
-    fontDeps: {
-      brandFaces: brand.fontFaces,
-      ...(brand.fonts.boldFamilies ? { boldFamilies: brand.fonts.boldFamilies } : {}),
-    },
-  };
-}
-
 async function make(
   mode: GateExportMode,
   canvas: GenericCanvasRef,
   brand: BrandPack,
   formatId: string
 ): Promise<Made> {
-  const deps = vectorDeps(canvas, brand);
+  const format = getCanvasFormatOrDefault(formatId);
+  // The wiring `CanvasEditorShell` gives the export functions, for a page that is the only one.
+  // The Studio registers no `exportFonts` service, so the brand's faces are all there is.
+  const deps = createVectorDeps({
+    canvasOf: (index) => (index === 0 ? canvas : null),
+    brand,
+    format,
+  });
   if (mode !== 'pdf') {
     const { blob, report } = await exportPagesSvg(
       [0],
@@ -91,7 +67,6 @@ async function make(
     );
     return { blob, report };
   }
-  const format = getCanvasFormatOrDefault(formatId);
   if (isPrintFormat(format)) throw new Error('the render gate draws no print format');
   // The reason the vector PDF was not made is logged by `exportPagesPdf`; the raster PDF that
   // would replace it is not what the gate is about, so it is a failure that carries the reason.

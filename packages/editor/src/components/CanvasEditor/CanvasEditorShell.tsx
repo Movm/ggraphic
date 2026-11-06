@@ -81,11 +81,9 @@ import {
   lowResolutionWarnings,
   PRINT_JPEG_QUALITY,
   printPdfFilename,
-  printPixelRatio,
   type PrintExportPage,
 } from '../../export/printExport.js';
-import { fetchImageBytes, rasterizeOps, reencodeImage } from '../../export/scene/browserDeps.js';
-import { pngFromDataUrl } from '../../export/scene/imageBytes.js';
+import { createVectorDeps } from '../../export/vectorDeps.js';
 import {
   exportPagesPdf,
   exportPagesSvg,
@@ -673,32 +671,13 @@ function CanvasEditorInner({
   // What the SVG and the PDF export need of the editor: every page needs its mounted stage, like
   // the PPTX export.
   const vectorDeps = useCallback(
-    (format: CanvasFormat, brand: BrandPack): VectorExportDeps => {
-      const refs = canvasRefsRef.current;
-      return {
-        recordPage: async (index, options) =>
-          (await refs[index]?.current?.recordScene({ page: index + 1, ...options })) ?? null,
-        resolveDeps: (index) => ({
-          page: index + 1,
-          fetchBytes: fetchImageBytes,
-          reencode: reencodeImage,
-          rasterizeElement: async (elementId, pixelRatio) => {
-            const drawn = await refs[index]?.current?.rasterizeElement(elementId, pixelRatio);
-            const png = drawn ? pngFromDataUrl(drawn.dataUrl) : null;
-            return drawn && png ? { png, box: drawn.box } : null;
-          },
-          rasterizeNode: async (nodeRef, pixelRatio) =>
-            (await refs[index]?.current?.rasterizeNode(nodeRef, pixelRatio)) ?? null,
-          rasterizeOps,
-          rasterPixelRatio: isPrintFormat(format) ? printPixelRatio(format) : 2,
-        }),
-        fontDeps: {
-          ...(services.exportFonts ? { host: services.exportFonts } : {}),
-          brandFaces: brand.fontFaces,
-          ...(brand.fonts.boldFamilies ? { boldFamilies: brand.fonts.boldFamilies } : {}),
-        },
-      };
-    },
+    (format: CanvasFormat, brand: BrandPack): VectorExportDeps =>
+      createVectorDeps({
+        canvasOf: (index) => canvasRefsRef.current[index]?.current,
+        exportFonts: services.exportFonts,
+        brand,
+        format,
+      }),
     [canvasRefsRef, services.exportFonts]
   );
 
