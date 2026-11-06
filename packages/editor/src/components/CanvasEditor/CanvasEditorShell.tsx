@@ -1069,6 +1069,15 @@ function CanvasEditorInner({
     [buildPptx, documentTitle, fileDelivery, filenamePrefix]
   );
 
+  const handleDownloadSvg = useCallback(
+    async (options: Parameters<CanvasEditorExportApi['exportSvg']>[0]) => {
+      const { blob, filename, report } = await exportSvg(options);
+      await fileDelivery.downloadBlob(blob, filename);
+      return report;
+    },
+    [exportSvg, fileDelivery]
+  );
+
   const handleDownloadSlidesPdf = useCallback(async () => {
     await ensureFontsReady();
     const images = await exportAllPages({ pixelRatio: SLIDES_PDF_PIXEL_RATIO });
@@ -1457,12 +1466,21 @@ function CanvasEditorInner({
             locale: deckLocale,
           }
         : null,
+      vectorExport: {
+        category: printFormat
+          ? ('print' as const)
+          : isSlideDeck
+            ? ('slides' as const)
+            : ('digital' as const),
+        onDownloadSvg: handleDownloadSvg,
+      },
     }),
     [
       getPhotoCredit,
       isSlideDeck,
       handleDownloadSlidesPdf,
       handleDownloadPptx,
+      handleDownloadSvg,
       deckLocale,
       printFormat,
       impressumGate,
