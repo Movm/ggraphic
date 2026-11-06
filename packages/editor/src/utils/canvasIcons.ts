@@ -18,6 +18,7 @@ import {
   externalIconsVersion,
   getExternalIcon,
   isExternalIconId,
+  isSafeColor,
 } from './externalIcons.js';
 
 export interface CanvasIcon {
@@ -283,8 +284,10 @@ export async function generateIconDataUrl(
       const attributes = Object.entries(rendered.attributes)
         .map(([key, value]) => `${key}="${value}"`)
         .join(' ');
-      // Iconify sets use currentColor for stroke/fill — bake the color in.
-      const body = rendered.body.replace(/currentColor/g, color);
+      // Iconify sets use currentColor for stroke/fill — bake the color in. The color comes from the
+      // document, so it must be one: it lands inside markup that exports inline as it is.
+      const ink = isSafeColor(color) ? color : '#000000';
+      const body = rendered.body.replace(/currentColor/g, ink);
       const svgText = `<svg xmlns="http://www.w3.org/2000/svg" ${attributes}>${body}</svg>`;
 
       const dataUrl = `data:image/svg+xml;base64,${btoa(svgText)}`;

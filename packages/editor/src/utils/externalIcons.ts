@@ -179,7 +179,7 @@ function toBase64(text: string): string {
 const SAFE_COLOR = /^(?:#[0-9a-f]{3,8}|(?:rgb|hsl)a?\(\s*[\d.%\s,/-]+\)|[a-z]{3,30})$/i;
 
 /** A colour that cannot break out of an attribute: hex, rgb(a), hsl(a) or a name. */
-const isSafeColor = (color: string) => SAFE_COLOR.test(color);
+export const isSafeColor = (color: string) => SAFE_COLOR.test(color);
 
 /** The SVG as a data URL of `size` px, `currentColor` replaced by `color`, for the canvas. */
 export function externalIconDataUrl(svg: string, size: number, color: string): string {
