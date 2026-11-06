@@ -14,7 +14,9 @@ import { memo, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Image, Group, Rect, Transformer } from 'react-konva';
 
+import { useDocumentBrand } from '../brand/documentBrand.js';
 import { activeBrand } from '../brand/brandRegistry.js';
+import { useCanvasEditorServices } from '../CanvasEditorProvider.js';
 import { LOCKED_TRANSFORMER, useIsItemLocked } from '../components/canvasItemLock.js';
 import { markTrustedSvgImage } from '../export/scene/trustedSvgImages.js';
 import { useBoxSnap, type SnapProps } from '../hooks/useBoxSnap.js';
@@ -32,7 +34,9 @@ import { ELEMENT_TRANSFORMER } from '../utils/orientation.js';
 import { useTrackPendingImage } from '../utils/pendingImages.js';
 
 import { chartBox } from '../utils/renderedBoxes.js';
+import { chartFontCss, cssString, type ChartFont } from './chartFont.js';
 
+import type { FontSourceDeps } from '../export/fonts/fontFiles.js';
 import type Konva from 'konva';
 
 export interface ChartPrimitiveProps extends SnapProps {
@@ -408,7 +412,14 @@ export function buildChartElement(recharts: any, chart: ChartInstance) {
   );
 }
 
-async function renderChartImage(chart: ChartInstance): Promise<HTMLImageElement | null> {
+/**
+ * The chart as an image. `font` is the brand body font as the SVG carries it: an SVG image cannot
+ * load web fonts, so the files are embedded in the SVG itself (see `chartFont.ts`).
+ */
+export async function renderChartImage(
+  chart: ChartInstance,
+  font: ChartFont
+): Promise<HTMLImageElement | null> {
   const container = document.createElement('div');
   container.style.cssText = `position:absolute;left:-99999px;top:0;width:${chart.width}px;height:${chart.height}px;font-family:sans-serif;`;
   document.body.appendChild(container);
@@ -431,7 +442,14 @@ async function renderChartImage(chart: ChartInstance): Promise<HTMLImageElement 
   if (svg) {
     svg.setAttribute('width', String(chart.width));
     svg.setAttribute('height', String(chart.height));
-    svg.setAttribute('font-family', 'sans-serif');
+    if (font.css) {
+      svg.setAttribute('font-family', `${cssString(font.family)}, sans-serif`);
+      const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+      style.textContent = font.css;
+      svg.insertBefore(style, svg.firstChild);
+    } else {
+      svg.setAttribute('font-family', 'sans-serif');
+    }
     const xml = new XMLSerializer().serializeToString(svg);
     const url = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(xml)}`;
     image = await new Promise<HTMLImageElement | null>((resolve) => {
@@ -449,6 +467,15 @@ async function renderChartImage(chart: ChartInstance): Promise<HTMLImageElement 
   return image;
 }
 
+/** The chart image in the brand body font, or in `sans-serif` where no file for it is found. */
+async function renderChartInBrandFont(
+  chart: ChartInstance,
+  family: string,
+  fontDeps: FontSourceDeps
+): Promise<HTMLImageElement | null> {
+  return renderChartImage(chart, { family, css: await chartFontCss(family, fontDeps) });
+}
+
 function ChartPrimitiveInner({
   chart,
   isSelected,
@@ -459,6 +486,9 @@ function ChartPrimitiveInner({
   ...snapProps
 }: ChartPrimitiveProps) {
   const locked = useIsItemLocked();
+  const brand = useDocumentBrand();
+  const { exportFonts } = useCanvasEditorServices();
+  const bodyFamily = brand.fonts.body;
   const snap = useBoxSnap({ id: chart.id, ...snapProps }, chartBox(chart));
   const groupRef = useRef<Konva.Group>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
@@ -478,6 +508,7 @@ function ChartPrimitiveInner({
     chart.unit ?? '',
     chart.background ?? '',
     chart.scale,
+    bodyFamily,
   ]);
   const [rendered, setRendered] = useState<{ image: HTMLImageElement | null; key: string }>({
     image: null,
@@ -497,7 +528,11 @@ function ChartPrimitiveInner({
   useEffect(() => {
     let cancelled = false;
     const timer = setTimeout(() => {
-      void renderChartImage(chart)
+      void renderChartInBrandFont(chart, bodyFamily, {
+        ...(exportFonts ? { host: exportFonts } : {}),
+        brandFaces: brand.fontFaces,
+        ...(brand.fonts.boldFamilies ? { boldFamilies: brand.fonts.boldFamilies } : {}),
+      })
         .catch(() => null)
         .then((img) => {
           // A failed render keeps the last image but stops the wait.
