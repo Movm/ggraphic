@@ -193,6 +193,21 @@ describe('rasterizeOps', () => {
       expect(decode).toHaveBeenCalledTimes(1);
     });
 
+    it('closes the bitmaps it has decoded when a later decode throws', async () => {
+      const first = { close: vi.fn() };
+      const other: SceneImageSource = { ...svg, markup: svg.markup.replace('#0000ff', '#00ff00') };
+      const decode = vi
+        .fn<DecodeImage>()
+        .mockResolvedValueOnce(first as unknown as CanvasImageSource)
+        .mockRejectedValueOnce(new Error('decoder failed'));
+
+      await expect(
+        rasterizeOps([image(svg, 40), image(other, 50)], BOX, 1, napiSurface, decode)
+      ).rejects.toThrow('decoder failed');
+
+      expect(first.close).toHaveBeenCalledTimes(1);
+    });
+
     it('draws without the picture, and says nothing, when it cannot be decoded', async () => {
       const png = await rasterizeOps(
         [image(svg, 50), red(40, 40)],

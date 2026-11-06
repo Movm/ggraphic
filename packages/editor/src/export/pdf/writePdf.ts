@@ -23,7 +23,7 @@ import { emptyReport, mergeReports } from '../scene/types.js';
 import { SLIDE_PDF_PAGE_PT } from '../slidesPdf.js';
 import { ContentWriter, type PageEnv, type RasterizeOps } from './pdfContent.js';
 import { fontkitForPdf } from './pdfFontkit.js';
-import { matrixOperands, num } from './pdfGeometry.js';
+import { matrixOperands, normalHex, num } from './pdfGeometry.js';
 import { PageResources, PdfAssets, type Ink } from './pdfResources.js';
 
 import type { FontFileSet } from '../fonts/fontFiles.js';
@@ -125,7 +125,9 @@ export async function writePdf(
 
   // The brand colours that ended up RGB: all of them in a pack without a map, the unmapped ones
   // in a pack with one.
-  const palette = new Set((options.brandPalette ?? []).map((hex) => hex.toLowerCase()));
+  const palette = new Set(
+    (options.brandPalette ?? []).flatMap((colour) => normalHex(colour) ?? [])
+  );
   report = mergeReports(report, {
     ...emptyReport(),
     rgbBrandColors: [...assets.rgbHexes].filter((hex) => palette.has(hex)),
@@ -204,13 +206,27 @@ function layoutOf(scene: ExportScene, options: WritePdfOptions): PageLayout {
 // ---------------------------------------------------------------------------------------------
 // Colour
 
-/** The map by lower-case hex, in 0..1; an entry that is not four numbers is left out. */
+/**
+ * The map by lower-case `#rrggbb`, in 0..1 (`#FFF` and `#0F3A52` both match what a scene paints).
+ * An entry whose key is no hex colour, or whose value is not four numbers, is left out: its colour
+ * would silently stay RGB, so the entries are named in one warning.
+ */
 function inksOf(map: CmykMap | undefined): Map<string, Ink> {
   const inks = new Map<string, Ink>();
-  for (const [hex, values] of Object.entries(map ?? {})) {
-    if (values.length !== 4 || !values.every(Number.isFinite)) continue;
+  const unusable: string[] = [];
+  for (const [key, values] of Object.entries(map ?? {})) {
+    const hex = normalHex(key);
+    if (!hex || values.length !== 4 || !values.every(Number.isFinite)) {
+      unusable.push(key);
+      continue;
+    }
     const [c, m, y, k] = values.map((value) => Math.min(100, Math.max(0, value)) / 100);
-    inks.set(hex.toLowerCase(), [c!, m!, y!, k!]);
+    inks.set(hex, [c!, m!, y!, k!]);
+  }
+  if (unusable.length > 0) {
+    console.warn(
+      `[writePdf] CMYK entries left out, those colours stay RGB: ${unusable.join(', ')}`
+    );
   }
   return inks;
 }

@@ -15,6 +15,7 @@ import { isPrintFormat, type CanvasFormat } from '../formats/index.js';
 import { messages } from '../i18n/catalogue.js';
 import { zipFiles } from '../utils/zipPageImages.js';
 import { resolveFontFiles, type FontFileSet, type FontSourceDeps } from './fonts/fontFiles.js';
+import { normalHex } from './pdf/pdfGeometry.js';
 import { writePdf } from './pdf/writePdf.js';
 import { IDENTITY } from './scene/matrix.js';
 import { fontFamilies } from './scene/recordingContext.js';
@@ -297,9 +298,7 @@ async function pdfFontsOf(
   return fonts;
 }
 
-const HEX = /^#[0-9a-f]{6}$/i;
-
-/** Every colour of the brand pack that is a `#rrggbb`: its roles, palettes, grounds and glows. */
+/** Every colour of the brand pack that is a hex colour, as `#rrggbb`: its roles, palettes, grounds and glows. */
 function brandHexes(brand: BrandPack): string[] {
   const colours = [
     ...Object.values(brand.colors),
@@ -307,5 +306,5 @@ function brandHexes(brand: BrandPack): string[] {
     ...brand.textPalette.map((swatch) => swatch.color),
     ...brand.backgrounds.flatMap((ground) => [ground.color, ...(ground.glow ?? [])]),
   ];
-  return [...new Set(colours.filter((colour) => HEX.test(colour)).map((c) => c.toLowerCase()))];
+  return [...new Set(colours.flatMap((colour) => normalHex(colour) ?? []))];
 }

@@ -303,7 +303,14 @@ export function DownloadSection({
         <Label htmlFor={`${fieldId}-format`} className="text-xs font-medium text-foreground-muted">
           {t.shell.downloadPanel.format}
         </Label>
-        <Select value={choice} onValueChange={(v) => setChoice(v as DownloadChoice)}>
+        <Select
+          value={choice}
+          onValueChange={(v) => {
+            setChoice(v as DownloadChoice);
+            // What the last download reported is about that format only.
+            setReport(null);
+          }}
+        >
           <SelectTrigger id={`${fieldId}-format`} size="sm" className="w-full">
             <SelectValue />
           </SelectTrigger>

@@ -449,6 +449,26 @@ describe('exportPagesPdf', () => {
     expect(report.rgbBrandColors).toEqual(['#457b9d']);
   });
 
+  it('applies print values whatever the case or length of their key, and finds short palette colours', async () => {
+    const white = { ...square, paint: { type: 'solid', hex: '#ffffff', alpha: 1 } } as SceneOp;
+    const teal = { ...square, paint: { type: 'solid', hex: '#aabbcc', alpha: 1 } } as SceneOp;
+    const night = { ...square, paint: { type: 'solid', hex: '#1d3557', alpha: 1 } } as SceneOp;
+    const { deps } = pdfSetup([pageOf([['a', [white, teal, night]]])]);
+    const brand: BrandPack = {
+      ...BRAND,
+      palette: [...BRAND.palette, { id: 'teal', label: 'Teal', color: '#ABC' }],
+      print: { cmyk: { '#FFF': [0, 0, 0, 5], '#1D3557': [100, 80, 30, 40] } },
+    };
+
+    const { blob, report } = await exportPagesPdf(pdfOptions({ brand }), deps);
+
+    const pdf = await inspectPdf(new Uint8Array(await blob.arrayBuffer()));
+    expect(pdf.content(0)).toContain('0 0 0 0.05 k');
+    expect(pdf.content(0)).toContain('1 0.8 0.3 0.4 k');
+    // Only the short palette colour without a print value is left RGB, and it is found.
+    expect(report.rgbBrandColors).toEqual(['#aabbcc']);
+  });
+
   it('writes a pure RGB pdf for a brand without print values', async () => {
     const mapped = { ...square, paint: { type: 'solid', hex: '#1d3557', alpha: 1 } } as SceneOp;
     const { deps } = pdfSetup([pageOf([['a', [mapped]]])]);

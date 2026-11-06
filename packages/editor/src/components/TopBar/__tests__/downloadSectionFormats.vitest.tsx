@@ -361,6 +361,33 @@ describe('the PDF choice', () => {
       expect(screen.queryByRole('status')).toBeNull();
     });
 
+    it('is not shown under SVG, and an SVG notice is not shown under PDF', async () => {
+      const { user } = renderSection(
+        'digital',
+        {},
+        async () => ({
+          ...emptyReport(),
+          rasterIslands: [{ page: 1, elementId: 'badge', reason: 'shadow' }],
+        }),
+        fallback()
+      );
+      await choosePdf(user, 'PDF');
+      await download(user);
+      await screen.findByText(NOTICE);
+
+      await user.click(formatPicker());
+      await user.click(screen.getByRole('option', { name: 'SVG (Vektor)' }));
+      // Gone for good, not only hidden: nothing from the PDF comes back with the format.
+      expect(screen.queryByText(NOTICE)).toBeNull();
+      await download(user);
+      await screen.findByText('Als Bild eingebettet: Schatten');
+      expect(screen.queryByText(NOTICE)).toBeNull();
+
+      await choosePdf(user, 'PDF');
+      expect(screen.queryByText(/Als Bild eingebettet/)).toBeNull();
+      expect(screen.queryByText(NOTICE)).toBeNull();
+    });
+
     it('goes away with the format', async () => {
       const { user } = renderSection('digital', {}, undefined, fallback());
       await choosePdf(user, 'PDF');

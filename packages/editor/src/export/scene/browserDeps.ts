@@ -131,16 +131,16 @@ export async function rasterizeOps(
   const surface = createSurface(width, height);
   if (!surface) return null;
   const images = new Map<SceneImageSource | Uint8Array, CanvasImageSource>();
-  for (const source of sourcesOf(ops)) {
-    if (images.has(source)) continue;
-    const image = await decode(source);
-    if (image) images.set(source, image);
-  }
   // The canvas is a whole number of px, so the scale is the one that puts the box on all of it.
   const sx = width / box.width;
   const sy = height / box.height;
   const place: Matrix = [sx, 0, 0, sy, -box.x * sx, -box.y * sy];
   try {
+    for (const source of sourcesOf(ops)) {
+      if (images.has(source)) continue;
+      const image = await decode(source);
+      if (image) images.set(source, image);
+    }
     replayScene(
       surface.context,
       {

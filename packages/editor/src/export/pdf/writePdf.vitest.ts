@@ -7,7 +7,7 @@ import path from 'node:path';
 
 import { createCanvas } from '@napi-rs/canvas';
 import { PDFName } from 'pdf-lib';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { resolveFontFiles, type FontFile, type FontFileSet } from '../fonts/fontFiles.js';
 import { loadFontkit } from '../fonts/glyphs.js';
@@ -1225,7 +1225,59 @@ describe('cmyk', () => {
     expect(pdf.content(0)).toContain('0.1 0.2 0.3 0.4 k');
   });
 
+  it('matches a key whatever its case, length or alpha digits', async () => {
+    const scene = sceneOf(
+      item(
+        'a',
+        null,
+        fill(rect(0, 0, 9, 9), solid(INK)),
+        fill(rect(0, 0, 9, 9), solid('#ffffff')),
+        fill(rect(0, 0, 9, 9), solid('#112233')),
+        fill(rect(0, 0, 9, 9), solid('#aabbcc'))
+      )
+    );
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { pdf } = await write(scene, {
+      cmyk: {
+        '#0F3A52': [10, 20, 30, 40], // upper case
+        '#fff': [0, 0, 0, 5], // short
+        '#11223380': [1, 2, 3, 4], // alpha dropped
+        '#ABCD': [50, 0, 0, 0], // short with alpha, dropped
+      },
+    });
+    const content = pdf.content(0);
+    expect(content).toContain('0.1 0.2 0.3 0.4 k');
+    expect(content).toContain('0 0 0 0.05 k');
+    expect(content).toContain('0.01 0.02 0.03 0.04 k');
+    // `#ABCD` is `#AABBCC` with an alpha digit.
+    expect(content).toContain('0.5 0 0 0 k');
+    expect(content).not.toContain(' rg');
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('normalises the brand palette too, so a short or upper-case colour is found', async () => {
+    const scene = sceneOf(item('a', null, fill(rect(0, 0, 9, 9), solid('#ffffff'))));
+    const { report } = await write(scene, { brandPalette: ['#FFF', 'not a colour'] });
+    expect(report.rgbBrandColors).toEqual(['#ffffff']);
+  });
+
+  it('names the entries it cannot use in one warning, and leaves those colours RGB', async () => {
+    const scene = sceneOf(
+      item('a', null, fill(rect(0, 0, 9, 9), solid(INK)), fill(rect(0, 0, 9, 9), solid('#336699')))
+    );
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { pdf } = await write(scene, {
+      cmyk: { blue: [100, 0, 0, 0], '#0f3a5': [1, 2, 3, 4], '#336699': [1, 2, 3] as never },
+    });
+    expect(pdf.content(0)).not.toMatch(/ [kK]\n/);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0]![0]).toMatch(/blue, #0f3a5, #336699/);
+    warn.mockRestore();
+  });
+
   it('leaves out an entry that is not four numbers, and keeps values within 0..100', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const scene = sceneOf(
       item(
         'a',
@@ -1245,6 +1297,7 @@ describe('cmyk', () => {
     expect(content).toContain('0.0667 0.0667 0.0667 rg');
     expect(content).toContain('1 0 0.5 0 k');
     expect(report.rgbBrandColors).toEqual(['#111111']);
+    warn.mockRestore();
   });
 
   it('writes a pure RGB pdf without a map', async () => {

@@ -21,6 +21,20 @@ export const num = (value: number): string => formatNumber(value, 3);
 /** Colour components and the like: 4 decimals round-trip an 8 bit channel. */
 export const unit = (value: number): string => formatNumber(value, 4);
 
+/**
+ * A CSS hex colour as the lower-case `#rrggbb` the scene and the CMYK map are keyed by: `#rgb` is
+ * expanded, an alpha digit (`#rgba`, `#rrggbbaa`) is dropped. Null for anything else.
+ */
+export function normalHex(colour: string): string | null {
+  const match = /^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.exec(colour.trim());
+  if (!match) return null;
+  const digits = match[1]!.toLowerCase();
+  if (digits.length <= 4) {
+    return `#${Array.from(digits.slice(0, 3), (digit) => digit + digit).join('')}`;
+  }
+  return `#${digits.slice(0, 6)}`;
+}
+
 /** The linear part has six decimals (a rotation 1000 px from the origin), the move three. */
 export function matrixOperands(m: Matrix): string {
   const [a, b, c, d] = [m[0], m[1], m[2], m[3]].map((v) => formatNumber(v, 6));

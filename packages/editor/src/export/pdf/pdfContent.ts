@@ -672,7 +672,8 @@ export class ContentWriter {
       const inner = new ContentWriter(this.env, multiply(this.base, op.matrix));
       await inner.ops(children);
       this.begin(op);
-      this.lines.push(...inner.lines);
+      // Not `push(...lines)`: the spread of a huge group overflows the stack.
+      for (const line of inner.lines) this.lines.push(line);
       this.end();
       return;
     }
