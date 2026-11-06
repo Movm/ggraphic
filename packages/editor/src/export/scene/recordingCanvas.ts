@@ -20,6 +20,14 @@ export interface RecordingSceneCanvasOptions {
   width: number;
   height: number;
   page: number;
+  /**
+   * The canvas pixel ratio Konva sizes device-px quantities with: a shadow's blur and offsets, and
+   * the width of a stroke that does not scale (`strokeScaleEnabled: false`), are the node's own
+   * numbers times its absolute scale times this. An export draws the stage at 1 / display scale,
+   * so that the display scale cancels; so must this, or these quantities come out in display px.
+   * Default 1.
+   */
+  pixelRatio?: number;
   /** Real 2D context used only for `measureText`. */
   measure: CanvasRenderingContext2D;
   /** Called for a context call the recorder does not model; the caller makes the element a raster island. */
@@ -40,6 +48,8 @@ export class RecordingSceneCanvas extends SceneCanvas {
     super({ width: 1, height: 1, pixelRatio: 1 });
     this.width = options.width;
     this.height = options.height;
+    // A plain field in Konva; `setPixelRatio` would resize the bitmap.
+    this.pixelRatio = options.pixelRatio ?? 1;
     this.options = options;
     this.recorder = new RecordingContext(options);
     // The one place the recorder meets Konva: `SceneContext` forwards every call to `_context`,

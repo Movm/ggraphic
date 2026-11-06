@@ -165,6 +165,56 @@ describe('recordPageScene', () => {
     expect(only(ops(scene, 'a'), 'path').matrix).toEqual([2, 0, 0, 2, 20, 10]);
   });
 
+  it('records a shadow in page px, not in the px of the scaled stage', () => {
+    // Konva sizes a shadow from the absolute scale and the canvas pixel ratio: a shape shown at
+    // display scale 0.5 under a group at scale 2 has a 10 px blur of 20 page px once exported.
+    const { stage, item } = buildPage({ displayScale: 0.5, logicalScale: 2 });
+    item(
+      'a',
+      rect({
+        x: 5,
+        y: 7,
+        width: 20,
+        height: 10,
+        shadowColor: '#000000',
+        shadowBlur: 10,
+        shadowOffsetX: 4,
+        shadowOffsetY: 6,
+        shadowOpacity: 0.5,
+      })
+    );
+
+    const scene = recordPageScene(stage, { page: 1 });
+
+    const path = only(ops(scene, 'a'), 'path');
+    expect(path.shadow).toEqual({ hex: '#000000', alpha: 0.5, blur: 20, offsetX: 8, offsetY: 12 });
+  });
+
+  it('keeps a stroke that does not scale at the width the export gives it', () => {
+    // strokeScaleEnabled: false draws under the canvas pixel ratio alone: 2 CSS px of the stage
+    // are 2 / 0.5 = 4 page px once the stage is exported.
+    const { stage, item } = buildPage({ displayScale: 0.5, logicalScale: 2 });
+    item(
+      'a',
+      rect({
+        x: 5,
+        y: 7,
+        width: 20,
+        height: 10,
+        fill: '',
+        stroke: '#0000ff',
+        strokeWidth: 2,
+        strokeScaleEnabled: false,
+      })
+    );
+
+    const scene = recordPageScene(stage, { page: 1 });
+
+    const path = only(ops(scene, 'a'), 'path');
+    expect(path.mode).toBe('stroke');
+    expect(path.stroke!.width * path.matrix[0]).toBeCloseTo(4);
+  });
+
   it('records a page that has no page-root group (logical size equals the format)', () => {
     const stage = new Konva.Stage({
       container: document.createElement('div'),

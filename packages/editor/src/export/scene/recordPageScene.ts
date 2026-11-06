@@ -45,6 +45,8 @@ interface PageContext {
   page: number;
   width: number;
   height: number;
+  /** What an export draws the stage at: 1 / display scale. */
+  pixelRatio: number;
   measure: CanvasRenderingContext2D;
   report: ExportReport;
   labels: ReadonlyMap<string, string> | undefined;
@@ -58,6 +60,7 @@ export function recordPageScene(stage: Konva.Stage, options: RecordPageOptions):
   const items: SceneItem[] = [];
   const width = options.size?.width ?? roundTo3(stage.width() / stage.scaleX());
   const height = options.size?.height ?? roundTo3(stage.height() / stage.scaleY());
+  const pixelRatio = 1 / (Math.abs(stage.scaleX()) || 1);
 
   // `CanvasStage` hides the same nodes for a transparent PNG.
   const backgrounds = options.transparent
@@ -72,6 +75,7 @@ export function recordPageScene(stage: Konva.Stage, options: RecordPageOptions):
           page: options.page,
           width,
           height,
+          pixelRatio,
           measure,
           report,
           labels: options.labels,
@@ -123,6 +127,7 @@ function recordOps(node: Konva.Node, page: PageContext, elementId: string | null
   const canvas = new RecordingSceneCanvas({
     width: page.width,
     height: page.height,
+    pixelRatio: page.pixelRatio,
     page: page.page,
     measure: page.measure,
     onUnknown: (call) => unknown.add(call),
