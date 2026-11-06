@@ -167,6 +167,7 @@ interface BrandPack {  // from packages/core/src/brand/brandPack.ts (type-only e
   logoAlt?: BrandLogoAlt | null | undefined
   layout?: BrandLayout | undefined
   quoteMark: { src: string; } | null
+  print?: { cmyk?: Readonly<Record<string, readonly [number, number, number, number]>>; } | undefined
 }
 interface BrandSwatch {  // from packages/core/src/brand/brandPack.ts (type-only export)
   id: string
