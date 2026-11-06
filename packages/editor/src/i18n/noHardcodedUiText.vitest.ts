@@ -27,6 +27,8 @@ const ALLOWED_FILES = [
   /^ai\/describeCanvasElements\.ts$/,
   // Developer notes on page keys the export drops.
   /^export\/pptx\/buildPptxModel\.ts$/,
+  // A fixture page of sample content (German sample text), not editor UI.
+  /^export\/scene\/__fixtures__\//,
   // Built-in format data in the original language; `formatLabel()` / `formatDescription()` read
   // the catalogue.
   /^formats\/index\.ts$/,
@@ -322,6 +324,13 @@ const DEVELOPER_ERRORS = [
   /^smartcrop: /,
   /^no catalogue$/,
   /^unsafe svg$/,
+  // The vector export's scene layer: invariants of its own data (a matrix that cannot be inverted,
+  // a canvas the browser would not give). A failed export tells the person through the catalogue.
+  /^cannot invert a singular matrix$/,
+  /^no 2D canvas context to measure text with$/,
+  /^colour stop offset /,
+  /^the replay buffer has no 2D context$/,
+  /^replaying a group needs a canvas: /,
 ];
 
 const isEditorUiFile = (rel: string) => !ALLOWED_FILES.some((re) => re.test(rel));
