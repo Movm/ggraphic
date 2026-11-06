@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
@@ -79,24 +80,23 @@ describe('variationInstance', () => {
   });
 });
 
-// A real variable WOFF2 (wght 200..800, default 800), if the repo has one installed.
-const bricolage = (() => {
-  try {
-    const root = path.resolve(import.meta.dirname, '../../../../..');
-    const dir = path.join(
-      root,
-      'node_modules/.pnpm/@fontsource-variable+bricolage-grotesque@5.3.0/node_modules/@fontsource-variable/bricolage-grotesque/files'
-    );
-    return new Uint8Array(
-      readFileSync(path.join(dir, 'bricolage-grotesque-latin-wght-normal.woff2'))
-    );
-  } catch {
-    return null;
-  }
-})();
+// A real variable WOFF2 (wght 200..800, default 800); a missing package fails the run.
+const bricolage = new Uint8Array(
+  readFileSync(
+    path.join(
+      path.dirname(
+        createRequire(import.meta.url).resolve(
+          '@fontsource-variable/bricolage-grotesque/package.json'
+        )
+      ),
+      'files',
+      'bricolage-grotesque-latin-wght-normal.woff2'
+    )
+  )
+);
 
-describe.skipIf(!bricolage)('a variable WOFF2 face', () => {
-  const open = async () => (await loadFontkit()).create(bricolage!) as unknown as FontkitFont;
+describe('a variable WOFF2 face', () => {
+  const open = async () => (await loadFontkit()).create(bricolage) as unknown as FontkitFont;
 
   it('is an instance at its default weight only; any other weight stays default-only', async () => {
     const font = await open();
