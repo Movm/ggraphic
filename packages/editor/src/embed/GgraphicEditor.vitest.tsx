@@ -164,6 +164,32 @@ describe('GgraphicEditor', { timeout: 2 * MOUNT_WAIT }, () => {
     expect(outlined.report.missingGlyphs.length).toBeGreaterThan(0);
   });
 
+  it('exports the document as a pdf through the export api', async () => {
+    // jsdom's canvas cannot encode and never calls back: a picture that cannot be made is null.
+    const toBlob = vi
+      .spyOn(HTMLCanvasElement.prototype, 'toBlob')
+      .mockImplementation((callback) => callback(null));
+    try {
+      const api = createRef<CanvasEditorExportApi>();
+      render(<GgraphicEditor brand={brandDefault} templates={pack} exportApiRef={api} />);
+      await waitFor(() => expect(api.current).not.toBeNull(), { timeout: MOUNT_WAIT });
+
+      const { blob, filename, report } = await api.current!.exportPdf();
+
+      expect(filename).toBe('ggraphic.pdf');
+      expect(blob.type).toBe('application/pdf');
+      expect(await blob.text()).toMatch(/^%PDF-/);
+      // The vector writer made it, from the document's brand: no fallback, and the neutral
+      // pack's colours, which has no print values, went out as RGB.
+      expect(report.fallback).toBeNull();
+      expect(report.rgbBrandColors).toContain('#1d3557');
+      // No font file and no canvas to draw the text on here: the headline is said to be missing.
+      expect(report.missingGlyphs).toEqual([{ page: 1, elementId: 'headline', text: 'Hello' }]);
+    } finally {
+      toBlob.mockRestore();
+    }
+  });
+
   it('opens on a pack that is still loading (loadTemplatePack)', async () => {
     const loading = loadTemplatePack(files);
     const api = createRef<CanvasEditorExportApi>();

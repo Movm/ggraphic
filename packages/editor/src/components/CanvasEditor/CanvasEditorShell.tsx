@@ -44,6 +44,7 @@ import {
   getCanvasFormatOrDefault,
   isPrintFormat,
   isSlideFormat,
+  type CanvasFormat,
 } from '../../formats/index.js';
 import {
   usePageManager,
@@ -85,7 +86,11 @@ import {
 } from '../../export/printExport.js';
 import { fetchImageBytes, rasterizeOps, reencodeImage } from '../../export/scene/browserDeps.js';
 import { pngFromDataUrl } from '../../export/scene/imageBytes.js';
-import { exportPagesSvg } from '../../export/vectorExport.js';
+import {
+  exportPagesPdf,
+  exportPagesSvg,
+  type VectorExportDeps,
+} from '../../export/vectorExport.js';
 import { exportSlidesPdf } from '../../export/slidesPdf.js';
 import { EditorBoxProvider } from '../../hooks/editorBox.js';
 import { StageFitProvider, useMeasuredStageFit } from '../../hooks/stageFit.js';
@@ -142,6 +147,7 @@ import { layersTab, withLayersTab } from './layersTab.js';
 import { getMobileSelectionArea } from './mobileSelectionArea.js';
 import { PageWrapper } from './PageWrapper.js';
 
+import type { BrandPack } from '@ggraphic/core';
 import type { CanvasEditorExportApi, CanvasEditorProps, PageWrapperProps } from './types.js';
 import type { SidebarTabId } from '../../sidebar/types.js';
 import type {
@@ -681,8 +687,47 @@ function CanvasEditorInner({
     [pagesDoc, canvasRefsRef, formatId, documentTitle, loadedConfigs]
   );
 
-  // SVG: every page needs its mounted stage, like the PPTX export. The file is named after the
-  // document the way the PDF is; a digital document without a title is named after the host.
+  // One brand per deck: its pages share a country. Without one, the active brand's.
+  const brandOfDeck = useCallback(
+    (deck: ReturnType<typeof serializeDeck>) =>
+      (deck[0] ? loadedConfigs.get(deck[0].configId)?.brand : undefined) ?? activeBrand(),
+    [loadedConfigs]
+  );
+
+  // What the SVG and the PDF export need of the editor: every page needs its mounted stage, like
+  // the PPTX export.
+  const vectorDeps = useCallback(
+    (format: CanvasFormat, brand: BrandPack): VectorExportDeps => {
+      const refs = canvasRefsRef.current;
+      return {
+        recordPage: async (index, options) =>
+          (await refs[index]?.current?.recordScene({ page: index + 1, ...options })) ?? null,
+        resolveDeps: (index) => ({
+          page: index + 1,
+          fetchBytes: fetchImageBytes,
+          reencode: reencodeImage,
+          rasterizeElement: async (elementId, pixelRatio) => {
+            const drawn = await refs[index]?.current?.rasterizeElement(elementId, pixelRatio);
+            const png = drawn ? pngFromDataUrl(drawn.dataUrl) : null;
+            return drawn && png ? { png, box: drawn.box } : null;
+          },
+          rasterizeNode: async (nodeRef, pixelRatio) =>
+            (await refs[index]?.current?.rasterizeNode(nodeRef, pixelRatio)) ?? null,
+          rasterizeOps,
+          rasterPixelRatio: isPrintFormat(format) ? printPixelRatio(format) : 2,
+        }),
+        fontDeps: {
+          ...(services.exportFonts ? { host: services.exportFonts } : {}),
+          brandFaces: brand.fontFaces,
+          ...(brand.fonts.boldFamilies ? { boldFamilies: brand.fonts.boldFamilies } : {}),
+        },
+      };
+    },
+    [canvasRefsRef, services.exportFonts]
+  );
+
+  // SVG: the file is named after the document the way the PDF is; a digital document without a
+  // title is named after the host.
   const exportSvg = useCallback(
     async ({
       pages: which,
@@ -696,9 +741,7 @@ function CanvasEditorInner({
         throw new Error(messages().errors.exportPagesPartial);
       }
       const format = getCanvasFormatOrDefault(formatId);
-      // One brand per deck: its pages share a country. Without one, the active brand's.
-      const brand =
-        (deck[0] ? loadedConfigs.get(deck[0].configId)?.brand : undefined) ?? activeBrand();
+      const brand = brandOfDeck(deck);
       const title =
         documentTitle ??
         (isSlideFormat(format) ? messages().defaults.presentationTitle : filenamePrefix);
@@ -709,29 +752,7 @@ function CanvasEditorInner({
           transparent,
           filenameBase: printPdfFilename(title, filenamePrefix).replace(/\.pdf$/, ''),
         },
-        {
-          recordPage: async (index, options) =>
-            (await refs[index]?.current?.recordScene({ page: index + 1, ...options })) ?? null,
-          resolveDeps: (index) => ({
-            page: index + 1,
-            fetchBytes: fetchImageBytes,
-            reencode: reencodeImage,
-            rasterizeElement: async (elementId, pixelRatio) => {
-              const drawn = await refs[index]?.current?.rasterizeElement(elementId, pixelRatio);
-              const png = drawn ? pngFromDataUrl(drawn.dataUrl) : null;
-              return drawn && png ? { png, box: drawn.box } : null;
-            },
-            rasterizeNode: async (nodeRef, pixelRatio) =>
-              (await refs[index]?.current?.rasterizeNode(nodeRef, pixelRatio)) ?? null,
-            rasterizeOps,
-            rasterPixelRatio: isPrintFormat(format) ? printPixelRatio(format) : 2,
-          }),
-          fontDeps: {
-            ...(services.exportFonts ? { host: services.exportFonts } : {}),
-            brandFaces: brand.fontFaces,
-            ...(brand.fonts.boldFamilies ? { boldFamilies: brand.fonts.boldFamilies } : {}),
-          },
-        }
+        vectorDeps(format, brand)
       );
     },
     [
@@ -739,12 +760,75 @@ function CanvasEditorInner({
       currentPageIndex,
       formatId,
       pagesDoc,
-      loadedConfigs,
+      brandOfDeck,
       documentTitle,
       filenamePrefix,
-      services.exportFonts,
+      vectorDeps,
     ]
   );
+
+  // Print: one PDF page per editor page, in page order.
+  const printPages = useCallback((): PrintExportPage[] => {
+    const refs = canvasRefsRef.current;
+    return refs.map((ref) => ({
+      captureTile: async (tile, pixelRatio) =>
+        (await ref.current?.capturePrintTile(tile, pixelRatio, PRINT_JPEG_QUALITY)) ?? null,
+      getImages: () => ref.current?.getPrintImages() ?? [],
+    }));
+  }, [canvasRefsRef]);
+
+  const printFormat = useMemo(() => {
+    const f = getCanvasFormatOrDefault(formatId);
+    return isPrintFormat(f) ? f : null;
+  }, [formatId]);
+
+  // PDF: every page, vector, in the mode of the format. If that cannot be made, the PDF of page
+  // pictures this replaces is (print: JPEG tiles with crop marks; slides and digital: PNGs).
+  const exportPdf = useCallback(async () => {
+    const refs = canvasRefsRef.current;
+    const deck = serializeDeck(pagesDoc);
+    if (deck.some((_, i) => !refs[i]?.current)) {
+      throw new Error(messages().errors.exportPagesPartial);
+    }
+    await ensureFontsReady();
+    const format = getCanvasFormatOrDefault(formatId);
+    const mode = isPrintFormat(format) ? 'print' : isSlideFormat(format) ? 'slides' : 'digital';
+    const brand = brandOfDeck(deck);
+    // A print file without a title is named for print; the others as the SVG is.
+    const title =
+      mode === 'print'
+        ? (documentTitle ?? null)
+        : (documentTitle ??
+          (mode === 'slides' ? messages().defaults.presentationTitle : filenamePrefix));
+    const rasterFallback = async () => {
+      if (isPrintFormat(format)) return exportPrintPdf({ format, pages: printPages() });
+      const images = await exportAllPages({ pixelRatio: SLIDES_PDF_PIXEL_RATIO });
+      return exportSlidesPdf(
+        images,
+        mode === 'slides' ? undefined : { width: format.width, height: format.height }
+      );
+    };
+    return exportPagesPdf(
+      {
+        mode,
+        format,
+        brand,
+        filenameBase: printPdfFilename(title, filenamePrefix).replace(/\.pdf$/, ''),
+        pageCount: deck.length,
+      },
+      { ...vectorDeps(format, brand), rasterFallback }
+    );
+  }, [
+    canvasRefsRef,
+    pagesDoc,
+    formatId,
+    brandOfDeck,
+    documentTitle,
+    filenamePrefix,
+    printPages,
+    exportAllPages,
+    vectorDeps,
+  ]);
   // The host's callback at call time: it may pass a new function every render.
   const onPagesChangeRef = useRef(onPagesChange);
   onPagesChangeRef.current = onPagesChange;
@@ -772,11 +856,20 @@ function CanvasEditorInner({
       },
       exportPptx: () => buildPptx(),
       exportSvg,
+      exportPdf,
       getPages: () => serializeDeck(pagesDoc).map(({ configId, state }) => ({ configId, state })),
       undo: toolbarHandlers.undo,
       redo: toolbarHandlers.redo,
     }),
-    [handleCaptureCanvas, exportAllPages, buildPptx, exportSvg, pagesDoc, toolbarHandlers]
+    [
+      handleCaptureCanvas,
+      exportAllPages,
+      buildPptx,
+      exportSvg,
+      exportPdf,
+      pagesDoc,
+      toolbarHandlers,
+    ]
   );
 
   const handleCaptureCanvasForAi = useCallback(async () => {
@@ -1030,31 +1123,12 @@ function CanvasEditorInner({
     []
   );
 
-  // Print: one PDF page per editor page, in page order.
-  const printPages = useCallback((): PrintExportPage[] => {
-    const refs = canvasRefsRef.current;
-    return refs.map((ref) => ({
-      captureTile: async (tile, pixelRatio) =>
-        (await ref.current?.capturePrintTile(tile, pixelRatio, PRINT_JPEG_QUALITY)) ?? null,
-      getImages: () => ref.current?.getPrintImages() ?? [],
-    }));
-  }, [canvasRefsRef]);
-
-  const printFormat = useMemo(() => {
-    const f = getCanvasFormatOrDefault(formatId);
-    return isPrintFormat(f) ? f : null;
-  }, [formatId]);
-
+  // The report tells the download view what is a picture in the PDF, and whether all of it is.
   const handleDownloadPdf = useCallback(async () => {
-    if (!printFormat) return;
-    const pages = printPages();
-    if (pages.some((_, i) => !canvasRefsRef.current[i]?.current)) {
-      throw new Error(messages().errors.exportPagesPartial);
-    }
-    const pdf = await exportPrintPdf({ format: printFormat, pages });
-    const blob = new Blob([pdf as BlobPart], { type: 'application/pdf' });
-    await fileDelivery.downloadBlob(blob, printPdfFilename(documentTitle ?? null, filenamePrefix));
-  }, [printFormat, printPages, canvasRefsRef, documentTitle, fileDelivery, filenamePrefix]);
+    const { blob, filename, report } = await exportPdf();
+    await fileDelivery.downloadBlob(blob, filename);
+    return report;
+  }, [exportPdf, fileDelivery]);
 
   const isSlideDeck = useMemo(() => isSlideFormat(getCanvasFormatOrDefault(formatId)), [formatId]);
   const handleDownloadPptx = useCallback(
@@ -1077,17 +1151,6 @@ function CanvasEditorInner({
     },
     [exportSvg, fileDelivery]
   );
-
-  const handleDownloadSlidesPdf = useCallback(async () => {
-    await ensureFontsReady();
-    const images = await exportAllPages({ pixelRatio: SLIDES_PDF_PIXEL_RATIO });
-    const pdf = await exportSlidesPdf(images);
-    const blob = new Blob([pdf as BlobPart], { type: 'application/pdf' });
-    await fileDelivery.downloadBlob(
-      blob,
-      printPdfFilename(documentTitle ?? messages().defaults.presentationTitle, filenamePrefix)
-    );
-  }, [exportAllPages, documentTitle, fileDelivery, filenamePrefix]);
 
   // Every poster page should carry a filled-in V.i.S.d.P. / Impressum, whichever
   // page is active; the download warns (never blocks) once every page has reported.
@@ -1461,7 +1524,7 @@ function CanvasEditorInner({
         : null,
       slideDeck: isSlideDeck
         ? {
-            onDownloadPdf: handleDownloadSlidesPdf,
+            onDownloadPdf: handleDownloadPdf,
             onDownloadPptx: handleDownloadPptx,
             locale: deckLocale,
           }
@@ -1473,12 +1536,12 @@ function CanvasEditorInner({
             ? ('slides' as const)
             : ('digital' as const),
         onDownloadSvg: handleDownloadSvg,
+        onDownloadPdf: handleDownloadPdf,
       },
     }),
     [
       getPhotoCredit,
       isSlideDeck,
-      handleDownloadSlidesPdf,
       handleDownloadPptx,
       handleDownloadSvg,
       deckLocale,

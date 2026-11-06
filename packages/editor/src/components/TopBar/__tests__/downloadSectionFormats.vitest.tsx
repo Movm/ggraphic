@@ -21,26 +21,32 @@ afterEach(() => registerMessages('de'));
 type Category = 'print' | 'slides' | 'digital';
 type SvgOptions = { pages: 'current' | 'all'; text: 'outlines' | 'editable'; transparent: boolean };
 
-const printExport = { onDownloadPdf: vi.fn(), getWarnings: () => [] };
-const slideDeck = { onDownloadPdf: vi.fn(), onDownloadPptx: vi.fn(), locale: 'de-DE' as const };
-
 function renderSection(
   category: Category,
   over: Partial<DownloadSectionProps> = {},
-  onDownloadSvg: (options: SvgOptions) => Promise<ExportReport> = vi.fn(async () => emptyReport())
+  onDownloadSvg: (options: SvgOptions) => Promise<ExportReport> = vi.fn(async () => emptyReport()),
+  // What the PDF of this category answers: the print and slide services, or the vector export.
+  pdfReport: ExportReport | void = emptyReport()
 ) {
   const user = userEvent.setup();
+  const onDownloadPdf = vi.fn(async () => pdfReport);
+  const printExport = { onDownloadPdf, getWarnings: () => [] };
+  const slideDeck = { onDownloadPdf, onDownloadPptx: vi.fn(), locale: 'de-DE' as const };
   render(
     <DownloadSection
       onDownload={vi.fn()}
       pageCount={1}
       printExport={category === 'print' ? printExport : null}
       slideDeck={category === 'slides' ? slideDeck : null}
-      vectorExport={{ category, onDownloadSvg }}
+      vectorExport={{
+        category,
+        onDownloadSvg,
+        onDownloadPdf: onDownloadPdf as () => Promise<ExportReport>,
+      }}
       {...over}
     />
   );
-  return { user, onDownloadSvg };
+  return { user, onDownloadSvg, onDownloadPdf };
 }
 
 const formatPicker = () => screen.getByRole('combobox', { name: 'Format' });
@@ -65,7 +71,7 @@ describe('formats per category', () => {
       'PowerPoint (.pptx)',
       ['PowerPoint (.pptx)', 'PDF', 'SVG (Vektor)', 'PNG', 'JPG', 'WebP'],
     ],
-    ['digital', 'PNG', ['PNG', 'JPG', 'WebP', 'SVG (Vektor)']],
+    ['digital', 'PNG', ['PNG', 'JPG', 'WebP', 'PDF', 'SVG (Vektor)']],
   ] as const)('%s: default %s, options in order', async (category, preselected, options) => {
     const { user } = renderSection(category);
 
@@ -84,7 +90,7 @@ describe('formats per category', () => {
     registerMessages('en');
     const { user } = renderSection('digital');
 
-    expect(await optionsOf(user)).toEqual(['PNG', 'JPG', 'WebP', 'SVG (vector)']);
+    expect(await optionsOf(user)).toEqual(['PNG', 'JPG', 'WebP', 'PDF', 'SVG (vector)']);
   });
 });
 
@@ -256,6 +262,116 @@ describe('the notice after an SVG download', () => {
 
     expect(await screen.findByRole('alert')).toBeTruthy();
     expect(screen.queryByText(/Als Bild eingebettet/)).toBeNull();
+  });
+});
+
+describe('the PDF choice', () => {
+  async function choosePdf(user: ReturnType<typeof userEvent.setup>, name: string) {
+    await user.click(formatPicker());
+    await user.click(screen.getByRole('option', { name }));
+  }
+  const download = (user: ReturnType<typeof userEvent.setup>) =>
+    user.click(screen.getByRole('button', { name: 'Herunterladen' }));
+
+  it.each([
+    ['print', 'PDF (Druck)'],
+    ['slides', 'PDF'],
+    ['digital', 'PDF'],
+  ] as const)('%s: "%s" downloads through the vector path', async (category, name) => {
+    const { user, onDownloadPdf, onDownloadSvg } = renderSection(category);
+    // The print format is preselected; the others are chosen.
+    if (category !== 'print') await choosePdf(user, name);
+    expect(formatPicker().textContent).toBe(name);
+
+    await download(user);
+
+    expect(onDownloadPdf).toHaveBeenCalledTimes(1);
+    expect(onDownloadSvg).not.toHaveBeenCalled();
+  });
+
+  it('asks nothing of the PDF of a digital document: it holds every page, as it is', async () => {
+    const { user } = renderSection('digital', { pageCount: 3, onDownloadAllZip: vi.fn() });
+    expect(screen.getByRole('combobox', { name: 'Seiten auswählen' })).toBeTruthy();
+
+    await choosePdf(user, 'PDF');
+
+    expect(screen.queryByRole('combobox', { name: 'Seiten auswählen' })).toBeNull();
+    expect(screen.queryByText('Auflösung')).toBeNull();
+    expect(screen.queryByRole('switch', { name: 'Transparenter Hintergrund' })).toBeNull();
+  });
+
+  describe('the notice', () => {
+    const fallback = (): ExportReport => ({ ...emptyReport(), fallback: { reason: 'fonts' } });
+    const NOTICE =
+      'Das PDF wurde als Bild erzeugt, weil nicht alle Schriften geladen werden konnten.';
+
+    it.each([
+      ['print', 'PDF (Druck)'],
+      ['slides', 'PDF'],
+      ['digital', 'PDF'],
+    ] as const)('%s: a report with a fallback says the pdf is an image', async (category, name) => {
+      const { user } = renderSection(category, {}, undefined, fallback());
+      if (category !== 'print') await choosePdf(user, name);
+      expect(screen.queryByText(NOTICE)).toBeNull();
+
+      await download(user);
+
+      const notice = await screen.findByText(NOTICE);
+      expect(notice.getAttribute('role')).toBe('status');
+    });
+
+    it('speaks English under en', async () => {
+      registerMessages('en');
+      const { user } = renderSection('digital', {}, undefined, fallback());
+      await user.click(formatPicker());
+      await user.click(screen.getByRole('option', { name: 'PDF' }));
+
+      await user.click(screen.getByRole('button', { name: 'Download' }));
+
+      expect(
+        await screen.findByText(
+          'The PDF was made as an image because not all fonts could be loaded.'
+        )
+      ).toBeTruthy();
+    });
+
+    it('names the raster islands and the missing elements of a vector pdf, like the SVG does', async () => {
+      const { user } = renderSection('digital', {}, undefined, {
+        ...emptyReport(),
+        rasterIslands: [{ page: 1, elementId: 'badge', reason: 'shadow' }],
+        missingElements: [{ page: 1, elementId: 'x', reason: 'image-unreadable' }],
+      });
+      await choosePdf(user, 'PDF');
+
+      await download(user);
+
+      expect(await screen.findByText('Als Bild eingebettet: Schatten')).toBeTruthy();
+      expect(
+        screen.getByText('1 Element(e) fehlen, weil ihr Bild nicht geladen werden konnte.')
+      ).toBeTruthy();
+      expect(screen.queryByText(NOTICE)).toBeNull();
+    });
+
+    it('says nothing when a host’s PDF service tells nothing', async () => {
+      const { user, onDownloadPdf } = renderSection('print', {}, undefined, undefined);
+
+      await download(user);
+
+      expect(onDownloadPdf).toHaveBeenCalled();
+      expect(screen.queryByRole('status')).toBeNull();
+    });
+
+    it('goes away with the format', async () => {
+      const { user } = renderSection('digital', {}, undefined, fallback());
+      await choosePdf(user, 'PDF');
+      await download(user);
+      await screen.findByText(NOTICE);
+
+      await user.click(formatPicker());
+      await user.click(screen.getByRole('option', { name: 'PNG' }));
+
+      expect(screen.queryByText(NOTICE)).toBeNull();
+    });
   });
 });
 

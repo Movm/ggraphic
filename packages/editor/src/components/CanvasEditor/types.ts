@@ -147,6 +147,14 @@ export interface CanvasEditorExportApi {
     /** No page background. */
     transparent?: boolean;
   }) => Promise<{ blob: Blob; filename: string; report: ExportReport }>;
+  /**
+   * Every page as one PDF, vector, in the mode that fits the format: print pages with bleed, trim
+   * and crop marks, slides at slide size, other pages at 1 px to the pt. Throws when a page cannot
+   * be rendered. The report says what could not stay vector and what is missing; when the
+   * document could not be made as vector at all, the PDF is made of page pictures and
+   * `report.fallback` says so.
+   */
+  exportPdf: () => Promise<{ blob: Blob; filename: string; report: ExportReport }>;
   /** The deck as a Vorlage stores it: config and state per page. */
   getPages: () => { configId: string; state: Record<string, unknown> }[];
   /** The menu bar's undo/redo, for a host that draws the bar itself. */

@@ -145,8 +145,8 @@ SVG outlines and PDF embedding need the font files.
   - `brandDefault` gets no map. Packs without a map produce a pure RGB PDF.
   - The Grünerator packs get their values from the party's corporate design manual. The maintainer supplies them; they are not invented.
 - **Fallback boundary, per document.** The whole PDF falls back to raster when:
-  - vector writing throws, or
-  - font failures affect the text of more than one element across the document.
+  - vector writing throws, or does not finish within 60 s (a font fontkit cannot subset can fail inside a timer callback, where nothing catches it and `save()` never settles), or
+  - font failures (`font-unavailable`, `bitmap-only-font`) affect the text of more than one element across the document (distinct page and element id).
 
   Other raster islands (filtered photos, PDF shadows, a missing glyph) are legitimate and never trigger the fallback. If the raster fallback fails too, the download fails with today's error message.
 
