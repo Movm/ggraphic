@@ -23,7 +23,7 @@
  * on nothing but the scene and the options: same input, same bytes.
  */
 import type { FontFileSet } from '../fonts/fontFiles.js';
-import { glyphOutline, splitRuns } from '../fonts/glyphs.js';
+import { fakeBoldWidth, glyphOutline, splitRuns } from '../fonts/glyphs.js';
 import { inlineSvg } from './inlineSvg.js';
 import {
   mostUsedFont,
@@ -411,7 +411,17 @@ class SvgWriter {
       }
       const glyphs = glyphOutline(run.file, run.text, op.font.size);
       const d = glyphs.map((glyph, i) => pathData(glyph.path, run.xs[i] ?? 0, op.y)).join('');
-      if (d !== '') parts.push((extra) => el('path', { d, ...paint, ...extra }));
+      // A regular cut standing in for a bold: the outline grows by a stroke in the fill's colour.
+      const bold =
+        run.file.fakeBold && op.mode === 'fill' && paint['fill'] !== undefined
+          ? {
+              stroke: paint['fill'],
+              'stroke-opacity': paint['fill-opacity'],
+              'stroke-width': num(fakeBoldWidth(op.font.size)),
+              'stroke-linejoin': 'round',
+            }
+          : {};
+      if (d !== '') parts.push((extra) => el('path', { d, ...paint, ...bold, ...extra }));
     }
     if (parts.length === 0) return [];
     if (parts.length === 1) return parts[0]!(common);

@@ -15,7 +15,13 @@
  * - Raster islands are asked for through `rasterize`; an island nobody could make is reported in
  *   `missingElements`, never left out quietly.
  */
-import { advanceOf, glyphOutline, splitRuns, type GlyphRun } from '../fonts/glyphs.js';
+import {
+  advanceOf,
+  fakeBoldWidth,
+  glyphOutline,
+  splitRuns,
+  type GlyphRun,
+} from '../fonts/glyphs.js';
 import { IDENTITY, invert, multiply } from '../scene/matrix.js';
 import { svgImageGroup, type SvgSource } from '../svg/svgImageScene.js';
 import { formatNumber } from '../svg/xml.js';
@@ -414,11 +420,21 @@ export class ContentWriter {
     if (!bounds) return;
     const paint = await this.paint(op.mode, op.paint, op, bounds);
     if (!paint) return;
+    // A regular cut standing in for a bold: filled and stroked in the fill's colour (mode 2), the
+    // outline growing by a line of `fakeBoldWidth`.
+    const bold = file.fakeBold && op.mode === 'fill';
+    const boldStroke = bold ? await this.paint('stroke', op.paint, op, bounds) : null;
     this.begin(op);
     for (const line of paint) this.raw(line);
+    if (boldStroke) {
+      for (const line of boldStroke) this.raw(line);
+      this.raw(`${num(fakeBoldWidth(size))} w`);
+      this.raw(`${JOIN.round} j`);
+    }
     if (op.mode === 'stroke') for (const line of this.strokeState(op.stroke)) this.raw(line);
     this.raw('BT');
     if (op.mode === 'stroke') this.raw('1 Tr');
+    else if (bold) this.raw('2 Tr');
     this.raw(`${resources.font(font)} ${num(size)} Tf`);
     // The page is y down, text is y up: a flipped text matrix stands the glyphs up again. An
     // upright cut standing in for an italic is sheared by the `c` term (top of the glyph to the right).

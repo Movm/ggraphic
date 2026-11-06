@@ -271,6 +271,20 @@ describe('text', () => {
     expect(upright.content(0)).toContain('1 0 0 -1 10 100 Tm');
   });
 
+  it('draws a regular cut that stands in for a bold with fill and stroke in one colour', async () => {
+    const bold = withFile((file) => ({ ...file, fakeBold: true }));
+    const op = text('II', { xs: [10, 40], font: { ...FACE, size: 36 } });
+    const { pdf } = await write(sceneOf(item('a', null, op)), { fonts: bold });
+    const content = pdf.content(0);
+    // Fill colour, the same as stroke colour, a line of size / 32 with round joins, mode 2.
+    expect(content).toMatch(/0\.0667 0\.1333 0\.2 rg\s+0\.0667 0\.1333 0\.2 RG/);
+    expect(content).toContain('1.125 w');
+    expect(content).toContain('1 j');
+    expect(content).toContain('2 Tr');
+    const { pdf: regular } = await write(sceneOf(item('a', null, op)));
+    expect(regular.content(0)).not.toContain(' Tr');
+  });
+
   it('sets the pen by the advance of the glyph the font shapes, which is the width the PDF holds', async () => {
     // A font that shapes 'I' to a glyph 100 units (of 1000) wider: the next 'I' is 4 px (at 40 px)
     // closer than the pen says, and the array says so by 100 thousandths of an em.
@@ -353,6 +367,7 @@ describe('text', () => {
         embeddable: 'yes',
         ranges: null,
         slant: 0,
+        fakeBold: false,
       };
     });
 

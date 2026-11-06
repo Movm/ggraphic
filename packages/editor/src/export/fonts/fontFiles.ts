@@ -34,6 +34,11 @@ export interface FontFile {
    * `SYNTHETIC_ITALIC_SLANT` for the upright cut that stands in for an italic the family lacks.
    */
   slant: number;
+  /**
+   * True for a cut lighter than 600 that stands in for a weight of 600 or more the family does not
+   * ship: a writer draws it emboldened like a browser does (`fakeBoldWidth`).
+   */
+  fakeBold: boolean;
 }
 
 export interface FontFileSet {
@@ -194,8 +199,11 @@ async function loadFiles(face: FontSpec, deps: FontSourceDeps): Promise<readonly
     : [{ family, weight: face.weight }];
   const find = async (style: 'normal' | 'italic') => {
     for (const attempt of attempts) {
-      const files = await filesFor(attempt.family, attempt.weight, style, deps);
-      if (files.length > 0) return files;
+      const { files, served } = await filesFor(attempt.family, attempt.weight, style, deps);
+      if (files.length === 0) continue;
+      // A bold asked for and a lighter cut served (the bold family's own regular is not that).
+      const fakeBold = attempt.weight >= 600 && served !== null && served < 600;
+      return fakeBold ? files.map((file) => ({ ...file, fakeBold })) : files;
     }
     return [];
   };
@@ -207,12 +215,13 @@ async function loadFiles(face: FontSpec, deps: FontSourceDeps): Promise<readonly
   return (await find('normal')).map((file) => ({ ...file, slant: SYNTHETIC_ITALIC_SLANT }));
 }
 
+/** The files for one family and weight, and the weight they serve (null: the host did not say). */
 async function filesFor(
   family: string,
   weight: number,
   style: 'normal' | 'italic',
   deps: FontSourceDeps
-): Promise<FontFile[]> {
+): Promise<{ files: FontFile[]; served: number | null }> {
   // The host's service is code we do not control: a throw is a font it does not have, the same
   // as a download that fails, and the next source is asked.
   let hosted: Uint8Array | null | undefined = null;
@@ -223,18 +232,23 @@ async function filesFor(
   }
   if (hosted) {
     const file = await toFontFile(hosted, null);
-    if (file) return [file];
+    if (file) return { files: [file], served: null };
   }
   const fetchBytes = deps.fetchBytes ?? fetchOverHttp;
-  const fromBrand = await loadCandidates(
-    pickCandidates(brandCandidates(deps.brandFaces ?? [], family), weight, style),
-    fetchBytes
-  );
-  if (fromBrand.length > 0) return fromBrand;
-  return loadCandidates(
-    pickCandidates(cssCandidates((deps.cssRules ?? documentFontFaces)(), family), weight, style),
-    fetchBytes
-  );
+  // The brand's faces first; the page's `@font-face` rules only if the brand has none.
+  const sources = [
+    () => brandCandidates(deps.brandFaces ?? [], family),
+    () => cssCandidates((deps.cssRules ?? documentFontFaces)(), family),
+  ];
+  for (const candidatesOf of sources) {
+    const picked = pickCandidates(candidatesOf(), weight, style);
+    const files = await loadCandidates(picked, fetchBytes);
+    if (files.length > 0) {
+      const [first] = picked;
+      return { files, served: first ? Math.min(Math.max(weight, first.low), first.high) : null };
+    }
+  }
+  return { files: [], served: null };
 }
 
 function brandCandidates(faces: readonly BrandFontFace[], family: string): Candidate[] {
@@ -331,7 +345,14 @@ async function toFontFile(
 ): Promise<FontFile | null> {
   const font = await parseFont(bytes);
   if (!font) return null;
-  return { bytes, font, embeddable: embeddingOf(font['OS/2']?.fsType ?? 0), ranges, slant: 0 };
+  return {
+    bytes,
+    font,
+    embeddable: embeddingOf(font['OS/2']?.fsType ?? 0),
+    ranges,
+    slant: 0,
+    fakeBold: false,
+  };
 }
 
 async function parseFont(bytes: Uint8Array): Promise<FontkitFont | null> {

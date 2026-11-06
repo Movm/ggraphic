@@ -248,6 +248,54 @@ describe('resolveFontFiles: brand faces', () => {
     expect(none.files).toEqual([]);
   });
 
+  it('a bold asked for and a lighter cut served is flagged to be emboldened, a real bold is not', async () => {
+    const { fetchBytes } = recordingFetch();
+    const regularOnly = await resolveFontFiles(face({ weight: 700 }), {
+      brandFaces: [brand('w400.woff2', 400)],
+      fetchBytes,
+    });
+    expect(regularOnly.files.map((file) => file.fakeBold)).toEqual([true]);
+    const realBold = await resolveFontFiles(face({ weight: 700 }), {
+      brandFaces: [brand('w400.woff2', 400), brand('w700.woff2', 700)],
+      fetchBytes,
+    });
+    expect(realBold.files.map((file) => file.fakeBold)).toEqual([false]);
+    const regular = await resolveFontFiles(face({ weight: 400 }), {
+      brandFaces: [brand('w400.woff2', 400)],
+      fetchBytes,
+    });
+    expect(regular.files.map((file) => file.fakeBold)).toEqual([false]);
+    // 600 is bold, 500 is not.
+    const semi = await resolveFontFiles(face({ weight: 600 }), {
+      brandFaces: [brand('w400.woff2', 400)],
+      fetchBytes,
+    });
+    expect(semi.files.map((file) => file.fakeBold)).toEqual([true]);
+    const medium = await resolveFontFiles(face({ weight: 500 }), {
+      brandFaces: [brand('w400.woff2', 400)],
+      fetchBytes,
+    });
+    expect(medium.files.map((file) => file.fakeBold)).toEqual([false]);
+  });
+
+  it('the bold family of boldFamilies is a real bold, and the faux italic and bold combine', async () => {
+    const { fetchBytes } = recordingFetch();
+    const real = await resolveFontFiles(face({ family: 'Foo', weight: 700 }), {
+      brandFaces: [
+        brand('regular.woff2', 400, 'normal', 'Foo'),
+        brand('bold.woff2', 400, 'normal', 'Foo Bold'),
+      ],
+      boldFamilies: { Foo: 'Foo Bold' },
+      fetchBytes,
+    });
+    expect(real.files.map((file) => file.fakeBold)).toEqual([false]);
+    const both = await resolveFontFiles(face({ weight: 700, style: 'italic' }), {
+      brandFaces: [brand('w400.woff2', 400)],
+      fetchBytes,
+    });
+    expect(both.files.map((file) => [file.slant, file.fakeBold])).toEqual([[0.25, true]]);
+  });
+
   it('asks the host for the italic first, then for the upright cut it slants', async () => {
     const load = vi.fn<CanvasExportFontService['load']>(async (wanted) =>
       wanted.style === 'normal' ? LATIN : null

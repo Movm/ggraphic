@@ -89,6 +89,16 @@ export function advanceOf(font: FontkitFont, codePoint: number): number {
   return glyphsFor(font, codePoint).reduce((sum, glyph) => sum + glyph.advanceWidth, 0);
 }
 
+/**
+ * The width of the outline a browser adds to a regular cut it draws for a bold nobody ships
+ * (Skia's fake bold): `size / 24` at 9 px and below, `size / 32` at 36 px and above, in between
+ * the factor falls linearly.
+ */
+export function fakeBoldWidth(size: number): number {
+  const t = Math.min(Math.max((size - 9) / (36 - 9), 0), 1);
+  return size * (1 / 24 + t * (1 / 32 - 1 / 24));
+}
+
 /** A stretch of a text op that one font file draws; `file` is null where no file has the glyphs. */
 export interface GlyphRun {
   file: FontFile | null;

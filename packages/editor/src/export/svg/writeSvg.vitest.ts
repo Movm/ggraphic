@@ -817,6 +817,27 @@ describe('text', () => {
     expect(xs[1]).toBeLessThan(215);
   });
 
+  it('outline mode strokes the glyphs of a regular cut that stands in for a bold, as a browser does', async () => {
+    const bold: FontSpec = { ...FACE, weight: 700, size: 36 };
+    const set = await resolveFontFiles(bold, {
+      brandFaces: [{ family: FACE.family, src: 'latin.woff2', weight: 400 }],
+      fetchBytes: async () => latinBytes,
+    });
+    const op = textOp('I', { font: bold, xs: [10], paint: solid('#112233') });
+    const { svg } = run(sceneOf(item('t', null, op)), {
+      fonts: new Map([['Instrument Sans|700|normal', set]]),
+    });
+
+    const path = parse(svg).querySelector('path')!;
+    expect(path.getAttribute('fill')).toBe('#112233');
+    expect(path.getAttribute('stroke')).toBe('#112233');
+    expect(path.getAttribute('stroke-width')).toBe('1.125'); // 36 px / 32
+    expect(path.getAttribute('stroke-linejoin')).toBe('round');
+    // A real bold, or a regular, is not stroked.
+    const plain = run(sceneOf(item('t', null, textOp('I', { xs: [10] }))));
+    expect(parse(plain.svg).querySelector('path')!.hasAttribute('stroke')).toBe(false);
+  });
+
   it('outline mode shears the upright cut that stands in for an italic the family does not ship', async () => {
     const italic: FontSpec = { ...FACE, style: 'italic' };
     // The brand ships the upright cut only; the resolver hands it back flagged to be slanted.

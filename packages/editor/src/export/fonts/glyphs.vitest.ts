@@ -6,7 +6,14 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { resolveFontFiles, type FontFile, type FontFileSet } from './fontFiles.js';
-import { advanceOf, glyphOutline, glyphsFor, loadFontkit, splitRuns } from './glyphs.js';
+import {
+  advanceOf,
+  fakeBoldWidth,
+  glyphOutline,
+  glyphsFor,
+  loadFontkit,
+  splitRuns,
+} from './glyphs.js';
 
 const fontsourceDir = path.dirname(
   createRequire(import.meta.url).resolve('@fontsource/instrument-sans/package.json')
@@ -202,5 +209,15 @@ describe('glyphOutline', () => {
         g.path.flatMap((c) => Object.values(c).filter((v): v is number => typeof v === 'number'))
       );
     expect(numbers.some((n) => Object.is(n, -0))).toBe(false);
+  });
+});
+
+describe('fakeBoldWidth', () => {
+  it('is size / 24 at 9 px and size / 32 at 36 px, interpolated between and clamped outside', () => {
+    expect(fakeBoldWidth(9)).toBeCloseTo(9 / 24, 10);
+    expect(fakeBoldWidth(36)).toBeCloseTo(36 / 32, 10);
+    expect(fakeBoldWidth(22.5)).toBeCloseTo(22.5 * (1 / 24 + 1 / 32) * 0.5, 10);
+    expect(fakeBoldWidth(4)).toBeCloseTo(4 / 24, 10);
+    expect(fakeBoldWidth(72)).toBeCloseTo(72 / 32, 10);
   });
 });
