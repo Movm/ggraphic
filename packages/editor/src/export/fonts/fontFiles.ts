@@ -16,6 +16,12 @@ import { loadFontkit, type FontkitFont, type FontkitFsType } from './glyphs.js';
 import type { CanvasExportFontService } from '../../hostServices.js';
 import type { FontSpec } from '../scene/types.js';
 
+/**
+ * How far a browser shears the upright cut it draws for an italic nobody ships: Skia's fake italic
+ * is `skewX(-1/4)`, a quarter of the height above the baseline to the right.
+ */
+export const SYNTHETIC_ITALIC_SLANT = 0.25;
+
 export interface FontFile {
   bytes: Uint8Array;
   font: FontkitFont;
@@ -23,6 +29,11 @@ export interface FontFile {
   embeddable: 'yes' | 'outlines-only' | 'bitmap-only';
   /** The `unicode-range` the stylesheet declared for the file; null = the whole font. */
   ranges: readonly [number, number][] | null;
+  /**
+   * How far a writer shears the glyphs, per unit of height above the baseline: 0 for a real cut,
+   * `SYNTHETIC_ITALIC_SLANT` for the upright cut that stands in for an italic the family lacks.
+   */
+  slant: number;
 }
 
 export interface FontFileSet {
@@ -181,11 +192,19 @@ async function loadFiles(face: FontSpec, deps: FontSourceDeps): Promise<readonly
         { family, weight: face.weight },
       ]
     : [{ family, weight: face.weight }];
-  for (const attempt of attempts) {
-    const files = await filesFor(attempt.family, attempt.weight, face.style, deps);
-    if (files.length > 0) return files;
-  }
-  return [];
+  const find = async (style: 'normal' | 'italic') => {
+    for (const attempt of attempts) {
+      const files = await filesFor(attempt.family, attempt.weight, style, deps);
+      if (files.length > 0) return files;
+    }
+    return [];
+  };
+  const files = await find(face.style);
+  if (files.length > 0 || face.style === 'normal') return files;
+  // An italic the family does not ship. A style is never traded for a weight above (a real italic
+  // of another weight beats the upright), but with no italic at all a browser slants the upright
+  // cut, so the export does: the file is the upright one, flagged for the writers to shear.
+  return (await find('normal')).map((file) => ({ ...file, slant: SYNTHETIC_ITALIC_SLANT }));
 }
 
 async function filesFor(
@@ -254,8 +273,8 @@ function cssCandidates(rules: Iterable<FontFaceRuleLike>, family: string): Candi
 
 /**
  * The candidates serving the style and the weight closest to `weight`. A style is never traded
- * for a weight: a browser would slant an upright face, a writer cannot, so an italic nobody ships
- * is reported as missing.
+ * for a weight: an italic of another weight is closer to what was asked than the upright cut of
+ * the right one. An empty answer is for `loadFiles` to turn into a slanted upright cut.
  */
 function pickCandidates(candidates: Candidate[], weight: number, style: 'normal' | 'italic') {
   const styled = candidates.filter((c) => c.style === style);
@@ -312,7 +331,7 @@ async function toFontFile(
 ): Promise<FontFile | null> {
   const font = await parseFont(bytes);
   if (!font) return null;
-  return { bytes, font, embeddable: embeddingOf(font['OS/2']?.fsType ?? 0), ranges };
+  return { bytes, font, embeddable: embeddingOf(font['OS/2']?.fsType ?? 0), ranges, slant: 0 };
 }
 
 async function parseFont(bytes: Uint8Array): Promise<FontkitFont | null> {

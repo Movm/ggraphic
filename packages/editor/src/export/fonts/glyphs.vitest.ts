@@ -111,6 +111,28 @@ describe('glyphOutline', () => {
     );
   });
 
+  it('shears a slanted file about the baseline: the top moves right by slant × height, the advance stays', async () => {
+    const { latin } = await latinOnly();
+    const slanted: FontFile = { ...latin, slant: 0.25 };
+    const [upright] = glyphOutline(latin, 'H', 100);
+    const [leaning] = glyphOutline(slanted, 'H', 100);
+    expect(leaning!.advance).toBe(upright!.advance);
+    expect(leaning!.path).toHaveLength(upright!.path.length);
+    upright!.path.forEach((c, i) => {
+      const moved = leaning!.path[i]!;
+      if (c.op === 'Z') return expect(moved).toEqual(c);
+      // y is up-negative: a point 72 px above the baseline (y = -72) shifts 18 px to the right.
+      expect(moved).toMatchObject({ op: c.op, y: c.y });
+      expect((moved as { x: number }).x).toBeCloseTo((c as { x: number }).x - 0.25 * c.y, 9);
+    });
+    const heights = upright!.path.flatMap((c) => (c.op === 'Z' ? [] : [c.y]));
+    const top = upright!.path.findIndex((c) => c.op !== 'Z' && c.y === Math.min(...heights));
+    expect((leaning!.path[top] as { x: number }).x).toBeCloseTo(
+      (upright!.path[top] as { x: number }).x + 18,
+      6
+    );
+  });
+
   it('gives one entry per code point, with curves for round letters and nothing for a space', async () => {
     const { latin } = await latinOnly();
     const out = glyphOutline(latin, 'o é', 100);
@@ -125,9 +147,11 @@ describe('glyphOutline', () => {
 
   it('writes no negative zero, so the output stays byte-stable', async () => {
     const { latin } = await latinOnly();
-    const numbers = glyphOutline(latin, 'Hxz', 37).flatMap((g) =>
-      g.path.flatMap((c) => Object.values(c).filter((v): v is number => typeof v === 'number'))
-    );
+    const numbers = [latin, { ...latin, slant: 0.25 }]
+      .flatMap((file) => glyphOutline(file, 'Hxz', 37))
+      .flatMap((g) =>
+        g.path.flatMap((c) => Object.values(c).filter((v): v is number => typeof v === 'number'))
+      );
     expect(numbers.some((n) => Object.is(n, -0))).toBe(false);
   });
 });

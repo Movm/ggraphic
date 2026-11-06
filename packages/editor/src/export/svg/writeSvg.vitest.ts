@@ -817,6 +817,40 @@ describe('text', () => {
     expect(xs[1]).toBeLessThan(215);
   });
 
+  it('outline mode shears the upright cut that stands in for an italic the family does not ship', async () => {
+    const italic: FontSpec = { ...FACE, style: 'italic' };
+    // The brand ships the upright cut only; the resolver hands it back flagged to be slanted.
+    const set = await resolveFontFiles(italic, {
+      brandFaces: [{ family: FACE.family, src: 'latin.woff2' }],
+      fetchBytes: async () => latinBytes,
+    });
+    const op = textOp('I', { font: italic, xs: [10] });
+    const slanted = run(sceneOf(item('t', null, op)), {
+      fonts: new Map([['Instrument Sans|400|italic', set]]),
+    });
+    const upright = run(sceneOf(item('t', null, textOp('I', { xs: [10] }))));
+
+    expect(slanted.report.missingGlyphs).toEqual([]);
+    expect(slanted.svg).not.toContain('<text');
+    const points = (svg: string) => {
+      const d = parse(svg).querySelector('path')!.getAttribute('d')!;
+      const numbers = Array.from(d.matchAll(/-?\d*\.?\d+/g), (m) => Number(m[0]));
+      return Array.from({ length: numbers.length >> 1 }, (_, i) => [
+        numbers[2 * i]!,
+        numbers[2 * i + 1]!,
+      ]);
+    };
+    const straight = points(upright.svg);
+    const leaning = points(slanted.svg);
+    expect(leaning).toHaveLength(straight.length);
+    straight.forEach(([x, y], i) => {
+      // y is the page's, the baseline is at op.y: height above it moves the point right by a quarter.
+      expect(leaning[i]![1]).toBeCloseTo(y!, 2);
+      expect(leaning[i]![0]).toBeCloseTo(x! + 0.25 * (op.y - y!), 2);
+    });
+    expect(Math.max(...straight.map(([, y]) => op.y - y!))).toBeGreaterThan(20);
+  });
+
   it('editable mode writes text with font-family, font-weight, font-style and the x list', () => {
     const op = textOp('Hi ya', {
       font: { ...FACE, weight: 700, style: 'italic', size: 31.5 },

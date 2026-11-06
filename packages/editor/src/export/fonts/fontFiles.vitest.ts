@@ -11,6 +11,7 @@ import {
   parseUnicodeRange,
   resolveFontFiles,
   subsetTag,
+  SYNTHETIC_ITALIC_SLANT,
   type FontFile,
   type FontFileSet,
   type FontSourceDeps,
@@ -214,14 +215,46 @@ describe('resolveFontFiles: brand faces', () => {
     expect(urls).toEqual(['medium.woff2']);
   });
 
-  it('never trades a style for a weight: an italic nobody ships is missing, not upright', async () => {
+  it('never trades a style for a weight: a real italic of another weight beats the upright cut', async () => {
     const { urls, fetchBytes } = recordingFetch();
     const set = await resolveFontFiles(face({ weight: 700, style: 'italic' }), {
+      brandFaces: [brand('w700.woff2', 700), brand('w400i.woff2', 400, 'italic')],
+      fetchBytes,
+    });
+    expect(urls).toEqual(['w400i.woff2']);
+    expect(set.files.map((file) => file.slant)).toEqual([0]);
+  });
+
+  it('an italic nobody ships is the upright cut of the weight, flagged to be slanted like a browser does', async () => {
+    const { urls, fetchBytes } = recordingFetch();
+    const set = await resolveFontFiles(face({ weight: 700, style: 'italic' }), {
+      brandFaces: [brand('w400.woff2', 400), brand('w700.woff2', 700)],
+      fetchBytes,
+    });
+    expect(urls).toEqual(['w700.woff2']);
+    expect(set.files).toHaveLength(1);
+    expect(set.files[0]!.slant).toBe(SYNTHETIC_ITALIC_SLANT);
+    expect(SYNTHETIC_ITALIC_SLANT).toBe(0.25);
+    // The upright request is not slanted, and an unshipped family stays missing, not slanted.
+    const upright = await resolveFontFiles(face({ weight: 700 }), {
       brandFaces: [brand('w700.woff2', 700)],
       fetchBytes,
     });
-    expect(set.files).toEqual([]);
-    expect(urls).toEqual([]);
+    expect(upright.files.map((file) => file.slant)).toEqual([0]);
+    const none = await resolveFontFiles(face({ family: 'Nobody', style: 'italic' }), {
+      brandFaces: [brand('w700.woff2', 700)],
+      fetchBytes,
+    });
+    expect(none.files).toEqual([]);
+  });
+
+  it('asks the host for the italic first, then for the upright cut it slants', async () => {
+    const load = vi.fn<CanvasExportFontService['load']>(async (wanted) =>
+      wanted.style === 'normal' ? LATIN : null
+    );
+    const set = await resolveFontFiles(face({ weight: 700, style: 'italic' }), { host: { load } });
+    expect(load.mock.calls.map(([wanted]) => wanted.style)).toEqual(['italic', 'normal']);
+    expect(set.files.map((file) => file.slant)).toEqual([SYNTHETIC_ITALIC_SLANT]);
   });
 
   it('boldFamilies: weight >= 600 tries the bold family at 400 first', async () => {

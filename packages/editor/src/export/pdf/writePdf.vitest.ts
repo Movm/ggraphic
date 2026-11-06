@@ -232,6 +232,16 @@ describe('text', () => {
     expect(content).toMatch(new RegExp(`\\[<[0-9a-f]{4}> ${shift} <[0-9a-f]{4}>\\] TJ`));
   });
 
+  it('shears the text matrix of an upright cut that stands in for an italic, and only that', async () => {
+    const slanted = withFile((file) => ({ ...file, slant: 0.25 }));
+    const op = text('II', { xs: [10, 200] });
+    const { pdf } = await write(sceneOf(item('a', null, op)), { fonts: slanted });
+    // The `c` term of the text matrix moves the top of a glyph (text space, y up) to the right.
+    expect(pdf.content(0)).toContain('1 0 0.25 -1 10 100 Tm');
+    const { pdf: upright } = await write(sceneOf(item('a', null, op)));
+    expect(upright.content(0)).toContain('1 0 0 -1 10 100 Tm');
+  });
+
   it('sets no adjustment where the advances already agree with the positions', async () => {
     const { pdf } = await write(sceneOf(item('a', null, text('Hallo'))));
     expect(pdf.content(0)).toMatch(/\[<[0-9a-f]{20}>\] TJ/);
@@ -286,6 +296,7 @@ describe('text', () => {
         font: (await loadFontkit()).create(bytes) as unknown as FontFile['font'],
         embeddable: 'yes',
         ranges: null,
+        slant: 0,
       };
     });
 

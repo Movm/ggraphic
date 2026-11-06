@@ -415,8 +415,9 @@ export class ContentWriter {
     this.raw('BT');
     if (op.mode === 'stroke') this.raw('1 Tr');
     this.raw(`${resources.font(font)} ${num(size)} Tf`);
-    // The page is y down, text is y up: a flipped text matrix stands the glyphs up again.
-    this.raw(`1 0 0 -1 ${num(x0)} ${num(op.y)} Tm`);
+    // The page is y down, text is y up: a flipped text matrix stands the glyphs up again. An
+    // upright cut standing in for an italic is sheared by the `c` term (top of the glyph to the right).
+    this.raw(`1 0 ${num(file.slant)} -1 ${num(x0)} ${num(op.y)} Tm`);
     this.raw(`[${parts.join(' ')}] TJ`);
     this.raw('ET');
     this.end();

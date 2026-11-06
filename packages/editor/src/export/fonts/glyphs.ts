@@ -96,36 +96,43 @@ export function splitRuns(set: FontFileSet, text: string, xs: number[]): GlyphRu
  * and the pen at x = 0 (the writer moves each glyph to its own x). One entry per code point, in
  * the order of the op's `xs`, so a ligature is not formed and kerning is left to the positions
  * the browser measured. A combining mark gets no base to attach to: precomposed text is exact.
+ * A file with a `slant` (an upright cut standing in for an italic) is sheared about the baseline.
  */
 export function glyphOutline(
   file: FontFile,
   text: string,
   size: number
 ): { advance: number; path: PathCommand[] }[] {
-  const { font } = file;
+  const { font, slant } = file;
   const scale = size / font.unitsPerEm;
   // `0 - y` rather than `-y`: a flipped 0 must stay +0, or the output differs by a "-0".
-  const x = (v: number) => v * scale;
-  const y = (v: number) => 0 - v * scale;
+  const x = (fx: number, fy: number) => (slant === 0 ? fx * scale : (fx + slant * fy) * scale);
+  const y = (fy: number) => 0 - fy * scale;
   return Array.from(text, (char) => {
     const glyph = font.glyphForCodePoint(char.codePointAt(0) ?? 0);
     const path: PathCommand[] = glyph.path.commands.map((segment): PathCommand => {
       const a = segment.args;
       switch (segment.command) {
         case 'moveTo':
-          return { op: 'M', x: x(a[0]!), y: y(a[1]!) };
+          return { op: 'M', x: x(a[0]!, a[1]!), y: y(a[1]!) };
         case 'lineTo':
-          return { op: 'L', x: x(a[0]!), y: y(a[1]!) };
+          return { op: 'L', x: x(a[0]!, a[1]!), y: y(a[1]!) };
         case 'quadraticCurveTo':
-          return { op: 'Q', x1: x(a[0]!), y1: y(a[1]!), x: x(a[2]!), y: y(a[3]!) };
+          return {
+            op: 'Q',
+            x1: x(a[0]!, a[1]!),
+            y1: y(a[1]!),
+            x: x(a[2]!, a[3]!),
+            y: y(a[3]!),
+          };
         case 'bezierCurveTo':
           return {
             op: 'C',
-            x1: x(a[0]!),
+            x1: x(a[0]!, a[1]!),
             y1: y(a[1]!),
-            x2: x(a[2]!),
+            x2: x(a[2]!, a[3]!),
             y2: y(a[3]!),
-            x: x(a[4]!),
+            x: x(a[4]!, a[5]!),
             y: y(a[5]!),
           };
         case 'closePath':
