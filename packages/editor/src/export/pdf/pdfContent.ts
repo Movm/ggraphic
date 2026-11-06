@@ -218,11 +218,16 @@ export class ContentWriter {
     const stroke = mode === 'stroke';
     switch (paint.type) {
       case 'solid':
-        return [...this.alpha(op.alpha * paint.alpha), `${rgb(paint.hex)} ${stroke ? 'RG' : 'rg'}`];
+        return [...this.alpha(op.alpha * paint.alpha), this.colour(paint.hex, stroke)];
       case 'linear':
       case 'radial': {
-        const shading = assets.shading(paint, 'rgb');
+        // Every stop in the brand's CMYK map: a CMYK shading. One that is not: RGB, all of it.
+        const mapped =
+          paint.stops.length > 0 &&
+          paint.stops.every((stop) => assets.cmyk.has(stop.hex.toLowerCase()));
+        const shading = assets.shading(paint, mapped ? 'cmyk' : 'rgb');
         if (!shading) return null; // canvas paints nothing for these
+        if (!mapped) for (const stop of paint.stops) assets.rgbHexes.add(stop.hex.toLowerCase());
         const first = paint.stops[0]?.alpha ?? 1;
         const uniform = paint.stops.every((stop) => stop.alpha === first);
         const mask = uniform ? null : assets.alphaMask(paint, growRect(bounds, 1));
@@ -254,38 +259,58 @@ export class ContentWriter {
     }
   }
 
-  /** An SVG tile cannot be a PDF image: it is drawn once, at its size, by the rasteriser. */
-  private async rasterTile(tile: SvgSource) {
-    const ops: SceneOp[] = [
-      {
-        matrix: IDENTITY,
-        alpha: 1,
-        clips: [],
-        shadow: null,
-        kind: 'image',
-        image: tile,
-        sx: 0,
-        sy: 0,
-        sw: tile.width,
-        sh: tile.height,
-        dx: 0,
-        dy: 0,
-        dw: tile.width,
-        dh: tile.height,
-      },
-    ];
-    const { assets, report, page } = this.env;
-    report.rasterIslands.push({
-      page,
-      elementId: this.env.elementId,
-      reason: 'unsupported-pattern',
+  /**
+   * The operator that sets a fill or stroke colour: DeviceCMYK with the brand's exact values if it
+   * has them for this colour, else RGB (which `report.rgbBrandColors` is made from).
+   */
+  private colour(hex: string, stroke: boolean): string {
+    const key = hex.toLowerCase();
+    const ink = this.env.assets.cmyk.get(key);
+    if (ink) return `${ink.map(unit).join(' ')} ${stroke ? 'K' : 'k'}`;
+    this.env.assets.rgbHexes.add(key);
+    return `${rgb(key)} ${stroke ? 'RG' : 'rg'}`;
+  }
+
+  /**
+   * An SVG tile cannot be a PDF image: it is drawn once, at its size, by the rasteriser. Once per
+   * document, however many paints use it; it is an island only if there is a picture.
+   */
+  private rasterTile(tile: SvgSource) {
+    return this.env.assets.once(tile, async () => {
+      const ops: SceneOp[] = [
+        {
+          matrix: IDENTITY,
+          alpha: 1,
+          clips: [],
+          shadow: null,
+          kind: 'image',
+          image: tile,
+          sx: 0,
+          sy: 0,
+          sw: tile.width,
+          sh: tile.height,
+          dx: 0,
+          dy: 0,
+          dw: tile.width,
+          dh: tile.height,
+        },
+      ];
+      const { assets, report, page } = this.env;
+      const png = await this.env.rasterize(
+        ops,
+        { x: 0, y: 0, width: tile.width, height: tile.height },
+        this.env.pixelRatio
+      );
+      const image = png ? await assets.image(tile, png, 'image/png') : null;
+      if (image) {
+        report.rasterIslands.push({
+          page,
+          elementId: this.env.elementId,
+          reason: 'unsupported-pattern',
+        });
+      }
+      return image;
     });
-    const png = await this.env.rasterize(
-      ops,
-      { x: 0, y: 0, width: tile.width, height: tile.height },
-      this.env.pixelRatio
-    );
-    return png ? assets.image(tile, png, 'image/png') : null;
   }
 
   private missing(): void {
@@ -499,12 +524,12 @@ export class ContentWriter {
       },
       pixelRatio
     );
-    report.rasterIslands.push({ page, elementId: this.env.elementId, reason });
     const image = png ? await assets.image(png, png, 'image/png') : null;
     if (!image) {
-      this.missing();
+      this.missing(); // not an island: there is no picture
       return;
     }
+    report.rasterIslands.push({ page, elementId: this.env.elementId, reason });
     this.picture(
       resources.xobject(image.ref),
       snapped.x0,
@@ -641,9 +666,14 @@ export class ContentWriter {
 
     if (flat) {
       const children = alone ? [{ ...alone, alpha: alone.alpha * op.alpha }] : op.ops;
-      if (needsState) this.begin(op);
-      await this.ops(children);
-      if (needsState) this.end();
+      if (!needsState) return this.ops(children);
+      // The children are drawn under the group's `cm`, so what maps their space to the stream's
+      // default space (a pattern matrix) has the group's matrix in it.
+      const inner = new ContentWriter(this.env, multiply(this.base, op.matrix));
+      await inner.ops(children);
+      this.begin(op);
+      this.lines.push(...inner.lines);
+      this.end();
       return;
     }
     const inner = new ContentWriter(this.env, IDENTITY);

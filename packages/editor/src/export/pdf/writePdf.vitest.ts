@@ -24,10 +24,13 @@ import {
   svgImage,
   textOp,
 } from '../scene/__fixtures__/exportSceneFixture.js';
+import { cropMarkLines, pdfPageGeometry } from '../printPdf.js';
 import { IDENTITY } from '../scene/matrix.js';
+import { SLIDE_PDF_PAGE_PT } from '../slidesPdf.js';
 import { emptyReport } from '../scene/types.js';
-import { extractText, inspectPdf, streamText } from './__fixtures__/inspectPdf.js';
+import { extractText, inspectPdf, renderPage, streamText } from './__fixtures__/inspectPdf.js';
 import { napiRasterize } from './__fixtures__/napiRasterize.js';
+import { num } from './pdfGeometry.js';
 import { writePdf, type WritePdfOptions } from './writePdf.js';
 
 import type {
@@ -37,6 +40,7 @@ import type {
   Matrix,
   Paint,
   PathCommand,
+  SceneImageSource,
   SceneOp,
 } from '../scene/types.js';
 
@@ -154,10 +158,8 @@ describe('pages', () => {
     expect(content.match(/ -1 0 \d+ cm/g)).toHaveLength(1);
   });
 
-  it('writes digital mode only, and says so for the others', async () => {
-    const scene = sceneOf();
-    await expect(write(scene, { mode: 'print' })).rejects.toThrow(/print mode/);
-    await expect(write(scene, { mode: 'slides' })).rejects.toThrow(/slides mode/);
+  it('needs the print format for the print mode, and says so', async () => {
+    await expect(write(sceneOf(), { mode: 'print' })).rejects.toThrow(/print mode needs/);
   });
 
   it('leaves the scenes alone and returns their report together with its own', async () => {
@@ -371,6 +373,8 @@ describe('text', () => {
     expect(report.missingElements).toEqual([
       { page: 1, elementId: 'm', reason: 'image-unreadable' },
     ]);
+    // An island nobody could draw is missing, and not also an island.
+    expect(report.rasterIslands).toEqual([]);
     expect(pdf.pictures()).toHaveLength(0);
     expect(pdf.content(0)).toContain('BT');
   });
@@ -633,6 +637,45 @@ describe('paths', () => {
     expect(pdf.content(0)).toMatch(/\/Pattern cs \/P\d+ scn/);
   });
 
+  describe('an SVG tile', () => {
+    const tile: Extract<SceneImageSource, { kind: 'svg' }> = {
+      kind: 'svg',
+      markup:
+        '<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><rect width="4" height="4" fill="#336699"/></svg>',
+      width: 8,
+      height: 8,
+    };
+    const tiled = (y: number) =>
+      fill(
+        rect(0, y, 60, 30),
+        { type: 'pattern', image: tile, repeat: 'repeat', matrix: [1, 0, 0, 1, 0, 0] },
+        { matrix: [1, 0, 0, 1, 20, 20] }
+      );
+
+    it('is drawn once and reported once, however often it paints', async () => {
+      const scene = sceneOf(item('p', null, tiled(0), tiled(40)), item('q', null, tiled(80)));
+      const { pdf, report, calls } = await write(scene);
+      expect(calls).toHaveLength(1);
+      expect(report.rasterIslands).toEqual([
+        { page: 1, elementId: 'p', reason: 'unsupported-pattern' },
+      ]);
+      // One pattern per matrix, one picture for all of them.
+      expect(pdf.pictures()).toHaveLength(1);
+      expect(pdf.content(0).match(/\/Pattern cs/g)).toHaveLength(3);
+    });
+
+    it('is missing, and no island, when nobody can draw it', async () => {
+      const { report, pdf } = await write(
+        sceneOf(item('p', null, tiled(0), tiled(40))),
+        {},
+        napiRasterize({ returns: 'null' })
+      );
+      expect(report.rasterIslands).toEqual([]);
+      expect(report.missingElements).toHaveLength(2);
+      expect(pdf.content(0)).not.toContain('scn');
+    });
+  });
+
   it('clips emit W n inside q/Q', async () => {
     const clipA: ClipPath = { matrix: IDENTITY, commands: rect(20, 20, 100, 100), rule: 'nonzero' };
     const clipB: ClipPath = {
@@ -708,6 +751,36 @@ describe('groups', () => {
     const { pdf } = await write(sceneOf(item('g', null, two(1))));
     expect(pdf.ofType('Form')).toHaveLength(0);
     expect(pdf.content(0).match(/ rg/g)).toHaveLength(2);
+  });
+
+  it('places a gradient or a pattern in a group by the group matrix too', async () => {
+    const linear: Paint = {
+      type: 'linear',
+      x0: 0,
+      y0: 0,
+      x1: 100,
+      y1: 0,
+      stops: stops([0, '#ff0000'], [1, '#0000ff']),
+    };
+    const tile = bitmap(png, 16, 8);
+    const tiling: Paint = { type: 'pattern', image: tile, repeat: 'repeat', matrix: IDENTITY };
+    const group: SceneOp = {
+      ...base({ matrix: [1, 0, 0, 1, 30, 40] }),
+      kind: 'group',
+      shadow: null,
+      ops: [
+        fill(rect(0, 0, 100, 10), linear, { matrix: [2, 0, 0, 2, 0, 0] }),
+        fill(rect(0, 20, 100, 10), tiling),
+      ],
+    };
+    const { pdf } = await write(sceneOf(item('g', null, group)));
+    expect(pdf.ofType('Form')).toHaveLength(0); // opaque: its children, under one cm
+    const matrices = pdf.objects
+      .filter((o) => pdf.number(o.dict, 'PatternType') !== null)
+      .map((o) => pdf.numbers(o.dict, 'Matrix'));
+    // page flip · group matrix (· op matrix)
+    expect(matrices).toContainEqual([2, 0, 0, -2, 30, 260]);
+    expect(matrices).toContainEqual([1, 0, 0, -1, 30, 260]);
   });
 
   it('clips a group once', async () => {
@@ -979,6 +1052,255 @@ describe('shadows', () => {
       { page: 1, elementId: 's', reason: 'image-unreadable' },
     ]);
     expect(pdf.content(0)).toContain('1 0 0 rg');
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+
+describe('print mode', () => {
+  const trimMm = { width: 210, height: 297 };
+  const bleedMm = 3;
+  const geometry = pdfPageGeometry({ trimMm, bleedMm });
+  // The canvas covers trim + bleed: 2 px to the mm here.
+  const canvas = (...items: ReturnType<typeof item>[]): ExportScene => ({
+    ...sceneOf(...items),
+    width: (210 + 6) * 2,
+    height: (297 + 6) * 2,
+  });
+  const writePrint = (scene: ExportScene) =>
+    write(scene, { mode: 'print', print: { trimMm, bleedMm } });
+
+  it('print boxes equal pdfPageGeometry and crop marks are present', async () => {
+    const { pdf } = await writePrint(
+      canvas(item('a', null, fill(rect(0, 0, 5, 5), solid('#000'))))
+    );
+    const page = pdf.doc.getPage(0);
+    for (const [name, got, want] of [
+      ['media', page.getMediaBox(), geometry.mediaBox],
+      ['bleed', page.getBleedBox(), geometry.bleedBox],
+      ['trim', page.getTrimBox(), geometry.trimBox],
+    ] as const) {
+      for (const key of ['x', 'y', 'width', 'height'] as const) {
+        expect(got[key], `${name}.${key}`).toBeCloseTo(want[key], 3);
+      }
+    }
+    // Eight marks, 0.25 pt, 100 % K, from the shared mark code.
+    const content = pdf.content(0);
+    expect(content).toContain('0 0 0 1 K');
+    expect(content).toContain('0.25 w');
+    const marks = cropMarkLines({ trimMm, bleedMm });
+    expect(marks).toHaveLength(8);
+    for (const { start, end } of marks) {
+      expect(content).toContain(
+        `${num(start.x)} ${num(start.y)} m ${num(end.x)} ${num(end.y)} l S`
+      );
+    }
+  });
+
+  it('keeps the marks 100 % K when the brand has a CMYK map', async () => {
+    const scene = canvas(item('a', null, fill(rect(0, 0, 5, 5), solid('#0f3a52'))));
+    const { pdf } = await write(scene, {
+      mode: 'print',
+      print: { trimMm, bleedMm },
+      cmyk: { '#0f3a52': [100, 60, 30, 40] },
+    });
+    const content = pdf.content(0);
+    expect(content).toContain('0 0 0 1 K');
+    expect(content).toContain('1 0.6 0.3 0.4 k');
+  });
+
+  it('places the canvas on the bleed box, clipped to it', async () => {
+    // A red square in the canvas corner, and a blue one far outside the canvas.
+    const scene = canvas(
+      item(
+        'a',
+        null,
+        fill(rect(0, 0, 40, 40), solid('#ff0000')),
+        fill(rect(-200, -200, 198, 198), solid('#0000ff'))
+      )
+    );
+    const { bytes } = await writePrint(scene);
+    const picture = await renderPage(bytes, 0, 1);
+    const at = (x: number, y: number) =>
+      Array.from(picture.getContext('2d').getImageData(Math.floor(x), Math.floor(y), 1, 1).data);
+    const { bleedBox } = geometry;
+    const top = geometry.mediaBox.height - (bleedBox.y + bleedBox.height); // y down
+    // Inside the bleed box, at the canvas corner: red.
+    expect(at(bleedBox.x + 10, top + 10)).toEqual([255, 0, 0, 255]);
+    // In the mark margin the blue square, which hangs out of the canvas, is not drawn.
+    expect(at(bleedBox.x - 4, top - 4)).toEqual([255, 255, 255, 255]);
+    // The scale is trim + bleed in pt over canvas px: 40 px is 20 mm.
+    expect(at(bleedBox.x + (40 * (216 * 72)) / 25.4 / scene.width - 2, top + 10)).toEqual([
+      255, 0, 0, 255,
+    ]);
+    expect(at(bleedBox.x + (40 * (216 * 72)) / 25.4 / scene.width + 3, top + 10)).toEqual([
+      255, 255, 255, 255,
+    ]);
+  });
+
+  it('writes one page of this size per scene', async () => {
+    const { pdf } = await writePrint(canvas());
+    expect(pdf.doc.getPageCount()).toBe(1);
+    const { width, height } = pdf.doc.getPage(0).getSize();
+    expect(width).toBeCloseTo(geometry.mediaBox.width, 3);
+    expect(height).toBeCloseTo(geometry.mediaBox.height, 3);
+  });
+});
+
+describe('slides mode', () => {
+  it('slides pages are SLIDE_PDF_PAGE_PT', async () => {
+    const full: ExportScene = {
+      ...sceneOf(item('a', null, fill(rect(0, 0, 5, 5), solid('#000')))),
+      width: 1920,
+      height: 1080,
+    };
+    const half: ExportScene = { ...full, width: 960, height: 540 };
+    const { pdf } = await write([full, half], { mode: 'slides' });
+    expect(pdf.doc.getPage(0).getSize()).toEqual(SLIDE_PDF_PAGE_PT);
+    expect(pdf.doc.getPage(1).getSize()).toEqual(SLIDE_PDF_PAGE_PT);
+    // No marks, no boxes of print: the scene fills the page, a half-size one scaled up.
+    expect(pdf.content(0).startsWith('1 0 0 -1 0 1080 cm\n')).toBe(true);
+    expect(pdf.content(1).startsWith('2 0 0 -2 0 1080 cm\n')).toBe(true);
+    expect(pdf.content(0)).not.toContain(' K');
+    expect(pdf.doc.getPage(0).node.has(PDFName.of('TrimBox'))).toBe(false);
+  });
+});
+
+describe('cmyk', () => {
+  const INK = '#0f3a52';
+  const cmyk = { [INK]: [100, 60, 30, 40] } as const;
+
+  it('mapped brand colours are DeviceCMYK with exact values, others RGB', async () => {
+    const scene = sceneOf(
+      item(
+        'a',
+        null,
+        fill(rect(0, 0, 40, 40), solid(INK)),
+        fill(rect(50, 0, 40, 40), solid('#336699')),
+        { ...fill(rect(0, 50, 40, 40), solid(INK)), mode: 'stroke', stroke: null },
+        fill(rect(50, 50, 40, 40), solid(INK, 0.5)),
+        text('Hallo', { paint: solid(INK) })
+      )
+    );
+    const { pdf } = await write(scene, { cmyk });
+    const content = pdf.content(0);
+    expect(content.match(/^1 0\.6 0\.3 0\.4 k$/gm)).toHaveLength(3); // fill, fill with alpha, text
+    expect(content).toContain('1 0.6 0.3 0.4 K');
+    expect(content).toContain('0.2 0.4 0.6 rg');
+    // The alpha of a mapped colour stays an ExtGState.
+    expect(pdf.number(only(pdf.ofType('ExtGState')).dict, 'ca')).toBe(0.5);
+    expect(content).not.toContain('0.0588 0.2275'); // the RGB of the mapped colour is nowhere
+  });
+
+  it('matches colours whatever the case of the key', async () => {
+    const { pdf } = await write(sceneOf(item('a', null, fill(rect(0, 0, 9, 9), solid(INK)))), {
+      cmyk: { '#0F3A52': [10, 20, 30, 40] },
+    });
+    expect(pdf.content(0)).toContain('0.1 0.2 0.3 0.4 k');
+  });
+
+  it('writes a pure RGB pdf without a map', async () => {
+    const { pdf } = await write(sceneOf(item('a', null, fill(rect(0, 0, 9, 9), solid(INK)))));
+    expect(pdf.content(0)).toContain(' rg');
+    expect(pdf.content(0)).not.toMatch(/ [kK]\n/);
+  });
+
+  describe('gradients', () => {
+    const gradient = (...entries: [number, string][]): Extract<Paint, { type: 'linear' }> => ({
+      type: 'linear',
+      x0: 0,
+      y0: 0,
+      x1: 100,
+      y1: 0,
+      stops: stops(...entries),
+    });
+    const shadingOf = async (paint: Paint, map: WritePdfOptions['cmyk'] = {}) => {
+      const { pdf } = await write(sceneOf(item('g', null, fill(rect(0, 0, 100, 10), paint))), {
+        cmyk: map,
+      });
+      const pattern = only(pdf.objects.filter((o) => pdf.number(o.dict, 'PatternType') === 2));
+      return { pdf, shading: pdf.dictAt(pattern.dict, 'Shading')! };
+    };
+
+    it('gradients with all stops mapped become DeviceCMYK shadings', async () => {
+      const { pdf, shading } = await shadingOf(gradient([0, INK], [1, '#1a5c3a']), {
+        ...cmyk,
+        '#1a5c3a': [90, 10, 80, 20],
+      });
+      expect(pdf.name(shading, 'ColorSpace')).toBe('DeviceCMYK');
+      const fn = pdf.dictAt(shading, 'Function')!;
+      expect(pdf.numbers(fn, 'C0')).toEqual([1, 0.6, 0.3, 0.4]);
+      expect(pdf.numbers(fn, 'C1')).toEqual([0.9, 0.1, 0.8, 0.2]);
+    });
+
+    it('keeps a gradient with a stop outside the map RGB', async () => {
+      const { pdf, shading } = await shadingOf(gradient([0, INK], [1, '#336699']), cmyk);
+      expect(pdf.name(shading, 'ColorSpace')).toBe('DeviceRGB');
+      expect(pdf.numbers(pdf.dictAt(shading, 'Function')!, 'C1')).toHaveLength(3);
+    });
+
+    it('mapped stops with different alphas still fade through a gray soft mask', async () => {
+      const fading: Paint = {
+        ...gradient([0, INK], [1, INK]),
+        stops: stops([0, INK, 1], [1, INK, 0]),
+      };
+      const { pdf } = await write(sceneOf(item('g', null, fill(rect(0, 0, 100, 10), fading))), {
+        cmyk,
+      });
+      const shadings = pdf.objects.filter((o) => pdf.number(o.dict, 'ShadingType') !== null);
+      expect(shadings.map((o) => pdf.name(o.dict, 'ColorSpace')).sort()).toEqual([
+        'DeviceCMYK',
+        'DeviceGray',
+      ]);
+    });
+  });
+
+  describe('report.rgbBrandColors', () => {
+    const palette = [INK, '#336699', '#ABCDEF', '#00ff00', '#ff00ff'];
+
+    it('report.rgbBrandColors lists palette colours written as RGB', async () => {
+      const scene = sceneOf(
+        item(
+          'a',
+          null,
+          fill(rect(0, 0, 40, 40), solid(INK)), // mapped: CMYK
+          fill(rect(50, 0, 40, 40), solid('#336699')), // RGB
+          fill(rect(0, 50, 40, 40), solid('#336699')), // twice: listed once
+          fill(rect(0, 0, 100, 10), {
+            type: 'linear',
+            x0: 0,
+            y0: 0,
+            x1: 100,
+            y1: 0,
+            stops: stops([0, INK], [1, '#abcdef']), // mixed: RGB, both stops
+          }),
+          fill(rect(0, 0, 9, 9), solid('#123456')) // RGB, but not a brand colour
+        )
+      );
+      const { report } = await write(scene, { cmyk, brandPalette: palette });
+      expect(report.rgbBrandColors).toEqual(['#0f3a52', '#336699', '#abcdef']);
+    });
+
+    it('lists nothing for a colour that is written as CMYK, or never drawn', async () => {
+      const scene = sceneOf(item('a', null, fill(rect(0, 0, 40, 40), solid(INK))));
+      const { report } = await write(scene, { cmyk, brandPalette: palette });
+      expect(report.rgbBrandColors).toEqual([]);
+    });
+
+    it('lists the colours of a pack without a map: it is RGB all through', async () => {
+      const scene = sceneOf(item('a', null, fill(rect(0, 0, 40, 40), solid(INK))));
+      const { report } = await write(scene, { brandPalette: palette });
+      expect(report.rgbBrandColors).toEqual([INK]);
+    });
+
+    it('does not list a colour whose op draws nothing', async () => {
+      const nothing: ClipPath = { matrix: IDENTITY, commands: [], rule: 'nonzero' };
+      const scene = sceneOf(
+        item('a', null, fill(rect(0, 0, 40, 40), solid('#336699'), { clips: [nothing] }))
+      );
+      const { report } = await write(scene, { cmyk, brandPalette: palette });
+      expect(report.rgbBrandColors).toEqual([]);
+    });
   });
 });
 

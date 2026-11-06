@@ -42,15 +42,26 @@ const alphaKey = (alpha: number) => unit(Math.min(1, Math.max(0, alpha)));
 // ---------------------------------------------------------------------------------------------
 // The document: what pages share
 
+/** The four inks of a colour, each 0..1. */
+export type Ink = readonly [number, number, number, number];
+
 export class PdfAssets {
+  /** The hex (lower case) of every colour written as RGB, for `report.rgbBrandColors`. */
+  readonly rgbHexes = new Set<string>();
   private readonly fonts = new Map<FontFile, Promise<PdfLib.PDFFont>>();
   private readonly images = new Map<object, Promise<PdfLib.PDFImage | null>>();
   private readonly shadings = new Map<string, PdfLib.PDFRef>();
   private readonly patterns = new Map<string, PdfLib.PDFRef>();
+  private readonly made = new Map<object, Promise<PdfLib.PDFImage | null>>();
 
+  /**
+   * @param cmyk the colours (hex, lower case) the brand has print values for; whatever paints
+   *   with one of them is DeviceCMYK, whatever does not is RGB
+   */
   constructor(
     readonly lib: PdfLibModule,
-    readonly doc: PdfLib.PDFDocument
+    readonly doc: PdfLib.PDFDocument,
+    readonly cmyk: ReadonlyMap<string, Ink> = new Map()
   ) {}
 
   get context(): PdfLib.PDFContext {
@@ -107,6 +118,16 @@ export class PdfAssets {
     return image;
   }
 
+  /** The picture `make` draws for `key`, made the first time it is asked for and not again. */
+  once(key: object, make: () => Promise<PdfLib.PDFImage | null>): Promise<PdfLib.PDFImage | null> {
+    let image = this.made.get(key);
+    if (!image) {
+      image = make();
+      this.made.set(key, image);
+    }
+    return image;
+  }
+
   bitmap(source: Extract<SceneImageSource, { kind: 'bitmap' }>): Promise<PdfLib.PDFImage | null> {
     return this.image(source, source.bytes, source.mime);
   }
@@ -116,9 +137,10 @@ export class PdfAssets {
   /**
    * The shading of a gradient: axial (type 2) or radial (type 3), extended past both ends as a
    * canvas gradient is. `channel` picks what the colour function returns: the RGB of the stops,
-   * or their alpha as a gray value (for a soft mask). Null when the geometry paints nothing.
+   * their CMYK (every stop must be in the brand's map), or their alpha as a gray value (for a soft
+   * mask). Null when the geometry paints nothing.
    */
-  shading(paint: Gradient, channel: 'rgb' | 'alpha'): PdfLib.PDFRef | null {
+  shading(paint: Gradient, channel: 'rgb' | 'cmyk' | 'alpha'): PdfLib.PDFRef | null {
     if (paint.type === 'linear' && paint.x0 === paint.x1 && paint.y0 === paint.y1) return null;
     if (
       paint.type === 'radial' &&
@@ -134,7 +156,8 @@ export class PdfAssets {
       ref = this.context.register(
         this.context.obj({
           ShadingType: paint.type === 'linear' ? 2 : 3,
-          ColorSpace: channel === 'rgb' ? 'DeviceRGB' : 'DeviceGray',
+          ColorSpace:
+            channel === 'rgb' ? 'DeviceRGB' : channel === 'cmyk' ? 'DeviceCMYK' : 'DeviceGray',
           Coords:
             paint.type === 'linear'
               ? [paint.x0, paint.y0, paint.x1, paint.y1]
@@ -154,7 +177,10 @@ export class PdfAssets {
    * ends are extended to 0 and 1 with the first and last colour; a hard stop (two stops at one
    * offset) is a segment of no width and is left out, so the bounds rise strictly.
    */
-  private colourFunction(stops: readonly ColorStop[], channel: 'rgb' | 'alpha'): PdfLib.PDFObject {
+  private colourFunction(
+    stops: readonly ColorStop[],
+    channel: 'rgb' | 'cmyk' | 'alpha'
+  ): PdfLib.PDFObject {
     const sorted = stops
       .map((stop, index) => ({ stop, index }))
       .sort((a, b) => a.stop.offset - b.stop.offset || a.index - b.index)
@@ -163,10 +189,12 @@ export class PdfAssets {
     const last = sorted.at(-1)!;
     if (first.offset > 0) sorted.unshift({ ...first, offset: 0 });
     if (last.offset < 1) sorted.push({ ...last, offset: 1 });
-    const colour = (stop: ColorStop) =>
+    const colour = (stop: ColorStop): number[] =>
       channel === 'alpha'
         ? [stop.alpha]
-        : [1, 3, 5].map((at) => Number.parseInt(stop.hex.slice(at, at + 2), 16) / 255);
+        : channel === 'cmyk'
+          ? [...this.cmyk.get(stop.hex.toLowerCase())!]
+          : [1, 3, 5].map((at) => Number.parseInt(stop.hex.slice(at, at + 2), 16) / 255);
     const segments: { from: ColorStop; to: ColorStop }[] = [];
     for (let i = 0; i + 1 < sorted.length; i++) {
       if (sorted[i + 1]!.offset > sorted[i]!.offset)
