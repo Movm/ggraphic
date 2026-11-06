@@ -707,6 +707,30 @@ describe('text', () => {
     expect(report.missingGlyphs).toEqual([]);
   });
 
+  it('editable mode leaves a code point XML forbids out of the text and out of the x list', () => {
+    // A paste from Word brings a vertical tab; a lone surrogate comes from a split emoji.
+    const text = 'A\u000BB\uD83DC';
+    const op = textOp(text, { xs: [10, 20, 30, 40, 50] });
+
+    const { svg } = run(sceneOf(item('t', null, op)), { text: 'editable' });
+
+    const element = parse(svg).querySelector('text')!;
+    expect(element.textContent).toBe('ABC');
+    expect(element.getAttribute('x')).toBe('10 30 50');
+  });
+
+  it('editable mode keeps a surrogate pair, and writes nothing for text that is only illegal', () => {
+    const pair = textOp('a😀b', { xs: [1, 2, 3] });
+    const only = textOp('\u0001\u0002', { xs: [1, 2] });
+
+    const withPair = run(sceneOf(item('t', null, pair)), { text: 'editable' }).svg;
+    const withNothing = run(sceneOf(item('t', null, only)), { text: 'editable' }).svg;
+
+    expect(parse(withPair).querySelector('text')!.textContent).toBe('a😀b');
+    expect(parse(withPair).querySelector('text')!.getAttribute('x')).toBe('1 2 3');
+    expect(parse(withNothing).querySelectorAll('text')).toHaveLength(0);
+  });
+
   it('writes stroked text as stroke, in both modes', () => {
     const op = textOp('I', {
       mode: 'stroke',

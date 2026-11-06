@@ -194,7 +194,14 @@ async function filesFor(
   style: 'normal' | 'italic',
   deps: FontSourceDeps
 ): Promise<FontFile[]> {
-  const hosted = await deps.host?.load({ family, weight, style });
+  // The host's service is code we do not control: a throw is a font it does not have, the same
+  // as a download that fails, and the next source is asked.
+  let hosted: Uint8Array | null | undefined = null;
+  try {
+    hosted = await deps.host?.load({ family, weight, style });
+  } catch {
+    hosted = null;
+  }
   if (hosted) {
     const file = await toFontFile(hosted, null);
     if (file) return [file];

@@ -22,7 +22,7 @@
 import type { FontFileSet } from '../fonts/fontFiles.js';
 import { glyphOutline, splitRuns } from '../fonts/glyphs.js';
 import { inlineSvg } from './inlineSvg.js';
-import { escapeXml, formatNumber } from './xml.js';
+import { escapeXml, formatNumber, withoutIllegalXml } from './xml.js';
 
 import type {
   ClipPath,
@@ -403,13 +403,18 @@ class SvgWriter {
     );
   }
 
-  /** A `<text>` with one x per code point; `xml:space` keeps the spaces the x list counts. */
+  /**
+   * A `<text>` with one x per code point; `xml:space` keeps the spaces the x list counts. A code
+   * point XML forbids is left out of the text and of the list alike.
+   */
   private textElement(
     op: TextOp,
-    run: { text: string; xs: number[] },
+    whole: { text: string; xs: number[] },
     paint: Attrs,
     extra: Attrs
   ): string[] {
+    const run = withoutIllegalXml(whole);
+    if (run.text === '') return [];
     return el(
       'text',
       {

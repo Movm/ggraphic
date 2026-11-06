@@ -129,6 +129,39 @@ describe('resolveFontFiles: sources', () => {
     expect(set.files).toEqual([]);
   });
 
+  it.each([
+    ['rejects', async () => Promise.reject(new Error('font server down'))],
+    [
+      'throws before it returns a promise',
+      () => {
+        throw new Error('not configured');
+      },
+    ],
+  ])(
+    'a host service that %s is a missing font: the brand faces are asked next',
+    async (_how, load) => {
+      const { urls, fetchBytes } = recordingFetch();
+
+      const set = await resolveFontFiles(face(), {
+        host: { load: load as CanvasExportFontService['load'] },
+        brandFaces: [brand('brand-400.woff2', 400)],
+        fetchBytes,
+      });
+
+      expect(urls).toEqual(['brand-400.woff2']);
+      expect(set.files).toHaveLength(1);
+    }
+  );
+
+  it('a host service that throws leaves an empty set when no other source has the face', async () => {
+    const set = await resolveFontFiles(face(), {
+      host: { load: async () => Promise.reject(new Error('font server down')) },
+      fetchBytes: async () => null,
+    });
+
+    expect(set.files).toEqual([]);
+  });
+
   it('applies font aliases first', async () => {
     const [from, to] = Object.entries(FONT_FAMILY_ALIASES)[0]!;
     const load = vi.fn<CanvasExportFontService['load']>(async () => null);

@@ -28,6 +28,26 @@ export function escapeXml(text: string): string {
 }
 
 /**
+ * A text run as `escapeXml` writes it, with the x of every code point it drops dropped too: a
+ * `<text x="…">` takes one x per character, so a list that still counted the dropped ones would
+ * move every glyph after it.
+ */
+export function withoutIllegalXml(run: { text: string; xs: number[] }): {
+  text: string;
+  xs: number[];
+} {
+  const kept: string[] = [];
+  const xs: number[] = [];
+  Array.from(run.text).forEach((char, index) => {
+    if (char.replace(ILLEGAL, '') === '') return;
+    kept.push(char);
+    const x = run.xs[index];
+    if (x !== undefined) xs.push(x);
+  });
+  return { text: kept.join(''), xs };
+}
+
+/**
  * At most `digits` decimals with the trailing zeros trimmed. Never `-0` (`String(-0)` is `'0'`)
  * and never `NaN`: a non-finite value is a bug upstream, but it must not make the file invalid.
  */
