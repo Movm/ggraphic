@@ -396,4 +396,92 @@ describe('replay differential', () => {
       stage.destroy();
     }
   }, 120_000);
+
+  // The same turn without a hole: a wedge or an arc with no inner radius of 360° is a disc in
+  // whichever direction Konva is asked to draw it, not a zero sweep.
+  it('replays a wedge and an arc of 360° as a full disc, clockwise or not', async () => {
+    const stage = new Konva.Stage({
+      container: document.createElement('div'),
+      width: WIDTH,
+      height: HEIGHT,
+    });
+    try {
+      const layer = new Konva.Layer();
+      stage.add(layer);
+      const x = 200;
+      const shapes: { name: string; y: number; make: (y: number) => Konva.Shape }[] = [
+        {
+          name: 'wedge clockwise',
+          y: 150,
+          make: (y) =>
+            new Konva.Wedge({ x, y, radius: 100, angle: 360, fill: '#c0392b', clockwise: true }),
+        },
+        {
+          name: 'wedge counter-clockwise',
+          y: 400,
+          make: (y) =>
+            new Konva.Wedge({ x, y, radius: 100, angle: 360, fill: '#2980b9', clockwise: false }),
+        },
+        {
+          name: 'arc clockwise',
+          y: 650,
+          make: (y) =>
+            new Konva.Arc({
+              x,
+              y,
+              innerRadius: 0,
+              outerRadius: 100,
+              angle: 360,
+              fill: '#27ae60',
+              clockwise: true,
+            }),
+        },
+        {
+          name: 'arc counter-clockwise',
+          y: 900,
+          make: (y) =>
+            new Konva.Arc({
+              x,
+              y,
+              innerRadius: 0,
+              outerRadius: 100,
+              angle: 360,
+              fill: '#8e44ad',
+              clockwise: false,
+            }),
+        },
+      ];
+      for (const [i, shape] of shapes.entries()) {
+        const group = new Konva.Group({ name: CANVAS_ITEM_NAME, canvasItemId: `disc-${i}` });
+        group.add(shape.make(shape.y));
+        layer.add(group);
+      }
+      layer.draw();
+
+      const image = await napi.loadImage(stage.toDataURL({ pixelRatio: 1 }));
+      const target = napi.createCanvas(WIDTH, HEIGHT);
+      target.getContext('2d').drawImage(image, 0, 0);
+      const konva = target.getContext('2d').getImageData(0, 0, WIDTH, HEIGHT)
+        .data as unknown as Uint8ClampedArray;
+      const scene = recordPageScene(stage, { page: 1 });
+      const replay = replayPixels(scene);
+
+      const alphaAt = (data: Uint8ClampedArray, px: number, py: number) =>
+        data[(py * WIDTH + px) * 4 + 3]!;
+      for (const { name, y } of shapes) {
+        // Where Konva paints, the replay paints; a zero sweep would leave both of these empty.
+        for (const dx of [0, 60, -60]) {
+          expect([name, dx, alphaAt(replay, x + dx, y)]).toEqual([
+            name,
+            dx,
+            alphaAt(konva, x + dx, y),
+          ]);
+        }
+        expect([name, alphaAt(replay, x + 60, y)]).toEqual([name, 255]);
+      }
+      expect(scene.report.unknownCalls).toEqual([]);
+    } finally {
+      stage.destroy();
+    }
+  }, 120_000);
 });
