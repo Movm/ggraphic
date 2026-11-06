@@ -19,10 +19,18 @@ import {
 import { emptyReport, type RecordedScene, type SceneItem, type SceneOp } from '../scene/types.js';
 import { isWellFormedSvg } from './svgPicture.js';
 import { createVectorizer } from './vectorizeElement.js';
+import { writeSvg } from '../svg/writeSvg.js';
 
 import type { PptxRasterRequest } from './types.js';
+import type * as WriteSvgModule from '../svg/writeSvg.js';
 import type { ResolveDeps } from '../scene/resolveScene.js';
 import type { VectorExportDeps } from '../vectorExport.js';
+
+// The real writer, except where a test makes it write something that is not an SVG.
+vi.mock('../svg/writeSvg.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof WriteSvgModule>();
+  return { ...actual, writeSvg: vi.fn(actual.writeSvg) };
+});
 
 const fontsourceDir = path.dirname(
   createRequire(import.meta.url).resolve('@fontsource/instrument-sans/package.json')
@@ -321,10 +329,11 @@ describe('createVectorizer', () => {
     expect(await vectorize(request('other'), 0)).not.toBeNull();
   });
 
-  it('answers null for markup that is not an svg document, here a label with a control character', async () => {
-    const { vectorize } = setup([
-      sceneOfItems(item('bad', 'Titel\u0001', fill(rect(0, 0, 10, 10), red))),
-    ]);
+  it('answers null when what the writer made is not an svg document', async () => {
+    const { vectorize } = setup([sceneOfItems(item('bad', null, fill(rect(0, 0, 10, 10), red)))]);
+    vi.mocked(writeSvg).mockReturnValueOnce(
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10" width="10" height="10"><g></svg>'
+    );
 
     expect(await vectorize(request('bad'), 0)).toBeNull();
   });

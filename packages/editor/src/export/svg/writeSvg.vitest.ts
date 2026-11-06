@@ -851,3 +851,34 @@ describe('determinism', () => {
     expect(editable[1]).toBe(editable[0]);
   });
 });
+
+describe('characters XML forbids', () => {
+  // A control character and a lone surrogate come in with pasted text (a Word or PDF paste).
+  const dirty = 'a\u0001b\uD800c\uDC00d\uFFFEe\tf';
+
+  it.each(['outlines', 'editable'] as const)(
+    'keeps them out of a text run and a layer label, in %s mode',
+    (text) => {
+      const scene = sceneOf(item('t', `Label ${dirty}`, textOp(dirty)));
+
+      const { svg } = run(scene, { text });
+
+      const root = parse(svg);
+      expect(root.querySelector('title')!.textContent).toBe('Label abcde\tf');
+      // eslint-disable-next-line no-control-regex
+      expect(svg).not.toMatch(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]/);
+      if (text === 'editable') expect(root.querySelector('text')!.textContent).toBe('abcde\tf');
+    }
+  );
+
+  it('keeps them out of an attribute value, and keeps the characters XML allows', () => {
+    const scene = sceneOf(
+      item('a\u0001b', 'Größe → 😀\nzwei', fill(rect(0, 0, 5, 5), solid('#ff0000')))
+    );
+
+    const root = parse(run(scene).svg);
+
+    expect(itemGroups(root)[0]!.getAttribute('data-element-id')).toBe('ab');
+    expect(root.querySelector('title')!.textContent).toBe('Größe → 😀\nzwei');
+  });
+});
