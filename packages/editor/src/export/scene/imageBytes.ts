@@ -5,11 +5,14 @@
  * - PNG and JPEG pass through unchanged. A JPEG with an EXIF orientation other than 1 does not:
  *   the browser turns it when it draws, a file does not, so it goes through `reencode`.
  * - WebP, GIF and AVIF are re-encoded: opaque ones as JPEG, the others as PNG.
- * - An SVG of ours (`data:image/svg+xml…`, made by the chart, icon and illustration primitives) is
- *   decoded and trusted. Any other SVG is a trust boundary and goes through `sanitizeSvg` before
- *   it is inlined anywhere; markup the sanitiser refuses is unreadable.
+ * - An SVG the editor generated itself is inlined as it is (`trusted`: the caller knows from who
+ *   made the image element, see `trustedSvgImages.ts`; the look of the url proves nothing). Every
+ *   other SVG is a trust boundary and goes through `sanitizeSvg` before it is inlined anywhere.
+ *   The sanitiser also strips what an SVG may be drawn with (`<style>`, `class`, `<text>` …), so
+ *   a foreign SVG that uses any of it is not inlined at all: it is `svg-unsupported`, and the
+ *   caller draws it from the stage.
  *
- * Every function answers `null` for "cannot be read"; the caller decides what that costs.
+ * Every function answers a failure rather than throwing; the caller decides what that costs.
  */
 import { sanitizeSvg } from '@ggraphic/schema';
 
@@ -21,7 +24,11 @@ export interface ImageByteDeps {
   reencode: (
     bytes: Uint8Array,
     mime: string,
-    opaque: boolean
+    /**
+     * true: JPEG at 0.92, the source has no alpha. false: PNG, it may have. null: unknown, so look
+     * at the decoded pixels: JPEG when none is transparent, else PNG.
+     */
+    opaque: boolean | null
   ) => Promise<{
     bytes: Uint8Array;
     mime: 'image/png' | 'image/jpeg';
@@ -29,6 +36,17 @@ export interface ImageByteDeps {
     height: number;
   } | null>;
 }
+
+/** A source, or why there is none: unreadable, or an SVG that cannot be inlined faithfully. */
+export type SourceOutcome =
+  | { ok: true; source: SceneImageSource }
+  | { ok: false; reason: 'image-unreadable' | 'svg-unsupported' };
+
+const UNREADABLE: SourceOutcome = { ok: false, reason: 'image-unreadable' };
+const UNSUPPORTED: SourceOutcome = { ok: false, reason: 'svg-unsupported' };
+
+const found = (source: SceneImageSource | null): SourceOutcome =>
+  source ? { ok: true, source } : UNREADABLE;
 
 /** The size the image was drawn from: what the canvas's source rectangle is measured in. */
 export interface ImageSize {
@@ -69,13 +87,13 @@ export function sniffRaster(bytes: Uint8Array): RasterMime | null {
 }
 
 /**
- * Whether a WebP can have transparent pixels, from its first chunk: `VP8 ` (lossy) never does,
- * `VP8X` says so in its flags, `VP8L` (lossless) in the `alpha_is_used` bit of its header.
+ * Whether a WebP can have transparent pixels, from its first chunk: `VP8 ` (lossy) never does and
+ * `VP8X` says so in its flags. `VP8L` (lossless) is taken to: its `alpha_is_used` bit is only a
+ * hint, and a lossless file that ignores it still decodes with transparency.
  */
 function webpHasAlpha(bytes: Uint8Array): boolean {
   if (startsWith(bytes, 12, 'VP8X')) return ((bytes[20] ?? 0) & 0x10) !== 0;
-  if (startsWith(bytes, 12, 'VP8L')) return ((bytes[24] ?? 0) & 0x10) !== 0;
-  return false;
+  return startsWith(bytes, 12, 'VP8L');
 }
 
 /**
@@ -197,20 +215,26 @@ const bitmap = (
   size: ImageSize
 ): SceneImageSource => ({ kind: 'bitmap', mime, bytes, ...size });
 
-const svg = (markup: string | null, size: ImageSize): SceneImageSource | null =>
-  markup === null ? null : { kind: 'svg', markup, ...size };
+const svg = (markup: string, size: ImageSize): SceneImageSource => ({
+  kind: 'svg',
+  markup,
+  ...size,
+});
 
 /**
- * Markup that has no business in an image of ours. Our primitives never write any of it, so it
- * means the data url did not come from them, and the sanitiser sees it like any other upload.
+ * What `sanitizeSvg` throws away that a picture is drawn with: style sheets, `class` and `style`
+ * attributes, text, embedded images, filters. Looked for in the markup as it was, because the
+ * sanitised copy cannot say what is missing from it. A hit may be a false alarm (the word in a
+ * text node); the cost is a raster instead of a vector, never a lost picture.
  */
-const ACTIVE_CONTENT = /<script|<foreignObject|\son[a-z]+\s*=|javascript:/i;
+const LOST_BY_SANITISING =
+  /<(?:[\w-]+:)?(?:style|text|image|filter|foreignObject)[\s/>]|\s(?:class|style|filter)\s*=/i;
 
-/** An SVG data url: decoded and trusted unless it holds active content. */
-function svgFromDataUrl(data: DataUrl, size: ImageSize): SceneImageSource | null {
-  const markup = dataUrlText(data);
-  if (markup === null) return null;
-  return svg(ACTIVE_CONTENT.test(markup) ? sanitizeSvg(markup) : markup, size);
+/** An SVG that is not ours: sanitised, or `svg-unsupported` when sanitising would change it. */
+function foreignSvg(markup: string, size: ImageSize): SourceOutcome {
+  if (LOST_BY_SANITISING.test(markup)) return UNSUPPORTED;
+  const clean = sanitizeSvg(markup);
+  return clean === null ? UNSUPPORTED : { ok: true, source: svg(clean, size) };
 }
 
 /** Whether fetched bytes are SVG text: by what the server said, or by how the text starts. */
@@ -224,51 +248,64 @@ function isSvgText(bytes: Uint8Array, mime: string): boolean {
 async function reencoded(
   bytes: Uint8Array,
   mime: string,
-  opaque: boolean,
+  opaque: boolean | null,
   size: ImageSize,
   deps: ImageByteDeps
-): Promise<SceneImageSource | null> {
+): Promise<SourceOutcome> {
   const result = await attempt(() => deps.reencode(bytes, mime, opaque));
-  if (!result) return null;
+  if (!result) return UNREADABLE;
   // The size is the one the canvas measured its source rectangle in; the bitmap only supplies it
   // when the element had none.
-  return bitmap(result.mime, result.bytes, {
-    width: size.width || result.width,
-    height: size.height || result.height,
-  });
+  return found(
+    bitmap(result.mime, result.bytes, {
+      width: size.width || result.width,
+      height: size.height || result.height,
+    })
+  );
 }
 
 async function fromBytes(
   bytes: Uint8Array,
   mime: string,
   size: ImageSize,
-  deps: ImageByteDeps
-): Promise<SceneImageSource | null> {
+  deps: ImageByteDeps,
+  trusted: boolean
+): Promise<SourceOutcome> {
   const raster = sniffRaster(bytes);
-  if (raster === 'image/png') return bitmap(raster, bytes, size);
+  if (raster === 'image/png') return found(bitmap(raster, bytes, size));
   if (raster === 'image/jpeg') {
     return jpegOrientation(bytes) === 1
-      ? bitmap(raster, bytes, size)
+      ? found(bitmap(raster, bytes, size))
       : reencoded(bytes, raster, true, size, deps);
   }
   if (raster) {
-    // Only a WebP says whether it has alpha without being decoded; for the rest, PNG is safe.
-    const opaque = raster === 'image/webp' && !webpHasAlpha(bytes);
+    // Only a WebP says whether it has alpha without being decoded; for the rest, the pixels do.
+    const opaque = raster === 'image/webp' ? !webpHasAlpha(bytes) : null;
     return reencoded(bytes, raster, opaque, size, deps);
   }
-  return isSvgText(bytes, mime) ? svg(sanitizeSvg(decodeText(bytes)), size) : null;
+  if (!isSvgText(bytes, mime)) return UNREADABLE;
+  const markup = decodeText(bytes);
+  return trusted ? { ok: true, source: svg(markup, size) } : foreignSvg(markup, size);
 }
 
-/** The source behind an image url, or null when it cannot be read. */
+/**
+ * The source behind an image url. `trusted`: the image element was made by editor code that
+ * generated this SVG itself (`isTrustedSvgImage`); it only matters for SVG.
+ */
 export async function sourceFromUrl(
   url: string,
   size: ImageSize,
-  deps: ImageByteDeps
-): Promise<SceneImageSource | null> {
+  deps: ImageByteDeps,
+  trusted: boolean
+): Promise<SourceOutcome> {
   const data = parseDataUrl(url);
-  if (data?.mime === 'image/svg+xml') return svgFromDataUrl(data, size);
+  if (data?.mime === 'image/svg+xml') {
+    const markup = dataUrlText(data);
+    if (markup === null) return UNREADABLE;
+    return trusted ? { ok: true, source: svg(markup, size) } : foreignSvg(markup, size);
+  }
   const fetched = data?.base64 ? bytesOf(data) : await attempt(() => deps.fetchBytes(url));
-  return fetched ? fromBytes(fetched.bytes, fetched.mime, size, deps) : null;
+  return fetched ? fromBytes(fetched.bytes, fetched.mime, size, deps, trusted) : UNREADABLE;
 }
 
 function bytesOf(data: DataUrl): { bytes: Uint8Array; mime: string } | null {
@@ -280,7 +317,7 @@ function bytesOf(data: DataUrl): { bytes: Uint8Array; mime: string } | null {
 export function sourceFromCanvas(
   canvas: { toDataURL(type?: string): string },
   size: ImageSize
-): SceneImageSource | null {
+): SourceOutcome {
   const png = canvasPng(canvas);
-  return png ? bitmap('image/png', png, size) : null;
+  return found(png ? bitmap('image/png', png, size) : null);
 }

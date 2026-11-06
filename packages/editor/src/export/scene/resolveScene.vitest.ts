@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { jpegOrientation } from './imageBytes.js';
 import { IDENTITY } from './matrix.js';
 import { resolveScene, type ResolveDeps } from './resolveScene.js';
+import { markTrustedSvgImage } from './trustedSvgImages.js';
 import { emptyReport, type RecordedScene, type SceneItem, type SceneOp } from './types.js';
 
 // ---------------------------------------------------------------------------------------------
@@ -82,6 +83,13 @@ const SIZE = { width: 40, height: 20 };
 
 /** What the recorder keeps of a drawn element: `HTMLImageElement` reduced to what is read of it. */
 const img = (src: string) => ({ src, naturalWidth: SIZE.width, naturalHeight: SIZE.height });
+
+/** An image element a producer in the editor made from an SVG it generated: marked as such. */
+const ownImg = (src: string) => {
+  const element = img(src);
+  markTrustedSvgImage(element as unknown as HTMLImageElement);
+  return element;
+};
 
 function imageOp(element: unknown, over: Partial<Extract<SceneOp, { kind: 'image' }>> = {}) {
   return {
@@ -199,15 +207,20 @@ describe('jpegOrientation', () => {
 });
 
 describe('resolveScene: image sources', () => {
-  it('turns an own svg data url into an svg source: decoded, and not sanitised', async () => {
-    // The sanitiser drops `<style>`; keeping it proves this markup was not run through it.
-    const markup = svgOf('<style>text{font-family:Brand Sans}</style>');
-    expect(sanitizeSvg(markup)).not.toContain('<style');
+  it('inlines the svg of a marked image as it is: decoded, and not sanitised', async () => {
+    // The sanitiser drops `<style>` and `<text>`; keeping them proves this markup was not run
+    // through it. This is what a chart looks like.
+    const markup = svgOf(
+      '<style>text{font-family:Brand Sans}</style><text x="2" y="9">Label</text>'
+    );
+    const stripped = sanitizeSvg(markup);
+    expect(stripped).not.toContain('<style');
+    expect(stripped).not.toContain('<text');
     const deps = makeDeps();
 
-    const percent = await resolveOne(imageOp(img(dataSvg(markup))), deps);
+    const percent = await resolveOne(imageOp(ownImg(dataSvg(markup))), deps);
     const base64 = await resolveOne(
-      imageOp(img(`data:image/svg+xml;base64,${Buffer.from(markup).toString('base64')}`)),
+      imageOp(ownImg(`data:image/svg+xml;base64,${Buffer.from(markup).toString('base64')}`)),
       deps
     );
 
@@ -217,15 +230,91 @@ describe('resolveScene: image sources', () => {
     expect(deps.fetchBytes).not.toHaveBeenCalled();
   });
 
-  it('sanitises an svg data url that carries active content', async () => {
-    const op = await resolveOne(
-      imageOp(img(dataSvg(svgOf('<script>alert(1)</script>')))),
-      makeDeps()
+  it('inlines the svg of a marked image fetched from a url, too', async () => {
+    // The illustration fallback loads the catalogue file by its path.
+    const markup = svgOf('<style>.a{fill:red}</style>');
+    const deps = makeDeps({
+      fetchBytes: vi.fn(async () => ({ bytes: utf8(markup), mime: 'image/svg+xml' })),
+    });
+
+    const op = await resolveOne(imageOp(ownImg('https://assets.example/ill.svg')), deps);
+
+    expect(op).toMatchObject({ image: { kind: 'svg', markup } });
+  });
+
+  describe('an svg a document wrote into an image it did not mark', () => {
+    // Each payload is what a user image or asset could carry as its `src`. The data url looks
+    // exactly like the editor's own, and that proves nothing.
+    const payloads: Record<string, string> = {
+      'a script in a namespace prefix': svgOf(
+        '<x:script xmlns:x="http://www.w3.org/2000/svg">alert(1)</x:script>'
+      ),
+      'a script': svgOf('<script>alert(1)</script>'),
+      'an entity-encoded javascript: link': svgOf('<use href="&#106;avascript:alert(1)"/>'),
+      'a foreignObject in a namespace prefix': svgOf(
+        '<x:foreignObject xmlns:x="http://www.w3.org/2000/svg"><p>hi</p></x:foreignObject>'
+      ),
+      'an image that phones home': svgOf('<image href="https://tracker.example/p.png"/>'),
+      'a style sheet that imports': svgOf(
+        '<style>@import url(https://tracker.example/x.css);</style>'
+      ),
+      'an event handler': svgOf('<rect width="1" height="1" onload="alert(1)"/>'),
+    };
+    const FORBIDDEN = /script|foreignObject|javascript|&#106;|tracker|@import|onload/i;
+
+    /** Every piece of svg markup the output holds. */
+    const markupOf = (scene: RecordedScene) =>
+      scene.items
+        .flatMap((i) => i.ops)
+        .flatMap((op) => (op.kind === 'image' && op.image.kind === 'svg' ? [op.image.markup] : []));
+
+    it.each(Object.entries(payloads))(
+      'is sanitised or left out, never inlined: %s',
+      async (_name, payload) => {
+        const sources = [
+          dataSvg(payload),
+          `data:image/svg+xml;base64,${Buffer.from(payload).toString('base64')}`,
+        ];
+        for (const src of sources) {
+          const deps = makeDeps();
+          const scene = await resolveScene(sceneOf(item('a', imageOp(img(src)))), deps);
+
+          expect(markupOf(scene).join('\n')).not.toMatch(FORBIDDEN);
+          expect(JSON.stringify(leaks(scene))).toBe('[]');
+        }
+      }
     );
 
-    expect(op).toMatchObject({ kind: 'image', image: { kind: 'svg' } });
-    const markup = (op as Extract<SceneOp, { kind: 'image' }>).image;
-    expect(markup.kind === 'svg' && markup.markup).not.toContain('script');
+    it('is drawn from the stage when it uses what the sanitiser would strip', async () => {
+      const deps = makeDeps();
+      deps.rasterizeElement.mockResolvedValue({
+        png: RESULT_PNG,
+        box: { x: 0, y: 0, width: 4, height: 4 },
+      });
+
+      const scene = await resolveScene(
+        sceneOf(item('a', imageOp(img(dataSvg(payloads['a style sheet that imports']!))))),
+        deps
+      );
+
+      expect(scene.items[0]!.ops).toMatchObject([
+        { kind: 'raster', reason: 'svg-unsupported', png: RESULT_PNG },
+      ]);
+      expect(scene.report.rasterIslands).toEqual([
+        { page: 2, elementId: 'a', reason: 'svg-unsupported' },
+      ]);
+    });
+
+    it('keeps what the sanitiser can express, sanitised', async () => {
+      const scene = await resolveScene(
+        sceneOf(item('a', imageOp(img(dataSvg(payloads['a script']!))))),
+        makeDeps()
+      );
+
+      const [markup] = markupOf(scene);
+      expect(markup).toContain('<rect');
+      expect(markup).not.toContain('script');
+    });
   });
 
   it('sanitises a foreign svg, from a url or a blob', async () => {
@@ -252,12 +341,58 @@ describe('resolveScene: image sources', () => {
     }
   });
 
-  it('treats an svg the sanitiser rejects as unreadable', async () => {
-    // Not well-formed XML: `sanitizeSvg` answers null.
-    const broken = '<svg xmlns="http://www.w3.org/2000/svg"><rect></svg>';
-    expect(sanitizeSvg(broken)).toBeNull();
+  it.each([
+    ['a style element', svgOf('<style>.a{fill:red}</style><rect class="a" width="1" height="1"/>')],
+    [
+      'a class attribute',
+      '<svg xmlns="http://www.w3.org/2000/svg"><rect class="a" width="1" height="1"/></svg>',
+    ],
+    [
+      'a style attribute',
+      '<svg xmlns="http://www.w3.org/2000/svg"><rect style="fill:red" width="1" height="1"/></svg>',
+    ],
+    ['text', svgOf('<text x="1" y="9">Hi</text>')],
+    ['not being well-formed', '<svg xmlns="http://www.w3.org/2000/svg"><rect></svg>'],
+  ])(
+    'is not inlined when a foreign svg has %s: the element is drawn from the stage',
+    async (_what, markup) => {
+      const deps = makeDeps({
+        fetchBytes: vi.fn(async () => ({ bytes: utf8(markup), mime: 'image/svg+xml' })),
+      });
+      deps.rasterizeElement.mockResolvedValue({
+        png: RESULT_PNG,
+        box: { x: 3, y: 4, width: 40, height: 20 },
+      });
+
+      const scene = await resolveScene(
+        sceneOf(item('a', solidPath(), imageOp(img('https://cdn.example/x.svg')))),
+        deps
+      );
+
+      expect(scene.items[0]!.ops).toEqual([
+        {
+          ...base,
+          kind: 'raster',
+          png: RESULT_PNG,
+          x: 3,
+          y: 4,
+          width: 40,
+          height: 20,
+          reason: 'svg-unsupported',
+          source: null,
+        },
+      ]);
+      expect(scene.report.rasterIslands).toEqual([
+        { page: 2, elementId: 'a', reason: 'svg-unsupported' },
+      ]);
+      expect(scene.report.missingElements).toEqual([]);
+    }
+  );
+
+  it('reports a foreign svg it can neither inline nor draw from the stage as missing', async () => {
+    const markup = svgOf('<style>.a{fill:red}</style>');
     const deps = makeDeps({
-      fetchBytes: vi.fn(async () => ({ bytes: utf8(broken), mime: 'image/svg+xml' })),
+      fetchBytes: vi.fn(async () => ({ bytes: utf8(markup), mime: 'image/svg+xml' })),
     });
 
     const scene = await resolveScene(
@@ -266,6 +401,7 @@ describe('resolveScene: image sources', () => {
     );
 
     expect(scene.items).toEqual([]);
+    expect(scene.report.rasterIslands).toEqual([]);
     expect(scene.report.missingElements).toEqual([
       { page: 2, elementId: 'a', reason: 'image-unreadable' },
     ]);
@@ -320,9 +456,10 @@ describe('resolveScene: image sources', () => {
     ]);
     const deps = makeDeps({
       fetchBytes: vi.fn(async (url: string) => ({ bytes: files.get(url)!, mime: 'image/webp' })),
+      // `null` asks the dependency to look at the pixels: this one finds none transparent.
       reencode: vi.fn(async (_bytes, _mime, opaque) => ({
-        bytes: opaque ? jpegOut : RESULT_PNG,
-        mime: opaque ? ('image/jpeg' as const) : ('image/png' as const),
+        bytes: opaque === false ? RESULT_PNG : jpegOut,
+        mime: opaque === false ? ('image/png' as const) : ('image/jpeg' as const),
         width: 40,
         height: 20,
       })),
@@ -343,14 +480,19 @@ describe('resolveScene: image sources', () => {
     expect(lossyCall.op).toMatchObject({ image: { kind: 'bitmap', mime: 'image/jpeg', ...SIZE } });
 
     expect((await opaqueOf('alpha.webp')).opaque).toBe(false);
+    // The `alpha_is_used` bit of a lossless file is a hint: with it clear, it still may have alpha.
     expect((await opaqueOf('lossless.webp')).opaque).toBe(false);
-    expect((await opaqueOf('opaque.webp')).opaque).toBe(true);
+    expect((await opaqueOf('opaque.webp')).opaque).toBe(false);
 
+    // Nothing in a GIF or AVIF says without decoding; the dependency decodes anyway.
     const gif = await opaqueOf('a.gif');
     expect(gif.mime).toBe('image/gif');
-    expect(gif.opaque).toBe(false);
-    expect(gif.op).toMatchObject({ image: { kind: 'bitmap', mime: 'image/png' } });
-    expect((await opaqueOf('a.avif')).mime).toBe('image/avif');
+    expect(gif.opaque).toBeNull();
+    const avif = await opaqueOf('a.avif');
+    expect(avif.mime).toBe('image/avif');
+    expect(avif.opaque).toBeNull();
+    // A photographic AVIF comes back as a JPEG.
+    expect(avif.op).toMatchObject({ image: { kind: 'bitmap', mime: 'image/jpeg' } });
 
     // A rotated jpeg has no alpha; the canvas applies the orientation when it draws it.
     const turned = await opaqueOf('rotated.jpg');
@@ -695,18 +837,26 @@ describe('resolveScene: raster islands', () => {
       kind: 'group',
       ops: [imageOp(img('https://cdn.example/a.png'))],
     };
+    // An island nested in a group (a buffered draw) keeps its handle in the recording too.
+    const nested: SceneOp = {
+      ...base,
+      kind: 'group',
+      ops: [island({ nodeRef: node, source: [imageOp(img('https://cdn.example/a.png'))] })],
+    };
 
     const scene = await resolveScene(
       sceneOf(
         item('a', imageOp(img('https://cdn.example/a.png')), grouped),
         item('b', island({ source: [imageOp(img('https://cdn.example/a.png'))] })),
         item('c', island()),
-        item(null, island({ nodeRef: node }))
+        item(null, island({ nodeRef: node })),
+        item(null, nested, { ...nested, ops: [island({ nodeRef: node })] })
       ),
       deps
     );
 
-    expect(scene.items).toHaveLength(4);
+    expect(scene.items).toHaveLength(5);
+    expect(scene.items[4]!.ops).toHaveLength(2);
     expect(leaks(scene)).toEqual([]);
   });
 });
