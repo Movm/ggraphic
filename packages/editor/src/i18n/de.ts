@@ -882,6 +882,8 @@ export const de = {
       rasterNotice: (items: string) => `Als Bild eingebettet: ${items}`,
       missingNotice: (n: number) =>
         `${n} Element(e) fehlen, weil ihr Bild nicht geladen werden konnte.`,
+      variableFontNotice: (fonts: string) =>
+        `Schrift in Standardstärke eingebettet, die Stärke kann abweichen: ${fonts}`,
       /** Why the PDF is a picture, by `ExportReport['fallback'].kind`. */
       pdfFallbackNotice: {
         fonts: 'Das PDF wurde als Bild erzeugt, weil nicht alle Schriften geladen werden konnten.',

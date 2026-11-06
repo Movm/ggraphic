@@ -817,6 +817,20 @@ describe('text', () => {
     expect(xs[1]).toBeLessThan(215);
   });
 
+  it('reports the family of a variable font drawn in its default instance', async () => {
+    const [latin] = fonts.get('Instrument Sans|400|normal')!.files;
+    const set = {
+      face: FACE,
+      files: [{ ...latin!, variation: 'default-only' as const }],
+      fileFor: () => ({ ...latin!, variation: 'default-only' as const }),
+    };
+    const { report } = run(sceneOf(item('t', null, textOp('Hi'), textOp('Ho', { y: 150 }))), {
+      fonts: new Map([['Instrument Sans|400|normal', set]]),
+    });
+    expect(report.defaultInstanceFonts).toEqual(['Instrument Sans']);
+    expect(run(sceneOf(item('t', null, textOp('Hi')))).report.defaultInstanceFonts).toEqual([]);
+  });
+
   it('outline mode strokes the glyphs of a regular cut that stands in for a bold, as a browser does', async () => {
     const bold: FontSpec = { ...FACE, weight: 700, size: 36 };
     const set = await resolveFontFiles(bold, {

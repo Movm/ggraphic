@@ -409,6 +409,10 @@ class SvgWriter {
         parts.push((extra) => this.textElement(op, run, paint, extra));
         continue;
       }
+      const { defaultInstanceFonts } = this.options.report;
+      if (run.file.variation === 'default-only' && !defaultInstanceFonts.includes(op.font.family)) {
+        defaultInstanceFonts.push(op.font.family);
+      }
       const glyphs = glyphOutline(run.file, run.text, op.font.size);
       const d = glyphs.map((glyph, i) => pathData(glyph.path, run.xs[i] ?? 0, op.y)).join('');
       // A regular cut standing in for a bold: the outline grows by a stroke in the fill's colour.

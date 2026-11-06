@@ -11,6 +11,7 @@ describe('export report', () => {
       missingElements: [],
       missingGlyphs: [],
       outlinedForLicence: [],
+      defaultInstanceFonts: [],
       rgbBrandColors: [],
       fallback: null,
     });
@@ -26,6 +27,7 @@ describe('export report', () => {
     a.rasterIslands.push({ page: 0, elementId: 'a', reason: 'filter' });
     a.unknownCalls.push({ page: 0, elementId: 'a', call: 'getImageData' });
     a.outlinedForLicence.push('Brand Sans');
+    a.defaultInstanceFonts.push('Var One');
     a.rgbBrandColors.push('#00ff00');
     a.fallback = { kind: 'error', reason: 'first' };
     const b = emptyReport();
@@ -33,6 +35,7 @@ describe('export report', () => {
     b.missingElements.push({ page: 1, elementId: 'c', reason: 'image-unreadable' });
     b.missingGlyphs.push({ page: 1, elementId: 'd', text: '→' });
     b.outlinedForLicence.push('Brand Sans', 'Other');
+    b.defaultInstanceFonts.push('Var One', 'Var Two');
     b.rgbBrandColors.push('#00ff00', '#ff00ff');
     b.fallback = { kind: 'error', reason: 'second' };
 
@@ -42,6 +45,7 @@ describe('export report', () => {
     expect(merged.missingElements).toHaveLength(1);
     expect(merged.missingGlyphs).toHaveLength(1);
     expect(merged.outlinedForLicence).toEqual(['Brand Sans', 'Other']);
+    expect(merged.defaultInstanceFonts).toEqual(['Var One', 'Var Two']);
     expect(merged.rgbBrandColors).toEqual(['#00ff00', '#ff00ff']);
     expect(merged.fallback).toEqual({ kind: 'error', reason: 'first' });
     // The inputs are left alone.

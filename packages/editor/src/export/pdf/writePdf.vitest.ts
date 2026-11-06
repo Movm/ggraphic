@@ -271,6 +271,42 @@ describe('text', () => {
     expect(upright.content(0)).toContain('1 0 0 -1 10 100 Tm');
   });
 
+  it('embeds the instance of a variable font, not the default instance the bytes parse to', async () => {
+    // An instance whose 'H' is 100 units wider than in the file the bytes come from.
+    const real = set.files[0]!.font as unknown as EmbeddedFont;
+    const wide = Object.create(real, {
+      getGlyph: {
+        value: (id: number) => {
+          const glyph = real.getGlyph(id);
+          return Object.create(glyph, {
+            advanceWidth: { value: glyph.advanceWidth + (id === hId ? 100 : 0) },
+          });
+        },
+      },
+    });
+    const hId = (real.glyphForCodePoint(72) as unknown as { id: number }).id;
+    const instance = withFile((file) => ({ ...file, font: wide, variation: 'instance' }));
+
+    const { pdf } = await write(sceneOf(item('a', null, text('H'))), { fonts: instance });
+
+    const program = pdf.bytesAt(pdf.ofType('FontDescriptor')[0]!.dict, 'FontFile2')!;
+    const embedded = (await loadFontkit()).create(program) as unknown as EmbeddedFont;
+    const original = real.glyphForCodePoint(72).advanceWidth;
+    // Glyph 0 is .notdef, the glyph of the text is the next.
+    expect(embedded.getGlyph(1).advanceWidth).toBe(original + 100);
+  });
+
+  it('reports the family of a variable font drawn in its default instance', async () => {
+    const stuck = withFile((file) => ({ ...file, variation: 'default-only' }));
+    const { report } = await write(sceneOf(item('a', null, text('Hi'), text('Ho', { y: 160 }))), {
+      fonts: stuck,
+    });
+    expect(report.defaultInstanceFonts).toEqual(['Instrument Sans']);
+    expect((await write(sceneOf(item('a', null, text('Hi'))))).report.defaultInstanceFonts).toEqual(
+      []
+    );
+  });
+
   it('draws a regular cut that stands in for a bold with fill and stroke in one colour', async () => {
     const bold = withFile((file) => ({ ...file, fakeBold: true }));
     const op = text('II', { xs: [10, 40], font: { ...FACE, size: 36 } });
@@ -368,6 +404,7 @@ describe('text', () => {
         ranges: null,
         slant: 0,
         fakeBold: false,
+        variation: 'none',
       };
     });
 

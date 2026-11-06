@@ -37,6 +37,7 @@ const sceneOf = (...ops: SceneOp[]): RecordedScene => ({
     missingElements: [],
     missingGlyphs: [],
     outlinedForLicence: [],
+    defaultInstanceFonts: [],
     rgbBrandColors: [],
     fallback: null,
   },

@@ -194,6 +194,11 @@ export interface ExportReport {
   missingElements: { page: number; elementId: string | null; reason: 'image-unreadable' }[];
   missingGlyphs: { page: number; elementId: string | null; text: string }[];
   outlinedForLicence: string[];
+  /**
+   * Families of variable fonts drawn in the default instance of the file, though the text asks
+   * for another weight: fontkit cannot instance them (a WOFF2), so the weight may be off.
+   */
+  defaultInstanceFonts: string[];
   rgbBrandColors: string[];
   /**
    * Why the vector PDF was not made: `fonts` (fonts could not be used for several elements),
@@ -210,6 +215,7 @@ export function emptyReport(): ExportReport {
     missingElements: [],
     missingGlyphs: [],
     outlinedForLicence: [],
+    defaultInstanceFonts: [],
     rgbBrandColors: [],
     fallback: null,
   };
@@ -225,6 +231,7 @@ export function mergeReports(a: ExportReport, b: ExportReport): ExportReport {
     missingElements: [...a.missingElements, ...b.missingElements],
     missingGlyphs: [...a.missingGlyphs, ...b.missingGlyphs],
     outlinedForLicence: unique(a.outlinedForLicence, b.outlinedForLicence),
+    defaultInstanceFonts: unique(a.defaultInstanceFonts, b.defaultInstanceFonts),
     rgbBrandColors: unique(a.rgbBrandColors, b.rgbBrandColors),
     fallback: a.fallback ?? b.fallback,
   };

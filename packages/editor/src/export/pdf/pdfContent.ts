@@ -364,6 +364,11 @@ export class ContentWriter {
       : [{ file: null, text: op.text, xs: op.xs }];
     const hasFiles = !!set && set.files.length > 0;
     for (const run of runs) {
+      if (run.file?.variation === 'default-only') {
+        const { defaultInstanceFonts } = this.env.report;
+        if (!defaultInstanceFonts.includes(op.font.family))
+          defaultInstanceFonts.push(op.font.family);
+      }
       if (run.file === null) {
         await this.rasterRun(op, run, hasFiles ? 'missing-glyph' : 'font-unavailable');
       } else if (run.file.embeddable === 'bitmap-only') {

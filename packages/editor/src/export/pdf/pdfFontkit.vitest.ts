@@ -3,10 +3,10 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { loadFontkit } from '../fonts/glyphs.js';
-import { encodeSimpleGlyph, fontkitForPdf } from './pdfFontkit.js';
+import { embeddableBytes, encodeSimpleGlyph, fontkitForPdf } from './pdfFontkit.js';
 
 const dir = path.dirname(
   createRequire(import.meta.url).resolve('@fontsource/instrument-sans/package.json')
@@ -200,5 +200,31 @@ describe('the subset of a WOFF2 face', () => {
     const font = fontkitForPdf(fontkit).create(ttf) as unknown as Font;
     const original = fontkit.create(ttf) as unknown as Font;
     expect(font.createSubset.toString()).toBe(original.createSubset.toString());
+  });
+});
+
+describe('the instance of a variable font', () => {
+  const file = (variation: 'none' | 'instance', font: unknown) =>
+    ({ bytes: woff2, font, variation }) as never;
+
+  it('is what embedding the bytes of its file gives, patched like a WOFF2 face', async () => {
+    const fontkit = await loadFontkit();
+    const parsed = fontkit.create(woff2) as never;
+    const instance = { createSubset: () => ({}), directory: { tables: { glyf: {} } } };
+    const create = vi.fn(() => parsed);
+    const ours = fontkitForPdf({ ...fontkit, create } as never);
+
+    const bytes = embeddableBytes(file('instance', instance));
+
+    expect(bytes).not.toBe(woff2); // its own view: the registry is keyed by identity
+    expect(Array.from(bytes)).toEqual(Array.from(woff2));
+    expect(ours.create(bytes)).toBe(instance);
+    expect(create).not.toHaveBeenCalled();
+    const subset = (instance.createSubset() as { _addGlyph?: unknown })._addGlyph;
+    expect(typeof subset).toBe('function'); // the path-based glyph writer, not fontkit's copy
+  });
+
+  it('is not made for a font that is not an instance: its bytes are parsed as before', () => {
+    expect(embeddableBytes(file('none', {}))).toBe(woff2);
   });
 });

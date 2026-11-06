@@ -26,6 +26,12 @@ export interface FontkitFont {
   glyphForCodePoint(codePoint: number): FontkitGlyph;
   /** The shaped glyphs of a string, with the default features (what `pdf-lib` embeds). */
   layout(text: string): { glyphs: readonly FontkitGlyph[] };
+  /** The axes of a variable font, by tag; `{}` for any other. */
+  variationAxes?: Readonly<Record<string, { min: number; default: number; max: number }>>;
+  /** The font with the axes set, for a variable font with `glyf` outlines (not for WOFF2: see `variation.ts`). */
+  getVariation?(settings: Record<string, number>): FontkitFont;
+  /** Which tables the file holds; `glyf.transformed` is WOFF2's. */
+  directory?: { tables?: { glyf?: { transformed?: boolean }; CFF2?: unknown } };
 }
 
 /** What fontkit makes of `OS/2.fsType`: the bits it names (a number if a future version stops decoding them). */

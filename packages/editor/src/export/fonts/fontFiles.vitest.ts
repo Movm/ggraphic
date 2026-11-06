@@ -28,6 +28,21 @@ const fontsourceFile = (name: string) =>
   new Uint8Array(readFileSync(path.join(fontsourceDir, 'files', `${name}.woff2`)));
 
 const LATIN = fontsourceFile('instrument-sans-latin-400-normal');
+const VARIABLE = (() => {
+  // A variable WOFF2 that the repo has installed for the studio; absent in a stripped install.
+  try {
+    return new Uint8Array(
+      readFileSync(
+        path.resolve(
+          import.meta.dirname,
+          '../../../../../node_modules/.pnpm/@fontsource-variable+bricolage-grotesque@5.3.0/node_modules/@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2'
+        )
+      )
+    );
+  } catch {
+    return null;
+  }
+})();
 const LATIN_EXT = fontsourceFile('instrument-sans-latin-ext-400-normal');
 
 /** The `@font-face` blocks of a fontsource stylesheet, as the `CSSFontFaceRule` surface the resolver reads. */
@@ -294,6 +309,33 @@ describe('resolveFontFiles: brand faces', () => {
       fetchBytes,
     });
     expect(both.files.map((file) => [file.slant, file.fakeBold])).toEqual([[0.25, true]]);
+  });
+
+  describe.skipIf(!VARIABLE)('a variable font file (wght 200..800, default 800)', () => {
+    const brandFaces = [{ family: 'Bricolage Grotesque', src: 'variable.woff2' }];
+    const ask = (weight: number) =>
+      resolveFontFiles(face({ family: 'Bricolage Grotesque', weight }), {
+        brandFaces,
+        fetchBytes: async () => VARIABLE,
+      });
+
+    it('is at its default instance for the default weight, and says so where it cannot do better', async () => {
+      expect((await ask(800)).files.map((file) => file.variation)).toEqual(['none']);
+      // A WOFF2 cannot be instanced by fontkit: the default instance is drawn, and flagged.
+      expect((await ask(400)).files.map((file) => file.variation)).toEqual(['default-only']);
+      expect(
+        (
+          await resolveFontFiles(face(), {
+            brandFaces: [brand('w.woff2', 400)],
+            fetchBytes: async () => LATIN,
+          })
+        ).files.map((file) => file.variation)
+      ).toEqual(['none']);
+    });
+
+    it('is never emboldened: its axis covers the weight, whatever the face declares', async () => {
+      expect((await ask(700)).files.map((file) => file.fakeBold)).toEqual([false]);
+    });
   });
 
   it('asks the host for the italic first, then for the upright cut it slants', async () => {

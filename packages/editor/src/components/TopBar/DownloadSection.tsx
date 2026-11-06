@@ -494,6 +494,11 @@ export function DownloadSection({
           {downloadPanel.missingNotice(report.missingElements.length)}
         </DownloadNotice>
       )}
+      {reportsExport && report && report.defaultInstanceFonts.length > 0 && (
+        <DownloadNotice tone="info">
+          {downloadPanel.variableFontNotice(report.defaultInstanceFonts.join(', '))}
+        </DownloadNotice>
+      )}
       {reportsExport && rasterReasons.length > 0 && (
         <DownloadNotice tone="info">
           {downloadPanel.rasterNotice(rasterReasons.join(', '))}

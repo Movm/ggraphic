@@ -342,6 +342,22 @@ describe('the PDF choice', () => {
       expect(screen.queryByText(NOTICE)).toBeNull();
     });
 
+    it('names the variable fonts that could not be set to their weight', async () => {
+      const { user } = renderSection('digital', {}, undefined, {
+        ...emptyReport(),
+        defaultInstanceFonts: ['Bricolage Grotesque', 'Fraunces'],
+      });
+      await choosePdf(user, 'PDF');
+
+      await download(user);
+
+      expect(
+        await screen.findByText(
+          'Schrift in Standardstärke eingebettet, die Stärke kann abweichen: Bricolage Grotesque, Fraunces'
+        )
+      ).toBeTruthy();
+    });
+
     it('speaks English under en', async () => {
       registerMessages('en');
       const { user } = renderSection('digital', {}, undefined, fallback());

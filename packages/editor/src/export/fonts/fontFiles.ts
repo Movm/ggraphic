@@ -12,6 +12,7 @@ import { type BrandFontFace } from '@ggraphic/core';
 
 import { resolveFontFamily } from '../../utils/fontAliases.js';
 import { loadFontkit, type FontkitFont, type FontkitFsType } from './glyphs.js';
+import { variationInstance, type Variation } from './variation.js';
 
 import type { CanvasExportFontService } from '../../hostServices.js';
 import type { FontSpec } from '../scene/types.js';
@@ -39,6 +40,12 @@ export interface FontFile {
    * ship: a writer draws it emboldened like a browser does (`fakeBoldWidth`).
    */
   fakeBold: boolean;
+  /**
+   * How `font` stands to the weight asked for when the file is a variable font (`none` for any
+   * other): `instance` = `font` is the instance for that weight, `default-only` = it could not be
+   * made and `font` draws the file's default instance, which a writer reports.
+   */
+  variation: Variation;
 }
 
 export interface FontFileSet {
@@ -203,7 +210,10 @@ async function loadFiles(face: FontSpec, deps: FontSourceDeps): Promise<readonly
       if (files.length === 0) continue;
       // A bold asked for and a lighter cut served (the bold family's own regular is not that).
       const fakeBold = attempt.weight >= 600 && served !== null && served < 600;
-      return fakeBold ? files.map((file) => ({ ...file, fakeBold })) : files;
+      // A variable font covers the weights of its axis whatever its @font-face says.
+      return fakeBold
+        ? files.map((file) => (file.font.variationAxes?.['wght'] ? file : { ...file, fakeBold }))
+        : files;
     }
     return [];
   };
@@ -231,7 +241,7 @@ async function filesFor(
     hosted = null;
   }
   if (hosted) {
-    const file = await toFontFile(hosted, null);
+    const file = await toFontFile(hosted, null, weight);
     if (file) return { files: [file], served: null };
   }
   const fetchBytes = deps.fetchBytes ?? fetchOverHttp;
@@ -242,7 +252,7 @@ async function filesFor(
   ];
   for (const candidatesOf of sources) {
     const picked = pickCandidates(candidatesOf(), weight, style);
-    const files = await loadCandidates(picked, fetchBytes);
+    const files = await loadCandidates(picked, fetchBytes, weight);
     if (files.length > 0) {
       const [first] = picked;
       return { files, served: first ? Math.min(Math.max(weight, first.low), first.high) : null };
@@ -324,13 +334,14 @@ function parseWeights(value: string): [number, number] {
 
 async function loadCandidates(
   candidates: Candidate[],
-  fetchBytes: (url: string) => Promise<Uint8Array | null>
+  fetchBytes: (url: string) => Promise<Uint8Array | null>,
+  weight: number
 ): Promise<FontFile[]> {
   const files = await Promise.all(
     candidates.map(async (candidate) => {
       for (const url of candidate.urls) {
         const bytes = await fetchBytes(url).catch(() => null);
-        const file = bytes && (await toFontFile(bytes, candidate.ranges));
+        const file = bytes && (await toFontFile(bytes, candidate.ranges, weight));
         if (file) return file;
       }
       return null;
@@ -341,17 +352,20 @@ async function loadCandidates(
 
 async function toFontFile(
   bytes: Uint8Array,
-  ranges: readonly [number, number][] | null
+  ranges: readonly [number, number][] | null,
+  weight: number
 ): Promise<FontFile | null> {
-  const font = await parseFont(bytes);
-  if (!font) return null;
+  const parsed = await parseFont(bytes);
+  if (!parsed) return null;
+  const { font, variation } = variationInstance(parsed, weight);
   return {
     bytes,
     font,
-    embeddable: embeddingOf(font['OS/2']?.fsType ?? 0),
+    embeddable: embeddingOf(parsed['OS/2']?.fsType ?? 0),
     ranges,
     slant: 0,
     fakeBold: false,
+    variation,
   };
 }
 
