@@ -190,6 +190,8 @@ export type ExportScene = RecordedScene;
 
 export interface ExportReport {
   rasterIslands: { page: number; elementId: string | null; reason: RasterReason }[];
+  /** Islands drawn at a lower resolution than asked for, because the bitmap would be too large. */
+  reducedRasters: { page: number; elementId: string | null }[];
   unknownCalls: { page: number; elementId: string | null; call: string }[];
   missingElements: { page: number; elementId: string | null; reason: 'image-unreadable' }[];
   missingGlyphs: { page: number; elementId: string | null; text: string }[];
@@ -211,6 +213,7 @@ export interface ExportReport {
 export function emptyReport(): ExportReport {
   return {
     rasterIslands: [],
+    reducedRasters: [],
     unknownCalls: [],
     missingElements: [],
     missingGlyphs: [],
@@ -227,6 +230,7 @@ const unique = (a: readonly string[], b: readonly string[]): string[] => [...new
 export function mergeReports(a: ExportReport, b: ExportReport): ExportReport {
   return {
     rasterIslands: [...a.rasterIslands, ...b.rasterIslands],
+    reducedRasters: [...a.reducedRasters, ...b.reducedRasters],
     unknownCalls: [...a.unknownCalls, ...b.unknownCalls],
     missingElements: [...a.missingElements, ...b.missingElements],
     missingGlyphs: [...a.missingGlyphs, ...b.missingGlyphs],

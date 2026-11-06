@@ -7,6 +7,7 @@ describe('export report', () => {
   it('emptyReport has no entries and no fallback', () => {
     expect(emptyReport()).toEqual({
       rasterIslands: [],
+      reducedRasters: [],
       unknownCalls: [],
       missingElements: [],
       missingGlyphs: [],

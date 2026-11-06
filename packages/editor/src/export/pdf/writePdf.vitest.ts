@@ -457,6 +457,26 @@ describe('text', () => {
     expect(pdf.ofType('FontDescriptor')).toHaveLength(0);
   });
 
+  it('lowers the ratio of an island that would be over the canvas limit and says so', async () => {
+    const inner = napiRasterize();
+    const asked: { ratio: number; width: number; height: number }[] = [];
+    const rasterize: typeof inner.rasterize = (ops, box, ratio) => {
+      asked.push({ ratio, width: box.width, height: box.height });
+      return inner.rasterize(ops, box, 1); // the pixels are not the point, the request is
+    };
+    const { report } = await write(
+      sceneOf(item('a', null, text('Hi'))),
+      { fonts: new Map(), rasterPixelRatio: 600 },
+      { ...inner, rasterize }
+    );
+    const request = only(asked);
+    expect(request.ratio).toBeLessThan(600);
+    expect(
+      Math.ceil(request.width * request.ratio) * Math.ceil(request.height * request.ratio)
+    ).toBeLessThanOrEqual(16_777_216);
+    expect(report.reducedRasters).toEqual([{ page: 1, elementId: 'a' }]);
+  });
+
   it('missing glyph run is reported and kept', async () => {
     // 'Ā' is outside the latin file; the runs around it are real text.
     const op = text('AĀB');

@@ -494,6 +494,9 @@ export function DownloadSection({
           {downloadPanel.missingNotice(report.missingElements.length)}
         </DownloadNotice>
       )}
+      {reportsExport && report && report.reducedRasters.length > 0 && (
+        <DownloadNotice tone="info">{downloadPanel.reducedRasterNotice}</DownloadNotice>
+      )}
       {reportsExport && report && report.defaultInstanceFonts.length > 0 && (
         <DownloadNotice tone="info">
           {downloadPanel.variableFontNotice(report.defaultInstanceFonts.join(', '))}

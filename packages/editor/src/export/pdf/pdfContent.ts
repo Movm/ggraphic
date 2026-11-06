@@ -23,6 +23,7 @@ import {
   type GlyphRun,
 } from '../fonts/glyphs.js';
 import { IDENTITY, invert, multiply } from '../scene/matrix.js';
+import { fitPixelRatio } from '../scene/rasterLimit.js';
 import { svgImageGroup, type SvgSource } from '../svg/svgImageScene.js';
 import { formatNumber } from '../svg/xml.js';
 import {
@@ -532,7 +533,10 @@ export class ContentWriter {
 
   /** Asks for the picture, places it, reports it; if there is none, reports that instead. */
   private async island(ops: SceneOp[], box: Rect, reason: RasterReason): Promise<void> {
-    const { assets, resources, report, page, pixelRatio } = this.env;
+    const { assets, resources, report, page } = this.env;
+    // A page-sized island at print resolution is more pixels than a canvas may have.
+    const fitted = fitPixelRatio(box.x1 - box.x0, box.y1 - box.y0, this.env.pixelRatio);
+    const pixelRatio = fitted.pixelRatio;
     // Whole device px, so the picture and the box it is placed in are the same size.
     const snapped: Rect = {
       x0: Math.floor(box.x0 * pixelRatio) / pixelRatio,
@@ -556,6 +560,7 @@ export class ContentWriter {
       return;
     }
     report.rasterIslands.push({ page, elementId: this.env.elementId, reason });
+    if (fitted.reduced) report.reducedRasters.push({ page, elementId: this.env.elementId });
     this.picture(
       resources.xobject(image.ref),
       snapped.x0,

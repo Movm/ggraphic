@@ -24,6 +24,7 @@ import {
 } from './imageBytes.js';
 import { itemBounds } from './itemBounds.js';
 import { IDENTITY } from './matrix.js';
+import { fitPixelRatio } from './rasterLimit.js';
 import { isTrustedSvgImage } from './trustedSvgImages.js';
 import {
   emptyReport,
@@ -283,14 +284,16 @@ async function rasterizedImage(
 
 async function resolveRaster(
   op: RasterOp,
-  { deps }: Resolution,
+  { deps, report }: Resolution,
   state: ItemState
 ): Promise<SceneOp | null> {
   // `nodeRef` and `source` are recorded forms: the node, and ops that still name DOM elements.
   const { nodeRef, source, ...island } = op;
   let png = op.png;
   if (!png) {
-    const ratio = deps.rasterPixelRatio;
+    // A page-sized island at print resolution is more pixels than a canvas may have.
+    const fitted = fitPixelRatio(op.width, op.height, deps.rasterPixelRatio);
+    const ratio = fitted.pixelRatio;
     if (source) {
       const box = { x: op.x, y: op.y, width: op.width, height: op.height };
       png = await attempt(() => deps.rasterizeOps(source, box, ratio));
@@ -300,6 +303,8 @@ async function resolveRaster(
     } else if (nodeRef !== undefined) {
       png = await attempt(() => deps.rasterizeNode(nodeRef, ratio));
     }
+    if (png && fitted.reduced)
+      report.reducedRasters.push({ page: deps.page, elementId: state.elementId });
   }
   if (!png) {
     state.missing = true;

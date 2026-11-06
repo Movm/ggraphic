@@ -865,6 +865,8 @@ export const en: Messages = {
       keepTextEditableHint: 'Only looks right where the font is installed.',
       rasterNotice: (items) => `Embedded as an image: ${items}`,
       missingNotice: (n) => `${n} element(s) are missing because their image could not be loaded.`,
+      reducedRasterNotice:
+        'An image area was embedded at a lower resolution because it would have been too large.',
       variableFontNotice: (fonts) =>
         `Font embedded at its default weight, the weight may differ: ${fonts}`,
       pdfFallbackNotice: {
