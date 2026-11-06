@@ -352,6 +352,21 @@ describe('resolveScene: image sources', () => {
       '<svg xmlns="http://www.w3.org/2000/svg"><rect style="fill:red" width="1" height="1"/></svg>',
     ],
     ['text', svgOf('<text x="1" y="9">Hi</text>')],
+    // Dropped by the sanitiser without a word, so the picture would come out wrong.
+    [
+      'a pattern',
+      svgOf('<pattern id="p" width="2" height="2"><rect width="1" height="1"/></pattern>'),
+    ],
+    ['a marker', svgOf('<marker id="m"><path d="M0 0L1 1"/></marker>')],
+    ['a link', svgOf('<a href="#x"><rect width="1" height="1"/></a>')],
+    ['a link without attributes', svgOf('<a><rect width="1" height="1"/></a>')],
+    ['a switch', svgOf('<switch><rect width="1" height="1"/></switch>')],
+    ['an animate', svgOf('<rect width="1" height="1"><animate attributeName="x" to="3"/></rect>')],
+    [
+      'an animateTransform',
+      svgOf('<rect width="1" height="1"><animateTransform attributeName="transform"/></rect>'),
+    ],
+    ['a set', svgOf('<rect width="1" height="1"><set attributeName="x" to="3"/></rect>')],
     ['not being well-formed', '<svg xmlns="http://www.w3.org/2000/svg"><rect></svg>'],
   ])(
     'is not inlined when a foreign svg has %s: the element is drawn from the stage',
@@ -407,7 +422,7 @@ describe('resolveScene: image sources', () => {
     ]);
   });
 
-  it('passes png and an upright jpeg through, byte for byte', async () => {
+  it('passes png through byte for byte, and an upright jpeg without its Exif segment', async () => {
     const upright = jpeg(1);
     const fetched = new Map([
       ['https://cdn.example/a.png', PNG],
@@ -425,7 +440,9 @@ describe('resolveScene: image sources', () => {
     expect(png).toMatchObject({ image: { kind: 'bitmap', mime: 'image/png', ...SIZE } });
     expect(jpg).toMatchObject({ image: { kind: 'bitmap', mime: 'image/jpeg', ...SIZE } });
     expect((png as { image: { bytes: Uint8Array } }).image.bytes).toBe(PNG);
-    expect((jpg as { image: { bytes: Uint8Array } }).image.bytes).toBe(upright);
+    // The Exif segment (orientation 1) is gone; JFIF, and the scan, are the file's own bytes.
+    expect((jpg as { image: { bytes: Uint8Array } }).image.bytes).toEqual(jpeg(null));
+    expect(upright).not.toEqual(jpeg(null));
     expect(plain).toMatchObject({ image: { kind: 'bitmap', mime: 'image/jpeg' } });
     expect(deps.reencode).not.toHaveBeenCalled();
   });

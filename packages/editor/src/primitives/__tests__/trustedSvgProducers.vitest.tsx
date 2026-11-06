@@ -50,6 +50,8 @@ vi.mock('use-image', () => ({ default: () => [hoisted.useImageElement] }));
 
 /** Every `new window.Image()` a component makes, in order. */
 const made: HTMLImageElement[] = [];
+/** Every `src` a component set on one of them. */
+const sources: string[] = [];
 
 beforeAll(() => {
   registerFixtureAssets();
@@ -62,9 +64,15 @@ beforeAll(() => {
 
 beforeEach(() => {
   made.length = 0;
+  sources.length = 0;
   vi.spyOn(window, 'Image').mockImplementation(function () {
     const image = Object.assign(createCanvas(10, 10), { naturalWidth: 10, naturalHeight: 10 });
-    Object.defineProperty(image, 'src', { set: () => {}, get: () => '' });
+    Object.defineProperty(image, 'src', {
+      set: (value: string) => {
+        sources.push(value);
+      },
+      get: () => '',
+    });
     made.push(image as unknown as HTMLImageElement);
     return image as unknown as HTMLImageElement;
   });
@@ -161,6 +169,40 @@ describe('producers mark the images they make from SVG they generated', () => {
       })
     );
     await expectTrusted();
+  });
+
+  describe('the colour of a Kawaii illustration is a document value', () => {
+    const kawaii = (color: string): KawaiiInstance => ({
+      id: 'k',
+      illustrationId: 'cat',
+      source: 'kawaii',
+      x: 0,
+      y: 0,
+      scale: 1,
+      rotation: 0,
+      color,
+      opacity: 1,
+      mood: 'happy',
+    });
+    /** The SVG text of the data url the component gave its image. */
+    const svgOfLastSource = () => decodeURIComponent(sources.at(-1)!.split(',').slice(1).join(','));
+
+    it('reaches the SVG when it is a plain colour', async () => {
+      mount(illustration(kawaii('#336699')));
+      await waitFor(() => expect(sources.length).toBeGreaterThan(0), { timeout: 4000 });
+      expect(svgOfLastSource().toLowerCase()).toContain('#336699');
+    });
+
+    it.each(['url(https://tracker.example/x.svg#p)', 'red;stroke:url(//tracker.example/y)'])(
+      'does not reach the trusted SVG when it is %s',
+      async (color) => {
+        mount(illustration(kawaii(color)));
+        await expectTrusted();
+        await waitFor(() => expect(sources.length).toBeGreaterThan(0));
+        expect(svgOfLastSource()).toContain('<svg');
+        expect(svgOfLastSource()).not.toContain('tracker.example');
+      }
+    );
   });
 
   it('IllustrationPrimitive: a catalogue illustration from the cache', async () => {

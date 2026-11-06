@@ -2,8 +2,10 @@
 /**
  * The bytes behind one drawn image, as a source a writer can embed (`SceneImageSource`).
  *
- * - PNG and JPEG pass through unchanged. A JPEG with an EXIF orientation other than 1 does not:
- *   the browser turns it when it draws, a file does not, so it goes through `reencode`.
+ * - PNG and JPEG pass through with their metadata removed (`stripJpegMetadata`,
+ *   `stripPngMetadata`: Exif and its GPS position, XMP, text chunks), the image data untouched. A
+ *   JPEG with an EXIF orientation other than 1 does not pass through: the browser turns it when
+ *   it draws, a file does not, so it goes through `reencode`, which drops the metadata with it.
  * - WebP, GIF and AVIF are re-encoded: opaque ones as JPEG, the others as PNG.
  * - An SVG the editor generated itself is inlined as it is (`trusted`: the caller knows from who
  *   made the image element, see `trustedSvgImages.ts`; the look of the url proves nothing). Every
@@ -96,17 +98,24 @@ function webpHasAlpha(bytes: Uint8Array): boolean {
   return startsWith(bytes, 12, 'VP8L');
 }
 
+/** One marker segment of a JPEG: `start` is its 0xFF, `end` the byte after its last. */
+interface JpegSegment {
+  marker: number;
+  start: number;
+  end: number;
+}
+
 /**
- * The orientation tag (EXIF 0x0112, 1..8) of a JPEG; 1 when there is none, or when the file is
- * not one we can read it from. Walks the marker segments up to the image data, then reads the
- * first IFD of the Exif segment's TIFF block in whichever byte order it declares.
+ * The marker segments of a JPEG that have a length, in file order, up to the image data (`SOS`)
+ * or the end. A segment cut off by the end of the file ends at the end of the file. The walk stops
+ * where the structure stops making sense; what lies beyond is not a segment of ours.
  */
-export function jpegOrientation(bytes: Uint8Array): number {
+function* jpegSegments(bytes: Uint8Array): Generator<JpegSegment> {
   const at = (i: number) => bytes[i] ?? 0;
-  if (at(0) !== 0xff || at(1) !== 0xd8) return 1;
+  if (at(0) !== 0xff || at(1) !== 0xd8) return;
   let cursor = 2;
   while (cursor + 4 <= bytes.length) {
-    if (at(cursor) !== 0xff) return 1;
+    if (at(cursor) !== 0xff) return;
     const marker = at(cursor + 1);
     // Fill bytes, and the markers that stand alone and have no length.
     if (marker === 0xff) {
@@ -117,14 +126,26 @@ export function jpegOrientation(bytes: Uint8Array): number {
       cursor += 2;
       continue;
     }
-    // Image data or the end: no Exif segment came before it.
-    if (marker === 0xda || marker === 0xd9) return 1;
+    // Image data or the end: no segment of this kind comes after it.
+    if (marker === 0xda || marker === 0xd9) return;
     const length = (at(cursor + 2) << 8) | at(cursor + 3);
-    if (length < 2) return 1;
-    if (marker === 0xe1 && startsWith(bytes, cursor + 4, 'Exif\0\0')) {
-      return tiffOrientation(bytes, cursor + 10, Math.min(cursor + 2 + length, bytes.length));
-    }
+    if (length < 2) return;
+    const end = Math.min(cursor + 2 + length, bytes.length);
+    yield { marker, start: cursor, end };
     cursor += 2 + length;
+  }
+}
+
+/**
+ * The orientation tag (EXIF 0x0112, 1..8) of a JPEG; 1 when there is none, or when the file is
+ * not one we can read it from. Reads the first IFD of the Exif segment's TIFF block in whichever
+ * byte order it declares.
+ */
+export function jpegOrientation(bytes: Uint8Array): number {
+  for (const { marker, start, end } of jpegSegments(bytes)) {
+    if (marker === 0xe1 && startsWith(bytes, start + 4, 'Exif\0\0')) {
+      return tiffOrientation(bytes, start + 10, end);
+    }
   }
   return 1;
 }
@@ -149,6 +170,77 @@ function tiffOrientation(bytes: Uint8Array, tiff: number, end: number): number {
     }
   }
   return 1;
+}
+
+// ---------------------------------------------------------------------------------------------
+// Metadata
+
+/** `bytes` without the half-open `ranges` (in order, not overlapping); the same array when none. */
+function withoutRanges(bytes: Uint8Array, ranges: readonly { start: number; end: number }[]) {
+  if (ranges.length === 0) return bytes;
+  const removed = ranges.reduce((total, { start, end }) => total + (end - start), 0);
+  const kept = new Uint8Array(bytes.length - removed);
+  let from = 0;
+  let to = 0;
+  for (const { start, end } of ranges) {
+    kept.set(bytes.subarray(from, start), to);
+    to += start - from;
+    from = end;
+  }
+  kept.set(bytes.subarray(from), to);
+  return kept;
+}
+
+/**
+ * Whether a JPEG segment is part of the picture rather than about it. APP0 (JFIF) and APP14
+ * (Adobe: the colour transform of a CMYK or YCCK file) are read by decoders; APP2 only when it
+ * carries the ICC profile. APP1 (Exif, XMP, and with them the GPS position), APP3 to APP13 and
+ * APP15 (Photoshop, IPTC …) and comments are not.
+ */
+function isJpegPicture(bytes: Uint8Array, { marker, start }: JpegSegment): boolean {
+  if (marker === 0xe0 || marker === 0xee) return true;
+  if (marker === 0xe2) return startsWith(bytes, start + 4, 'ICC_PROFILE\0');
+  return !(marker >= 0xe1 && marker <= 0xef) && marker !== 0xfe;
+}
+
+/**
+ * The JPEG without its metadata: the image data and what decodes it stay byte for byte. A photo
+ * is placed in a file that is sent on, and its Exif can hold where it was taken. A file whose
+ * segments cannot be walked to the image data is returned as it is: a decoder cannot find
+ * metadata in what it cannot walk either.
+ */
+export function stripJpegMetadata(bytes: Uint8Array): Uint8Array {
+  return withoutRanges(
+    bytes,
+    [...jpegSegments(bytes)].filter((segment) => !isJpegPicture(bytes, segment))
+  );
+}
+
+/** PNG chunks that are text, a timestamp or Exif: about the picture, not part of it. */
+const PNG_METADATA = new Set(['tEXt', 'zTXt', 'iTXt', 'eXIf', 'tIME']);
+
+/**
+ * The PNG without its text, time and Exif chunks. The colour chunks (`iCCP`, `sRGB`, `gAMA`,
+ * `cHRM`) and `pHYs` stay, and so does every chunk that is the image. A file whose chunks do not
+ * add up is returned as far as they did: what was found before the break is dropped.
+ */
+export function stripPngMetadata(bytes: Uint8Array): Uint8Array {
+  const dropped: { start: number; end: number }[] = [];
+  let cursor = 8;
+  while (cursor + 12 <= bytes.length) {
+    const length =
+      (bytes[cursor] ?? 0) * 0x1000000 +
+      (((bytes[cursor + 1] ?? 0) << 16) |
+        ((bytes[cursor + 2] ?? 0) << 8) |
+        (bytes[cursor + 3] ?? 0));
+    const end = cursor + 12 + length;
+    if (end > bytes.length) break;
+    const type = String.fromCharCode(...bytes.subarray(cursor + 4, cursor + 8));
+    if (PNG_METADATA.has(type)) dropped.push({ start: cursor, end });
+    if (type === 'IEND') break;
+    cursor = end;
+  }
+  return withoutRanges(bytes, dropped);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -228,12 +320,13 @@ const svg = (markup: string, size: ImageSize): SceneImageSource => ({
 
 /**
  * What `sanitizeSvg` throws away that a picture is drawn with: style sheets, `class` and `style`
- * attributes, text, embedded images, filters. Looked for in the markup as it was, because the
- * sanitised copy cannot say what is missing from it. A hit may be a false alarm (the word in a
- * text node); the cost is a raster instead of a vector, never a lost picture.
+ * attributes, text, embedded images, filters, patterns, markers, links and `switch`, animation.
+ * Looked for in the markup as it was, because the sanitised copy cannot say what is missing from
+ * it. A hit may be a false alarm (the word in a text node); the cost is a raster instead of a
+ * vector, never a lost picture.
  */
 const LOST_BY_SANITISING =
-  /<(?:[\w-]+:)?(?:style|text|image|filter|foreignObject)[\s/>]|\s(?:class|style|filter)\s*=/i;
+  /<(?:[\w-]+:)?(?:style|text|image|filter|foreignObject|pattern|marker|a|switch|animate\w*|set)[\s/>]|\s(?:class|style|filter)\s*=/i;
 
 /** An SVG that is not ours: sanitised, or `svg-unsupported` when sanitising would change it. */
 function foreignSvg(markup: string, size: ImageSize): SourceOutcome {
@@ -277,10 +370,10 @@ async function fromBytes(
   trusted: boolean
 ): Promise<SourceOutcome> {
   const raster = sniffRaster(bytes);
-  if (raster === 'image/png') return found(bitmap(raster, bytes, size));
+  if (raster === 'image/png') return found(bitmap(raster, stripPngMetadata(bytes), size));
   if (raster === 'image/jpeg') {
     return jpegOrientation(bytes) === 1
-      ? found(bitmap(raster, bytes, size))
+      ? found(bitmap(raster, stripJpegMetadata(bytes), size))
       : reencoded(bytes, raster, true, size, deps);
   }
   if (raster) {

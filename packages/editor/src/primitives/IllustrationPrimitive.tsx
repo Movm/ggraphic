@@ -6,6 +6,7 @@ import { activeBrand } from '../brand/brandRegistry.js';
 import { LOCKED_TRANSFORMER, useIsItemLocked } from '../components/canvasItemLock.js';
 import { markTrustedSvgImage } from '../export/scene/trustedSvgImages.js';
 import { useBoxSnap, type SnapProps } from '../hooks/useBoxSnap.js';
+import { isSafeColor } from '../utils/externalIcons.js';
 import { ILLUSTRATION_TARGET_SIZE, MOTIF_BASE_SIZE } from '../utils/motifSizes.js';
 import { ELEMENT_TRANSFORMER, signedScale } from '../utils/orientation.js';
 import { illustrationBox } from '../utils/renderedBoxes.js';
@@ -45,9 +46,11 @@ async function renderKawaiiSvg(instance: KawaiiInstance, size: number): Promise<
   };
   const Component = components[instance.illustrationId];
   if (!Component) return null;
-  return renderToStaticMarkup(
-    <Component size={size} mood={instance.mood} color={instance.color} />
-  );
+  // The colour is the document's and goes into the markup as it is; `export` inlines this SVG as
+  // trusted, so a value that is not a plain colour (`url(https://…)`) must not get that far. The
+  // library draws its own default colour without one.
+  const color = isSafeColor(instance.color) ? instance.color : undefined;
+  return renderToStaticMarkup(<Component size={size} mood={instance.mood} color={color} />);
 }
 
 export interface IllustrationPrimitiveProps extends SnapProps {
