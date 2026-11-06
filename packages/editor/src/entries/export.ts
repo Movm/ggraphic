@@ -43,6 +43,7 @@ export {
   type Shadow,
   type StrokeStyle,
 } from '../export/scene/types.js';
+export { writePdf, type WritePdfOptions } from '../export/pdf/writePdf.js';
 export { writeSvg, type WriteSvgOptions } from '../export/svg/writeSvg.js';
 export {
   createVectorDeps,

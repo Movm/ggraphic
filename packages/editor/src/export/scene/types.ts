@@ -63,6 +63,7 @@ export interface Shadow {
 
 export interface ClipPath {
   matrix: Matrix;
+  /** In the user space of `matrix`. Empty means "clip everything": the op it clips draws nothing. */
   commands: PathCommand[];
   rule: CanvasFillRule;
 }
@@ -177,7 +178,14 @@ export interface RecordedScene {
   report: ExportReport;
 }
 
-/** After `resolveScene`: no `element` image refs, every raster has a `png`. */
+/**
+ * After `resolveScene`: no `element` image refs, every raster has a `png`. The writers (`writeSvg`,
+ * `writePdf`) take this form: they cannot draw an `element` ref (a recorded `CanvasImageSource`,
+ * which only exists next to the stage it was read from), and a raster op without pixels is
+ * written from its `source` ops at best. A scene straight from `recordPageScene` has to go
+ * through `resolveScene` first. `nodeRef` of a raster op is also recorded-only: `resolveScene`
+ * uses it to draw the island and strips it, so no writer sees one.
+ */
 export type ExportScene = RecordedScene;
 
 export interface ExportReport {
