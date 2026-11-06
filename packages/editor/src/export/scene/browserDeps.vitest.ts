@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { createCanvas, loadImage } from '@napi-rs/canvas';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { rasterizeOps, type CreateSurface, type RasterSurface } from './browserDeps.js';
+import {
+  rasterizeOps,
+  type CreateSurface,
+  type DecodeImage,
+  type RasterSurface,
+} from './browserDeps.js';
 import { IDENTITY } from './matrix.js';
-import type { SceneOp } from './types.js';
+import type { SceneImageSource, SceneOp } from './types.js';
 
 /** A surface on `@napi-rs/canvas`, which draws for real in node. */
 const napiSurface: CreateSurface = (width, height) => {
@@ -16,10 +21,25 @@ const napiSurface: CreateSurface = (width, height) => {
   };
 };
 
+/** What the browser does with `createImageBitmap` and an `Image`, on napi: read the file. */
+const napiDecode: DecodeImage = async (source) => {
+  const bytes =
+    source instanceof Uint8Array
+      ? source
+      : source.kind === 'svg'
+        ? Buffer.from(source.markup)
+        : source.bytes;
+  return (await loadImage(Buffer.from(bytes))) as unknown as CanvasImageSource;
+};
+
 const base = { alpha: 1, clips: [], shadow: null } as const;
 
 /** A red 10 px square whose corner is at (x, y) in the space of `matrix`. */
-const red = (x: number, y: number, matrix: SceneOp['matrix'] = IDENTITY): SceneOp => ({
+const red = (
+  x: number,
+  y: number,
+  matrix: SceneOp['matrix'] = IDENTITY
+): Extract<SceneOp, { kind: 'path' }> => ({
   ...base,
   matrix,
   kind: 'path',
@@ -87,5 +107,104 @@ describe('rasterizeOps', () => {
   it('answers null for an empty box or a canvas it cannot get', async () => {
     expect(await rasterizeOps([red(50, 50)], { ...BOX, width: 0 }, 2, napiSurface)).toBeNull();
     expect(await rasterizeOps([red(50, 50)], BOX, 2, () => null)).toBeNull();
+  });
+
+  describe('pictures in the ops', () => {
+    const svg: SceneImageSource = {
+      kind: 'svg',
+      markup:
+        '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect width="10" height="10" fill="#0000ff"/></svg>',
+      width: 10,
+      height: 10,
+    };
+    const image = (source: SceneImageSource, x: number, over: Partial<SceneOp> = {}): SceneOp =>
+      ({
+        ...base,
+        matrix: IDENTITY,
+        kind: 'image',
+        image: source,
+        sx: 0,
+        sy: 0,
+        sw: 10,
+        sh: 10,
+        dx: x,
+        dy: 50,
+        dw: 10,
+        dh: 10,
+        ...over,
+      }) as SceneOp;
+
+    it('draws an svg or a bitmap source once the browser has decoded it', async () => {
+      // A blue square svg at page px 50..60.
+      const png = await rasterizeOps([image(svg, 50)], BOX, 2, napiSurface, napiDecode);
+
+      const picture = await pixels(png!);
+      expect(picture.at(21, 21)).toEqual([0, 0, 255, 255]);
+      expect(picture.at(45, 45)[3]).toBe(0);
+    });
+
+    it('draws the shadow of a picture, which the shadow island of a photo is', async () => {
+      const shadowed = image(svg, 41, {
+        shadow: { hex: '#000000', alpha: 1, blur: 0, offsetX: 20, offsetY: 0 },
+      });
+      const png = await rasterizeOps([shadowed], BOX, 1, napiSurface, napiDecode);
+
+      // The picture at 41..51, its shadow 20 px right at 61..71: the box ends at 70.
+      const picture = await pixels(png!);
+      expect(picture.at(5, 15)).toEqual([0, 0, 255, 255]);
+      expect(picture.at(25, 15)).toEqual([0, 0, 0, 255]);
+    });
+
+    it('draws a tile of a pattern and the pixels of a raster op', async () => {
+      const swatch = createCanvas(4, 4);
+      const context = swatch.getContext('2d');
+      context.fillStyle = '#00ff00';
+      context.fillRect(0, 0, 4, 4);
+      const pixelsOf = new Uint8Array(swatch.encodeSync('png'));
+      const tiled: SceneOp = {
+        ...red(50, 50),
+        paint: { type: 'pattern', image: svg, repeat: 'repeat', matrix: IDENTITY },
+      };
+      const raster: SceneOp = {
+        ...base,
+        matrix: IDENTITY,
+        kind: 'raster',
+        png: pixelsOf,
+        x: 40,
+        y: 40,
+        width: 5,
+        height: 5,
+        reason: 'filter',
+        source: null,
+      };
+
+      const png = await rasterizeOps([tiled, raster], BOX, 2, napiSurface, napiDecode);
+
+      const picture = await pixels(png!);
+      expect(picture.at(21, 21)).toEqual([0, 0, 255, 255]);
+      expect(picture.at(4, 4)).toEqual([0, 255, 0, 255]);
+    });
+
+    it('decodes a source once however often the ops use it', async () => {
+      const decode = vi.fn(napiDecode);
+
+      await rasterizeOps([image(svg, 40), image(svg, 50)], BOX, 1, napiSurface, decode);
+
+      expect(decode).toHaveBeenCalledTimes(1);
+    });
+
+    it('draws without the picture, and says nothing, when it cannot be decoded', async () => {
+      const png = await rasterizeOps(
+        [image(svg, 50), red(40, 40)],
+        BOX,
+        2,
+        napiSurface,
+        async () => null
+      );
+
+      const picture = await pixels(png!);
+      expect(picture.at(5, 5)).toEqual([255, 0, 0, 255]);
+      expect(picture.at(21, 21)[3]).toBe(0);
+    });
   });
 });
