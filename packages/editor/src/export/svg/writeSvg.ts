@@ -730,13 +730,25 @@ class SvgWriter {
           height: num(this.scene.height + 2 * reach),
           'color-interpolation-filters': 'sRGB',
         },
-        el('feDropShadow', {
-          dx: num(shadow.offsetX),
-          dy: num(shadow.offsetY),
-          stdDeviation: num(sigma),
-          'flood-color': shadow.hex,
-          'flood-opacity': num(shadow.alpha),
-        })
+        [
+          ...el('feGaussianBlur', { in: 'SourceAlpha', stdDeviation: num(sigma), result: 'blur' }),
+          ...el('feOffset', {
+            in: 'blur',
+            dx: num(shadow.offsetX),
+            dy: num(shadow.offsetY),
+            result: 'offset',
+          }),
+          ...el('feFlood', {
+            'flood-color': shadow.hex,
+            'flood-opacity': num(shadow.alpha),
+            result: 'flood',
+          }),
+          ...el('feComposite', { in: 'flood', in2: 'offset', operator: 'in', result: 'shadow' }),
+          ...el('feMerge', {}, [
+            ...el('feMergeNode', { in: 'shadow' }),
+            ...el('feMergeNode', { in: 'SourceGraphic' }),
+          ]),
+        ]
       );
     });
   }

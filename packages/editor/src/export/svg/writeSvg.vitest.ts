@@ -763,7 +763,7 @@ describe('paint', () => {
 });
 
 describe('shadow', () => {
-  it('writes an feDropShadow filter around the shape', () => {
+  it('writes a primitive shadow filter around the shape', () => {
     const op = {
       ...fill(rect(10, 10, 50, 50), solid('#ffffff')),
       shadow: { hex: '#102030', alpha: 0.4, blur: 10, offsetX: 3, offsetY: -5 },
@@ -771,10 +771,34 @@ describe('shadow', () => {
     const root = parse(run(sceneOf(item('s', null, op, { ...op }))).svg);
     const filters = root.querySelectorAll('defs > filter');
     expect(filters).toHaveLength(1);
-    const drop = filters[0]!.querySelector('feDropShadow')!;
-    expect(
-      ['dx', 'dy', 'stdDeviation', 'flood-color', 'flood-opacity'].map((n) => drop.getAttribute(n))
-    ).toEqual(['3', '-5', '5', '#102030', '0.4']);
+    const f = filters[0]!;
+    expect(f.querySelector('feDropShadow')).toBeNull();
+    const kids = Array.from(f.children);
+    expect(kids.map((k) => k.tagName)).toEqual([
+      'feGaussianBlur',
+      'feOffset',
+      'feFlood',
+      'feComposite',
+      'feMerge',
+    ]);
+    const [blur, offset, flood, comp, merge] = kids;
+    expect([blur!.getAttribute('in'), blur!.getAttribute('stdDeviation')]).toEqual([
+      'SourceAlpha',
+      '5',
+    ]);
+    expect([offset!.getAttribute('dx'), offset!.getAttribute('dy')]).toEqual(['3', '-5']);
+    expect([flood!.getAttribute('flood-color'), flood!.getAttribute('flood-opacity')]).toEqual([
+      '#102030',
+      '0.4',
+    ]);
+    expect([comp!.getAttribute('operator'), comp!.getAttribute('in2')]).toEqual([
+      'in',
+      offset!.getAttribute('result'),
+    ]);
+    expect(Array.from(merge!.children).map((n) => n.getAttribute('in'))).toEqual([
+      comp!.getAttribute('result'),
+      'SourceGraphic',
+    ]);
     // The region covers the page and the reach of the shadow, also for a hairline.
     expect(filters[0]!.getAttribute('filterUnits')).toBe('userSpaceOnUse');
     const [x, y, w, h] = ['x', 'y', 'width', 'height'].map((n) =>

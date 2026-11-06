@@ -61,7 +61,7 @@ Goal: every export that can be vector is vector, looks exactly like the canvas, 
   - `drawImage` of an `HTMLImageElement` whose `src` is `data:image/svg+xml` becomes an `image` op with SVG markup. That is how icons, illustrations (incl. Kawaii) and charts reach the canvas, so they stay vector.
   - Other images keep their source bytes (fetched; a tainted or unloadable source → `raster` island from the stage, same as `rasterizeStageElement`).
   - `drawImage` of a canvas becomes a `raster` island: Konva filter caches (image adjustments), `cache()`d nodes.
-- **What cannot be vector** becomes a `raster` island for exactly that element or op, at print resolution, with a reason. Examples: canvas filters, unsupported composite operations, shadows in PDF. In PDF, a shadow with blur is drawn as a raster island of the shadow alone under the vector content, so text stays text; in SVG it is an `feDropShadow` filter.
+- **What cannot be vector** becomes a `raster` island for exactly that element or op, at print resolution, with a reason. Examples: canvas filters, unsupported composite operations, shadows in PDF. In PDF, a shadow with blur is drawn as a raster island of the shadow alone under the vector content, so text stays text; in SVG it is a filter of primitives (blur, offset, flood, composite, merge) rather than `feDropShadow`, which fewer SVG consumers read.
 - **Patterns (grain).** `utils/grain.ts` fills with `createPattern(noiseCanvas, 'repeat')`. The recorder supports pattern paint with a tile image, repeat mode and pattern transform:
   - SVG: `<pattern>` with the tile embedded once.
   - PDF: a tiling pattern whose tile is the image XObject (with its alpha as SMask).
