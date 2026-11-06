@@ -16,6 +16,7 @@ import { Image, Group, Rect, Transformer } from 'react-konva';
 
 import { activeBrand } from '../brand/brandRegistry.js';
 import { LOCKED_TRANSFORMER, useIsItemLocked } from '../components/canvasItemLock.js';
+import { markTrustedSvgImage } from '../export/scene/trustedSvgImages.js';
 import { useBoxSnap, type SnapProps } from '../hooks/useBoxSnap.js';
 import {
   CHART_INK_DARK,
@@ -420,6 +421,8 @@ async function renderChartImage(chart: ChartInstance): Promise<HTMLImageElement 
     const url = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(xml)}`;
     image = await new Promise<HTMLImageElement | null>((resolve) => {
       const img = new window.Image();
+      // The SVG is Recharts' own output for this chart; exports inline it as it is.
+      markTrustedSvgImage(img);
       img.onload = () => resolve(img);
       img.onerror = () => resolve(null);
       img.src = url;
