@@ -416,16 +416,27 @@ class SvgWriter {
       const glyphs = glyphOutline(run.file, run.text, op.font.size);
       const d = glyphs.map((glyph, i) => pathData(glyph.path, run.xs[i] ?? 0, op.y)).join('');
       // A regular cut standing in for a bold: the outline grows by a stroke in the fill's colour.
-      const bold =
-        run.file.fakeBold && op.mode === 'fill' && paint['fill'] !== undefined
-          ? {
-              stroke: paint['fill'],
-              'stroke-opacity': paint['fill-opacity'],
-              'stroke-width': num(fakeBoldWidth(op.font.size)),
-              'stroke-linejoin': 'round',
-            }
-          : {};
-      if (d !== '') parts.push((extra) => el('path', { d, ...paint, ...bold, ...extra }));
+      // Fill and stroke are painted opaque and the alpha sits on a group around them, or the
+      // inner half of the stroke band would be painted twice and come out darker than on canvas.
+      const grows = run.file.fakeBold && op.mode === 'fill' && paint['fill'] !== undefined;
+      if (d === '') continue;
+      if (!grows) {
+        parts.push((extra) => el('path', { d, ...paint, ...extra }));
+        continue;
+      }
+      const { 'fill-opacity': alpha, ...opaque } = paint;
+      const grown = {
+        d,
+        ...opaque,
+        stroke: paint['fill'],
+        'stroke-width': num(fakeBoldWidth(op.font.size)),
+        'stroke-linejoin': 'round',
+      };
+      parts.push((extra) =>
+        alpha === undefined
+          ? el('path', { ...grown, ...extra })
+          : el('g', { opacity: alpha }, el('path', { ...grown, ...extra }))
+      );
     }
     if (parts.length === 0) return [];
     if (parts.length === 1) return parts[0]!(common);
