@@ -2,6 +2,8 @@
 /** What `gate.html` reports on `window.__gate`; the specs in `e2e/` read it. */
 import type { ExportReport } from '@ggraphic/editor/export';
 
+import type { comparePixels } from './pixelCompare';
+
 /** A slot text that does not fit: its line count over the slot's budget, or its bottom past its frame. */
 export interface GateOverflow {
   elementId: string;
@@ -66,5 +68,7 @@ export interface GateResult {
 declare global {
   interface Window {
     __gate?: GateResult;
+    /** The pixel comparison of the export gate, for the spec to call in the page. */
+    __gateCompare?: typeof comparePixels;
   }
 }

@@ -5,17 +5,19 @@
  * light world (else the first one the brand offers), is drawn in Chromium, exported as SVG with
  * glyph outlines, SVG with `<text>` and PDF, and each file is drawn again at the size of the page:
  * the SVG by the browser, the PDF by pdf.js. The Konva PNG and the drawn file are compared pixel
- * by pixel; the share of pixels a channel of which is off by more than `TOLERANCE` may not pass
- * `MAX_SHARE`.
+ * by pixel, with the antialiasing allowed for (`src/gate/pixelCompare.ts`): a pixel differs only if
+ * no pixel within one pixel of it in the other picture is within `TOLERANCE` of it, either way
+ * round. The share of such pixels may not pass `MAX_SHARE`.
  *
  * Besides the pixels: the export must say nothing is missing, did not fall back to a raster PDF,
  * and a template without a photo slot must have no raster island at all.
  *
  * One page load per template and format: `export=all` makes the three files in it. A failure
- * attaches the canvas, the drawn file, a diff (red = differing pixels) and the file itself.
+ * attaches the canvas, the drawn file, a diff (red = differing pixels, orange = edge pixels the neighbourhood allowed) and the file itself.
  *
- * Every case logs one `[export-gate]` line with its measured share: read the distribution off the
- * first CI run before trusting the threshold.
+ * Every case logs one `[export-gate]` line with its measured share, and the strict share (no
+ * neighbourhood allowed for) beside it: read the distribution off a CI run before trusting the
+ * threshold.
  *
  * Run it in the Playwright image (`scripts/gate-render-docker.sh`), never on the host.
  */
@@ -31,7 +33,7 @@ import {
   type GateResult,
 } from '../src/gate/result.js';
 
-/** A pixel differs when some channel is off by more than this (of 255; about 0.1). */
+/** A colour is the same when no channel is off by more than this (of 255; about 0.1). */
 const TOLERANCE = 25;
 /** At most this share of the page's pixels may differ. */
 const MAX_SHARE = 0.01;
@@ -41,21 +43,25 @@ const LOAD_TIMEOUT = 120_000;
 interface Comparison {
   width: number;
   height: number;
+  /** Pixels that differ with the neighbourhood allowed for: what the limit is about. */
   differing: number;
+  /** Pixels that differ at the same position, whatever the neighbours: the raw share, for calibration. */
+  strict: number;
   total: number;
-  /** The largest channel delta of any pixel. */
+  /** The largest channel delta of any pixel at the same position. */
   maxDelta: number;
   /** The bounding box of the differing pixels (inclusive), or null when there are none. */
   box: { minX: number; minY: number; maxX: number; maxY: number } | null;
   /** The differing pixels per tenth of the page's height, top to bottom. */
   bands: number[];
-  /** Differing pixels red over the faded canvas, as a PNG data URL; only when over `maxShare`. */
+  /** Differing pixels red (strict-only orange) over the faded canvas, as a PNG data URL; only when over `maxShare`. */
   diff: string | null;
 }
 
 /**
  * Runs in the page and compares `exportPng` with the picture of export `index`, both laid over
- * white at the canvas PNG's size. Self-contained: Playwright serialises the function.
+ * white at the canvas PNG's size, with `window.__gateCompare` (`src/gate/pixelCompare.ts`, put
+ * there by `main.tsx`). Self-contained: Playwright serialises the function.
  */
 async function compareInPage(args: {
   index: number;
@@ -83,56 +89,21 @@ async function compareInPage(args: {
     context.drawImage(image, 0, 0, width, height);
     return context.getImageData(0, 0, width, height).data;
   };
-  const a = pixels(canvasImage);
-  const b = pixels(exportedImage);
-  const diff = new ImageData(width, height);
-  let differing = 0;
-  let maxDelta = 0;
-  let minX = width;
-  let minY = height;
-  let maxX = -1;
-  let maxY = -1;
-  // Tenths of the page's height; a module constant would not reach the page.
-  const BANDS = 10;
-  const bands = new Array<number>(BANDS).fill(0);
-  for (let at = 0; at < a.length; at += 4) {
-    const delta = Math.max(
-      Math.abs(a[at]! - b[at]!),
-      Math.abs(a[at + 1]! - b[at + 1]!),
-      Math.abs(a[at + 2]! - b[at + 2]!)
-    );
-    if (delta > maxDelta) maxDelta = delta;
-    if (delta > args.tolerance) {
-      differing += 1;
-      const pixel = at / 4;
-      const x = pixel % width;
-      const y = (pixel - x) / width;
-      if (x < minX) minX = x;
-      if (x > maxX) maxX = x;
-      if (y < minY) minY = y;
-      if (y > maxY) maxY = y;
-      bands[Math.min(BANDS - 1, Math.floor((y * BANDS) / height))]! += 1;
-      diff.data[at] = 255;
-      diff.data[at + 1] = 0;
-      diff.data[at + 2] = 0;
-    } else {
-      // The canvas, faded to a third, so the diff shows where the differences are on the page.
-      const grey = 0.3 * a[at]! + 0.59 * a[at + 1]! + 0.11 * a[at + 2]!;
-      const faded = 255 - (255 - grey) / 3;
-      diff.data[at] = faded;
-      diff.data[at + 1] = faded;
-      diff.data[at + 2] = faded;
-    }
-    diff.data[at + 3] = 255;
-  }
+  const compared = window.__gateCompare!(
+    pixels(canvasImage),
+    pixels(exportedImage),
+    width,
+    height,
+    args.tolerance
+  );
   const total = width * height;
   let url: string | null = null;
-  if (differing / total > args.maxShare) {
-    context.putImageData(diff, 0, 0);
+  if (compared.differing / total > args.maxShare) {
+    context.putImageData(new ImageData(compared.diff, width, height), 0, 0);
     url = surface.toDataURL('image/png');
   }
-  const box = differing > 0 ? { minX, minY, maxX, maxY } : null;
-  return { width, height, differing, total, maxDelta, box, bands, diff: url };
+  const { differing, strict, maxDelta, box, bands } = compared;
+  return { width, height, differing, strict, total, maxDelta, box, bands, diff: url };
 }
 
 /**
@@ -266,7 +237,8 @@ async function checkExport(
   const failing = share > MAX_SHARE;
   console.log(
     `[export-gate] ${label} ${gate.scheme} ${exported.mode} share=${percent}% ` +
-      `differing=${result.differing} maxDelta=${result.maxDelta} ` +
+      `strict=${((result.strict / result.total) * 100).toFixed(3)}% ` +
+      `differing=${result.differing} strictDiffering=${result.strict} maxDelta=${result.maxDelta} ` +
       `islands=${JSON.stringify(islands)} unknownCalls=${report.unknownCalls.length} ` +
       `missingGlyphs=${report.missingGlyphs.length}` +
       // Which glyphs, and (for a failure) where on the page the pixels differ.

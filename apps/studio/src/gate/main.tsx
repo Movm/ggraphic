@@ -47,6 +47,7 @@ import { registerEditor } from '../registerEditor';
 import '../fonts';
 import { addExportFixture } from './exportFixture';
 import { runExports, type ExportRun } from './exportRun';
+import { comparePixels } from './pixelCompare';
 import {
   GATE_EXPORT_MODES,
   type GateExportMode,
@@ -347,6 +348,7 @@ async function run(): Promise<void> {
   );
 }
 
+window.__gateCompare = comparePixels;
 publish({ ready: false, overflow: [], error: null });
 registerEditor();
 run().catch((error: unknown) => {
