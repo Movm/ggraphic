@@ -10,6 +10,11 @@
  *                 on `worlds`; nothing is shown, so it is for the overflow sweep, not for goldens
  *   `list=1`      reports the templates and brands the gate covers
  *   `probe=overflow`   sets every slot text to three times its `maxChars`, which must overflow
+ *   `export=svg-outlines|svg-editable|pdf|all`   stage 3: draws the page (in `scheme`, else `light`
+ *                 if the brand offers it, else the first world), exports it in that mode or in all
+ *                 three and reports the canvas PNG, the files, their pictures and their reports
+ *                 (`exportRun.ts`). `fixture=export` adds the pictures only a synthetic page has
+ *                 (`exportFixture.ts`).
  *
  * A dev and test entry only: `vite build` has `index.html` as its one input.
  */
@@ -21,6 +26,7 @@ import {
   type SchemeId,
 } from '@ggraphic/core';
 import { registerBrandPacks } from '@ggraphic/editor/brand';
+import { type GenericCanvasRef } from '@ggraphic/editor/canvas';
 import { PagePreview } from '@ggraphic/editor/shell';
 import { loadCanvasConfig, type FullCanvasConfig } from '@ggraphic/editor/config';
 import { getCanvasFormatOrDefault } from '@ggraphic/editor/templates';
@@ -28,7 +34,7 @@ import { ensureFontsReady, runMeasurer } from '@ggraphic/editor/text';
 import { layoutRichTextBlock } from '@ggraphic/schema';
 import { SAMPLE_PHOTOS } from '@ggraphic/templates-open/photos';
 import { testBrandPacks } from '@ggraphic/templates-open/test/testBrands';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { prepareBrandPack } from '../brandLoader';
@@ -39,7 +45,15 @@ import { templatePageState } from '../editor/templates/instantiate';
 import { withSamplePhotos } from '../editor/templates/samplePhotos';
 import { registerEditor } from '../registerEditor';
 import '../fonts';
-import { type GateOverflow, type GateResult, type GateWorld } from './result';
+import { addExportFixture } from './exportFixture';
+import { runExports, type ExportRun } from './exportRun';
+import {
+  GATE_EXPORT_MODES,
+  type GateExportMode,
+  type GateOverflow,
+  type GateResult,
+  type GateWorld,
+} from './result';
 
 /** A text box may end this far past its frame (rounding), as stage 1 allows. */
 const SLACK = 1;
@@ -148,6 +162,54 @@ function Stage(props: {
   );
 }
 
+/** The page drawn off screen, then exported in each of `modes` (stage 3). Nothing is shown. */
+function ExportStage(props: {
+  config: FullCanvasConfig;
+  state: Obj;
+  formatId: string;
+  brand: BrandPack;
+  modes: readonly GateExportMode[];
+  scheme: string;
+  overflow: GateOverflow[];
+}) {
+  const { config, state, formatId, brand, modes, scheme, overflow } = props;
+  const canvas = useRef<GenericCanvasRef | null>(null);
+  const done = (error: string | null, run?: ExportRun) =>
+    publish({
+      ready: true,
+      overflow,
+      error,
+      scheme,
+      ...(run && {
+        page: run.page,
+        exportPng: run.exportPng,
+        images: run.images,
+        exports: run.exports,
+      }),
+    });
+  return (
+    <div style={{ position: 'fixed', left: -100000 }}>
+      <PagePreview
+        config={config}
+        state={state}
+        formatId={formatId}
+        width={getCanvasFormatOrDefault(formatId).width}
+        onCanvas={(handle) => {
+          canvas.current = handle;
+        }}
+        onRendered={() => {
+          if (!canvas.current) return done('the page gave no canvas');
+          runExports(canvas.current, brand, formatId, modes).then(
+            (run) => done(null, run),
+            (error: unknown) => done(error instanceof Error ? error.message : String(error))
+          );
+        }}
+        onFailed={() => done('the page could not be drawn')}
+      />
+    </div>
+  );
+}
+
 interface SweepWorld {
   scheme: string;
   state: Obj;
@@ -181,6 +243,15 @@ function Sweep(props: { config: FullCanvasConfig; formatId: string; worlds: Swee
   );
 }
 
+/** The modes an `export` value asks for; null when the page is not an export run. */
+function exportModes(value: string | null): readonly GateExportMode[] | null {
+  if (value === null) return null;
+  if (value === 'all') return GATE_EXPORT_MODES;
+  const mode = GATE_EXPORT_MODES.find((m) => m === value);
+  if (!mode) throw new Error(`unknown export mode ${value}`);
+  return [mode];
+}
+
 async function run(): Promise<void> {
   const params = new URLSearchParams(window.location.search);
   const catalog = studioCatalog().entries.filter((e) => e.kind === 'template');
@@ -203,13 +274,20 @@ async function run(): Promise<void> {
   if (!entry || !brand) throw new Error('unknown template or brand');
 
   const offered = offeredSchemes(entry.template, brand);
-  const scheme = params.get('scheme');
+  const modes = exportModes(params.get('export'));
+  // An export run asks for one world; it draws `light` unless the brand does not offer it.
+  const scheme =
+    params.get('scheme') ??
+    (modes ? (offered.includes('light') ? 'light' : (offered[0] ?? null)) : null);
+  if (scheme === null && modes)
+    throw new Error(`brand ${brand.id} offers no world for ${entry.id}`);
   if (scheme === null) {
     publish({ ready: true, overflow: [], error: null, schemes: [...offered] });
     return;
   }
   if (scheme !== 'all' && !offered.includes(scheme as SchemeId))
     throw new Error(`brand ${brand.id} does not offer ${scheme}`);
+  if (scheme === 'all' && modes) throw new Error('an export run draws one world, not all');
 
   // The brand under test is the active one before the page config and the placement read it.
   registerBrandPacks([brand]);
@@ -237,11 +315,28 @@ async function run(): Promise<void> {
     return;
   }
 
-  const state = templatePageState(entry, formatId, { schemeId: scheme as SchemeId, brand });
-  if (!state) throw new Error(`${entry.id} cannot be placed on ${formatId}`);
-  if (params.get('probe') === 'overflow') applyProbe(state, entry);
+  const placed = templatePageState(entry, formatId, { schemeId: scheme as SchemeId, brand });
+  if (!placed) throw new Error(`${entry.id} cannot be placed on ${formatId}`);
+  if (params.get('probe') === 'overflow') applyProbe(placed, entry);
+  const photo = SAMPLE_PHOTOS.find((p) => p.role === 'scene') ?? SAMPLE_PHOTOS[0];
+  const state =
+    params.get('fixture') === 'export' && photo ? addExportFixture(placed, photo.src) : placed;
 
   const overflow = measureOverflow(state, entry, brand, formatSize(formatId));
+  if (modes) {
+    createRoot(root).render(
+      <ExportStage
+        config={config}
+        state={withSamplePhotos(state, SAMPLE_PHOTOS, entry.id, formatSize(formatId))}
+        formatId={formatId}
+        brand={brand}
+        modes={modes}
+        scheme={scheme}
+        overflow={overflow}
+      />
+    );
+    return;
+  }
   createRoot(root).render(
     <Stage
       config={config}

@@ -13,32 +13,11 @@ import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
-import type { GateResult } from '../src/gate/result';
+import { FORMAT_OF_ASPECT, open, STUDIO_DIR, templates } from './gatePack.js';
 
-const STUDIO_DIR = path.resolve(import.meta.dirname, '..');
-const PACK_DIR = path.resolve(STUDIO_DIR, '../../packages/templates-open/src/templates');
 const TEST_BRANDS = path.resolve(STUDIO_DIR, '../../packages/templates-open/test/test-brands.json');
-
-/** The Studio format each template aspect is drawn on. */
-const FORMAT_OF_ASPECT: Readonly<Record<string, string>> = {
-  '1:1': 'profile-square',
-  '4:5': 'post-portrait',
-  '16:9': 'slide-16-9',
-};
-
-interface PackTemplate {
-  id: string;
-  kind: string;
-  formats: string[];
-}
-
-const templates: PackTemplate[] = readdirSync(PACK_DIR)
-  .filter((file) => file.endsWith('.json'))
-  .map((file) => JSON.parse(readFileSync(path.join(PACK_DIR, file), 'utf8')) as PackTemplate)
-  .filter((t) => t.kind === 'template')
-  .sort((a, b) => a.id.localeCompare(b.id));
 
 const brands: string[] = [
   'default',
@@ -46,12 +25,6 @@ const brands: string[] = [
     (b) => `test-${b.id}`
   ),
 ];
-
-async function open(page: Page, params: Record<string, string>): Promise<GateResult> {
-  await page.goto(`/gate.html?${new URLSearchParams(params)}`);
-  await page.waitForFunction(() => window.__gate?.ready === true, undefined, { timeout: 45_000 });
-  return page.evaluate(() => window.__gate!);
-}
 
 test('the gate covers the templates and brands this spec loops over', async ({ page }) => {
   const gate = await open(page, { list: '1' });
