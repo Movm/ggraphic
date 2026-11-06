@@ -30,6 +30,47 @@ export interface BrandInputs {
   layout?: BrandLayout;
   /** Headline line height = font size × this factor; 1.1 when absent. */
   lineHeightFactor?: number;
+  /**
+   * What a print export needs beyond the screen colours; see `BrandPack.print`. Keys are CSS hex
+   * colours (`#rgb` and `#rrggbb` in any case; an alpha digit is dropped) and are stored as
+   * lower-case `#rrggbb`. Each value is cyan, magenta, yellow, black, each 0–100.
+   */
+  print?: {
+    cmyk?: Readonly<Record<string, readonly [number, number, number, number]>>;
+  };
+}
+
+/** The `#rrggbb` a CMYK key stands for, as the PDF writer looks colours up; null for non-hex. */
+function cmykKey(colour: string): string | null {
+  const match = /^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.exec(colour.trim());
+  if (!match) return null;
+  const digits = match[1]!.toLowerCase();
+  if (digits.length <= 4) return `#${Array.from(digits.slice(0, 3), (d) => d + d).join('')}`;
+  return `#${digits.slice(0, 6)}`;
+}
+
+function printOf(id: string, print: BrandInputs['print']): BrandPack['print'] | undefined {
+  if (!print?.cmyk) return undefined;
+  const cmyk: Record<string, readonly [number, number, number, number]> = {};
+  for (const [key, value] of Object.entries(print.cmyk)) {
+    const hex = cmykKey(key);
+    if (!hex) throw new Error(`defineBrand("${id}"): print.cmyk key "${key}" is not a hex colour`);
+    const valid =
+      Array.isArray(value) &&
+      value.length === 4 &&
+      value.every((n) => typeof n === 'number' && Number.isFinite(n) && n >= 0 && n <= 100);
+    if (!valid) {
+      throw new Error(
+        `defineBrand("${id}"): print.cmyk["${key}"] must be four numbers from 0 to 100`
+      );
+    }
+    const known = cmyk[hex];
+    if (known && known.some((n, i) => n !== value[i])) {
+      throw new Error(`defineBrand("${id}"): print.cmyk names ${hex} twice with different values`);
+    }
+    cmyk[hex] = [value[0]!, value[1]!, value[2]!, value[3]!];
+  }
+  return { cmyk };
 }
 
 const WHITE = '#ffffff';
@@ -56,6 +97,7 @@ export function defineBrand(input: BrandInputs): BrandPack {
   const white: BrandSwatch = { id: 'white', label: 'White', color: WHITE };
   const black: BrandSwatch = { id: 'black', label: 'Black', color: BLACK };
   const { headline } = input.fonts;
+  const print = printOf(input.id, input.print);
 
   return {
     id: input.id,
@@ -102,6 +144,7 @@ export function defineBrand(input: BrandInputs): BrandPack {
     logo: input.logo ?? null,
     ...(input.logoAlt !== undefined && { logoAlt: input.logoAlt }),
     ...(input.layout && { layout: input.layout }),
+    ...(print && { print }),
     quoteMark: null,
   };
 }
