@@ -1,5 +1,19 @@
 # @ggraphic/core
 
+## 0.1.0-alpha.3
+
+### Minor Changes
+
+- 064350e: Vector export follow-ups. `defineBrand` takes `print.cmyk` and validates it. A variable TTF is exported at the requested weight; a variable WOFF/WOFF2 or CFF2 font that cannot be set is listed in the new `ExportReport.defaultInstanceFonts`. A regular cut that stands in for a bold is emboldened like the canvas draws it. The soft hyphen no longer moves the PDF pen. `ExportReport.fallback` is now `{ kind: 'fonts' | 'timeout' | 'error', reason }`, and the download notice names the actual reason; raster islands no longer count against the 60 s timeout. Raster islands above 16.7 MP are scaled down and listed in `ExportReport.reducedRasters`. SVG shadows are written as filter primitives instead of `feDropShadow`. An image without an element id is rasterised instead of reported missing. SVG assets from the host catalogue are exported as trusted, so hosts must not list user uploads there. `isSafeColor` accepts `oklch()`, `lab()`, `color-mix()` and angle units. The text baseline falls back to measured ascents in engines without `alphabeticBaseline`.
+
+  Breaking for hosts that build these types by hand: `Messages.downloadPanel.pdfFallbackNotice` is now an object `{ fonts, timeout, error }` instead of a string, and `reducedRasterNotice` and `variableFontNotice` are new required keys, so a host that supplies or extends a full `Messages` object must add them. `FontFile` (from `export/fonts/fontFiles`) gained the required fields `fakeBold` and `variation`. New exports: `fitPixelRatio`, `variationInstance`, `isCatalogueInstance` and `embeddableBytes`; `FontkitFont` is extended. A host `exportFonts` file lighter than the weight asked (by its `OS/2.usWeightClass`) is emboldened too, and a raster island that does not finish within `islandTimeoutMs` (default 60 s) falls back to the raster PDF.
+
+- d570cbc: Vector PDF: print, slide and digital PDFs are now written as vectors with real, selectable text and subset-embedded fonts, instead of page images. Print PDFs keep the bleed, trim and crop-mark geometry. If the vector export fails (a font that cannot be loaded for more than one element, a writer error, or a 60 s timeout), the download falls back to the image PDF and says so. Digital formats offer PDF too.
+
+  `BrandPack.print.cmyk` (optional, keys `#rrggbb`, values 0–100): vector fills, strokes and text in these colours, and gradients whose stops are all mapped, are written as DeviceCMYK with exactly these values. Everything else, photos included, stays RGB. The export report lists brand colours that left the PDF in RGB. New: `CanvasEditorExportApi.exportPdf`.
+
+  `@ggraphic/editor/export` also exports `exportPagesPdf` and the browser helpers the exports are wired with (`fetchImageBytes`, `reencodeImage`, `rasterizeOps`, `pngFromDataUrl`), and `PagePreview` takes an `onCanvas` callback that hands over the page's canvas handle, so a host can export the page it previews.
+
 ## 0.1.0-alpha.2
 
 ### Minor Changes

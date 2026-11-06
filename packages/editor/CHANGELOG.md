@@ -1,5 +1,31 @@
 # @ggraphic/editor
 
+## 0.1.0-alpha.6
+
+### Minor Changes
+
+- 064350e: Vector export follow-ups. `defineBrand` takes `print.cmyk` and validates it. A variable TTF is exported at the requested weight; a variable WOFF/WOFF2 or CFF2 font that cannot be set is listed in the new `ExportReport.defaultInstanceFonts`. A regular cut that stands in for a bold is emboldened like the canvas draws it. The soft hyphen no longer moves the PDF pen. `ExportReport.fallback` is now `{ kind: 'fonts' | 'timeout' | 'error', reason }`, and the download notice names the actual reason; raster islands no longer count against the 60 s timeout. Raster islands above 16.7 MP are scaled down and listed in `ExportReport.reducedRasters`. SVG shadows are written as filter primitives instead of `feDropShadow`. An image without an element id is rasterised instead of reported missing. SVG assets from the host catalogue are exported as trusted, so hosts must not list user uploads there. `isSafeColor` accepts `oklch()`, `lab()`, `color-mix()` and angle units. The text baseline falls back to measured ascents in engines without `alphabeticBaseline`.
+
+  Breaking for hosts that build these types by hand: `Messages.downloadPanel.pdfFallbackNotice` is now an object `{ fonts, timeout, error }` instead of a string, and `reducedRasterNotice` and `variableFontNotice` are new required keys, so a host that supplies or extends a full `Messages` object must add them. `FontFile` (from `export/fonts/fontFiles`) gained the required fields `fakeBold` and `variation`. New exports: `fitPixelRatio`, `variationInstance`, `isCatalogueInstance` and `embeddableBytes`; `FontkitFont` is extended. A host `exportFonts` file lighter than the weight asked (by its `OS/2.usWeightClass`) is emboldened too, and a raster island that does not finish within `islandTimeoutMs` (default 60 s) falls back to the raster PDF.
+
+- d570cbc: Vector PDF: print, slide and digital PDFs are now written as vectors with real, selectable text and subset-embedded fonts, instead of page images. Print PDFs keep the bleed, trim and crop-mark geometry. If the vector export fails (a font that cannot be loaded for more than one element, a writer error, or a 60 s timeout), the download falls back to the image PDF and says so. Digital formats offer PDF too.
+
+  `BrandPack.print.cmyk` (optional, keys `#rrggbb`, values 0–100): vector fills, strokes and text in these colours, and gradients whose stops are all mapped, are written as DeviceCMYK with exactly these values. Everything else, photos included, stays RGB. The export report lists brand colours that left the PDF in RGB. New: `CanvasEditorExportApi.exportPdf`.
+
+  `@ggraphic/editor/export` also exports `exportPagesPdf` and the browser helpers the exports are wired with (`fetchImageBytes`, `reencodeImage`, `rasterizeOps`, `pngFromDataUrl`), and `PagePreview` takes an `onCanvas` callback that hands over the page's canvas handle, so a host can export the page it previews.
+
+- 3d987af: PowerPoint export: elements PowerPoint cannot draw natively (path shapes, icons, illustrations) now go into the slide as SVG pictures with a PNG preview instead of PNG only, so they stay sharp when zoomed or printed. An element that is not fully vector, carries a shadow, or whose SVG picture fails to render keeps the PNG path. `PagePreview` takes an optional `onCanvas` callback that hands over the page's canvas once it has settled.
+- 5c0f142: SVG download: every page can be downloaded as a real vector SVG, recorded from what Konva draws. Text is written as outlines by default, or as editable `<text>` with the switch "Text bearbeitbar lassen". Icons, illustrations and charts stay vector, and only what has no vector form (filtered photos, unknown effects) is embedded as an image and listed in a notice. New: `CanvasEditorExportApi.exportSvg`, the optional host service `exportFonts`, and `@ggraphic/editor/export` exports the recorder (`recordPageScene`, `resolveScene`), `writeSvg` and `resolveFontFiles`.
+
+  Visible change: chart labels now draw in the brand body font on the canvas too (the font is embedded in the chart SVG), so canvas and export match. Chart colours that are not plain colours are replaced by the brand chart colour.
+
+### Patch Changes
+
+- e7a5637: Two brand leaks in a document of another pack. The image tint fallback follows the document's brand: its accent when that is one of its tint swatches, else the first swatch, and the „Stärke" slider on an image without a tint now writes that colour, so the highlighted swatch and the painted colour are always one the picker offers. `registerEditorShell` takes an optional `documentAudience(pages)`: whose assets (logos, marks) the Elemente tab offers for the document, `null` for the user's locale. A host without it keeps following `userLocale`. It is separate from `deckLocale`, which only says whose fonts a deck carries.
+- Updated dependencies [064350e]
+- Updated dependencies [d570cbc]
+  - @ggraphic/core@0.1.0-alpha.3
+
 ## 0.1.0-alpha.5
 
 ### Patch Changes
