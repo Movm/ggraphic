@@ -1138,6 +1138,32 @@ describe('print mode', () => {
     ]);
   });
 
+  it('maps a gradient by the placement of the page, not by the plain flip', async () => {
+    const linear: Paint = {
+      type: 'linear',
+      x0: 0,
+      y0: 0,
+      x1: 100,
+      y1: 0,
+      stops: stops([0, '#ff0000'], [1, '#0000ff']),
+    };
+    const scene = canvas(item('g', null, fill(rect(0, 0, 100, 10), linear)));
+    const { pdf } = await writePrint(scene);
+    const pattern = only(pdf.objects.filter((o) => pdf.number(o.dict, 'PatternType') === 2));
+    const { bleedBox } = geometry;
+    const want = [
+      bleedBox.width / scene.width,
+      0,
+      0,
+      -bleedBox.height / scene.height,
+      bleedBox.x,
+      bleedBox.y + bleedBox.height,
+    ];
+    pdf
+      .numbers(pattern.dict, 'Matrix')!
+      .forEach((got, at) => expect(got).toBeCloseTo(want[at]!, 3));
+  });
+
   it('writes one page of this size per scene', async () => {
     const { pdf } = await writePrint(canvas());
     expect(pdf.doc.getPageCount()).toBe(1);
@@ -1197,6 +1223,28 @@ describe('cmyk', () => {
       cmyk: { '#0F3A52': [10, 20, 30, 40] },
     });
     expect(pdf.content(0)).toContain('0.1 0.2 0.3 0.4 k');
+  });
+
+  it('leaves out an entry that is not four numbers, and keeps values within 0..100', async () => {
+    const scene = sceneOf(
+      item(
+        'a',
+        null,
+        fill(rect(0, 0, 9, 9), solid('#111111')),
+        fill(rect(0, 0, 9, 9), solid('#222222'))
+      )
+    );
+    const { pdf, report } = await write(scene, {
+      cmyk: {
+        '#111111': [10, 20, 30] as never, // three inks: no colour
+        '#222222': [120, -5, 50, 0], // clamped
+      },
+      brandPalette: ['#111111'],
+    });
+    const content = pdf.content(0);
+    expect(content).toContain('0.0667 0.0667 0.0667 rg');
+    expect(content).toContain('1 0 0.5 0 k');
+    expect(report.rgbBrandColors).toEqual(['#111111']);
   });
 
   it('writes a pure RGB pdf without a map', async () => {
