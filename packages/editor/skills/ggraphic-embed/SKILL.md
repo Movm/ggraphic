@@ -190,6 +190,12 @@ const exportFonts: CanvasExportFontService = {
 <GgraphicEditor brand={brand} templates={templates} services={{ exportFonts }} />;
 ```
 
+`load` is asked for the face the export resolved, which is not always the one the document names:
+
+- `family` is already resolved through ggraphic's open font aliases (a document that says an aliased name is asked for its replacement) and has no CSS quotes.
+- For a bold request (weight 600 and up) of a regular family that the brand pack's `fonts.boldFamilies` maps to a bold-only family, `load` is first asked for that bold family at weight `400`, because its regular cut is the bold. Answer weight-400 requests for such a family with its file; if you return `null`, `load` is asked again for the regular family at the bold weight.
+- An answer of `null`, or a `load` that throws or rejects, means "no file from you": the brand's `fontFaces` and the page's `@font-face` rules are tried next.
+
 A face no source has a file for does not break the export: in an SVG its text stays a live `<text>` with the family name; in a PDF it becomes a picture (`rasterIslands`, reason `font-unavailable`), and when that hits the text of more than one element the PDF is made of page pictures (`report.fallback`).
 
 ## Testing a host
