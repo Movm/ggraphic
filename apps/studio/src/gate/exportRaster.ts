@@ -45,26 +45,17 @@ function base64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
-/** Whether a `font-weight` descriptor (`400`, `100 900`, `bold`) covers one of the weights. */
-function coversWeight(descriptor: string, weights: ReadonlySet<number>): boolean {
-  const named: Record<string, number> = { normal: 400, bold: 700 };
-  const bounds = descriptor
-    .trim()
-    .split(/\s+/)
-    .map((word) => named[word] ?? Number(word));
-  const low = bounds[0] ?? 400;
-  const high = bounds[1] ?? low;
-  return [...weights].some((weight) => weight >= low && weight <= high);
-}
-
 /**
  * `svg` with the page's web fonts inside it. An SVG drawn as an `<img>` cannot reach the fonts of
  * the page that shows it, only installed ones; an editable SVG names its fonts and leaves it to
  * the viewer to have them. This gives the viewer the fonts the page has: every `@font-face` of a
- * family the SVG names, in a weight and style it uses, with its file inlined.
+ * family the SVG names, in a style it uses, with its file inlined.
+ *
+ * Every weight of the family goes in, not only the weights the SVG names: a text asks for 500 or
+ * 600 and the browser picks the nearest face it has (400 or 700), which is a face the SVG never
+ * names. Leaving those out drew the text in the fallback face, a difference the canvas does not have.
  */
 async function withPageFonts(svg: string): Promise<string> {
-  const weights = new Set([...svg.matchAll(/font-weight="(\d+)"/g)].map((m) => Number(m[1])));
   const styles = new Set([...svg.matchAll(/font-style="(\w+)"/g)].map((m) => m[1]));
   if (!svg.includes('<text')) return svg;
   const faces: string[] = [];
@@ -80,7 +71,6 @@ async function withPageFonts(svg: string): Promise<string> {
       const declared = (name: string) => rule.style.getPropertyValue(name);
       const family = unquote(declared('font-family'));
       if (!family || !svg.includes(family)) continue;
-      if (!coversWeight(declared('font-weight') || '400', weights)) continue;
       const style = /^\s*(italic|oblique)/.test(declared('font-style')) ? 'italic' : 'normal';
       if (!styles.has(style)) continue;
       const url = /url\(\s*["']?([^"')]+)["']?\s*\)/.exec(declared('src'))?.[1];
