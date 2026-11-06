@@ -5,8 +5,10 @@
  * `fixture-poster` template: the template draws the colour plane, the ornament and three text
  * lines, everything else comes from the collections.
  *
- * Meant to be laid out on 1080×1350. No element carries a filter: a filtered photo becomes a
- * raster island, which only Task 5 fills in, so it would show up in the differential as missing.
+ * Meant to be laid out on 1080×1350. A filtered photo ('filtered', only with `filtered: true`) is a
+ * raster island by design: the replay does not draw one until `resolveScene` has made its pixels,
+ * so the page that is compared pixel by pixel does not have it. The editor has no even-odd fill
+ * to put in a page state; the differential adds one on its own stage.
  */
 import { createCircleBadgeInstance } from '../../../utils/circleBadgeUtils.js';
 import { createFrameInstance } from '../../../utils/framePresets.js';
@@ -23,6 +25,8 @@ export const STICKER_SRC = 'https://example.org/share/sticker.png';
 export interface AllElementsPageOptions {
   /** A small PNG data URL used for every photo. */
   photo: string;
+  /** Adds a photo with brightness and blur, which Konva filters: a raster island. */
+  filtered?: boolean;
 }
 
 const shape = (
@@ -40,7 +44,10 @@ const shape = (
   ...extra,
 });
 
-export function allElementsPage({ photo }: AllElementsPageOptions): Record<string, unknown> {
+export function allElementsPage({
+  photo,
+  filtered = false,
+}: AllElementsPageOptions): Record<string, unknown> {
   const shapeInstances: ShapeInstance[] = [
     shape({
       id: 'rounded',
@@ -115,6 +122,18 @@ export function allElementsPage({ photo }: AllElementsPageOptions): Record<strin
       ringWidth: 36,
       arc: 0.27,
       fill: '#e2574c',
+    }),
+    // A dashed stroke: the dash pattern has to reach the recorded path.
+    shape({
+      id: 'dashed',
+      type: 'line-dashed',
+      x: 440,
+      y: 240,
+      width: 360,
+      height: 24,
+      fill: '#ffffff',
+      strokeWidth: 8,
+      dash: [22, 14],
     }),
     shape({
       id: 'grain',
@@ -194,6 +213,26 @@ export function allElementsPage({ photo }: AllElementsPageOptions): Record<strin
       fit: 'cover',
       notch: 0.08,
     },
+    // Konva caches the node and filters the cache: brightness and blur at once.
+    ...(filtered
+      ? [
+          {
+            id: 'filtered',
+            src: photo,
+            fileName: 'filtered.png',
+            x: 300,
+            y: 580,
+            width: 200,
+            height: 140,
+            rotation: 0,
+            scale: 1,
+            opacity: 1,
+            fit: 'cover' as const,
+            brightness: 0.25,
+            blur: 3,
+          },
+        ]
+      : []),
   ];
 
   const frame = createFrameInstance('circle', 780, 900);
