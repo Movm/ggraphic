@@ -29,13 +29,13 @@ Goal: every export that can be vector is vector, looks exactly like the canvas, 
 
 ## Approaches considered
 
-| # | Approach | Verdict |
-|---|---|---|
-| 1 | Generalise the PPTX state model into one export model with SVG/PDF writers | Rejected. It is a second renderer: line wrapping, paths, gradients, notches, bubble tails, markers, glow would all be rebuilt and drift from the canvas. Every element kind, host kinds included, would need three mappings. |
-| 2 | Walk the Konva node tree (Rect, Text, Path, Image …) | Rejected as the main path. Exact geometry, but `sceneFunc` shapes (shapes, frames, user images) are opaque, and it reads Konva internals such as `textArr`. |
-| 3 | **Record Canvas 2D calls** while Konva draws each element into a recording canvas | **Chosen.** Complete by construction, including custom `sceneFunc` and host kinds such as the Grünerator's Balken. Same output as the screen. The Canvas 2D model maps almost one-to-one onto PDF. |
-| 4 | SVG only, PDF via headless Chromium on a server | Fallback only. Very faithful, but ggraphic is a library: an embedder without a server would get no PDF. |
-| 5 | Rebuild the renderer around a declarative scene shared by Konva and the exporters | Rejected for now. Cleanest long term, but means rewriting ~7,000 lines of primitives and their interaction code for an export feature. |
+| #   | Approach                                                                          | Verdict                                                                                                                                                                                                                      |
+| --- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Generalise the PPTX state model into one export model with SVG/PDF writers        | Rejected. It is a second renderer: line wrapping, paths, gradients, notches, bubble tails, markers, glow would all be rebuilt and drift from the canvas. Every element kind, host kinds included, would need three mappings. |
+| 2   | Walk the Konva node tree (Rect, Text, Path, Image …)                              | Rejected as the main path. Exact geometry, but `sceneFunc` shapes (shapes, frames, user images) are opaque, and it reads Konva internals such as `textArr`.                                                                  |
+| 3   | **Record Canvas 2D calls** while Konva draws each element into a recording canvas | **Chosen.** Complete by construction, including custom `sceneFunc` and host kinds such as the Grünerator's Balken. Same output as the screen. The Canvas 2D model maps almost one-to-one onto PDF.                           |
+| 4   | SVG only, PDF via headless Chromium on a server                                   | Fallback only. Very faithful, but ggraphic is a library: an embedder without a server would get no PDF.                                                                                                                      |
+| 5   | Rebuild the renderer around a declarative scene shared by Konva and the exporters | Rejected for now. Cleanest long term, but means rewriting ~7,000 lines of primitives and their interaction code for an export feature.                                                                                       |
 
 ## Architecture
 
@@ -146,6 +146,7 @@ SVG outlines and PDF embedding need the font files.
   - font failures affect the text of more than one element across the document.
 
   Other raster islands (filtered photos, PDF shadows, a missing glyph) are legitimate and never trigger the fallback. If the raster fallback fails too, the download fails with today's error message.
+
 - **Fallback.** `exportPrintPdf` and the slides PDF try vector first. On failure they log, run the existing raster path, and return `report.fallback = { reason }`. The download view shows that as a notice.
 
 ### 5. PPTX: vector instead of PNG
@@ -161,11 +162,11 @@ In `writePptx`, a raster request is answered in one of two ways:
 
 Formats per canvas category, default first:
 
-| Category | Formats |
-|---|---|
-| Print formats | **PDF (Druck)** vector · SVG · PNG |
-| Slide decks | **PowerPoint** · PDF (vector) · SVG · PNG · JPG · WebP |
-| Digital (sharepics, profile pictures …) | **PNG** · JPG · WebP · PDF · SVG |
+| Category                                | Formats                                                |
+| --------------------------------------- | ------------------------------------------------------ |
+| Print formats                           | **PDF (Druck)** vector · SVG · PNG                     |
+| Slide decks                             | **PowerPoint** · PDF (vector) · SVG · PNG · JPG · WebP |
+| Digital (sharepics, profile pictures …) | **PNG** · JPG · WebP · PDF · SVG                       |
 
 - SVG shows the switch "Text bearbeitbar lassen" ("Keep text editable"), off by default.
 - SVG honours the existing transparent-background switch (digital formats); PDF always includes the background. Neither shows the scale option.
@@ -230,9 +231,10 @@ ggraphic pull requests, in order, each green on its own:
    - a `pptxgenjs` SVG image with PNG fallback opens in LibreOffice
 
    A failed assumption comes back to the maintainer before PR 2.
+
 2. Scene recorder, IR, replay differential, guard test.
 3. Fonts resolver + SVG writer + SVG in the download view.
-3b. Chart SVGs carry the brand body font (canvas change, decision 6), with a test that the chart image's `<style>` holds a data-URL `@font-face` for the resolved file.
+   3b. Chart SVGs carry the brand body font (canvas change, decision 6), with a test that the chart image's `<style>` holds a data-URL `@font-face` for the resolved file.
 4. PDF writer (digital, slides, print, CMYK, fallback) + download view; `BrandPack.print` in core.
 5. PPTX vector images.
 6. Render gate stage 3.
