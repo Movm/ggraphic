@@ -20,9 +20,10 @@ export function fitPixelRatio(
   if (!(pixels > MAX_RASTER_PIXELS) || !(width > 0) || !(height > 0)) {
     return { pixelRatio, reduced: false };
   }
-  // Solve (w*r + 2) * (h*r + 2) = MAX for r, then take a hair less.
+  // `ceil(w*r) + 2` is under `w*r + 3`: solve (w*r + 3) * (h*r + 3) = MAX for r, then take a hair
+  // less, so the checked product is guaranteed to be within the limit.
   const a = width * height;
-  const b = 2 * (width + height);
-  const r = (-b + Math.sqrt(b * b + 4 * a * (MAX_RASTER_PIXELS - 4))) / (2 * a);
+  const b = 3 * (width + height);
+  const r = (-b + Math.sqrt(b * b + 4 * a * (MAX_RASTER_PIXELS - 9))) / (2 * a);
   return { pixelRatio: Math.min(pixelRatio, r * 0.9999), reduced: true };
 }
