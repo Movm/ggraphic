@@ -19,6 +19,7 @@ import {
   transparencyOf,
   type PptxUnits,
 } from './pptxUnits.js';
+import { svgDataUrl } from './svgPicture.js';
 import { shadowProps, textBoxOptions, textRuns } from './writeText.js';
 
 import type {
@@ -134,16 +135,6 @@ function addRaster(slide: Slide, image: PptxRasterImage, id: string, units: Pptx
     h: units.inch(image.box.height),
     objectName: id,
   });
-}
-
-/** UTF-8, nicht Latin-1: `btoa` allein bricht an jedem Zeichen über U+00FF. */
-function svgDataUrl(svg: string): string {
-  const bytes = new TextEncoder().encode(svg);
-  let binary = '';
-  for (let i = 0; i < bytes.length; i += 0x8000) {
-    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  }
-  return `data:image/svg+xml;base64,${btoa(binary)}`;
 }
 
 const CHART_TYPES = {

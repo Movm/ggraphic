@@ -26,6 +26,24 @@ describe('itemBounds', () => {
     expect(itemBounds(item('a', null, stroked))).toEqual({ x0: 8, y0: 8, x1: 32, y1: 32 });
   });
 
+  it('widens a stroke by the miter limit only for a miter join: round and bevel stay at half the width', () => {
+    const stroked = (join: CanvasLineJoin): SceneOp => ({
+      ...fill(rect(10, 10, 20, 20), red),
+      mode: 'stroke',
+      stroke: { width: 4, cap: 'butt', join, miterLimit: 10, dash: [], dashOffset: 0 },
+    });
+
+    expect(itemBounds(item('a', null, stroked('round')))).toEqual({ x0: 8, y0: 8, x1: 32, y1: 32 });
+    expect(itemBounds(item('a', null, stroked('bevel')))).toEqual({ x0: 8, y0: 8, x1: 32, y1: 32 });
+    // The limit is the longest a miter can reach: half the width times the limit, from a corner.
+    expect(itemBounds(item('a', null, stroked('miter')))).toEqual({
+      x0: -10,
+      y0: -10,
+      x1: 50,
+      y1: 50,
+    });
+  });
+
   it('grows by the reach of a shadow, offset and blur', () => {
     const shadowed: SceneOp = {
       ...fill(rect(100, 100, 50, 50), red),

@@ -198,30 +198,33 @@ describe('writePptx raster requests', () => {
   });
 
   it('take their svg from the recording of the slide, at the box of the element', async () => {
-    const vectorize = createVectorizer({
-      recordPage: async () => ({
-        width: 1920,
-        height: 1080,
-        items: [
-          item(
-            'star',
-            'Star',
-            fill(rect(0, 0, 200, 100), solid('#00a050'), { matrix: [1, 0, 0, 1, 120, 90] })
-          ),
-        ],
-        report: emptyReport(),
-      }),
-      resolveDeps: (page) => ({
-        page,
-        fetchBytes: async () => null,
-        reencode: async () => null,
-        rasterizeElement: async () => null,
-        rasterizeNode: async () => null,
-        rasterizeOps: async () => null,
-        rasterPixelRatio: 2,
-      }),
-      fontDeps: {},
-    });
+    const vectorize = createVectorizer(
+      {
+        recordPage: async () => ({
+          width: 1920,
+          height: 1080,
+          items: [
+            item(
+              'star',
+              'Star',
+              fill(rect(0, 0, 200, 100), solid('#00a050'), { matrix: [1, 0, 0, 1, 120, 90] })
+            ),
+          ],
+          report: emptyReport(),
+        }),
+        resolveDeps: (page) => ({
+          page,
+          fetchBytes: async () => null,
+          reencode: async () => null,
+          rasterizeElement: async () => null,
+          rasterizeNode: async () => null,
+          rasterizeOps: async () => null,
+          rasterPixelRatio: 2,
+        }),
+        fontDeps: {},
+      },
+      { canPreview: async () => true }
+    );
     const rasterize = vi.fn(async () => null);
 
     const { blob, skipped } = await writePptx(rasterModel, {
@@ -238,6 +241,47 @@ describe('writePptx raster requests', () => {
     expect(svgFile && strFromU8(files[svgFile]!)).toContain('viewBox="0 0 200 100"');
     const inch = (px: number) => Math.round((px * 13.333 * 914400) / 1920);
     expect(xml).toContain(`<a:off x="${inch(120)}" y="${inch(90)}"/>`);
+  });
+
+  it('keep the deck alive when the svg of one element cannot be previewed: that element stays a png', async () => {
+    const vectorize = createVectorizer(
+      {
+        recordPage: async () => ({
+          width: 1920,
+          height: 1080,
+          items: [item('star', null, fill(rect(0, 0, 200, 100), solid('#00a050')))],
+          report: emptyReport(),
+        }),
+        resolveDeps: (page) => ({
+          page,
+          fetchBytes: async () => null,
+          reencode: async () => null,
+          rasterizeElement: async () => null,
+          rasterizeNode: async () => null,
+          rasterizeOps: async () => null,
+          rasterPixelRatio: 2,
+        }),
+        fontDeps: {},
+      },
+      { canPreview: async () => false }
+    );
+    const rasterize = vi.fn(async () => ({
+      dataUrl: PNG_DATA_URL,
+      box: { x: 120, y: 90, width: 240, height: 120 },
+    }));
+
+    const { blob, skipped } = await writePptx(rasterModel, {
+      rasterize,
+      loadImage: async () => null,
+      vectorize,
+    });
+
+    expect(skipped).toEqual([]);
+    expect(rasterize).toHaveBeenCalledWith(star, 0);
+    const { files, xml } = await slideOf(blob);
+    expect(xml).not.toContain('asvg:svgBlip');
+    expect(media(files).filter((path) => path.endsWith('.svg'))).toEqual([]);
+    expect(media(files).filter((path) => path.endsWith('.png'))).toHaveLength(1);
   });
 
   it('are skipped, as before, when neither vector nor png can be had', async () => {

@@ -17,6 +17,7 @@ import {
   textOp,
 } from '../scene/__fixtures__/exportSceneFixture.js';
 import { emptyReport, type RecordedScene, type SceneItem, type SceneOp } from '../scene/types.js';
+import { isWellFormedSvg } from './svgPicture.js';
 import { createVectorizer } from './vectorizeElement.js';
 
 import type { PptxRasterRequest } from './types.js';
@@ -49,7 +50,11 @@ const sceneOfItems = (...items: SceneItem[]): RecordedScene => ({
   report: emptyReport(),
 });
 
-function setup(slides: (RecordedScene | null)[], over: Partial<VectorExportDeps> = {}) {
+function setup(
+  slides: (RecordedScene | null)[],
+  over: Partial<VectorExportDeps> = {},
+  canPreview: (svg: string) => Promise<boolean> = async () => true
+) {
   const recordPage = vi.fn(
     async (index: number, _options: { transparent: boolean }) => slides[index] ?? null
   );
@@ -69,7 +74,7 @@ function setup(slides: (RecordedScene | null)[], over: Partial<VectorExportDeps>
     fontDeps: { brandFaces: [{ family: 'Instrument Sans', src: 'latin.woff2' }], fetchBytes },
     ...over,
   };
-  return { vectorize: createVectorizer(deps), recordPage, fetchBytes };
+  return { vectorize: createVectorizer(deps, { canPreview }), recordPage, fetchBytes };
 }
 
 const raster: SceneOp = {
@@ -83,6 +88,8 @@ const raster: SceneOp = {
   height: 5,
   reason: 'filter',
 };
+
+const shadow = { hex: '#000000', alpha: 0.5, blur: 8, offsetX: 4, offsetY: 4 };
 
 describe('createVectorizer', () => {
   it('answers with the element alone, cropped to its bounds, and the box it covers', async () => {
@@ -266,5 +273,105 @@ describe('createVectorizer', () => {
     const answer = await vectorize(request('a'), 0);
 
     expect(answer?.svg).toMatch(/^<svg [^>]*viewBox="0 0 40 30" width="80" height="60">/);
+  });
+
+  it('answers null for an element with a shadow, which the PNG has baked in', async () => {
+    const square = fill(rect(0, 0, 10, 10), red);
+    const grouped: SceneOp = { ...base(), kind: 'group', ops: [{ ...square, shadow }] };
+    const { vectorize } = setup([
+      sceneOfItems(
+        item('own', null, { ...square, shadow }),
+        item('nested', null, grouped),
+        item('plain', null, square)
+      ),
+    ]);
+
+    expect(await vectorize(request('own'), 0)).toBeNull();
+    expect(await vectorize(request('nested'), 0)).toBeNull();
+    expect(await vectorize(request('plain'), 0)).not.toBeNull();
+  });
+
+  it('answers null for an element the resolver lost a picture of, not an SVG missing a part', async () => {
+    const unreadable = {
+      ...base(),
+      kind: 'image',
+      image: {
+        kind: 'element',
+        element: { src: 'https://cdn.example/x.png', naturalWidth: 8, naturalHeight: 8 },
+        width: 8,
+        height: 8,
+      },
+      sx: 0,
+      sy: 0,
+      sw: 8,
+      sh: 8,
+      dx: 0,
+      dy: 0,
+      dw: 40,
+      dh: 40,
+    } as unknown as SceneOp;
+    const { vectorize } = setup([
+      sceneOfItems(
+        item('frame', null, fill(rect(0, 0, 50, 50), red), unreadable),
+        item('other', null, fill(rect(0, 0, 50, 50), red))
+      ),
+    ]);
+
+    expect(await vectorize(request('frame'), 0)).toBeNull();
+    expect(await vectorize(request('other'), 0)).not.toBeNull();
+  });
+
+  it('answers null for markup that is not an svg document, here a label with a control character', async () => {
+    const { vectorize } = setup([
+      sceneOfItems(item('bad', 'Titel\u0001', fill(rect(0, 0, 10, 10), red))),
+    ]);
+
+    expect(await vectorize(request('bad'), 0)).toBeNull();
+  });
+
+  it('answers null when the browser cannot make a preview of the svg, and asks it about the sized svg', async () => {
+    const canPreview = vi.fn(async (_svg: string) => false);
+    const { vectorize } = setup(
+      [sceneOfItems(item('a', null, fill(rect(0, 0, 10, 10), red)))],
+      {},
+      canPreview
+    );
+
+    expect(await vectorize(request('a'), 0)).toBeNull();
+    expect(canPreview).toHaveBeenCalledTimes(1);
+    expect(canPreview.mock.calls[0]![0]).toMatch(/^<svg [^>]*width="20" height="20">/);
+  });
+
+  it('keeps a preview within what a canvas can hold, however large the element', async () => {
+    const wide = sceneOfItems(item('wide', null, fill(rect(0, 0, 6000, 100), red)));
+    const { vectorize } = setup([wide]);
+
+    const answer = await vectorize(request('wide'), 0);
+
+    // 2x would be 12000 px wide; the side is capped at 8192.
+    expect(answer?.svg).toMatch(/viewBox="0 0 6000 100" width="8192" height="136\.533"/);
+  });
+
+  it('lets go of earlier slides once a later one is asked for', async () => {
+    const slide = sceneOfItems(item('a', null, fill(rect(0, 0, 10, 10), red)));
+    const { vectorize, recordPage } = setup([slide, slide]);
+
+    await vectorize(request('a'), 0);
+    await vectorize(request('a'), 0);
+    await vectorize(request('a'), 1);
+    expect(recordPage).toHaveBeenCalledTimes(2);
+
+    // Slide 0 was dropped when slide 1 came: asking again records it again.
+    await vectorize(request('a'), 0);
+    expect(recordPage).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('svgPicture', () => {
+  it('knows a well-formed svg from text that is not one', () => {
+    expect(isWellFormedSvg('<svg xmlns="http://www.w3.org/2000/svg"><g/></svg>')).toBe(true);
+    expect(isWellFormedSvg('<svg xmlns="http://www.w3.org/2000/svg"><g></svg>')).toBe(false);
+    expect(isWellFormedSvg('<html xmlns="http://www.w3.org/1999/xhtml"/>')).toBe(false);
+    expect(isWellFormedSvg('')).toBe(false);
   });
 });
