@@ -94,6 +94,15 @@ describe('rebaseOps', () => {
     expect(at(out, out.ops[0]!)).toEqual({ x: (before.x - 90) * 2, y: (before.y - 40) * 2 });
   });
 
+  it('keeps ops that shared a clip sharing it, which is how a writer groups them', () => {
+    const next: SceneOp = { ...square, matrix: [1, 0, 0, 1, 0, 0] };
+
+    const [a, b] = rebaseOps([square, next], { x: 3, y: 4, width: 10, height: 10 }, 1);
+
+    expect(a!.clips[0]).toBe(b!.clips[0]);
+    expect(a!.clips[0]).not.toBe(clip);
+  });
+
   it('leaves its input alone', () => {
     rebaseOps([square], { x: 1, y: 1, width: 1, height: 1 }, 2);
     expect(square.matrix).toEqual([2, 0, 0, 2, 100, 50]);

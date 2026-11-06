@@ -241,7 +241,8 @@ export function opBounds(op: SceneOp): Rect | null {
   return clipped(user && transformRect(user, op.matrix), op);
 }
 
-function clipped(bounds: Rect | null, op: SceneOp): Rect | null {
+/** `bounds` cut to the clips of `op`: null when they leave nothing, or one has no path to know. */
+export function clipped(bounds: Rect | null, op: Pick<SceneOp, 'clips'>): Rect | null {
   let result = bounds;
   for (const clip of op.clips) {
     if (!result) return null;

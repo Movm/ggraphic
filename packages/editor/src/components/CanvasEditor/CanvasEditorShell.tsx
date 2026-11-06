@@ -663,30 +663,6 @@ function CanvasEditorInner({
     [currentPageIndex, canvasRefsRef]
   );
 
-  // Wie capturePages: jede Seite braucht ihr gemountetes Stage, sonst bricht der Export ab.
-  const buildPptx = useCallback(
-    async (onProgress?: (done: number, total: number) => void) => {
-      await ensureFontsReady();
-      const deck = serializeDeck(pagesDoc);
-      const refs = canvasRefsRef.current;
-      if (deck.some((_, i) => !refs[i]?.current)) {
-        throw new Error(messages().errors.exportSlidesPartial);
-      }
-      // One brand per deck: its pages share a country.
-      const brand = deck[0] ? loadedConfigs.get(deck[0].configId)?.brand : undefined;
-      return exportPptxDeck({
-        pages: deck.map((page) => page.state),
-        format: getCanvasFormatOrDefault(formatId),
-        rasterizeElement: async (slideIndex, elementId) =>
-          (await refs[slideIndex]?.current?.rasterizeElement(elementId)) ?? null,
-        ...(documentTitle ? { title: documentTitle } : {}),
-        ...(brand ? { brand } : {}),
-        ...(onProgress ? { onProgress } : {}),
-      });
-    },
-    [pagesDoc, canvasRefsRef, formatId, documentTitle, loadedConfigs]
-  );
-
   // One brand per deck: its pages share a country. Without one, the active brand's.
   const brandOfDeck = useCallback(
     (deck: ReturnType<typeof serializeDeck>) =>
@@ -724,6 +700,33 @@ function CanvasEditorInner({
       };
     },
     [canvasRefsRef, services.exportFonts]
+  );
+
+  // Wie capturePages: jede Seite braucht ihr gemountetes Stage, sonst bricht der Export ab.
+  const buildPptx = useCallback(
+    async (onProgress?: (done: number, total: number) => void) => {
+      await ensureFontsReady();
+      const deck = serializeDeck(pagesDoc);
+      const refs = canvasRefsRef.current;
+      if (deck.some((_, i) => !refs[i]?.current)) {
+        throw new Error(messages().errors.exportSlidesPartial);
+      }
+      // One brand per deck: its pages share a country.
+      const brand = deck[0] ? loadedConfigs.get(deck[0].configId)?.brand : undefined;
+      const format = getCanvasFormatOrDefault(formatId);
+      return exportPptxDeck({
+        pages: deck.map((page) => page.state),
+        format,
+        rasterizeElement: async (slideIndex, elementId) =>
+          (await refs[slideIndex]?.current?.rasterizeElement(elementId)) ?? null,
+        // What the PNG rasters of shapes, icons and frames can be as SVG instead.
+        vector: vectorDeps(format, brandOfDeck(deck)),
+        ...(documentTitle ? { title: documentTitle } : {}),
+        ...(brand ? { brand } : {}),
+        ...(onProgress ? { onProgress } : {}),
+      });
+    },
+    [pagesDoc, canvasRefsRef, formatId, documentTitle, loadedConfigs, brandOfDeck, vectorDeps]
   );
 
   // SVG: the file is named after the document the way the PDF is; a digital document without a

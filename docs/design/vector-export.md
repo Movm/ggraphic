@@ -156,10 +156,10 @@ SVG outlines and PDF embedding need the font files.
 
 In `writePptx`, a raster request is answered in one of two ways:
 
-- **Vector image.** If the element's recording has no raster island, the element is written as an SVG image built from its scene item. The box is the item's bounds. The PNG fallback that PowerPoint requires for `svgBlip` is the existing element raster.
-- **PNG.** Otherwise it stays PNG.
+- **Vector image.** If the element's recording has no raster island, the element is written as an SVG image built from its scene item: the item's ops moved so its bounds (ink, stroke and shadow reach) start at the origin, written with text as outlines and a `viewBox` of the bounds. The picture sits at those bounds, unrotated, because the rotation is already in the ops, exactly where the PNG of the element would have sat.
+- **PNG.** Otherwise it stays PNG: a raster op in the element, a text run no font file covers, an SVG picture with text of its own (a viewer would set it in a font the file does not carry), or a page that cannot be recorded.
 
-`pptxgenjs` 4.0.1 contains `svgBlip`. The builder confirms that its API writes an SVG image with a PNG fallback; if not, a small post-processing step on the zip (fflate, as `writePptx` already patches the XML) adds it. Native text, shapes and charts are unchanged.
+`pptxgenjs` 4.0.1 writes `svgBlip` itself: `addImage({ data: 'data:image/svg+xml;base64,…' })` stores the SVG and a PNG preview that PowerPoint 2013 and other programs show. The preview is made by pptxgenjs (`createSvgPngPreview`: the SVG drawn on a canvas at its own size), so the SVG's `width`/`height` are set to twice the page px, the pixel ratio the PNG raster used; in node it is a placeholder. Each slide is recorded and resolved once, and only if one of its elements asks. Native text, shapes and charts are unchanged.
 
 ### 6. Download view (`components/TopBar/DownloadSection.tsx`)
 

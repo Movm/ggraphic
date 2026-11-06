@@ -119,7 +119,7 @@ function collectFaces(
 }
 
 /** The files of every face the page draws text in. A face no source has comes out with no files. */
-async function fontsOf(
+export async function fontsOf(
   scene: RecordedScene,
   deps: FontSourceDeps
 ): Promise<Map<string, FontFileSet>> {

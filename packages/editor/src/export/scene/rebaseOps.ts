@@ -9,7 +9,7 @@
  */
 import { invert, multiply } from './matrix.js';
 
-import type { Matrix, SceneOp } from './types.js';
+import type { ClipPath, Matrix, SceneOp } from './types.js';
 
 export interface PageBox {
   x: number;
@@ -20,10 +20,20 @@ export interface PageBox {
 
 export function rebaseOps(ops: readonly SceneOp[], box: PageBox, pixelRatio: number): SceneOp[] {
   const base: Matrix = [pixelRatio, 0, 0, pixelRatio, -box.x * pixelRatio, -box.y * pixelRatio];
+  // A writer groups neighbours that share a clip by reference: moved clips stay shared.
+  const movedClips = new Map<ClipPath, ClipPath>();
+  const moveClip = (clip: ClipPath): ClipPath => {
+    let moved = movedClips.get(clip);
+    if (!moved) {
+      moved = { ...clip, matrix: multiply(base, clip.matrix) };
+      movedClips.set(clip, moved);
+    }
+    return moved;
+  };
   const rebase = (op: SceneOp): SceneOp => {
     const moved = {
       matrix: multiply(base, op.matrix),
-      clips: op.clips.map((clip) => ({ ...clip, matrix: multiply(base, clip.matrix) })),
+      clips: op.clips.map(moveClip),
       shadow: op.shadow && {
         ...op.shadow,
         blur: op.shadow.blur * pixelRatio,
