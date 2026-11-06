@@ -130,7 +130,7 @@ function arcSweep(start: number, end: number, counterclockwise: boolean): number
 // ---------------------------------------------------------------------------------------------
 // Colour and font parsing
 
-interface Rgba {
+export interface Rgba {
   hex: string;
   alpha: number;
 }
@@ -145,7 +145,7 @@ const byteHex = (n: number) =>
     .padStart(2, '0');
 
 /** `#rgb[a]`, `#rrggbb[aa]`, `rgb[a](...)` and `transparent`; anything else is `null`. */
-function parseCssColor(value: string): Rgba | null {
+export function parseCssColor(value: string): Rgba | null {
   const v = value.trim().toLowerCase();
   if (v === 'transparent') return { hex: '#000000', alpha: 0 };
   const hex = HEX_RE.exec(v)?.[1];
@@ -200,7 +200,7 @@ function parseFont(value: string): FontSpec | null {
 }
 
 /** The families of a CSS `font-family` list, in order, unquoted. */
-function fontFamilies(list: string): string[] {
+export function fontFamilies(list: string): string[] {
   const names: string[] = [];
   const family = /\s*(?:"([^"]*)"|'([^']*)'|([^,]+?))\s*(?:,|$)/y;
   while (family.lastIndex < list.length) {
