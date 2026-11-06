@@ -238,6 +238,8 @@ function safeColor(color: string, depth: number): boolean {
  * quotes, semicolons and braces never get through. Case is folded first.
  */
 export const isSafeColor = (color: string) => {
+  // The caller writes `color` into markup as it is, so surrounding whitespace is not slack to trim.
+  if (color !== color.trim()) return false;
   const value = color.toLowerCase();
   return value.length <= MAX_LENGTH && safeColor(value, 0);
 };

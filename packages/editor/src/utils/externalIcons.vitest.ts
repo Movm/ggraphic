@@ -299,6 +299,9 @@ describe('isSafeColor', () => {
     'rgb(calc(1 + 2) 0 0)',
     'foo(1 2 3)',
     'oklch(60%\n0.15 50) ; x',
+    'red\n',
+    ' red',
+    '#fff\n',
   ])('rejects %j', (color) => {
     expect(isSafeColor(color)).toBe(false);
   });
