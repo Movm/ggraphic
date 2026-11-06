@@ -46,6 +46,16 @@ export interface BrandPack {
   layout?: BrandLayout;
   /** The quotation-mark graphic; null = typographic quotes. */
   quoteMark: { src: string } | null;
+  /** What a print export needs of the brand beyond its screen colours. Absent = a pure RGB PDF. */
+  print?: {
+    /**
+     * Keys `#rrggbb` (lower case), values 0–100 as cyan, magenta, yellow, black. Vector paints in
+     * these colours (fills, strokes, text, and gradients whose every stop is listed) are written
+     * to a PDF as DeviceCMYK with exactly these values; every other colour, photos included, stays
+     * RGB. A colour the brand has no print value for stays out of the map: none is derived.
+     */
+    cmyk?: Readonly<Record<string, readonly [number, number, number, number]>>;
+  };
 }
 
 export interface BrandColors {
