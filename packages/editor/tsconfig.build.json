@@ -16,6 +16,7 @@
     "src/**/__tests__/**",
     "src/**/__snapshots__/**",
     "src/test-utils.ts",
+    "src/testing/napiStageBridge.ts",
     "src/testing-matchers.d.ts"
   ]
 }

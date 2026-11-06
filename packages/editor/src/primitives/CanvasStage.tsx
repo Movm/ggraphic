@@ -29,7 +29,7 @@ import { MOUSE_DRAG_DISTANCE, TOUCH_DRAG_DISTANCE } from '../utils/touchInput.js
 import { USER_PHOTO_NODE_NAME } from '../utils/userImageUtils.js';
 import { STAGE_VERTICAL_CHROME } from '../utils/viewport.js';
 
-import { withSelectionChromeHidden } from '../utils/captureStage.js';
+import { PAGE_ROOT_NAME, withSelectionChromeHidden } from '../utils/captureStage.js';
 import { BACKGROUND_IMAGE_NODE_ID, printImageInfo } from '../utils/printImageInfo.js';
 
 import type { ExportOptions } from '../types/editorTypes.js';
@@ -488,7 +488,11 @@ export const CanvasStage = forwardRef<CanvasStageRef, CanvasStageProps>(
                       Flyer, Plakat) we render the brand's light surface behind the
                       scaled design so it never sits on a transparent canvas. */}
                   <Rect x={0} y={0} width={width} height={height} fill={surface} />
-                  <Group scaleX={width / logicalWidth} scaleY={height / logicalHeight}>
+                  <Group
+                    name={PAGE_ROOT_NAME}
+                    scaleX={width / logicalWidth}
+                    scaleY={height / logicalHeight}
+                  >
                     {children}
                   </Group>
                 </>

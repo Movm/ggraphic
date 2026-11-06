@@ -9,6 +9,13 @@ import type Konva from 'konva';
 export const EXPORT_HIDDEN_NAME = 'export-hidden';
 
 /**
+ * Konva node name of the group `CanvasStage` scales the logical layout up to the format with: its
+ * children are the page's canvas items. A page whose logical size equals its format has no such
+ * group, and the items sit on the layer itself.
+ */
+export const PAGE_ROOT_NAME = 'page-root';
+
+/**
  * Runs `capture` with all selection chrome on the stage hidden — Konva
  * Transformers plus the dashed selection Rects primitives render alongside
  * them (tagged `name="selection-chrome"`). Callers don't have to mutate the

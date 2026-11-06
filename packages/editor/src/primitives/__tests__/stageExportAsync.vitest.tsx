@@ -7,16 +7,11 @@
  * wer die Reihenfolge verdreht, backt den Transformer ins Bild oder lässt ihn
  * verschwunden zurück.
  *
- * jsdom rastert nicht. `vitest.setup.ts` gibt jedem Canvas einen
- * `@napi-rs/canvas`-Kontext, aber das reicht für einen Export nicht: Konva
- * setzt die Bühne per `drawImage(<jsdom-canvas>)` aus den Ebenen zusammen,
- * vergrößert Canvas über `el.width = …` und liest per `el.toDataURL()` aus —
- * nichts davon erreicht den napi-Canvas. Diese Datei schaltet deshalb drei
- * Brücken dazu (Größe, drawImage, toDataURL) und ersetzt das in jsdom fehlende
- * `HTMLCanvasElement.prototype.toBlob` durch einen Stub, der über die
- * `toDataURL` desselben Canvas einen Blob baut. Geprüft wird also die
- * Verdrahtung (Ansicht, Bereich, Wiederherstellung, Blob → FileReader), nicht
- * der echte asynchrone Encoder des Browsers.
+ * jsdom rastert nicht; die Brücken (Größe, drawImage, toDataURL) und der
+ * `toBlob`-Stub, die einen Export im dom-Lauf möglich machen, stehen in
+ * `testing/napiStageBridge.ts`. Geprüft wird also die Verdrahtung (Ansicht,
+ * Bereich, Wiederherstellung, Blob → FileReader), nicht der echte
+ * asynchrone Encoder des Browsers.
  */
 import { render } from '@testing-library/react';
 import Konva from 'konva';
@@ -24,86 +19,18 @@ import { createRef } from 'react';
 import { Rect } from 'react-konva';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { CanvasStage, type CanvasStageRef } from '../CanvasStage.js';
+import { napi, installNapiStageBridge } from '../../testing/napiStageBridge.js';
 import { captureStageImageAsync } from '../../utils/captureStage.js';
+import { CanvasStage, type CanvasStageRef } from '../CanvasStage.js';
 
-const napi = await import('@napi-rs/canvas');
-
-type NapiContext = ReturnType<ReturnType<typeof napi.createCanvas>['getContext']>;
-const napiContexts = new WeakMap<HTMLCanvasElement, NapiContext>();
-const napiContextProto = Object.getPrototypeOf(napi.createCanvas(1, 1).getContext('2d')) as {
-  drawImage: (...args: unknown[]) => void;
-};
-
-const proto = HTMLCanvasElement.prototype;
-const saved = {
-  getContext: proto.getContext,
-  toDataURL: proto.toDataURL,
-  toBlob: proto.toBlob,
-  width: Object.getOwnPropertyDescriptor(proto, 'width')!,
-  height: Object.getOwnPropertyDescriptor(proto, 'height')!,
-  drawImage: napiContextProto.drawImage,
-};
-
-function bridgeSize(dimension: 'width' | 'height') {
-  const original = saved[dimension];
-  Object.defineProperty(proto, dimension, {
-    configurable: true,
-    get: original.get,
-    set(this: HTMLCanvasElement, value: number) {
-      original.set!.call(this, value);
-      // Konva gibt Export-Canvas mit Größe 0 frei; ein napi-Canvas mit 0 Pixeln
-      // wirft, und gezeichnet wird darauf ohnehin nicht mehr.
-      const context = napiContexts.get(this);
-      if (context && value > 0) context.canvas[dimension] = value;
-    },
-  });
-}
+let restoreBridge: () => void;
 
 beforeAll(() => {
-  proto.getContext = function getContext(this: HTMLCanvasElement, id: string, ...rest: unknown[]) {
-    const context = (saved.getContext as (...args: unknown[]) => unknown).call(this, id, ...rest);
-    if (id === '2d' && context) {
-      const napiContext = context as NapiContext;
-      if (!napiContexts.has(this)) {
-        napiContexts.set(this, napiContext);
-        if (this.width > 0) napiContext.canvas.width = this.width;
-        if (this.height > 0) napiContext.canvas.height = this.height;
-      }
-    }
-    return context;
-  } as HTMLCanvasElement['getContext'];
-  bridgeSize('width');
-  bridgeSize('height');
-  napiContextProto.drawImage = function drawImage(this: unknown, image: unknown, ...args) {
-    const source =
-      image instanceof HTMLCanvasElement ? (napiContexts.get(image)?.canvas ?? image) : image;
-    return saved.drawImage.call(this, source, ...args);
-  };
-  proto.toDataURL = function toDataURL(this: HTMLCanvasElement, type?: string) {
-    const context = napiContexts.get(this) ?? (this.getContext('2d') as unknown as NapiContext);
-    return context.canvas.toDataURL((type ?? 'image/png') as 'image/png');
-  };
-  proto.toBlob = function toBlob(
-    this: HTMLCanvasElement,
-    callback: BlobCallback,
-    type?: string,
-    quality?: number
-  ) {
-    const dataUrl = this.toDataURL(type, quality);
-    const bytes = Uint8Array.from(atob(dataUrl.split(',')[1]), (c) => c.charCodeAt(0));
-    const blob = new Blob([bytes], { type: type ?? 'image/png' });
-    setTimeout(() => callback(blob), 0);
-  };
+  restoreBridge = installNapiStageBridge();
 });
 
 afterAll(() => {
-  proto.getContext = saved.getContext;
-  proto.toDataURL = saved.toDataURL;
-  proto.toBlob = saved.toBlob;
-  Object.defineProperty(proto, 'width', saved.width);
-  Object.defineProperty(proto, 'height', saved.height);
-  napiContextProto.drawImage = saved.drawImage;
+  restoreBridge();
 });
 
 const W = 120;
