@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { describe, expect, it } from 'vitest';
 
-import { apply, IDENTITY } from './matrix.js';
+import { apply, IDENTITY, multiply } from './matrix.js';
 import { rebaseOps } from './rebaseOps.js';
 
 import type { ClipPath, SceneOp } from './types.js';
@@ -72,6 +72,26 @@ describe('rebaseOps', () => {
         nested!.kind === 'group' ? nested.ops[0]! : (nested as typeof island).source![0]!;
       expect(apply(child.matrix, 0, 0)).toEqual({ x: 0, y: 0 });
     }
+  });
+
+  it('keeps a group and its children where they were under the group matrix, in the moved space', () => {
+    const group: SceneOp = {
+      kind: 'group',
+      matrix: [1, 0, 0, 1, 5, 0],
+      alpha: 1,
+      clips: [],
+      shadow: null,
+      ops: [square],
+    };
+    const box = { x: 90, y: 40, width: 50, height: 30 };
+
+    const [out] = rebaseOps([group], box, 2) as [typeof group];
+
+    // Where a point of the child lands: group · child, before and after the move. The move is
+    // the same for both: the box origin at 0, and twice the size.
+    const at = (g: SceneOp, c: SceneOp) => apply(multiply(g.matrix, c.matrix), 1, 1);
+    const before = at(group, square);
+    expect(at(out, out.ops[0]!)).toEqual({ x: (before.x - 90) * 2, y: (before.y - 40) * 2 });
   });
 
   it('leaves its input alone', () => {

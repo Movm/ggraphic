@@ -7,7 +7,7 @@
  *
  * Used by whoever answers a writer's request to raster ops (`WritePdfOptions.rasterize`).
  */
-import { multiply } from './matrix.js';
+import { invert, multiply } from './matrix.js';
 
 import type { Matrix, SceneOp } from './types.js';
 
@@ -33,7 +33,14 @@ export function rebaseOps(ops: readonly SceneOp[], box: PageBox, pixelRatio: num
     };
     switch (op.kind) {
       case 'group':
-        return { ...op, ...moved, ops: op.ops.map(rebase) };
+        // The children are moved by `base` alone, and replay draws them under the group's matrix:
+        // that matrix has to act in the moved space, or `base` is applied twice.
+        return {
+          ...op,
+          ...moved,
+          matrix: multiply(base, multiply(op.matrix, invert(base))),
+          ops: op.ops.map(rebase),
+        };
       case 'raster':
         return { ...op, ...moved, source: op.source && op.source.map(rebase) };
       default:
