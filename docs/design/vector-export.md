@@ -1,6 +1,6 @@
 # Vector export: SVG, vector PDF and sharper PPTX
 
-Status: design, 2026-11-06. Built in `@ggraphic/editor`; the Grünerator picks it up with a version bump.
+Status: implemented, 2026-11-07. Built in `@ggraphic/editor`; the Grünerator picks it up with a version bump.
 
 ## Why
 
@@ -274,3 +274,23 @@ Then the changesets release (automated "Version Packages (alpha)" PR). Then a Gr
 - How the PDF writer handles nested SVG `<use>` and patterns: support, or raster with a report.
 - The render-gate thresholds, which must be justified in the PR.
 - The notice wording.
+
+## Deviations during implementation
+
+Where the build differs from the design above, and why.
+
+- **Recording.** Ops carry the matrix of the fill/stroke call; a path built under another matrix is mapped through `inverse(CTM) · matrix-at-add`, which keeps gradient and pattern coordinates right. The recorder works relative to the layer, not the page-root group, because that group's scale is what maps logical units to page pixels.
+- **Konva coupling.** The recording context sets Konva's `_opacityRoot` to the page root, so page-root opacity is not baked into every op, and overrides the memoising `_getLinearGradient`, `_getRadialGradient` and `_getFillPattern`; tests guard both.
+- **Text baseline.** The baseline is `y - alphabeticBaseline`: `@napi-rs/canvas` (the test lane) and Chrome report `alphabeticBaseline` y-up, the design formula had the sign the other way round.
+- **Font weight.** Face matching follows the CSS rule (a target of 400 with faces 300 and 500 takes 500), and an italic the family does not ship counts as missing instead of being swapped for the upright cut, as the browser draws it.
+- **Subset names.** PDF font subsets carry a deterministic six-letter tag (a hash of family, weight, style and file index) as the PDF/A-style name prefix preflight tools expect.
+- **SVG trust.** Which SVG images are the editor's own is decided by provenance (a `WeakSet` filled by the chart, illustration, icon and external-icon producers in `export/scene/trustedSvgImages.ts`), not by the URL's shape; every other SVG goes through `sanitizeSvg`.
+- **Foreign SVG.** A foreign SVG that relies on what `sanitizeSvg` strips (`<style>`, `class=`, `style=`) becomes a raster island with reason `svg-unsupported` and is reported, instead of a silently lossy vector.
+- **SVG numbers.** The linear part of a matrix is written with 6 decimals (translation with 3): 3 decimals drift about 0.5 px at 1000 px under rotation.
+- **Transparent SVG.** It keeps the stage's brand backdrop rectangle exactly as the transparent PNG does; only the page background is left out.
+- **Raster islands in PDF.** `WritePdfOptions` takes `rasterize` and `rasterPixelRatio`, which the design's signature lacked: shadow-only islands, runs with a missing glyph and unsupported SVGs need a picture.
+- **`replayScene`.** It ships in `export/scene` because the PDF path uses it in production for op-level raster islands, not only tests.
+- **PPTX shadows.** An element with a shadow keeps the PNG path, because PowerPoint's `feDropShadow` support is unverified; shadows were baked into the PNG before.
+- **Single-item crop.** A single item is cropped by prepending `translate(-x, -y)` to its ops and passing a scene sized to the item's bounds; `writeSvg` needs no crop option.
+- **Render gate.** The pixel comparison is an in-repo function in `apps/studio/e2e/exportGate.spec.ts` (a pixel differs when a channel is off by more than about 0.1, at most 1 percent of the page may), not a dependency: Playwright's own pixel diff is not public API and `pixelmatch` was not on the plan's dependency list.
+- **Changesets.** Three per-PR changesets (`vector-export-svg`, `-pdf`, `-pptx`) instead of one, so each stacked PR carries its own release note.

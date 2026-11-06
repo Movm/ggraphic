@@ -66,7 +66,7 @@ Things to know:
 
 ### Export
 
-The editor's own Share menu downloads PNG, PDF and slide decks. To export from your own UI (a "Save PNG" button, a thumbnail on save), pass `exportApiRef`:
+The editor's own Share menu downloads PNG, SVG, PDF and slide decks. To export from your own UI (a "Save PNG" button, a thumbnail on save), pass `exportApiRef`:
 
 ```tsx
 import { type CanvasEditorExportApi } from '@ggraphic/editor/embed';
@@ -90,10 +90,16 @@ const [api, setApi] = useState<CanvasEditorExportApi | null>(null);
 - `captureActivePage({ pixelRatio, transparent })`: the active page as a PNG data URL, or `null` while its canvas is not mounted.
 - `capturePages({ pixelRatio })`: every page as a PNG data URL, in order.
 - `exportPptx()`: the deck as an editable .pptx `Blob`.
+- `exportSvg({ pages, text, transparent })`: vector SVG, resolving to `{ blob, filename, report }`. `pages` is `'current'` or `'all'`; one page gives the SVG itself, several give a ZIP of SVGs. `text` is `'outlines'` (glyph outlines, looks the same everywhere) or `'editable'` (live `<text>`, which needs the font where the file is opened). `transparent` leaves out the page background. It rejects when a page cannot be rendered.
+- `exportPdf()`: every page as one vector PDF, resolving to `{ blob, filename, report }`: print pages with bleed, trim and crop marks, slides at slide size, other pages at 1 px to the pt. Text is real and selectable, fonts are subset-embedded. It rejects when a page cannot be rendered; when the document cannot be made as vector at all, the PDF is made of page pictures and `report.fallback` says why.
 - `getPages()`: the document's pages as `onChange` reports them.
 - `undo()` / `redo()`.
 
+Both vector exports return an `ExportReport` (type from `@ggraphic/editor/export`): what could not stay vector (`rasterIslands`, each with a reason), glyphs a font lacks (`missingGlyphs`), images that could not be read (`missingElements`), fonts whose licence only allows outlines (`outlinedForLicence`), brand colours that left a PDF in RGB (`rgbBrandColors`) and `fallback`. Show it to the person who exported; the editor's own Share menu does.
+
 To hide the editor's own Share menu, use the low-level path (`showShare={false}` on `CanvasEditorShell`).
+
+To export a page you only preview (a gallery, a server-less render queue), mount `PagePreview` (from `@ggraphic/editor/shell`) and take its optional `onCanvas` callback: it receives the page's canvas handle (`GenericCanvasRef`) once the page has settled, just before the PNG is encoded, and the handle stays valid while the preview is mounted. The handle's `recordScene({ page, transparent })` is the `recordPage` dependency of `exportPagesSvg` / `exportPagesPdf` from `@ggraphic/editor/export`, which come with the browser helpers they are wired with (`fetchImageBytes`, `reencodeImage`, `rasterizeOps`, `pngFromDataUrl`).
 
 ### A brand of your own: `defineBrand`
 
@@ -117,6 +123,8 @@ export const brand = defineBrand({
 ```
 
 The other five colour roles, the grounds and every picker are derived with WCAG contrast checks. It throws when a colour is not a colour. Load the fonts you name yourself (see Fonts).
+
+**CMYK for print PDFs.** `BrandPack.print.cmyk` is optional: keys are `#rrggbb` (lower case), values are `[c, m, y, k]` from 0 to 100. In a vector PDF, fills, strokes and text in a listed colour, and gradients whose stops are all listed, are written as DeviceCMYK with exactly those values; every other colour, photos included, stays RGB, and a colour without a print value is never derived. Without the map the PDF is pure RGB, and `report.rgbBrandColors` lists the brand colours that left it that way. `defineBrand` does not take `print`; add it to the pack it returns: `{ ...defineBrand({ … }), print: { cmyk: { '#0f2352': [100, 85, 30, 40] } } }`.
 
 ### Templates as data: `loadTemplatePack`
 
@@ -165,6 +173,24 @@ Either way, theme the editor through the `--editor-*` custom properties. Set the
 ## Fonts
 
 Every family a brand pack names in `fonts` / `fontFaces` must actually load in the page (`@font-face` with the real files), including each cut you declare. With `defaultBrand`, `import '@ggraphic/brand-default/fonts'` does that. Declare which cuts exist in `fonts.cuts` (`{ bold, italic, boldItalic }` per family): a missing declaration makes the editor fake a cut or hide the bold/italic buttons. Families no pack declares fall back to ggraphic's open aliases.
+
+The SVG and PDF exports embed or outline the glyphs themselves, so they need the font files, not only a loaded `@font-face`. They look in this order: the optional host service `exportFonts`, the brand pack's `fontFaces`, then the page's own `@font-face` rules (same-origin, or cross-origin with CORS headers, so `fetch` can read them). A host whose fonts are not reachable that way (signed URLs, files behind an API, cross-origin fonts without CORS) passes `exportFonts` in `services`:
+
+```tsx
+import { type CanvasExportFontService } from '@ggraphic/editor/services';
+
+const exportFonts: CanvasExportFontService = {
+  // The file for one face: TTF, OTF, WOFF or WOFF2; null when you have none.
+  load: async ({ family, weight, style }) => {
+    const res = await fetch(fontUrl(family, weight, style));
+    return res.ok ? new Uint8Array(await res.arrayBuffer()) : null;
+  },
+};
+
+<GgraphicEditor brand={brand} templates={templates} services={{ exportFonts }} />;
+```
+
+A face no source has a file for does not break the export: in an SVG its text stays a live `<text>` with the family name; in a PDF it becomes a picture (`rasterIslands`, reason `font-unavailable`), and when that hits the text of more than one element the PDF is made of page pictures (`report.fallback`).
 
 ## Testing a host
 
