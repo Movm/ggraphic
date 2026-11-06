@@ -4,6 +4,7 @@ import { Image, Group, Rect, Transformer } from 'react-konva';
 
 import { activeBrand } from '../brand/brandRegistry.js';
 import { LOCKED_TRANSFORMER, useIsItemLocked } from '../components/canvasItemLock.js';
+import { markTrustedSvgImage } from '../export/scene/trustedSvgImages.js';
 import { useGeometryReporter, type GeometryReporter } from '../hooks/useGeometryReporter.js';
 import { useSnapScheduler } from '../hooks/useSnapScheduler.js';
 import { isGroupDrag } from '../utils/multiSelect.js';
@@ -14,6 +15,7 @@ import { boxFrame, createBoxFrame, frameBounds, snapByBounds } from '../utils/sn
 
 import {
   ASSET_TARGET_SIZE,
+  isCatalogueInstance,
   isStickerLikeInstance,
   resolveAssetInstanceSrc,
 } from '../utils/canvasAssets.js';
@@ -65,6 +67,7 @@ function AssetPrimitiveInner({
 
   const src = resolveAssetInstanceSrc(asset);
   const stickerLike = isStickerLikeInstance(asset);
+  const fromCatalogue = isCatalogueInstance(asset);
 
   const [settled, setSettled] = useState<{ src: string; retry: number; ok: boolean } | null>(null);
   // A retry (`retryFailedImages`) loads the same source again.
@@ -75,6 +78,8 @@ function AssetPrimitiveInner({
 
     const img = new window.Image();
     img.crossOrigin = 'anonymous';
+    // The host's catalogue is the host's own artwork; a file stored for one instance is not.
+    if (fromCatalogue) markTrustedSvgImage(img);
     img.src = src;
     img.onload = () => {
       setImage(img);
@@ -87,7 +92,7 @@ function AssetPrimitiveInner({
       img.onload = null;
       img.onerror = null;
     };
-  }, [src, retry]);
+  }, [src, retry, fromCatalogue]);
   // Logos and stickers are assets too: the chat preview must not capture
   // before they have arrived (#4834).
   useTrackPendingImage(

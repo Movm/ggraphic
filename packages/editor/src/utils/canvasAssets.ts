@@ -233,6 +233,18 @@ export function resolveAssetInstanceSrc(
   return getAssetById(instance.assetId, catalog)?.src ?? null;
 }
 
+/**
+ * Does the image of this instance come from the host's catalogue, rather than from a file the
+ * host stores for the one instance (a shop sticker, which a user made)? Only the first is
+ * something the host itself shipped; the second is user content, whatever its `src` looks like.
+ */
+export function isCatalogueInstance(
+  instance: Pick<AssetInstance, 'src'>,
+  catalog: CanvasAssetCatalog = registered
+): boolean {
+  return !(instance.src && catalog.isInstanceSrc(instance.src));
+}
+
 /** Sticker-like instances get a pixel-exact hit area: transparent pixels click through. */
 export function isStickerLikeInstance(
   instance: Pick<AssetInstance, 'assetId' | 'src'>,

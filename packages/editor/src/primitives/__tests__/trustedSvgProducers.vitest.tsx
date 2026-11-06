@@ -9,7 +9,11 @@ import { createRef, type ReactElement } from 'react';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { isTrustedSvgImage } from '../../export/scene/trustedSvgImages.js';
-import { FIXTURE_ASSET_ID, registerFixtureAssets } from '../../testing/fixtureTemplates';
+import {
+  FIXTURE_ASSET_ID,
+  FIXTURE_INSTANCE_SRC_PREFIX,
+  registerFixtureAssets,
+} from '../../testing/fixtureTemplates';
 import { createChartInstance } from '../../utils/chartUtils.js';
 import { getCachedSVG, getSVG } from '../../utils/illustrations/svgCache.js';
 import { AssetPrimitive } from '../AssetPrimitive.js';
@@ -242,6 +246,30 @@ describe('producers mark the images they make from SVG they generated', () => {
   });
 });
 
+describe('catalogue assets', () => {
+  it('AssetPrimitive marks an image the host catalogue supplied', async () => {
+    mount(
+      <AssetPrimitive
+        asset={{
+          id: 'a',
+          assetId: FIXTURE_ASSET_ID,
+          x: 10,
+          y: 10,
+          scale: 1,
+          rotation: 0,
+          opacity: 1,
+        }}
+        isSelected={false}
+        onSelect={noop}
+        onDragEnd={noop}
+        onTransformEnd={noop}
+      />
+    );
+    await waitFor(() => expect(made.length).toBeGreaterThan(0));
+    expect(made.map((image) => isTrustedSvgImage(image))).toEqual(made.map(() => true));
+  });
+});
+
 describe('elements a document writes the src of are not marked', () => {
   // The control for the tests above: a data url that looks like the editor's own, in a field a
   // document controls, is no more trusted than any other url.
@@ -272,12 +300,13 @@ describe('elements a document writes the src of are not marked', () => {
     expect(made.map((image) => isTrustedSvgImage(image))).toEqual(made.map(() => false));
   });
 
-  it('AssetPrimitive', async () => {
+  it('AssetPrimitive with a src of its own (a shop sticker)', async () => {
     mount(
       <AssetPrimitive
         asset={{
           id: 'a',
           assetId: FIXTURE_ASSET_ID,
+          src: `${FIXTURE_INSTANCE_SRC_PREFIX}sticker.svg`,
           x: 10,
           y: 10,
           scale: 1,
@@ -291,6 +320,31 @@ describe('elements a document writes the src of are not marked', () => {
       />
     );
     await waitFor(() => expect(made.length).toBeGreaterThan(0));
+    expect(sources).toEqual([`${FIXTURE_INSTANCE_SRC_PREFIX}sticker.svg`]);
     expect(made.map((image) => isTrustedSvgImage(image))).toEqual(made.map(() => false));
+  });
+
+  it('AssetPrimitive whose src a document wrote but the host does not store', async () => {
+    mount(
+      <AssetPrimitive
+        asset={{
+          id: 'a',
+          assetId: FIXTURE_ASSET_ID,
+          src: 'https://evil.example/x.svg',
+          x: 10,
+          y: 10,
+          scale: 1,
+          rotation: 0,
+          opacity: 1,
+        }}
+        isSelected={false}
+        onSelect={noop}
+        onDragEnd={noop}
+        onTransformEnd={noop}
+      />
+    );
+    await waitFor(() => expect(made.length).toBeGreaterThan(0));
+    // The foreign src is ignored: the image is the catalogue's own, never the document's.
+    expect(sources).toEqual([`https://example.org/assets/${FIXTURE_ASSET_ID}.svg`]);
   });
 });
