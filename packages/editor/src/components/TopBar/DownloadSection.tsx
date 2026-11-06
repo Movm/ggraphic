@@ -485,7 +485,9 @@ export function DownloadSection({
       </Button>
 
       {reportsExport && report?.fallback && (
-        <DownloadNotice tone="info">{downloadPanel.pdfFallbackNotice}</DownloadNotice>
+        <DownloadNotice tone="info">
+          {downloadPanel.pdfFallbackNotice[report.fallback.kind]}
+        </DownloadNotice>
       )}
       {reportsExport && report && report.missingElements.length > 0 && (
         <DownloadNotice>

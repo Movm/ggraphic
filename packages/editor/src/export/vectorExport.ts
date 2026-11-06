@@ -227,17 +227,24 @@ export async function exportPagesPdf(
   }
   const filename = `${options.filenameBase}.pdf`;
   let reason: string;
+  let kind: NonNullable<ExportReport['fallback']>['kind'];
   try {
     const { bytes, report } = await writeVectorPdf(options, deps);
     const failures = fontFailureCount(report);
     if (failures <= 1) return { blob: pdfBlob(bytes), filename, report };
+    kind = 'fonts';
     reason = `fonts could not be used for the text of ${failures} elements`;
   } catch (error) {
+    kind = error instanceof WriteTimeoutError ? 'timeout' : 'error';
     reason = error instanceof Error ? error.message : String(error);
   }
   console.warn(`[exportPagesPdf] vector PDF not made, writing the raster PDF instead: ${reason}`);
   const bytes = await deps.rasterFallback();
-  return { blob: pdfBlob(bytes), filename, report: { ...emptyReport(), fallback: { reason } } };
+  return {
+    blob: pdfBlob(bytes),
+    filename,
+    report: { ...emptyReport(), fallback: { kind, reason } },
+  };
 }
 
 const pdfBlob = (bytes: Uint8Array) => new Blob([bytes as BlobPart], { type: 'application/pdf' });
@@ -261,7 +268,10 @@ async function writeVectorPdf(options: PdfExportOptions, deps: PdfExportDeps) {
   const shared = deps.resolveDeps(0);
   const trim = isPrintFormat(format) ? format.print.trimMm : null;
 
-  return withTimeout(
+  // The budget is for the writer: the time it waits for a raster island does not count, or a
+  // page with several shadows or filtered photos would fall back to the raster PDF by itself.
+  const budget = new TimeoutBudget(options.writeTimeoutMs ?? PDF_WRITE_TIMEOUT_MS);
+  return budget.run(() =>
     writePdf(scenes, {
       mode: options.mode,
       ...(trim && {
@@ -270,23 +280,61 @@ async function writeVectorPdf(options: PdfExportOptions, deps: PdfExportDeps) {
       ...(brand.print?.cmyk && { cmyk: brand.print.cmyk }),
       brandPalette: brandHexes(brand),
       fonts,
-      rasterize: shared.rasterizeOps,
+      rasterize: (ops, box, pixelRatio) =>
+        budget.paused(() => shared.rasterizeOps(ops, box, pixelRatio)),
       rasterPixelRatio: shared.rasterPixelRatio,
       defaultFont,
-    }),
-    options.writeTimeoutMs ?? PDF_WRITE_TIMEOUT_MS
+    })
   );
 }
 
-function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const expired = new Promise<never>((_resolve, reject) => {
-    timer = setTimeout(
-      () => reject(new Error(`the PDF writer did not finish within ${ms / 1000} s`)),
-      ms
+/** The writer did not finish in its time. */
+class WriteTimeoutError extends Error {}
+
+/** A timeout that stands still while `paused` work runs (overlapping pauses count once). */
+class TimeoutBudget {
+  private left: number;
+  private timer: ReturnType<typeof setTimeout> | undefined;
+  private since = 0;
+  private pauses = 0;
+  private fail: (error: Error) => void = () => {};
+
+  constructor(private readonly ms: number) {
+    this.left = ms;
+  }
+
+  run<T>(work: () => Promise<T>): Promise<T> {
+    const expired = new Promise<never>((_resolve, reject) => {
+      this.fail = reject;
+    });
+    this.start();
+    return Promise.race([work(), expired]).finally(() => clearTimeout(this.timer));
+  }
+
+  async paused<T>(work: () => Promise<T>): Promise<T> {
+    if (this.pauses++ === 0) this.stop();
+    try {
+      return await work();
+    } finally {
+      if (--this.pauses === 0) this.start();
+    }
+  }
+
+  private start(): void {
+    this.since = Date.now();
+    this.timer = setTimeout(
+      () =>
+        this.fail(
+          new WriteTimeoutError(`the PDF writer did not finish within ${this.ms / 1000} s`)
+        ),
+      this.left
     );
-  });
-  return Promise.race([work, expired]).finally(() => clearTimeout(timer));
+  }
+
+  private stop(): void {
+    clearTimeout(this.timer);
+    this.left = Math.max(0, this.left - (Date.now() - this.since));
+  }
 }
 
 /** The body font of the brand as the default of an SVG's text: regular, upright, 16 px. */

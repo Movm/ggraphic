@@ -301,7 +301,10 @@ describe('the PDF choice', () => {
   });
 
   describe('the notice', () => {
-    const fallback = (): ExportReport => ({ ...emptyReport(), fallback: { reason: 'fonts' } });
+    const fallback = (): ExportReport => ({
+      ...emptyReport(),
+      fallback: { kind: 'fonts', reason: 'fonts' },
+    });
     const NOTICE =
       'Das PDF wurde als Bild erzeugt, weil nicht alle Schriften geladen werden konnten.';
 
@@ -318,6 +321,25 @@ describe('the PDF choice', () => {
 
       const notice = await screen.findByText(NOTICE);
       expect(notice.getAttribute('role')).toBe('status');
+    });
+
+    it.each([
+      [
+        'timeout',
+        'Das PDF wurde als Bild erzeugt, weil die Vektor-Erzeugung zu lange gedauert hat.',
+      ],
+      ['error', 'Das PDF wurde als Bild erzeugt, weil die Vektor-Erzeugung fehlgeschlagen ist.'],
+    ] as const)('says why for a %s fallback', async (kind, text) => {
+      const { user } = renderSection('digital', {}, undefined, {
+        ...emptyReport(),
+        fallback: { kind, reason: 'x' },
+      });
+      await choosePdf(user, 'PDF');
+
+      await download(user);
+
+      expect(await screen.findByText(text)).toBeTruthy();
+      expect(screen.queryByText(NOTICE)).toBeNull();
     });
 
     it('speaks English under en', async () => {

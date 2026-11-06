@@ -882,8 +882,12 @@ export const de = {
       rasterNotice: (items: string) => `Als Bild eingebettet: ${items}`,
       missingNotice: (n: number) =>
         `${n} Element(e) fehlen, weil ihr Bild nicht geladen werden konnte.`,
-      pdfFallbackNotice:
-        'Das PDF wurde als Bild erzeugt, weil nicht alle Schriften geladen werden konnten.',
+      /** Why the PDF is a picture, by `ExportReport['fallback'].kind`. */
+      pdfFallbackNotice: {
+        fonts: 'Das PDF wurde als Bild erzeugt, weil nicht alle Schriften geladen werden konnten.',
+        timeout: 'Das PDF wurde als Bild erzeugt, weil die Vektor-Erzeugung zu lange gedauert hat.',
+        error: 'Das PDF wurde als Bild erzeugt, weil die Vektor-Erzeugung fehlgeschlagen ist.',
+      },
       /** Why a part of the page is a picture in the SVG or PDF, as a short noun phrase. */
       rasterReason: {
         filter: 'Foto mit Filter',

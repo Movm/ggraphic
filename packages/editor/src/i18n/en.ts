@@ -865,7 +865,11 @@ export const en: Messages = {
       keepTextEditableHint: 'Only looks right where the font is installed.',
       rasterNotice: (items) => `Embedded as an image: ${items}`,
       missingNotice: (n) => `${n} element(s) are missing because their image could not be loaded.`,
-      pdfFallbackNotice: 'The PDF was made as an image because not all fonts could be loaded.',
+      pdfFallbackNotice: {
+        fonts: 'The PDF was made as an image because not all fonts could be loaded.',
+        timeout: 'The PDF was made as an image because creating the vector PDF took too long.',
+        error: 'The PDF was made as an image because creating the vector PDF failed.',
+      },
       rasterReason: {
         filter: 'Photo with filter',
         composite: 'Blend',

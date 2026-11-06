@@ -195,7 +195,12 @@ export interface ExportReport {
   missingGlyphs: { page: number; elementId: string | null; text: string }[];
   outlinedForLicence: string[];
   rgbBrandColors: string[];
-  fallback: { reason: string } | null;
+  /**
+   * Why the vector PDF was not made: `fonts` (fonts could not be used for several elements),
+   * `timeout` (the writer did not finish) or `error` (the writer or a page recording failed).
+   * `reason` is the detail for the console.
+   */
+  fallback: { kind: 'fonts' | 'timeout' | 'error'; reason: string } | null;
 }
 
 export function emptyReport(): ExportReport {
