@@ -31,10 +31,11 @@ import {
 } from '../utils/chartUtils.js';
 import { isSafeColor } from '../utils/externalIcons.js';
 import { ELEMENT_TRANSFORMER } from '../utils/orientation.js';
+import { ensureFontsReady } from '../utils/ensureFontsReady.js';
 import { useTrackPendingImage } from '../utils/pendingImages.js';
 
 import { chartBox } from '../utils/renderedBoxes.js';
-import { chartFontCss, cssString, type ChartFont } from './chartFont.js';
+import { SANS, chartFontCss, chartFontFamily, type ChartFont } from './chartFont.js';
 
 import type { FontSourceDeps } from '../export/fonts/fontFiles.js';
 import type Konva from 'konva';
@@ -56,12 +57,12 @@ const OUTLINE_PX = 2;
 
 let measureContext: CanvasRenderingContext2D | null | undefined;
 /**
- * A label's width at tick size as the rasterised SVG draws it (`font-family:
- * sans-serif`). A per-character estimate clipped wide labels: „Wünschen mehr"
- * needs 95 px where 13 × 7.5 − 8 left 89.5. The estimate stays only where no
- * canvas can measure.
+ * A label's width at tick size in `family`, the font-family the chart SVG declares
+ * (`chartFontFamily`), so a label is measured in the font it is drawn in. A per-character
+ * estimate clipped wide labels: „Wünschen mehr" needs 95 px in sans-serif where 13 × 7.5 − 8
+ * left 89.5. The estimate stays only where no canvas can measure.
  */
-function tickTextWidth(text: string): number {
+function tickTextWidth(text: string, family: string): number {
   if (measureContext === undefined) {
     try {
       measureContext = document.createElement('canvas').getContext('2d');
@@ -70,7 +71,7 @@ function tickTextWidth(text: string): number {
     }
   }
   if (!measureContext) return text.length * 7.5;
-  measureContext.font = `${AXIS_TICK.fontSize}px sans-serif`;
+  measureContext.font = `${AXIS_TICK.fontSize}px ${family}`;
   return measureContext.measureText(text).width;
 }
 
@@ -94,9 +95,10 @@ function layoutLegend(
   entries: LegendEntry[],
   position: 'right' | 'bottom',
   width: number,
-  height: number
+  height: number,
+  family: string
 ): { width: number; height: number; at: (top: number) => { x: number; y: number }[] } {
-  const widths = entries.map((e) => LEGEND_TEXT_X + Math.ceil(tickTextWidth(e.name)));
+  const widths = entries.map((e) => LEGEND_TEXT_X + Math.ceil(tickTextWidth(e.name, family)));
   if (position === 'right') {
     // 8 px gap to the chart, 4 px slack at the edge.
     const column = Math.max(...widths) + 12;
@@ -150,8 +152,12 @@ function safeSeriesColor(color: string, index: number): string {
   return fallback !== undefined && isSafeColor(fallback) ? fallback : CHART_INK_DARK;
 }
 
+/**
+ * `family` is the font-family the SVG will declare (`chartFontFamily`): the legend and the
+ * category axis are sized by labels measured in it.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function buildChartElement(recharts: any, chart: ChartInstance) {
+export function buildChartElement(recharts: any, chart: ChartInstance, family: string = SANS) {
   const {
     BarChart,
     Bar,
@@ -190,7 +196,8 @@ export function buildChartElement(recharts: any, chart: ChartInstance) {
       ? data.map((d, index) => ({ name: d.name, index }))
       : (series ?? []).map((s, index) => ({ name: s.name, index }));
   const legendPosition = chartLegendPosition(chart);
-  const legend = entries.length > 0 ? layoutLegend(entries, legendPosition, width, height) : null;
+  const legend =
+    entries.length > 0 ? layoutLegend(entries, legendPosition, width, height, family) : null;
   const legendTop = height - (legend?.height ?? 0);
   const legendSvg = legend ? (
     <g>
@@ -345,7 +352,7 @@ export function buildChartElement(recharts: any, chart: ChartInstance) {
   // past the bar's end (~8.5 px a bold character).
   const nameWidth = Math.min(
     width * 0.4,
-    Math.max(64, Math.ceil(Math.max(...data.map((d) => tickTextWidth(d.name)))) + 12)
+    Math.max(64, Math.ceil(Math.max(...data.map((d) => tickTextWidth(d.name, family)))) + 12)
   );
   const valueRoom = showValues
     ? Math.max(...allValues.map((v) => formatValue(v).length)) * 8.5 + 12
@@ -412,6 +419,9 @@ export function buildChartElement(recharts: any, chart: ChartInstance) {
   );
 }
 
+/** How long a chart waits for the page's fonts before it measures with what is there. */
+const FONT_WAIT_MS = 2000;
+
 /**
  * The chart as an image. `font` is the brand body font as the SVG carries it: an SVG image cannot
  * load web fonts, so the files are embedded in the SVG itself (see `chartFont.ts`).
@@ -424,9 +434,15 @@ export async function renderChartImage(
   container.style.cssText = `position:absolute;left:-99999px;top:0;width:${chart.width}px;height:${chart.height}px;font-family:sans-serif;`;
   document.body.appendChild(container);
 
-  const recharts = await import('recharts');
+  // One family for both: the labels are measured in the font the SVG then draws them in. The
+  // brand font is a web font of the page; until it is loaded the canvas measures the fallback.
+  const family = chartFontFamily(font);
+  const [recharts] = await Promise.all([
+    import('recharts'),
+    font.css ? ensureFontsReady({ timeoutMs: FONT_WAIT_MS }) : undefined,
+  ]);
   const root = createRoot(container);
-  root.render(buildChartElement(recharts, chart));
+  root.render(buildChartElement(recharts, chart, family));
 
   // Recharts paints after a couple of frames; poll for a populated <svg>.
   const raf = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
@@ -442,13 +458,11 @@ export async function renderChartImage(
   if (svg) {
     svg.setAttribute('width', String(chart.width));
     svg.setAttribute('height', String(chart.height));
+    svg.setAttribute('font-family', family);
     if (font.css) {
-      svg.setAttribute('font-family', `${cssString(font.family)}, sans-serif`);
       const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
       style.textContent = font.css;
       svg.insertBefore(style, svg.firstChild);
-    } else {
-      svg.setAttribute('font-family', 'sans-serif');
     }
     const xml = new XMLSerializer().serializeToString(svg);
     const url = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(xml)}`;

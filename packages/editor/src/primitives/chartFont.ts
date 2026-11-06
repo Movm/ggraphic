@@ -16,6 +16,17 @@ export interface ChartFont {
   css: string | null;
 }
 
+/** What a chart without a font of its own is drawn and measured in. */
+export const SANS = 'sans-serif';
+
+/**
+ * The `font-family` the chart SVG declares, and the one its labels are measured in. A chart
+ * draws and measures through this one function, so the two cannot drift apart.
+ */
+export function chartFontFamily(font: ChartFont): string {
+  return font.css ? `${cssString(font.family)}, ${SANS}` : SANS;
+}
+
 /** Tick and legend text is regular, value labels are bold. */
 const WEIGHTS = [400, 700] as const;
 
