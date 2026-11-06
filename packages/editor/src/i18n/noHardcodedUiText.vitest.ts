@@ -331,6 +331,9 @@ const DEVELOPER_ERRORS = [
   /^colour stop offset /,
   /^the replay buffer has no 2D context$/,
   /^replaying a group needs a canvas: /,
+  // The PDF writer: a mode nobody asked it for yet, and an outline the font repair cannot write.
+  /^writePdf: the \$\{\} mode is not written yet$/,
+  /^a cubic outline cannot be written as a TrueType glyph$/,
 ];
 
 const isEditorUiFile = (rel: string) => !ALLOWED_FILES.some((re) => re.test(rel));

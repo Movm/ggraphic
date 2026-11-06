@@ -96,6 +96,8 @@ SVG outlines and PDF embedding need the font files.
 - **Parser:** `@pdf-lib/fontkit`, a new dependency. It is the fontkit `pdf-lib` is built for, and it reads TTF, OTF, WOFF and WOFF2. It is loaded with a dynamic `import()` like `pdf-lib` and `pptxgenjs`.
 - **SVG outlines:** glyph paths from fontkit's layout (`font.layout(text).glyphs` with advances), placed at the recorded glyph positions, so kerning matches the canvas.
 - **PDF:** fonts are embedded as subsets (`pdf-lib` `embedFont(bytes, { subset: true })`), and text is drawn as real text, so it is selectable and searchable.
+  - **WOFF2 needs a repair.** fontkit never rebuilds the `glyf` and `loca` tables of a WOFF2 file, so the subset `pdf-lib` cuts from it has empty or damaged glyphs (the PDF is valid and the text invisible), and a composite glyph (`"`, `:`, accented capitals) makes `save()` hang in a timer. `export/pdf/pdfFontkit.ts` is the fontkit given to `registerFontkit`: for a WOFF2 font it builds the subset from the glyph paths. Measured against Instrument Sans (Fontsource WOFF2); the writer test reads every glyph back.
+  - A font that forbids subsetting (`fsType` bit 8) is embedded whole, as it is when it is a TrueType or OpenType file; a WOFF or WOFF2 file cannot go into a PDF as it is, so it goes through the subsetter with every glyph.
 - **No font file:**
   - The SVG uses `<text>` for that run, even in outline mode, and the report says so.
   - The PDF draws that text item as a raster island and reports it.
@@ -131,6 +133,7 @@ SVG outlines and PDF embedding need the font files.
   - MediaBox, BleedBox and TrimBox, plus crop marks, come from the existing `pdfPageGeometry` and mark code in `printPdf.ts`, which stays the single place for that geometry.
   - The scene is placed on the bleed box, scaled from page px to pt.
   - `lowResolutionWarnings` keeps working.
+- **Pictures inside a vector page.** The writer cannot draw a blurred shadow, a glyph no font covers, or an SVG `svgToScene` cannot convert. It asks its caller (`WritePdfOptions.rasterize(ops, box, pixelRatio)`, answered with `replayScene` on a canvas; `rebaseOps` moves the ops onto the box) and places the PNG. A blurred shadow is a picture of the shadow alone, under the op, which stays vector: the op is replayed far off the box with its shadow offset by as much, so only the shadow lands on it. A picture that cannot be made is a `missingElements` entry.
 - **Slides mode:** page = `SLIDE_PDF_PAGE_PT`.
 - **Digital mode:** page = format px at 72 dpi.
 - **CMYK.**
