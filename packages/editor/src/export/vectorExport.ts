@@ -173,6 +173,9 @@ async function resolveFaces(
  */
 export const PDF_WRITE_TIMEOUT_MS = 60_000;
 
+/** The most one raster island may take (decode, draw, encode) before the export falls back. */
+export const PDF_ISLAND_TIMEOUT_MS = 60_000;
+
 export interface PdfExportOptions {
   /** `print` pages are trim + bleed with crop marks, `slides` fill a slide, `digital` are 1 pt to the px. */
   mode: 'digital' | 'slides' | 'print';
@@ -186,6 +189,8 @@ export interface PdfExportOptions {
   pageCount: number;
   /** Default `PDF_WRITE_TIMEOUT_MS`. */
   writeTimeoutMs?: number;
+  /** Default `PDF_ISLAND_TIMEOUT_MS`. */
+  islandTimeoutMs?: number;
 }
 
 export interface PdfExportDeps extends VectorExportDeps {
@@ -270,7 +275,10 @@ async function writeVectorPdf(options: PdfExportOptions, deps: PdfExportDeps) {
 
   // The budget is for the writer: the time it waits for a raster island does not count, or a
   // page with several shadows or filtered photos would fall back to the raster PDF by itself.
-  const budget = new TimeoutBudget(options.writeTimeoutMs ?? PDF_WRITE_TIMEOUT_MS);
+  const budget = new TimeoutBudget(
+    options.writeTimeoutMs ?? PDF_WRITE_TIMEOUT_MS,
+    options.islandTimeoutMs ?? PDF_ISLAND_TIMEOUT_MS
+  );
   return budget.run(() =>
     writePdf(scenes, {
       mode: options.mode,
@@ -299,7 +307,10 @@ class TimeoutBudget {
   private pauses = 0;
   private fail: (error: Error) => void = () => {};
 
-  constructor(private readonly ms: number) {
+  constructor(
+    private readonly ms: number,
+    private readonly islandMs: number
+  ) {
     this.left = ms;
   }
 
@@ -313,9 +324,22 @@ class TimeoutBudget {
 
   async paused<T>(work: () => Promise<T>): Promise<T> {
     if (this.pauses++ === 0) this.stop();
+    // Paused time is not the writer's, but it is not unbounded either: a decode or encode that
+    // never settles must still end in the raster PDF.
+    let cap: ReturnType<typeof setTimeout> | undefined;
+    const stuck = new Promise<never>((_resolve, reject) => {
+      cap = setTimeout(() => {
+        const error = new WriteTimeoutError(
+          `a raster island did not finish within ${this.islandMs / 1000} s`
+        );
+        this.fail(error);
+        reject(error);
+      }, this.islandMs);
+    });
     try {
-      return await work();
+      return await Promise.race([work(), stuck]);
     } finally {
+      clearTimeout(cap);
       if (--this.pauses === 0) this.start();
     }
   }

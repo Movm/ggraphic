@@ -698,6 +698,24 @@ describe('exportPagesPdf', () => {
       expect(await blob.text()).toBe('%PDF-slow');
     });
 
+    it('a raster island that never settles: a raster pdf, kind timeout', async () => {
+      const { deps, rasterFallback } = pdfSetup([pageOf([['a', [square]]])]);
+      vi.mocked(writePdf).mockImplementationOnce(async (_scenes, options) => {
+        await options.rasterize([], { x: 0, y: 0, width: 1, height: 1 }, 1);
+        return { bytes: new TextEncoder().encode('%PDF-never'), report: emptyReport() };
+      });
+      const base = deps.resolveDeps;
+      deps.resolveDeps = (index) => ({ ...base(index), rasterizeOps: () => new Promise(() => {}) });
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const { report } = await exportPagesPdf(pdfOptions({ islandTimeoutMs: 20 }), deps);
+
+      expect(rasterFallback).toHaveBeenCalledTimes(1);
+      expect(report.fallback?.kind).toBe('timeout');
+      expect(report.fallback?.reason).toMatch(/raster island/);
+      vi.restoreAllMocks();
+    });
+
     it('a page that cannot be recorded: a raster pdf, which then says what is wrong', async () => {
       const { deps, rasterFallback } = pdfSetup([pageOf([['a', [square]]]), null]);
       vi.spyOn(console, 'warn').mockImplementation(() => {});
