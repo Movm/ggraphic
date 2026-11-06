@@ -137,6 +137,7 @@ interface BrandInputs {  // from packages/core/src/brand/define.ts (type-only ex
   logoAlt?: BrandLogoAlt | null | undefined
   layout?: BrandLayout | undefined
   lineHeightFactor?: number | undefined
+  print?: { cmyk?: Readonly<Record<string, readonly [number, number, number, number]>>; } | undefined
 }
 function brandLayout(brand: BrandPack) => BrandLayout  // from packages/core/src/brand/layout.ts
 interface BrandLayout {  // from packages/core/src/brand/layout.ts (type-only export)
