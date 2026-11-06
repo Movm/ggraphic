@@ -22,6 +22,7 @@ import {
   type ImageByteDeps,
   type SourceOutcome,
 } from './imageBytes.js';
+import { itemBounds } from './itemBounds.js';
 import { IDENTITY } from './matrix.js';
 import { isTrustedSvgImage } from './trustedSvgImages.js';
 import {
@@ -206,6 +207,8 @@ async function resolveImage(
   const ref = op.image;
   const outcome = await resolveRef(ref, resolution);
   if (!outcome.ok) {
+    // An item without an id (a page background) has no stage element to draw: raster the op.
+    if (state.elementId === null) return rasterizedImage(op, outcome.reason, resolution, state);
     state.stageFallback ??= outcome.reason;
     return null;
   }
@@ -236,6 +239,46 @@ async function resolveImage(
     }
   }
   return { ...op, image: source };
+}
+
+/** An image nothing can embed, drawn by the browser from the op itself: an island of its box. */
+async function rasterizedImage(
+  op: Extract<SceneOp, { kind: 'image' }>,
+  reason: Extract<RasterReason, 'image-unreadable' | 'svg-unsupported'>,
+  resolution: Resolution,
+  state: ItemState
+): Promise<SceneOp | null> {
+  const bounds = itemBounds({ elementId: null, label: null, ops: [op] });
+  if (!bounds) {
+    state.missing = true;
+    return null;
+  }
+  const island = await resolveRaster(
+    {
+      kind: 'raster',
+      matrix: IDENTITY,
+      alpha: 1,
+      clips: [],
+      shadow: null,
+      png: null,
+      x: bounds.x0,
+      y: bounds.y0,
+      width: bounds.x1 - bounds.x0,
+      height: bounds.y1 - bounds.y0,
+      reason,
+      source: [op],
+    },
+    resolution,
+    state
+  );
+  if (island) {
+    resolution.report.rasterIslands.push({
+      page: resolution.deps.page,
+      elementId: null,
+      reason,
+    });
+  }
+  return island;
 }
 
 async function resolveRaster(
