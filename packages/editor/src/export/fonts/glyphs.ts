@@ -20,7 +20,7 @@ export interface FontkitFont {
   /** Every code point the font's cmap maps to a glyph. */
   characterSet: readonly number[];
   /** The table is absent in fonts that never declare a licence flag. */
-  'OS/2'?: { fsType?: FontkitFsType };
+  'OS/2'?: { fsType?: FontkitFsType; usWeightClass?: number };
   hasGlyphForCodePoint(codePoint: number): boolean;
   /** One glyph for one code point, no shaping; code points outside the font give `.notdef`. */
   glyphForCodePoint(codePoint: number): FontkitGlyph;

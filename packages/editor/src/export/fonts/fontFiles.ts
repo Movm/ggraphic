@@ -225,7 +225,7 @@ async function loadFiles(face: FontSpec, deps: FontSourceDeps): Promise<readonly
   return (await find('normal')).map((file) => ({ ...file, slant: SYNTHETIC_ITALIC_SLANT }));
 }
 
-/** The files for one family and weight, and the weight they serve (null: the host did not say). */
+/** The files for one family and weight, and the weight they serve (null: unknown). */
 async function filesFor(
   family: string,
   weight: number,
@@ -242,7 +242,10 @@ async function filesFor(
   }
   if (hosted) {
     const file = await toFontFile(hosted, null, weight);
-    if (file) return { files: [file], served: null };
+    // The host does not say which weight it served; the font's own class does (a host that
+    // answers a bold request with its regular is the case fake bold exists for).
+    const declared = file?.font['OS/2']?.usWeightClass;
+    if (file) return { files: [file], served: declared && declared > 0 ? declared : null };
   }
   const fetchBytes = deps.fetchBytes ?? fetchOverHttp;
   // The brand's faces first; the page's `@font-face` rules only if the brand has none.

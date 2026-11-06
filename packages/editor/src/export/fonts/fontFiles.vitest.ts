@@ -368,6 +368,14 @@ describe('resolveFontFiles: brand faces', () => {
     expect(await run(700, [brandFaces[0]!])).toEqual(['regular.woff2']);
   });
 
+  it('a host that answers a bold request with its regular cut gets fake bold', async () => {
+    const load = async () => LATIN;
+    const bold = await resolveFontFiles(face({ weight: 700 }), { host: { load } });
+    const regular = await resolveFontFiles(face({ weight: 400 }), { host: { load } });
+    expect(bold.files[0]!.fakeBold).toBe(true);
+    expect(regular.files[0]!.fakeBold).toBe(false);
+  });
+
   it('boldFamilies is also consulted for the host service', async () => {
     const load = vi.fn<CanvasExportFontService['load']>(async ({ family }) =>
       family === 'Foo Bold' ? LATIN : null
