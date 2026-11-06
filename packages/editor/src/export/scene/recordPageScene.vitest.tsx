@@ -11,6 +11,7 @@ import { CanvasStage, type CanvasStageRef } from '../../primitives/CanvasStage.j
 import { installNapiStageBridge } from '../../testing/napiStageBridge.js';
 import { PAGE_ROOT_NAME, EXPORT_HIDDEN_NAME } from '../../utils/captureStage.js';
 import { CANVAS_ITEM_NAME } from '../../utils/deepSelect.js';
+import { HIT_ALPHA_THRESHOLD } from '../../utils/pixelHitArea.js';
 import { apply, IDENTITY, multiply } from './matrix.js';
 import { recordPageScene } from './recordPageScene.js';
 
@@ -338,22 +339,71 @@ describe('recordPageScene', () => {
     expect(only(ops(scene, 'a'), 'path').alpha).toBe(0.8);
   });
 
-  it('records a node cached without filters from its source and keeps it cached', () => {
+  it('records a node cached without filters from its source and keeps its cache as it was', () => {
     const { stage, item } = buildPage();
     const cached = rect({ x: 5, y: 7, width: 20, height: 10 });
     item('a', cached);
     cached.cache({ pixelRatio: 3 });
-    const before = cached._getCanvasCache()!;
-    const box = { x: before.x, y: before.y, hit: before.hitConfig };
+    const before = cached._getCanvasCache();
 
     const scene = recordPageScene(stage, { page: 1 });
 
     expect(only(ops(scene, 'a'), 'path').mode).toBe('fill');
     expect(cached.isCached()).toBe(true);
-    // The cache box and the hit canvas keep the extent they had.
-    const after = cached._getCanvasCache()!;
-    expect(after.scene.pixelRatio).toBe(3);
-    expect({ x: after.x, y: after.y, hit: after.hitConfig }).toEqual(box);
+    // The very same cache object: its scene canvas, its hit canvas and their boxes.
+    expect(cached._getCanvasCache()).toBe(before);
+    expect(before!.scene.pixelRatio).toBe(3);
+  });
+
+  it('keeps the pixel hit area of a cached image', () => {
+    const { stage, item } = buildPage({ width: 100, height: 80, displayScale: 1, logicalScale: 1 });
+    // Opaque left half, transparent right half.
+    const source = Konva.Util.createCanvasElement();
+    source.width = 20;
+    source.height = 10;
+    const paint = source.getContext('2d')!;
+    paint.fillStyle = '#cc0000';
+    paint.fillRect(0, 0, 10, 10);
+    const image = new Konva.Image({ image: source, x: 10, y: 10, width: 20, height: 10 });
+    item('a', image);
+    // As `applyPixelHitArea` does it: the hit mask is cut from the cached pixels.
+    image.cache({ pixelRatio: 1, hitCanvasPixelRatio: 1 });
+    image.drawHitFromCache(HIT_ALPHA_THRESHOLD);
+    const opaque = { x: 14, y: 15 };
+    const transparent = { x: 26, y: 15 };
+    stage.draw();
+    expect(stage.getIntersection(opaque)).toBe(image);
+    expect(stage.getIntersection(transparent)).toBeNull();
+
+    const scene = recordPageScene(stage, { page: 1 });
+
+    expect(only(ops(scene, 'a'), 'image').kind).toBe('image');
+    stage.draw();
+    expect(stage.getIntersection(opaque)).toBe(image);
+    expect(stage.getIntersection(transparent)).toBeNull();
+  });
+
+  it('gives the caches back when an element throws while recording', () => {
+    const { stage, item } = buildPage();
+    const cached = rect({ x: 5, y: 7, width: 20, height: 10 });
+    item(
+      'a',
+      cached,
+      new Konva.Shape({
+        width: 10,
+        height: 10,
+        sceneFunc() {
+          throw new Error('broken element');
+        },
+      })
+    );
+    cached.cache();
+    const before = cached._getCanvasCache();
+
+    expect(() => recordPageScene(stage, { page: 1 })).toThrow('broken element');
+
+    expect(cached._getCanvasCache()).toBe(before);
+    expect(cached.isCached()).toBe(true);
   });
 
   it('turns a node cached with filters into a raster island', () => {

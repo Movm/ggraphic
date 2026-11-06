@@ -171,36 +171,27 @@ function cachedNodes(node: Konva.Node): Konva.Node[] {
  * would be recorded as one bitmap `drawImage`), and with gradients and patterns built on the
  * recorder; then puts both back.
  *
- * Each cache is cleared and rebuilt with the box and ratios it had. `cache()` without them would
- * measure the node again, and a cache made with its own `x`/`y`/`width`/`height` or `pixelRatio`
- * would change, and its hit canvas, the region Konva answers pointer events from, with it.
+ * A cache is detached from its node and the same object is handed back, not cleared and rebuilt:
+ * `cache()` would rasterise the node again, and the hit canvas, the region Konva answers pointer
+ * events from, would be lost. `applyPixelHitArea` cuts that canvas to the visible pixels
+ * (`drawHitFromCache`) once, when the image loads, and nothing repeats it, so a rebuilt cache
+ * would make an image's transparent corners clickable.
+ *
+ * Putting back is plain assignment, so it cannot fail half-way and hide the error `draw` threw.
  */
 function drawFromSource(cached: Konva.Node[], recorder: RecordingContext, draw: () => void): void {
-  const configs = cached.map((node) => {
-    const cache = node._getCanvasCache()!;
-    return {
-      node,
-      config: {
-        x: cache.x,
-        y: cache.y,
-        width: cache.hitConfig.width,
-        height: cache.hitConfig.height,
-        pixelRatio: cache.scene.pixelRatio,
-        hitCanvasPixelRatio: cache.hitConfig.pixelRatio,
-        ...(cache.scene.getContext()._context.imageSmoothingEnabled === false
-          ? { imageSmoothingEnabled: false }
-          : {}),
-      },
-    };
+  const detached = cached.map((node) => ({ node, cache: node._getCanvasCache() }));
+  detached.forEach(({ node }) => {
+    node._canvasCache = null;
   });
-  configs.forEach(({ node }) => node.clearCache());
   const restorePaints = recordPaintsOn(recorder);
   try {
     draw();
   } finally {
     restorePaints();
-    // Inner caches first: an outer one draws them into itself.
-    for (const { node, config } of configs.reverse()) node.cache(config);
+    detached.forEach(({ node, cache }) => {
+      node._canvasCache = cache;
+    });
   }
 }
 
