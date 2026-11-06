@@ -1,5 +1,13 @@
 # @ggraphic/studio-server
 
+## 0.1.0-alpha.6
+
+### Patch Changes
+
+- Updated dependencies [064350e]
+- Updated dependencies [d570cbc]
+  - @ggraphic/core@0.1.0-alpha.3
+
 ## 0.1.0-alpha.5
 
 ## 0.1.0-alpha.4
