@@ -15,7 +15,7 @@
  * - Raster islands are asked for through `rasterize`; an island nobody could make is reported in
  *   `missingElements`, never left out quietly.
  */
-import { glyphOutline, splitRuns, type GlyphRun } from '../fonts/glyphs.js';
+import { advanceOf, glyphOutline, splitRuns, type GlyphRun } from '../fonts/glyphs.js';
 import { IDENTITY, invert, multiply } from '../scene/matrix.js';
 import { svgImageGroup, type SvgSource } from '../svg/svgImageScene.js';
 import { formatNumber } from '../svg/xml.js';
@@ -400,7 +400,8 @@ export class ContentWriter {
       }
       // `encodeText` is what makes pdf-lib keep this glyph in the subset.
       hex += font.encodeText(char).toString().slice(1, -1);
-      pen += file.font.glyphForCodePoint(codePoint).advanceWidth * perEm * (size / 1000);
+      // The advance of the glyphs `encodeText` wrote (it shapes), which is the width in `/W`.
+      pen += advanceOf(file.font, codePoint) * perEm * (size / 1000);
     });
     if (hex) parts.push(`<${hex}>`);
     if (parts.length === 0) return;

@@ -242,6 +242,33 @@ describe('text', () => {
     expect(upright.content(0)).toContain('1 0 0 -1 10 100 Tm');
   });
 
+  it('sets the pen by the advance of the glyph the font shapes, which is the width the PDF holds', async () => {
+    // A font that shapes 'I' to a glyph 100 units (of 1000) wider: the next 'I' is 4 px (at 40 px)
+    // closer than the pen says, and the array says so by 100 thousandths of an em.
+    const real = set.files[0]!.font;
+    const wider = withFile((file) => ({
+      ...file,
+      font: Object.create(real, {
+        layout: {
+          value: (value: string) => {
+            const { glyphs } = real.layout(value);
+            return {
+              glyphs: glyphs.map((glyph) =>
+                Object.create(glyph, { advanceWidth: { value: glyph.advanceWidth + 100 } })
+              ),
+            };
+          },
+        },
+      }),
+    }));
+    const advance = (real.glyphForCodePoint(73).advanceWidth * 40) / real.unitsPerEm;
+    const op = text('II', { xs: [10, 10 + advance] });
+    const { pdf } = await write(sceneOf(item('a', null, op)), { fonts: wider });
+    expect(pdf.content(0)).toMatch(/\[<[0-9a-f]{4}> 100 <[0-9a-f]{4}>\] TJ/);
+    const { pdf: plain } = await write(sceneOf(item('a', null, op)));
+    expect(plain.content(0)).toMatch(/\[<[0-9a-f]{8}>\] TJ/);
+  });
+
   it('sets no adjustment where the advances already agree with the positions', async () => {
     const { pdf } = await write(sceneOf(item('a', null, text('Hallo'))));
     expect(pdf.content(0)).toMatch(/\[<[0-9a-f]{20}>\] TJ/);

@@ -24,6 +24,8 @@ export interface FontkitFont {
   hasGlyphForCodePoint(codePoint: number): boolean;
   /** One glyph for one code point, no shaping; code points outside the font give `.notdef`. */
   glyphForCodePoint(codePoint: number): FontkitGlyph;
+  /** The shaped glyphs of a string, with the default features (what `pdf-lib` embeds). */
+  layout(text: string): { glyphs: readonly FontkitGlyph[] };
 }
 
 /** What fontkit makes of `OS/2.fsType`: the bits it names (a number if a future version stops decoding them). */
@@ -61,6 +63,32 @@ export async function loadFontkit(): Promise<typeof FontkitModule> {
   return module.default;
 }
 
+const shaped = new WeakMap<FontkitFont, Map<number, readonly FontkitGlyph[]>>();
+
+/**
+ * The glyphs a font draws for one code point on its own: what the browser shapes it to and what
+ * `pdf-lib` embeds (it encodes text through `layout`), not the glyph the cmap names. They differ
+ * in a font with required variation alternates: Fraunces Italic draws its 'w' with a glyph of 1491
+ * units where the cmap one has 1644, and the x positions the browser measured are those of the
+ * shaped glyph. Never empty.
+ */
+export function glyphsFor(font: FontkitFont, codePoint: number): readonly FontkitGlyph[] {
+  let known = shaped.get(font);
+  if (!known) shaped.set(font, (known = new Map()));
+  let glyphs = known.get(codePoint);
+  if (!glyphs) {
+    const laidOut = font.layout(String.fromCodePoint(codePoint)).glyphs;
+    glyphs = laidOut.length > 0 ? laidOut : [font.glyphForCodePoint(codePoint)];
+    known.set(codePoint, glyphs);
+  }
+  return glyphs;
+}
+
+/** The advance of `codePoint` in font units: that of the glyphs `glyphsFor` gives, and so of the glyphs a PDF holds. */
+export function advanceOf(font: FontkitFont, codePoint: number): number {
+  return glyphsFor(font, codePoint).reduce((sum, glyph) => sum + glyph.advanceWidth, 0);
+}
+
 /** A stretch of a text op that one font file draws; `file` is null where no file has the glyphs. */
 export interface GlyphRun {
   file: FontFile | null;
@@ -95,7 +123,8 @@ export function splitRuns(set: FontFileSet, text: string, xs: number[]): GlyphRu
  * The outline of every code point of `text` in `file`, scaled to `size` px, y down, baseline at 0
  * and the pen at x = 0 (the writer moves each glyph to its own x). One entry per code point, in
  * the order of the op's `xs`, so a ligature is not formed and kerning is left to the positions
- * the browser measured. A combining mark gets no base to attach to: precomposed text is exact.
+ * the browser measured. A glyph is the one the font shapes the code point to on its own (see
+ * `glyphsFor`). A combining mark gets no base to attach to: precomposed text is exact.
  * A file with a `slant` (an upright cut standing in for an italic) is sheared about the baseline.
  */
 export function glyphOutline(
@@ -109,7 +138,11 @@ export function glyphOutline(
   const x = (fx: number, fy: number) => (slant === 0 ? fx * scale : (fx + slant * fy) * scale);
   const y = (fy: number) => 0 - fy * scale;
   return Array.from(text, (char) => {
-    const glyph = font.glyphForCodePoint(char.codePointAt(0) ?? 0);
+    const codePoint = char.codePointAt(0) ?? 0;
+    // The shaped glyph, as the browser draws it; one that shapes into several (a decomposition)
+    // keeps the glyph of the cmap, which has the whole character in one outline.
+    const shapedGlyphs = glyphsFor(font, codePoint);
+    const glyph = shapedGlyphs.length === 1 ? shapedGlyphs[0]! : font.glyphForCodePoint(codePoint);
     const path: PathCommand[] = glyph.path.commands.map((segment): PathCommand => {
       const a = segment.args;
       switch (segment.command) {

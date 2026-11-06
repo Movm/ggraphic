@@ -6,7 +6,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { resolveFontFiles, type FontFile, type FontFileSet } from './fontFiles.js';
-import { glyphOutline, loadFontkit, splitRuns } from './glyphs.js';
+import { advanceOf, glyphOutline, glyphsFor, loadFontkit, splitRuns } from './glyphs.js';
 
 const fontsourceDir = path.dirname(
   createRequire(import.meta.url).resolve('@fontsource/instrument-sans/package.json')
@@ -74,6 +74,44 @@ describe('splitRuns', () => {
   it('puts all text into one missing run for a face without files', async () => {
     const set = await resolveFontFiles(spec, { fetchBytes: async () => null });
     expect(splitRuns(set, 'Hi', [0, 7])).toEqual([{ file: null, text: 'Hi', xs: [0, 7] }]);
+  });
+});
+
+/** `latin` with a font that shapes `from` to the glyphs of `to` (as Fraunces does for a 'w'). */
+function shapingTo(latin: FontFile, from: string, to: string[]): FontFile {
+  const real = latin.font;
+  const font = Object.create(real, {
+    layout: {
+      value: (text: string) =>
+        text === from
+          ? { glyphs: to.map((char) => real.glyphForCodePoint(char.codePointAt(0)!)) }
+          : real.layout(text),
+    },
+  });
+  return { ...latin, font };
+}
+
+describe('the glyph of a code point on its own', () => {
+  it('is the cmap glyph in a font that shapes nothing', async () => {
+    const { latin } = await latinOnly();
+    expect(glyphsFor(latin.font, 0x48)).toEqual([latin.font.glyphForCodePoint(0x48)]);
+    expect(advanceOf(latin.font, 0x48)).toBe(latin.font.glyphForCodePoint(0x48).advanceWidth);
+  });
+
+  it('is the shaped glyph where the font shapes one: its outline and its advance', async () => {
+    const { latin } = await latinOnly();
+    const shaped = shapingTo(latin, 'I', ['H']);
+    expect(advanceOf(shaped.font, 0x49)).toBe(latin.font.glyphForCodePoint(0x48).advanceWidth);
+    expect(glyphOutline(shaped, 'I', 100)[0]).toEqual(glyphOutline(latin, 'H', 100)[0]);
+  });
+
+  it('adds up the advances of what a code point shapes to, and draws the cmap glyph then', async () => {
+    const { latin } = await latinOnly();
+    const split = shapingTo(latin, 'I', ['H', 'o']);
+    const advance = (char: string) =>
+      latin.font.glyphForCodePoint(char.codePointAt(0)!).advanceWidth;
+    expect(advanceOf(split.font, 0x49)).toBe(advance('H') + advance('o'));
+    expect(glyphOutline(split, 'I', 100)[0]).toEqual(glyphOutline(latin, 'I', 100)[0]);
   });
 });
 

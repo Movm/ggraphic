@@ -11,6 +11,7 @@
  * - `svgDefaultsFor` and `mostUsedFont` say what the picture's text inherits where it names no
  *   family, and how wide its glyphs are, from the font files the export resolved.
  */
+import { advanceOf } from '../fonts/glyphs.js';
 import { IDENTITY, multiply } from '../scene/matrix.js';
 import { svgToScene, type SvgToSceneDefaults } from './svgToScene.js';
 import { formatNumber } from './xml.js';
@@ -141,7 +142,7 @@ function measure(fonts: ReadonlyMap<string, FontFileSet>, text: string, font: Fo
     const codePoint = char.codePointAt(0) ?? 0;
     const file = set?.fileFor(codePoint);
     return file
-      ? (file.font.glyphForCodePoint(codePoint).advanceWidth * font.size) / file.font.unitsPerEm
+      ? (advanceOf(file.font, codePoint) * font.size) / file.font.unitsPerEm
       : font.size * 0.6;
   });
 }
