@@ -331,8 +331,12 @@ const DEVELOPER_ERRORS = [
   /^colour stop offset /,
   /^the replay buffer has no 2D context$/,
   /^replaying a group needs a canvas: /,
-  // The PDF writer: a mode nobody asked it for yet, and an outline the font repair cannot write.
-  /^writePdf: the \$\{\} mode is not written yet$/,
+  // The PDF writer and its caller: a print export without the print format, and an outline the
+  // font repair cannot write. The timeout lands in `report.fallback.reason` and the console; the
+  // person is told by `downloadPanel.pdfFallbackNotice`.
+  /^writePdf: the print mode needs /,
+  /^exportPagesPdf: the print mode needs /,
+  /^the PDF writer did not finish within /,
   /^a cubic outline cannot be written as a TrueType glyph$/,
 ];
 

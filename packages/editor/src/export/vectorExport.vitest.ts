@@ -1,11 +1,18 @@
+// @vitest-environment jsdom
 // SPDX-License-Identifier: AGPL-3.0-only
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
+import { brandDefault, type BrandPack } from '@ggraphic/core';
 import { unzipSync } from 'fflate';
 import { describe, expect, it, vi } from 'vitest';
 
+import { type CanvasFormat, type PrintCanvasFormat } from '../formats/index.js';
+import { extractText, inspectPdf } from './pdf/__fixtures__/inspectPdf.js';
+import { napiRasterize } from './pdf/__fixtures__/napiRasterize.js';
+import { writePdf } from './pdf/writePdf.js';
+import type * as WritePdfModule from './pdf/writePdf.js';
 import { IDENTITY } from './scene/matrix.js';
 import type { ResolveDeps } from './scene/resolveScene.js';
 import {
@@ -15,7 +22,19 @@ import {
   type RecordedScene,
   type SceneOp,
 } from './scene/types.js';
-import { exportPagesSvg, type VectorExportDeps } from './vectorExport.js';
+import { SLIDE_PDF_PAGE_PT } from './slidesPdf.js';
+import {
+  exportPagesPdf,
+  exportPagesSvg,
+  type PdfExportOptions,
+  type VectorExportDeps,
+} from './vectorExport.js';
+
+// The real writer, except where a test makes it throw or hang.
+vi.mock('./pdf/writePdf.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof WritePdfModule>();
+  return { ...actual, writePdf: vi.fn(actual.writePdf) };
+});
 
 // ---------------------------------------------------------------------------------------------
 // Fixtures
@@ -103,7 +122,7 @@ interface Setup {
 }
 
 function depsFor({ scenes, resolve }: Setup) {
-  const fetchBytes = vi.fn(async () => latinBytes);
+  const fetchBytes = vi.fn(async (_url: string) => latinBytes);
   const recordPage = vi.fn(
     async (index: number, _options: { transparent: boolean }) => scenes[index] ?? null
   );
@@ -238,5 +257,356 @@ describe('exportPagesSvg', () => {
     const { deps } = depsFor({ scenes: [scene([square]), null] });
 
     await expect(exportPagesSvg([0, 1], OPTIONS, deps)).rejects.toThrow('Seite 2');
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// exportPagesPdf
+
+const DIGITAL: CanvasFormat = {
+  id: 'test-post',
+  label: 'Post',
+  description: '',
+  group: 'post',
+  category: 'digital',
+  width: 200,
+  height: 100,
+  dpi: 72,
+  iconKey: 'landscape',
+  defaultExport: 'png',
+  exportable: ['png', 'pdf'],
+  print: null,
+};
+const SLIDES: CanvasFormat = {
+  ...DIGITAL,
+  id: 'test-slides',
+  group: 'slides',
+  width: 960,
+  height: 540,
+};
+const PRINT: PrintCanvasFormat = {
+  ...DIGITAL,
+  id: 'test-print',
+  group: 'print',
+  category: 'print',
+  width: 308, // trim + bleed at 2 px to the mm
+  height: 432,
+  print: {
+    trimMm: { w: 148, h: 210 },
+    bleedMm: 3,
+    safeMm: 5,
+    exportDpi: 300,
+    pageCount: 1,
+    imprint: null,
+  },
+};
+
+const BRAND: BrandPack = {
+  ...brandDefault,
+  fonts: { ...brandDefault.fonts, body: FACE.family },
+  print: { cmyk: { '#1D3557': [100, 80, 30, 40] } },
+};
+
+/** A face no source has: its text cannot be a font. */
+const LOST: FontSpec = { family: 'Lost Face', weight: 400, style: 'normal', size: 40 };
+const RASTER_PDF = new TextEncoder().encode('%PDF-raster');
+
+const ICON = (inner: string) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40" width="120" height="40">${inner}</svg>`;
+const svgImage = (markup: string): SceneOp => ({
+  ...base,
+  kind: 'image',
+  image: { kind: 'svg', markup, width: 120, height: 40 },
+  sx: 0,
+  sy: 0,
+  sw: 120,
+  sh: 40,
+  dx: 10,
+  dy: 10,
+  dw: 120,
+  dh: 40,
+});
+
+/** A square with a shadow: the shadow alone is a raster island. */
+const shadowed = (hex: string): SceneOp => ({
+  ...square,
+  shadow: { hex, alpha: 1, blur: 4, offsetX: 2, offsetY: 2 },
+});
+
+const pageOf = (
+  items: [string, SceneOp[]][],
+  over: Partial<RecordedScene> = {}
+): RecordedScene => ({
+  width: 200,
+  height: 100,
+  items: items.map(([elementId, ops]) => ({ elementId, label: elementId, ops })),
+  report: emptyReport(),
+  ...over,
+});
+
+function pdfSetup(scenes: (RecordedScene | null)[], resolve: Partial<ResolveDeps> = {}) {
+  const raster = napiRasterize();
+  const { deps, fetchBytes, recordPage } = depsFor({
+    scenes,
+    resolve: { rasterizeOps: raster.rasterize, ...resolve },
+  });
+  deps.fontDeps = {
+    brandFaces: [
+      { family: FACE.family, src: 'latin.woff2' },
+      { family: 'Second Face', src: 'second.woff2' },
+    ],
+    fetchBytes,
+  };
+  const rasterFallback = vi.fn(async () => RASTER_PDF);
+  return { deps: { ...deps, rasterFallback }, fetchBytes, recordPage, rasterFallback, raster };
+}
+
+const pdfOptions = (over: Partial<PdfExportOptions> = {}): PdfExportOptions => ({
+  mode: 'digital',
+  format: DIGITAL,
+  brand: BRAND,
+  filenameBase: 'Plakat',
+  pageCount: 1,
+  ...over,
+});
+
+describe('exportPagesPdf', () => {
+  it('writes every page into one pdf named <base>.pdf', async () => {
+    const { deps, recordPage, rasterFallback } = pdfSetup([
+      pageOf([['a', [text('Eins')]]]),
+      pageOf([['b', [text('Zwei')]]]),
+    ]);
+
+    const { blob, filename, report } = await exportPagesPdf(pdfOptions({ pageCount: 2 }), deps);
+
+    expect(filename).toBe('Plakat.pdf');
+    expect(blob.type).toBe('application/pdf');
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    expect((await inspectPdf(bytes)).doc.getPageCount()).toBe(2);
+    expect((await extractText(bytes, 1)).join('')).toBe('Zwei');
+    // Opaque pages, in order.
+    expect(recordPage.mock.calls).toEqual([
+      [0, { transparent: false }],
+      [1, { transparent: false }],
+    ]);
+    expect(rasterFallback).not.toHaveBeenCalled();
+    expect(report.fallback).toBeNull();
+  });
+
+  it('digital pages are 1 pt to the px, slides are SLIDE_PDF_PAGE_PT', async () => {
+    const digital = pdfSetup([pageOf([['a', [square]]])]);
+    const { blob } = await exportPagesPdf(pdfOptions(), digital.deps);
+    const small = await inspectPdf(new Uint8Array(await blob.arrayBuffer()));
+    expect(small.doc.getPage(0).getSize()).toEqual({ width: 200, height: 100 });
+
+    const slides = pdfSetup([pageOf([['a', [square]]], { width: 960, height: 540 })]);
+    const result = await exportPagesPdf(
+      pdfOptions({ mode: 'slides', format: SLIDES }),
+      slides.deps
+    );
+    const deck = await inspectPdf(new Uint8Array(await result.blob.arrayBuffer()));
+    expect(deck.doc.getPage(0).getSize()).toEqual(SLIDE_PDF_PAGE_PT);
+  });
+
+  it('print pages carry the format’s trim and bleed boxes, and rasterise at the print ratio', async () => {
+    const { deps, raster } = pdfSetup(
+      [pageOf([['a', [square, shadowed('#000000')]]], { width: 308, height: 432 })],
+      { rasterPixelRatio: 4 }
+    );
+
+    const { blob } = await exportPagesPdf(pdfOptions({ mode: 'print', format: PRINT }), deps);
+
+    const pdf = await inspectPdf(new Uint8Array(await blob.arrayBuffer()));
+    const page = pdf.doc.getPage(0);
+    // 148 mm + 2 × 3 mm bleed, + 2 × 5 mm for the marks; and the trim 8 mm in from the media box.
+    expect(page.getMediaBox().width).toBeCloseTo(((148 + 6 + 10) * 72) / 25.4, 3);
+    expect(page.getBleedBox().width).toBeCloseTo(((148 + 6) * 72) / 25.4, 3);
+    expect(page.getTrimBox().width).toBeCloseTo((148 * 72) / 25.4, 3);
+    expect(page.getTrimBox().x).toBeCloseTo((8 * 72) / 25.4, 3);
+    expect(pdf.content(0)).toContain('0 0 0 1 K');
+    expect(raster.calls.every((call) => call.pixelRatio === 4)).toBe(true);
+  });
+
+  it('refuses the print mode for a format without a print profile', async () => {
+    const { deps, rasterFallback } = pdfSetup([pageOf([['a', [square]]])]);
+
+    // A mistake in the caller is no reason to print a raster pdf of something else.
+    await expect(exportPagesPdf(pdfOptions({ mode: 'print' }), deps)).rejects.toThrow(/print/);
+    expect(rasterFallback).not.toHaveBeenCalled();
+  });
+
+  it('writes the colours of the brand’s print map as CMYK and reports the palette colours left RGB', async () => {
+    const mapped = { ...square, paint: { type: 'solid', hex: '#1d3557', alpha: 1 } } as SceneOp;
+    const other = { ...square, paint: { type: 'solid', hex: '#457b9d', alpha: 1 } } as SceneOp;
+    const { deps } = pdfSetup([pageOf([['a', [mapped, other]]])]);
+
+    const { blob, report } = await exportPagesPdf(pdfOptions(), deps);
+
+    const pdf = await inspectPdf(new Uint8Array(await blob.arrayBuffer()));
+    expect(pdf.content(0)).toContain('1 0.8 0.3 0.4 k');
+    expect(pdf.content(0)).toContain('rg');
+    // brandDefault's ocean is in its palette and has no print value here.
+    expect(report.rgbBrandColors).toEqual(['#457b9d']);
+  });
+
+  it('writes a pure RGB pdf for a brand without print values', async () => {
+    const mapped = { ...square, paint: { type: 'solid', hex: '#1d3557', alpha: 1 } } as SceneOp;
+    const { deps } = pdfSetup([pageOf([['a', [mapped]]])]);
+    const { print: _print, ...plain } = BRAND;
+
+    const { blob, report } = await exportPagesPdf(pdfOptions({ brand: plain }), deps);
+
+    const pdf = await inspectPdf(new Uint8Array(await blob.arrayBuffer()));
+    expect(pdf.content(0)).not.toMatch(/ k\n/);
+    expect(report.rgbBrandColors).toEqual(['#1d3557']);
+  });
+
+  describe('fonts', () => {
+    it('finds the faces of text inside an SVG, in the body font where it names none', async () => {
+      // No text of the page's own: the chart's labels are all there is to draw.
+      const chart = svgImage(
+        ICON(
+          '<text x="2" y="12" font-family="sans-serif" font-size="10">Hallo</text>' +
+            '<text x="2" y="30" font-family="Second Face" font-size="10">Welt</text>'
+        )
+      );
+      const { deps, fetchBytes } = pdfSetup([pageOf([['chart', [chart]]])]);
+
+      const { blob, report } = await exportPagesPdf(pdfOptions(), deps);
+
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      expect((await extractText(bytes)).join('')).toBe('HalloWelt');
+      expect(report.rasterIslands).toEqual([]);
+      expect(fetchBytes.mock.calls.map(([url]) => url).sort()).toEqual([
+        'latin.woff2',
+        'second.woff2',
+      ]);
+    });
+  });
+
+  describe('the raster fallback', () => {
+    const lost = (value: string) => text(value, LOST);
+
+    it('more than one element with unresolvable fonts: a raster pdf and report.fallback', async () => {
+      const { deps, rasterFallback } = pdfSetup([
+        pageOf([
+          ['a', [lost('Eins')]],
+          ['b', [lost('Zwei')]],
+        ]),
+      ]);
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const { blob, filename, report } = await exportPagesPdf(pdfOptions(), deps);
+
+      expect(rasterFallback).toHaveBeenCalledTimes(1);
+      expect(await blob.text()).toBe('%PDF-raster');
+      expect(filename).toBe('Plakat.pdf');
+      expect(report.fallback?.reason).toMatch(/2 elements/);
+      // What the vector attempt found says nothing about the raster pdf.
+      expect(report.rasterIslands).toEqual([]);
+      expect(warn).toHaveBeenCalled();
+      warn.mockRestore();
+    });
+
+    it('counts the elements of all pages together', async () => {
+      const { deps, rasterFallback } = pdfSetup([
+        pageOf([['a', [lost('Eins')]]]),
+        pageOf([['b', [lost('Zwei')]]]),
+      ]);
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const { report } = await exportPagesPdf(pdfOptions({ pageCount: 2 }), deps);
+
+      expect(rasterFallback).toHaveBeenCalledTimes(1);
+      expect(report.fallback).not.toBeNull();
+      vi.restoreAllMocks();
+    });
+
+    it('one element with an unresolvable font: no fallback, that text rastered', async () => {
+      const { deps, rasterFallback } = pdfSetup([
+        // Several runs of one element are still one element.
+        pageOf([
+          ['a', [lost('Eins'), lost('Zwei')]],
+          ['b', [text('Drei')]],
+        ]),
+      ]);
+
+      const { blob, report } = await exportPagesPdf(pdfOptions(), deps);
+
+      expect(rasterFallback).not.toHaveBeenCalled();
+      expect(report.fallback).toBeNull();
+      expect(report.rasterIslands.map((entry) => entry.reason)).toEqual([
+        'font-unavailable',
+        'font-unavailable',
+      ]);
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      expect((await extractText(bytes)).join('').replace(/\s/g, '')).toBe('Drei');
+    });
+
+    it('other raster islands never trigger it', async () => {
+      // Three elements with a glyph the font lacks, and three with a shadow.
+      const { deps, rasterFallback } = pdfSetup([
+        pageOf([
+          ['a', [text('Ā')]],
+          ['b', [text('Ā')]],
+          ['c', [text('Ā')]],
+          ['d', [shadowed('#000000')]],
+          ['e', [shadowed('#111111')]],
+          ['f', [shadowed('#222222')]],
+        ]),
+      ]);
+
+      const { report } = await exportPagesPdf(pdfOptions(), deps);
+
+      expect(rasterFallback).not.toHaveBeenCalled();
+      expect(report.rasterIslands).toHaveLength(6);
+      expect(report.fallback).toBeNull();
+    });
+
+    it('writer throws: a raster pdf', async () => {
+      const { deps, rasterFallback } = pdfSetup([pageOf([['a', [square]]])]);
+      vi.mocked(writePdf).mockRejectedValueOnce(new Error('fontkit exploded'));
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const { blob, report } = await exportPagesPdf(pdfOptions(), deps);
+
+      expect(await blob.text()).toBe('%PDF-raster');
+      expect(rasterFallback).toHaveBeenCalledTimes(1);
+      expect(report.fallback?.reason).toContain('fontkit exploded');
+      vi.restoreAllMocks();
+    });
+
+    it('writer hangs: a raster pdf after the timeout', async () => {
+      const { deps, rasterFallback } = pdfSetup([pageOf([['a', [square]]])]);
+      vi.mocked(writePdf).mockImplementationOnce(() => new Promise(() => {}));
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const { report } = await exportPagesPdf(pdfOptions({ writeTimeoutMs: 20 }), deps);
+
+      expect(rasterFallback).toHaveBeenCalledTimes(1);
+      expect(report.fallback?.reason).toMatch(/did not finish/);
+      vi.restoreAllMocks();
+    });
+
+    it('a page that cannot be recorded: a raster pdf, which then says what is wrong', async () => {
+      const { deps, rasterFallback } = pdfSetup([pageOf([['a', [square]]]), null]);
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const { report } = await exportPagesPdf(pdfOptions({ pageCount: 2 }), deps);
+
+      expect(rasterFallback).toHaveBeenCalledTimes(1);
+      expect(report.fallback?.reason).toContain('Seite 2');
+      vi.restoreAllMocks();
+    });
+
+    it('if the raster pdf fails too, that is the error', async () => {
+      const { deps, rasterFallback } = pdfSetup([pageOf([['a', [square]]])]);
+      vi.mocked(writePdf).mockRejectedValueOnce(new Error('vector failed'));
+      rasterFallback.mockRejectedValueOnce(new Error('raster failed'));
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      await expect(exportPagesPdf(pdfOptions(), deps)).rejects.toThrow('raster failed');
+      vi.restoreAllMocks();
+    });
   });
 });
