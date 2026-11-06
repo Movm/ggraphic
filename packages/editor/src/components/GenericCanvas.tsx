@@ -25,6 +25,8 @@ import { DocumentBrandContext } from '../brand/documentBrand.js';
 import { useEmitHostStateChanges } from '../collab/useEmitHostStateChanges.js';
 import { useYjsCanvasBinding } from '../collab/useYjsCanvasBinding.js';
 import { stateKeyOfCallback } from '../collab/wrapCallbacksWithPageSync.js';
+import { pngFromDataUrl } from '../export/scene/imageBytes.js';
+import { recordPageScene } from '../export/scene/recordPageScene.js';
 import { CropGhostOverlay } from './CropGhostOverlay.js';
 import { PrintGuides } from './PrintGuides.js';
 import { SlotBudgetStatus } from './SlotBudgetStatus.js';
@@ -94,6 +96,7 @@ import {
   captureStageImage,
   captureStageImageAsync,
   rasterizeStageElement,
+  rasterizeStageNode,
   visibleStageTexts,
 } from '../utils/captureStage.js';
 import { MAX_ICON_SELECTIONS, selectedCatalogIconIds } from '../utils/iconInstances.js';
@@ -112,6 +115,7 @@ const hostLayoutKeys = fromHostKinds((kinds) => kinds.flatMap((k) => k.layoutSta
 
 import type { BaseCanvasState } from '../configs/factory/baseTypes.js';
 import type { CanvasElementConfig, FullCanvasConfig, LayoutResult } from '../configs/types.js';
+import type { RecordedScene } from '../export/scene/types.js';
 import type { OptionalCanvasActions } from '../hooks/useCanvasElementHandlers.js';
 import type { ShadowPatch } from '../hooks/useFloatingModuleHandlers.js';
 import type { FloatingModuleState } from '../hooks/useFloatingModuleState.js';
@@ -322,8 +326,24 @@ export interface GenericCanvasRef {
   captureCanvasForAi: () => Promise<string | null>;
   /** The page's visible texts in reading order, for alt texts. */
   getVisibleTexts: () => string[];
-  /** One element alone as PNG plus its box in page px (PPTX raster fallback); null when not on the stage. */
-  rasterizeElement: (elementId: string) => Promise<ReturnType<typeof rasterizeStageElement>>;
+  /**
+   * One element alone as PNG plus its box in page px (PPTX raster fallback); null when not on the
+   * stage. `pixelRatio` is per page px; default 2.
+   */
+  rasterizeElement: (
+    elementId: string,
+    pixelRatio?: number
+  ) => Promise<ReturnType<typeof rasterizeStageElement>>;
+  /**
+   * A PNG of the stage node `recordScene` kept as the `nodeRef` of a raster island, for an island
+   * whose item has no element id to look the node up by; null when it cannot be drawn.
+   */
+  rasterizeNode: (nodeRef: unknown, pixelRatio: number) => Promise<Uint8Array | null>;
+  /**
+   * This page as a scene for the vector export: one item per element, ops in page px. Waits for
+   * the fonts; null when there is no stage.
+   */
+  recordScene: (options: { page: number; transparent?: boolean }) => Promise<RecordedScene | null>;
   /** Clears this page's element selection — the per-page store lives behind
    *  CanvasStoreProvider, so the parent editor reaches it through this handle. */
   deselect: () => void;
@@ -1047,9 +1067,31 @@ function GenericCanvasWithRef<
       captureCanvasForAi: async () =>
         captureStageImage(stageRef.current, { format: 'jpeg', pixelRatio: 1, quality: 0.85 }),
       getVisibleTexts: () => visibleStageTexts(stageRef.current?.getStage() ?? null),
-      rasterizeElement: async (elementId) => {
+      rasterizeElement: async (elementId, pixelRatio) => {
         await ensureFontsReady();
-        return rasterizeStageElement(stageRef.current?.getStage() ?? null, elementId);
+        return rasterizeStageElement(stageRef.current?.getStage() ?? null, elementId, pixelRatio);
+      },
+      rasterizeNode: async (nodeRef, pixelRatio) => {
+        if (!(nodeRef instanceof Konva.Node)) return null;
+        const drawn = rasterizeStageNode(stageRef.current?.getStage() ?? null, nodeRef, pixelRatio);
+        return drawn ? pngFromDataUrl(drawn.dataUrl) : null;
+      },
+      recordScene: async ({ page, transparent }) => {
+        await ensureFontsReady();
+        const stage = stageRef.current?.getStage();
+        if (!stage) return null;
+        // Read at call time, like the doors above: the page as it is on screen now.
+        const { sortedRenderList } = commandInputsRef.current;
+        const labels = new Map(
+          sortedRenderList.map((item) => [item.id, layerLabel(item, committedStateRef.current)])
+        );
+        return recordPageScene(stage, {
+          page,
+          // The format: the stage's own size is rounded to whole display px.
+          size: { width: stageWidth, height: stageHeight },
+          labels,
+          ...(transparent === undefined ? {} : { transparent }),
+        });
       },
       deselect: () => setSelectedElement(null),
       selectLayers: (change) => applyLayerSelection(store, change),
@@ -1277,6 +1319,7 @@ function GenericCanvasWithRef<
       store,
       actions,
       stageWidth,
+      stageHeight,
       referenceWidth,
       referenceHeight,
       commands,

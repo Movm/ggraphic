@@ -15,7 +15,7 @@ const MM_PER_INCH = 25.4;
 const DEFAULT_MARK_MM = 5;
 /** Abstand der Schnittmarken zur Beschnittkante, damit sie nie hineinragen. */
 const MARK_GAP_MM = 1;
-const MARK_STROKE_PT = 0.25;
+export const MARK_STROKE_PT = 0.25;
 
 export interface SizeMm {
   width: number;

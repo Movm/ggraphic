@@ -19,14 +19,16 @@ import type {
   CanvasImprintParts,
   CanvasImprintService,
 } from '../../hostServices.js';
+import type { ExportReport } from '../../export/scene/types.js';
 
 export type CanvasDownloadChoice = 'png' | 'jpeg' | 'webp';
 
-type DownloadChoice = CanvasDownloadChoice | 'pdf' | 'pptx';
+type DownloadChoice = CanvasDownloadChoice | 'pdf' | 'pptx' | 'svg';
 
 /** Print formats: PDF with bleed and crop marks is the default download. */
 export interface PrintExportProps {
-  onDownloadPdf: () => Promise<void>;
+  /** Resolves with what could not stay vector and whether a raster PDF was made instead, if it knows. */
+  onDownloadPdf: () => Promise<ExportReport | void>;
   /** Notices for photos too small to print well. */
   getWarnings: () => string[];
   /** Posters only: warns (without blocking) while this is missing or a placeholder. */
@@ -38,7 +40,8 @@ export interface PrintExportProps {
  * mit allen Seiten, ohne Druckmarken.
  */
 export interface SlideDeckExportProps {
-  onDownloadPdf: () => Promise<void>;
+  /** As `PrintExportProps.onDownloadPdf`. */
+  onDownloadPdf: () => Promise<ExportReport | void>;
   /** Meldet nach jeder geschriebenen Folie den Fortschritt. */
   onDownloadPptx: (onProgress: (done: number, total: number) => void) => Promise<void>;
   /** Welche Hausschriften das Deck trägt: deutsche oder österreichische Marke. */
@@ -46,6 +49,24 @@ export interface SlideDeckExportProps {
 }
 
 type DeckLocale = 'de-DE' | 'de-AT';
+
+/**
+ * SVG for every format, and the PDF of a digital format (a print format and a slide deck have
+ * theirs in `PrintExportProps` and `SlideDeckExportProps`). `category` decides what the SVG choice
+ * offers: only a digital format has a page background to leave out (a print page or a slide
+ * always has one).
+ */
+export interface VectorExportProps {
+  category: 'print' | 'slides' | 'digital';
+  /** The PDF with every page. Resolves with what could not stay vector or is missing. */
+  onDownloadPdf: () => Promise<ExportReport>;
+  /** Resolves with what could not stay vector or is missing, which the section tells the person. */
+  onDownloadSvg: (options: {
+    pages: 'current' | 'all';
+    text: 'outlines' | 'editable';
+    transparent: boolean;
+  }) => Promise<ExportReport>;
+}
 
 export interface PrintImpressumGate {
   /** False until every poster page has reported its state; no warning until then. */
@@ -164,6 +185,7 @@ export interface DownloadSectionProps {
   exportNotice?: string | null;
   printExport?: PrintExportProps | null;
   slideDeck?: SlideDeckExportProps | null;
+  vectorExport?: VectorExportProps | null;
 }
 
 const DEFAULT_RASTER_PIXEL_RATIO = 1;
@@ -179,6 +201,7 @@ export function DownloadSection({
   exportNotice,
   printExport = null,
   slideDeck = null,
+  vectorExport = null,
 }: DownloadSectionProps) {
   const t = useMessages();
   const [choice, setChoice] = useState<DownloadChoice>(
@@ -188,6 +211,8 @@ export function DownloadSection({
   const [printWarnings] = useState<string[]>(() => printExport?.getWarnings() ?? []);
   const [scale, setScale] = useState<number>(DEFAULT_RASTER_PIXEL_RATIO);
   const [transparent, setTransparent] = useState(false);
+  const [keepTextEditable, setKeepTextEditable] = useState(false);
+  const [report, setReport] = useState<ExportReport | null>(null);
   const [pageSelection, setPageSelection] = useState<'current' | 'all'>('current');
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
@@ -203,23 +228,54 @@ export function DownloadSection({
     impressumGate?.ready === true &&
     !impressum.isComplete(impressum.parse(impressumGate.locale, impressumGate.text ?? ''));
   const isSlidesPdf = choice === 'pdf' && slideDeck !== null;
+  // A digital format has no print or slide service: its PDF comes with the vector export.
+  const isDigitalPdf = choice === 'pdf' && !printExport && !slideDeck && vectorExport !== null;
   const isPptx = choice === 'pptx' && slideDeck !== null;
-  const isMultiPage = pageCount > 1 && onDownloadAllZip && !isPdf && !isSlidesPdf && !isPptx;
+  const isSvg = choice === 'svg' && vectorExport !== null;
+  // A PDF always holds every page, so it asks nothing.
+  const isMultiPage =
+    pageCount > 1 &&
+    (isSvg || (onDownloadAllZip && !isPdf && !isSlidesPdf && !isDigitalPdf && !isPptx));
+  // What the person is told after a vector download: SVG, and every PDF but the old raster one.
+  const reportsExport = isSvg || choice === 'pdf';
   // JPEG has no alpha channel — the transparency toggle is only meaningful for
   // PNG/WebP.
   const supportsTransparency = choice !== 'jpeg';
-  const rasterFormat: CanvasDownloadChoice = choice === 'pdf' || choice === 'pptx' ? 'png' : choice;
+  // A print page or a slide always has its background; only a digital format can leave it out.
+  const svgTransparency = vectorExport?.category === 'digital';
+  const rasterFormat: CanvasDownloadChoice =
+    choice === 'pdf' || choice === 'pptx' || choice === 'svg' ? 'png' : choice;
+  const downloadPanel = t.shell.downloadPanel;
+  // Once each, in the order they happened: the same reason on three photos is one phrase.
+  const rasterReasons = [
+    ...new Set(report?.rasterIslands.map((island) => downloadPanel.rasterReason[island.reason])),
+  ];
 
   const handleDownload = async () => {
     setIsDownloading(true);
     setDownloadError(null);
+    setReport(null);
     try {
+      if (isSvg && vectorExport) {
+        setReport(
+          await vectorExport.onDownloadSvg({
+            pages: pageCount > 1 ? pageSelection : 'current',
+            text: keepTextEditable ? 'editable' : 'outlines',
+            transparent: svgTransparency && transparent,
+          })
+        );
+        return;
+      }
       if (choice === 'pdf' && printExport) {
-        await printExport.onDownloadPdf();
+        setReport((await printExport.onDownloadPdf()) ?? null);
         return;
       }
       if (isSlidesPdf && slideDeck) {
-        await slideDeck.onDownloadPdf();
+        setReport((await slideDeck.onDownloadPdf()) ?? null);
+        return;
+      }
+      if (isDigitalPdf && vectorExport) {
+        setReport(await vectorExport.onDownloadPdf());
         return;
       }
       if (isPptx && slideDeck) {
@@ -247,7 +303,14 @@ export function DownloadSection({
         <Label htmlFor={`${fieldId}-format`} className="text-xs font-medium text-foreground-muted">
           {t.shell.downloadPanel.format}
         </Label>
-        <Select value={choice} onValueChange={(v) => setChoice(v as DownloadChoice)}>
+        <Select
+          value={choice}
+          onValueChange={(v) => {
+            setChoice(v as DownloadChoice);
+            // What the last download reported is about that format only.
+            setReport(null);
+          }}
+        >
           <SelectTrigger id={`${fieldId}-format`} size="sm" className="w-full">
             <SelectValue />
           </SelectTrigger>
@@ -255,45 +318,99 @@ export function DownloadSection({
             {printExport && <SelectItem value="pdf">{t.shell.downloadPanel.pdfPrint}</SelectItem>}
             {slideDeck && <SelectItem value="pptx">PowerPoint (.pptx)</SelectItem>}
             {slideDeck && <SelectItem value="pdf">PDF</SelectItem>}
+            {vectorExport && (printExport || slideDeck) && (
+              <SelectItem value="svg">{downloadPanel.svg}</SelectItem>
+            )}
             <SelectItem value="png">PNG</SelectItem>
             {!printExport && <SelectItem value="jpeg">JPG</SelectItem>}
             {!printExport && <SelectItem value="webp">WebP</SelectItem>}
+            {vectorExport && !printExport && !slideDeck && (
+              <>
+                <SelectItem value="pdf">PDF</SelectItem>
+                <SelectItem value="svg">{downloadPanel.svg}</SelectItem>
+              </>
+            )}
           </SelectContent>
         </Select>
       </div>
 
       {/* Resolution + transparency only apply to single-page export; the
           multi-page ZIP path renders at fixed settings, in the chosen format. */}
-      {!isPdf && !isSlidesPdf && !isPptx && pageSelection === 'current' && (
-        <>
-          <div className="flex flex-col gap-1.5">
-            <Label
-              htmlFor={`${fieldId}-scale`}
-              className="text-xs font-medium text-foreground-muted"
-            >
-              {t.shell.downloadPanel.resolution}
-            </Label>
-            <Select value={String(scale)} onValueChange={(v) => setScale(Number(v))}>
-              <SelectTrigger id={`${fieldId}-scale`} size="sm" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent position="popper" className="z-[10001]">
-                {SCALE_OPTIONS.map((s) => (
-                  <SelectItem key={s} value={String(s)}>
-                    {s}× {s === DEFAULT_RASTER_PIXEL_RATIO ? t.shell.downloadPanel.defaultMark : ''}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      {!isPdf &&
+        !isSlidesPdf &&
+        !isDigitalPdf &&
+        !isPptx &&
+        !isSvg &&
+        pageSelection === 'current' && (
+          <>
+            <div className="flex flex-col gap-1.5">
+              <Label
+                htmlFor={`${fieldId}-scale`}
+                className="text-xs font-medium text-foreground-muted"
+              >
+                {t.shell.downloadPanel.resolution}
+              </Label>
+              <Select value={String(scale)} onValueChange={(v) => setScale(Number(v))}>
+                <SelectTrigger id={`${fieldId}-scale`} size="sm" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent position="popper" className="z-[10001]">
+                  {SCALE_OPTIONS.map((s) => (
+                    <SelectItem key={s} value={String(s)}>
+                      {s}×{' '}
+                      {s === DEFAULT_RASTER_PIXEL_RATIO ? t.shell.downloadPanel.defaultMark : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          {supportsTransparency && (
+            {supportsTransparency && (
+              <div className="flex items-center justify-between gap-2">
+                <Label
+                  htmlFor={`${fieldId}-transparent`}
+                  className="text-xs font-medium text-foreground-muted"
+                >
+                  {t.shell.downloadPanel.transparentBackground}
+                </Label>
+                <Switch
+                  id={`${fieldId}-transparent`}
+                  checked={transparent}
+                  onCheckedChange={setTransparent}
+                />
+              </div>
+            )}
+          </>
+        )}
+
+      {isSvg && (
+        <>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between gap-2">
+              <Label
+                htmlFor={`${fieldId}-editable-text`}
+                className="text-xs font-medium text-foreground-muted"
+              >
+                {downloadPanel.keepTextEditable}
+              </Label>
+              <Switch
+                id={`${fieldId}-editable-text`}
+                aria-describedby={`${fieldId}-editable-text-hint`}
+                checked={keepTextEditable}
+                onCheckedChange={setKeepTextEditable}
+              />
+            </div>
+            <p id={`${fieldId}-editable-text-hint`} className="m-0 text-xs text-foreground-muted">
+              {downloadPanel.keepTextEditableHint}
+            </p>
+          </div>
+          {svgTransparency && (
             <div className="flex items-center justify-between gap-2">
               <Label
                 htmlFor={`${fieldId}-transparent`}
                 className="text-xs font-medium text-foreground-muted"
               >
-                {t.shell.downloadPanel.transparentBackground}
+                {downloadPanel.transparentBackground}
               </Label>
               <Switch
                 id={`${fieldId}-transparent`}
@@ -366,6 +483,20 @@ export function DownloadSection({
         )}
         {isDownloading ? t.shell.downloading : t.shell.download}
       </Button>
+
+      {reportsExport && report?.fallback && (
+        <DownloadNotice tone="info">{downloadPanel.pdfFallbackNotice}</DownloadNotice>
+      )}
+      {reportsExport && report && report.missingElements.length > 0 && (
+        <DownloadNotice>
+          {downloadPanel.missingNotice(report.missingElements.length)}
+        </DownloadNotice>
+      )}
+      {reportsExport && rasterReasons.length > 0 && (
+        <DownloadNotice tone="info">
+          {downloadPanel.rasterNotice(rasterReasons.join(', '))}
+        </DownloadNotice>
+      )}
     </div>
   );
 }

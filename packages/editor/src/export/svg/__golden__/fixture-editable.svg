@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 400 300" width="400" height="300">
+  <defs>
+    <linearGradient id="grad-0" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="100" y2="60">
+      <stop offset="0" stop-color="#00a050"/>
+      <stop offset="1" stop-color="#005030" stop-opacity="0.5"/>
+    </linearGradient>
+    <radialGradient id="grad-1" gradientUnits="userSpaceOnUse" cx="50" cy="30" r="60" fx="50" fy="30">
+      <stop offset="0" stop-color="#00a050"/>
+      <stop offset="1" stop-color="#005030" stop-opacity="0.5"/>
+    </radialGradient>
+    <pattern id="pattern-0" patternUnits="userSpaceOnUse" width="16" height="16">
+      <image width="16" height="16" preserveAspectRatio="none" xlink:href="data:image/png;base64,iVBORw0KGgoBAgM="/>
+    </pattern>
+    <clipPath id="clip-0">
+      <path d="M20 20L380 20L380 280L20 280Z"/>
+    </clipPath>
+    <clipPath id="clip-1">
+      <path d="M0 0L100 0L100 100L0 100Z" transform="translate(40,10)" clip-rule="evenodd"/>
+    </clipPath>
+    <filter id="shadow-0" filterUnits="userSpaceOnUse" x="-21" y="-21" width="442" height="342" color-interpolation-filters="sRGB">
+      <feDropShadow dx="3" dy="5" stdDeviation="5" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+    <clipPath id="clip-2">
+      <rect x="0" y="0" width="80" height="80"/>
+    </clipPath>
+    <filter id="shadow-1" filterUnits="userSpaceOnUse" x="-8" y="-8" width="416" height="316" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#202020" flood-opacity="1"/>
+    </filter>
+  </defs>
+  <g id="el-page">
+    <path d="M0 0L400 0L400 300L0 300Z" fill="#f4f1e8"/>
+  </g>
+  <g id="el-rect-1" data-element-id="rect-1">
+    <title>Kachel &lt;1&gt; &amp; &quot;Rand&quot;</title>
+    <path d="M10 0L90 0C95.5 0 100 4.5 100 10L100 50Q100 60 90 60L10 60Z" fill="url(#grad-0)" fill-rule="evenodd" transform="translate(30,40)" opacity="0.8"/>
+    <path d="M0 0L80 0L80 40L0 40Z" fill="none" stroke="#cc3300" stroke-opacity="0.5" stroke-width="3" stroke-linecap="round" stroke-linejoin="bevel" stroke-dasharray="6 4" stroke-dashoffset="2" transform="matrix(0.978156,0.207873,-0.207873,0.978156,150,40)" opacity="0.5"/>
+    <path d="M10 0L90 0C95.5 0 100 4.5 100 10L100 50Q100 60 90 60L10 60Z" fill="url(#grad-1)" transform="matrix(-1,0,0,1,380,100)"/>
+    <path d="M0 0L60 0L60 60L0 60Z" fill="url(#pattern-0)" transform="translate(20,200)"/>
+    <g clip-path="url(#clip-0)">
+      <path d="M30 30L80 30L80 80L30 80Z" fill="#0088ff"/>
+      <path d="M60 60L110 60L110 110L60 110Z" fill="#ff8800"/>
+      <g clip-path="url(#clip-1)">
+        <path d="M90 90L140 90L140 140L90 140Z" fill="#8800ff"/>
+      </g>
+    </g>
+  </g>
+  <g id="el-headline" data-element-id="headline">
+    <title>Überschrift</title>
+    <g filter="url(#shadow-0)">
+      <text x="20 42 64 86 108 130 152" y="100" font-family="Instrument Sans, Helvetica Neue, sans-serif" font-size="40" font-weight="400" font-style="normal" xml:space="preserve" fill="#112233">Hallo →</text>
+    </g>
+    <text x="20 42" y="160" font-family="Instrument Sans, Helvetica Neue, sans-serif" font-size="40" font-weight="400" font-style="normal" xml:space="preserve" fill="none" stroke="#112233" stroke-width="1.5" stroke-linejoin="round">Hi</text>
+  </g>
+  <g id="el-icon" data-element-id="icon">
+    <title>Icon</title>
+    <svg x="10" y="20" width="48" height="48" viewBox="0 0 24 24" preserveAspectRatio="none" id="i0-root" fill="none"><defs><linearGradient id="i0-a"><stop offset="0" stop-color="#ff0000"/><stop offset="1" stop-color="#0000ff"/></linearGradient><clipPath id="i0-c"><rect width="24" height="24"/></clipPath></defs><rect class="i0-x i0-y" width="24" height="24" fill="url(#i0-a)" clip-path="url(#i0-c)"/><use xlink:href="#i0-a"/><use href="#i0-c"/><style>#i0-root #i0-a { opacity: 1 } #i0-root .i0-x { fill: #c; stroke: url(#i0-a) }</style></svg>
+    <svg x="80" y="20" width="48" height="48" viewBox="0 0 24 24" preserveAspectRatio="none" id="i1-root" fill="none"><defs><linearGradient id="i1-a"><stop offset="0" stop-color="#ff0000"/><stop offset="1" stop-color="#0000ff"/></linearGradient><clipPath id="i1-c"><rect width="24" height="24"/></clipPath></defs><rect class="i1-x i1-y" width="24" height="24" fill="url(#i1-a)" clip-path="url(#i1-c)"/><use xlink:href="#i1-a"/><use href="#i1-c"/><style>#i1-root #i1-a { opacity: 1 } #i1-root .i1-x { fill: #c; stroke: url(#i1-a) }</style></svg>
+  </g>
+  <g id="el-photo" data-element-id="photo">
+    <title>Foto</title>
+    <image x="-40" y="-40" width="160" height="160" preserveAspectRatio="none" xlink:href="data:image/png;base64,iVBORw0KGgoBAgM=" clip-path="url(#clip-2)" transform="translate(200,20)"/>
+    <image x="300" y="20" width="50" height="50" preserveAspectRatio="none" xlink:href="data:image/png;base64,iVBORw0KGgoBAgM="/>
+  </g>
+  <g id="el-buffer" data-element-id="buffer">
+    <title>Puffer</title>
+    <g opacity="0.5">
+      <path d="M250 150L330 150L330 230L250 230Z" fill="#aa0000"/>
+      <g filter="url(#shadow-1)">
+        <path d="M290 170L370 170L370 250L290 250Z" fill="#0000aa" fill-opacity="0.7"/>
+      </g>
+    </g>
+  </g>
+</svg>

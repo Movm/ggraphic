@@ -8,6 +8,7 @@ export {
 export {
   browserFileDelivery,
   type CanvasCarouselService,
+  type CanvasExportFontService,
   type CanvasFeedbackService,
   type CanvasImageUrlService,
   type CanvasImprintParts,

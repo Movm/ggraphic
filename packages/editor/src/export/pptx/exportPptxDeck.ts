@@ -2,17 +2,20 @@
 /**
  * Browser-Seite des PPTX-Exports: Seitenzustände → Modell → Datei. Texte
  * werden mit derselben Messung wie auf dem Canvas vermessen, Raster-Anfragen
- * gehen an das Stage der jeweiligen Seite, Bilder werden als PNG/JPEG geladen.
+ * gehen an das Stage der jeweiligen Seite (als SVG, wo die Aufnahme ganz Vektor ist, sonst als
+ * PNG), Bilder werden als PNG/JPEG geladen.
  */
 
 import { type BrandPack } from '@ggraphic/core';
 import { measureTextWidthWithFont } from '../../utils/textUtils.js';
 
 import { buildPptxModel, type PptxPageState } from './buildPptxModel.js';
+import { createVectorizer } from './vectorizeElement.js';
 import { writePptx, type PptxLoadedImage, type PptxRasterImage } from './writePptx.js';
 
 import type { PptxRasterRequest } from './types.js';
 import type { CanvasFormat } from '../../formats/index.js';
+import type { VectorExportDeps } from '../vectorExport.js';
 
 const PPTX_IMAGE_TYPES = ['image/png', 'image/jpeg'];
 /** SVGs ohne Eigenmaße werden in dieser Breite gerastert. */
@@ -77,6 +80,12 @@ export interface ExportPptxDeckOptions {
   format: CanvasFormat;
   /** Rastert ein Element der Seite `slideIndex`; null ohne Knoten. */
   rasterizeElement: (slideIndex: number, elementId: string) => Promise<PptxRasterImage | null>;
+  /**
+   * What the SVG export records pages with (`recordPage(slideIndex)` among it). With it, an
+   * element that would be a PNG is an SVG image when its recording is vector all the way; the PNG
+   * stays for the rest. Each slide is recorded once, and only if one of its elements asks.
+   */
+  vector?: VectorExportDeps;
   title?: string;
   /** Das Paket des Dokuments (`FullCanvasConfig.brand`); ohne: das aktive. */
   brand?: BrandPack;
@@ -87,6 +96,7 @@ export async function exportPptxDeck({
   pages,
   format,
   rasterizeElement,
+  vector,
   title,
   brand,
   onProgress,
@@ -98,6 +108,7 @@ export async function exportPptxDeck({
   const { blob } = await writePptx(model, {
     rasterize: (request: PptxRasterRequest, slideIndex: number) =>
       rasterizeElement(slideIndex, request.elementId),
+    ...(vector ? { vectorize: createVectorizer(vector) } : {}),
     loadImage: loadPptxImage,
     ...(title ? { title } : {}),
     ...(onProgress ? { onProgress } : {}),

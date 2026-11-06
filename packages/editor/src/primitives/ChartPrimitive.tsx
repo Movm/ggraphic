@@ -14,22 +14,30 @@ import { memo, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Image, Group, Rect, Transformer } from 'react-konva';
 
+import { useDocumentBrand } from '../brand/documentBrand.js';
 import { activeBrand } from '../brand/brandRegistry.js';
+import { useCanvasEditorServices } from '../CanvasEditorProvider.js';
 import { LOCKED_TRANSFORMER, useIsItemLocked } from '../components/canvasItemLock.js';
+import { markTrustedSvgImage } from '../export/scene/trustedSvgImages.js';
 import { useBoxSnap, type SnapProps } from '../hooks/useBoxSnap.js';
 import {
   CHART_INK_DARK,
+  chartColors,
   chartInk,
   chartLegendPosition,
   chartSeries,
   chartSeriesOutlines,
   type ChartInstance,
 } from '../utils/chartUtils.js';
+import { isSafeColor } from '../utils/externalIcons.js';
 import { ELEMENT_TRANSFORMER } from '../utils/orientation.js';
+import { ensureFontsReady } from '../utils/ensureFontsReady.js';
 import { useTrackPendingImage } from '../utils/pendingImages.js';
 
 import { chartBox } from '../utils/renderedBoxes.js';
+import { SANS, chartFontCss, chartFontFamily, type ChartFont } from './chartFont.js';
 
+import type { FontSourceDeps } from '../export/fonts/fontFiles.js';
 import type Konva from 'konva';
 
 export interface ChartPrimitiveProps extends SnapProps {
@@ -49,12 +57,12 @@ const OUTLINE_PX = 2;
 
 let measureContext: CanvasRenderingContext2D | null | undefined;
 /**
- * A label's width at tick size as the rasterised SVG draws it (`font-family:
- * sans-serif`). A per-character estimate clipped wide labels: „Wünschen mehr"
- * needs 95 px where 13 × 7.5 − 8 left 89.5. The estimate stays only where no
- * canvas can measure.
+ * A label's width at tick size in `family`, the font-family the chart SVG declares
+ * (`chartFontFamily`), so a label is measured in the font it is drawn in. A per-character
+ * estimate clipped wide labels: „Wünschen mehr" needs 95 px in sans-serif where 13 × 7.5 − 8
+ * left 89.5. The estimate stays only where no canvas can measure.
  */
-function tickTextWidth(text: string): number {
+function tickTextWidth(text: string, family: string): number {
   if (measureContext === undefined) {
     try {
       measureContext = document.createElement('canvas').getContext('2d');
@@ -63,7 +71,7 @@ function tickTextWidth(text: string): number {
     }
   }
   if (!measureContext) return text.length * 7.5;
-  measureContext.font = `${AXIS_TICK.fontSize}px sans-serif`;
+  measureContext.font = `${AXIS_TICK.fontSize}px ${family}`;
   return measureContext.measureText(text).width;
 }
 
@@ -87,9 +95,10 @@ function layoutLegend(
   entries: LegendEntry[],
   position: 'right' | 'bottom',
   width: number,
-  height: number
+  height: number,
+  family: string
 ): { width: number; height: number; at: (top: number) => { x: number; y: number }[] } {
-  const widths = entries.map((e) => LEGEND_TEXT_X + Math.ceil(tickTextWidth(e.name)));
+  const widths = entries.map((e) => LEGEND_TEXT_X + Math.ceil(tickTextWidth(e.name, family)));
   if (position === 'right') {
     // 8 px gap to the chart, 4 px slack at the edge.
     const column = Math.max(...widths) + 12;
@@ -131,8 +140,24 @@ function layoutLegend(
   };
 }
 
+/**
+ * A series colour that can be written into the chart SVG. The colours are document data and the
+ * SVG is inlined into exports as it is, so `url(https://…)` and the like must not get through: the
+ * brand's colour of the same slot stands in for a colour `isSafeColor` rejects.
+ */
+function safeSeriesColor(color: string, index: number): string {
+  if (isSafeColor(color)) return color;
+  const brand = chartColors();
+  const fallback = brand[index % brand.length];
+  return fallback !== undefined && isSafeColor(fallback) ? fallback : CHART_INK_DARK;
+}
+
+/**
+ * `family` is the font-family the SVG will declare (`chartFontFamily`): the legend and the
+ * category axis are sized by labels measured in it.
+ */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function buildChartElement(recharts: any, chart: ChartInstance) {
+export function buildChartElement(recharts: any, chart: ChartInstance, family: string = SANS) {
   const {
     BarChart,
     Bar,
@@ -148,13 +173,14 @@ export function buildChartElement(recharts: any, chart: ChartInstance) {
     CartesianGrid,
     LabelList,
   } = recharts;
-  const { width, height, data, colors, chartType, showGrid, showLegend, showValues } = chart;
+  const { width, height, data, chartType, showGrid, showLegend, showValues } = chart;
+  const colors = chart.colors.map(safeSeriesColor);
   const color = (i: number) => colors[i % colors.length];
   // Auf dunklem Grund (dunkle Folie) stehen Achsen, Legende und Werte weiß.
   const ink = chartInk(chart);
   const tick = { ...AXIS_TICK, fill: ink };
   const valueLabel = { ...VALUE_LABEL, fill: ink };
-  const outlines = chartSeriesOutlines(chart);
+  const outlines = chartSeriesOutlines({ ...chart, colors });
   const outline = (i: number) => {
     const stroke = outlines[i % colors.length];
     return stroke ? { stroke, strokeWidth: OUTLINE_PX / chart.scale } : {};
@@ -170,7 +196,8 @@ export function buildChartElement(recharts: any, chart: ChartInstance) {
       ? data.map((d, index) => ({ name: d.name, index }))
       : (series ?? []).map((s, index) => ({ name: s.name, index }));
   const legendPosition = chartLegendPosition(chart);
-  const legend = entries.length > 0 ? layoutLegend(entries, legendPosition, width, height) : null;
+  const legend =
+    entries.length > 0 ? layoutLegend(entries, legendPosition, width, height, family) : null;
   const legendTop = height - (legend?.height ?? 0);
   const legendSvg = legend ? (
     <g>
@@ -325,7 +352,7 @@ export function buildChartElement(recharts: any, chart: ChartInstance) {
   // past the bar's end (~8.5 px a bold character).
   const nameWidth = Math.min(
     width * 0.4,
-    Math.max(64, Math.ceil(Math.max(...data.map((d) => tickTextWidth(d.name)))) + 12)
+    Math.max(64, Math.ceil(Math.max(...data.map((d) => tickTextWidth(d.name, family)))) + 12)
   );
   const valueRoom = showValues
     ? Math.max(...allValues.map((v) => formatValue(v).length)) * 8.5 + 12
@@ -392,14 +419,30 @@ export function buildChartElement(recharts: any, chart: ChartInstance) {
   );
 }
 
-async function renderChartImage(chart: ChartInstance): Promise<HTMLImageElement | null> {
+/** How long a chart waits for the page's fonts before it measures with what is there. */
+const FONT_WAIT_MS = 2000;
+
+/**
+ * The chart as an image. `font` is the brand body font as the SVG carries it: an SVG image cannot
+ * load web fonts, so the files are embedded in the SVG itself (see `chartFont.ts`).
+ */
+export async function renderChartImage(
+  chart: ChartInstance,
+  font: ChartFont
+): Promise<HTMLImageElement | null> {
   const container = document.createElement('div');
   container.style.cssText = `position:absolute;left:-99999px;top:0;width:${chart.width}px;height:${chart.height}px;font-family:sans-serif;`;
   document.body.appendChild(container);
 
-  const recharts = await import('recharts');
+  // One family for both: the labels are measured in the font the SVG then draws them in. The
+  // brand font is a web font of the page; until it is loaded the canvas measures the fallback.
+  const family = chartFontFamily(font);
+  const [recharts] = await Promise.all([
+    import('recharts'),
+    font.css ? ensureFontsReady({ timeoutMs: FONT_WAIT_MS }) : undefined,
+  ]);
   const root = createRoot(container);
-  root.render(buildChartElement(recharts, chart));
+  root.render(buildChartElement(recharts, chart, family));
 
   // Recharts paints after a couple of frames; poll for a populated <svg>.
   const raf = () => new Promise<void>((r) => requestAnimationFrame(() => r()));
@@ -415,11 +458,18 @@ async function renderChartImage(chart: ChartInstance): Promise<HTMLImageElement 
   if (svg) {
     svg.setAttribute('width', String(chart.width));
     svg.setAttribute('height', String(chart.height));
-    svg.setAttribute('font-family', 'sans-serif');
+    svg.setAttribute('font-family', family);
+    if (font.css) {
+      const style = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+      style.textContent = font.css;
+      svg.insertBefore(style, svg.firstChild);
+    }
     const xml = new XMLSerializer().serializeToString(svg);
     const url = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(xml)}`;
     image = await new Promise<HTMLImageElement | null>((resolve) => {
       const img = new window.Image();
+      // The SVG is Recharts' own output for this chart; exports inline it as it is.
+      markTrustedSvgImage(img);
       img.onload = () => resolve(img);
       img.onerror = () => resolve(null);
       img.src = url;
@@ -429,6 +479,15 @@ async function renderChartImage(chart: ChartInstance): Promise<HTMLImageElement 
   root.unmount();
   container.remove();
   return image;
+}
+
+/** The chart image in the brand body font, or in `sans-serif` where no file for it is found. */
+async function renderChartInBrandFont(
+  chart: ChartInstance,
+  family: string,
+  fontDeps: FontSourceDeps
+): Promise<HTMLImageElement | null> {
+  return renderChartImage(chart, { family, css: await chartFontCss(family, fontDeps) });
 }
 
 function ChartPrimitiveInner({
@@ -441,6 +500,9 @@ function ChartPrimitiveInner({
   ...snapProps
 }: ChartPrimitiveProps) {
   const locked = useIsItemLocked();
+  const brand = useDocumentBrand();
+  const { exportFonts } = useCanvasEditorServices();
+  const bodyFamily = brand.fonts.body;
   const snap = useBoxSnap({ id: chart.id, ...snapProps }, chartBox(chart));
   const groupRef = useRef<Konva.Group>(null);
   const transformerRef = useRef<Konva.Transformer>(null);
@@ -460,6 +522,7 @@ function ChartPrimitiveInner({
     chart.unit ?? '',
     chart.background ?? '',
     chart.scale,
+    bodyFamily,
   ]);
   const [rendered, setRendered] = useState<{ image: HTMLImageElement | null; key: string }>({
     image: null,
@@ -479,7 +542,11 @@ function ChartPrimitiveInner({
   useEffect(() => {
     let cancelled = false;
     const timer = setTimeout(() => {
-      void renderChartImage(chart)
+      void renderChartInBrandFont(chart, bodyFamily, {
+        ...(exportFonts ? { host: exportFonts } : {}),
+        brandFaces: brand.fontFaces,
+        ...(brand.fonts.boldFamilies ? { boldFamilies: brand.fonts.boldFamilies } : {}),
+      })
         .catch(() => null)
         .then((img) => {
           // A failed render keeps the last image but stops the wait.

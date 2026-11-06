@@ -33,6 +33,7 @@ import {
   type CanvasDownloadChoice,
   type PrintExportProps,
   type SlideDeckExportProps,
+  type VectorExportProps,
 } from './DownloadSection.js';
 
 export interface ShareDropdownProps {
@@ -59,6 +60,8 @@ export interface ShareDropdownProps {
   printExport?: PrintExportProps | null;
   /** Set for slide formats: the download section offers PowerPoint and a PDF of all pages. */
   slideDeck?: SlideDeckExportProps | null;
+  /** SVG download; without it the download section offers no SVG. */
+  vectorExport?: VectorExportProps | null;
   /**
    * Optional host-supplied "invite people" action. When provided, the share
    * popover shows a "Personen" icon button that opens the host's collaborator
@@ -103,6 +106,7 @@ export function ShareDropdown({
   exportNotice,
   printExport,
   slideDeck,
+  vectorExport,
   onInvitePeople,
   onSaveAsTemplate,
   hostControl,
@@ -226,6 +230,7 @@ export function ShareDropdown({
                 exportNotice={exportNotice}
                 printExport={printExport}
                 slideDeck={slideDeck}
+                vectorExport={vectorExport}
               />
             </div>
           </>
