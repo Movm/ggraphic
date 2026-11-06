@@ -305,6 +305,7 @@ class TimeoutBudget {
   private timer: ReturnType<typeof setTimeout> | undefined;
   private since = 0;
   private pauses = 0;
+  private done = false;
   private fail: (error: Error) => void = () => {};
 
   constructor(
@@ -319,7 +320,10 @@ class TimeoutBudget {
       this.fail = reject;
     });
     this.start();
-    return Promise.race([work(), expired]).finally(() => clearTimeout(this.timer));
+    return Promise.race([work(), expired]).finally(() => {
+      this.done = true;
+      clearTimeout(this.timer);
+    });
   }
 
   async paused<T>(work: () => Promise<T>): Promise<T> {
@@ -345,6 +349,8 @@ class TimeoutBudget {
   }
 
   private start(): void {
+    // An abandoned writer may still finish a pause after the race is over.
+    if (this.done) return;
     this.since = Date.now();
     this.timer = setTimeout(
       () =>

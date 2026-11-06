@@ -716,6 +716,33 @@ describe('exportPagesPdf', () => {
       vi.restoreAllMocks();
     });
 
+    it('leaves no timer behind when an abandoned writer ends its pause late', async () => {
+      const { deps } = pdfSetup([pageOf([['a', [square]]])]);
+      vi.mocked(writePdf).mockImplementationOnce(async (_scenes, options) => {
+        await options.rasterize([], { x: 0, y: 0, width: 1, height: 1 }, 1);
+        return { bytes: new TextEncoder().encode('%PDF-x'), report: emptyReport() };
+      });
+      let release: () => void = () => {};
+      const base = deps.resolveDeps;
+      deps.resolveDeps = (index) => ({
+        ...base(index),
+        rasterizeOps: () => new Promise((resolve) => (release = () => resolve(new Uint8Array(0)))),
+      });
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      vi.useFakeTimers();
+      try {
+        const done = exportPagesPdf(pdfOptions({ islandTimeoutMs: 20 }), deps);
+        await vi.advanceTimersByTimeAsync(25);
+        await done;
+        release();
+        await vi.advanceTimersByTimeAsync(0);
+        expect(vi.getTimerCount()).toBe(0);
+      } finally {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+      }
+    });
+
     it('a page that cannot be recorded: a raster pdf, which then says what is wrong', async () => {
       const { deps, rasterFallback } = pdfSetup([pageOf([['a', [square]]]), null]);
       vi.spyOn(console, 'warn').mockImplementation(() => {});
