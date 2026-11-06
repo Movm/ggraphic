@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import type { ExportReport } from '../../export/scene/types.js';
 import type { SidebarTabId } from '../../sidebar/types.js';
 import type { GenericCanvasRef, ToolbarStateReport } from '../GenericCanvas.js';
 import type { FullCanvasConfig } from '../../configs/types.js';
@@ -135,6 +136,17 @@ export interface CanvasEditorExportApi {
   capturePages: (options?: { pixelRatio?: number }) => Promise<string[]>;
   /** The deck as an editable .pptx; throws when a page cannot be rendered. */
   exportPptx: () => Promise<Blob>;
+  /**
+   * The page, or every page, as SVG: one page is the SVG itself, several are a ZIP of SVGs. Throws
+   * when a page cannot be rendered. The report says what could not stay vector and what is missing.
+   */
+  exportSvg: (options: {
+    pages: 'current' | 'all';
+    /** `outlines`: glyph outlines. `editable`: live `<text>`, which needs the font where it is opened. */
+    text: 'outlines' | 'editable';
+    /** No page background. */
+    transparent?: boolean;
+  }) => Promise<{ blob: Blob; filename: string; report: ExportReport }>;
   /** The deck as a Vorlage stores it: config and state per page. */
   getPages: () => { configId: string; state: Record<string, unknown> }[];
   /** The menu bar's undo/redo, for a host that draws the bar itself. */

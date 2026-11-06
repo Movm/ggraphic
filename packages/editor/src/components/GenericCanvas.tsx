@@ -25,6 +25,7 @@ import { DocumentBrandContext } from '../brand/documentBrand.js';
 import { useEmitHostStateChanges } from '../collab/useEmitHostStateChanges.js';
 import { useYjsCanvasBinding } from '../collab/useYjsCanvasBinding.js';
 import { stateKeyOfCallback } from '../collab/wrapCallbacksWithPageSync.js';
+import { pngFromDataUrl } from '../export/scene/imageBytes.js';
 import { recordPageScene } from '../export/scene/recordPageScene.js';
 import { CropGhostOverlay } from './CropGhostOverlay.js';
 import { PrintGuides } from './PrintGuides.js';
@@ -95,6 +96,7 @@ import {
   captureStageImage,
   captureStageImageAsync,
   rasterizeStageElement,
+  rasterizeStageNode,
   visibleStageTexts,
 } from '../utils/captureStage.js';
 import { MAX_ICON_SELECTIONS, selectedCatalogIconIds } from '../utils/iconInstances.js';
@@ -324,8 +326,19 @@ export interface GenericCanvasRef {
   captureCanvasForAi: () => Promise<string | null>;
   /** The page's visible texts in reading order, for alt texts. */
   getVisibleTexts: () => string[];
-  /** One element alone as PNG plus its box in page px (PPTX raster fallback); null when not on the stage. */
-  rasterizeElement: (elementId: string) => Promise<ReturnType<typeof rasterizeStageElement>>;
+  /**
+   * One element alone as PNG plus its box in page px (PPTX raster fallback); null when not on the
+   * stage. `pixelRatio` is per page px; default 2.
+   */
+  rasterizeElement: (
+    elementId: string,
+    pixelRatio?: number
+  ) => Promise<ReturnType<typeof rasterizeStageElement>>;
+  /**
+   * A PNG of the stage node `recordScene` kept as the `nodeRef` of a raster island, for an island
+   * whose item has no element id to look the node up by; null when it cannot be drawn.
+   */
+  rasterizeNode: (nodeRef: unknown, pixelRatio: number) => Promise<Uint8Array | null>;
   /**
    * This page as a scene for the vector export: one item per element, ops in page px. Waits for
    * the fonts; null when there is no stage.
@@ -1054,9 +1067,14 @@ function GenericCanvasWithRef<
       captureCanvasForAi: async () =>
         captureStageImage(stageRef.current, { format: 'jpeg', pixelRatio: 1, quality: 0.85 }),
       getVisibleTexts: () => visibleStageTexts(stageRef.current?.getStage() ?? null),
-      rasterizeElement: async (elementId) => {
+      rasterizeElement: async (elementId, pixelRatio) => {
         await ensureFontsReady();
-        return rasterizeStageElement(stageRef.current?.getStage() ?? null, elementId);
+        return rasterizeStageElement(stageRef.current?.getStage() ?? null, elementId, pixelRatio);
+      },
+      rasterizeNode: async (nodeRef, pixelRatio) => {
+        if (!(nodeRef instanceof Konva.Node)) return null;
+        const drawn = rasterizeStageNode(stageRef.current?.getStage() ?? null, nodeRef, pixelRatio);
+        return drawn ? pngFromDataUrl(drawn.dataUrl) : null;
       },
       recordScene: async ({ page, transparent }) => {
         await ensureFontsReady();

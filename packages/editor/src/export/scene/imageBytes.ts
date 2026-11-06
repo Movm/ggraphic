@@ -196,11 +196,16 @@ function dataUrlText(data: DataUrl): string | null {
   }
 }
 
+/** The bytes of a base64 PNG data url, or null for anything else. */
+export function pngFromDataUrl(dataUrl: string): Uint8Array | null {
+  const data = parseDataUrl(dataUrl);
+  return data?.base64 && data.mime === 'image/png' ? base64Bytes(data.payload) : null;
+}
+
 /** The PNG of a canvas, or null for an empty or tainted one. */
 export function canvasPng(canvas: { toDataURL(type?: string): string }): Uint8Array | null {
   try {
-    const data = parseDataUrl(canvas.toDataURL('image/png'));
-    return data?.base64 && data.mime === 'image/png' ? base64Bytes(data.payload) : null;
+    return pngFromDataUrl(canvas.toDataURL('image/png'));
   } catch {
     return null;
   }

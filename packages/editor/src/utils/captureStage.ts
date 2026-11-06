@@ -103,7 +103,19 @@ export function rasterizeStageElement(
   const node = stage
     .find(`.${CANVAS_ITEM_NAME}`)
     .find((candidate) => candidate.getAttr('canvasItemId') === elementId);
-  if (!node || !node.isVisible()) return null;
+  return node ? rasterizeStageNode(stage, node, pixelRatio) : null;
+}
+
+/**
+ * `rasterizeStageElement` for a node in hand: the SVG export draws an island whose item has no id
+ * to look the group up by from the node the recorder kept. `pixelRatio` is per page px.
+ */
+export function rasterizeStageNode(
+  stage: Konva.Stage | null,
+  node: Konva.Node,
+  pixelRatio = 2
+): { dataUrl: string; box: { x: number; y: number; width: number; height: number } } | null {
+  if (!stage || !node.isVisible()) return null;
   // Absolut (inkl. Zoom und Verschiebung des Stage) für toDataURL, das in
   // diesen Koordinaten schneidet; relativ zum Stage = Seiten-px für die Box.
   const rect = node.getClientRect();

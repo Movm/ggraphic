@@ -140,6 +140,30 @@ describe('GgraphicEditor', { timeout: 2 * MOUNT_WAIT }, () => {
     expect(api.current).toBeNull();
   });
 
+  it('exports the page as an svg through the export api, text kept editable', async () => {
+    const api = createRef<CanvasEditorExportApi>();
+    render(<GgraphicEditor brand={brandDefault} templates={pack} exportApiRef={api} />);
+    await waitFor(() => expect(api.current).not.toBeNull(), { timeout: MOUNT_WAIT });
+
+    const { blob, filename, report } = await api.current!.exportSvg({
+      pages: 'current',
+      text: 'editable',
+    });
+
+    expect(filename).toMatch(/\.svg$/);
+    expect(blob.type).toBe('image/svg+xml');
+    const svg = await blob.text();
+    expect(svg).toMatch(/^<svg /);
+    expect(svg).toContain('data-element-id="headline"');
+    expect(svg).toContain('<text');
+    expect(report.missingElements).toEqual([]);
+
+    // Outlines need a font file; jsdom has none, so the text stays text and the report says so.
+    const outlined = await api.current!.exportSvg({ pages: 'all', text: 'outlines' });
+    expect(outlined.blob.type).toBe('image/svg+xml');
+    expect(outlined.report.missingGlyphs.length).toBeGreaterThan(0);
+  });
+
   it('opens on a pack that is still loading (loadTemplatePack)', async () => {
     const loading = loadTemplatePack(files);
     const api = createRef<CanvasEditorExportApi>();

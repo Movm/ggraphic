@@ -27,6 +27,7 @@
  * - useToolbarHandlers     — bundled toolbar actions for the active page
  */
 
+import { activeBrand } from '../../brand/brandRegistry.js';
 import { DocumentBrandContext } from '../../brand/documentBrand.js';
 import { useCanvasEditorServices } from '../../CanvasEditorProvider.js';
 import { messages, useMessages } from '../../i18n/messages.js';
@@ -79,8 +80,12 @@ import {
   lowResolutionWarnings,
   PRINT_JPEG_QUALITY,
   printPdfFilename,
+  printPixelRatio,
   type PrintExportPage,
 } from '../../export/printExport.js';
+import { fetchImageBytes, rasterizeOps, reencodeImage } from '../../export/scene/browserDeps.js';
+import { pngFromDataUrl } from '../../export/scene/imageBytes.js';
+import { exportPagesSvg } from '../../export/vectorExport.js';
 import { exportSlidesPdf } from '../../export/slidesPdf.js';
 import { EditorBoxProvider } from '../../hooks/editorBox.js';
 import { StageFitProvider, useMeasuredStageFit } from '../../hooks/stageFit.js';
@@ -137,7 +142,7 @@ import { layersTab, withLayersTab } from './layersTab.js';
 import { getMobileSelectionArea } from './mobileSelectionArea.js';
 import { PageWrapper } from './PageWrapper.js';
 
-import type { CanvasEditorProps, PageWrapperProps } from './types.js';
+import type { CanvasEditorExportApi, CanvasEditorProps, PageWrapperProps } from './types.js';
 import type { SidebarTabId } from '../../sidebar/types.js';
 import type {
   AltTextPage,
@@ -675,6 +680,71 @@ function CanvasEditorInner({
     },
     [pagesDoc, canvasRefsRef, formatId, documentTitle, loadedConfigs]
   );
+
+  // SVG: every page needs its mounted stage, like the PPTX export. The file is named after the
+  // document the way the PDF is; a digital document without a title is named after the host.
+  const exportSvg = useCallback(
+    async ({
+      pages: which,
+      text,
+      transparent = false,
+    }: Parameters<CanvasEditorExportApi['exportSvg']>[0]) => {
+      const refs = canvasRefsRef.current;
+      const deck = serializeDeck(pagesDoc);
+      const indexes = which === 'all' ? deck.map((_, i) => i) : [currentPageIndex];
+      if (indexes.some((i) => !refs[i]?.current)) {
+        throw new Error(messages().errors.exportPagesPartial);
+      }
+      const format = getCanvasFormatOrDefault(formatId);
+      // One brand per deck: its pages share a country. Without one, the active brand's.
+      const brand =
+        (deck[0] ? loadedConfigs.get(deck[0].configId)?.brand : undefined) ?? activeBrand();
+      const title =
+        documentTitle ??
+        (isSlideFormat(format) ? messages().defaults.presentationTitle : filenamePrefix);
+      return exportPagesSvg(
+        indexes,
+        {
+          text,
+          transparent,
+          filenameBase: printPdfFilename(title, filenamePrefix).replace(/\.pdf$/, ''),
+        },
+        {
+          recordPage: async (index, options) =>
+            (await refs[index]?.current?.recordScene({ page: index + 1, ...options })) ?? null,
+          resolveDeps: (index) => ({
+            page: index + 1,
+            fetchBytes: fetchImageBytes,
+            reencode: reencodeImage,
+            rasterizeElement: async (elementId, pixelRatio) => {
+              const drawn = await refs[index]?.current?.rasterizeElement(elementId, pixelRatio);
+              const png = drawn ? pngFromDataUrl(drawn.dataUrl) : null;
+              return drawn && png ? { png, box: drawn.box } : null;
+            },
+            rasterizeNode: async (nodeRef, pixelRatio) =>
+              (await refs[index]?.current?.rasterizeNode(nodeRef, pixelRatio)) ?? null,
+            rasterizeOps,
+            rasterPixelRatio: isPrintFormat(format) ? printPixelRatio(format) : 2,
+          }),
+          fontDeps: {
+            ...(services.exportFonts ? { host: services.exportFonts } : {}),
+            brandFaces: brand.fontFaces,
+            ...(brand.fonts.boldFamilies ? { boldFamilies: brand.fonts.boldFamilies } : {}),
+          },
+        }
+      );
+    },
+    [
+      canvasRefsRef,
+      currentPageIndex,
+      formatId,
+      pagesDoc,
+      loadedConfigs,
+      documentTitle,
+      filenamePrefix,
+      services.exportFonts,
+    ]
+  );
   // The host's callback at call time: it may pass a new function every render.
   const onPagesChangeRef = useRef(onPagesChange);
   onPagesChangeRef.current = onPagesChange;
@@ -701,11 +771,12 @@ function CanvasEditorInner({
         return exportAllPages({ pixelRatio });
       },
       exportPptx: () => buildPptx(),
+      exportSvg,
       getPages: () => serializeDeck(pagesDoc).map(({ configId, state }) => ({ configId, state })),
       undo: toolbarHandlers.undo,
       redo: toolbarHandlers.redo,
     }),
-    [handleCaptureCanvas, exportAllPages, buildPptx, pagesDoc, toolbarHandlers]
+    [handleCaptureCanvas, exportAllPages, buildPptx, exportSvg, pagesDoc, toolbarHandlers]
   );
 
   const handleCaptureCanvasForAi = useCallback(async () => {
