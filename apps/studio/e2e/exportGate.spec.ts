@@ -20,6 +20,8 @@
  * Run it in the Playwright image (`scripts/gate-render-docker.sh`), never on the host.
  */
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
 
 import { FORMAT_OF_ASPECT, load, templates } from './gatePack.js';
 import {
@@ -43,6 +45,10 @@ interface Comparison {
   total: number;
   /** The largest channel delta of any pixel. */
   maxDelta: number;
+  /** The bounding box of the differing pixels (inclusive), or null when there are none. */
+  box: { minX: number; minY: number; maxX: number; maxY: number } | null;
+  /** The differing pixels per tenth of the page's height, top to bottom. */
+  bands: number[];
   /** Differing pixels red over the faded canvas, as a PNG data URL; only when over `maxShare`. */
   diff: string | null;
 }
@@ -82,6 +88,13 @@ async function compareInPage(args: {
   const diff = new ImageData(width, height);
   let differing = 0;
   let maxDelta = 0;
+  let minX = width;
+  let minY = height;
+  let maxX = -1;
+  let maxY = -1;
+  // Tenths of the page's height; a module constant would not reach the page.
+  const BANDS = 10;
+  const bands = new Array<number>(BANDS).fill(0);
   for (let at = 0; at < a.length; at += 4) {
     const delta = Math.max(
       Math.abs(a[at]! - b[at]!),
@@ -91,6 +104,14 @@ async function compareInPage(args: {
     if (delta > maxDelta) maxDelta = delta;
     if (delta > args.tolerance) {
       differing += 1;
+      const pixel = at / 4;
+      const x = pixel % width;
+      const y = (pixel - x) / width;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+      bands[Math.min(BANDS - 1, Math.floor((y * BANDS) / height))]! += 1;
       diff.data[at] = 255;
       diff.data[at + 1] = 0;
       diff.data[at + 2] = 0;
@@ -110,7 +131,8 @@ async function compareInPage(args: {
     context.putImageData(diff, 0, 0);
     url = surface.toDataURL('image/png');
   }
-  return { width, height, differing, total, maxDelta, diff: url };
+  const box = differing > 0 ? { minX, minY, maxX, maxY } : null;
+  return { width, height, differing, total, maxDelta, box, bands, diff: url };
 }
 
 /**
@@ -145,6 +167,24 @@ const EXTENSION: Record<GateExportMode, string> = {
   'svg-editable': 'svg',
   pdf: 'pdf',
 };
+
+/** `element:"text"=U+0041 U+0042`: the text of a glyph the fonts lack, as the code points to look up. */
+function describeMissingGlyph(glyph: { elementId: string | null; text: string }): string {
+  const points = [...glyph.text]
+    .map((char) => `U+${char.codePointAt(0)!.toString(16).toUpperCase().padStart(4, '0')}`)
+    .join(' ');
+  return `${glyph.elementId ?? '-'}:${JSON.stringify(glyph.text)}=${points}`;
+}
+
+/** The box of the differing pixels and how they spread down the page, to say which element differs. */
+function describeDifference(result: Comparison): string {
+  const { minX, minY, maxX, maxY } = result.box!;
+  const rows = result.bands
+    .map((count, band) => (count > 0 ? `${band * 10}%:${count}` : null))
+    .filter((band) => band !== null)
+    .join(',');
+  return `box=${minX},${minY},${maxX},${maxY} rows=[${rows}]`;
+}
 
 interface Expectations {
   /** The report lists no raster island (a template without a photo slot). */
@@ -223,36 +263,41 @@ async function checkExport(
     .toBeLessThanOrEqual(1);
   const share = result.differing / result.total;
   const percent = (share * 100).toFixed(3);
+  const failing = share > MAX_SHARE;
   console.log(
     `[export-gate] ${label} ${gate.scheme} ${exported.mode} share=${percent}% ` +
       `differing=${result.differing} maxDelta=${result.maxDelta} ` +
       `islands=${JSON.stringify(islands)} unknownCalls=${report.unknownCalls.length} ` +
-      `missingGlyphs=${report.missingGlyphs.length}`
+      `missingGlyphs=${report.missingGlyphs.length}` +
+      // Which glyphs, and (for a failure) where on the page the pixels differ.
+      (report.missingGlyphs.length > 0
+        ? ` missing=${report.missingGlyphs.map(describeMissingGlyph).join(' ')}`
+        : '') +
+      (failing && result.box ? ` ${describeDifference(result)}` : '')
   );
   testInfo.annotations.push({ type: `share ${exported.mode}`, description: `${percent} %` });
   expect
     .soft(share, `${where}: ${percent} % of the pixels differ (limit ${MAX_SHARE * 100} %)`)
     .toBeLessThanOrEqual(MAX_SHARE);
 
-  if (share > MAX_SHARE) {
-    const name = `${label}-${exported.mode}`;
+  if (failing) {
+    // Files, not buffers: a buffer attachment lives in the reporter and never reaches
+    // `test-results/`, which is what CI uploads.
     const held = await pictures(page, index);
-    await testInfo.attach(`${name}-canvas.png`, {
-      body: bytesOf(held.canvas),
-      contentType: 'image/png',
-    });
-    await testInfo.attach(`${name}-drawn.png`, {
-      body: bytesOf(held.drawn),
-      contentType: 'image/png',
-    });
-    await testInfo.attach(`${name}-diff.png`, {
-      body: bytesOf(result.diff!),
-      contentType: 'image/png',
-    });
-    await testInfo.attach(`${name}.${EXTENSION[exported.mode]}`, {
-      body: bytesOf(held.file),
-      contentType: exported.mode === 'pdf' ? 'application/pdf' : 'image/svg+xml',
-    });
+    mkdirSync(testInfo.outputDir, { recursive: true });
+    const attach = async (suffix: string, bytes: Buffer, contentType: string) => {
+      const file = path.join(testInfo.outputDir, `${label}-${exported.mode}-${suffix}`);
+      writeFileSync(file, bytes);
+      await testInfo.attach(`${label}-${exported.mode}-${suffix}`, { path: file, contentType });
+    };
+    await attach('canvas.png', bytesOf(held.canvas), 'image/png');
+    await attach('drawn.png', bytesOf(held.drawn), 'image/png');
+    await attach('diff.png', bytesOf(result.diff!), 'image/png');
+    await attach(
+      `export.${EXTENSION[exported.mode]}`,
+      bytesOf(held.file),
+      exported.mode === 'pdf' ? 'application/pdf' : 'image/svg+xml'
+    );
   }
 }
 
