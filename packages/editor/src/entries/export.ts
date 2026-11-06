@@ -20,6 +20,8 @@ export {
   type FontFileSet,
   type FontSourceDeps,
 } from '../export/fonts/fontFiles.js';
+export { fetchImageBytes, rasterizeOps, reencodeImage } from '../export/scene/browserDeps.js';
+export { pngFromDataUrl } from '../export/scene/imageBytes.js';
 export { recordPageScene, type RecordPageOptions } from '../export/scene/recordPageScene.js';
 export { resolveScene, type ResolveDeps } from '../export/scene/resolveScene.js';
 export {
@@ -43,7 +45,10 @@ export {
 } from '../export/scene/types.js';
 export { writeSvg, type WriteSvgOptions } from '../export/svg/writeSvg.js';
 export {
+  exportPagesPdf,
   exportPagesSvg,
+  type PdfExportDeps,
+  type PdfExportOptions,
   type VectorExportDeps,
   type VectorExportOptions,
   type VectorExportResult,
