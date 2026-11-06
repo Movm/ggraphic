@@ -102,6 +102,20 @@ export function allElementsPage({ photo }: AllElementsPageOptions): Record<strin
       shadowOffsetY: 18,
       shadowOpacity: 0.6,
     }),
+    // The hole of a ring is a circle drawn against the direction of the outer one
+    // (`arc(0, 2π, true)`): a recorder that reads that span as nothing paints a disc.
+    shape({ id: 'ring', type: 'ring', x: 40, y: 220, width: 160, height: 160, ringWidth: 36 }),
+    shape({
+      id: 'ring-share',
+      type: 'ring',
+      x: 230,
+      y: 220,
+      width: 160,
+      height: 160,
+      ringWidth: 36,
+      arc: 0.27,
+      fill: '#e2574c',
+    }),
     shape({
       id: 'grain',
       type: 'rect',

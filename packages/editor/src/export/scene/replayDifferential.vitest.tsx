@@ -29,6 +29,7 @@ import { installNapiStageBridge, napi } from '../../testing/napiStageBridge.js';
 import { diffPixels } from '../../testing/pixelDiff.js';
 import { loadIconSetsFor } from '../../utils/canvasIcons.js';
 import { CANVAS_ITEM_NAME } from '../../utils/deepSelect.js';
+import { recordPageScene } from './recordPageScene.js';
 
 import type { RecordedScene, SceneItem, SceneOp } from './types.js';
 
@@ -38,6 +39,9 @@ const HEIGHT = 1350;
 const TOLERANCE = 8;
 /** At most this share of the page's pixels may differ. */
 const MAX_SHARE = 0.005;
+/** Pictures of circles only: the antialiased rim may differ by more than `TOLERANCE`, a hole may not. */
+const RIM_TOLERANCE = 64;
+const MAX_RIM_SHARE = 0.0005;
 /** An element alone: at most this share of what it covers may differ. */
 const MAX_ITEM_SHARE = 0.05;
 
@@ -309,5 +313,87 @@ describe('replay differential', () => {
       }
     }
     expect(failures).toEqual([]);
+  }, 120_000);
+
+  // A ring is two circles run in opposite directions, and the span of the second one is exactly a
+  // turn: `Konva.Ring` draws it as arc(2π, 0, true), `Konva.Arc` of 360° as arc(0, 2π) then
+  // arc(2π, 0) in the direction it was given. The recorder once read a span of a turn against its
+  // direction as no arc at all, and a ring became a disc (the editor's own ring is in the fixture).
+  it('replays the hole of a ring and of an arc of 360° as a hole', async () => {
+    const stage = new Konva.Stage({
+      container: document.createElement('div'),
+      width: WIDTH,
+      height: HEIGHT,
+    });
+    try {
+      const layer = new Konva.Layer();
+      stage.add(layer);
+      const x = 200;
+      const centres = { ring: 200, arcClockwise: 560, arcCounter: 920 };
+      const radii = { innerRadius: 60, outerRadius: 150 };
+      const item = (id: string, node: Konva.Shape) => {
+        const group = new Konva.Group({ name: CANVAS_ITEM_NAME, canvasItemId: id });
+        group.add(node);
+        layer.add(group);
+      };
+      item('ring', new Konva.Ring({ x, y: centres.ring, fill: '#c0392b', ...radii }));
+      item(
+        'arc-clockwise',
+        new Konva.Arc({
+          x,
+          y: centres.arcClockwise,
+          fill: '#2980b9',
+          angle: 360,
+          clockwise: true,
+          ...radii,
+        })
+      );
+      item(
+        'arc-counter',
+        new Konva.Arc({
+          x,
+          y: centres.arcCounter,
+          fill: '#27ae60',
+          angle: 360,
+          clockwise: false,
+          ...radii,
+        })
+      );
+      layer.draw();
+
+      const image = await napi.loadImage(stage.toDataURL({ pixelRatio: 1 }));
+      const target = napi.createCanvas(WIDTH, HEIGHT);
+      target.getContext('2d').drawImage(image, 0, 0);
+      const konva = target.getContext('2d').getImageData(0, 0, WIDTH, HEIGHT)
+        .data as unknown as Uint8ClampedArray;
+      const scene = recordPageScene(stage, { page: 1 });
+      const replay = replayPixels(scene);
+
+      const alphaAt = (data: Uint8ClampedArray, x: number, y: number) =>
+        data[(y * WIDTH + x) * 4 + 3]!;
+      for (const [name, y] of Object.entries({
+        ring: centres.ring,
+        'arc clockwise': centres.arcClockwise,
+        'arc counter-clockwise': centres.arcCounter,
+      })) {
+        // Konva draws a hole here, and the replay must too; the band round it is painted.
+        expect([name, alphaAt(konva, x, y)]).toEqual([name, 0]);
+        expect([name, alphaAt(replay, x, y)]).toEqual([name, 0]);
+        expect([name, alphaAt(replay, x + 105, y)]).toEqual([name, 255]);
+      }
+      // A coarse tolerance: the rim of a circle is antialiased differently by a conic and a
+      // cubic, which is not what this test is about. A disc where the hole should be is 34 000 px.
+      const diff = diffPixels(konva, replay, WIDTH, HEIGHT, RIM_TOLERANCE);
+      if (diff.share > MAX_RIM_SHARE || process.env.REPLAY_DUMP) {
+        console.info(
+          `rings: ${diff.differing} px differ, box ${JSON.stringify(diff.box)}; ` +
+            `pictures in ${dump('rings', konva, replay, diff.diffRgba)}`
+        );
+      }
+      expect(diff.share).toBeLessThanOrEqual(MAX_RIM_SHARE);
+      expect(scene.report.unknownCalls).toEqual([]);
+    } finally {
+      stage.destroy();
+    }
   }, 120_000);
 });

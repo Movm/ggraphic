@@ -116,15 +116,29 @@ export function arcToBeziers(
   return { start, curves };
 }
 
-/** The signed sweep of `arc()`/`ellipse()` from `start` to `end`, per the canvas spec. */
+/**
+ * The signed sweep of `arc()`/`ellipse()` from `start` to `end`, the way the canvas spec and
+ * Chromium (`AdjustEndAngle`) have it: a span of a full turn or more in the drawn direction is the
+ * whole circle, and so is a span that is a whole number of turns against it (`arc(0, 2π, true)`: the
+ * hole of a ring is drawn that way). Only `start === end` is a zero-length arc.
+ *
+ * Chromium decides on 32-bit floats, where angles a turn apart "up to rounding" are a turn; `NOISE`
+ * stands in for that, so `arc(s, s + 2π)` is the circle whatever the last bit of `s + 2π` is.
+ */
 function arcSweep(start: number, end: number, counterclockwise: boolean): number {
   const TAU = Math.PI * 2;
-  if (!counterclockwise && end - start >= TAU) return TAU;
-  if (counterclockwise && start - end >= TAU) return -TAU;
-  let sweep = (end - start) % TAU;
-  if (!counterclockwise && sweep < 0) sweep += TAU;
-  if (counterclockwise && sweep > 0) sweep -= TAU;
-  return sweep;
+  const NOISE = 1e-6;
+  // The span in the drawn direction: positive when the arc runs the way it was asked to.
+  const forward = counterclockwise ? start - end : end - start;
+  let sweep: number;
+  if (forward >= TAU - NOISE) sweep = TAU;
+  else if (forward >= 0) sweep = forward;
+  else {
+    // The end lies behind the start: the arc takes the rest of the turn.
+    const back = -forward % TAU;
+    sweep = TAU - back < NOISE ? TAU : TAU - back;
+  }
+  return counterclockwise ? -sweep : sweep;
 }
 
 // ---------------------------------------------------------------------------------------------

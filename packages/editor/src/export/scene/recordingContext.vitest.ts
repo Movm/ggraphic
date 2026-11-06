@@ -186,6 +186,101 @@ describe('RecordingContext paths and paint', () => {
     expect(Math.min(...long.map((p) => Math.hypot(p.x + 10, p.y)))).toBeLessThan(0.5);
   });
 
+  describe('a whole number of turns is the whole circle, in the direction asked for', () => {
+    const TAU = Math.PI * 2;
+    /** What `arc(0, 0, 10, start, end, ccw)` records: the curves, and whether it goes round the circle. */
+    function recordArc(start: number, end: number, counterclockwise: boolean) {
+      const { ctx } = setup();
+      ctx.beginPath();
+      ctx.arc(0, 0, 10, start, end, counterclockwise);
+      ctx.fill();
+      const { commands } = lastOp(ctx, 'path');
+      const points = sampleCurves(commands);
+      const near = (x: number, y: number) =>
+        Math.min(...points.map((p) => Math.hypot(p.x - x, p.y - y))) < 0.5;
+      // On screen y points down: the cross product of the first two points round the centre is
+      // positive for a clockwise arc.
+      const [a, b] = points;
+      return {
+        commands,
+        full: near(10, 0) && near(0, 10) && near(-10, 0) && near(0, -10),
+        direction: a && b ? Math.sign(a.x * b.y - a.y * b.x) : 0,
+      };
+    }
+
+    it('arc(0, 2π, false) is the circle, clockwise', () => {
+      const arc = recordArc(0, TAU, false);
+      expect(arc.full).toBe(true);
+      expect(arc.direction).toBe(1);
+    });
+
+    it('arc(2π, 0, true) is the circle, counter-clockwise', () => {
+      const arc = recordArc(TAU, 0, true);
+      expect(arc.full).toBe(true);
+      expect(arc.direction).toBe(-1);
+    });
+
+    // Konva's ring hole (`arcRing`), and `Konva.Arc` with `clockwise` and 360°: Chromium turns a
+    // span of exactly 2π against the direction into the whole circle, not into nothing.
+    it('arc(0, 2π, true) is the circle, counter-clockwise', () => {
+      const arc = recordArc(0, TAU, true);
+      expect(arc.full).toBe(true);
+      expect(arc.direction).toBe(-1);
+    });
+
+    it('arc(2π, 0, false) is the circle, clockwise', () => {
+      const arc = recordArc(TAU, 0, false);
+      expect(arc.full).toBe(true);
+      expect(arc.direction).toBe(1);
+    });
+
+    it('arc(0, 4π, false) is one circle, not two', () => {
+      const arc = recordArc(0, 2 * TAU, false);
+      expect(arc.full).toBe(true);
+      expect(arc.commands.filter((c) => c.op === 'C')).toHaveLength(
+        recordArc(0, TAU, false).commands.filter((c) => c.op === 'C').length
+      );
+    });
+
+    it('arc(0, -4π, true) is one circle, counter-clockwise', () => {
+      const arc = recordArc(0, -2 * TAU, true);
+      expect(arc.full).toBe(true);
+      expect(arc.direction).toBe(-1);
+    });
+
+    it('a turn that is a rounding error short is still a turn', () => {
+      // (1.8632 + 2π) - 1.8632 is one ulp under 2π; Chromium works in 32 bits and sees a full turn.
+      const end = 1.8632 + TAU;
+      expect(end - 1.8632).toBeLessThan(TAU);
+      for (const counterclockwise of [false, true]) {
+        const arc = recordArc(1.8632, end, counterclockwise);
+        expect(arc.full).toBe(true);
+        expect(arc.direction).toBe(counterclockwise ? -1 : 1);
+        const against = recordArc(end, 1.8632, !counterclockwise);
+        expect(against.full).toBe(true);
+      }
+    });
+
+    it('arc(x, x) draws nothing', () => {
+      for (const counterclockwise of [false, true]) {
+        const { ctx } = setup();
+        ctx.beginPath();
+        ctx.arc(0, 0, 10, 1, 1, counterclockwise);
+        ctx.fill();
+        expect(ctx.ops).toEqual([]);
+      }
+    });
+
+    it('an arc against its direction takes the rest of the turn', () => {
+      // 0 → π/2 counter-clockwise is three quarters of a turn, so it passes (0, -10) and (-10, 0).
+      const { commands } = recordArc(0, Math.PI / 2, true);
+      const points = sampleCurves(commands);
+      const near = (x: number, y: number) =>
+        Math.min(...points.map((p) => Math.hypot(p.x - x, p.y - y))) < 0.5;
+      expect([near(0, -10), near(-10, 0), near(0, 10)]).toEqual([true, true, true]);
+    });
+  });
+
   it('a rotated ellipse stays on the ellipse', () => {
     const { ctx } = setup();
     const rotation = Math.PI / 6;
