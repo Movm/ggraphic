@@ -116,7 +116,7 @@ function recordItem(node: Konva.Node, page: PageContext): SceneItem | null {
 function recordOps(node: Konva.Node, page: PageContext, elementId: string | null): SceneOp[] {
   const island = (reason: RasterReason): SceneOp[] => {
     page.report.rasterIslands.push({ page: page.page, elementId, reason });
-    return [rasterIsland(node.getClientRect({ relativeTo: page.layer }), reason)];
+    return [rasterIsland(node.getClientRect({ relativeTo: page.layer }), reason, node)];
   };
 
   const cached = cachedNodes(node);
@@ -146,7 +146,8 @@ function recordOps(node: Konva.Node, page: PageContext, elementId: string | null
 
 function rasterIsland(
   box: { x: number; y: number; width: number; height: number },
-  reason: RasterReason
+  reason: RasterReason,
+  node: Konva.Node
 ): SceneOp {
   return {
     kind: 'raster',
@@ -154,9 +155,11 @@ function rasterIsland(
     alpha: 1,
     clips: [],
     shadow: null,
-    // Task 5 renders the PNG; here only where it goes and why it is needed.
+    // `resolveScene` renders the PNG; here only where it goes and why it is needed. The node is
+    // kept for an island whose item has no element id, which cannot be found on the stage by id.
     png: null,
     source: null,
+    nodeRef: node,
     reason,
     ...box,
   };

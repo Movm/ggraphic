@@ -483,6 +483,9 @@ describe('recordPageScene', () => {
       height: 20,
     });
     expect(scene.report.rasterIslands).toEqual([{ page: 1, elementId: 'a', reason: 'filter' }]);
+    // The handle `resolveScene` rasterises an island by when its item has no element id: the
+    // item's node, not the shape inside it.
+    expect(island.nodeRef).toBe(image.getParent());
     expect(image.isCached()).toBe(true);
   });
 
@@ -511,6 +514,7 @@ describe('recordPageScene', () => {
       width: 60,
       height: 40,
     });
+    expect(only(ops(scene, 'a'), 'raster').nodeRef).toBe(custom.getParent());
     expect(only(ops(scene, 'b'), 'path').kind).toBe('path');
     expect(scene.report.unknownCalls).toEqual([{ page: 3, elementId: 'a', call: 'getImageData' }]);
     expect(scene.report.rasterIslands).toEqual([

@@ -144,6 +144,12 @@ export type SceneOp =
       height: number;
       reason: RasterReason;
       source: SceneOp[] | null;
+      /**
+       * Recorded form only: an opaque handle to what drew the island (the Konva node), for the
+       * rasteriser of an island whose item has no `elementId` to look the node up by. Never
+       * inspected here; `resolveScene` strips it, so no writer sees it.
+       */
+      nodeRef?: unknown;
     });
 
 export type RasterReason =
