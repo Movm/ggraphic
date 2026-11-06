@@ -842,6 +842,7 @@ describe('RecordingContext text', () => {
       weight: 700,
       style: 'italic',
       size: 24,
+      fallback: ['sans-serif'],
     });
     ctx.font = "500 12.5px 'Foo Bar'";
     ctx.fillText('x', 1, 0);
@@ -851,6 +852,25 @@ describe('RecordingContext text', () => {
       style: 'normal',
       size: 12.5,
     });
+  });
+
+  it('keeps the families after the first, in order and unquoted, as the fallback', () => {
+    // The first family may not be installed; the face drawn is then the next one in the list, and
+    // a scene that dropped the list could not tell which.
+    const { ctx } = setup();
+    ctx.font = `600 20px "Foo Bar", 'Baz', Arial , sans-serif`;
+    ctx.fillText('x', 0, 0);
+    expect(lastOp(ctx, 'text').font).toEqual({
+      family: 'Foo Bar',
+      weight: 600,
+      style: 'normal',
+      size: 20,
+      fallback: ['Baz', 'Arial', 'sans-serif'],
+    });
+    // Different fallbacks are different fonts: no merge into one text op.
+    ctx.font = `600 20px "Foo Bar", serif`;
+    ctx.fillText('y', 5, 0);
+    expect(ctx.ops.filter((op) => op.kind === 'text')).toHaveLength(2);
   });
 
   it('keeps the previous font and reports one it cannot read', () => {

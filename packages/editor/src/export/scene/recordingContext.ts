@@ -194,11 +194,22 @@ function parseFont(value: string): FontSpec | null {
   }
   const [, amount, unit] = SIZE_RE.exec(tokens[sizeAt])!;
   const size = Number(amount) * (unit === 'pt' ? 4 / 3 : 1);
-  const list = tokens.slice(sizeAt + 1).join(' ');
-  const family = /^\s*(?:"([^"]*)"|'([^']*)'|([^,]+?))\s*(?:,|$)/.exec(list);
-  const name = family?.[1] ?? family?.[2] ?? family?.[3];
-  if (!name || !(size > 0)) return null;
-  return { family: name, weight, style, size };
+  const [family, ...fallback] = fontFamilies(tokens.slice(sizeAt + 1).join(' '));
+  if (!family || !(size > 0)) return null;
+  return { family, weight, style, size, ...(fallback.length > 0 && { fallback }) };
+}
+
+/** The families of a CSS `font-family` list, in order, unquoted. */
+function fontFamilies(list: string): string[] {
+  const names: string[] = [];
+  const family = /\s*(?:"([^"]*)"|'([^']*)'|([^,]+?))\s*(?:,|$)/y;
+  while (family.lastIndex < list.length) {
+    const match = family.exec(list);
+    if (!match) break;
+    const name = match[1] ?? match[2] ?? match[3];
+    if (name) names.push(name);
+  }
+  return names;
 }
 
 // ---------------------------------------------------------------------------------------------

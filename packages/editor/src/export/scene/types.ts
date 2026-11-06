@@ -70,6 +70,11 @@ export interface ClipPath {
 export interface FontSpec {
   /** The first family of the CSS list, unquoted. */
   family: string;
+  /**
+   * The families after the first, in order, unquoted; absent when the list had only one. What a
+   * viewer draws when `family` is not installed.
+   */
+  fallback?: string[];
   weight: number;
   style: 'normal' | 'italic';
   size: number;
