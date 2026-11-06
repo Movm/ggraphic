@@ -12,6 +12,7 @@ import {
   getExternalIcon,
   iconCreditLine,
   isExternalIconId,
+  isSafeColor,
   pageIconSources,
   registerExternalIcon,
   registerStoredExternalIcons,
@@ -240,5 +241,70 @@ describe('icon credits', () => {
     expect(iconCreditLine([{ ...mit, author: '' }])).toBe(
       'Icon: Tabler Icons (MIT, https://spdx.org/licenses/MIT.html)'
     );
+  });
+});
+
+describe('isSafeColor', () => {
+  it.each([
+    '#fff',
+    '#336699',
+    '#33669980',
+    'rebeccapurple',
+    'transparent',
+    'none',
+    'currentcolor',
+    'rgb(10, 20, 30)',
+    'rgba(10 20 30 / 50%)',
+    'hsl(120deg 50% 50%)',
+    'hsl(120, 50%, 50%)',
+    'hsla(0.5turn, 50%, 50%, 0.5)',
+    'hsl(2rad 50% 50%)',
+    'hsl(100grad 50% 50%)',
+    'hwb(194 0% 0%)',
+    'lab(29.2345% 39.3825 20.0664)',
+    'lch(52.2345% 72.2 56.2)',
+    'oklab(59.686% 0.1009 0.1192 / 0.5)',
+    'oklch(60% 0.15 50)',
+    'oklch(none 0.15 50deg)',
+    'color(display-p3 1 0.5 0)',
+    'color(srgb 1 0 0 / 0.5)',
+    'color-mix(in oklch, red, blue)',
+    'color-mix(in srgb, #fff 30%, rgb(0 0 0))',
+    'color-mix(in hsl longer hue, hsl(10 50% 50%) 20%, oklch(60% 0.15 50))',
+  ])('accepts %s', (color) => {
+    expect(isSafeColor(color)).toBe(true);
+  });
+
+  it.each([
+    '',
+    'url(https://tracker.example/x.svg#a)',
+    'red; background: url(x)',
+    'red" onload="alert(1)',
+    "red' onload='x'",
+    '<script>',
+    'red>',
+    'rgb(0 0 0) }',
+    'expression(alert(1))',
+    'var(--x)',
+    'oklch(60% 0.15 50 / url(x))',
+    'oklch(60% 0.15 50);',
+    'oklch(60% 0.15 50',
+    'oklch(60% 0.15 50))',
+    'color-mix(in oklch, url(x), blue)',
+    'color-mix(in oklch, red, blue) url(x)',
+    'color-mix(in url(x), red, blue)',
+    'color(url(x) 1 0 0)',
+    'oklch(60% 0.15 50)\\',
+    'oklch(60% 0.15 {50})',
+    'rgb(calc(1 + 2) 0 0)',
+    'foo(1 2 3)',
+    'oklch(60%\n0.15 50) ; x',
+  ])('rejects %j', (color) => {
+    expect(isSafeColor(color)).toBe(false);
+  });
+
+  it('refuses a deeply nested colour-mix', () => {
+    const deep = `color-mix(in srgb, ${'color-mix(in srgb, '.repeat(6)}red, blue${', blue)'.repeat(6)}, blue)`;
+    expect(isSafeColor(deep)).toBe(false);
   });
 });
