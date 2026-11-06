@@ -19,8 +19,19 @@
  * written here. Other fonts (TrueType, OpenType, WOFF) keep fontkit's own copy, exact for them.
  *
  * This reaches into fontkit's private parts (`TtfSubset`), so `@pdf-lib/fontkit` is pinned to an
- * exact version in package.json: a bump is a decision, checked against `pdfFontkit.vitest.ts`.
+ * exact version in package.json (1.1.1): a bump is a decision, checked against `pdfFontkit.vitest.ts`,
+ * whose first describe pins each of these, one test per member:
+ *
+ * - `font.directory.tables.glyf.transformed`  true for WOFF2 (the test for a repaired subset)
+ * - `font.createSubset()`                      replaced, to patch the subset it returns
+ * - `subset._addGlyph(id)`                     replaced by `addGlyphFromPath`
+ * - `subset.font.getGlyph(id)`                 glyph advance and path
+ * - `subset.glyphEncoder.encodeSimple(...)`    only to reach the glyph-record buffer class
+ * - `subset.glyf`, `subset.loca.offsets`, `subset.hmtx.metrics`, `subset.offset`
+ *                                              the tables `_addGlyph` appends to
+ * - `<record>.constructor.from(bytes)`         makes a record of the class fontkit's stream takes
  */
+import type { FontFile } from '../fonts/fontFiles.js';
 import type { FontkitFont } from '../fonts/glyphs.js';
 import type * as FontkitModule from '@pdf-lib/fontkit';
 import type { PDFDocument } from 'pdf-lib';
@@ -193,15 +204,38 @@ function addGlyphFromPath(this: TtfSubset, id: number): number {
   return this.glyf.length - 1;
 }
 
+/**
+ * The instances of variable fonts, by the bytes object `embeddableBytes` handed out for them.
+ * `embedFont` takes bytes and has fontkit parse them, which gives the default instance: this is
+ * how `create` is told to hand out the instance instead.
+ */
+const instances = new WeakMap<Uint8Array, FontkitFont>();
+const patched = new WeakSet<object>();
+
+/**
+ * The bytes to give `embedFont` for `file`: its own bytes, or for a variation instance a view of
+ * them that `fontkitForPdf(...).create` recognises (identity, not content).
+ */
+export function embeddableBytes(file: Pick<FontFile, 'bytes' | 'font' | 'variation'>): Uint8Array {
+  if (file.variation !== 'instance') return file.bytes;
+  const view = new Uint8Array(file.bytes.buffer, file.bytes.byteOffset, file.bytes.byteLength);
+  instances.set(view, file.font);
+  return view;
+}
+
 /** What `registerFontkit` takes: `create` as fontkit has it, with the WOFF2 subset repaired. */
 export function fontkitForPdf(fontkit: typeof FontkitModule): Fontkit {
   return {
     create(bytes: Uint8Array) {
+      const instance = instances.get(bytes);
       // Boundary cast: fontkit's shipped declarations do not describe the font it returns.
-      const font = fontkit.create(bytes) as unknown as FontkitFont;
-      if (hasTransformedGlyf(font)) {
-        const createSubset = font.createSubset.bind(font);
-        font.createSubset = () => {
+      const font = (instance ?? fontkit.create(bytes)) as unknown as FontkitFont;
+      // An instance of a variable font is cut from its paths too: fontkit's own encoder for
+      // variable glyphs has the flag-run bug described at the top.
+      if ((instance || hasTransformedGlyf(font)) && !patched.has(font)) {
+        patched.add(font);
+        const createSubset = (font as unknown as WoffFont).createSubset.bind(font);
+        (font as unknown as WoffFont).createSubset = () => {
           const subset = createSubset();
           subset._addGlyph = addGlyphFromPath;
           return subset;

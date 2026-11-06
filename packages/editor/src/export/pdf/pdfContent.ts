@@ -15,8 +15,15 @@
  * - Raster islands are asked for through `rasterize`; an island nobody could make is reported in
  *   `missingElements`, never left out quietly.
  */
-import { advanceOf, glyphOutline, splitRuns, type GlyphRun } from '../fonts/glyphs.js';
+import {
+  advanceOf,
+  fakeBoldWidth,
+  glyphOutline,
+  splitRuns,
+  type GlyphRun,
+} from '../fonts/glyphs.js';
 import { IDENTITY, invert, multiply } from '../scene/matrix.js';
+import { fitPixelRatio } from '../scene/rasterLimit.js';
 import { svgImageGroup, type SvgSource } from '../svg/svgImageScene.js';
 import { formatNumber } from '../svg/xml.js';
 import {
@@ -107,6 +114,7 @@ const CAP = { butt: 0, round: 1, square: 2 } as const;
 const JOIN = { miter: 0, round: 1, bevel: 2 } as const;
 
 /** Nothing to see in a run of these: no island for a zero-width space. */
+const SOFT_HYPHEN = 0xad;
 const INVISIBLE = /^[\p{Cc}\p{Cf}\p{Zs}]*$/u;
 
 const rgb = (hex: string): string =>
@@ -357,6 +365,11 @@ export class ContentWriter {
       : [{ file: null, text: op.text, xs: op.xs }];
     const hasFiles = !!set && set.files.length > 0;
     for (const run of runs) {
+      if (run.file?.variation === 'default-only') {
+        const { defaultInstanceFonts } = this.env.report;
+        if (!defaultInstanceFonts.includes(op.font.family))
+          defaultInstanceFonts.push(op.font.family);
+      }
       if (run.file === null) {
         await this.rasterRun(op, run, hasFiles ? 'missing-glyph' : 'font-unavailable');
       } else if (run.file.embeddable === 'bitmap-only') {
@@ -388,6 +401,9 @@ export class ContentWriter {
     const parts: (string | number)[] = [];
     Array.from(run.text).forEach((char, index) => {
       const codePoint = char.codePointAt(0) ?? 0;
+      // A soft hyphen is not drawn and 0 wide in a canvas (it only shows at a line break, which
+      // the recorded text never has): no glyph, and the pen stays where it is.
+      if (codePoint === SOFT_HYPHEN) return;
       const x = run.xs[index];
       if (index > 0 && x !== undefined) {
         const shift = Number(formatNumber(((pen - x) * 1000) / size, 2));
@@ -410,11 +426,21 @@ export class ContentWriter {
     if (!bounds) return;
     const paint = await this.paint(op.mode, op.paint, op, bounds);
     if (!paint) return;
+    // A regular cut standing in for a bold: filled and stroked in the fill's colour (mode 2), the
+    // outline growing by a line of `fakeBoldWidth`.
+    const bold = file.fakeBold && op.mode === 'fill';
+    const boldStroke = bold ? await this.paint('stroke', op.paint, op, bounds) : null;
     this.begin(op);
     for (const line of paint) this.raw(line);
+    if (boldStroke) {
+      for (const line of boldStroke) this.raw(line);
+      this.raw(`${num(fakeBoldWidth(size))} w`);
+      this.raw(`${JOIN.round} j`);
+    }
     if (op.mode === 'stroke') for (const line of this.strokeState(op.stroke)) this.raw(line);
     this.raw('BT');
     if (op.mode === 'stroke') this.raw('1 Tr');
+    else if (bold) this.raw('2 Tr');
     this.raw(`${resources.font(font)} ${num(size)} Tf`);
     // The page is y down, text is y up: a flipped text matrix stands the glyphs up again. An
     // upright cut standing in for an italic is sheared by the `c` term (top of the glyph to the right).
@@ -507,7 +533,10 @@ export class ContentWriter {
 
   /** Asks for the picture, places it, reports it; if there is none, reports that instead. */
   private async island(ops: SceneOp[], box: Rect, reason: RasterReason): Promise<void> {
-    const { assets, resources, report, page, pixelRatio } = this.env;
+    const { assets, resources, report, page } = this.env;
+    // A page-sized island at print resolution is more pixels than a canvas may have.
+    const fitted = fitPixelRatio(box.x1 - box.x0, box.y1 - box.y0, this.env.pixelRatio);
+    const pixelRatio = fitted.pixelRatio;
     // Whole device px, so the picture and the box it is placed in are the same size.
     const snapped: Rect = {
       x0: Math.floor(box.x0 * pixelRatio) / pixelRatio,
@@ -531,6 +560,7 @@ export class ContentWriter {
       return;
     }
     report.rasterIslands.push({ page, elementId: this.env.elementId, reason });
+    if (fitted.reduced) report.reducedRasters.push({ page, elementId: this.env.elementId });
     this.picture(
       resources.xobject(image.ref),
       snapped.x0,

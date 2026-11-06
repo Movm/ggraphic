@@ -585,6 +585,7 @@ describe('exportPagesPdf', () => {
       expect(await blob.text()).toBe('%PDF-raster');
       expect(filename).toBe('Plakat.pdf');
       expect(report.fallback?.reason).toMatch(/2 elements/);
+      expect(report.fallback?.kind).toBe('fonts');
       // What the vector attempt found says nothing about the raster pdf.
       expect(report.rasterIslands).toEqual([]);
       expect(warn).toHaveBeenCalled();
@@ -656,6 +657,7 @@ describe('exportPagesPdf', () => {
       expect(await blob.text()).toBe('%PDF-raster');
       expect(rasterFallback).toHaveBeenCalledTimes(1);
       expect(report.fallback?.reason).toContain('fontkit exploded');
+      expect(report.fallback?.kind).toBe('error');
       vi.restoreAllMocks();
     });
 
@@ -668,7 +670,77 @@ describe('exportPagesPdf', () => {
 
       expect(rasterFallback).toHaveBeenCalledTimes(1);
       expect(report.fallback?.reason).toMatch(/did not finish/);
+      expect(report.fallback?.kind).toBe('timeout');
       vi.restoreAllMocks();
+    });
+
+    it('the time raster islands take does not count against the timeout', async () => {
+      const { deps, rasterFallback } = pdfSetup([pageOf([['a', [square]]])]);
+      // A writer that spends 120 ms in the rasteriser and 10 ms of its own, under a 60 ms budget.
+      vi.mocked(writePdf).mockImplementationOnce(async (_scenes, options) => {
+        await options.rasterize([], { x: 0, y: 0, width: 1, height: 1 }, 1);
+        await new Promise((resolve) => setTimeout(resolve, 10));
+        return { bytes: new TextEncoder().encode('%PDF-slow'), report: emptyReport() };
+      });
+      const slow = deps.resolveDeps;
+      deps.resolveDeps = (index) => ({
+        ...slow(index),
+        rasterizeOps: async () => {
+          await new Promise((resolve) => setTimeout(resolve, 120));
+          return new Uint8Array(0);
+        },
+      });
+
+      const { blob, report } = await exportPagesPdf(pdfOptions({ writeTimeoutMs: 60 }), deps);
+
+      expect(rasterFallback).not.toHaveBeenCalled();
+      expect(report.fallback).toBeNull();
+      expect(await blob.text()).toBe('%PDF-slow');
+    });
+
+    it('a raster island that never settles: a raster pdf, kind timeout', async () => {
+      const { deps, rasterFallback } = pdfSetup([pageOf([['a', [square]]])]);
+      vi.mocked(writePdf).mockImplementationOnce(async (_scenes, options) => {
+        await options.rasterize([], { x: 0, y: 0, width: 1, height: 1 }, 1);
+        return { bytes: new TextEncoder().encode('%PDF-never'), report: emptyReport() };
+      });
+      const base = deps.resolveDeps;
+      deps.resolveDeps = (index) => ({ ...base(index), rasterizeOps: () => new Promise(() => {}) });
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const { report } = await exportPagesPdf(pdfOptions({ islandTimeoutMs: 20 }), deps);
+
+      expect(rasterFallback).toHaveBeenCalledTimes(1);
+      expect(report.fallback?.kind).toBe('timeout');
+      expect(report.fallback?.reason).toMatch(/raster island/);
+      vi.restoreAllMocks();
+    });
+
+    it('leaves no timer behind when an abandoned writer ends its pause late', async () => {
+      const { deps } = pdfSetup([pageOf([['a', [square]]])]);
+      vi.mocked(writePdf).mockImplementationOnce(async (_scenes, options) => {
+        await options.rasterize([], { x: 0, y: 0, width: 1, height: 1 }, 1);
+        return { bytes: new TextEncoder().encode('%PDF-x'), report: emptyReport() };
+      });
+      let release: () => void = () => {};
+      const base = deps.resolveDeps;
+      deps.resolveDeps = (index) => ({
+        ...base(index),
+        rasterizeOps: () => new Promise((resolve) => (release = () => resolve(new Uint8Array(0)))),
+      });
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      vi.useFakeTimers();
+      try {
+        const done = exportPagesPdf(pdfOptions({ islandTimeoutMs: 20 }), deps);
+        await vi.advanceTimersByTimeAsync(25);
+        await done;
+        release();
+        await vi.advanceTimersByTimeAsync(0);
+        expect(vi.getTimerCount()).toBe(0);
+      } finally {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+      }
     });
 
     it('a page that cannot be recorded: a raster pdf, which then says what is wrong', async () => {

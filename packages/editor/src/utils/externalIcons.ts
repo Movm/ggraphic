@@ -176,10 +176,73 @@ function toBase64(text: string): string {
   return btoa(binary);
 }
 
-const SAFE_COLOR = /^(?:#[0-9a-f]{3,8}|(?:rgb|hsl)a?\(\s*[\d.%\s,/-]+\)|[a-z]{3,30})$/i;
+const HEX_OR_NAME = /^(?:#[0-9a-f]{3,8}|[a-z]{3,30})$/;
+/** `none`, or a number with an optional percent sign or angle unit: one channel of a colour. */
+const CHANNEL = /^(?:none|[+-]?(?:\d+\.?\d*|\.\d+)(?:%|deg|grad|rad|turn)?)$/;
+const COLOR_FUNCTION = /^(rgba?|hsla?|hwb|lab|lch|oklab|oklch|color|color-mix)\((.*)\)$/;
+const MIX_HEAD = /^in [a-z]+(?: (?:shorter|longer|increasing|decreasing) hue)?$/;
+const MIX_PERCENT = /^(.*?)(?:\s+(?:\d+\.?\d*|\.\d+)%)?$/;
+const MAX_LENGTH = 200;
+const MAX_DEPTH = 3;
 
-/** A colour that cannot break out of an attribute: hex, rgb(a), hsl(a) or a name. */
-export const isSafeColor = (color: string) => SAFE_COLOR.test(color);
+/** The top-level comma-separated parts of `args`, or null when the parentheses do not balance. */
+function splitTopLevel(args: string): string[] | null {
+  const parts: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let i = 0; i < args.length; i++) {
+    const c = args[i];
+    if (c === '(') depth++;
+    else if (c === ')' && --depth < 0) return null;
+    else if (c === ',' && depth === 0) {
+      parts.push(args.slice(start, i));
+      start = i + 1;
+    }
+  }
+  if (depth !== 0) return null;
+  parts.push(args.slice(start));
+  return parts;
+}
+
+function safeColor(color: string, depth: number): boolean {
+  const value = color.trim();
+  if (HEX_OR_NAME.test(value)) return true;
+  const fn = COLOR_FUNCTION.exec(value);
+  if (!fn || depth > MAX_DEPTH) return false;
+  const [, name, args] = fn as unknown as [string, string, string];
+  if (name === 'color-mix') {
+    const parts = splitTopLevel(args);
+    if (!parts || parts.length !== 3 || !MIX_HEAD.test(parts[0]!.trim())) return false;
+    return parts.slice(1).every((part) => safeColor(MIX_PERCENT.exec(part.trim())![1]!, depth + 1));
+  }
+  // No nested function and no stray parenthesis: a plain list of channels.
+  if (/[()]/.test(args)) return false;
+  const tokens = args.split(/[\s,/]+/).filter(Boolean);
+  if (name === 'color') {
+    // `color(<space> c1 c2 c3 [/ alpha])`: the space is an identifier, e.g. `display-p3`.
+    const [space, ...channels] = tokens;
+    return (
+      !!space &&
+      /^[a-z][a-z0-9-]{1,30}$/.test(space) &&
+      channels.length > 0 &&
+      channels.every((t) => CHANNEL.test(t))
+    );
+  }
+  return tokens.length >= 3 && tokens.length <= 4 && tokens.every((token) => CHANNEL.test(token));
+}
+
+/**
+ * A colour that cannot break out of an attribute or reach for a resource: hex, a name, or one of
+ * the CSS colour functions (rgb, hsl, hwb, lab, lch, oklab, oklch, color, color-mix) over plain
+ * numbers, percentages and angles. Nothing else is parsed, so `url()`, `var()`, `calc()`,
+ * quotes, semicolons and braces never get through. Case is folded first.
+ */
+export const isSafeColor = (color: string) => {
+  // The caller writes `color` into markup as it is, so surrounding whitespace is not slack to trim.
+  if (color !== color.trim()) return false;
+  const value = color.toLowerCase();
+  return value.length <= MAX_LENGTH && safeColor(value, 0);
+};
 
 /** The SVG as a data URL of `size` px, `currentColor` replaced by `color`, for the canvas. */
 export function externalIconDataUrl(svg: string, size: number, color: string): string {

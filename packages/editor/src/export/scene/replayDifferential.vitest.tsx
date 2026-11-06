@@ -144,13 +144,15 @@ const IMAGE_NODES = 8;
  * Mounts the fixture page and waits until every image node holds its image. The icon, the
  * illustration and the chart load without telling `imagesSettled`, so the nodes are counted.
  */
-async function mountFixture(): Promise<{ canvas: GenericCanvasRef; stage: Konva.Stage }> {
+async function mountFixture(
+  filtered = false
+): Promise<{ canvas: GenericCanvasRef; stage: Konva.Stage }> {
   const ref = createRef<GenericCanvasRef>();
   render(
     <AutoSaveStoreProvider>
       <GenericCanvas
         config={config as never}
-        initialProps={allElementsPage({ photo: makePhoto() })}
+        initialProps={allElementsPage({ photo: makePhoto(), filtered })}
         onExport={() => {}}
         onCancel={() => {}}
         callbacks={{}}
@@ -170,9 +172,9 @@ async function mountFixture(): Promise<{ canvas: GenericCanvasRef; stage: Konva.
       await sleep(50);
     });
     const settled = !!ref.current && ref.current.imageLoadState().pending === 0;
-    stable = settled && imagesIn() >= IMAGE_NODES ? stable + 1 : 0;
+    stable = settled && imagesIn() >= IMAGE_NODES + (filtered ? 1 : 0) ? stable + 1 : 0;
   }
-  expect(imagesIn()).toBeGreaterThanOrEqual(IMAGE_NODES);
+  expect(imagesIn()).toBeGreaterThanOrEqual(IMAGE_NODES + (filtered ? 1 : 0));
   return { canvas: ref.current!, stage: stage() };
 }
 
@@ -315,6 +317,84 @@ describe('replay differential', () => {
     expect(failures).toEqual([]);
   }, 120_000);
 
+  // A filter cannot be replayed: Konva runs it on pixels. The recorder hands the element over as
+  // a raster island (made by `resolveScene` from the stage), and does not draw it a second time.
+  it('records a filtered photo as a raster island of reason filter', async () => {
+    const { canvas } = await mountFixture(true);
+    const scene = (await canvas.recordScene({ page: 1 }))!;
+    const item = scene.items.find((i) => i.elementId === 'filtered')!;
+    const rasters = allOps(item.ops).filter((op) => op.kind === 'raster');
+    expect(rasters).toHaveLength(1);
+    expect(rasters[0]).toMatchObject({ reason: 'filter' });
+    expect(scene.report.rasterIslands).toEqual([
+      { page: 1, elementId: 'filtered', reason: 'filter' },
+    ]);
+    expect(scene.report.unknownCalls).toEqual([]);
+  }, 120_000);
+
+  // An even-odd fill is not in any page state (no shape sets a fill rule), so it is put on a stage
+  // by hand: a square with a square hole, both wound the same way, which only even-odd leaves open.
+  it('replays an even-odd fill and a dashed stroke the way konva draws them', async () => {
+    const stage = new Konva.Stage({
+      container: document.createElement('div'),
+      width: WIDTH,
+      height: HEIGHT,
+    });
+    try {
+      const layer = new Konva.Layer();
+      stage.add(layer);
+      const item = (id: string, node: Konva.Shape) => {
+        const group = new Konva.Group({ name: CANVAS_ITEM_NAME, canvasItemId: id });
+        group.add(node);
+        layer.add(group);
+      };
+      item(
+        'evenodd',
+        new Konva.Path({
+          x: 100,
+          y: 100,
+          data: 'M0,0 L200,0 L200,200 L0,200 Z M60,60 L140,60 L140,140 L60,140 Z',
+          fill: '#c0392b',
+          fillRule: 'evenodd',
+        })
+      );
+      item(
+        'dashed',
+        new Konva.Line({
+          x: 100,
+          y: 500,
+          points: [0, 0, 400, 0],
+          stroke: '#2980b9',
+          strokeWidth: 10,
+          dash: [30, 20],
+        })
+      );
+      layer.draw();
+
+      const image = await napi.loadImage(stage.toDataURL({ pixelRatio: 1 }));
+      const target = napi.createCanvas(WIDTH, HEIGHT);
+      target.getContext('2d').drawImage(image, 0, 0);
+      const konva = target.getContext('2d').getImageData(0, 0, WIDTH, HEIGHT)
+        .data as unknown as Uint8ClampedArray;
+      const scene = recordPageScene(stage, { page: 1 });
+      const replay = replayPixels(scene);
+
+      const alphaAt = (data: Uint8ClampedArray, px: number, py: number) =>
+        data[(py * WIDTH + px) * 4 + 3]!;
+      // The hole is open, the band round it is painted, a dash is painted and a gap is not.
+      expect(alphaAt(konva, 200, 200)).toBe(0);
+      expect(alphaAt(replay, 200, 200)).toBe(0);
+      expect(alphaAt(replay, 120, 200)).toBe(255);
+      expect(alphaAt(replay, 115, 500)).toBe(255);
+      expect(alphaAt(replay, 140, 500)).toBe(0);
+      const diff = diffPixels(konva, replay, WIDTH, HEIGHT, RIM_TOLERANCE);
+      expect(diff.share).toBeLessThanOrEqual(MAX_RIM_SHARE);
+      expect(scene.report.unknownCalls).toEqual([]);
+    } finally {
+      stage.destroy();
+    }
+  }, 120_000);
+
   // A ring is two circles run in opposite directions, and the span of the second one is exactly a
   // turn: `Konva.Ring` draws it as arc(2π, 0, true), `Konva.Arc` of 360° as arc(0, 2π) then
   // arc(2π, 0) in the direction it was given. The recorder once read a span of a turn against its
@@ -391,6 +471,94 @@ describe('replay differential', () => {
         );
       }
       expect(diff.share).toBeLessThanOrEqual(MAX_RIM_SHARE);
+      expect(scene.report.unknownCalls).toEqual([]);
+    } finally {
+      stage.destroy();
+    }
+  }, 120_000);
+
+  // The same turn without a hole: a wedge or an arc with no inner radius of 360° is a disc in
+  // whichever direction Konva is asked to draw it, not a zero sweep.
+  it('replays a wedge and an arc of 360° as a full disc, clockwise or not', async () => {
+    const stage = new Konva.Stage({
+      container: document.createElement('div'),
+      width: WIDTH,
+      height: HEIGHT,
+    });
+    try {
+      const layer = new Konva.Layer();
+      stage.add(layer);
+      const x = 200;
+      const shapes: { name: string; y: number; make: (y: number) => Konva.Shape }[] = [
+        {
+          name: 'wedge clockwise',
+          y: 150,
+          make: (y) =>
+            new Konva.Wedge({ x, y, radius: 100, angle: 360, fill: '#c0392b', clockwise: true }),
+        },
+        {
+          name: 'wedge counter-clockwise',
+          y: 400,
+          make: (y) =>
+            new Konva.Wedge({ x, y, radius: 100, angle: 360, fill: '#2980b9', clockwise: false }),
+        },
+        {
+          name: 'arc clockwise',
+          y: 650,
+          make: (y) =>
+            new Konva.Arc({
+              x,
+              y,
+              innerRadius: 0,
+              outerRadius: 100,
+              angle: 360,
+              fill: '#27ae60',
+              clockwise: true,
+            }),
+        },
+        {
+          name: 'arc counter-clockwise',
+          y: 900,
+          make: (y) =>
+            new Konva.Arc({
+              x,
+              y,
+              innerRadius: 0,
+              outerRadius: 100,
+              angle: 360,
+              fill: '#8e44ad',
+              clockwise: false,
+            }),
+        },
+      ];
+      for (const [i, shape] of shapes.entries()) {
+        const group = new Konva.Group({ name: CANVAS_ITEM_NAME, canvasItemId: `disc-${i}` });
+        group.add(shape.make(shape.y));
+        layer.add(group);
+      }
+      layer.draw();
+
+      const image = await napi.loadImage(stage.toDataURL({ pixelRatio: 1 }));
+      const target = napi.createCanvas(WIDTH, HEIGHT);
+      target.getContext('2d').drawImage(image, 0, 0);
+      const konva = target.getContext('2d').getImageData(0, 0, WIDTH, HEIGHT)
+        .data as unknown as Uint8ClampedArray;
+      const scene = recordPageScene(stage, { page: 1 });
+      const replay = replayPixels(scene);
+
+      const alphaAt = (data: Uint8ClampedArray, px: number, py: number) =>
+        data[(py * WIDTH + px) * 4 + 3]!;
+      for (const { name, y } of shapes) {
+        // Where Konva paints, the replay paints; a zero sweep would leave both of these empty.
+        for (const dx of [0, 60, -60]) {
+          expect([name, dx, alphaAt(replay, x + dx, y)]).toEqual([
+            name,
+            dx,
+            alphaAt(konva, x + dx, y),
+          ]);
+        }
+        expect([name, alphaAt(replay, x + 60, y)]).toEqual([name, 255]);
+      }
       expect(scene.report.unknownCalls).toEqual([]);
     } finally {
       stage.destroy();

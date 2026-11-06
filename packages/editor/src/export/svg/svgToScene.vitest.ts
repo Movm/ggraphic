@@ -499,6 +499,15 @@ describe('svgToScene: paint and style', () => {
     expect(unsupported).toEqual(['color']);
   });
 
+  it.each(['oklch(60% 0.15 50)', 'color-mix(in srgb, red, blue)', 'hsl(120deg 50% 50%)'])(
+    'a modern colour the converter cannot read (%s) is reported, not guessed',
+    (fill) => {
+      const { ops, unsupported } = convert(svg(`<rect width="1" height="1" fill="${fill}"/>`));
+      expect(ops).toEqual([]);
+      expect(unsupported).toEqual(['color']);
+    }
+  );
+
   it('lengths with units and percentages', () => {
     const op = only(
       pathsOf(convert(svg('<rect x="10%" y="1in" width="0.5em" height="6pt" />')).ops)

@@ -1069,7 +1069,16 @@ export class RecordingContext {
     let baselineShift = 0;
     if (metrics && s.textBaseline !== 'alphabetic') {
       if (Number.isFinite(metrics.alphabeticBaseline)) baselineShift = metrics.alphabeticBaseline;
-      else this.onUnknown('measureText:alphabeticBaseline');
+      else {
+        // The same glyph top seen from both lines: ascent(requested) - ascent(alphabetic).
+        const ascent = metrics.actualBoundingBoxAscent;
+        this.measure.textBaseline = 'alphabetic';
+        const alphabetic = this.measure.measureText(text).actualBoundingBoxAscent;
+        this.measure.textBaseline = s.textBaseline;
+        if (Number.isFinite(ascent) && Number.isFinite(alphabetic))
+          baselineShift = ascent - alphabetic;
+        else this.onUnknown('measureText:alphabeticBaseline');
+      }
     }
     const baseline = y - baselineShift;
 

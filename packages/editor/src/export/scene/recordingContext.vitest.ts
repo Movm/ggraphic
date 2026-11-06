@@ -824,6 +824,31 @@ describe('RecordingContext text', () => {
     expect(unknown).toEqual(['measureText:alphabeticBaseline']);
   });
 
+  it('derives the baseline offset from bounding-box ascents when alphabeticBaseline is missing', () => {
+    const ascents: Record<string, number> = { alphabetic: 30, middle: 12, top: 0 };
+    const stub = {
+      textBaseline: 'alphabetic',
+      fillStyle: '',
+      measureText(this: { textBaseline: string }) {
+        return { width: 10, actualBoundingBoxAscent: ascents[this.textBaseline] };
+      },
+    } as unknown as CanvasRenderingContext2D;
+    const unknown: string[] = [];
+    const ctx = new RecordingContext({
+      measure: stub,
+      page: 0,
+      width: 10,
+      height: 10,
+      onUnknown: (call) => unknown.push(call),
+    });
+    ctx.textBaseline = 'middle';
+    ctx.fillText('x', 0, 50);
+    // ascent(middle) - ascent(alphabetic) = -18: the alphabetic baseline is 18 below the line.
+    expect(lastOp(ctx, 'text').y).toBe(68);
+    expect(unknown).toEqual([]);
+    expect(stub.textBaseline).toBe('middle');
+  });
+
   it('merges per-glyph fillText on one baseline into one text op', () => {
     const { ctx } = setup();
     ctx.font = '20px sans-serif';

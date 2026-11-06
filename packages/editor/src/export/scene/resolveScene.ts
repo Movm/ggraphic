@@ -22,7 +22,9 @@ import {
   type ImageByteDeps,
   type SourceOutcome,
 } from './imageBytes.js';
+import { itemBounds } from './itemBounds.js';
 import { IDENTITY } from './matrix.js';
+import { fitPixelRatio } from './rasterLimit.js';
 import { isTrustedSvgImage } from './trustedSvgImages.js';
 import {
   emptyReport,
@@ -206,6 +208,8 @@ async function resolveImage(
   const ref = op.image;
   const outcome = await resolveRef(ref, resolution);
   if (!outcome.ok) {
+    // An item without an id (a page background) has no stage element to draw: raster the op.
+    if (state.elementId === null) return rasterizedImage(op, outcome.reason, resolution, state);
     state.stageFallback ??= outcome.reason;
     return null;
   }
@@ -238,16 +242,58 @@ async function resolveImage(
   return { ...op, image: source };
 }
 
+/** An image nothing can embed, drawn by the browser from the op itself: an island of its box. */
+async function rasterizedImage(
+  op: Extract<SceneOp, { kind: 'image' }>,
+  reason: Extract<RasterReason, 'image-unreadable' | 'svg-unsupported'>,
+  resolution: Resolution,
+  state: ItemState
+): Promise<SceneOp | null> {
+  const bounds = itemBounds({ elementId: null, label: null, ops: [op] });
+  if (!bounds) {
+    state.missing = true;
+    return null;
+  }
+  const island = await resolveRaster(
+    {
+      kind: 'raster',
+      matrix: IDENTITY,
+      alpha: 1,
+      clips: [],
+      shadow: null,
+      png: null,
+      x: bounds.x0,
+      y: bounds.y0,
+      width: bounds.x1 - bounds.x0,
+      height: bounds.y1 - bounds.y0,
+      reason,
+      source: [op],
+    },
+    resolution,
+    state
+  );
+  if (island) {
+    resolution.report.rasterIslands.push({
+      page: resolution.deps.page,
+      elementId: null,
+      reason,
+    });
+  }
+  return island;
+}
+
 async function resolveRaster(
   op: RasterOp,
-  { deps }: Resolution,
+  { deps, report }: Resolution,
   state: ItemState
 ): Promise<SceneOp | null> {
   // `nodeRef` and `source` are recorded forms: the node, and ops that still name DOM elements.
   const { nodeRef, source, ...island } = op;
   let png = op.png;
   if (!png) {
-    const ratio = deps.rasterPixelRatio;
+    // A page-sized island at print resolution is more pixels than a canvas may have.
+    const fitted = fitPixelRatio(op.width, op.height, deps.rasterPixelRatio);
+    const ratio = fitted.pixelRatio;
     if (source) {
       const box = { x: op.x, y: op.y, width: op.width, height: op.height };
       png = await attempt(() => deps.rasterizeOps(source, box, ratio));
@@ -257,6 +303,8 @@ async function resolveRaster(
     } else if (nodeRef !== undefined) {
       png = await attempt(() => deps.rasterizeNode(nodeRef, ratio));
     }
+    if (png && fitted.reduced)
+      report.reducedRasters.push({ page: deps.page, elementId: state.elementId });
   }
   if (!png) {
     state.missing = true;

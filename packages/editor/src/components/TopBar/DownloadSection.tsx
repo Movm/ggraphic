@@ -485,11 +485,21 @@ export function DownloadSection({
       </Button>
 
       {reportsExport && report?.fallback && (
-        <DownloadNotice tone="info">{downloadPanel.pdfFallbackNotice}</DownloadNotice>
+        <DownloadNotice tone="info">
+          {downloadPanel.pdfFallbackNotice[report.fallback.kind]}
+        </DownloadNotice>
       )}
       {reportsExport && report && report.missingElements.length > 0 && (
         <DownloadNotice>
           {downloadPanel.missingNotice(report.missingElements.length)}
+        </DownloadNotice>
+      )}
+      {reportsExport && report && report.reducedRasters.length > 0 && (
+        <DownloadNotice tone="info">{downloadPanel.reducedRasterNotice}</DownloadNotice>
+      )}
+      {reportsExport && report && report.defaultInstanceFonts.length > 0 && (
+        <DownloadNotice tone="info">
+          {downloadPanel.variableFontNotice(report.defaultInstanceFonts.join(', '))}
         </DownloadNotice>
       )}
       {reportsExport && rasterReasons.length > 0 && (

@@ -190,6 +190,35 @@ describe('text', () => {
     expect(pdf.ofType('Image')).toHaveLength(0);
   });
 
+  it('a soft hyphen the canvas does not draw neither advances the pen nor writes a glyph', async () => {
+    // Most fonts map U+00AD to a hyphen glyph; this one's latin subset does not, so give it one.
+    const real = set.files[0]!.font;
+    const hyphen = real.glyphForCodePoint(0x2d);
+    const font = Object.create(real) as typeof real;
+    font.hasGlyphForCodePoint = (cp) => cp === 0xad || real.hasGlyphForCodePoint(cp);
+    font.glyphForCodePoint = (cp) => (cp === 0xad ? hyphen : real.glyphForCodePoint(cp));
+    font.layout = (value) => (value === '\u00ad' ? { glyphs: [hyphen] } : real.layout(value));
+    const file = { ...set.files[0]!, font };
+    const withHyphen = new Map([
+      [FACE_KEY, { face: set.face, files: [file], fileFor: () => file }],
+    ]);
+    // As measured in a browser: the soft hyphen is 0 wide, the next letter starts where it does.
+    const xs = xsOf('Worttrennung');
+    xs.splice(4, 0, xs[4]!);
+
+    const { bytes, pdf } = await write(
+      sceneOf(item('a', null, textOp('Wort\u00adtrennung', { xs }))),
+      { fonts: withHyphen }
+    );
+
+    expect((await extractText(bytes)).join('')).toBe('Worttrennung');
+    // 12 glyphs of "Worttrennung", 4 hex digits each: no thirteenth for the hyphen.
+    const hex = [...pdf.content(0).matchAll(/<([0-9a-f]+)>/g)].map((m) => m[1]).join('');
+    expect(hex.length / 4).toBe(12);
+    // And no shift to undo an advance: the letters follow each other.
+    expect(pdf.content(0)).not.toMatch(/\] TJ[\s\S]*\] TJ/);
+  });
+
   it('fonts are embedded as subsets', async () => {
     const { pdf } = await write(sceneOf(item('a', null, text('Hallo Welt'))));
     const descriptors = pdf.ofType('FontDescriptor');
@@ -240,6 +269,56 @@ describe('text', () => {
     expect(pdf.content(0)).toContain('1 0 0.25 -1 10 100 Tm');
     const { pdf: upright } = await write(sceneOf(item('a', null, op)));
     expect(upright.content(0)).toContain('1 0 0 -1 10 100 Tm');
+  });
+
+  it('embeds the instance of a variable font, not the default instance the bytes parse to', async () => {
+    // An instance whose 'H' is 100 units wider than in the file the bytes come from.
+    const real = set.files[0]!.font as unknown as EmbeddedFont;
+    const wide = Object.create(real, {
+      getGlyph: {
+        value: (id: number) => {
+          const glyph = real.getGlyph(id);
+          return Object.create(glyph, {
+            advanceWidth: { value: glyph.advanceWidth + (id === hId ? 100 : 0) },
+          });
+        },
+      },
+    });
+    const hId = (real.glyphForCodePoint(72) as unknown as { id: number }).id;
+    const instance = withFile((file) => ({ ...file, font: wide, variation: 'instance' }));
+
+    const { pdf } = await write(sceneOf(item('a', null, text('H'))), { fonts: instance });
+
+    const program = pdf.bytesAt(pdf.ofType('FontDescriptor')[0]!.dict, 'FontFile2')!;
+    const embedded = (await loadFontkit()).create(program) as unknown as EmbeddedFont;
+    const original = real.glyphForCodePoint(72).advanceWidth;
+    // Glyph 0 is .notdef, the glyph of the text is the next.
+    expect(embedded.getGlyph(1).advanceWidth).toBe(original + 100);
+  });
+
+  it('reports the family of a variable font drawn in its default instance', async () => {
+    const stuck = withFile((file) => ({ ...file, variation: 'default-only' }));
+    const { report } = await write(sceneOf(item('a', null, text('Hi'), text('Ho', { y: 160 }))), {
+      fonts: stuck,
+    });
+    expect(report.defaultInstanceFonts).toEqual(['Instrument Sans']);
+    expect((await write(sceneOf(item('a', null, text('Hi'))))).report.defaultInstanceFonts).toEqual(
+      []
+    );
+  });
+
+  it('draws a regular cut that stands in for a bold with fill and stroke in one colour', async () => {
+    const bold = withFile((file) => ({ ...file, fakeBold: true }));
+    const op = text('II', { xs: [10, 40], font: { ...FACE, size: 36 } });
+    const { pdf } = await write(sceneOf(item('a', null, op)), { fonts: bold });
+    const content = pdf.content(0);
+    // Fill colour, the same as stroke colour, a line of size / 32 with round joins, mode 2.
+    expect(content).toMatch(/0\.0667 0\.1333 0\.2 rg\s+0\.0667 0\.1333 0\.2 RG/);
+    expect(content).toContain('1.125 w');
+    expect(content).toContain('1 j');
+    expect(content).toContain('2 Tr');
+    const { pdf: regular } = await write(sceneOf(item('a', null, op)));
+    expect(regular.content(0)).not.toContain(' Tr');
   });
 
   it('sets the pen by the advance of the glyph the font shapes, which is the width the PDF holds', async () => {
@@ -324,6 +403,8 @@ describe('text', () => {
         embeddable: 'yes',
         ranges: null,
         slant: 0,
+        fakeBold: false,
+        variation: 'none',
       };
     });
 
@@ -374,6 +455,26 @@ describe('text', () => {
     expect(calls).toHaveLength(1);
     expect(pdf.pictures()).toHaveLength(1);
     expect(pdf.ofType('FontDescriptor')).toHaveLength(0);
+  });
+
+  it('lowers the ratio of an island that would be over the canvas limit and says so', async () => {
+    const inner = napiRasterize();
+    const asked: { ratio: number; width: number; height: number }[] = [];
+    const rasterize: typeof inner.rasterize = (ops, box, ratio) => {
+      asked.push({ ratio, width: box.width, height: box.height });
+      return inner.rasterize(ops, box, 1); // the pixels are not the point, the request is
+    };
+    const { report } = await write(
+      sceneOf(item('a', null, text('Hi'))),
+      { fonts: new Map(), rasterPixelRatio: 600 },
+      { ...inner, rasterize }
+    );
+    const request = only(asked);
+    expect(request.ratio).toBeLessThan(600);
+    expect(
+      Math.ceil(request.width * request.ratio) * Math.ceil(request.height * request.ratio)
+    ).toBeLessThanOrEqual(16_777_216);
+    expect(report.reducedRasters).toEqual([{ page: 1, elementId: 'a' }]);
   });
 
   it('missing glyph run is reported and kept', async () => {

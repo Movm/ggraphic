@@ -763,7 +763,7 @@ describe('paint', () => {
 });
 
 describe('shadow', () => {
-  it('writes an feDropShadow filter around the shape', () => {
+  it('writes a primitive shadow filter around the shape', () => {
     const op = {
       ...fill(rect(10, 10, 50, 50), solid('#ffffff')),
       shadow: { hex: '#102030', alpha: 0.4, blur: 10, offsetX: 3, offsetY: -5 },
@@ -771,10 +771,34 @@ describe('shadow', () => {
     const root = parse(run(sceneOf(item('s', null, op, { ...op }))).svg);
     const filters = root.querySelectorAll('defs > filter');
     expect(filters).toHaveLength(1);
-    const drop = filters[0]!.querySelector('feDropShadow')!;
-    expect(
-      ['dx', 'dy', 'stdDeviation', 'flood-color', 'flood-opacity'].map((n) => drop.getAttribute(n))
-    ).toEqual(['3', '-5', '5', '#102030', '0.4']);
+    const f = filters[0]!;
+    expect(f.querySelector('feDropShadow')).toBeNull();
+    const kids = Array.from(f.children);
+    expect(kids.map((k) => k.tagName)).toEqual([
+      'feGaussianBlur',
+      'feOffset',
+      'feFlood',
+      'feComposite',
+      'feMerge',
+    ]);
+    const [blur, offset, flood, comp, merge] = kids;
+    expect([blur!.getAttribute('in'), blur!.getAttribute('stdDeviation')]).toEqual([
+      'SourceAlpha',
+      '5',
+    ]);
+    expect([offset!.getAttribute('dx'), offset!.getAttribute('dy')]).toEqual(['3', '-5']);
+    expect([flood!.getAttribute('flood-color'), flood!.getAttribute('flood-opacity')]).toEqual([
+      '#102030',
+      '0.4',
+    ]);
+    expect([comp!.getAttribute('operator'), comp!.getAttribute('in2')]).toEqual([
+      'in',
+      offset!.getAttribute('result'),
+    ]);
+    expect(Array.from(merge!.children).map((n) => n.getAttribute('in'))).toEqual([
+      comp!.getAttribute('result'),
+      'SourceGraphic',
+    ]);
     // The region covers the page and the reach of the shadow, also for a hairline.
     expect(filters[0]!.getAttribute('filterUnits')).toBe('userSpaceOnUse');
     const [x, y, w, h] = ['x', 'y', 'width', 'height'].map((n) =>
@@ -815,6 +839,59 @@ describe('text', () => {
     expect(xs[0]).toBeLessThan(25);
     expect(xs[1]).toBeGreaterThan(200);
     expect(xs[1]).toBeLessThan(215);
+  });
+
+  it('reports the family of a variable font drawn in its default instance', async () => {
+    const [latin] = fonts.get('Instrument Sans|400|normal')!.files;
+    const set = {
+      face: FACE,
+      files: [{ ...latin!, variation: 'default-only' as const }],
+      fileFor: () => ({ ...latin!, variation: 'default-only' as const }),
+    };
+    const { report } = run(sceneOf(item('t', null, textOp('Hi'), textOp('Ho', { y: 150 }))), {
+      fonts: new Map([['Instrument Sans|400|normal', set]]),
+    });
+    expect(report.defaultInstanceFonts).toEqual(['Instrument Sans']);
+    expect(run(sceneOf(item('t', null, textOp('Hi')))).report.defaultInstanceFonts).toEqual([]);
+  });
+
+  it('outline mode strokes the glyphs of a regular cut that stands in for a bold, as a browser does', async () => {
+    const bold: FontSpec = { ...FACE, weight: 700, size: 36 };
+    const set = await resolveFontFiles(bold, {
+      brandFaces: [{ family: FACE.family, src: 'latin.woff2', weight: 400 }],
+      fetchBytes: async () => latinBytes,
+    });
+    const op = textOp('I', { font: bold, xs: [10], paint: solid('#112233') });
+    const { svg } = run(sceneOf(item('t', null, op)), {
+      fonts: new Map([['Instrument Sans|700|normal', set]]),
+    });
+
+    const path = parse(svg).querySelector('path')!;
+    expect(path.getAttribute('fill')).toBe('#112233');
+    expect(path.getAttribute('stroke')).toBe('#112233');
+    expect(path.getAttribute('stroke-width')).toBe('1.125'); // 36 px / 32
+    expect(path.getAttribute('stroke-linejoin')).toBe('round');
+    // A real bold, or a regular, is not stroked.
+    const plain = run(sceneOf(item('t', null, textOp('I', { xs: [10] }))));
+    expect(parse(plain.svg).querySelector('path')!.hasAttribute('stroke')).toBe(false);
+  });
+
+  it('translucent fake bold: the alpha sits on a group, fill and stroke are painted opaque', async () => {
+    const bold: FontSpec = { ...FACE, weight: 700, size: 36 };
+    const set = await resolveFontFiles(bold, {
+      brandFaces: [{ family: FACE.family, src: 'latin.woff2', weight: 400 }],
+      fetchBytes: async () => latinBytes,
+    });
+    const op = textOp('I', { font: bold, xs: [10], paint: solid('#112233', 0.5) });
+    const { svg } = run(sceneOf(item('t', null, op)), {
+      fonts: new Map([['Instrument Sans|700|normal', set]]),
+    });
+
+    const path = parse(svg).querySelector('path')!;
+    expect(path.hasAttribute('fill-opacity')).toBe(false);
+    expect(path.hasAttribute('stroke-opacity')).toBe(false);
+    expect(path.getAttribute('stroke')).toBe('#112233');
+    expect(path.parentElement!.getAttribute('opacity')).toBe('0.5');
   });
 
   it('outline mode shears the upright cut that stands in for an italic the family does not ship', async () => {

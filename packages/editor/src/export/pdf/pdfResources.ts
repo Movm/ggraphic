@@ -9,6 +9,7 @@
  * module passed in.
  */
 import { subsetTag, type FontFile } from '../fonts/fontFiles.js';
+import { embeddableBytes } from './pdfFontkit.js';
 import { unit, type Rect } from './pdfGeometry.js';
 
 import type { FontkitFsType } from '../fonts/glyphs.js';
@@ -82,20 +83,22 @@ export class PdfAssets {
     if (!font) {
       const name = safeName(file.font.postscriptName ?? face.family);
       if (!forbidsSubsetting(file.font['OS/2']?.fsType)) {
-        font = this.doc.embedFont(file.bytes, {
+        font = this.doc.embedFont(embeddableBytes(file), {
           subset: true,
           customName: `${subsetTag(face, fileIndex)}+${name}`,
         });
       } else if (isSfnt(file.bytes)) {
         font = this.doc.embedFont(file.bytes, { subset: false, customName: name });
       } else {
-        font = this.doc.embedFont(file.bytes, { subset: true, customName: name }).then((whole) => {
-          // `encodeText` is what puts a glyph into the subset.
-          for (const codePoint of file.font.characterSet) {
-            whole.encodeText(String.fromCodePoint(codePoint));
-          }
-          return whole;
-        });
+        font = this.doc
+          .embedFont(embeddableBytes(file), { subset: true, customName: name })
+          .then((whole) => {
+            // `encodeText` is what puts a glyph into the subset.
+            for (const codePoint of file.font.characterSet) {
+              whole.encodeText(String.fromCodePoint(codePoint));
+            }
+            return whole;
+          });
       }
       this.fonts.set(file, font);
     }

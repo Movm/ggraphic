@@ -23,7 +23,7 @@
  * on nothing but the scene and the options: same input, same bytes.
  */
 import type { FontFileSet } from '../fonts/fontFiles.js';
-import { glyphOutline, splitRuns } from '../fonts/glyphs.js';
+import { fakeBoldWidth, glyphOutline, splitRuns } from '../fonts/glyphs.js';
 import { inlineSvg } from './inlineSvg.js';
 import {
   mostUsedFont,
@@ -409,9 +409,34 @@ class SvgWriter {
         parts.push((extra) => this.textElement(op, run, paint, extra));
         continue;
       }
+      const { defaultInstanceFonts } = this.options.report;
+      if (run.file.variation === 'default-only' && !defaultInstanceFonts.includes(op.font.family)) {
+        defaultInstanceFonts.push(op.font.family);
+      }
       const glyphs = glyphOutline(run.file, run.text, op.font.size);
       const d = glyphs.map((glyph, i) => pathData(glyph.path, run.xs[i] ?? 0, op.y)).join('');
-      if (d !== '') parts.push((extra) => el('path', { d, ...paint, ...extra }));
+      // A regular cut standing in for a bold: the outline grows by a stroke in the fill's colour.
+      // Fill and stroke are painted opaque and the alpha sits on a group around them, or the
+      // inner half of the stroke band would be painted twice and come out darker than on canvas.
+      const grows = run.file.fakeBold && op.mode === 'fill' && paint['fill'] !== undefined;
+      if (d === '') continue;
+      if (!grows) {
+        parts.push((extra) => el('path', { d, ...paint, ...extra }));
+        continue;
+      }
+      const { 'fill-opacity': alpha, ...opaque } = paint;
+      const grown = {
+        d,
+        ...opaque,
+        stroke: paint['fill'],
+        'stroke-width': num(fakeBoldWidth(op.font.size)),
+        'stroke-linejoin': 'round',
+      };
+      parts.push((extra) =>
+        alpha === undefined
+          ? el('path', { ...grown, ...extra })
+          : el('g', { opacity: alpha }, el('path', { ...grown, ...extra }))
+      );
     }
     if (parts.length === 0) return [];
     if (parts.length === 1) return parts[0]!(common);
@@ -716,13 +741,25 @@ class SvgWriter {
           height: num(this.scene.height + 2 * reach),
           'color-interpolation-filters': 'sRGB',
         },
-        el('feDropShadow', {
-          dx: num(shadow.offsetX),
-          dy: num(shadow.offsetY),
-          stdDeviation: num(sigma),
-          'flood-color': shadow.hex,
-          'flood-opacity': num(shadow.alpha),
-        })
+        [
+          ...el('feGaussianBlur', { in: 'SourceAlpha', stdDeviation: num(sigma), result: 'blur' }),
+          ...el('feOffset', {
+            in: 'blur',
+            dx: num(shadow.offsetX),
+            dy: num(shadow.offsetY),
+            result: 'offset',
+          }),
+          ...el('feFlood', {
+            'flood-color': shadow.hex,
+            'flood-opacity': num(shadow.alpha),
+            result: 'flood',
+          }),
+          ...el('feComposite', { in: 'flood', in2: 'offset', operator: 'in', result: 'shadow' }),
+          ...el('feMerge', {}, [
+            ...el('feMergeNode', { in: 'shadow' }),
+            ...el('feMergeNode', { in: 'SourceGraphic' }),
+          ]),
+        ]
       );
     });
   }

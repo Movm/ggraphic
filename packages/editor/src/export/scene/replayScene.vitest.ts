@@ -33,10 +33,12 @@ const sceneOf = (...ops: SceneOp[]): RecordedScene => ({
   items: [{ elementId: 'a', label: null, ops }],
   report: {
     rasterIslands: [],
+    reducedRasters: [],
     unknownCalls: [],
     missingElements: [],
     missingGlyphs: [],
     outlinedForLicence: [],
+    defaultInstanceFonts: [],
     rgbBrandColors: [],
     fallback: null,
   },

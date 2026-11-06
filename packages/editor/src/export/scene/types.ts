@@ -190,21 +190,35 @@ export type ExportScene = RecordedScene;
 
 export interface ExportReport {
   rasterIslands: { page: number; elementId: string | null; reason: RasterReason }[];
+  /** Islands drawn at a lower resolution than asked for, because the bitmap would be too large. */
+  reducedRasters: { page: number; elementId: string | null }[];
   unknownCalls: { page: number; elementId: string | null; call: string }[];
   missingElements: { page: number; elementId: string | null; reason: 'image-unreadable' }[];
   missingGlyphs: { page: number; elementId: string | null; text: string }[];
   outlinedForLicence: string[];
+  /**
+   * Families of variable fonts drawn in the default instance of the file, though the text asks
+   * for another weight: fontkit cannot instance them (a WOFF2), so the weight may be off.
+   */
+  defaultInstanceFonts: string[];
   rgbBrandColors: string[];
-  fallback: { reason: string } | null;
+  /**
+   * Why the vector PDF was not made: `fonts` (fonts could not be used for several elements),
+   * `timeout` (the writer did not finish) or `error` (the writer or a page recording failed).
+   * `reason` is the detail for the console.
+   */
+  fallback: { kind: 'fonts' | 'timeout' | 'error'; reason: string } | null;
 }
 
 export function emptyReport(): ExportReport {
   return {
     rasterIslands: [],
+    reducedRasters: [],
     unknownCalls: [],
     missingElements: [],
     missingGlyphs: [],
     outlinedForLicence: [],
+    defaultInstanceFonts: [],
     rgbBrandColors: [],
     fallback: null,
   };
@@ -216,10 +230,12 @@ const unique = (a: readonly string[], b: readonly string[]): string[] => [...new
 export function mergeReports(a: ExportReport, b: ExportReport): ExportReport {
   return {
     rasterIslands: [...a.rasterIslands, ...b.rasterIslands],
+    reducedRasters: [...a.reducedRasters, ...b.reducedRasters],
     unknownCalls: [...a.unknownCalls, ...b.unknownCalls],
     missingElements: [...a.missingElements, ...b.missingElements],
     missingGlyphs: [...a.missingGlyphs, ...b.missingGlyphs],
     outlinedForLicence: unique(a.outlinedForLicence, b.outlinedForLicence),
+    defaultInstanceFonts: unique(a.defaultInstanceFonts, b.defaultInstanceFonts),
     rgbBrandColors: unique(a.rgbBrandColors, b.rgbBrandColors),
     fallback: a.fallback ?? b.fallback,
   };

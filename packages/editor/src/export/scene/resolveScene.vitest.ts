@@ -717,6 +717,65 @@ describe('resolveScene: unreadable images', () => {
     ]);
   });
 
+  it('rasters the image op itself when its item has no id, e.g. a page background', async () => {
+    const deps = unreadable();
+    deps.rasterizeOps.mockResolvedValue(RESULT_PNG);
+    const op = imageOp(img('https://cdn.example/x.svg'), { dx: 5, dy: 6, dw: 40, dh: 20 });
+
+    const scene = await resolveScene(sceneOf(item(null, op)), deps);
+
+    expect(deps.rasterizeElement).not.toHaveBeenCalled();
+    expect(deps.rasterizeOps).toHaveBeenCalledTimes(1);
+    const [source, box, ratio] = deps.rasterizeOps.mock.calls[0]!;
+    expect(source).toEqual([op]);
+    expect(box).toEqual({ x: 5, y: 6, width: 40, height: 20 });
+    expect(ratio).toBe(3);
+    expect(scene.items[0]!.ops).toEqual([
+      {
+        ...base,
+        kind: 'raster',
+        png: RESULT_PNG,
+        x: 5,
+        y: 6,
+        width: 40,
+        height: 20,
+        reason: 'image-unreadable',
+        source: null,
+      },
+    ]);
+    expect(scene.report.rasterIslands).toEqual([
+      { page: 2, elementId: null, reason: 'image-unreadable' },
+    ]);
+    expect(scene.report.missingElements).toEqual([]);
+  });
+
+  it('lowers the resolution of a page-sized island that would be over the canvas limit', async () => {
+    // A3 at 300 dpi: 3508 x 4961 px, 17.4 Mpx.
+    const ratio = 300 / 96;
+    const deps = makeDeps({ rasterPixelRatio: ratio });
+    deps.rasterizeOps.mockResolvedValue(RESULT_PNG);
+    const a3 = { width: 1122.52, height: 1587.4 };
+    const op = island({ x: 0, y: 0, ...a3, source: [solidPath()] });
+
+    const scene = await resolveScene(sceneOf(item('page', op)), deps);
+
+    const [, box, used] = deps.rasterizeOps.mock.calls[0]!;
+    expect(used).toBeLessThan(ratio);
+    const w = Math.ceil(box.width * used);
+    const h = Math.ceil(box.height * used);
+    expect(w * h).toBeLessThanOrEqual(16_777_216);
+    expect(w / h).toBeCloseTo(a3.width / a3.height, 2);
+    expect(scene.report.reducedRasters).toEqual([{ page: 2, elementId: 'page' }]);
+  });
+
+  it('keeps the resolution of an island within the limit', async () => {
+    const deps = makeDeps();
+    deps.rasterizeOps.mockResolvedValue(RESULT_PNG);
+    const scene = await resolveScene(sceneOf(item('a', island({ source: [solidPath()] }))), deps);
+    expect(deps.rasterizeOps.mock.calls[0]![2]).toBe(3);
+    expect(scene.report.reducedRasters).toEqual([]);
+  });
+
   it('falls back to the stage for a source that cannot be decoded, and for a tainted canvas', async () => {
     const deps = makeDeps({
       fetchBytes: vi.fn(async () => ({ bytes: GIF, mime: 'image/gif' })),
