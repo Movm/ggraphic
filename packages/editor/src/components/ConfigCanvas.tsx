@@ -35,6 +35,12 @@ export interface ConfigCanvasProps {
    * `GenericCanvasProps.preview`. Used by the offscreen chat-preview renderer.
    */
   preview?: boolean;
+  /**
+   * Output pixels per page pixel of the capture a preview is drawn for — see
+   * `GenericCanvasProps.previewCaptureRatio`. Without it a filtered photo is cached at the
+   * offscreen stage's display scale, which settles only after the first effects.
+   */
+  previewCaptureRatio?: number;
 }
 
 const noop = () => {};
@@ -48,6 +54,7 @@ function ConfigCanvasInner({
   onExport,
   className,
   preview = false,
+  previewCaptureRatio,
 }: ConfigCanvasProps) {
   // Stable ref for onStateChange callback — avoids stale closures
   const onStateChangeRef = useRef(onStateChange);
@@ -72,6 +79,7 @@ function ConfigCanvasInner({
         onCancel={noop}
         callbacks={callbacks.current}
         preview={preview}
+        {...(previewCaptureRatio === undefined ? {} : { previewCaptureRatio })}
       />
     </div>
   );
