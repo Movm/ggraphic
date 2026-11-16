@@ -207,13 +207,15 @@ const GHOST_SOURCE_SIDE = 1024;
  * Einfärbung), einmal auf eine verkleinerte Kopie gerechnet statt per Cache
  * auf dem ganzen, oft vielfach gezoomten Restbild. Spiegeln bleibt außen vor:
  * das Restbild spiegelt über seine Skalierung. `displayedWidth` ist die Breite
- * des ganzen Fotos auf der Bühne; der Weichzeichner-Radius gilt dort.
+ * des ganzen Fotos auf der Bühne; der Weichzeichner-Radius gilt dort. `maxSide`
+ * begrenzt die längste Kante der Kopie (der Pan braucht Bildschirmauflösung).
  */
 export function cropGhostSource(
   image: HTMLImageElement,
   adjustments: ImageAdjustments | null,
   displayedWidth: number,
-  color: string | null = null
+  color: string | null = null,
+  maxSide = GHOST_SOURCE_SIDE
 ): CanvasImageSource {
   const look = adjustments ? { ...adjustments, flipX: false, flipY: false } : null;
   const filters = [
@@ -223,7 +225,7 @@ export function cropGhostSource(
   const natural = { width: image.naturalWidth, height: image.naturalHeight };
   if (filters.length === 0 || !natural.width || !natural.height) return image;
 
-  const scale = Math.min(1, GHOST_SOURCE_SIDE / Math.max(natural.width, natural.height));
+  const scale = Math.min(1, maxSide / Math.max(natural.width, natural.height));
   const width = Math.max(1, Math.round(natural.width * scale));
   const height = Math.max(1, Math.round(natural.height * scale));
   const canvas = document.createElement('canvas');

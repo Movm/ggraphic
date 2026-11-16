@@ -31,7 +31,7 @@ import {
 import { isGroupDrag } from '../utils/multiSelect.js';
 import { ELEMENT_TRANSFORMER, normalizeRotation } from '../utils/orientation.js';
 import { cacheFiltered, usePreviewCaptureRatio } from '../utils/filterCache.js';
-import { recacheNextFrame } from '../utils/recacheNextFrame.js';
+import { beginFilteredPan, type FilteredPan } from '../utils/filteredPan.js';
 import { boxFrame, createBoxFrame, frameBounds, snapByBounds } from '../utils/snapping.js';
 import {
   panStraightPhoto,
@@ -190,6 +190,7 @@ function CanvasImageInner({
     dx: number;
     dy: number;
     photo: Rect | null;
+    filtered: FilteredPan | null;
   } | null>(null);
   const adjustmentFilters = adjustments ? getActiveImageFilters(adjustments) : [];
   const trRef = useRef<Konva.Transformer>(null);
@@ -319,6 +320,11 @@ function CanvasImageInner({
 
       snap.onDragEnd();
       const pan = panStartRef.current;
+      if (pan?.filtered) {
+        // The photo and its filters come back before the store does: no unfiltered frame.
+        pan.filtered.end();
+        cacheFiltered(node, captureRatio);
+      }
       if (pan?.photo) {
         // Begradigt: das Fenster behält seine Größe, seine Mitte ist die des gedrehten Fotos.
         panStartRef.current = null;
@@ -362,7 +368,19 @@ function CanvasImageInner({
         }
       }
     },
-    [id, x, y, width, height, part, onDragEnd, onPositionChange, onGeometryChange, snap]
+    [
+      id,
+      x,
+      y,
+      width,
+      height,
+      part,
+      onDragEnd,
+      onPositionChange,
+      onGeometryChange,
+      snap,
+      captureRatio,
+    ]
   );
 
   const clampToBounds = useCallback(
@@ -423,11 +441,10 @@ function CanvasImageInner({
           node.setAttr(STRAIGHT_DRAW_ATTR, straightDrawOf(moved, turnDeg, slot, mirror));
         } else {
           const next = visiblePart(natural, moved, slot, mirror);
-          if (next) node.crop(next.crop);
+          if (next) (pan.filtered?.crop ?? node.crop.bind(node))(next.crop);
         }
         pan.photo = moved;
         placeCropGhost(ghostRef.current, moved, mirror, turnDeg);
-        recacheNextFrame(node);
         return;
       }
       if (pan && natural && slot) {
@@ -442,7 +459,7 @@ function CanvasImageInner({
         if (!next.part) return;
         node.position(next.part.box);
         node.size(next.part.box);
-        node.crop(next.part.crop);
+        (pan.filtered?.crop ?? node.crop.bind(node))(next.part.crop);
         pan.dx = next.dx;
         pan.dy = next.dy;
         // Ziehen und Zoomen ändern die Knoten direkt; das Restbild geht ohne React-Zustand mit.
@@ -451,7 +468,6 @@ function CanvasImageInner({
           photoRectAround(natural, { x: x + next.dx, y: y + next.dy, width, height }),
           mirror
         );
-        recacheNextFrame(node);
         return;
       }
       const nodeWidth = node.width() * node.scaleX();
@@ -520,17 +536,57 @@ function CanvasImageInner({
     ]
   );
 
+  // A filtered photo pans over a copy filtered once, at the size it is shown (#197). The copy is
+  // made when Ausschnitt mode opens (and after a zoom), so the drag itself starts without a pause.
+  const panPhoto = natural ? (straight ?? photoRectAround(natural, { x, y, width, height })) : null;
+  const panPhotoWidth = panPhoto ? Math.round(panPhoto.width) : 0;
+  const filtered = !!color || adjustmentFilters.length > 0;
+  const panSourceRef = useRef<CanvasImageSource | null>(null);
+  const makePanSource = useCallback(
+    (node: Konva.Image): CanvasImageSource | null => {
+      if (!image || !natural || !panPhotoWidth) return null;
+      const shown = panPhotoWidth * node.getAbsoluteScale().x * Konva.pixelRatio;
+      const scale = Math.min(1, shown / natural.width);
+      const maxSide = Math.ceil(Math.max(natural.width, natural.height) * scale);
+      return cropGhostSource(image, adjustments ?? null, panPhotoWidth, color ?? null, maxSide);
+    },
+    // `natural` is a new object each render; its size comes with `image`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [image, panPhotoWidth, adjustments, color]
+  );
+  useEffect(() => {
+    const node = imageRef.current;
+    panSourceRef.current = cropping && filtered && node ? makePanSource(node) : null;
+  }, [cropping, filtered, makePanSource]);
+  const startFilteredPan = useCallback(
+    (node: Konva.Image): FilteredPan | null => {
+      if (!natural || !node.isCached()) return null;
+      const source = panSourceRef.current ?? makePanSource(node);
+      return source ? beginFilteredPan(node, source, natural.width) : null;
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [image, makePanSource]
+  );
+
   const handleDragStart = useCallback(
     (e: Konva.KonvaEventObject<DragEvent>) => {
       // In a group drag a cover-fitted image moves with the others; the background photo
       // never joins one, outside Ausschnitt mode it is not draggable.
+      const node = e.target as Konva.Image;
       panStartRef.current =
-        part && !isGroupDrag(e.target)
-          ? { part: part.box, pointer: pointerInParent(e.target), dx: 0, dy: 0, photo: null }
+        part && !isGroupDrag(node)
+          ? {
+              part: part.box,
+              pointer: pointerInParent(node),
+              dx: 0,
+              dy: 0,
+              photo: null,
+              filtered: startFilteredPan(node),
+            }
           : null;
       snap.onDragStart();
     },
-    [part, snap]
+    [part, snap, startFilteredPan]
   );
 
   // Tastatur im Ausschnitt-Modus: dieselben Grenzen und dieselbe Übernahme wie Ziehen und Zoomen.
