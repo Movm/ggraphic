@@ -30,6 +30,7 @@ import { ELEMENT_TRANSFORMER } from '../utils/orientation.js';
 import { useImageRetry, useTrackPendingImage } from '../utils/pendingImages.js';
 import { cacheFiltered, usePreviewCaptureRatio } from '../utils/filterCache.js';
 import { recacheNextFrame } from '../utils/recacheNextFrame.js';
+import { beginFilteredPan, type FilteredPan } from '../utils/filteredPan.js';
 import {
   clampPointToStraightPhoto,
   frameForAspectOnStraightPhoto,
@@ -63,7 +64,7 @@ import { userImageBox } from '../utils/renderedBoxes.js';
 import { userImageCropUpdate } from '../utils/userImageCrop.js';
 import { USER_PHOTO_NODE_NAME, type UserImageInstance } from '../utils/userImageUtils.js';
 
-import type Konva from 'konva';
+import Konva from 'konva';
 
 // Konva hält das Verhältnis nur an den Ecken; Kantengriffe würden es brechen.
 const CORNER_ANCHORS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'];
@@ -246,6 +247,45 @@ function UserImagePrimitiveInner({
         : null,
     [cropping, image, userImage]
   );
+
+  // A filtered photo pans and resizes over a copy filtered once, at the size it is shown, instead
+  // of running every filter on every pointer move (#197). Made when Ausschnitt mode opens.
+  const shownPhotoWidth = userImage.width * (userImage.cropZoom ?? 1);
+  const filtered = hasActiveImageFilters(userImage);
+  // The look alone decides the copy; a pan or zoom of the frame does not.
+  const lookKey = filtered ? JSON.stringify(imageFilterAttrs(userImage)) : '';
+  const panSourceRef = useRef<CanvasImageSource | null>(null);
+  const filteredPanRef = useRef<FilteredPan | null>(null);
+  useEffect(() => {
+    const node = imageRef.current;
+    if (!cropping || !filtered || !image || !node) {
+      panSourceRef.current = null;
+      return;
+    }
+    const natural = image.naturalWidth;
+    const shown = shownPhotoWidth * node.getAbsoluteScale().x * Konva.pixelRatio;
+    const scale = Math.min(1, shown / natural);
+    const maxSide = Math.ceil(Math.max(natural, image.naturalHeight) * scale);
+    panSourceRef.current = cropGhostSource(image, userImage, shownPhotoWidth, null, maxSide);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `lookKey` stands for the look in `userImage`
+  }, [cropping, filtered, image, shownPhotoWidth, lookKey]);
+  const beginFiltered = () => {
+    const node = imageRef.current;
+    const source = panSourceRef.current;
+    if (filteredPanRef.current || !node || !source || !image || !node.isCached()) return;
+    filteredPanRef.current = beginFilteredPan(node, source, image.naturalWidth);
+  };
+  const endFiltered = () => {
+    const pan = filteredPanRef.current;
+    const node = imageRef.current;
+    filteredPanRef.current = null;
+    if (!pan || !node) return;
+    // The photo and its filters come back before the store does: no unfiltered frame.
+    pan.end();
+    cacheFiltered(node, captureRatio);
+  };
+  const setDrawnCrop = (node: Konva.Image, crop: Parameters<FilteredPan['crop']>[0]) =>
+    filteredPanRef.current ? filteredPanRef.current.crop(crop) : node.crop(crop);
 
   const keyCropRef = useRef({ image, userImage, onCropEnd });
   useEffect(() => {
@@ -455,7 +495,7 @@ function UserImagePrimitiveInner({
       node.position({ x: placed.x, y: placed.y });
       if (imageRef.current) {
         imageRef.current.setAttr(STRAIGHT_DRAW_ATTR, straightDrawOf(moved, deg, frame, mirror));
-        recacheNextFrame(imageRef.current);
+        if (!filteredPanRef.current) recacheNextFrame(imageRef.current);
       }
       return moved;
     }
@@ -469,8 +509,8 @@ function UserImagePrimitiveInner({
     node.position({ x: moved.x + ghostShift.x, y: moved.y + ghostShift.y });
     const part = visiblePart(natural, moved, frame, mirror);
     if (part && imageRef.current) {
-      imageRef.current.crop(part.crop);
-      recacheNextFrame(imageRef.current);
+      setDrawnCrop(imageRef.current, part.crop);
+      if (!filteredPanRef.current) recacheNextFrame(imageRef.current);
     }
     return moved;
   };
@@ -507,6 +547,7 @@ function UserImagePrimitiveInner({
             onDragStart={(e) => {
               e.cancelBubble = true;
               panStartRef.current = { ...photo };
+              beginFiltered();
             }}
             onDragMove={(e) => {
               e.cancelBubble = true;
@@ -516,6 +557,7 @@ function UserImagePrimitiveInner({
               e.cancelBubble = true;
               const moved = panPhoto(e.target);
               panStartRef.current = null;
+              endFiltered();
               if (!moved) return;
               const pan = turned
                 ? panOfStraightPhoto(moved, deg, frame, keptPan)
@@ -568,19 +610,24 @@ function UserImagePrimitiveInner({
                   drawn.position(window);
                   drawn.size(window);
                   drawn.setAttr(STRAIGHT_DRAW_ATTR, straightDrawOf(photo, deg, window, mirror));
-                  recacheNextFrame(drawn);
+                  if (!filteredPanRef.current) recacheNextFrame(drawn);
                   return;
                 }
                 const part = visiblePart(natural, photo, window, mirror);
                 if (part) {
                   drawn.position(part.box);
                   drawn.size(part.box);
-                  drawn.crop(part.crop);
-                  recacheNextFrame(drawn);
+                  setDrawnCrop(drawn, part.crop);
+                  if (!filteredPanRef.current) recacheNextFrame(drawn);
                 }
+              }}
+              onTransformStart={(e) => {
+                e.cancelBubble = true;
+                beginFiltered();
               }}
               onTransformEnd={(e) => {
                 e.cancelBubble = true;
+                endFiltered();
                 const node = cropFrameRef.current;
                 if (!node) return;
                 const window = {
