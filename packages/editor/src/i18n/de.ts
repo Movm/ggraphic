@@ -988,6 +988,7 @@ export const de = {
     layerDown: 'Ebene nach unten',
     fontSmaller: 'Schrift verkleinern',
     fontLarger: 'Schrift vergrößern',
+    fontSizeInput: 'Schriftgröße',
     fontRole: 'Schrift',
     fontRoles: {
       headline: 'Überschrift',
