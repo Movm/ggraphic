@@ -427,7 +427,6 @@
     "./utils/pillBadgeUtils": "./src/utils/pillBadgeUtils.ts",
     "./utils/pixelHitArea": "./src/utils/pixelHitArea.ts",
     "./utils/printImageInfo": "./src/utils/printImageInfo.ts",
-    "./utils/recacheNextFrame": "./src/utils/recacheNextFrame.ts",
     "./utils/removeElement": "./src/utils/removeElement.ts",
     "./utils/renderedBoxes": "./src/utils/renderedBoxes.ts",
     "./utils/resolveElementValue": "./src/utils/resolveElementValue.ts",
