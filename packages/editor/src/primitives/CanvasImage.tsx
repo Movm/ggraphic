@@ -31,6 +31,7 @@ import {
 import { isGroupDrag } from '../utils/multiSelect.js';
 import { ELEMENT_TRANSFORMER, normalizeRotation } from '../utils/orientation.js';
 import { cacheFiltered, usePreviewCaptureRatio } from '../utils/filterCache.js';
+import { useShallowStable } from '../hooks/useShallowStable.js';
 import { recacheNextFrame } from '../utils/recacheNextFrame.js';
 import { boxFrame, createBoxFrame, frameBounds, snapByBounds } from '../utils/snapping.js';
 import {
@@ -201,7 +202,12 @@ function CanvasImageInner({
           : visiblePart(natural, straight, slot, mirror)
         : panWindowPhoto(natural, { x, y, width, height }, slot, 0, 0, mirror).part
       : null;
-  const draw = turned && straight && slot ? straightDrawOf(straight, turnDeg, slot, mirror) : null;
+  // Same values, same object: a re-render mid-gesture (snap lines, selection) must not write the
+  // committed crop back over the one the pan has set on the node.
+  const crop = useShallowStable(part?.crop ?? null);
+  const draw = useShallowStable(
+    turned && straight && slot ? straightDrawOf(straight, turnDeg, slot, mirror) : null
+  );
   const ghost =
     cropping && natural && part
       ? (straight ?? photoRectAround(natural, { x, y, width, height }))
@@ -643,7 +649,7 @@ function CanvasImageInner({
         width={part?.box.width ?? width}
         height={part?.box.height ?? height}
         rotation={coverFit ? 0 : rotation}
-        crop={part?.crop}
+        crop={crop ?? undefined}
         opacity={opacity}
         draggable={draggable && !locked}
         dragBoundFunc={dragBoundFunc}
