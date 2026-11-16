@@ -59,6 +59,29 @@ import type { TransformConfig, TransformAnchor } from '../types/editorTypes.js';
 import type { SnapTarget, SnapLine } from '../utils/snapping.js';
 
 // Rahmen für Snap und Geometrie-Meldung, pro Aufruf neu beschrieben (synchron, ohne Allokation).
+/** The pointer in `node`'s parent space — where Konva itself places a dragged node from. */
+function pointerInParent(node: Konva.Node): Konva.Vector2d | null {
+  const pointer = node.getStage()?.getPointerPosition();
+  const parent = node.getParent();
+  if (!pointer || !parent) return null;
+  return parent.getAbsoluteTransform().copy().invert().point(pointer);
+}
+
+/**
+ * How far a pan has moved since its start. Taken from the pointer, not from the node: the pan puts
+ * the node back on its box after every move, and Konva fires `dragmove` without placing the node
+ * again when the pointer did not move (a resting mouse, a trackpad) — read from the node, that
+ * event is a pan of zero and the photo jumps back to where the drag began.
+ */
+function panDelta(
+  node: Konva.Node,
+  pan: { part: Rect; pointer: Konva.Vector2d | null }
+): [dx: number, dy: number] {
+  const at = pan.pointer && pointerInParent(node);
+  if (pan.pointer && at) return [at.x - pan.pointer.x, at.y - pan.pointer.y];
+  return [node.x() - pan.part.x, node.y() - pan.part.y];
+}
+
 const dragFrame = createBoxFrame();
 
 export interface CanvasImageProps {
@@ -159,10 +182,11 @@ function CanvasImageInner({
   const locked = useIsItemLocked();
   const imageRef = useRef<Konva.Image>(null);
   const captureRatio = usePreviewCaptureRatio();
-  // Drag of a cover-fitted photo: the node under the pointer at drag start, and the pan so far
-  // (begradigt: die Lage des gedrehten Fotos).
+  // Drag of a cover-fitted photo: the node under the pointer at drag start, the pointer there (in
+  // the node's parent space), and the pan so far (begradigt: die Lage des gedrehten Fotos).
   const panStartRef = useRef<{
     part: Rect;
+    pointer: Konva.Vector2d | null;
     dx: number;
     dy: number;
     photo: Rect | null;
@@ -411,13 +435,7 @@ function CanvasImageInner({
       const pan = panStartRef.current;
       if (pan && straight && natural && slot) {
         // Der Knoten bleibt der Rahmen; das gedrehte Foto bewegt sich darin.
-        const moved = panStraightPhoto(
-          straight,
-          turnDeg,
-          slot,
-          node.x() - pan.part.x,
-          node.y() - pan.part.y
-        );
+        const moved = panStraightPhoto(straight, turnDeg, slot, ...panDelta(node, pan));
         node.position(slot);
         if (turned) {
           node.setAttr(STRAIGHT_DRAW_ATTR, straightDrawOf(moved, turnDeg, slot, mirror));
@@ -435,8 +453,7 @@ function CanvasImageInner({
           natural,
           { x, y, width, height },
           slot,
-          node.x() - pan.part.x,
-          node.y() - pan.part.y,
+          ...panDelta(node, pan),
           mirror
         );
         if (!next.part) return;
@@ -558,7 +575,14 @@ function CanvasImageInner({
       const node = e.target as Konva.Image;
       panStartRef.current =
         part && !isGroupDrag(node)
-          ? { part: part.box, dx: 0, dy: 0, photo: null, filtered: startFilteredPan(node) }
+          ? {
+              part: part.box,
+              pointer: pointerInParent(node),
+              dx: 0,
+              dy: 0,
+              photo: null,
+              filtered: startFilteredPan(node),
+            }
           : null;
       snap.onDragStart();
     },
