@@ -7,7 +7,7 @@
  * width/height directly (already scaled during creation).
  */
 
-import { useState, useEffect, useRef, useMemo, memo, type ReactNode } from 'react';
+import { useState, useEffect, useRef, memo, type ReactNode } from 'react';
 import { Image, Group, Rect, Transformer, Circle, Line } from 'react-konva';
 
 import { activeBrand } from '../brand/brandRegistry.js';
@@ -15,6 +15,7 @@ import { useDocumentBrand } from '../brand/documentBrand.js';
 import { LOCKED_TRANSFORMER, useIsItemLocked } from '../components/canvasItemLock.js';
 import { useAnnounce } from '../hooks/useAnnounce.js';
 import { useBoxSnap, type SnapProps } from '../hooks/useBoxSnap.js';
+import { useLookBitmap } from '../hooks/useLookBitmap.js';
 import { messages } from '../i18n/messages.js';
 import {
   clampPan,
@@ -28,8 +29,8 @@ import { cropAspectRatio, frameForAspect, type CropAspectId } from '../utils/cro
 import { notchPx, traceNotch } from '../utils/notch.js';
 import { ELEMENT_TRANSFORMER } from '../utils/orientation.js';
 import { useImageRetry, useTrackPendingImage } from '../utils/pendingImages.js';
-import { cacheFiltered, usePreviewCaptureRatio } from '../utils/filterCache.js';
-import { recacheNextFrame } from '../utils/recacheNextFrame.js';
+import { usePreviewCaptureRatio } from '../utils/filterCache.js';
+import { drawsLook, lookDrawAttrs, lookSceneFunc } from '../utils/lookBitmap.js';
 import {
   clampPointToStraightPhoto,
   frameForAspectOnStraightPhoto,
@@ -40,22 +41,11 @@ import {
   straightFramedPhoto,
   straightPhotoCovers,
   straightScaleCrop,
-  straightSceneFunc,
 } from '../utils/straighten.js';
 import { EXPORT_HIDDEN_NAME } from '../utils/captureStage.js';
 import { touchAnchorStyleFunc } from '../utils/touchInput.js';
 
-import {
-  CROP_GHOST_NAME,
-  CROP_GHOST_OPACITY,
-  cropGhostAttrs,
-  cropGhostSource,
-} from '../utils/cropGhost.js';
-import {
-  getActiveImageFilters,
-  hasActiveImageFilters,
-  imageFilterAttrs,
-} from '../utils/imageFilters.js';
+import { CROP_GHOST_NAME, CROP_GHOST_OPACITY, cropGhostAttrs } from '../utils/cropGhost.js';
 import { cropKeyOf, userImageKeyCrop } from '../utils/keyboardCrop.js';
 import { hasCorners, sameCorners, type CornerRadius } from '../utils/cornerRadius.js';
 import { photoPlaceholderLook } from '../utils/photoPlaceholder.js';
@@ -116,6 +106,7 @@ function UserImagePrimitiveInner({
   const cropTransformerRef = useRef<Konva.Transformer>(null);
   const groupRef = useRef<Konva.Group>(null);
   const imageRef = useRef<Konva.Image>(null);
+  const ghostRef = useRef<Konva.Image>(null);
   const captureRatio = usePreviewCaptureRatio();
   const transformerRef = useRef<Konva.Transformer>(null);
   const [image, setImage] = useState<HTMLImageElement | null>(null);
@@ -199,52 +190,26 @@ function UserImagePrimitiveInner({
     if (!same) onCropEnd?.(userImageCropUpdate(userImage, natural, photo, window));
   }, [aspectActive, cropAspect, image, userImage, onCropEnd]);
 
-  // Konva filters require the node to be cached first.
-  useEffect(() => {
-    const node = imageRef.current;
-    if (!node || !image) return;
-    if (hasActiveImageFilters(userImage)) {
-      cacheFiltered(node, captureRatio);
-    } else {
-      node.clearCache();
-    }
-    node.getLayer()?.batchDraw();
-  }, [
+  // The look is a bitmap made once per look (`useLookBitmap`); panning, zooming and the crop
+  // frame only move the crop. The dimmed rest of the photo shows the same bitmap.
+  const lookPhotoWidth =
+    image && userImage.fit === 'cover'
+      ? straightFramedPhoto(
+          { width: image.naturalWidth, height: image.naturalHeight },
+          { width: userImage.width, height: userImage.height },
+          { x: 0, y: 0 },
+          userImage.cropZoom ?? 1,
+          userImage.cropRotation ?? 0
+        ).width
+      : userImage.width;
+  useLookBitmap(
+    [imageRef, ghostRef],
     image,
+    userImage,
+    null,
+    lookPhotoWidth,
     captureRatio,
-    userImage.width,
-    userImage.height,
-    userImage.blur,
-    userImage.brightness,
-    userImage.contrast,
-    userImage.saturation,
-    userImage.hue,
-    userImage.temperature,
-    userImage.grayscale,
-    userImage.sepia,
-    userImage.invert,
-    userImage.tint,
-    userImage.tintStrength,
-    userImage.duotoneLow,
-    userImage.duotoneHigh,
-    userImage.vignette,
-    userImage.flipX,
-    userImage.flipY,
-    userImage.fit,
-    userImage.cropZoom,
-    userImage.panX,
-    userImage.panY,
-    userImage.cropRotation,
-    userImage.mask,
-  ]);
-
-  // Das Restbild trägt dieselbe Bearbeitung wie das Bild im Rahmen.
-  const ghostImage = useMemo(
-    () =>
-      cropping && image
-        ? cropGhostSource(image, userImage, userImage.width * (userImage.cropZoom ?? 1))
-        : null,
-    [cropping, image, userImage]
+    cropping
   );
 
   const keyCropRef = useRef({ image, userImage, onCropEnd });
@@ -411,7 +376,7 @@ function UserImagePrimitiveInner({
   const natural = { width: image.naturalWidth, height: image.naturalHeight };
   const frame = { x: 0, y: 0, width, height };
   const cover = userImage.fit === 'cover';
-  // Begradigt: das Foto dreht sich im Rahmen; Konvas `crop` kann das nicht, `straightSceneFunc` zeichnet.
+  // Begradigt: das Foto dreht sich im Rahmen; Konvas `crop` kann das nicht, `lookSceneFunc` zeichnet.
   const deg = cover ? (userImage.cropRotation ?? 0) : 0;
   const turned = deg !== 0;
   const keptPan = { x: userImage.panX ?? 0, y: userImage.panY ?? 0 };
@@ -455,7 +420,6 @@ function UserImagePrimitiveInner({
       node.position({ x: placed.x, y: placed.y });
       if (imageRef.current) {
         imageRef.current.setAttr(STRAIGHT_DRAW_ATTR, straightDrawOf(moved, deg, frame, mirror));
-        recacheNextFrame(imageRef.current);
       }
       return moved;
     }
@@ -470,7 +434,6 @@ function UserImagePrimitiveInner({
     const part = visiblePart(natural, moved, frame, mirror);
     if (part && imageRef.current) {
       imageRef.current.crop(part.crop);
-      recacheNextFrame(imageRef.current);
     }
     return moved;
   };
@@ -487,8 +450,10 @@ function UserImagePrimitiveInner({
         {isCropping && photo && (
           // The whole photo, dimmed: what lies outside the frame shows where it can go.
           <Image
+            ref={ghostRef}
             name={`selection-chrome ${CROP_GHOST_NAME}`}
-            image={ghostImage ?? image}
+            image={image}
+            sceneFunc={drawsLook(userImage, null) ? lookSceneFunc : undefined}
             {...(turned
               ? cropGhostAttrs(photo, mirror, deg)
               : {
@@ -534,14 +499,14 @@ function UserImagePrimitiveInner({
             height={height}
             crop={crop}
             cornerRadius={cornerRadius}
-            filters={getActiveImageFilters(userImage)}
-            {...imageFilterAttrs(userImage)}
+            {...lookDrawAttrs(userImage)}
+            sceneFunc={draw || drawsLook(userImage, null) ? lookSceneFunc : undefined}
             shadowColor={userImage.shadowColor}
             shadowBlur={userImage.shadowBlur}
             shadowOffsetX={userImage.shadowOffsetX}
             shadowOffsetY={userImage.shadowOffsetY}
             shadowOpacity={userImage.shadowOpacity}
-            {...(draw ? { sceneFunc: straightSceneFunc, [STRAIGHT_DRAW_ATTR]: draw } : {})}
+            {...(draw ? { [STRAIGHT_DRAW_ATTR]: draw } : {})}
           />
         )}
 
@@ -568,7 +533,6 @@ function UserImagePrimitiveInner({
                   drawn.position(window);
                   drawn.size(window);
                   drawn.setAttr(STRAIGHT_DRAW_ATTR, straightDrawOf(photo, deg, window, mirror));
-                  recacheNextFrame(drawn);
                   return;
                 }
                 const part = visiblePart(natural, photo, window, mirror);
@@ -576,7 +540,6 @@ function UserImagePrimitiveInner({
                   drawn.position(part.box);
                   drawn.size(part.box);
                   drawn.crop(part.crop);
-                  recacheNextFrame(drawn);
                 }
               }}
               onTransformEnd={(e) => {

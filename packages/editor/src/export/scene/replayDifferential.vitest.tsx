@@ -317,19 +317,39 @@ describe('replay differential', () => {
     expect(failures).toEqual([]);
   }, 120_000);
 
-  // A filter cannot be replayed: Konva runs it on pixels. The recorder hands the element over as
-  // a raster island (made by `resolveScene` from the stage), and does not draw it a second time.
-  it('records a filtered photo as a raster island of reason filter', async () => {
-    const { canvas } = await mountFixture(true);
+  // A photo's look is a bitmap made once (`lookBitmap`), not a filter run while drawing: the
+  // recorder takes it as an image of that bitmap, and the replay draws it the way Konva does.
+  it('records a filtered photo as an image of its look bitmap that replays like konva', async () => {
+    const { canvas, stage } = await mountFixture(true);
     const scene = (await canvas.recordScene({ page: 1 }))!;
     const item = scene.items.find((i) => i.elementId === 'filtered')!;
-    const rasters = allOps(item.ops).filter((op) => op.kind === 'raster');
-    expect(rasters).toHaveLength(1);
-    expect(rasters[0]).toMatchObject({ reason: 'filter' });
-    expect(scene.report.rasterIslands).toEqual([
-      { page: 1, elementId: 'filtered', reason: 'filter' },
-    ]);
+    const ops = allOps(item.ops);
+    expect(ops.filter((op) => op.kind === 'raster')).toEqual([]);
+    const images = ops.filter((op) => op.kind === 'image');
+    expect(images).toHaveLength(1);
+    expect(images[0]).toMatchObject({ image: { kind: 'element' } });
+    expect((images[0] as { image: { element: unknown } }).image.element).not.toBeInstanceOf(
+      window.Image
+    );
+    expect(scene.report.rasterIslands).toEqual([]);
     expect(scene.report.unknownCalls).toEqual([]);
+
+    const groups = stage.find<Konva.Group>(`.${CANVAS_ITEM_NAME}`);
+    const hidden = groups.filter(
+      (group) => group.visible() && group.getAttr('canvasItemId') !== 'filtered'
+    );
+    hidden.forEach((group) => group.hide());
+    let konva: Uint8ClampedArray;
+    try {
+      konva = await konvaPixels(canvas);
+    } finally {
+      hidden.forEach((group) => group.show());
+    }
+    const replay = replayPixels(scene, (candidate) => candidate === item);
+    const diff = diffPixels(konva, replay, WIDTH, HEIGHT, TOLERANCE);
+    const covered = alphaPixels(konva, replay);
+    expect(covered).toBeGreaterThan(0);
+    expect(diff.differing / covered).toBeLessThanOrEqual(MAX_ITEM_SHARE);
   }, 120_000);
 
   // An even-odd fill is not in any page state (no shape sets a fill rule), so it is put on a stage
