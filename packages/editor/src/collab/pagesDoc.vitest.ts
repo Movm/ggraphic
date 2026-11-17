@@ -240,11 +240,16 @@ describe('legacy migration', () => {
     const legacy = doc.getArray<Y.Map<unknown>>(YDOC_KEYS.pages);
     doc.transact(() => {
       const p1 = buildPage(
+        doc,
         { id: 'a', configId: 'slider', state: { headline: '1' }, config: { width: 1080 } },
         'ignored'
       );
       p1.delete(YDOC_KEYS.pos);
-      const p2 = buildPage({ id: 'b', configId: 'slider', state: { headline: '2' } }, 'ignored');
+      const p2 = buildPage(
+        doc,
+        { id: 'b', configId: 'slider', state: { headline: '2' } },
+        'ignored'
+      );
       p2.delete(YDOC_KEYS.pos);
       legacy.push([p1, p2]);
     });

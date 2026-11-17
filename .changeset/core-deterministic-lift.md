@@ -1,0 +1,7 @@
+---
+'@ggraphic/core': minor
+---
+
+The deterministic lift identity of document version 4, in `@ggraphic/core/ydoc`: `transactDeterministically(doc, salt, fn, origin)` runs `fn` in an outermost transaction under `deterministicClientId(doc, salt)`, a client id derived from the document's state vector and delete set, the salt (`liftSalt`) and the algorithm tag `LIFT_ID_ALGORITHM` (`ggraphic-lift-id/1`), mapped above every Yjs-generated id. Two replicas that lift the same state therefore write identical structs, which Yjs keeps once, so the edits both make afterwards merge. The algorithm is part of the stored format: every build that lifts must use it. `liftStateMap` and `liftDocumentState` now lift pages and keys in UTF-16 code-unit order and build canonically, and `StateWriteOptions.deterministic` makes `writeStateKeys` and `buildStateMap` write keys, properties and record entries in UTF-16 code-unit order with canonical values (`canonicalJsonValue`) and no random order-key suffix.
+
+A key the classes name that is written plain because its value cannot be a structure is still stored plain, and is now reported once per state map and key through `StateWriteOptions.onPlainFallback` (and the lift's `LiftOptions.onPlainFallback`) with the reason (`representableProblem`); the core does not log. Reports are delivered only after the write's transaction (after `transactDeterministically` has returned, for the lift; `runAfterWrite`), never inside it, and a hook that throws is ignored, so a hook can neither write under the derived id nor abort a write halfway.

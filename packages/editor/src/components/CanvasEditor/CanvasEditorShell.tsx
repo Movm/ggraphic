@@ -271,7 +271,11 @@ function CanvasEditorInner({
     // Persisted page JSON: `parseInitialPages` only checks that `configId` is
     // a string; an unknown id fails when its config loads.
     initialPages: initialPages as InitialPageDef<string>[] | undefined,
-    collaborative,
+    // A viewer's session writes nothing, not even the open's lift (see `readOnly`).
+    collaborative: collaborative && {
+      ...collaborative,
+      canWrite: collaborative.canWrite ?? !readOnly,
+    },
     announce: announcer.announce,
   });
 
@@ -394,6 +398,7 @@ function CanvasEditorInner({
       const publishSelection = collaborative ? isActivePage : false;
       const isSynced = collaborative ? collaborative.isSynced : true;
       const provider = collaborative?.provider ?? null;
+      const canWrite = collaborative ? (collaborative.canWrite ?? !readOnly) : true;
       const cache = pageBindingCacheRef.current;
       const cached = cache.get(pageId);
       if (
@@ -401,15 +406,16 @@ function CanvasEditorInner({
         cached.pageYMap === pageYMap &&
         cached.isSynced === isSynced &&
         cached.provider === provider &&
-        cached.publishSelection === publishSelection
+        cached.publishSelection === publishSelection &&
+        cached.canWrite === canWrite
       ) {
         return cached;
       }
-      const next = { pageYMap, isSynced, provider, pageId, publishSelection };
+      const next = { pageYMap, isSynced, provider, pageId, publishSelection, canWrite };
       cache.set(pageId, next);
       return next;
     },
-    [collaborative, getPageYMap]
+    [collaborative, getPageYMap, readOnly]
   );
 
   // Multi-page export hook

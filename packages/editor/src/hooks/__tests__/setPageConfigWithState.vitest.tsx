@@ -16,7 +16,7 @@ function open() {
   const ydoc = new Y.Doc();
   seedPagesIfEmpty(ydoc, [{ id: 'p1', configId: 'freeform', state: { headline: 'Eins' } }]);
   getMetaMap(ydoc).set(YDOC_KEYS.formStateFolded, true);
-  getMetaMap(ydoc).set(YDOC_KEYS.schemaVersion, 3);
+  getMetaMap(ydoc).set(YDOC_KEYS.schemaVersion, 4);
   return renderHook(() =>
     usePageManager({
       initialConfigId: 'freeform',

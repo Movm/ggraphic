@@ -274,6 +274,8 @@ export interface GenericCanvasProps<TState, TActions extends OptionalCanvasActio
     pageId?: string | null;
     /** Only the active page publishes its selection to awareness. */
     publishSelection?: boolean;
+    /** False when the client may not write the doc: the binding writes nothing. */
+    canWrite?: boolean;
   };
 }
 
@@ -1433,11 +1435,13 @@ const MemoizedGenericCanvas = memo(GenericCanvasWithRef) as typeof GenericCanvas
 function CanvasYjsBindingMount({
   pageYMap,
   isSynced,
+  readOnly,
 }: {
   pageYMap: Y.Map<unknown>;
   isSynced: boolean;
+  readOnly: boolean;
 }) {
-  useYjsCanvasBinding({ parent: pageYMap, isSynced });
+  useYjsCanvasBinding({ parent: pageYMap, isSynced, readOnly });
   return null;
 }
 
@@ -1458,6 +1462,7 @@ function GenericCanvasWithProvider<
           <CanvasYjsBindingMount
             pageYMap={props.pageBinding.pageYMap}
             isSynced={props.pageBinding.isSynced}
+            readOnly={props.pageBinding.canWrite === false}
           />
         ) : null}
         <MemoizedGenericCanvas {...props} />

@@ -1,17 +1,30 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { type DocumentRefusal } from '@ggraphic/schema';
+import {
+  liftDocumentState,
+  liftSalt,
+  mayWriteStructured,
+  transactDeterministically,
+} from '@ggraphic/core/ydoc';
+import { documentMigrations, type DocumentRefusal } from '@ggraphic/schema';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuid } from 'uuid';
 import * as Y from 'yjs';
 
-import { migrateYDocument, readYDocRefusal, stampYDocument } from './documentVersion.js';
+import {
+  migrateYDocument,
+  readYDocRefusal,
+  stampYDocument,
+  type YDocMigration,
+} from './documentVersion.js';
 import {
   appendPage,
   duplicatePageById,
+  editorStateKeyClasses,
   foldLegacyFormStateIntoFirstPage,
   getMetaMap,
   getPagesMap,
   insertPageAt,
+  isUnseeded,
   migrateLegacyDoc,
   movePageById,
   readPages,
@@ -27,6 +40,7 @@ import {
   type PageView,
   type ReplaceDeckOps,
 } from './pagesDoc.js';
+import { plainFallbackReporter } from './stateWriteWarnings.js';
 import { YDOC_KEYS } from './ydocKeys.js';
 import { type HistoryStamps, nextHistoryStamp } from '../utils/historyStamp.js';
 
@@ -211,6 +225,11 @@ export interface YjsPagesApi {
    * nothing is seeded or lifted; show `pages` read-only.
    */
   schemaRefusal: DocumentRefusal | null;
+  /**
+   * True when nothing may be written: the doc is refused (`schemaRefusal`), or
+   * the client may not write it (`canWrite: false`). Every mutator is a no-op.
+   */
+  readOnly: boolean;
 }
 
 const noChrome: CanvasCarouselService['refreshChrome'] = () => {};
@@ -218,8 +237,12 @@ const noChrome: CanvasCarouselService['refreshChrome'] = () => {};
 const noop = () => {};
 const noStamps = (): HistoryStamps => ({ undo: null, redo: null });
 
-/** The API of a doc this build must not write: its pages, and nothing that changes them. */
-function refusedApi(pages: PageView[], schemaRefusal: DocumentRefusal): YjsPagesApi {
+/**
+ * The API of a doc this client must not write: its pages, and nothing that
+ * changes them. `schemaRefusal` says why when the build refuses the doc; it is
+ * null for a client that may not write (`canWrite: false`).
+ */
+function readOnlyApi(pages: PageView[], schemaRefusal: DocumentRefusal | null): YjsPagesApi {
   return {
     pages,
     // Seeded as far as the page manager is concerned: it must not seed over it.
@@ -240,7 +263,46 @@ function refusedApi(pages: PageView[], schemaRefusal: DocumentRefusal): YjsPages
     canRedoPageOp: false,
     pageOpStamps: noStamps,
     schemaRefusal,
+    readOnly: true,
   };
+}
+
+/**
+ * Brings a writable doc to this build's version: the version steps (`migrateYDocument`, which
+ * raises the stamp), then, when `lift`, the version 4 lift of every classed key that still holds
+ * plain JSON. One transaction, so a peer receives the stamp and the first structured values in
+ * one update (rule 2 of "Version 4" in DOCUMENT_VERSIONING.md). The lift is triggered by the
+ * stamp or by the data: it also runs over plain data an old writer left under a version 4
+ * stamp. An empty, unseeded doc is left alone; its seed stamps it.
+ *
+ * With `lift`, the transaction runs under the deterministic lift identity
+ * (`transactDeterministically`): every write in it is a pure function of the document state, so
+ * two clients settling the same state write identical structs, Yjs keeps one copy, and what each
+ * then edits lands in the same structures. Without `lift` it runs under this client's own id, as
+ * before element storage.
+ */
+function settleDocument(doc: Y.Doc, lift: boolean): YDocMigration {
+  if (isUnseeded(doc)) return { status: 'current' };
+  const settle = (): YDocMigration => {
+    const outcome = migrateYDocument(doc);
+    if (outcome.status === 'invalid' || outcome.status === 'newer') return outcome;
+    // Rule 1: structure only under a stamp of 4 or above, which the step above has just written.
+    if (lift && mayWriteStructured(doc)) {
+      liftDocumentState(doc, editorStateKeyClasses(), {
+        onPlainFallback: plainFallbackReporter(doc),
+      });
+    }
+    return outcome;
+  };
+  if (!lift) return doc.transact(settle, SETUP_ORIGIN);
+  const salt = liftSalt(
+    {
+      schemaVersion: documentMigrations.coreVersion,
+      kindVersions: documentMigrations.kindVersions(),
+    },
+    editorStateKeyClasses()
+  );
+  return transactDeterministically(doc, salt, settle, SETUP_ORIGIN);
 }
 
 const shallowEqualState = (a: Record<string, unknown>, b: Record<string, unknown>): boolean => {
@@ -256,11 +318,24 @@ const shallowEqualState = (a: Record<string, unknown>, b: Record<string, unknown
  * Mirror a Y.Doc's `pagesById` map into React state and expose mutation
  * helpers that wrap each change in a `ydoc.transact` so it propagates to
  * remote peers. Migrates legacy docs (pages Y.Array, legacy_root) once.
+ *
+ * `canWrite` is whether this client may write the doc (the host's connection
+ * scope, not the user's role in the UI):
+ * - `true`: the open runs the legacy lifts, the version steps and the
+ *   version 4 lift, and the mutators write.
+ * - `false`: nothing is written, not even on open (no lift, no stamp, no
+ *   seed); the pages stay live and every mutator is a no-op. A read-only
+ *   share must pass it: a write its server drops would leave this client's
+ *   own lift winning locally over everyone's edits.
+ * - omitted: as before element storage, the open runs the legacy lifts and
+ *   the version steps and the mutators write, but the open does not lift;
+ *   a key becomes structured when this client writes it.
  */
 export function useYjsPages(
   ydoc: Y.Doc | null,
   isSynced: boolean,
-  normalizeEcho: NormalizeEcho | null = null
+  normalizeEcho: NormalizeEcho | null = null,
+  canWrite?: boolean
 ): YjsPagesApi | null {
   const [version, setVersion] = useState(0);
   const [historyVersion, setHistoryVersion] = useState(0);
@@ -282,6 +357,8 @@ export function useYjsPages(
 
   useEffect(() => {
     if (!ydoc || !isSynced) return undefined;
+    const writable = canWrite !== false;
+    const lift = canWrite === true;
     const pagesMap = getPagesMap(ydoc);
     const meta = getMetaMap(ydoc);
 
@@ -289,29 +366,35 @@ export function useYjsPages(
     // when it is newer. Re-run when a version stamp changes remotely: a
     // stamp raced down by an older client is lifted again (the steps are
     // idempotent), a newer one turns this client read-only. Neither loops —
-    // this client writes only while the stored version is below its own.
-    // The trigger is the stamp, not the data: old-shape data written under
-    // a current stamp (an old bundle, a peer before it saw the newer stamp)
-    // is never lifted here — see "Old writers" in DOCUMENT_VERSIONING.md.
+    // this client writes only while the stored version is below its own, or
+    // a classed key still holds plain JSON. The version steps are triggered
+    // by the stamp; the version 4 lift also by the data (`settleDocument`).
     let disposed = false;
+    const reportFailed = (outcome: YDocMigration) => {
+      if (outcome.status !== 'invalid' && outcome.status !== 'newer') return;
+      console.error('[useYjsPages] document version not lifted:', outcome);
+      setFailedLift({ doc: ydoc, refusal: outcome });
+    };
     const settleVersion = () => {
-      if (disposed || readYDocRefusal(ydoc)) return;
-      const outcome = ydoc.transact(() => migrateYDocument(ydoc), SETUP_ORIGIN);
-      if (outcome.status === 'invalid' || outcome.status === 'newer') {
-        console.error('[useYjsPages] document version not lifted:', outcome);
-        setFailedLift({ doc: ydoc, refusal: outcome });
-      }
+      if (disposed || !writable || readYDocRefusal(ydoc)) return;
+      reportFailed(settleDocument(ydoc, lift));
     };
 
-    if (!migratedDocsRef.current.has(ydoc)) {
+    // A client that may not write runs no setup at all; it runs once it may.
+    if (writable && !migratedDocsRef.current.has(ydoc)) {
       migratedDocsRef.current.add(ydoc);
       // A newer doc is not touched at all, not even by the legacy lift.
       if (!readYDocRefusal(ydoc)) {
+        // The legacy lifts first, under this client's own id: they mint a
+        // timestamped page id and iterate in replica order, so they cannot be
+        // part of the deterministic transaction below. They write only into
+        // documents from before version 1 or not yet folded. The stamp and the
+        // version 4 lift then come in one transaction (rule 2).
         ydoc.transact(() => {
           migrateLegacyDoc(ydoc);
           foldLegacyFormStateIntoFirstPage(ydoc);
         }, SETUP_ORIGIN);
-        settleVersion();
+        reportFailed(settleDocument(ydoc, lift));
       }
     }
 
@@ -367,7 +450,7 @@ export function useYjsPages(
       undoManager.destroy();
       undoManagerRef.current = null;
     };
-  }, [ydoc, isSynced]);
+  }, [ydoc, isSynced, canWrite]);
 
   return useMemo<YjsPagesApi | null>(() => {
     if (!ydoc || !isSynced) return null;
@@ -376,7 +459,7 @@ export function useYjsPages(
     // effect could seed or write.
     const schemaRefusal =
       readYDocRefusal(ydoc) ?? (failedLift?.doc === ydoc ? failedLift.refusal : null);
-    if (schemaRefusal) return refusedApi(readPages(ydoc), schemaRefusal);
+    if (schemaRefusal) return readOnlyApi(readPages(ydoc), schemaRefusal);
 
     const fresh = readPages(ydoc);
     const prev = viewsRef.current;
@@ -400,19 +483,22 @@ export function useYjsPages(
     });
     const pages = unchanged ? prev : stable;
     viewsRef.current = pages;
+    // Live pages, nothing that writes: the canvases stay bound and follow remote edits.
+    if (canWrite === false) return readOnlyApi(pages, null);
 
     const seedIfEmpty: YjsPagesApi['seedIfEmpty'] = (defs) => {
       ydoc.transact(() => {
-        const seeded = seedPagesIfEmpty(
+        if (!isUnseeded(ydoc)) return;
+        // Stamp first: the seed builds its pages structured only under a
+        // version 4 stamp, and stamp and pages reach peers in one update.
+        stampYDocument(ydoc);
+        seedPagesIfEmpty(
           ydoc,
           defs.map((def, index) => ({ ...def, id: def.id ?? seedPageId(index) }))
         );
         // Fold NOW, in the same transaction — deferring to a later open
         // would overwrite page edits made in between (see pagesDoc).
-        if (seeded) {
-          foldLegacyFormStateIntoFirstPage(ydoc);
-          stampYDocument(ydoc);
-        }
+        foldLegacyFormStateIntoFirstPage(ydoc);
       }, SETUP_ORIGIN);
     };
 
@@ -532,7 +618,8 @@ export function useYjsPages(
           : noStamps();
       },
       schemaRefusal: null,
+      readOnly: false,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- version/historyVersion invalidate the derived view
-  }, [ydoc, isSynced, version, historyVersion, normalizeEcho, refreshChrome, failedLift]);
+  }, [ydoc, isSynced, version, historyVersion, normalizeEcho, refreshChrome, failedLift, canWrite]);
 }

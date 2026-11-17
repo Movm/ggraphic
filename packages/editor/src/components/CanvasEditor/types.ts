@@ -42,6 +42,12 @@ export interface CanvasEditorProps<TConfigId extends string = string> {
     previewBeforeSync?: boolean;
     /** The doc holds the local cache: show its pages, read-only, until the sync. */
     isLocalLoaded?: boolean;
+    /**
+     * May this client write the doc (the connection's scope)? Defaults to
+     * `!readOnly`. `false` writes nothing, not even the open's lift; see
+     * `usePageManager`'s `collaborative.canWrite`.
+     */
+    canWrite?: boolean;
   };
   /** Host-supplied content rendered at the very left of the toolbar (in-flow). */
   chromeLeft?: React.ReactNode;
@@ -221,6 +227,8 @@ export interface PageWrapperProps {
     pageId?: string | null;
     /** Only the active page publishes its selection to awareness. */
     publishSelection?: boolean;
+    /** False when the client may not write the doc (`collaborative.canWrite`). */
+    canWrite?: boolean;
   };
   /** Forwarded ref to the wrapper div — used for scroll-into-view */
   pageRef?: React.Ref<HTMLDivElement>;

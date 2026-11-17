@@ -4,6 +4,7 @@ export { useYjsCanvasBinding } from '../collab/useYjsCanvasBinding.js';
 export { useYjsPages, type YjsPagesApi, type YjsPageView } from '../collab/useYjsPages.js';
 export { bindCanvasStoreToYMap, type CanvasBinding } from '../collab/yjsBinding.js';
 export { useSelectionAwareness } from '../collab/useSelectionAwareness.js';
+export { onStateWriteWarning, type StateWriteWarning } from '../collab/stateWriteWarnings.js';
 export {
   readPages,
   type ReplaceDeckOps,

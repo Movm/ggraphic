@@ -50,10 +50,8 @@ describe('editor key lists against the core key classes', () => {
   });
 
   it('binds ELEMENT_STORAGE_VERSION to CANVAS_DOCUMENT_VERSION', () => {
-    // Readers release: the editor writes no structure yet and still stamps the version before
-    // element storage. The release that turns the writers on raises CANVAS_DOCUMENT_VERSION to
-    // ELEMENT_STORAGE_VERSION and changes this to
-    // `expect(ELEMENT_STORAGE_VERSION).toBeLessThanOrEqual(CANVAS_DOCUMENT_VERSION)`.
-    expect(CANVAS_DOCUMENT_VERSION).toBe(ELEMENT_STORAGE_VERSION - 1);
+    // The editor writes structured page state and stamps the version it writes, so that version
+    // must allow structure (rule 1 of "Version 4").
+    expect(ELEMENT_STORAGE_VERSION).toBeLessThanOrEqual(CANVAS_DOCUMENT_VERSION);
   });
 });

@@ -17,16 +17,26 @@
  */
 
 import {
+  STATE_KIND_KEY,
+  assertWritableState,
+  buildStateMap,
+  mayWriteStructured,
   posBetween,
   posJitter,
   readState,
   readStateKey,
   sameStateValue,
+  stateKeyClasses,
+  writeStateKeys,
+  type StateKeyClasses,
+  type StateWriteOptions,
 } from '@ggraphic/core/ydoc';
 import { v4 as uuid } from 'uuid';
 import * as Y from 'yjs';
 
+import { plainFallbackReporter } from './stateWriteWarnings.js';
 import { YDOC_KEYS } from './ydocKeys.js';
+import { fromHostKinds } from '../utils/elementKinds.js';
 
 export interface PageDef {
   id: string;
@@ -60,6 +70,40 @@ export interface SerializedPage {
 
 // Moved to `@ggraphic/core/ydoc`, which element order inside a page's state uses too.
 export { posBetween };
+
+// ── page-state writes (document version 4) ──────────────────────────────────
+
+/**
+ * The editor's key classes: the core's, plus every registered host kind's `stateKey` as a
+ * collection. Only the lift and the first structured write of a key need them; readers follow
+ * the `$kind` marker (`packages/schema/DOCUMENT_VERSIONING.md`, "Version 4").
+ */
+export const editorStateKeyClasses: () => StateKeyClasses = fromHostKinds((kinds) =>
+  stateKeyClasses(kinds.map((kind) => kind.stateKey))
+);
+
+/**
+ * Options for `writeStateKeys` into a live state map. `lift` may always be on: the codec reads
+ * the stamp inside the transaction and writes plain JSON into a document below version 4
+ * (rule 1), so a writer in a version 3 document that is not being lifted stays plain.
+ */
+const liveWrite = (doc: Y.Doc, deterministic = false): StateWriteOptions => ({
+  classes: editorStateKeyClasses(),
+  lift: true,
+  deterministic,
+  onPlainFallback: plainFallbackReporter(doc),
+});
+
+/**
+ * Options for `buildStateMap` of a map that `doc` will hold. A map outside a document cannot
+ * read a stamp, so the caller's document decides: structured only at version 4 or above, which
+ * a seed must therefore stamp before it builds (rule 1).
+ */
+const builtFor = (doc: Y.Doc): StateWriteOptions => ({
+  classes: editorStateKeyClasses(),
+  lift: mayWriteStructured(doc),
+  onPlainFallback: plainFallbackReporter(doc),
+});
 
 // ── doc accessors ───────────────────────────────────────────────────────────
 
@@ -107,14 +151,16 @@ export function readPages(doc: Y.Doc): PageView[] {
 
 // ── page construction / cloning ─────────────────────────────────────────────
 
-export function buildPage(def: PageDef, pos: string): Y.Map<unknown> {
+/**
+ * A page Y.Map for `doc`. Its state is built through the codec: structured where `doc` is at
+ * version 4 or above (stamp first, in the same transaction), plain JSON below.
+ */
+export function buildPage(doc: Y.Doc, def: PageDef, pos: string): Y.Map<unknown> {
   const page = new Y.Map<unknown>();
   page.set(YDOC_KEYS.id, def.id);
   page.set(YDOC_KEYS.configId, def.configId);
   page.set(YDOC_KEYS.pos, pos);
-  const state = new Y.Map<unknown>();
-  for (const [k, v] of Object.entries(def.state)) state.set(k, v);
-  page.set(YDOC_KEYS.state, state);
+  page.set(YDOC_KEYS.state, buildStateMap(def.state, builtFor(doc)));
   // config is otherwise created on demand by bindCanvasStoreToYMap
   // when the page first mounts in a GenericCanvas.
   if (def.config && Object.keys(def.config).length > 0) {
@@ -135,8 +181,36 @@ const cloneYMapShallow = (source: Y.Map<unknown>): Y.Map<unknown> => {
   return copy;
 };
 
-/** Deep-clone a page's state and config into a fresh Y.Map. */
-export function clonePage(source: Y.Map<unknown>, newId: string, pos: string): Y.Map<unknown> {
+/**
+ * A copy of a page's state for `doc`: read through the codec and built again, so a structured
+ * key becomes a new, independent structure (fresh maps, the deterministic order chain) and no
+ * plain object is shared with the source. Yjs values the codec does not own (no `$kind`; no
+ * writer creates them, but a legacy page may carry one) are cloned as before.
+ */
+const cloneState = (doc: Y.Doc, source: Y.Map<unknown>): Y.Map<unknown> => {
+  const plain: Record<string, unknown> = {};
+  const foreign = new Map<string, Y.AbstractType<unknown>>();
+  for (const [k, v] of source.entries()) {
+    if (v instanceof Y.AbstractType && !(v instanceof Y.Map && v.has(STATE_KIND_KEY))) {
+      foreign.set(k, v as Y.AbstractType<unknown>);
+    } else {
+      // `readStateKey` of an unknown class is absent; such a doc is refused and never cloned.
+      const value = readStateKey(source, k);
+      if (value !== undefined || !(v instanceof Y.AbstractType)) plain[k] = structuredClone(value);
+    }
+  }
+  const copy = buildStateMap(plain, builtFor(doc));
+  for (const [k, v] of foreign) copy.set(k, v.clone());
+  return copy;
+};
+
+/** Deep-clone a page's state and config into a fresh Y.Map for `doc`. */
+export function clonePage(
+  doc: Y.Doc,
+  source: Y.Map<unknown>,
+  newId: string,
+  pos: string
+): Y.Map<unknown> {
   const page = new Y.Map<unknown>();
   page.set(YDOC_KEYS.id, newId);
   page.set(YDOC_KEYS.configId, source.get(YDOC_KEYS.configId) ?? 'unknown');
@@ -145,7 +219,7 @@ export function clonePage(source: Y.Map<unknown>, newId: string, pos: string): Y
   const sourceState = source.get(YDOC_KEYS.state);
   page.set(
     YDOC_KEYS.state,
-    sourceState instanceof Y.Map ? cloneYMapShallow(sourceState) : new Y.Map<unknown>()
+    sourceState instanceof Y.Map ? cloneState(doc, sourceState) : new Y.Map<unknown>()
   );
 
   const sourceConfig = source.get(YDOC_KEYS.config);
@@ -186,12 +260,15 @@ export function posForInsert(doc: Y.Doc, index: number): string {
   return posJitter(posBetween(before, after));
 }
 
+// Each checks the state first: `posForInsert` may re-space the pages before the page is built.
 export function insertPageAt(doc: Y.Doc, index: number, def: PageDef): void {
-  getPagesMap(doc).set(def.id, buildPage(def, posForInsert(doc, index)));
+  assertWritableState(def.state, builtFor(doc));
+  getPagesMap(doc).set(def.id, buildPage(doc, def, posForInsert(doc, index)));
 }
 
 export function appendPage(doc: Y.Doc, def: PageDef): void {
-  getPagesMap(doc).set(def.id, buildPage(def, posForInsert(doc, Number.MAX_SAFE_INTEGER)));
+  assertWritableState(def.state, builtFor(doc));
+  getPagesMap(doc).set(def.id, buildPage(doc, def, posForInsert(doc, Number.MAX_SAFE_INTEGER)));
 }
 
 /** Clone `sourceId` (state + config) and insert it right after the source. */
@@ -200,7 +277,7 @@ export function duplicatePageById(doc: Y.Doc, sourceId: string, newId: string): 
   const source = pagesMap.get(sourceId);
   if (!source) return false;
   const idx = readPages(doc).findIndex((v) => v.id === sourceId);
-  pagesMap.set(newId, clonePage(source, newId, posForInsert(doc, idx + 1)));
+  pagesMap.set(newId, clonePage(doc, source, newId, posForInsert(doc, idx + 1)));
   return true;
 }
 
@@ -233,10 +310,12 @@ export function movePageById(doc: Y.Doc, id: string, direction: 'up' | 'down'): 
 }
 
 /**
- * Patch primitive/plain-object fields on a page's `state` Y.Map. Structural
- * (JSON) equality guard: Y.Map.set on an identical value still emits an
- * update, and echoed updates ping-pong between clients via
- * useYjsPageStateSync + GenericCanvas's synced-image-key re-emission.
+ * Patch fields on a page's `state` Y.Map, through the codec: a structured key
+ * gets only its changed elements, properties, ids and positions written, a
+ * plain key is set when its value changed. Structural (JSON) equality guard:
+ * Y.Map.set on an identical value still emits an update, and echoed updates
+ * ping-pong between clients via useYjsPageStateSync + GenericCanvas's
+ * synced-image-key re-emission.
  */
 export function updatePageStateById(
   doc: Y.Doc,
@@ -247,9 +326,7 @@ export function updatePageStateById(
   if (!page) return;
   const stateY = page.get(YDOC_KEYS.state);
   if (!(stateY instanceof Y.Map)) return;
-  for (const [k, v] of Object.entries(partial)) {
-    if (!sameStateValue(readStateKey(stateY, k), v)) stateY.set(k, v);
-  }
+  writeStateKeys(stateY as Y.Map<unknown>, partial, liveWrite(doc));
 }
 
 /**
@@ -264,22 +341,32 @@ export function setPageConfigById(
 ): void {
   const page = getPagesMap(doc).get(id);
   if (!page) return;
+  // Built first: a state the codec rejects throws before the page changes.
+  const state = buildStateMap(newState, builtFor(doc));
   page.set(YDOC_KEYS.configId, configId);
-  const state = new Y.Map<unknown>();
-  for (const [k, v] of Object.entries(newState)) state.set(k, v);
   page.set(YDOC_KEYS.state, state);
 }
 
-/** Make a page's state map equal `state` in place: absent keys deleted, changed keys set. */
-export function replacePageState(doc: Y.Doc, pageId: string, state: Record<string, unknown>): void {
+/**
+ * Make a page's state map equal `state` in place: absent keys deleted, changed keys set. A
+ * state the codec would reject throws before anything, the deletions included, is written.
+ * `deterministic`: the writes are a pure function of the document and `state` (the codec's
+ * `deterministic` option), for the version steps inside the deterministic lift transaction.
+ */
+export function replacePageState(
+  doc: Y.Doc,
+  pageId: string,
+  state: Record<string, unknown>,
+  options: { deterministic?: boolean } = {}
+): void {
   const stateY = getPagesMap(doc).get(pageId)?.get(YDOC_KEYS.state);
   if (!(stateY instanceof Y.Map)) return;
+  const write = liveWrite(doc, options.deterministic === true);
+  assertWritableState(state, write, stateY as Y.Map<unknown>);
   for (const key of Array.from(stateY.keys())) {
     if (!(key in state)) stateY.delete(key);
   }
-  for (const [k, v] of Object.entries(state)) {
-    if (!sameStateValue(readStateKey(stateY, k), v)) stateY.set(k, v);
-  }
+  writeStateKeys(stateY as Y.Map<unknown>, state, write);
 }
 
 // Moved to `@ggraphic/core/ydoc`, beside the codec that compares across its boundary with it.
@@ -302,8 +389,8 @@ export function restorePageStateKeys(
     if (!untouched(k, readStateKey(stateY, k))) continue;
     if (!Object.hasOwn(target, k)) {
       if (stateY.has(k)) stateY.delete(k);
-    } else if (!sameStateValue(readStateKey(stateY, k), target[k])) {
-      stateY.set(k, target[k]);
+    } else {
+      writeStateKeys(stateY as Y.Map<unknown>, { [k]: target[k] }, liveWrite(doc));
     }
   }
 }
@@ -327,10 +414,18 @@ export interface ReplaceDeckOps {
  * a recomposed page may have dropped elements. The existing state Y.Map is
  * mutated in place (not swapped) so observers on it — useYjsPageStateSync —
  * keep firing. Order: updates, inserts (sequential), removes — so an insert
- * may anchor on a page that is removed in the same call.
+ * may anchor on a page that is removed in the same call. A state the codec
+ * would reject throws before any page is written.
  */
 export function replaceDeck(doc: Y.Doc, ops: ReplaceDeckOps, origin: unknown): string[] {
   const insertedIds: string[] = [];
+  const pagesMap = getPagesMap(doc);
+  for (const { pageId, state } of ops.updates) {
+    const stateY = pagesMap.get(pageId)?.get(YDOC_KEYS.state);
+    if (stateY instanceof Y.Map)
+      assertWritableState(state, liveWrite(doc), stateY as Y.Map<unknown>);
+  }
+  for (const { state } of ops.inserts) assertWritableState(state, builtFor(doc));
   doc.transact(() => {
     for (const { pageId, state } of ops.updates) replacePageState(doc, pageId, state);
     for (const ins of ops.inserts) {
@@ -356,18 +451,27 @@ export function replaceDeck(doc: Y.Doc, ops: ReplaceDeckOps, origin: unknown): s
  */
 export const seedPageId = (index: number): string => `seed-${index}`;
 
+/** Would `seedPagesIfEmpty` seed `doc`: no pages and no seed watermark? */
+export function isUnseeded(doc: Y.Doc): boolean {
+  return getPagesMap(doc).size === 0 && getMetaMap(doc).get(YDOC_KEYS.pagesSeeded) !== true;
+}
+
 /**
  * Seed a fresh page list. No-op when pages exist or the doc carries the
- * server-authoritative seed watermark.
+ * server-authoritative seed watermark. The pages are structured when the doc
+ * is stamped version 4 or above already: stamp first, in the same
+ * transaction (`useYjsPages`' `seedIfEmpty` does).
  */
 export function seedPagesIfEmpty(doc: Y.Doc, defs: PageDef[]): boolean {
   const pagesMap = getPagesMap(doc);
   const meta = getMetaMap(doc);
-  if (pagesMap.size > 0 || meta.get(YDOC_KEYS.pagesSeeded) === true) return false;
+  if (!isUnseeded(doc)) return false;
+  // Every page first: a rejected state must not leave half a seed.
+  for (const def of defs) assertWritableState(def.state, builtFor(doc));
   let pos: string | null = null;
   for (const def of defs) {
     pos = posBetween(pos, null);
-    pagesMap.set(def.id, buildPage(def, pos));
+    pagesMap.set(def.id, buildPage(doc, def, pos));
   }
   meta.set(YDOC_KEYS.pagesSeeded, true);
   return true;
@@ -410,7 +514,7 @@ export function migrateLegacyDoc(doc: Y.Doc): void {
       const id = source.get(YDOC_KEYS.id);
       if (typeof id !== 'string') continue;
       pos = posBetween(pos, null);
-      pagesMap.set(id, clonePage(source, id, pos));
+      pagesMap.set(id, clonePage(doc, source, id, pos));
     }
     legacyPages.delete(0, legacyPages.length);
     meta.set(YDOC_KEYS.legacyMigrated, true);
@@ -426,6 +530,7 @@ export function migrateLegacyDoc(doc: Y.Doc): void {
   if (!legacyHasContent) return;
 
   const promoted = buildPage(
+    doc,
     { id: `legacy-${Date.now()}`, configId: 'unknown', state: {} },
     posBetween(null, null)
   );
@@ -458,10 +563,13 @@ export function foldLegacyFormStateIntoFirstPage(doc: Y.Doc): void {
   if (views.length === 1 && formState.size > 0) {
     const stateY = views[0].yMap.get(YDOC_KEYS.state);
     if (!(stateY instanceof Y.Map)) return;
+    const folded: Record<string, unknown> = {};
     formState.forEach((value, key) => {
       if (key.startsWith('_')) return;
-      if (readStateKey(stateY, key) !== value) stateY.set(key, value);
+      // The codec writes plain JSON only; a Yjs value in the legacy map is folded as its JSON.
+      folded[key] = value instanceof Y.AbstractType ? (value.toJSON() as unknown) : value;
     });
+    writeStateKeys(stateY as Y.Map<unknown>, folded, liveWrite(doc));
   }
   meta.set(YDOC_KEYS.formStateFolded, true);
 }

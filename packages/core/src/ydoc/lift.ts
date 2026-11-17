@@ -10,20 +10,46 @@
  */
 import * as Y from 'yjs';
 
-import { buildStructured, representable } from './codec.js';
+import {
+  buildStructured,
+  reportIfPlainFallback,
+  representable,
+  type PlainFallback,
+} from './codec.js';
 import { type StateKeyClasses } from './stateKeyClasses.js';
 import { YDOC_KEYS } from './ydocKeys.js';
 
-/** Lift every classed key of one state map that holds a representable plain value. Returns the lifted keys. */
-export function liftStateMap(stateY: Y.Map<unknown>, classes: StateKeyClasses): string[] {
+export interface LiftOptions {
+  /** Called once per state map and key the classes name whose value stays plain (see `PlainFallback`). */
+  onPlainFallback?: (fallback: PlainFallback) => void;
+}
+
+/** UTF-16 code-unit order (JavaScript's `<` on strings). F0 for the deterministic writes. */
+const byCodeUnit = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+
+/**
+ * Lift every classed key of one state map that holds a representable plain value. Returns the
+ * lifted keys. The keys are lifted in UTF-16 code-unit order and each structure is built canonically,
+ * so the writes are a pure function of the map's content: two replicas of one document state
+ * lift it into identical Yjs structs (`transactDeterministically`).
+ */
+export function liftStateMap(
+  stateY: Y.Map<unknown>,
+  classes: StateKeyClasses,
+  options: LiftOptions = {}
+): string[] {
   const lifted: string[] = [];
   const run = () => {
-    for (const key of Array.from(stateY.keys())) {
+    for (const key of Array.from(stateY.keys()).sort(byCodeUnit)) {
       const cls = classes.get(key);
       if (cls === undefined) continue;
       const value = stateY.get(key);
-      if (value instanceof Y.AbstractType || !representable(cls, value)) continue;
-      stateY.set(key, buildStructured(cls, value));
+      if (value instanceof Y.AbstractType) continue;
+      if (!representable(cls, value)) {
+        reportIfPlainFallback(stateY, key, value, cls, false, options.onPlainFallback);
+        continue;
+      }
+      stateY.set(key, buildStructured(cls, value, true));
       lifted.push(key);
     }
   };
@@ -33,17 +59,26 @@ export function liftStateMap(stateY: Y.Map<unknown>, classes: StateKeyClasses): 
 }
 
 /**
- * `liftStateMap` over every page of `pagesById`; returns the number of keys lifted. Call inside
- * the setup transaction that also raises the stamp, so peers receive both in one update.
+ * `liftStateMap` over every page of `pagesById`, pages in UTF-16 code-unit order of their ids; returns
+ * the number of keys lifted. Call inside the setup transaction that also raises the stamp, so
+ * peers receive both in one update.
  */
-export function liftDocumentState(doc: Y.Doc, classes: StateKeyClasses): number {
+export function liftDocumentState(
+  doc: Y.Doc,
+  classes: StateKeyClasses,
+  options: LiftOptions = {}
+): number {
   let count = 0;
   doc.transact(() => {
-    doc.getMap<unknown>(YDOC_KEYS.pagesById).forEach((page) => {
-      if (!(page instanceof Y.Map)) return;
+    const pages = doc.getMap<unknown>(YDOC_KEYS.pagesById);
+    for (const id of Array.from(pages.keys()).sort(byCodeUnit)) {
+      const page = pages.get(id);
+      if (!(page instanceof Y.Map)) continue;
       const stateY: unknown = page.get(YDOC_KEYS.state);
-      if (stateY instanceof Y.Map) count += liftStateMap(stateY as Y.Map<unknown>, classes).length;
-    });
+      if (stateY instanceof Y.Map) {
+        count += liftStateMap(stateY as Y.Map<unknown>, classes, options).length;
+      }
+    }
   });
   return count;
 }

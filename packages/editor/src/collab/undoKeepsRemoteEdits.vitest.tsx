@@ -4,10 +4,17 @@
  * arrived in between must survive it, in this canvas and in the shared
  * document — even when both edits sit in the same state key (one
  * `shapeInstances` array holds every shape).
+ *
+ * Plain storage: the document is stamped version 3 and never lifted, so every
+ * key holds one JSON value, as in a version 3 document or under an old writer.
+ * The writers stay plain there (rule 1 of "Version 4"). The same net on
+ * structured storage, including the cases where version 4 no longer loses an
+ * edit (#176), is `undoStructured.vitest.tsx`.
  */
 import { pagePersistedStateKeys } from './pageElementStateKeys.js';
-import { readPages, seedPagesIfEmpty, updatePageStateById } from './pagesDoc.js';
+import { getMetaMap, readPages, seedPagesIfEmpty, updatePageStateById } from './pagesDoc.js';
 import { PAGES_STATE_ORIGIN } from './useYjsPages.js';
+import { YDOC_KEYS } from './ydocKeys.js';
 import { createPageSyncedCallbacks } from './wrapCallbacksWithPageSync.js';
 import { GenericCanvas, type GenericCanvasRef } from '../components/GenericCanvas.js';
 import { loadCanvasConfig } from '../configs/configLoader.js';
@@ -72,7 +79,10 @@ async function mountTwoClients(seed: Record<string, unknown>, hostKeys: string[]
   const docB = new Y.Doc();
   // A wins a concurrent write to the same key: Y.Map keeps the higher client id.
   docB.clientID = 1;
-  seedPagesIfEmpty(docB, [{ id: PAGE_ID, configId: 'fixture-poster', state: seed }]);
+  docB.transact(() => {
+    getMetaMap(docB).set(YDOC_KEYS.schemaVersion, 3);
+    seedPagesIfEmpty(docB, [{ id: PAGE_ID, configId: 'fixture-poster', state: seed }]);
+  });
   const docA = new Y.Doc();
   docA.clientID = 2;
   Y.applyUpdate(docA, Y.encodeStateAsUpdate(docB));
@@ -266,7 +276,10 @@ describe("undo keeps another client's edits", () => {
     expect(pageState(docA).line2).toBe('von A');
   }, 90_000);
 
-  it('a write from a stale view: B loses its own step to A on the key but can redo it', async () => {
+  // Plain storage only: in version 4 both moves survive (`undoStructured.vitest.tsx`, "a write
+  // from a stale view: both moves survive …"). Kept for the rebase of a whole-value overwrite,
+  // which an old writer still produces under version 4.
+  it('plain storage, a write from a stale view: B loses its own step to A on the key but can redo it', async () => {
     const { docA, docB, ref, live, remoteEdit, localEdit, disconnect, reconnect } =
       await mountTwoClients({ shapeInstances: [shape('s1', 100), shape('s2', 100)] }, []);
     const updateShape = live.actions.updateShape as (id: string, p: Partial<Shape>) => void;
@@ -275,7 +288,7 @@ describe("undo keeps another client's edits", () => {
     await localEdit(() => updateShape('s1', { x: 500 }));
     await remoteEdit((state) => moveShape(state, 's2', 900));
     await reconnect();
-    // #176: A's whole-array write wins, B's move is gone from the page.
+    // #176 on plain storage: A's whole-array write wins, B's move is gone from the page.
     expect(xOf(live.state, 's1')).toBe(100);
     expect(xOf(live.state, 's2')).toBe(900);
 
@@ -379,7 +392,9 @@ describe("undo keeps another client's edits", () => {
     }
   }, 90_000);
 
-  it('a third client’s overwrite of A’s edit is not undone by B (separate updates)', async () => {
+  // Plain storage only: in version 4 C's edit of s2 does not touch s1 (`undoStructured.vitest.tsx`,
+  // "a third client’s edit of another element …").
+  it('plain storage: a third client’s overwrite of A’s edit is not undone by B (separate updates)', async () => {
     const {
       docB,
       ref,

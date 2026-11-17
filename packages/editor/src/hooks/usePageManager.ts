@@ -116,6 +116,20 @@ export interface UsePageManagerOptions<TId extends string = TemplateId> {
      * to them.
      */
     isLocalLoaded?: boolean;
+    /**
+     * May this client write the doc? The connection's scope (a read-only
+     * share is `false`), not the user's role in the UI.
+     * - `true`: the open lifts the doc to this build's format (version 4:
+     *   element storage) and every page op writes.
+     * - `false`: nothing is written, not even on open: no lift, no stamp, no
+     *   seed, and every page op is a no-op. The pages stay live. Pass it for
+     *   every read-only connection: a write its server drops would let this
+     *   client's own lift win locally over everyone else's edits.
+     * - omitted: page ops write, but the open does not lift; a page-state key
+     *   becomes structured when this client writes it. Pass `true` or
+     *   `false`. `CanvasEditor` derives it from its `readOnly` prop.
+     */
+    canWrite?: boolean;
   };
 }
 
@@ -229,7 +243,9 @@ export function usePageManager<TId extends string = TemplateId>({
     );
   }, []);
 
-  const docPagesApi = useYjsPages(ydoc, isSynced, normalizeEcho);
+  // A local doc is this hook's own: it may always write it.
+  const canWrite = collaborative ? collaborative.canWrite : true;
+  const docPagesApi = useYjsPages(ydoc, isSynced, normalizeEcho, canWrite);
   // A doc this build must not write is previewed like the unsynced cache.
   const schemaRefusal = docPagesApi?.schemaRefusal ?? null;
   const yjsPages = schemaRefusal ? null : docPagesApi;

@@ -15,6 +15,11 @@ interface BindOptions {
    * this is just `ydoc.getMap('root')`; for multi-page it is one of `pages[i]`.
    */
   parent: Y.Map<unknown>;
+  /**
+   * The client may not write the doc (`collaborative.canWrite: false`): the store follows the
+   * page's stored config, live, and nothing is written, not even an empty `config` map.
+   */
+  readOnly?: boolean;
 }
 
 export interface CanvasBinding {
@@ -39,11 +44,38 @@ export function seedCanvasStoreFromYMap(store: CanvasEditorStoreApi, parent: Y.M
   }
 }
 
-export function bindCanvasStoreToYMap({ store, parent }: BindOptions): CanvasBinding {
+/** The store follows the page's `config` map, also one that appears or is replaced later. */
+function followCanvasConfig(store: CanvasEditorStoreApi, parent: Y.Map<unknown>): CanvasBinding {
+  let bound: Y.Map<unknown> | null = null;
+  const apply = () => seedCanvasStoreFromYMap(store, parent);
+  const rebind = () => {
+    const current = parent.get(YDOC_KEYS.config);
+    const next = current instanceof Y.Map ? (current as Y.Map<unknown>) : null;
+    if (next === bound) return;
+    bound?.unobserve(apply);
+    bound = next;
+    bound?.observe(apply);
+    apply();
+  };
+  const onParent = (event: Y.YMapEvent<unknown>) => {
+    if (event.keysChanged.has(YDOC_KEYS.config)) rebind();
+  };
+  parent.observe(onParent);
+  rebind();
+  return {
+    destroy: () => {
+      parent.unobserve(onParent);
+      bound?.unobserve(apply);
+    },
+  };
+}
+
+export function bindCanvasStoreToYMap({ store, parent, readOnly }: BindOptions): CanvasBinding {
   const ydoc = parent.doc;
   if (!ydoc) {
     throw new Error('bindCanvasStoreToYMap: parent Y.Map is not attached to a Y.Doc');
   }
+  if (readOnly) return followCanvasConfig(store, parent);
   // Ensure structural Y types exist before observers attach.
   ydoc.transact(() => {
     ensureConfig(parent);
