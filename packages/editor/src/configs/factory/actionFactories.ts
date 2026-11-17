@@ -47,6 +47,19 @@ import type { StickerRef } from '@ggraphic/schema';
 // TYPE HELPERS
 // ============================================================================
 
+/**
+ * `state` without `id` in its `layerOrder`. A deleted element must leave the stored order: an id
+ * nothing renders would stay in the document, and take part in the position of later inserts,
+ * until a reorder happens to rewrite the list (#214). A state without a list, or one that does
+ * not name `id`, comes back as it is, so no `layerOrder` key is written that was not there.
+ */
+export function withoutLayer<TState extends object>(state: TState, id: string): TState {
+  const order = (state as { layerOrder?: string[] }).layerOrder;
+  return order?.includes(id)
+    ? { ...state, layerOrder: order.filter((entry) => entry !== id) }
+    : state;
+}
+
 type StateSetter<TState> = (partial: Partial<TState> | ((prev: TState) => TState)) => void;
 type HistorySaver<TState> = (state: TState) => void;
 
@@ -113,10 +126,12 @@ export function createAssetActions<TState extends { assetInstances: AssetInstanc
       debouncedSaveToHistory(getState());
     },
     removeAsset: (id: string) => {
-      setState((prev) => ({
-        ...prev,
-        assetInstances: prev.assetInstances.filter((a) => a.id !== id),
-      }));
+      setState((prev) =>
+        withoutLayer(
+          { ...prev, assetInstances: prev.assetInstances.filter((a) => a.id !== id) },
+          id
+        )
+      );
       saveToHistory(getState());
     },
   };
@@ -257,10 +272,12 @@ export function createShapeActions<TState extends { shapeInstances: ShapeInstanc
       debouncedSaveToHistory(getState());
     },
     removeShape: (id: string) => {
-      setState((prev) => ({
-        ...prev,
-        shapeInstances: prev.shapeInstances.filter((s) => s.id !== id),
-      }));
+      setState((prev) =>
+        withoutLayer(
+          { ...prev, shapeInstances: prev.shapeInstances.filter((s) => s.id !== id) },
+          id
+        )
+      );
       saveToHistory(getState());
     },
   };
@@ -305,10 +322,12 @@ export function createIllustrationActions<
       debouncedSaveToHistory(getState());
     },
     removeIllustration: (id: string) => {
-      setState((prev) => ({
-        ...prev,
-        illustrationInstances: prev.illustrationInstances.filter((i) => i.id !== id),
-      }));
+      setState((prev) =>
+        withoutLayer(
+          { ...prev, illustrationInstances: prev.illustrationInstances.filter((i) => i.id !== id) },
+          id
+        )
+      );
       saveToHistory(getState());
     },
     duplicateIllustration: (illustrationId: string) => {
@@ -487,10 +506,12 @@ export function createAdditionalTextActions<TState extends { additionalTexts: Ad
       debouncedSaveToHistory(getState());
     },
     removeAdditionalText: (id: string) => {
-      setState((prev) => ({
-        ...prev,
-        additionalTexts: prev.additionalTexts.filter((t) => t.id !== id),
-      }));
+      setState((prev) =>
+        withoutLayer(
+          { ...prev, additionalTexts: prev.additionalTexts.filter((t) => t.id !== id) },
+          id
+        )
+      );
       saveToHistory(getState());
     },
   };
@@ -527,10 +548,12 @@ export function createPillBadgeActions<TState extends { pillBadgeInstances: Pill
       debouncedSaveToHistory(getState());
     },
     removePillBadge: (id: string) => {
-      setState((prev) => ({
-        ...prev,
-        pillBadgeInstances: prev.pillBadgeInstances.filter((p) => p.id !== id),
-      }));
+      setState((prev) =>
+        withoutLayer(
+          { ...prev, pillBadgeInstances: prev.pillBadgeInstances.filter((p) => p.id !== id) },
+          id
+        )
+      );
       saveToHistory(getState());
     },
   };
@@ -569,10 +592,12 @@ export function createCircleBadgeActions<
       debouncedSaveToHistory(getState());
     },
     removeCircleBadge: (id: string) => {
-      setState((prev) => ({
-        ...prev,
-        circleBadgeInstances: prev.circleBadgeInstances.filter((c) => c.id !== id),
-      }));
+      setState((prev) =>
+        withoutLayer(
+          { ...prev, circleBadgeInstances: prev.circleBadgeInstances.filter((c) => c.id !== id) },
+          id
+        )
+      );
       saveToHistory(getState());
     },
   };
@@ -628,10 +653,12 @@ export function createChartActions<TState extends { chartInstances: ChartInstanc
       debouncedSaveToHistory(getState());
     },
     removeChart: (id: string) => {
-      setState((prev) => ({
-        ...prev,
-        chartInstances: prev.chartInstances.filter((c) => c.id !== id),
-      }));
+      setState((prev) =>
+        withoutLayer(
+          { ...prev, chartInstances: prev.chartInstances.filter((c) => c.id !== id) },
+          id
+        )
+      );
       saveToHistory(getState());
     },
   };
@@ -674,10 +701,12 @@ export function createFrameActions<TState extends { frameInstances: FrameInstanc
       if (frame?.imageSrc && isLastHolder(frames, (f) => f.imageSrc, frame.imageSrc)) {
         URL.revokeObjectURL(frame.imageSrc);
       }
-      setState((prev) => ({
-        ...prev,
-        frameInstances: prev.frameInstances.filter((f) => f.id !== id),
-      }));
+      setState((prev) =>
+        withoutLayer(
+          { ...prev, frameInstances: prev.frameInstances.filter((f) => f.id !== id) },
+          id
+        )
+      );
       saveToHistory(getState());
     },
     setFrameImage: (id: string, _file: File, objectUrl: string) => {
@@ -732,10 +761,12 @@ export function createUserImageActions<TState extends { userImageInstances: User
     if (instance?.src.startsWith('blob:') && isLastHolder(images, (u) => u.src, instance.src)) {
       URL.revokeObjectURL(instance.src);
     }
-    commit((s) => ({
-      ...s,
-      userImageInstances: s.userImageInstances.filter((u) => u.id !== id),
-    }));
+    commit((s) =>
+      withoutLayer(
+        { ...s, userImageInstances: s.userImageInstances.filter((u) => u.id !== id) },
+        id
+      )
+    );
   };
 
   return {

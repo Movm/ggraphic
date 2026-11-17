@@ -8,7 +8,7 @@
  * pins as a loss is rewritten at the end ("both survive").
  */
 import { pagePersistedStateKeys } from './pageElementStateKeys.js';
-import { isStructured, v4Doc } from './__tests__/elementStorageKit.js';
+import { isStructured, stateMapOf, v4Doc } from './__tests__/elementStorageKit.js';
 import { readPages, updatePageStateById } from './pagesDoc.js';
 import { PAGES_STATE_ORIGIN } from './useYjsPages.js';
 import { createPageSyncedCallbacks } from './wrapCallbacksWithPageSync.js';
@@ -514,5 +514,43 @@ describe('own writes from another stack', () => {
 
     await undo(ref);
     for (const state of [live.state, pageState(docB)]) expect(xOf(state, 's1')).toBe(100);
+  }, 90_000);
+});
+
+const rawOrder = (doc: Y.Doc, key = 'layerOrder'): Record<string, string> => {
+  const map = stateMapOf(doc, PAGE_ID).get(key);
+  return map instanceof Y.Map ? (map.toJSON() as Record<string, string>) : {};
+};
+
+describe('delete and undo keep the stored structures tidy (#214)', () => {
+  const seed = () => ({
+    shapeInstances: [shape('s1', 100), shape('s2', 100), shape('s3', 100)],
+    layerOrder: ['s1', 's2', 's3'],
+  });
+
+  it('deleting an element removes its id from the structured layerOrder', async () => {
+    const { docA, docB, live, localEdit } = await mountTwoClients(seed(), []);
+    await localEdit(() => (live.actions.removeShape as (id: string) => void)('s2'));
+    for (const doc of [docB, docA]) {
+      expect(Object.keys(rawOrder(doc)).filter((k) => k !== '$kind')).toEqual(['s1', 's3']);
+    }
+  }, 90_000);
+
+  it('undo of a delete puts the id back into layerOrder, between its old neighbours', async () => {
+    const { docA, ref, live, localEdit } = await mountTwoClients(seed(), []);
+    await localEdit(() => (live.actions.removeShape as (id: string) => void)('s2'));
+    await undo(ref);
+    expect(shapeOrder(pageState(docA))).toEqual(['s1', 's2', 's3']);
+    expect(ids(pageState(docA))).toEqual(['s1', 's2', 's3']);
+  }, 90_000);
+
+  it('the first undo of a session creates no empty collection for a key the page never had', async () => {
+    const { docA, docB, ref, live, localEdit } = await mountTwoClients(seed(), []);
+    const keysOf = (doc: Y.Doc) => [...stateMapOf(doc, PAGE_ID).keys()].sort();
+    const before = keysOf(docB);
+    await localEdit(() => (live.actions.removeShape as (id: string) => void)('s2'));
+    await undo(ref);
+    expect(keysOf(docB)).toEqual(before);
+    expect(keysOf(docA)).toEqual(before);
   }, 90_000);
 });

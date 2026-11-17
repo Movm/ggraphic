@@ -19,6 +19,7 @@
  * elements behave as on a real template. Only `brandDefault` colours and
  * invented copy are used.
  */
+import { withoutLayer } from '../configs/factory/actionFactories.js';
 import { defineTemplate, registerTemplates } from '../templates/registry.js';
 
 import {
@@ -159,10 +160,12 @@ function collectionActions(
       debouncedSaveToHistory(getState());
     };
     actions[`remove${suffix}`] = (id: string) => {
-      setState((prev) => ({
-        ...prev,
-        [key]: (prev[key] as { id: string }[]).filter((item) => item.id !== id),
-      }));
+      setState((prev) =>
+        withoutLayer(
+          { ...prev, [key]: (prev[key] as { id: string }[]).filter((item) => item.id !== id) },
+          id
+        )
+      );
       saveToHistory(getState());
     };
   }
