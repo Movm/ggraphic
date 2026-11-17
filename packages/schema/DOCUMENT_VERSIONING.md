@@ -79,8 +79,9 @@ and stay as they are.
 ### (b) Migration registry
 
 `createMigrationRegistry(coreMigrations)` builds a registry; the core's
-default registry (`documentMigrations`) ships with one step (1 → 2, the
-identity on pages; see "Version 2"), so `CANVAS_DOCUMENT_VERSION` is 2.
+default registry (`documentMigrations`) ships with three steps (1 → 2, 2 → 3
+and 3 → 4, each the identity on pages; see "Version 2" to "Version 4"), so
+`CANVAS_DOCUMENT_VERSION` is 4.
 
 - A core step is `{ from: n, migrate(doc) }` and lifts the whole document from
   n to n + 1. Steps must be contiguous from 1.
@@ -389,9 +390,14 @@ Two rules tie the stamp to the data:
 - **When:** on open, by a client that may write the document (not refused),
   after the sync, never on the unsynced local cache. It runs in the setup
   transaction (`SETUP_ORIGIN`, untracked by undo) together with the legacy
-  lift, the form-state fold and `migrateYDocument`, so lift and stamp reach
-  peers in one update (rule 2). It runs again whenever the `meta` observer
-  re-settles the version. A lift is never part of an undo step.
+  lift, the form-state fold and `migrateYDocument`, in that order, so lift and
+  stamp reach peers in one update (rule 2). It runs again whenever the `meta`
+  observer re-settles the version. A lift is never part of an undo step.
+- **An empty document** (no pages, no seed watermark) is neither stamped nor
+  lifted on open: there is nothing to lift, and its seed stamps it. The seed
+  raises the stamp first and then builds its pages structured, in one
+  transaction (rule 1; a state map built outside the document cannot read the
+  stamp, so the order matters).
 - **Trigger: the stamp or the data.** It runs when the stored version is below
   4, and also when a key the client classes as structured still holds a plain
   value the structure can represent. This is the old-shape detection that
@@ -402,9 +408,11 @@ Two rules tie the stamp to the data:
   (the chain above), idempotent (a structured key is left alone) and the
   identity on the JSON view.
 - **Two clients lifting at once** write two structured values with equal
-  content under one key, and one wins at key level. What a client wrote _into_
-  the losing value before it saw the winner is lost; the window is the round
-  trip right after open.
+  content under one key, and one wins at key level (in Yjs the entry of the
+  higher client id). What a client wrote _into_ the losing value before it saw
+  the winner is lost; the window is from its open until the peer's lift
+  arrives, one round trip. The loss is whole: the losing client's elements
+  read as the winner's, never as a mix.
 - **Lift on write:** a version 4 writer that writes a key it classes as
   structured and finds plain JSON there writes the new value structured. The
   lift is then part of that write, and of its undo step if the write is

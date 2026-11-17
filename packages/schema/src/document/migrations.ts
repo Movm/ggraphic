@@ -10,7 +10,7 @@
 import { z } from 'zod';
 
 /** The core format version this build reads and writes. */
-export const CANVAS_DOCUMENT_VERSION = 3;
+export const CANVAS_DOCUMENT_VERSION = 4;
 
 const versionSchema = z.number().int().min(1);
 
@@ -120,16 +120,21 @@ export function createMigrationRegistry(core: readonly CoreMigration[]): Migrati
 }
 
 /**
- * The core's steps. Both are the identity on pages: the bumps exist so an
- * older build refuses a document it would strip keys from.
+ * The core's steps. All are the identity on pages: the bumps exist so an
+ * older build refuses a document it would strip keys from, or could not read.
  * - 1 → 2 admits the page keys `bind`, `brandScheme` and `brandStamp` (brand
  *   bindings). See `DOCUMENT_VERSIONING.md`, "Version 2".
  * - 2 → 3 admits `templateRef` and `groups` (template origin, element groups).
  *   See `DOCUMENT_VERSIONING.md`, "Version 3".
+ * - 3 → 4 lets a Y.Doc store element collections, id lists and three records
+ *   as Yjs structures (element storage); the JSON form is unchanged. The lift
+ *   of a Y.Doc is the editor's open, not this step. See `DOCUMENT_VERSIONING.md`,
+ *   "Version 4".
  */
 const CORE_MIGRATIONS: readonly CoreMigration[] = [
   { from: 1, migrate: (doc) => doc },
   { from: 2, migrate: (doc) => doc },
+  { from: 3, migrate: (doc) => doc },
 ];
 
 /** The registry every load uses unless a caller passes its own. */

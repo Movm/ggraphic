@@ -99,7 +99,7 @@ describe('v1 corpus through the shipped identity steps', () => {
     const result = migrateDocument(load(name));
     if (result.status !== 'migrated') throw new Error(result.status);
     const { schemaVersion, ...rest } = result.document;
-    expect(schemaVersion).toBe(3);
+    expect(schemaVersion).toBe(4);
     expect(JSON.stringify(rest)).toBe(JSON.stringify(CORPUS[name]));
   });
 });

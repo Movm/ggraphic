@@ -21,12 +21,13 @@ describe('parseDocument', () => {
     });
   });
 
-  it('accepts v1 and v2 (migrated) and v3, and refuses v4', () => {
+  it('accepts v1, v2 and v3 (migrated) and v4, and refuses v5', () => {
     const base = v1Fixture();
     expect(parseDocument({ ...base, schemaVersion: 1 }).kind).toBe('ok');
     expect(parseDocument({ ...base, schemaVersion: 2 }).kind).toBe('ok');
     expect(parseDocument({ ...base, schemaVersion: 3 }).kind).toBe('ok');
-    expect(parseDocument({ ...base, schemaVersion: 4 })).toEqual({
+    expect(parseDocument({ ...base, schemaVersion: 4 }).kind).toBe('ok');
+    expect(parseDocument({ ...base, schemaVersion: 5 })).toEqual({
       kind: 'refused',
       reason: 'newer',
     });
