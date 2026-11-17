@@ -22,25 +22,19 @@ export {
 export {
   assertWritableState,
   buildStateMap,
-  canonicalJsonValue,
-  representableProblem,
   type PlainFallback,
   mayWriteStructured,
   readState,
   readStateKey,
-  sameStateValue,
   writeStateKeys,
   type StateWriteOptions,
 } from './codec.js';
 export { liftDocumentState, liftStateMap, type LiftOptions } from './lift.js';
 export {
   LIFT_ID_ALGORITHM,
-  cyrb53,
   deterministicClientId,
-  isDerivedClientId,
   liftSalt,
   transactDeterministically,
 } from './deterministic.js';
-export { runAfterWrite } from './reports.js';
 export { YDOC_KEYS, type YDocKey } from './ydocKeys.js';
-export { posBetween, posJitter } from './pos.js';
+export { posBetween } from './pos.js';

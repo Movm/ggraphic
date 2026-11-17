@@ -7,7 +7,7 @@
  * document writes under the client's own id, and one that throws changes nothing (review of the
  * deterministic lift, finding 1).
  */
-import { isDerivedClientId } from '@ggraphic/core/ydoc';
+import { isDerivedClientId } from '@ggraphic/core/internal/ydoc/internal';
 import { renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as Y from 'yjs';

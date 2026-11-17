@@ -23,6 +23,12 @@
       "types": "./src/ydoc/index.ts",
       "import": "./dist/ydoc/index.js",
       "default": "./dist/ydoc/index.js"
+    },
+    "./internal/*": {
+      "development": "./src/*.ts",
+      "types": "./src/*.ts",
+      "import": "./dist/*.js",
+      "default": "./dist/*.js"
     }
   },
   "scripts": {
@@ -64,6 +70,11 @@
         "types": "./dist/ydoc/index.d.ts",
         "import": "./dist/ydoc/index.js",
         "default": "./dist/ydoc/index.js"
+      },
+      "./internal/*": {
+        "types": "./dist/*.d.ts",
+        "import": "./dist/*.js",
+        "default": "./dist/*.js"
       }
     }
   }

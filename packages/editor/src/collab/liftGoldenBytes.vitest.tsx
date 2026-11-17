@@ -11,7 +11,7 @@
  * Established with yjs 13.6.33 and lib0 0.2.119. Any change of these values is a format change:
  * bump `LIFT_ID_ALGORITHM` (and the salt's tag) instead of updating the expected values.
  */
-import { cyrb53 } from '@ggraphic/core/ydoc';
+import { cyrb53 } from '@ggraphic/core/internal/ydoc/internal';
 import { documentMigrations } from '@ggraphic/schema';
 import { STAMP_V2_STEP } from '@ggraphic/schema/testing/v2Fixture';
 import { renderHook } from '@testing-library/react';

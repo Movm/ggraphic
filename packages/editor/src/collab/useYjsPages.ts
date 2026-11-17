@@ -5,6 +5,7 @@ import {
   mayWriteStructured,
   transactDeterministically,
 } from '@ggraphic/core/ydoc';
+import {} from '@ggraphic/core/internal/ydoc/internal';
 import { documentMigrations, type DocumentRefusal } from '@ggraphic/schema';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuid } from 'uuid';

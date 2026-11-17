@@ -87,6 +87,13 @@ describe('core element model', () => {
     expect(files.every((file) => !file.startsWith('..'))).toBe(true);
   });
 
+  it('lets the internal ydoc entry load yjs and core files only, and keeps it out of the ydoc entry', () => {
+    const { files, packages } = importGraph(join(YDOC, 'internal.ts'));
+    expect(packages).toEqual([YDOC_PEER]);
+    expect(files.every((file) => !file.startsWith('..'))).toBe(true);
+    expect(importGraph(join(YDOC, 'index.ts')).files).not.toContain(`ydoc${sep}internal.ts`);
+  });
+
   it('red probe: the graph walk sees a package import', () => {
     expect(importGraph(join(YDOC, 'codec.ts')).packages).toContain(YDOC_PEER);
   });

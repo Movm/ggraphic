@@ -109,7 +109,7 @@ function recordProblem(value: unknown): string | null {
 }
 
 /** Why `value` cannot be stored as a structure of class `cls`, or `null` when it can. */
-export function representableProblem(cls: StateKeyClass, value: unknown): string | null {
+function representableProblem(cls: StateKeyClass, value: unknown): string | null {
   switch (cls) {
     case 'elements':
       return elementListProblem(value);

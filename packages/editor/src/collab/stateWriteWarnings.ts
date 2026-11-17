@@ -11,7 +11,8 @@
  * client id. A listener may write to the document; one that throws is reported with
  * `console.error` and does not affect the write or the other listeners.
  */
-import { runAfterWrite, type PlainFallback } from '@ggraphic/core/ydoc';
+import { type PlainFallback } from '@ggraphic/core/ydoc';
+import { runAfterWrite } from '@ggraphic/core/internal/ydoc/internal';
 
 import type * as Y from 'yjs';
 

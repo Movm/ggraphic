@@ -9,15 +9,14 @@ import { describe, expect, it } from 'vitest';
 import * as Y from 'yjs';
 
 import {
-  cyrb53,
   deterministicClientId,
-  isDerivedClientId,
   liftDocumentState,
   liftSalt,
   readState,
   stateKeyClasses,
   transactDeterministically,
 } from './index.js';
+import { cyrb53, isDerivedClientId } from './internal.js';
 
 const classes = stateKeyClasses();
 const SALT = liftSalt({ schemaVersion: 4, kindVersions: {} }, classes);
