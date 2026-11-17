@@ -260,6 +260,20 @@ describe('the derived id stays inside the transaction', () => {
   });
 });
 
+describe('the derivation is pinned (F0)', () => {
+  it('a fixed document and salt give a fixed id', () => {
+    // If this changes, every build's lifts stop merging with this one's: a format change that
+    // needs a new LIFT_ID_ALGORITHM, never an edit of the expected values.
+    const doc = new Y.Doc();
+    doc.clientID = 42;
+    doc.getMap('pagesById').set('p1', 'x');
+    doc.getMap('meta').set('schemaVersion', 3);
+    doc.getMap('meta').delete('schemaVersion');
+    expect(deterministicClientId(doc, 'salt ü € 𝄞')).toBe(1322104991787550);
+    expect(deterministicClientId(doc, 'lift')).toBe(1403451316673095);
+  });
+});
+
 describe('Yjs with ids above 2^32 (yjs 13.6, lib0 0.2)', () => {
   it('encodes, decodes, merges and diffs them in both update formats', () => {
     const doc = v3({ shapeInstances: SHAPES });

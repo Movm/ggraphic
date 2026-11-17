@@ -43,6 +43,29 @@ export function cyrb53(bytes: Uint8Array, seed = 0): number {
   return 4294967296 * (2097151 & h2) + (h1 >>> 0);
 }
 
+/** UTF-8 bytes of `text` (as `TextEncoder` gives them; the core has no DOM or Node types). */
+function utf8(text: string): Uint8Array {
+  const bytes: number[] = [];
+  for (const char of text) {
+    let code = char.codePointAt(0)!;
+    // A lone surrogate is encoded as U+FFFD, as TextEncoder does.
+    if (code >= 0xd800 && code <= 0xdfff) code = 0xfffd;
+    if (code < 0x80) bytes.push(code);
+    else if (code < 0x800) bytes.push(0xc0 | (code >> 6), 0x80 | (code & 63));
+    else if (code < 0x10000) {
+      bytes.push(0xe0 | (code >> 12), 0x80 | ((code >> 6) & 63), 0x80 | (code & 63));
+    } else {
+      bytes.push(
+        0xf0 | (code >> 18),
+        0x80 | ((code >> 12) & 63),
+        0x80 | ((code >> 6) & 63),
+        0x80 | (code & 63)
+      );
+    }
+  }
+  return Uint8Array.from(bytes);
+}
+
 /**
  * The client id a deterministic transaction of `doc`, for a writer described by `salt`, runs
  * under. Input, as bytes: UTF-8 of `LIFT_ID_ALGORITHM + '\n' + salt + '\n'`, then
@@ -58,7 +81,7 @@ export function cyrb53(bytes: Uint8Array, seed = 0): number {
  * none: a deterministic transaction never appends to a range another state started.
  */
 export function deterministicClientId(doc: Y.Doc, salt: string): number {
-  const head = new TextEncoder().encode(`${LIFT_ID_ALGORITHM}\n${salt}\n`);
+  const head = utf8(`${LIFT_ID_ALGORITHM}\n${salt}\n`);
   const state = Y.encodeSnapshot(Y.snapshot(doc));
   const used = Y.decodeStateVector(Y.encodeStateVector(doc));
   for (let attempt = 0; ; attempt++) {
