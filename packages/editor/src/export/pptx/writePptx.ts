@@ -19,6 +19,7 @@ import {
   transparencyOf,
   type PptxUnits,
 } from './pptxUnits.js';
+import { svgDataUrl } from './svgPicture.js';
 import { shadowProps, textBoxOptions, textRuns } from './writeText.js';
 
 import type {
@@ -40,6 +41,15 @@ export interface PptxRasterImage {
   box: PptxBox;
 }
 
+/**
+ * Ein Element als SVG-Bild: das Markup plus seine achsparallele Box in Seiten-px (Drehung im Bild).
+ * pptxgenjs legt dazu das PNG-Vorschaubild an, das ältere Programme statt des SVG zeigen.
+ */
+export interface PptxVectorImage {
+  svg: string;
+  box: PptxBox;
+}
+
 /** Ein geladenes Bild: PNG/JPEG als Data-URL plus Eigenmaße (für den Zuschnitt). */
 export interface PptxLoadedImage {
   dataUrl: string;
@@ -50,6 +60,11 @@ export interface PptxLoadedImage {
 export interface WritePptxDeps {
   /** `null` oder Fehler: Knoten nicht gefunden oder nicht lesbar — das Element fehlt dann. */
   rasterize: (request: PptxRasterRequest, slideIndex: number) => Promise<PptxRasterImage | null>;
+  /**
+   * Das Element als SVG statt als PNG, oder `null` (oder Fehler): dann kommt `rasterize` dran.
+   * Gefragt wird zuerst; ohne diese Abhängigkeit bleibt es bei PNG.
+   */
+  vectorize?: (request: PptxRasterRequest, slideIndex: number) => Promise<PptxVectorImage | null>;
   /** `null`: Quelle nicht ladbar — das Bild wird dann gerastert. */
   loadImage: (src: string) => Promise<PptxLoadedImage | null>;
   onProgress?: (done: number, total: number) => void;
@@ -224,7 +239,27 @@ export async function writePptx(
   const units = pptxUnits(model.page.width);
   const skipped: string[] = [];
 
+  const vectorOf = async (request: PptxRasterRequest, slideIndex: number) => {
+    if (!deps.vectorize) return null;
+    try {
+      return await deps.vectorize(request, slideIndex);
+    } catch {
+      return null;
+    }
+  };
+
   const rasterInto = async (slide: Slide, request: PptxRasterRequest, slideIndex: number) => {
+    // Erst als SVG: dieselbe Box wie beim PNG, nur das Bildformat ist ein anderes.
+    const vector = await vectorOf(request, slideIndex);
+    if (vector) {
+      addRaster(
+        slide,
+        { dataUrl: svgDataUrl(vector.svg), box: vector.box },
+        request.elementId,
+        units
+      );
+      return;
+    }
     // Ein Raster, das wirft, kostet nur dieses Element, nicht den ganzen Export.
     const image = await deps.rasterize(request, slideIndex).catch(() => null);
     if (image) addRaster(slide, image, request.elementId, units);

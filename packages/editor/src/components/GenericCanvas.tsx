@@ -25,6 +25,8 @@ import { DocumentBrandContext } from '../brand/documentBrand.js';
 import { useEmitHostStateChanges } from '../collab/useEmitHostStateChanges.js';
 import { useYjsCanvasBinding } from '../collab/useYjsCanvasBinding.js';
 import { stateKeyOfCallback } from '../collab/wrapCallbacksWithPageSync.js';
+import { pngFromDataUrl } from '../export/scene/imageBytes.js';
+import { recordPageScene } from '../export/scene/recordPageScene.js';
 import { CropGhostOverlay } from './CropGhostOverlay.js';
 import { PrintGuides } from './PrintGuides.js';
 import { SlotBudgetStatus } from './SlotBudgetStatus.js';
@@ -46,7 +48,11 @@ import { applyLayerSelection, type LayerSelectionChange } from '../utils/layerSe
 import { locateDrop, type ElementDragPayload, type MediaDragPayload } from '../utils/mediaDrop.js';
 import { selectableItemIds } from '../utils/multiSelect.js';
 import { type ViewportRect, rotaterRects, visibleArea } from '../utils/orientation.js';
-import { PendingImagesContext } from '../utils/pendingImages.js';
+import {
+  ImageRetryContext,
+  PendingImagesContext,
+  type ImageLoads,
+} from '../utils/pendingImages.js';
 import { PreviewRenderContext } from '../utils/filterCache.js';
 import { stageCssScale } from '../utils/stageCssScale.js';
 import { STAGE_VERTICAL_CHROME, getOptimalContainerWidth, isMobile } from '../utils/viewport.js';
@@ -82,6 +88,7 @@ import { canvasFontFamilies } from '../utils/canvasFontFamilies.js';
 import {
   buildCanvasItems,
   buildSortedRenderList,
+  insertedItemIds,
   withInsertsOnTop,
 } from '../utils/canvasLayerManager.js';
 import { addHostElement, fromHostKinds } from '../utils/elementKinds.js';
@@ -89,6 +96,7 @@ import {
   captureStageImage,
   captureStageImageAsync,
   rasterizeStageElement,
+  rasterizeStageNode,
   visibleStageTexts,
 } from '../utils/captureStage.js';
 import { MAX_ICON_SELECTIONS, selectedCatalogIconIds } from '../utils/iconInstances.js';
@@ -112,6 +120,7 @@ import type {
   FullCanvasConfig,
   LayoutResult,
 } from '../configs/types.js';
+import type { RecordedScene } from '../export/scene/types.js';
 import type { OptionalCanvasActions } from '../hooks/useCanvasElementHandlers.js';
 import type { ShadowPatch } from '../hooks/useFloatingModuleHandlers.js';
 import type { FloatingModuleState } from '../hooks/useFloatingModuleState.js';
@@ -310,12 +319,36 @@ export interface GenericCanvasRef {
   /** False while an image element's source is still loading — a capture
    *  taken then is missing that image. */
   imagesSettled: () => boolean;
+  /** How many image elements are still loading and how many failed to load.
+   *  A capture is complete only when both are 0: `imagesSettled()` is also
+   *  true when an image failed, and a host that captures at a deadline gets
+   *  a picture without the images still pending. */
+  imageLoadState: () => { pending: number; failed: number };
+  /** Loads every failed image element again and returns how many. They count
+   *  as pending at once; `use-image` alone loads only for a new url. */
+  retryFailedImages: () => number;
   /** Lightweight JPEG capture for sending the canvas to vision models. */
   captureCanvasForAi: () => Promise<string | null>;
   /** The page's visible texts in reading order, for alt texts. */
   getVisibleTexts: () => string[];
-  /** One element alone as PNG plus its box in page px (PPTX raster fallback); null when not on the stage. */
-  rasterizeElement: (elementId: string) => Promise<ReturnType<typeof rasterizeStageElement>>;
+  /**
+   * One element alone as PNG plus its box in page px (PPTX raster fallback); null when not on the
+   * stage. `pixelRatio` is per page px; default 2.
+   */
+  rasterizeElement: (
+    elementId: string,
+    pixelRatio?: number
+  ) => Promise<ReturnType<typeof rasterizeStageElement>>;
+  /**
+   * A PNG of the stage node `recordScene` kept as the `nodeRef` of a raster island, for an island
+   * whose item has no element id to look the node up by; null when it cannot be drawn.
+   */
+  rasterizeNode: (nodeRef: unknown, pixelRatio: number) => Promise<Uint8Array | null>;
+  /**
+   * This page as a scene for the vector export: one item per element, ops in page px. Waits for
+   * the fonts; null when there is no stage.
+   */
+  recordScene: (options: { page: number; transparent?: boolean }) => Promise<RecordedScene | null>;
   /** Clears this page's element selection — the per-page store lives behind
    *  CanvasStoreProvider, so the parent editor reaches it through this handle. */
   deselect: () => void;
@@ -411,7 +444,9 @@ function GenericCanvasWithRef<
 
   const stageRef = useRef<CanvasStageRef>(null);
   const getStage = useCallback(() => stageRef.current?.getStage() ?? null, []);
-  const [pendingImages] = useState(() => new Set<string>());
+  const [imageLoads] = useState<ImageLoads>(() => ({ pending: new Set(), failed: new Set() }));
+  // Never pruned: one entry per retried element is bounded; pruning on cleanup would remount it.
+  const [imageRetries, setImageRetries] = useState<ReadonlyMap<string, number>>(() => new Map());
 
   // Export state (used by auto-save and attribution overlay)
   const [exportedImage, setExportedImage] = useState<string | null>(null);
@@ -484,12 +519,15 @@ function GenericCanvasWithRef<
   }, []);
 
   // The setter the element actions get: whatever an action inserts is drawn on top of the page,
-  // regardless of its kind. The canvas commands (paste, duplicate, reorder) place their own
-  // elements and keep the plain setter.
+  // regardless of its kind, and selected once committed (#162). The canvas commands (paste,
+  // duplicate, reorder) place and select their own elements and keep the plain setter.
+  const insertedRef = useRef<string[] | null>(null);
   const setActionState = useCallback(
     (partial: Partial<TState> | ((prev: TState) => TState)) => {
       setStateRaw((prev) => {
         const next = typeof partial === 'function' ? partial(prev) : { ...prev, ...partial };
+        const inserted = insertedItemIds(config, prev, next);
+        if (inserted.length > 0) insertedRef.current = inserted;
         return withInsertsOnTop(config, prev, next);
       });
     },
@@ -507,12 +545,30 @@ function GenericCanvasWithRef<
   // derives is the template's own knowledge, and `createInitialState` is where
   // it already lives.
   const [remoteStateCount, setRemoteStateCount] = useState(0);
+  const committedStateRef = useRef(state);
+  useLayoutEffect(() => {
+    committedStateRef.current = state;
+  }, [state]);
+  const store = useCanvasStore();
+  // The edit is not this client's step: the history takes it in as well, so
+  // undo cannot write the value from before it back (#160). What it changed
+  // is measured from the values its writer started from, not from this
+  // canvas: an own value not yet written, or one the write overrode, is no
+  // part of the other client's edit.
   const handleRemotePageState = useCallback(
-    (partial: Record<string, unknown>) => {
+    (partial: Record<string, unknown>, base: Record<string, unknown>, own: boolean) => {
+      const committed = committedStateRef.current as Record<string, unknown>;
+      store
+        .getState()
+        .rebaseHistory(
+          config.createInitialState({ ...committed, ...base }) as TState,
+          config.createInitialState({ ...committed, ...partial }) as TState,
+          own
+        );
       setStateRaw((prev) => config.createInitialState({ ...prev, ...partial }) as TState);
       setRemoteStateCount((n) => n + 1);
     },
-    [config]
+    [store, config]
   );
 
   // Measured fits need the brand fonts, so normalization waits for them. The
@@ -536,10 +592,6 @@ function GenericCanvasWithRef<
   });
 
   const collectState = useCallback(() => state, [state]);
-  const committedStateRef = useRef(state);
-  useLayoutEffect(() => {
-    committedStateRef.current = state;
-  }, [state]);
   // Text fields reach the page document only through their `on<Key>Change`
   // callback, so a restore reports each one it changed (#4247). The emitted
   // keys are left to useEmitHostStateChanges, which already reports them.
@@ -694,7 +746,6 @@ function GenericCanvasWithRef<
     getSnapTargets,
   } = useCanvasInteractions({ stageRef, marqueeEnabled: interactive, getGroups });
 
-  const store = useCanvasStore();
   const { setSnapLines, updateElementPosition } = store.getState();
   // Before the deep select: a ⌃-click on a Mac is a right-click, not a pick.
   useContextPress(stageRef, interactive);
@@ -704,6 +755,14 @@ function GenericCanvasWithRef<
   useEffect(() => {
     if (!isActivePage) setSelectedElement(null);
   }, [isActivePage, setSelectedElement]);
+
+  // What an action inserted is selected, and only it (`setActionState`).
+  useLayoutEffect(() => {
+    const inserted = insertedRef.current;
+    if (!inserted) return;
+    insertedRef.current = null;
+    if (isActivePage) store.getState().setSelectedLayers(inserted);
+  }, [state, isActivePage, store]);
 
   // Output canvas dimensions are driven by the chosen format. Layout calculators
   // continue to operate in the template's reference space (config.canvas.{width,height});
@@ -996,13 +1055,55 @@ function GenericCanvasWithRef<
         return stageRef.current?.toTileJpeg({ ...tile, pixelRatio, quality }) ?? null;
       },
       getPrintImages: () => stageRef.current?.getPrintImages() ?? [],
-      imagesSettled: () => pendingImages.size === 0,
+      imagesSettled: () => imageLoads.pending.size === 0,
+      imageLoadState: () => ({
+        pending: imageLoads.pending.size,
+        failed: imageLoads.failed.size,
+      }),
+      retryFailedImages: () => {
+        const failed = [...imageLoads.failed];
+        if (failed.length === 0) return 0;
+        // Pending at once, before the elements re-render: a host polling right
+        // after the call must not read a settled canvas.
+        for (const id of failed) {
+          imageLoads.failed.delete(id);
+          imageLoads.pending.add(id);
+        }
+        setImageRetries((prev) => {
+          const next = new Map(prev);
+          for (const id of failed) next.set(id, (prev.get(id) ?? 0) + 1);
+          return next;
+        });
+        return failed.length;
+      },
       captureCanvasForAi: async () =>
         captureStageImage(stageRef.current, { format: 'jpeg', pixelRatio: 1, quality: 0.85 }),
       getVisibleTexts: () => visibleStageTexts(stageRef.current?.getStage() ?? null),
-      rasterizeElement: async (elementId) => {
+      rasterizeElement: async (elementId, pixelRatio) => {
         await ensureFontsReady();
-        return rasterizeStageElement(stageRef.current?.getStage() ?? null, elementId);
+        return rasterizeStageElement(stageRef.current?.getStage() ?? null, elementId, pixelRatio);
+      },
+      rasterizeNode: async (nodeRef, pixelRatio) => {
+        if (!(nodeRef instanceof Konva.Node)) return null;
+        const drawn = rasterizeStageNode(stageRef.current?.getStage() ?? null, nodeRef, pixelRatio);
+        return drawn ? pngFromDataUrl(drawn.dataUrl) : null;
+      },
+      recordScene: async ({ page, transparent }) => {
+        await ensureFontsReady();
+        const stage = stageRef.current?.getStage();
+        if (!stage) return null;
+        // Read at call time, like the doors above: the page as it is on screen now.
+        const { sortedRenderList } = commandInputsRef.current;
+        const labels = new Map(
+          sortedRenderList.map((item) => [item.id, layerLabel(item, committedStateRef.current)])
+        );
+        return recordPageScene(stage, {
+          page,
+          // The format: the stage's own size is rounded to whole display px.
+          size: { width: stageWidth, height: stageHeight },
+          labels,
+          ...(transparent === undefined ? {} : { transparent }),
+        });
       },
       deselect: () => setSelectedElement(null),
       selectLayers: (change) => applyLayerSelection(store, change),
@@ -1226,10 +1327,11 @@ function GenericCanvasWithRef<
       elementHandlers.handleTextFormatChange,
       setSelectedElement,
       beginMarquee,
-      pendingImages,
+      imageLoads,
       store,
       actions,
       stageWidth,
+      stageHeight,
       referenceWidth,
       referenceHeight,
       commands,
@@ -1239,80 +1341,82 @@ function GenericCanvasWithRef<
   );
 
   return (
-    <PendingImagesContext.Provider value={pendingImages}>
-      <PreviewRenderContext.Provider value={preview ? (previewCaptureRatio ?? 0) : null}>
-        <CanvasStage
-          ref={stageRef}
-          width={stageWidth}
-          height={stageHeight}
-          logicalWidth={referenceWidth}
-          logicalHeight={referenceHeight}
-          responsive
-          maxContainerWidth={maxWidth}
-          maxContainerHeight={maxHeight}
-          fitToParent={fitToParent}
-          onStageClick={handleStageClick}
-          listening={interactive}
-          ariaLabel={stageLabel}
-          className={`${config.id}-stage`}
-          overlay={
-            interactive ? (
-              <>
-                <CropGhostOverlay getStage={getStage} />
-                <SlotBudgetStatus
-                  state={state as Record<string, unknown>}
-                  canvasWidth={referenceWidth}
-                  canvasHeight={referenceHeight}
-                />
-              </>
-            ) : null
-          }
-        >
-          <CanvasRenderLayer
-            sortedRenderList={sortedRenderList}
-            canRotateSelection={canRotateSelection}
-            config={config}
-            state={drawnState}
-            layout={layout}
-            handlers={elementHandlers}
-            getSnapTargets={getSnapTargets}
-            registerGeometry={updateElementPosition}
-            handleSnapChange={handleSnapChange}
-            setSnapLines={setSnapLines}
-            stageWidth={config.canvas.width}
-            stageHeight={config.canvas.height}
-            isFontAvailable={isFontAvailable}
-            remoteSelections={remoteSelections}
-            {...(pageNumber === undefined ? {} : { pageNumber })}
-          />
+    <PendingImagesContext.Provider value={imageLoads}>
+      <ImageRetryContext.Provider value={imageRetries}>
+        <PreviewRenderContext.Provider value={preview ? (previewCaptureRatio ?? 0) : null}>
+          <CanvasStage
+            ref={stageRef}
+            width={stageWidth}
+            height={stageHeight}
+            logicalWidth={referenceWidth}
+            logicalHeight={referenceHeight}
+            responsive
+            maxContainerWidth={maxWidth}
+            maxContainerHeight={maxHeight}
+            fitToParent={fitToParent}
+            onStageClick={handleStageClick}
+            listening={interactive}
+            ariaLabel={stageLabel}
+            className={`${config.id}-stage`}
+            overlay={
+              interactive ? (
+                <>
+                  <CropGhostOverlay getStage={getStage} />
+                  <SlotBudgetStatus
+                    state={state as Record<string, unknown>}
+                    canvasWidth={referenceWidth}
+                    canvasHeight={referenceHeight}
+                  />
+                </>
+              ) : null
+            }
+          >
+            <CanvasRenderLayer
+              sortedRenderList={sortedRenderList}
+              canRotateSelection={canRotateSelection}
+              config={config}
+              state={drawnState}
+              layout={layout}
+              handlers={elementHandlers}
+              getSnapTargets={getSnapTargets}
+              registerGeometry={updateElementPosition}
+              handleSnapChange={handleSnapChange}
+              setSnapLines={setSnapLines}
+              stageWidth={config.canvas.width}
+              stageHeight={config.canvas.height}
+              isFontAvailable={isFontAvailable}
+              remoteSelections={remoteSelections}
+              {...(pageNumber === undefined ? {} : { pageNumber })}
+            />
 
-          <PrintGuides format={format} />
+            <PrintGuides format={format} />
 
-          <SnapGuidelines />
-        </CanvasStage>
+            <SnapGuidelines />
+          </CanvasStage>
 
-        {/* Renderless bridge: owns all selectedElement-derived computation.
+          {/* Renderless bridge: owns all selectedElement-derived computation.
           Re-renders only this component (returns null) on selection change,
           NOT GenericCanvasInner or the Konva tree. */}
-        <ToolbarStateBridge
-          bridgeRef={bridgeRef}
-          config={config}
-          state={state}
-          layout={layout}
-          actions={actions}
-          sortedRenderList={sortedRenderList}
-          setState={setStateWrapper}
-          debouncedSaveToHistory={debouncedSaveToHistory}
-          canUndo={canUndo}
-          canRedo={canRedo}
-          readOnly={!interactive}
-          saveToHistory={saveToHistory}
-          runHistoryBatch={runHistoryBatch}
-          cropCancelCount={cropSession.cancelCount}
-          getStage={getStage}
-          onToolbarStateChange={onToolbarStateChange}
-        />
-      </PreviewRenderContext.Provider>
+          <ToolbarStateBridge
+            bridgeRef={bridgeRef}
+            config={config}
+            state={state}
+            layout={layout}
+            actions={actions}
+            sortedRenderList={sortedRenderList}
+            setState={setStateWrapper}
+            debouncedSaveToHistory={debouncedSaveToHistory}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            readOnly={!interactive}
+            saveToHistory={saveToHistory}
+            runHistoryBatch={runHistoryBatch}
+            cropCancelCount={cropSession.cancelCount}
+            getStage={getStage}
+            onToolbarStateChange={onToolbarStateChange}
+          />
+        </PreviewRenderContext.Provider>
+      </ImageRetryContext.Provider>
     </PendingImagesContext.Provider>
   );
 }

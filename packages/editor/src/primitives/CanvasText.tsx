@@ -16,6 +16,7 @@ import { overlayBoxForNode, useCanvasTextEditor } from '../components/CanvasText
 import { useGeometryReporter, type GeometryReporter } from '../hooks/useGeometryReporter.js';
 import { useFontGeneration } from '../hooks/useFontGeneration.js';
 import { useSnapScheduler } from '../hooks/useSnapScheduler.js';
+import { setLiveFontSize } from '../hooks/useLiveFontSize.js';
 import { gradientFillProps, type GradientFill } from '../utils/gradientFill.js';
 import { isGroupDrag } from '../utils/multiSelect.js';
 import { ELEMENT_TRANSFORMER, normalizeRotation } from '../utils/orientation.js';
@@ -110,7 +111,22 @@ export interface CanvasTextProps {
 export const isWidthOnlyScale = (node: Konva.Node) =>
   Math.abs(node.scaleY() - 1) < 1e-3 && Math.abs(node.scaleX() - 1) >= 1e-3;
 
-const DEFAULT_TEXT_ANCHORS: TransformAnchor[] = ['middle-left', 'middle-right'];
+/**
+ * A side handle sets the width (the text re-wraps), a corner handle scales the text: the font
+ * size follows the drag and is written on release.
+ */
+export const DEFAULT_TEXT_ANCHORS: TransformAnchor[] = [
+  'top-left',
+  'top-right',
+  'bottom-left',
+  'bottom-right',
+  'middle-left',
+  'middle-right',
+];
+
+/** The font size a corner drag at `scaleY` gives `fontSize`; the same rule on release and live. */
+export const scaledFontSize = (fontSize: number, scaleY: number) =>
+  Math.max(8, Math.round(fontSize * scaleY));
 
 function CanvasTextInner({
   id,
@@ -320,17 +336,23 @@ function CanvasTextInner({
 
   // A side handle only changes the width: turn that scale into width right
   // away so the text re-wraps under the pointer instead of stretching and
-  // jumping on release. Corner handles keep scaling (font size on release).
+  // jumping on release. Corner handles keep scaling (font size on release);
+  // the size they reach is published live so the size field can follow.
   const handleTransform = useCallback(() => {
     const node = textRef.current;
-    if (!node || !isWidthOnlyScale(node)) return;
+    if (!node) return;
+    if (!isWidthOnlyScale(node)) {
+      setLiveFontSize({ id: id ?? '', size: scaledFontSize(node.fontSize(), node.scaleY()) });
+      return;
+    }
     node.width(Math.max(1, node.width() * node.scaleX()));
     node.scaleX(1);
-  }, []);
+  }, [id]);
 
   const handleTransformEnd = useCallback(() => {
     const node = textRef.current;
     if (!node) return;
+    setLiveFontSize(null);
 
     const scaleX = node.scaleX();
     const scaleY = node.scaleY();
@@ -345,7 +367,7 @@ function CanvasTextInner({
 
     if (scaleChanged) {
       // Calculate new dimensions - scale both fontSize AND width
-      const newFontSize = Math.max(8, Math.round(currentFontSize * scaleY));
+      const newFontSize = scaledFontSize(currentFontSize, scaleY);
       const newWidth = Math.round(currentWidth * scaleX);
 
       // Reset scale and apply new dimensions

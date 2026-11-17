@@ -4,7 +4,9 @@ import { Image, Group, Rect, Transformer } from 'react-konva';
 
 import { activeBrand } from '../brand/brandRegistry.js';
 import { LOCKED_TRANSFORMER, useIsItemLocked } from '../components/canvasItemLock.js';
+import { markTrustedSvgImage } from '../export/scene/trustedSvgImages.js';
 import { useBoxSnap, type SnapProps } from '../hooks/useBoxSnap.js';
+import { isSafeColor } from '../utils/externalIcons.js';
 import { ILLUSTRATION_TARGET_SIZE, MOTIF_BASE_SIZE } from '../utils/motifSizes.js';
 import { ELEMENT_TRANSFORMER, signedScale } from '../utils/orientation.js';
 import { illustrationBox } from '../utils/renderedBoxes.js';
@@ -44,9 +46,11 @@ async function renderKawaiiSvg(instance: KawaiiInstance, size: number): Promise<
   };
   const Component = components[instance.illustrationId];
   if (!Component) return null;
-  return renderToStaticMarkup(
-    <Component size={size} mood={instance.mood} color={instance.color} />
-  );
+  // The colour is the document's and goes into the markup as it is; `export` inlines this SVG as
+  // trusted, so a value that is not a plain colour (`url(https://…)`) must not get that far. The
+  // library draws its own default colour without one.
+  const color = isSafeColor(instance.color) ? instance.color : undefined;
+  return renderToStaticMarkup(<Component size={size} mood={instance.mood} color={color} />);
 }
 
 export interface IllustrationPrimitiveProps extends SnapProps {
@@ -85,6 +89,8 @@ function IllustrationPrimitiveInner({
         const dataUrl = `data:image/svg+xml;charset=utf-8,${encoded}`;
 
         const img = new window.Image();
+        // Rendered from the Kawaii components right here.
+        markTrustedSvgImage(img);
         img.src = dataUrl;
         img.onload = () => setImage(img);
       });
@@ -100,6 +106,8 @@ function IllustrationPrimitiveInner({
         const cached = getCachedSVG(svgDef.id, illustration.color);
         if (cached) {
           const img = new window.Image();
+          // The catalogue's SVG, recoloured; the document only picks the entry and the colour.
+          markTrustedSvgImage(img);
           img.src = cached;
           img.onload = () => setImage(img);
           return;
@@ -109,6 +117,7 @@ function IllustrationPrimitiveInner({
         try {
           const dataUrl = await getSVG(svgDef.id, svgDef, illustration.color, assetBaseUrl);
           const img = new window.Image();
+          markTrustedSvgImage(img);
           img.src = dataUrl;
           img.onload = () => setImage(img);
         } catch (err) {
@@ -116,6 +125,8 @@ function IllustrationPrimitiveInner({
           // Final fallback: direct load without color manipulation
           const path = getIllustrationPath(svgDef, assetBaseUrl);
           const img = new window.Image();
+          // The catalogue entry's own file, by its path under the host's asset base.
+          markTrustedSvgImage(img);
           img.src = path;
           img.onload = () => setImage(img);
         }

@@ -20,6 +20,11 @@ import { createStore } from 'zustand/vanilla';
 
 import { activeBrand } from '../brand/brandRegistry.js';
 import { nextHistoryStamp } from '../utils/historyStamp.js';
+import {
+  applyHistoryRebase,
+  applyOwnWrite,
+  planHistoryRebase,
+} from '../utils/rebaseHistoryState.js';
 
 import { DEFAULT_FORMAT_ID, getCanvasFormatOrDefault } from '../formats/index.js';
 
@@ -101,6 +106,15 @@ export interface CanvasEditorActions<
   deselectAll: () => void;
 
   saveToHistory: (componentState?: TComponentState) => void;
+  /**
+   * Another client changed the page from `prev` to `next`: write that change
+   * into every entry, so undo and redo only ever revert this client's own
+   * steps (#160). With `own`, the write is this client's own from another
+   * stack (a deck op or its undo): it reaches only the entries that still hold
+   * the replaced value, so its inverse restores every entry and the steps
+   * before it stay undoable.
+   */
+  rebaseHistory: (prev: TComponentState, next: TComponentState, own?: boolean) => void;
   undo: () => void;
   redo: () => void;
   /** Merkt den aktuellen Verlaufsstand als Beginn einer Sitzung; `null` ohne Verlauf. */
@@ -331,6 +345,43 @@ export function createCanvasEditorStore<
             state.historyIndex++;
           }
         }),
+
+      rebaseHistory: (prev, next, own = false) => {
+        const plan = own ? null : planHistoryRebase(prev, next);
+        if (plan?.length === 0) return;
+        const { history } = get();
+        const rebased = history.map((entry) =>
+          !entry.componentState
+            ? null
+            : plan
+              ? applyHistoryRebase(entry.componentState, plan)
+              : applyOwnWrite(entry.componentState, prev, next)
+        );
+        if (rebased.every((componentState, i) => componentState === history[i].componentState))
+          return;
+        set((state) => {
+          rebased.forEach((componentState, i) => {
+            if (componentState === history[i].componentState) return;
+            // Immer's Draft<T> conditional cannot resolve for a generic
+            // `TComponentState` (see saveToHistory); the runtime values match.
+            state.history[i].componentState =
+              componentState as (typeof state.history)[number]['componentState'];
+          });
+          // Two neighbours the edit made equal would be an undo step that changes nothing;
+          // saveToHistory never keeps such a pair either.
+          const touched = rebased.map(
+            (componentState, i) => componentState !== history[i].componentState
+          );
+          const json: (string | undefined)[] = [];
+          const jsonAt = (i: number) => (json[i] ??= JSON.stringify(rebased[i]));
+          for (let i = rebased.length - 1; i > 0; i--) {
+            if (!touched[i] && !touched[i - 1]) continue;
+            if (jsonAt(i) !== jsonAt(i - 1)) continue;
+            state.history.splice(i, 1);
+            if (state.historyIndex >= i) state.historyIndex--;
+          }
+        });
+      },
 
       undo: () => {
         const state = get();

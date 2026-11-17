@@ -67,6 +67,26 @@ describe('PagePreview', () => {
     expect(Math.floor(options.width * options.pixelRatio)).toBe(200);
   });
 
+  it('hands the canvas handle to onCanvas once, before the image is reported', async () => {
+    const order: string[] = [];
+    const onCanvas = vi.fn((canvas: { recordScene: unknown }) => {
+      order.push(typeof canvas.recordScene === 'function' ? 'canvas' : 'no recordScene');
+    });
+    const onRendered = vi.fn(() => order.push('rendered'));
+    render(
+      <PagePreview
+        config={config as never}
+        state={{ line1: 'a', line2: 'b', line3: 'c' }}
+        width={200}
+        onRendered={onRendered}
+        onCanvas={onCanvas}
+      />
+    );
+    await waitFor(() => expect(onRendered).toHaveBeenCalled(), { timeout: 3000 });
+    expect(onCanvas).toHaveBeenCalledTimes(1);
+    expect(order).toEqual(['canvas', 'rendered']);
+  });
+
   it('calls onFailed, not onRendered, when the stage gives no image', async () => {
     blob.current = null;
     const onRendered = vi.fn();

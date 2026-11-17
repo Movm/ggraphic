@@ -72,6 +72,16 @@ describe('an SVG set the host ships', () => {
     expect(svg).toContain('#ff5678');
   });
 
+  it('cannot write markup into the svg with a colour that is none', async () => {
+    registerAssetCatalog(catalog({ hostset: '#6c63ff' }));
+    // The colour comes from the document, and an export inlines this svg as it is.
+    const svg = decode(
+      await getSVG('host-1', HOST_DEF, '#123456" onload="alert(1)"><script>alert(2)</script><g x="')
+    );
+    expect(svg).not.toMatch(/onload|<script|#123456/);
+    expect(svg).toContain('#6C63FF');
+  });
+
   it('keeps its colours when the host names none', async () => {
     registerAssetCatalog(catalog());
     const svg = decode(await getSVG('host-1', HOST_DEF, '#123456'));

@@ -423,6 +423,22 @@ export interface CanvasPrintService {
   untestedNotice?: string;
 }
 
+/**
+ * The font files behind the page's text, for the vector export (SVG outlines, PDF embedding).
+ *
+ * Without it the export reads the brand pack's font faces and the page's `@font-face` rules; a
+ * host that serves fonts some other way (a font server with signed URLs, bundled files) hands
+ * them over here, and they win over both.
+ */
+export interface CanvasExportFontService {
+  /** The font file for one face, or null when the host has none. TTF, OTF, WOFF or WOFF2. */
+  load: (face: {
+    family: string;
+    weight: number;
+    style: 'normal' | 'italic';
+  }) => Promise<Uint8Array | null>;
+}
+
 /** @deprecated Use `CanvasImprintLocale`. Removed in the next alpha. */
 export type CanvasImpressumLocale = CanvasImprintLocale;
 /** @deprecated Use `CanvasImprintLabels`. Removed in the next alpha. */

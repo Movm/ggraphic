@@ -177,12 +177,22 @@ export function withInsertsOnTop<
   TActions = Record<string, unknown>,
 >(config: FullCanvasConfig<TState, TActions>, prev: TState, next: TState): TState {
   if (next === prev || next.layerOrder !== prev.layerOrder) return next;
-  const before = buildCanvasItems(config, prev);
-  const known = new Set(before.map((item) => item.id));
-  const added = buildCanvasItems(config, next)
+  const added = insertedItemIds(config, prev, next);
+  if (added.length === 0) return next;
+  const order = buildSortedRenderList(buildCanvasItems(config, prev), prev.layerOrder ?? []).map(
+    (item) => item.id
+  );
+  return { ...next, layerOrder: [...order, ...added] };
+}
+
+/** The items `next` has and `prev` has not, template elements aside: what an update inserted. */
+export function insertedItemIds<
+  TState extends StateWithFeatures & { layerOrder?: string[] },
+  TActions = Record<string, unknown>,
+>(config: FullCanvasConfig<TState, TActions>, prev: TState, next: TState): string[] {
+  if (next === prev) return [];
+  const known = new Set(buildCanvasItems(config, prev).map((item) => item.id));
+  return buildCanvasItems(config, next)
     .filter((item) => item.type !== 'element' && !known.has(item.id))
     .map((item) => item.id);
-  if (added.length === 0) return next;
-  const order = buildSortedRenderList(before, prev.layerOrder ?? []).map((item) => item.id);
-  return { ...next, layerOrder: [...order, ...added] };
 }

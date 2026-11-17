@@ -9,6 +9,13 @@ import type Konva from 'konva';
 export const EXPORT_HIDDEN_NAME = 'export-hidden';
 
 /**
+ * Konva node name of the group `CanvasStage` scales the logical layout up to the format with: its
+ * children are the page's canvas items. A page whose logical size equals its format has no such
+ * group, and the items sit on the layer itself.
+ */
+export const PAGE_ROOT_NAME = 'page-root';
+
+/**
  * Runs `capture` with all selection chrome on the stage hidden — Konva
  * Transformers plus the dashed selection Rects primitives render alongside
  * them (tagged `name="selection-chrome"`). Callers don't have to mutate the
@@ -96,7 +103,19 @@ export function rasterizeStageElement(
   const node = stage
     .find(`.${CANVAS_ITEM_NAME}`)
     .find((candidate) => candidate.getAttr('canvasItemId') === elementId);
-  if (!node || !node.isVisible()) return null;
+  return node ? rasterizeStageNode(stage, node, pixelRatio) : null;
+}
+
+/**
+ * `rasterizeStageElement` for a node in hand: the SVG export draws an island whose item has no id
+ * to look the group up by from the node the recorder kept. `pixelRatio` is per page px.
+ */
+export function rasterizeStageNode(
+  stage: Konva.Stage | null,
+  node: Konva.Node,
+  pixelRatio = 2
+): { dataUrl: string; box: { x: number; y: number; width: number; height: number } } | null {
+  if (!stage || !node.isVisible()) return null;
   // Absolut (inkl. Zoom und Verschiebung des Stage) für toDataURL, das in
   // diesen Koordinaten schneidet; relativ zum Stage = Seiten-px für die Box.
   const rect = node.getClientRect();

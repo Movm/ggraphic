@@ -91,7 +91,16 @@ const pack = templatePackFromJson(files);
 const textsOf = (doc: GgraphicDocument | undefined) =>
   (doc?.pages[0]?.state['additionalTexts'] as { id: string }[] | undefined) ?? [];
 
-describe('GgraphicEditor', () => {
+/**
+ * How long a test waits for the editor to mount. The first mount loads the lazy `EmbeddedEditor`
+ * chunk and its module graph: about 1 s warm, more than 10 s on a cold first run in a fresh
+ * worktree under memory pressure (#177). Waiting costs nothing once the editor is there.
+ */
+const MOUNT_WAIT = 20_000;
+
+// Each test waits up to MOUNT_WAIT and then still clicks and waits for `onChange`. Under vitest's
+// default 5 s timeout the first test failed on cold runs before its own wait ran out (#177).
+describe('GgraphicEditor', { timeout: 2 * MOUNT_WAIT }, () => {
   it("opens on the pack's template and reports an added text through onChange", async () => {
     expect(pack.problems).toEqual([]);
     const changes: GgraphicDocument[] = [];
@@ -100,7 +109,7 @@ describe('GgraphicEditor', () => {
     );
 
     // English by default, the free page's tabs.
-    const textTab = await screen.findByRole('button', { name: /^Text/ }, { timeout: 10_000 });
+    const textTab = await screen.findByRole('button', { name: /^Text/ }, { timeout: MOUNT_WAIT });
     await userEvent.click(textTab);
     const before = changes.length;
     await userEvent.click(await screen.findByText(messages().sidebar.text.labelTitle));
@@ -122,13 +131,63 @@ describe('GgraphicEditor', () => {
       <GgraphicEditor brand={brandDefault} templates={pack} exportApiRef={api} />
     );
 
-    await waitFor(() => expect(api.current).not.toBeNull(), { timeout: 10_000 });
+    await waitFor(() => expect(api.current).not.toBeNull(), { timeout: MOUNT_WAIT });
     expect(api.current?.getPages().map((p) => p.configId)).toEqual(['embed-headline']);
     // jsdom cannot rasterise a stage, so the PNG itself is not checked here.
     expect(typeof api.current?.captureActivePage).toBe('function');
 
     unmount();
     expect(api.current).toBeNull();
+  });
+
+  it('exports the page as an svg through the export api, text kept editable', async () => {
+    const api = createRef<CanvasEditorExportApi>();
+    render(<GgraphicEditor brand={brandDefault} templates={pack} exportApiRef={api} />);
+    await waitFor(() => expect(api.current).not.toBeNull(), { timeout: MOUNT_WAIT });
+
+    const { blob, filename, report } = await api.current!.exportSvg({
+      pages: 'current',
+      text: 'editable',
+    });
+
+    expect(filename).toMatch(/\.svg$/);
+    expect(blob.type).toBe('image/svg+xml');
+    const svg = await blob.text();
+    expect(svg).toMatch(/^<svg /);
+    expect(svg).toContain('data-element-id="headline"');
+    expect(svg).toContain('<text');
+    expect(report.missingElements).toEqual([]);
+
+    // Outlines need a font file; jsdom has none, so the text stays text and the report says so.
+    const outlined = await api.current!.exportSvg({ pages: 'all', text: 'outlines' });
+    expect(outlined.blob.type).toBe('image/svg+xml');
+    expect(outlined.report.missingGlyphs.length).toBeGreaterThan(0);
+  });
+
+  it('exports the document as a pdf through the export api', async () => {
+    // jsdom's canvas cannot encode and never calls back: a picture that cannot be made is null.
+    const toBlob = vi
+      .spyOn(HTMLCanvasElement.prototype, 'toBlob')
+      .mockImplementation((callback) => callback(null));
+    try {
+      const api = createRef<CanvasEditorExportApi>();
+      render(<GgraphicEditor brand={brandDefault} templates={pack} exportApiRef={api} />);
+      await waitFor(() => expect(api.current).not.toBeNull(), { timeout: MOUNT_WAIT });
+
+      const { blob, filename, report } = await api.current!.exportPdf();
+
+      expect(filename).toBe('ggraphic.pdf');
+      expect(blob.type).toBe('application/pdf');
+      expect(await blob.text()).toMatch(/^%PDF-/);
+      // The vector writer made it, from the document's brand: no fallback, and the neutral
+      // pack's colours, which has no print values, went out as RGB.
+      expect(report.fallback).toBeNull();
+      expect(report.rgbBrandColors).toContain('#1d3557');
+      // No font file and no canvas to draw the text on here: the headline is said to be missing.
+      expect(report.missingGlyphs).toEqual([{ page: 1, elementId: 'headline', text: 'Hello' }]);
+    } finally {
+      toBlob.mockRestore();
+    }
   });
 
   it('opens on a pack that is still loading (loadTemplatePack)', async () => {
@@ -141,7 +200,7 @@ describe('GgraphicEditor', () => {
     });
 
     await expect(loading).resolves.toMatchObject({ problems: [] });
-    await waitFor(() => expect(api.current).not.toBeNull(), { timeout: 10_000 });
+    await waitFor(() => expect(api.current).not.toBeNull(), { timeout: MOUNT_WAIT });
     expect(api.current?.getPages().map((p) => p.configId)).toEqual(['embed-headline']);
   });
 
@@ -158,7 +217,7 @@ describe('GgraphicEditor', () => {
       />
     );
 
-    await waitFor(() => expect(api.current).not.toBeNull(), { timeout: 10_000 });
+    await waitFor(() => expect(api.current).not.toBeNull(), { timeout: MOUNT_WAIT });
     expect(BLANK_PAGE_ID).toBe('ggraphic-blank');
     expect(api.current?.getPages().map((p) => p.configId)).toEqual([BLANK_PAGE_ID]);
 

@@ -19,7 +19,7 @@ import { v4 as uuid } from 'uuid';
 import * as Y from 'yjs';
 
 import { readPages } from '../collab/pagesDoc.js';
-import { extractInheritablePageState } from '../configs/pageInheritance.js';
+import { extractInheritablePageState, type PageInheritance } from '../configs/pageInheritance.js';
 import { messages } from '../i18n/catalogue.js';
 import { getTemplate, type TemplateId } from '../templates/registry.js';
 
@@ -126,7 +126,7 @@ export interface UsePageManagerReturn<TId extends string = TemplateId> {
   currentPage: HeterogeneousPage<TId> | undefined;
   addPage: (
     configId: TId,
-    inheritBackground?: boolean,
+    inherit?: boolean | PageInheritance,
     stateOverrides?: Record<string, unknown>
   ) => Promise<void>;
   duplicateCurrentPage: () => void;
@@ -369,10 +369,15 @@ export function usePageManager<TId extends string = TemplateId>({
   /**
    * Add a new page with a specific template
    * @param configId - The template type for the new page
-   * @param inheritBackground - Whether to copy background/scheme from current page
+   * @param inherit - What the new page takes from the current one: `true` its
+   *   background and brand, `false` nothing, or each part on its own.
    */
   const addPage = useCallback(
-    async (configId: TId, inheritBackground = true, stateOverrides?: Record<string, unknown>) => {
+    async (
+      configId: TId,
+      inherit: boolean | PageInheritance = true,
+      stateOverrides?: Record<string, unknown>
+    ) => {
       if (!canAddMore || !yjsPages) return;
 
       const config = await getConfigForPage(configId);
@@ -383,10 +388,11 @@ export function usePageManager<TId extends string = TemplateId>({
       const liveViews = readPages(ydoc);
       const sourcePage =
         liveViews.find((p) => p.id === currentPageId) ?? liveViews[liveViews.length - 1];
-      const inherited =
-        inheritBackground && sourcePage
-          ? extractInheritablePageState(sourcePage.state, configId)
-          : {};
+      const parts =
+        typeof inherit === 'boolean' ? { brand: inherit, background: inherit } : inherit;
+      const inherited = sourcePage
+        ? extractInheritablePageState(sourcePage.state, configId, parts)
+        : {};
 
       const newPageState = config.createInitialState({
         ...(config.multiPage?.defaultNewPageState || {}),

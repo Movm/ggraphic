@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { describe, expect, it } from 'vitest';
 
-import { rasterizeStageElement } from '../captureStage.js';
+import { rasterizeStageElement, rasterizeStageNode } from '../captureStage.js';
 
 import type Konva from 'konva';
 
@@ -63,5 +63,35 @@ describe('rasterizeStageElement', () => {
       throw new DOMException('The canvas has been tainted', 'SecurityError');
     });
     expect(rasterizeStageElement(tainted, 'foto')).toBeNull();
+  });
+});
+
+describe('rasterizeStageNode', () => {
+  const nodeOf = (stage: Konva.Stage, visible = true) =>
+    ({
+      ...(stage.find('.canvas-item') as unknown as Konva.Node[])[0],
+      isVisible: () => visible,
+    }) as unknown as Konva.Node;
+
+  it('draws a node in hand the way it draws an element found by id', () => {
+    let cut: Record<string, unknown> | null = null;
+    const stage = fakeStage((config) => {
+      cut = config;
+      return 'blob:fixture-image';
+    });
+    const [item] = stage.find('.canvas-item') as unknown as Konva.Node[];
+
+    expect(rasterizeStageNode(stage, item!, 3)).toEqual({
+      dataUrl: 'blob:fixture-image',
+      box: { x: 100, y: 200, width: 400, height: 200 },
+    });
+    // 3 × page px on a stage shown at half size
+    expect(cut).toMatchObject({ x: 80, y: 60, width: 200, height: 100, pixelRatio: 6 });
+  });
+
+  it('returns null for a hidden node and for no stage', () => {
+    const stage = fakeStage(() => 'x');
+    expect(rasterizeStageNode(stage, nodeOf(stage, false))).toBeNull();
+    expect(rasterizeStageNode(null, nodeOf(stage))).toBeNull();
   });
 });

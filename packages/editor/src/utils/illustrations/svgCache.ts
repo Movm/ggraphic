@@ -11,6 +11,7 @@
 
 import { recordCacheHit, recordCacheMiss, recordNetworkRequest } from './prefetchAnalytics.js';
 import { registeredAssetCatalog } from '../canvasAssets.js';
+import { isSafeColor } from '../externalIcons.js';
 import { getIllustrationPath } from './registry.js';
 
 import type { SvgDef, SvgSource } from './types.js';
@@ -88,7 +89,11 @@ function escapeRegExp(text: string): string {
 /** Swaps the set's main colour (host `recolor`, else the built-in one) for `color`. */
 function replaceColors(svgText: string, color: string, source: SvgSource): string {
   const key = registeredAssetCatalog().illustrations?.recolor?.[source] ?? BUILT_IN_RECOLOR[source];
-  return key ? svgText.replace(new RegExp(escapeRegExp(key), 'gi'), color) : svgText;
+  // The colour comes from the document and lands inside markup that exports inline as it is; a
+  // value that is not a colour leaves the set's own colour.
+  return key && isSafeColor(color)
+    ? svgText.replace(new RegExp(escapeRegExp(key), 'gi'), color)
+    : svgText;
 }
 
 /**

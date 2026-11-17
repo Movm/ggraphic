@@ -89,7 +89,11 @@ function emojiAssetFromId(id: string, catalog: CanvasAssetCatalog): UniversalAss
  * a host never renames an entry.
  */
 export interface CanvasAssetCatalog {
-  /** Everything an instance may name, in lookup order: by id and by src, the first match wins. */
+  /**
+   * Everything an instance may name, in lookup order: by id and by src, the first match wins.
+   * SVG assets listed here are treated as host-authored and exported without sanitising, so a host
+   * must not list user uploads here; those belong to instance srcs (`isInstanceSrc`).
+   */
   assets: readonly UniversalAsset[];
   /**
    * Is this an image the host stores for one instance (a shop sticker)? Such
@@ -231,6 +235,18 @@ export function resolveAssetInstanceSrc(
 ): string | null {
   if (instance.src && catalog.isInstanceSrc(instance.src)) return instance.src;
   return getAssetById(instance.assetId, catalog)?.src ?? null;
+}
+
+/**
+ * Does the image of this instance come from the host's catalogue, rather than from a file the
+ * host stores for the one instance (a shop sticker, which a user made)? Only the first is
+ * something the host itself shipped; the second is user content, whatever its `src` looks like.
+ */
+export function isCatalogueInstance(
+  instance: Pick<AssetInstance, 'src'>,
+  catalog: CanvasAssetCatalog = registered
+): boolean {
+  return !(instance.src && catalog.isInstanceSrc(instance.src));
 }
 
 /** Sticker-like instances get a pixel-exact hit area: transparent pixels click through. */

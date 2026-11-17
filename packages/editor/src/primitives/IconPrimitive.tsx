@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { Image, Group, Rect, Transformer } from 'react-konva';
 
 import { LOCKED_TRANSFORMER, useIsItemLocked } from '../components/canvasItemLock.js';
+import { markTrustedSvgImage } from '../export/scene/trustedSvgImages.js';
 import { useGeometryReporter, type GeometryReporter } from '../hooks/useGeometryReporter.js';
 import { useSnapScheduler } from '../hooks/useSnapScheduler.js';
 import { generateIconDataUrl } from '../utils/canvasIcons.js';
@@ -77,6 +78,8 @@ function IconPrimitiveInner({
     void generateIconDataUrl(icon, size, color).then((dataUrl) => {
       if (cancelled || !dataUrl) return;
       const img = new window.Image();
+      // The data url is built from the icon set (or the sanitised external icon) and a colour.
+      markTrustedSvgImage(img);
       img.src = dataUrl;
       img.onload = () => {
         if (!cancelled) setImage(img);

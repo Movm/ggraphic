@@ -84,3 +84,44 @@ describe('defineBrand', () => {
     ).toThrow(/riverside/);
   });
 });
+
+describe('defineBrand print.cmyk', () => {
+  it('has no print block without an input', () => {
+    expect(defineBrand(inputs).print).toBeUndefined();
+    expect(defineBrand({ ...inputs, print: {} }).print).toBeUndefined();
+  });
+
+  it('passes the map to the pack with its keys as lower-case #rrggbb', () => {
+    const brand = defineBrand({
+      ...inputs,
+      print: {
+        cmyk: {
+          '#0F2352': [100, 90, 30, 40],
+          '#f80': [0, 50, 100, 0],
+          '#ffffff80': [0, 0, 0, 0],
+        },
+      },
+    });
+    expect(brand.print).toEqual({
+      cmyk: {
+        '#0f2352': [100, 90, 30, 40],
+        '#ff8800': [0, 50, 100, 0],
+        '#ffffff': [0, 0, 0, 0],
+      },
+    });
+  });
+
+  it.each([
+    ['a key that is not hex', { red: [0, 100, 100, 0] }],
+    ['a key without the hash', { '0f2352': [0, 0, 0, 0] }],
+    ['three numbers', { '#0f2352': [1, 2, 3] }],
+    ['five numbers', { '#0f2352': [1, 2, 3, 4, 5] }],
+    ['a value above 100', { '#0f2352': [0, 0, 0, 101] }],
+    ['a negative value', { '#0f2352': [-1, 0, 0, 0] }],
+    ['NaN', { '#0f2352': [Number.NaN, 0, 0, 0] }],
+    ['a string for a number', { '#0f2352': ['1', 0, 0, 0] }],
+    ['one colour twice with different values', { '#fff': [0, 0, 0, 0], '#FFFFFF': [0, 0, 0, 1] }],
+  ])('throws for %s', (_label, cmyk) => {
+    expect(() => defineBrand({ ...inputs, print: { cmyk: cmyk as never } })).toThrow(/print\.cmyk/);
+  });
+});

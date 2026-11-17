@@ -8,6 +8,8 @@
  * Deliberately no `as const`: the leaves stay `string` / `(…) => string`, so a
  * second language fits the same type.
  */
+import type { RasterReason } from '../export/scene/types.js';
+
 export const de = {
   common: {
     addShape: (name: string) => `${name} hinzufügen`,
@@ -874,6 +876,35 @@ export const de = {
       imprintAddressPlaceholder: 'Straße Nr., PLZ Ort',
       imprintAddressRequired: 'Bitte Anschrift eintragen.',
       imprintSubmit: 'Übernehmen',
+      svg: 'SVG (Vektor)',
+      keepTextEditable: 'Text bearbeitbar lassen',
+      keepTextEditableHint: 'Sieht nur richtig aus, wo die Schrift installiert ist.',
+      rasterNotice: (items: string) => `Als Bild eingebettet: ${items}`,
+      missingNotice: (n: number) =>
+        `${n} Element(e) fehlen, weil ihr Bild nicht geladen werden konnte.`,
+      reducedRasterNotice:
+        'Ein Bildbereich wurde in geringerer Auflösung eingebettet, weil das Bild sonst zu groß geworden wäre.',
+      variableFontNotice: (fonts: string) =>
+        `Schrift in Standardstärke eingebettet, die Stärke kann abweichen: ${fonts}`,
+      /** Why the PDF is a picture, by `ExportReport['fallback'].kind`. */
+      pdfFallbackNotice: {
+        fonts: 'Das PDF wurde als Bild erzeugt, weil nicht alle Schriften geladen werden konnten.',
+        timeout: 'Das PDF wurde als Bild erzeugt, weil die Vektor-Erzeugung zu lange gedauert hat.',
+        error: 'Das PDF wurde als Bild erzeugt, weil die Vektor-Erzeugung fehlgeschlagen ist.',
+      },
+      /** Why a part of the page is a picture in the SVG or PDF, as a short noun phrase. */
+      rasterReason: {
+        filter: 'Foto mit Filter',
+        composite: 'Überblendung',
+        'unsupported-call': 'Effekt ohne Vektorform',
+        'unsupported-pattern': 'Muster',
+        'missing-glyph': 'Zeichen ohne Schrift',
+        'font-unavailable': 'Schrift nicht verfügbar',
+        'bitmap-only-font': 'Bitmap-Schrift',
+        shadow: 'Schatten',
+        'svg-unsupported': 'SVG-Grafik',
+        'image-unreadable': 'Bild nicht lesbar',
+      } satisfies Record<RasterReason, string>,
     },
   },
 
@@ -957,6 +988,7 @@ export const de = {
     layerDown: 'Ebene nach unten',
     fontSmaller: 'Schrift verkleinern',
     fontLarger: 'Schrift vergrößern',
+    fontSizeInput: 'Schriftgröße',
     fontRole: 'Schrift',
     fontRoles: {
       headline: 'Überschrift',

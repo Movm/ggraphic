@@ -19,7 +19,7 @@ import {
   useIsElementSelected,
 } from '../stores/CanvasStoreProvider.js';
 import { backgroundAdjustments } from '../utils/imageFilters.js';
-import { useTrackPendingImage } from '../utils/pendingImages.js';
+import { useImageRetry, useTrackPendingImage } from '../utils/pendingImages.js';
 import {
   assertAsString,
   assertAsNumber,
@@ -35,6 +35,7 @@ import { templateTextAlignOf } from '../utils/textAlign.js';
 import { useCanvasEditorServices } from '../CanvasEditorProvider.js';
 import { plainImageUrls } from '../hostServices.js';
 import { CanvasText, CanvasImage, CanvasBackground } from '../primitives/index.js';
+import { DEFAULT_TEXT_ANCHORS } from '../primitives/CanvasText.js';
 import { canCropBackgroundPhoto, imageElementInteraction } from '../utils/backgroundPhotoCrop.js';
 import { canvasImageSourceUrl } from '../utils/canvasImageSource.js';
 import { imageRenderInputsAreEqual } from '../utils/imageElementComparison.js';
@@ -62,6 +63,7 @@ import type {
   LayoutResult,
   PositionValue,
 } from '../configs/types.js';
+import type { TransformAnchor } from '../types/editorTypes.js';
 import type { SnapTarget, SnapLine } from '../utils/snapping.js';
 
 // The bundler replaces `process.env.NODE_ENV`; outside one, `process` may not exist.
@@ -87,6 +89,16 @@ interface MemoizedTextProps<TState extends Record<string, unknown> = Record<stri
   stageWidth: number;
   stageHeight: number;
   getSnapTargets: (excludeId: string) => SnapTarget[];
+}
+
+/**
+ * The handles of a template text. Side handles set the width as before. A corner scales the text
+ * only where its size persists (`fontSizeStateKey`); and where its position does not (a text that
+ * cannot turn), only the corner that keeps the top-left in place, so the text does not jump back.
+ */
+function templateTextAnchors(sizePersists: boolean, positionPersists: boolean): TransformAnchor[] {
+  if (!sizePersists) return ['middle-left', 'middle-right'];
+  return positionPersists ? DEFAULT_TEXT_ANCHORS : ['bottom-right', 'middle-left', 'middle-right'];
 }
 
 const MemoizedTextElement = memo(
@@ -185,7 +197,10 @@ const MemoizedTextElement = memo(
         onGeometryChange={onGeometryChange}
         onSnapLinesChange={onSnapLinesChange}
         rotation={rotation}
-        transformConfig={{ rotateEnabled: rotatable }}
+        transformConfig={{
+          rotateEnabled: rotatable,
+          enabledAnchors: templateTextAnchors(config.fontSizeStateKey !== undefined, rotatable),
+        }}
         {...(rotatable ? { onTransformEnd: handleTransformEnd } : {})}
       />
     );
@@ -580,6 +595,8 @@ export const GenericCanvasElement = memo(function GenericCanvasElement<
   getSnapTargets,
 }: GenericCanvasElementProps<TState>) {
   const selected = useIsElementSelected(config.id);
+  // A retry remounts the image element: its `use-image` then loads afresh.
+  const imageRetry = useImageRetry(config.id);
 
   // Check visibility
   if (config.visible && !config.visible(state)) {
@@ -611,6 +628,7 @@ export const GenericCanvasElement = memo(function GenericCanvasElement<
     case 'image':
       return (
         <MemoizedImageElement
+          key={imageRetry}
           config={config as ImageElementConfig<Record<string, unknown>>}
           state={state as Record<string, unknown>}
           layout={layout}

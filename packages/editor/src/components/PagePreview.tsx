@@ -32,6 +32,12 @@ export interface PagePreviewProps {
   onRendered: (dataUrl: string) => void;
   /** Called once instead, when the page could not be drawn or produced no image. */
   onFailed?: () => void;
+  /**
+   * Called once with the page's canvas handle when it has settled, just before the image is
+   * encoded; the handle stays valid while the preview is mounted. For a host that reads more than
+   * the PNG off the same stage (the render gate exports it as SVG and PDF).
+   */
+  onCanvas?: (canvas: GenericCanvasRef) => void;
   /** The page's format; absent: the default format. */
   formatId?: string;
 }
@@ -42,6 +48,7 @@ export function PagePreview({
   width,
   onRendered,
   onFailed,
+  onCanvas,
   formatId,
 }: PagePreviewProps) {
   const canvasRef = useRef<GenericCanvasRef>(null);
@@ -49,6 +56,8 @@ export function PagePreview({
   onRenderedRef.current = onRendered;
   const onFailedRef = useRef(onFailed);
   onFailedRef.current = onFailed;
+  const onCanvasRef = useRef(onCanvas);
+  onCanvasRef.current = onCanvas;
   const stageWidth = getCanvasFormatOrDefault(formatId).width;
 
   useEffect(() => {
@@ -61,6 +70,7 @@ export function PagePreview({
         const late = Date.now() - startedAt > SETTLE_TIMEOUT_MS;
         if (!ref && late) return onFailedRef.current?.();
         if (ref && (ref.imagesSettled() || late)) {
+          onCanvasRef.current?.(ref);
           // Waits for the fonts, then encodes off the main thread: a gallery keeps scrolling.
           const dataUrl = await ref.captureCanvas({
             format: 'png',

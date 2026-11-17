@@ -43,6 +43,21 @@ export const TemperatureFilter: KonvaFilter = function (imageData) {
 /** The tint colour when an image has a strength but no colour of its own: the brand accent. */
 export const defaultTint = (): string => activeBrand().colors.accent;
 
+/**
+ * The tint of an image with a strength but no colour, read from a document's brand:
+ * its accent if that is an offered swatch, else the first swatch — so the colour
+ * painted is always one the picker shows.
+ */
+export const fallbackTintOf = (brand: {
+  colors: { accent: string };
+  effects: { tints: readonly string[] };
+}): string => {
+  const { tints } = brand.effects;
+  return tints.includes(brand.colors.accent)
+    ? brand.colors.accent
+    : (tints[0] ?? brand.colors.accent);
+};
+
 const hexRgb = (hex: string): [number, number, number] => {
   const n = Number.parseInt(hex.replace('#', '').slice(0, 6), 16) || 0;
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];

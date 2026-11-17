@@ -265,8 +265,8 @@ function PillBadgeInner({
     textarea.addEventListener('blur', removeTextarea);
 
     textarea.addEventListener('keydown', (e) => {
+      // Escape schliesst ab wie im Text (`CanvasTextOverlay`): das Getippte bleibt (#163).
       if (e.key === 'Escape') {
-        textarea.value = text;
         textarea.blur();
       }
       if (e.key === 'Enter' && !e.shiftKey) {

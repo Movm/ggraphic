@@ -1,5 +1,95 @@
 # @ggraphic/editor
 
+## 0.1.0-alpha.8
+
+### Minor Changes
+
+- f585f15: A photo's look (adjustments, background tint) is now a bitmap made once per look instead of Konva filters run over the node's cache. Panning, zooming and dragging the crop frame of a filtered photo (background or framed) no longer filter again; a slider drag shows a small bitmap and builds the full one once the look rests. Flip and vignette are drawn over the frame; the vignette darkens only the photo's own pixels. A filtered photo now exports as an image of its bitmap instead of a raster island. Removed `cacheFiltered`, `cropGhostSource`, `recacheNextFrame` and `straightSceneFunc` (no consumers).
+
+## 0.1.0-alpha.7
+
+### Minor Changes
+
+- e3124dd: Text size like in Canva. The size field in the toolbar takes a typed number: Enter or leaving the field applies it, Escape drops it, the arrow keys step by 1 (10 with Shift). A text has corner handles: dragging a corner scales the text, the size field follows the drag live, and the size is written on release in the same undo step as the box. A free text kept only its new width before. A template text gets corners where its size persists (`fontSizeStateKey`). A size set by hand fixes the size: `updateAdditionalText` with `fontSize` drops `maxFontSize`, so no later edit, font or brand change refits the text over it.
+
+### Patch Changes
+
+- 95288f2: Panning a background photo in Ausschnitt mode no longer jumps back when the pointer rests. The pan read its offset from the node, which it puts back on its box after every move. Konva fires `dragmove` without placing the node again when the pointer did not move, so a resting mouse or trackpad read a pan of zero and the photo jumped to where the drag began, back and forth while dragging and lost entirely when released during a pause. The offset now comes from the pointer, as Konva places a dragged node.
+- Panning a filtered background photo in Ausschnitt mode runs at frame rate. Every pointer move used to re-cache the node and so ran every filter over the whole bitmap again (about 85 ms per move). Now the node shows a copy of the whole photo, filtered once at the resolution it is shown at, with its crop scaled to that copy and no filters or cache. The copy is made when Ausschnitt mode opens, and again after a zoom. On release the photo, its filters and a sharp cache come back before the store updates. `cropGhostSource` takes an optional `maxSide`.
+
+## 0.1.0-alpha.6
+
+### Minor Changes
+
+- 064350e: Vector export follow-ups. `defineBrand` takes `print.cmyk` and validates it. A variable TTF is exported at the requested weight; a variable WOFF/WOFF2 or CFF2 font that cannot be set is listed in the new `ExportReport.defaultInstanceFonts`. A regular cut that stands in for a bold is emboldened like the canvas draws it. The soft hyphen no longer moves the PDF pen. `ExportReport.fallback` is now `{ kind: 'fonts' | 'timeout' | 'error', reason }`, and the download notice names the actual reason; raster islands no longer count against the 60 s timeout. Raster islands above 16.7 MP are scaled down and listed in `ExportReport.reducedRasters`. SVG shadows are written as filter primitives instead of `feDropShadow`. An image without an element id is rasterised instead of reported missing. SVG assets from the host catalogue are exported as trusted, so hosts must not list user uploads there. `isSafeColor` accepts `oklch()`, `lab()`, `color-mix()` and angle units. The text baseline falls back to measured ascents in engines without `alphabeticBaseline`.
+
+  Breaking for hosts that build these types by hand: `Messages.downloadPanel.pdfFallbackNotice` is now an object `{ fonts, timeout, error }` instead of a string, and `reducedRasterNotice` and `variableFontNotice` are new required keys, so a host that supplies or extends a full `Messages` object must add them. `FontFile` (from `export/fonts/fontFiles`) gained the required fields `fakeBold` and `variation`. New exports: `fitPixelRatio`, `variationInstance`, `isCatalogueInstance` and `embeddableBytes`; `FontkitFont` is extended. A host `exportFonts` file lighter than the weight asked (by its `OS/2.usWeightClass`) is emboldened too, and a raster island that does not finish within `islandTimeoutMs` (default 60 s) falls back to the raster PDF.
+
+- d570cbc: Vector PDF: print, slide and digital PDFs are now written as vectors with real, selectable text and subset-embedded fonts, instead of page images. Print PDFs keep the bleed, trim and crop-mark geometry. If the vector export fails (a font that cannot be loaded for more than one element, a writer error, or a 60 s timeout), the download falls back to the image PDF and says so. Digital formats offer PDF too.
+
+  `BrandPack.print.cmyk` (optional, keys `#rrggbb`, values 0–100): vector fills, strokes and text in these colours, and gradients whose stops are all mapped, are written as DeviceCMYK with exactly these values. Everything else, photos included, stays RGB. The export report lists brand colours that left the PDF in RGB. New: `CanvasEditorExportApi.exportPdf`.
+
+  `@ggraphic/editor/export` also exports `exportPagesPdf` and the browser helpers the exports are wired with (`fetchImageBytes`, `reencodeImage`, `rasterizeOps`, `pngFromDataUrl`), and `PagePreview` takes an `onCanvas` callback that hands over the page's canvas handle, so a host can export the page it previews.
+
+- 3d987af: PowerPoint export: elements PowerPoint cannot draw natively (path shapes, icons, illustrations) now go into the slide as SVG pictures with a PNG preview instead of PNG only, so they stay sharp when zoomed or printed. An element that is not fully vector, carries a shadow, or whose SVG picture fails to render keeps the PNG path. `PagePreview` takes an optional `onCanvas` callback that hands over the page's canvas once it has settled.
+- 5c0f142: SVG download: every page can be downloaded as a real vector SVG, recorded from what Konva draws. Text is written as outlines by default, or as editable `<text>` with the switch "Text bearbeitbar lassen". Icons, illustrations and charts stay vector, and only what has no vector form (filtered photos, unknown effects) is embedded as an image and listed in a notice. New: `CanvasEditorExportApi.exportSvg`, the optional host service `exportFonts`, and `@ggraphic/editor/export` exports the recorder (`recordPageScene`, `resolveScene`), `writeSvg` and `resolveFontFiles`.
+
+  Visible change: chart labels now draw in the brand body font on the canvas too (the font is embedded in the chart SVG), so canvas and export match. Chart colours that are not plain colours are replaced by the brand chart colour.
+
+### Patch Changes
+
+- e7a5637: Two brand leaks in a document of another pack. The image tint fallback follows the document's brand: its accent when that is one of its tint swatches, else the first swatch, and the „Stärke" slider on an image without a tint now writes that colour, so the highlighted swatch and the painted colour are always one the picker offers. `registerEditorShell` takes an optional `documentAudience(pages)`: whose assets (logos, marks) the Elemente tab offers for the document, `null` for the user's locale. A host without it keeps following `userLocale`. It is separate from `deckLocale`, which only says whose fonts a deck carries.
+- Updated dependencies [064350e]
+- Updated dependencies [d570cbc]
+  - @ggraphic/core@0.1.0-alpha.3
+
+## 0.1.0-alpha.5
+
+### Patch Changes
+
+- a9a467c: Undoing a deck op ("apply a template to all slides", `replaceDeck`) no longer takes the step before it along. Since 0.1.0-alpha.3, this client's own writes from another stack (a deck op, its undo by the page-level `Y.UndoManager`, a version lift) were written into every entry of the page's undo history, like another client's edit. The deck op and its undo overwrote the older entries, so after undoing the deck, undo no longer reverted the step before it. Such a write now reaches only the entries that still hold the value it replaced, and its undo restores every entry. Remote edits are handled as before (#160).
+
+  `useYjsPageStateSync` passes `own` (a local Yjs transaction) to `onRemoteState` as a third argument, and the store's `rebaseHistory` takes it as a third argument.
+
+## 0.1.0-alpha.4
+
+### Patch Changes
+
+- 0ed7bdb: A newly added text starts at 120 / 72 / 56 px (heading / subheading / text) across 80 % of a 1080 px page, and grows with the page width on every format. Before, it started at 48 / 36 / 32 px in a 400 px box and scaled only on slides, a third of the size of the headlines templates set.
+
+## 0.1.0-alpha.3
+
+### Minor Changes
+
+- 532ecff: `addPage` and the host's `EditorAddPage` take `inherit: boolean | PageInheritance`. `{ brand: true, background: false }` adds a page that keeps the active page's scheme and brand bindings (`colorScheme`, `colorSchemeId`, `bind`, `brandScheme`, `brandStamp`) without its background (photo, colour, composer planes). Such a page drops the bindings of background fields (for example `bind.backgroundColor`), since it carries none of those fields. `{ brand: false, background: true }` is the reverse. `true` and `false` mean what they meant before. `PageInheritance` is exported from `@ggraphic/editor/shell`, and `extractInheritablePageState` takes it as an optional third argument.
+- 5be7dcc: Export `BLANK_PAGE_ID` from `@ggraphic/editor/embed` and `@ggraphic/editor/host`: the page config id of the empty page `GgraphicEditor` registers, for a host that starts a blank design (`pages: [{ configId: BLANK_PAGE_ID, state: {} }]`). The host entry loads no React, so a server component can read it too.
+- 24a0d79: `captureActivePage` takes `fontWaitMs`: the longest wait for fonts before the export, after which the fallback faces are used. Without it the export waits until the fonts settle, as before.
+
+  A web view that cannot fetch a font file can leave its faces loading for good (WKWebView in an Expo DOM component), and `captureActivePage` then never returned. `@ggraphic/react-native` passes 3000.
+
+- 34c88be: `GenericCanvasRef.imageLoadState()` returns how many image elements are still loading (`pending`) and how many failed to load (`failed`). A capture is complete only when both are 0. `imagesSettled()` is also true after a failed load, so a host could not tell a complete capture from one without its photo.
+
+  `GenericCanvasRef.retryFailedImages()` loads every failed image element again and returns how many. They count as pending at once. Before, a failed image stayed failed: `use-image` loads again only for a new url.
+
+  **Breaking for direct importers of `utils/pendingImages`** (the deep path under the `./*` export): `PendingImagesContext` now holds `ImageLoads` (`{ pending, failed }`) instead of one `Set<string>`, and the module adds `ImageRetryContext` and `useImageRetry`. The public entries are unchanged.
+
+- 8b286ef: Export `formatLabel` and `formatDescription` from `@ggraphic/editor/host` and `@ggraphic/editor/templates`: a format's name and size line in the language of the message catalogue (`registerMessages('en' | 'de')`). The built-in formats' `label` and `description` fields stay in their original language (German); show these functions instead. The host entry loads no React, so a server component can list formats in English after `registerMessages('en')`.
+- cfeca71: Relicensed from MPL-2.0 to AGPL-3.0-only. Versions published before this change remain available under MPL-2.0.
+- 73f7316: An uploaded photo's durable URL replaces its `blob:` preview in the whole undo history instead of becoming an undo step of its own. Before, undo after a slow upload could bring back the revoked preview and save it, so the photo was lost for everyone. `createActions` gets an optional sixth argument, `history` (`CanvasActionHistory`), which `createUserImageActions` and `createElementActions` take as their last argument. A template that builds its own actions passes it on; without it the swap stays an undo step as before.
+
+### Patch Changes
+
+- 49f3140: Undo in a collaborative session no longer reverts other people's edits. An edit that arrives from another client is written into this client's undo history, so undo and redo only revert this client's own steps. They are patched per element and property, so an own change to another element in the same collection still undoes.
+
+  The edit is measured from the value its writer started from, so an own step that lost a simultaneous write to the same key stays in the history and can be redone. Layer order and locked layers merge per id, so undo of a reorder still works after someone adds a layer. Undo of an own add removes the element even after someone else changed it. `useYjsPageStateSync` passes that starting value to `onRemoteState` as a second argument.
+
+- 74f0c84: The editor is as tall as the viewport again in hosts that import `@ggraphic/editor/styles/editor` without `tokens.css` and don't declare `--editor-height` themselves (#152). Its root used to read the token without a fallback, so its height became `auto`, the editor grew with its content and the canvas fit grew with it. The root now falls back to `100dvh`, the default of `tokens.css`.
+- 6fad500: Escape ends a pill-badge edit the way it ends a normal text edit: the typed text is kept. Before, Escape discarded the edit on badges while it committed on normal text.
+- 137096d: A newly inserted element (text, shape, icon, chart, ...) is selected, and only it. Before, the previous selection stayed, and the new element had to be found and clicked first, which was awkward when it landed on top of other elements.
+- Updated dependencies [cfeca71]
+  - @ggraphic/core@0.1.0-alpha.2
+  - @ggraphic/schema@0.1.0-alpha.2
+
 ## 0.1.0-alpha.2
 
 ### Minor Changes
