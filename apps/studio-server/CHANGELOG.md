@@ -1,5 +1,12 @@
 # @ggraphic/studio-server
 
+## 0.1.0-alpha.10
+
+### Patch Changes
+
+- Updated dependencies [2297fbb]
+  - @ggraphic/schema@0.1.0-alpha.3
+
 ## 0.1.0-alpha.9
 
 ## 0.1.0-alpha.8
