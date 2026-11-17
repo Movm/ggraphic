@@ -22,7 +22,7 @@
  * the change does not reach it.
  */
 
-import { sameStateValue } from '@ggraphic/core/ydoc';
+import { sameStateValue } from '@ggraphic/core/internal/ydoc/internal';
 
 // Order-insensitive: the history snapshots come from React state, the remote values from the
 // codec, and the two may build the same object with its keys in another order (#183).

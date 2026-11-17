@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { useEffect, useRef } from 'react';
-import { readStateKey, sameStateValue } from '@ggraphic/core/ydoc';
+import { readStateKey } from '@ggraphic/core/ydoc';
+import { sameStateValue } from '@ggraphic/core/internal/ydoc/internal';
 import * as Y from 'yjs';
 
 import { YDOC_KEYS } from './ydocKeys.js';

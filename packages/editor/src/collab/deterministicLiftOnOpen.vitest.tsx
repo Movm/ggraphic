@@ -8,7 +8,8 @@
  */
 import { STAMP_V2_STEP } from '@ggraphic/schema/testing/v2Fixture';
 import { documentMigrations } from '@ggraphic/schema';
-import { isDerivedClientId, liftDocumentState, stateKeyClasses } from '@ggraphic/core/ydoc';
+import { liftDocumentState, stateKeyClasses } from '@ggraphic/core/ydoc';
+import { isDerivedClientId } from '@ggraphic/core/internal/ydoc/internal';
 import { renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import * as Y from 'yjs';

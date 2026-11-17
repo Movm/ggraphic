@@ -22,15 +22,14 @@ import {
   buildStateMap,
   mayWriteStructured,
   posBetween,
-  posJitter,
   readState,
   readStateKey,
-  sameStateValue,
   stateKeyClasses,
   writeStateKeys,
   type StateKeyClasses,
   type StateWriteOptions,
 } from '@ggraphic/core/ydoc';
+import { posJitter, sameStateValue } from '@ggraphic/core/internal/ydoc/internal';
 import { v4 as uuid } from 'uuid';
 import * as Y from 'yjs';
 

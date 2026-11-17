@@ -12,7 +12,7 @@
  * Call the writers inside the caller's `doc.transact` (its origin decides
  * whether undo tracks them; the editor uses its untracked setup origin).
  */
-import { canonicalJsonValue } from '@ggraphic/core/ydoc';
+import { canonicalJsonValue } from '@ggraphic/core/internal/ydoc/internal';
 import {
   canvasPageSchema,
   documentMigrations,

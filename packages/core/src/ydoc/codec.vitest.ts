@@ -12,11 +12,11 @@ import {
   mayWriteStructured,
   readState,
   readStateKey,
-  sameStateValue,
   stateKeyClasses,
   writeStateKeys,
   type StateKeyClass,
 } from './index.js';
+import { sameStateValue } from './internal.js';
 
 const HOST_KEY = 'stampInstances';
 const classes = stateKeyClasses([HOST_KEY]);

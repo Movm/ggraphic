@@ -10,7 +10,6 @@ import { describe, expect, it } from 'vitest';
 import * as Y from 'yjs';
 
 import {
-  isDerivedClientId,
   liftDocumentState,
   liftSalt,
   readState,
@@ -19,6 +18,7 @@ import {
   writeStateKeys,
   type PlainFallback,
 } from './index.js';
+import { isDerivedClientId } from './internal.js';
 
 const classes = stateKeyClasses();
 const SALT = liftSalt({ schemaVersion: 4, kindVersions: {} }, classes);
