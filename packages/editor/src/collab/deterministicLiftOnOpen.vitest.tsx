@@ -8,7 +8,7 @@
  */
 import { STAMP_V2_STEP } from '@ggraphic/schema/testing/v2Fixture';
 import { documentMigrations } from '@ggraphic/schema';
-import { isDerivedClientId } from '@ggraphic/core/ydoc';
+import { isDerivedClientId, liftDocumentState, stateKeyClasses } from '@ggraphic/core/ydoc';
 import { renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import * as Y from 'yjs';
@@ -113,6 +113,60 @@ describe('the open lifts under the deterministic identity', () => {
     Y.applyUpdate(a, Y.encodeStateAsUpdate(b));
     Y.applyUpdate(b, Y.encodeStateAsUpdate(a));
     expect(Y.encodeStateVector(a)).toEqual(Y.encodeStateVector(b));
+    expect(serializeDeck(a)).toEqual(serializeDeck(b));
+  });
+
+  it('a key-order-sensitive host step on replicas that integrated an element differently', () => {
+    // A version 4 document whose stamp element got two properties from two writers at once;
+    // the replicas integrated them in opposite orders, so their element maps iterate differently.
+    // The kind's step (1 → 2) records the element's keys in order: on raw reads it would write
+    // different values under the derived id. Steps get canonical input.
+    const keyOrderStep = {
+      from: 1,
+      migrate: (list: unknown) =>
+        (list as Record<string, unknown>[]).map((item) => ({
+          ...item,
+          seenKeys: Object.keys(item).join(','),
+        })),
+    };
+    const doc = v3Doc([
+      {
+        id: PAGE_ID,
+        configId: 'fixture-poster',
+        state: { [STAMP_KIND.stateKey]: [{ id: 'st1', label: 'A' }] },
+      },
+    ]);
+    doc.transact(() => {
+      liftDocumentState(doc, stateKeyClasses([STAMP_KIND.stateKey]));
+      getMetaMap(doc).set(YDOC_KEYS.schemaVersion, 4);
+    });
+    const element = (d: Y.Doc) =>
+      (stateMapOf(d).get(STAMP_KIND.stateKey) as Y.Map<unknown>).get('st1') as Y.Map<unknown>;
+    const w1 = replica(doc, 11);
+    const w2 = replica(doc, 12);
+    element(w1).set('zeta', 1);
+    element(w2).set('alpha', 2);
+    const [u1, u2] = [since(w1, doc), since(w2, doc)];
+    const a = replica(doc, 1);
+    const b = replica(doc, 2);
+    Y.applyUpdate(a, u1);
+    Y.applyUpdate(a, u2);
+    Y.applyUpdate(b, u2);
+    Y.applyUpdate(b, u1);
+    expect(Array.from(element(a).keys())).not.toEqual(Array.from(element(b).keys()));
+    registerElementKind({
+      ...(STAMP_KIND as unknown as ElementKindRegistration<never>),
+      migrations: [keyOrderStep],
+    });
+    const before = Y.encodeStateVector(a);
+    openWriting(a);
+    openWriting(b);
+    expect((pageState(a)[STAMP_KIND.stateKey] as { seenKeys: string }[])[0]!.seenKeys).toBe(
+      'alpha,id,label,zeta'
+    );
+    expect(Y.encodeStateAsUpdate(a, before)).toEqual(Y.encodeStateAsUpdate(b, before));
+    Y.applyUpdate(a, Y.encodeStateAsUpdate(b));
+    Y.applyUpdate(b, Y.encodeStateAsUpdate(a));
     expect(serializeDeck(a)).toEqual(serializeDeck(b));
   });
 

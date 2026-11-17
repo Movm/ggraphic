@@ -14,11 +14,16 @@
  * - every client holds the same document, version 4, every collection structured;
  * - every edit to an element no other client touched is in the result.
  *
+ * Every fourth seed adds the server's own plain writes (an old writer or a server patch: they
+ * give openers different starting states, and the plain key wins at key level) and keeps one
+ * client mounted, so its `meta` observer re-settles the document while others' lifts arrive.
+ * Those runs assert convergence only: edits can be lost there by design.
+ *
  * Before the deterministic lift identity, a client that edited before another's lift reached it
  * lost those edits whenever its own lift lost at key level. Bounded for CI;
  * `ELEMENT_STORAGE_RANDOM_SEEDS=<n>` runs more seeds locally.
  */
-import { renderHook } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import * as Y from 'yjs';
 
@@ -41,8 +46,9 @@ function rng(seed: number) {
   };
 }
 
-function run(seed: number, clientCount: number, steps: number) {
+async function run(seed: number, clientCount: number, steps: number) {
   const random = rng(seed);
+  const chaos = seed % 4 === 0;
   const pick = <T,>(list: readonly T[]): T => list[Math.floor(random() * list.length)]!;
   const initial: Shape[] = Array.from({ length: 6 }, (_, i) => ({ id: `s${i}`, x: i, fill: '#0' }));
   const server = v3Doc(
@@ -82,10 +88,27 @@ function run(seed: number, clientCount: number, steps: number) {
     }
     return true;
   };
+  // The server's own plain write, relayed like any update.
+  const serverWrite = (step: number) => {
+    let update: Uint8Array | null = null;
+    server.once('update', (u: Uint8Array) => (update = u));
+    server.transact(() => {
+      const stateY = (server.getMap('pagesById').get(PAGE) as Y.Map<unknown>).get(
+        'state'
+      ) as Y.Map<unknown>;
+      if (random() < 0.5) stateY.set('headline', `server-${step}`);
+      else stateY.set(SHAPES, [{ id: `srv-${step}`, x: step, fill: '#s' }]);
+    });
+    if (update) down.forEach((q) => q.push(update!));
+  };
+  // A client that stays mounted: its meta observer re-settles on others' stamps.
+  let mounted: { unmount: () => void } | null = null;
 
   const opened = docs.map(() => false);
   const open = (c: number) => {
-    renderHook(() => useYjsPages(docs[c]!, true, null, true)).unmount();
+    const hook = renderHook(() => useYjsPages(docs[c]!, true, null, true));
+    if (chaos && c === 0) mounted = hook;
+    else hook.unmount();
     opened[c] = true;
   };
   // Per element: who touched it, and the last value of each prop its only toucher wrote.
@@ -104,7 +127,13 @@ function run(seed: number, clientCount: number, steps: number) {
   for (let step = 0; step < steps; step++) {
     const r = random();
     if (r < 0.4) {
-      deliverOne();
+      // Through act, with the microtasks the mounted client's observer queues.
+      if (mounted) await act(async () => void deliverOne());
+      else deliverOne();
+      continue;
+    }
+    if (chaos && r < 0.43) {
+      serverWrite(step);
       continue;
     }
     const c = Math.floor(random() * clientCount);
@@ -145,15 +174,23 @@ function run(seed: number, clientCount: number, steps: number) {
     }
   }
   docs.forEach((_, c) => !opened[c] && open(c));
+  if (mounted) {
+    await act(async () => {
+      while (deliverOne());
+    });
+    // Let the re-settle's writes go out and come back.
+    for (let i = 0; i < 3; i++) await act(async () => void (await Promise.resolve()));
+  }
   while (deliverOne());
+  (mounted as { unmount: () => void } | null)?.unmount();
 
   const label = `seed ${seed}`;
   const finals = docs.map((doc) => serializeDeck(doc));
   for (const deck of finals.slice(1)) expect(deck, label).toEqual(finals[0]);
-  for (const doc of docs) {
-    expect(schemaVersionOf(doc), label).toBe(4);
-    expect(isStructured(doc, SHAPES), label).toBe(true);
-  }
+  expect(serializeDeck(server), label).toEqual(finals[0]);
+  for (const doc of docs) expect(schemaVersionOf(doc), label).toBe(4);
+  if (chaos) return;
+  for (const doc of docs) expect(isStructured(doc, SHAPES), label).toBe(true);
   const byId = new Map((finals[0]![0]!.state[SHAPES] as Shape[]).map((s) => [s.id, s]));
   for (const [id, t] of touches) {
     if (t.clients.size !== 1) continue;
@@ -174,11 +211,11 @@ function run(seed: number, clientCount: number, steps: number) {
 const SEEDS = Number(process.env['ELEMENT_STORAGE_RANDOM_SEEDS'] ?? 25);
 
 describe('random opens of one version 3 document, edits and delivery', () => {
-  it(`converge and keep every untouched-by-others edit (${SEEDS} seeds, 3 clients)`, () => {
-    for (let seed = 1; seed <= SEEDS; seed++) run(seed, 3, 120);
+  it(`converge and keep every untouched-by-others edit (${SEEDS} seeds, 3 clients)`, async () => {
+    for (let seed = 1; seed <= SEEDS; seed++) await run(seed, 3, 120);
   }, 120_000);
 
-  it('also with four clients', () => {
-    for (let seed = 1; seed <= Math.ceil(SEEDS / 3); seed++) run(500 + seed, 4, 160);
+  it('also with four clients', async () => {
+    for (let seed = 1; seed <= Math.ceil(SEEDS / 3); seed++) await run(500 + seed, 4, 160);
   }, 120_000);
 });

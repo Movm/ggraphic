@@ -89,11 +89,12 @@ export function readYDocRefusal(
   return newer ? { ...newer, document: null } : null;
 }
 
-const byCodePoint = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+/** UTF-16 code-unit order (JavaScript's `<` on strings). */
+const byCodeUnit = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
 /**
  * Raises the doc's stamps to `versions`; never lowers one. A kind at 1 needs no stamp. Kinds in
- * code-point order: the writes are a pure function of the doc and `versions`, as the
+ * UTF-16 code-unit order: the writes are a pure function of the doc and `versions`, as the
  * deterministic lift transaction needs.
  */
 function raiseStamps(doc: Y.Doc, versions: DocumentVersions): void {
@@ -102,7 +103,7 @@ function raiseStamps(doc: Y.Doc, versions: DocumentVersions): void {
   if (!isVersion(core) || core < versions.schemaVersion) {
     meta.set(YDOC_KEYS.schemaVersion, versions.schemaVersion);
   }
-  const kinds = Object.entries(versions.kindVersions).sort(([a], [b]) => byCodePoint(a, b));
+  const kinds = Object.entries(versions.kindVersions).sort(([a], [b]) => byCodeUnit(a, b));
   for (const [stateKey, version] of kinds) {
     if (version <= 1) continue;
     const stored = meta.get(kindKey(stateKey));
@@ -117,10 +118,10 @@ export function stampYDocument(doc: Y.Doc, registry: MigrationRegistry = documen
 
 export type YDocMigration = { status: 'current' } | { status: 'migrated' } | DocumentRefusal;
 
-/** Config writes in code-point order and canonical values: a pure function of doc and `config`. */
+/** Config writes in UTF-16 code-unit order and canonical values: a pure function of doc and `config`. */
 function replaceConfig(page: Y.Map<unknown>, config: Record<string, unknown>): void {
   const entries = Object.keys(config)
-    .sort(byCodePoint)
+    .sort(byCodeUnit)
     .map((k): [string, unknown] => [k, canonicalJsonValue(config[k])]);
   const existing = page.get(YDOC_KEYS.config);
   if (!(existing instanceof Y.Map)) {
@@ -153,7 +154,14 @@ export function migrateYDocument(
 ): YDocMigration {
   const stored = readStored(doc);
   if (!stored.ok) return { status: 'invalid', reason: stored.reason };
-  const pages = serializeDeck(doc);
+  // Canonical input: a structured key reads in the order this replica integrated its entries,
+  // and a step whose output follows key order would otherwise write different values on two
+  // replicas inside the deterministic lift transaction.
+  const pages = serializeDeck(doc).map((page) => ({
+    ...page,
+    state: canonicalJsonValue(page.state) as Record<string, unknown>,
+    config: canonicalJsonValue(page.config) as Record<string, unknown>,
+  }));
   const result = migrateDocument(
     {
       ...(stored.schemaVersion !== null ? { schemaVersion: stored.schemaVersion } : {}),

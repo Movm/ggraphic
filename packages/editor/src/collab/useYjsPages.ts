@@ -40,7 +40,7 @@ import {
   type PageView,
   type ReplaceDeckOps,
 } from './pagesDoc.js';
-import { reportPlainFallback } from './stateWriteWarnings.js';
+import { plainFallbackReporter } from './stateWriteWarnings.js';
 import { YDOC_KEYS } from './ydocKeys.js';
 import { type HistoryStamps, nextHistoryStamp } from '../utils/historyStamp.js';
 
@@ -288,7 +288,9 @@ function settleDocument(doc: Y.Doc, lift: boolean): YDocMigration {
     if (outcome.status === 'invalid' || outcome.status === 'newer') return outcome;
     // Rule 1: structure only under a stamp of 4 or above, which the step above has just written.
     if (lift && mayWriteStructured(doc)) {
-      liftDocumentState(doc, editorStateKeyClasses(), { onPlainFallback: reportPlainFallback });
+      liftDocumentState(doc, editorStateKeyClasses(), {
+        onPlainFallback: plainFallbackReporter(doc),
+      });
     }
     return outcome;
   };

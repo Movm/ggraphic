@@ -34,7 +34,7 @@ import {
 import { v4 as uuid } from 'uuid';
 import * as Y from 'yjs';
 
-import { reportPlainFallback } from './stateWriteWarnings.js';
+import { plainFallbackReporter } from './stateWriteWarnings.js';
 import { YDOC_KEYS } from './ydocKeys.js';
 import { fromHostKinds } from '../utils/elementKinds.js';
 
@@ -87,11 +87,11 @@ export const editorStateKeyClasses: () => StateKeyClasses = fromHostKinds((kinds
  * the stamp inside the transaction and writes plain JSON into a document below version 4
  * (rule 1), so a writer in a version 3 document that is not being lifted stays plain.
  */
-const liveWrite = (deterministic = false): StateWriteOptions => ({
+const liveWrite = (doc: Y.Doc, deterministic = false): StateWriteOptions => ({
   classes: editorStateKeyClasses(),
   lift: true,
   deterministic,
-  onPlainFallback: reportPlainFallback,
+  onPlainFallback: plainFallbackReporter(doc),
 });
 
 /**
@@ -102,7 +102,7 @@ const liveWrite = (deterministic = false): StateWriteOptions => ({
 const builtFor = (doc: Y.Doc): StateWriteOptions => ({
   classes: editorStateKeyClasses(),
   lift: mayWriteStructured(doc),
-  onPlainFallback: reportPlainFallback,
+  onPlainFallback: plainFallbackReporter(doc),
 });
 
 // ── doc accessors ───────────────────────────────────────────────────────────
@@ -326,7 +326,7 @@ export function updatePageStateById(
   if (!page) return;
   const stateY = page.get(YDOC_KEYS.state);
   if (!(stateY instanceof Y.Map)) return;
-  writeStateKeys(stateY as Y.Map<unknown>, partial, liveWrite());
+  writeStateKeys(stateY as Y.Map<unknown>, partial, liveWrite(doc));
 }
 
 /**
@@ -361,7 +361,7 @@ export function replacePageState(
 ): void {
   const stateY = getPagesMap(doc).get(pageId)?.get(YDOC_KEYS.state);
   if (!(stateY instanceof Y.Map)) return;
-  const write = liveWrite(options.deterministic === true);
+  const write = liveWrite(doc, options.deterministic === true);
   assertWritableState(state, write, stateY as Y.Map<unknown>);
   for (const key of Array.from(stateY.keys())) {
     if (!(key in state)) stateY.delete(key);
@@ -390,7 +390,7 @@ export function restorePageStateKeys(
     if (!Object.hasOwn(target, k)) {
       if (stateY.has(k)) stateY.delete(k);
     } else {
-      writeStateKeys(stateY as Y.Map<unknown>, { [k]: target[k] }, liveWrite());
+      writeStateKeys(stateY as Y.Map<unknown>, { [k]: target[k] }, liveWrite(doc));
     }
   }
 }
@@ -422,7 +422,8 @@ export function replaceDeck(doc: Y.Doc, ops: ReplaceDeckOps, origin: unknown): s
   const pagesMap = getPagesMap(doc);
   for (const { pageId, state } of ops.updates) {
     const stateY = pagesMap.get(pageId)?.get(YDOC_KEYS.state);
-    if (stateY instanceof Y.Map) assertWritableState(state, liveWrite(), stateY as Y.Map<unknown>);
+    if (stateY instanceof Y.Map)
+      assertWritableState(state, liveWrite(doc), stateY as Y.Map<unknown>);
   }
   for (const { state } of ops.inserts) assertWritableState(state, builtFor(doc));
   doc.transact(() => {
@@ -568,7 +569,7 @@ export function foldLegacyFormStateIntoFirstPage(doc: Y.Doc): void {
       // The codec writes plain JSON only; a Yjs value in the legacy map is folded as its JSON.
       folded[key] = value instanceof Y.AbstractType ? (value.toJSON() as unknown) : value;
     });
-    writeStateKeys(stateY as Y.Map<unknown>, folded, liveWrite());
+    writeStateKeys(stateY as Y.Map<unknown>, folded, liveWrite(doc));
   }
   meta.set(YDOC_KEYS.formStateFolded, true);
 }

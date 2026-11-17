@@ -273,7 +273,7 @@ interface SerializedPage {  // from packages/editor/src/collab/pagesDoc.ts (type
   config: Record<string, unknown>
 }
 function setPageConfigById(doc: Y.Doc, id: string, configId: string, newState: Record<string, unknown>) => void  // from packages/editor/src/collab/pagesDoc.ts
-type StateWriteWarning = { kind: "plain-fallback"; } & PlainFallback  // from packages/editor/src/collab/stateWriteWarnings.ts (type-only export)
+type StateWriteWarning = { kind: "plain-fallback"; doc: Y.Doc; } & PlainFallback  // from packages/editor/src/collab/stateWriteWarnings.ts (type-only export)
 function updatePageStateById(doc: Y.Doc, id: string, partial: Record<string, unknown>) => void  // from packages/editor/src/collab/pagesDoc.ts
 function useSelectionAwareness(provider: HocuspocusProvider | null, options?: UseSelectionAwarenessOptions) => RemoteSelection[]  // from packages/editor/src/collab/useSelectionAwareness.ts
 function useYjsCanvasBinding({ parent, isSynced, readOnly }: Options) => void  // from packages/editor/src/collab/useYjsCanvasBinding.ts
