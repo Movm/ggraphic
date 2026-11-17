@@ -481,20 +481,178 @@ function writeKey(
 }
 
 /**
+ * Why `value` cannot be stored, or `null`: what `Y.Map.set` would throw on, or what would not
+ * come back from a Yjs encode and decode as the same JSON. Read off yjs 13.6
+ * (`typeMapSet`: which constructors a `set` accepts) and lib0's `writeAny` (how a value is
+ * encoded at every depth). The codec hands Yjs an element property, a record entry or a whole
+ * plain value, so every depth is checked the same way.
+ *
+ * Accepted: `null`, `undefined` (also inside arrays: it decodes as `undefined`, and an array
+ * hole as `undefined` too), booleans, strings, numbers (`NaN` and `±Infinity` included: Yjs
+ * stores them as float64 and decodes them unchanged, as version 3 stored them; the JSON view
+ * reads them as `null` on every client alike), arrays (`Array` itself, not a subclass) and
+ * plain objects (prototype `Object.prototype`) whose own keys are all enumerable strings.
+ * The key `__proto__` only where it becomes a `Y.Map` key (an element property, a record entry);
+ * inside an encoded value the decoder assigns it (`obj[key] = …`), so it would be lost.
+ *
+ * Rejected: a Yjs value; `bigint` (Yjs stores it, JSON cannot); functions and symbols (`set`
+ * throws, nested they decode as `undefined`); `Date` (`set` accepts it, it decodes as `{}`);
+ * `Uint8Array` (stored and decoded unchanged, but not JSON: every JSON consumer of the view
+ * would read an index map) and every other typed array, `ArrayBuffer`, `Map`, `Set`, class
+ * instances and boxed primitives (`set` throws, nested they decode as plain objects or index
+ * maps); an object with a `null` prototype where it is handed to `set` itself (`set` throws;
+ * nested it decodes as an equal plain object and is accepted); symbol or non-enumerable own keys
+ * (dropped by the encoder); cycles.
+ */
+interface Placement {
+  /** `value` is handed to `Y.Map.set` itself (not encoded inside another value). */
+  direct: boolean;
+  /** `value`'s own keys become `Y.Map` keys (an element, a record); its values are `direct`. */
+  mapKeys: boolean;
+}
+const PLAIN_VALUE: Placement = { direct: true, mapKeys: false };
+const MAP_KEYS: Placement = { direct: false, mapKeys: true };
+
+function valueProblem(
+  value: unknown,
+  path: string,
+  seen: Set<object>,
+  at: Placement
+): string | null {
+  switch (typeof value) {
+    case 'undefined':
+    case 'boolean':
+    case 'string':
+    case 'number':
+      return null;
+    case 'bigint':
+      return `${path} is a BigInt, not JSON`;
+    case 'function':
+      return `${path} is a function`;
+    case 'symbol':
+      return `${path} is a symbol`;
+  }
+  if (value === null) return null;
+  const object = value as object;
+  if (object instanceof Y.AbstractType) return `${path} is a Yjs value, not plain JSON`;
+  if (seen.has(object)) return `${path} is a cycle`;
+  const proto = Object.getPrototypeOf(object) as unknown;
+  const isArray = Array.isArray(object) && proto === Array.prototype;
+  const plainObject = proto === Object.prototype || (proto === null && !at.direct);
+  if (!isArray && !plainObject) {
+    const name = (object as { constructor?: { name?: unknown } }).constructor?.name;
+    return `${path} is ${typeof name === 'string' && name !== '' ? `a ${name}` : 'an object without the plain prototype'}, not plain JSON`;
+  }
+  if (Object.getOwnPropertySymbols(object).length > 0) return `${path} has a symbol key`;
+  seen.add(object);
+  const child: Placement = { direct: at.mapKeys, mapKeys: false };
+  try {
+    if (isArray) {
+      const array = object as unknown[];
+      for (let i = 0; i < array.length; i++) {
+        const problem = valueProblem(array[i], `${path}[${i}]`, seen, child);
+        if (problem !== null) return problem;
+      }
+      return null;
+    }
+    const keys = Object.keys(object);
+    if (Object.getOwnPropertyNames(object).length !== keys.length) {
+      return `${path} has a non-enumerable key`;
+    }
+    if (!at.mapKeys && Object.hasOwn(object, '__proto__')) {
+      return `${path} has a key named __proto__, which the encoder drops`;
+    }
+    for (const key of keys) {
+      const problem = valueProblem((object as PlainObject)[key], `${path}.${key}`, seen, child);
+      if (problem !== null) return problem;
+    }
+    return null;
+  } finally {
+    seen.delete(object);
+  }
+}
+
+/**
+ * Why `value` cannot be stored under `key` in the form `as` (the structure it goes into, or
+ * `null` for plain), or `null`. In a structure the elements' and the record's own keys are map
+ * keys; everything below them, and a plain value as a whole, goes through the encoder.
+ */
+function storableProblem(key: string, value: unknown, as: StateKeyClass | null): string | null {
+  const path = `'${key}'`;
+  const seen = new Set<object>();
+  if (as === 'elements') {
+    const elements = value as PlainObject[];
+    for (let i = 0; i < elements.length; i++) {
+      const problem = valueProblem(elements[i], `${path}[${i}]`, seen, MAP_KEYS);
+      if (problem !== null) return problem;
+    }
+    return null;
+  }
+  return valueProblem(value, path, seen, as === 'record' ? MAP_KEYS : PLAIN_VALUE);
+}
+
+/** The structure `writeKey` puts `value` into, or `null` when it writes it plain. */
+function storageOf(
+  current: unknown,
+  key: string,
+  value: unknown,
+  options: StateWriteOptions
+): StateKeyClass | null {
+  const cls = current instanceof Y.Map ? classOf(current as Y.Map<unknown>) : null;
+  if (cls === 'elements' || cls === 'order' || cls === 'record') {
+    return representable(cls, value) ? cls : null;
+  }
+  if (sameStateValue(readValue(current), value)) return null;
+  const target = options.classes.get(key);
+  return options.lift && target !== undefined && representable(target, value) ? target : null;
+}
+
+/**
  * Why `value` cannot be written, or `null`. Checked for every key before the transaction
  * starts, because Yjs has no rollback: a write that threw halfway would leave half of it in the
- * document.
+ * document. `options.lift` must already say whether the document allows structure.
  */
-function rejection(stateY: Y.Map<unknown>, key: string, value: unknown): string | null {
-  if (isUnreadable(stateY.get(key))) return 'holds a structure of a class this build lacks';
-  if (value instanceof Y.AbstractType) return 'is a Yjs value, not plain JSON';
-  try {
-    canonicalJson(value);
-  } catch (error) {
-    return `is not JSON (${error instanceof Error ? error.message : String(error)})`;
-  }
-  return null;
+function rejection(
+  stateY: Y.Map<unknown> | null,
+  key: string,
+  value: unknown,
+  options: StateWriteOptions
+): string | null {
+  const current = stateY === null ? undefined : stateY.get(key);
+  if (isUnreadable(current)) return `'${key}' holds a structure of a class this build lacks`;
+  // A Yjs value first: `storageOf` compares values and must not see one.
+  if (value instanceof Y.AbstractType) return `'${key}' is a Yjs value, not plain JSON`;
+  return storableProblem(key, value, storageOf(current, key, value, options));
 }
+
+/**
+ * Throws, naming the first problem, when `writeStateKeys(stateY, partial)` or (without
+ * `stateY`) `buildStateMap(partial)` would reject the write; changes nothing. For a caller
+ * that writes more than the codec does in one go (it deletes keys, or writes several pages) and
+ * must not start when the codec would refuse a part of it.
+ */
+export function assertWritableState(
+  partial: Record<string, unknown>,
+  options: StateWriteOptions,
+  stateY: Y.Map<unknown> | null = null
+): void {
+  const effective = effectiveOptions(options, stateY);
+  for (const [key, value] of Object.entries(partial)) {
+    const reason = rejection(stateY, key, value, effective);
+    if (reason !== null) throw new Error(`state write rejected: ${reason}`);
+  }
+}
+
+/** `options` with `lift` as the document allows it (rule 1); a map outside one cannot say. */
+const effectiveOptions = (
+  options: StateWriteOptions,
+  stateY: Y.Map<unknown> | null
+): StateWriteOptions => {
+  const doc = stateY?.doc ?? null;
+  return doc === null
+    ? options
+    : { classes: options.classes, lift: options.lift && mayWriteStructured(doc) };
+};
 
 /**
  * Write each key of `partial`. A structured key is diffed into its structure (only changed
@@ -508,7 +666,8 @@ function rejection(stateY: Y.Map<unknown>, key: string, value: unknown): string 
  * Throws, before writing anything, when the map is not part of a document (use
  * `buildStateMap`), when a key of `partial` holds a structure of a class this build does not
  * know (such a document is newer, and writing into it would destroy what a newer client
- * stored), or when a value is a Yjs type or not serialisable as JSON (a BigInt, a cycle).
+ * stored), or when a value is not one Yjs stores and decodes unchanged as JSON (`valueProblem`:
+ * a Yjs type, a BigInt, a function, a `Date`, a `Map`, a class instance, a cycle, …).
  */
 export function writeStateKeys(
   stateY: Y.Map<unknown>,
@@ -519,12 +678,14 @@ export function writeStateKeys(
   if (doc === null) {
     throw new Error('writeStateKeys: the state map is not part of a document; use buildStateMap');
   }
+  // Read outside our transaction, as the writes below see it: a caller that stamps version 4
+  // in its own transaction has stamped already (rule 1).
+  const effective = effectiveOptions(options, stateY);
   for (const [key, value] of Object.entries(partial)) {
-    const reason = rejection(stateY, key, value);
-    if (reason !== null) throw new Error(`writeStateKeys: '${key}' ${reason}`);
+    const reason = rejection(stateY, key, value, effective);
+    if (reason !== null) throw new Error(`writeStateKeys: ${reason}`);
   }
   doc.transact(() => {
-    const effective = { classes: options.classes, lift: options.lift && mayWriteStructured(doc) };
     for (const [key, value] of Object.entries(partial)) writeKey(stateY, key, value, effective);
   });
 }
@@ -532,11 +693,16 @@ export function writeStateKeys(
 /**
  * A fresh, not yet integrated state map holding `state`: each key the classes name structured
  * when `lift` is set and the value is representable, everything else plain. Reads nothing back.
+ * Throws, before building anything, for a value `writeStateKeys` would reject.
  */
 export function buildStateMap(
   state: Record<string, unknown>,
   options: StateWriteOptions
 ): Y.Map<unknown> {
+  for (const [key, value] of Object.entries(state)) {
+    const reason = rejection(null, key, value, options);
+    if (reason !== null) throw new Error(`buildStateMap: ${reason}`);
+  }
   const stateY = new Y.Map<unknown>();
   for (const [key, value] of Object.entries(state)) {
     const cls = options.classes.get(key);

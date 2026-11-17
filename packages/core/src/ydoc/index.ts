@@ -20,6 +20,7 @@ export {
   type StateKeyClasses,
 } from './stateKeyClasses.js';
 export {
+  assertWritableState,
   buildStateMap,
   mayWriteStructured,
   readState,
