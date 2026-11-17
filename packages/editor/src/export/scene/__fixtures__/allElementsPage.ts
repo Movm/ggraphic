@@ -5,10 +5,9 @@
  * `fixture-poster` template: the template draws the colour plane, the ornament and three text
  * lines, everything else comes from the collections.
  *
- * Meant to be laid out on 1080×1350. A filtered photo ('filtered', only with `filtered: true`) is a
- * raster island by design: the replay does not draw one until `resolveScene` has made its pixels,
- * so the page that is compared pixel by pixel does not have it. The editor has no even-odd fill
- * to put in a page state; the differential adds one on its own stage.
+ * Meant to be laid out on 1080×1350. A filtered photo ('filtered', only with `filtered: true`) is
+ * drawn from its look bitmap; the differential checks it on its own. The editor has no even-odd
+ * fill to put in a page state; the differential adds one on its own stage.
  */
 import { createCircleBadgeInstance } from '../../../utils/circleBadgeUtils.js';
 import { createFrameInstance } from '../../../utils/framePresets.js';
@@ -213,7 +212,7 @@ export function allElementsPage({
       fit: 'cover',
       notch: 0.08,
     },
-    // Konva caches the node and filters the cache: brightness and blur at once.
+    // Brightness and blur at once, in one look bitmap.
     ...(filtered
       ? [
           {

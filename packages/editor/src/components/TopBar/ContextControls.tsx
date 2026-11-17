@@ -436,6 +436,7 @@ export function ContextControls({
     groups.push(
       <FloatingFontSizeControl
         key="fontsize"
+        elementId={activeFloatingModule.data.id}
         fontSize={activeFloatingModule.data.fontSize ?? 16}
         onFontSizeChange={(size) =>
           handlers.handleFontSizeChange(activeFloatingModule.data.id, size)

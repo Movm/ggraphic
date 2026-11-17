@@ -578,6 +578,7 @@ export const KIND_RENDERERS: KindRenderers = {
     } = ctx;
     const textItem = item.data;
     if (!textItem) return null;
+    let scaledSize: number | null = null;
     return (
       <SelectableCanvasText
         key={textItem.id}
@@ -622,13 +623,21 @@ export const KIND_RENDERERS: KindRenderers = {
           handlers.handleAdditionalTextChange(textItem.id, { x, y });
         }}
         transformConfig={{ rotateEnabled: true }}
+        // A corner drag reports its size right before its box, in the same release: both go
+        // into one change, so the drag is one undo step and the size is set by hand.
+        onFontSizeChange={(size) => {
+          scaledSize = size;
+        }}
         onTransformEnd={(x, y, width, scaleX, _scaleY, rotation) => {
+          const fontSize = scaledSize;
+          scaledSize = null;
           handlers.handleAdditionalTextChange(textItem.id, {
             x,
             y,
             width,
             scale: scaleX,
             rotation,
+            ...(fontSize === null ? {} : { fontSize }),
           });
         }}
         editable={textItem.counter === undefined}

@@ -11,6 +11,7 @@ import '../../testing/fixtureTemplates';
 import { AutoSaveStoreProvider } from '../../stores/AutoSaveStoreProvider.js';
 import { withSelectionChromeHidden } from '../../utils/captureStage.js';
 import { CROP_GHOST_NAME, paintCropGhosts } from '../../utils/cropGhost.js';
+import { LOOK_IMAGE_ATTR } from '../../utils/lookBitmap.js';
 
 import { createCanvas } from '@napi-rs/canvas';
 import { act, cleanup, render, waitFor } from '@testing-library/react';
@@ -286,10 +287,10 @@ describe('Restbild: Fläche und Look', () => {
     const canvas = await mount({ backgroundImageAdjustments: { grayscale: true } });
     await canvas.fire(canvas.background(), 'dbltap');
     const [ghost] = canvas.ghosts();
-    // Eine gefilterte, verkleinerte Kopie statt der Originalquelle.
-    expect(ghost!.image()).not.toBe(canvas.background().image());
-    const source = ghost!.image() as HTMLCanvasElement;
+    // Dieselbe gefilterte Bitmap wie das Foto im Rahmen, einmal gerechnet.
+    const source = ghost!.getAttr(LOOK_IMAGE_ATTR) as HTMLCanvasElement;
     expect(source).toBeInstanceOf(HTMLCanvasElement);
+    expect(canvas.background().getAttr(LOOK_IMAGE_ATTR)).toBe(source);
     const sourceCall = grayscale.mock.calls.find(
       ([data]) => data.width === source.width && data.height === source.height
     );
@@ -307,8 +308,8 @@ describe('Restbild beim begradigten Foto', () => {
     await canvas.fire(canvas.background(), 'dbltap');
     const [ghost] = canvas.ghosts();
     expect(ghost!.rotation()).toBe(10);
-    expect(ghost!.image()).toBeInstanceOf(HTMLCanvasElement);
-    expect(ghost!.image()).not.toBe(canvas.background().image());
+    expect(ghost!.getAttr(LOOK_IMAGE_ATTR)).toBeInstanceOf(HTMLCanvasElement);
+    expect(ghost!.getAttr(LOOK_IMAGE_ATTR)).toBe(canvas.background().getAttr(LOOK_IMAGE_ATTR));
     await waitFor(() => expect(canvas.overlay()!.style.display).toBe(''));
   }, 90_000);
 });

@@ -59,4 +59,20 @@ globalThis.ResizeObserver ??= class {
   disconnect() {}
 } as unknown as typeof ResizeObserver;
 
+// jsdom has no `matchMedia` either. Layout hooks such as `useIsCanvasMobile`
+// fall back to a window query when no editor box was measured; "no match"
+// means desktop. Tests that need the mobile layout install their own
+// `matchMedia` and override this placeholder.
+window.matchMedia ??= (query: string) =>
+  ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener() {},
+    removeEventListener() {},
+    addListener() {},
+    removeListener() {},
+    dispatchEvent: () => false,
+  }) as MediaQueryList;
+
 afterEach(cleanup);

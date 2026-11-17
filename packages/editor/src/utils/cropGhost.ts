@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import Konva from 'konva';
+import { LOOK_IMAGE_ATTR } from './lookBitmap.js';
 
-import { getActiveImageFilters, imageFilterAttrs } from './imageFilters.js';
-
-import type { ImageAdjustments } from './userImageUtils.js';
+import type Konva from 'konva';
 import type { Mirror, Rect } from './coverFit.js';
 
 /**
@@ -192,62 +190,12 @@ export function paintCropGhosts(
     ctx.setTransform(...toOverlay);
     ctx.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
     ctx.globalAlpha = node.getAbsoluteOpacity();
-    ctx.drawImage(node.image()!, 0, 0, width, height);
+    // The look bitmap, when the photo has one (`useLookBitmap`); the mirror is in the matrix.
+    const source =
+      (node.getAttr(LOOK_IMAGE_ATTR) as CanvasImageSource | undefined) ?? node.image()!;
+    ctx.drawImage(source, 0, 0, width, height);
   }
   ctx.setTransform(...toOverlay);
   ctx.globalAlpha = 1;
   ctx.clearRect(0, 0, stage.width(), stage.height());
-}
-
-// Längste Kante der gefilterten Restbild-Vorlage; abgedunkelt braucht es keine volle Auflösung.
-const GHOST_SOURCE_SIDE = 1024;
-
-/**
- * Die Bildquelle des Restbilds mit dem Look des Fotos („Bearbeiten"-Filter,
- * Einfärbung), einmal auf eine verkleinerte Kopie gerechnet statt per Cache
- * auf dem ganzen, oft vielfach gezoomten Restbild. Spiegeln bleibt außen vor:
- * das Restbild spiegelt über seine Skalierung. `displayedWidth` ist die Breite
- * des ganzen Fotos auf der Bühne; der Weichzeichner-Radius gilt dort.
- */
-export function cropGhostSource(
-  image: HTMLImageElement,
-  adjustments: ImageAdjustments | null,
-  displayedWidth: number,
-  color: string | null = null
-): CanvasImageSource {
-  const look = adjustments ? { ...adjustments, flipX: false, flipY: false } : null;
-  const filters = [
-    ...(color ? [Konva.Filters.RGB] : []),
-    ...(look ? getActiveImageFilters(look) : []),
-  ];
-  const natural = { width: image.naturalWidth, height: image.naturalHeight };
-  if (filters.length === 0 || !natural.width || !natural.height) return image;
-
-  const scale = Math.min(1, GHOST_SOURCE_SIDE / Math.max(natural.width, natural.height));
-  const width = Math.max(1, Math.round(natural.width * scale));
-  const height = Math.max(1, Math.round(natural.height * scale));
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return image;
-  ctx.drawImage(image, 0, 0, width, height);
-  // Die Filter lesen ihre Werte vom Knoten (`this`), wie in Konvas Cache.
-  const attrs = new Konva.Image({
-    image,
-    ...(look ? imageFilterAttrs(look) : {}),
-    blurRadius: ((look?.blur ?? 0) * width) / Math.max(1, displayedWidth),
-    ...(color
-      ? {
-          red: parseInt(color.slice(1, 3), 16),
-          green: parseInt(color.slice(3, 5), 16),
-          blue: parseInt(color.slice(5, 7), 16),
-        }
-      : {}),
-  });
-  const data = ctx.getImageData(0, 0, width, height);
-  for (const filter of filters) if (typeof filter === 'function') filter.call(attrs, data);
-  ctx.putImageData(data, 0, 0);
-  attrs.destroy();
-  return canvas;
 }

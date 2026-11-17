@@ -968,6 +968,7 @@ export const en: Messages = {
     layerDown: 'Move layer down',
     fontSmaller: 'Make text smaller',
     fontLarger: 'Make text larger',
+    fontSizeInput: 'Font size',
     fontRole: 'Font',
     fontRoles: {
       headline: 'Headline',

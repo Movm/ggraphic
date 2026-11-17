@@ -1,5 +1,22 @@
 # @ggraphic/editor
 
+## 0.1.0-alpha.8
+
+### Minor Changes
+
+- f585f15: A photo's look (adjustments, background tint) is now a bitmap made once per look instead of Konva filters run over the node's cache. Panning, zooming and dragging the crop frame of a filtered photo (background or framed) no longer filter again; a slider drag shows a small bitmap and builds the full one once the look rests. Flip and vignette are drawn over the frame; the vignette darkens only the photo's own pixels. A filtered photo now exports as an image of its bitmap instead of a raster island. Removed `cacheFiltered`, `cropGhostSource`, `recacheNextFrame` and `straightSceneFunc` (no consumers).
+
+## 0.1.0-alpha.7
+
+### Minor Changes
+
+- e3124dd: Text size like in Canva. The size field in the toolbar takes a typed number: Enter or leaving the field applies it, Escape drops it, the arrow keys step by 1 (10 with Shift). A text has corner handles: dragging a corner scales the text, the size field follows the drag live, and the size is written on release in the same undo step as the box. A free text kept only its new width before. A template text gets corners where its size persists (`fontSizeStateKey`). A size set by hand fixes the size: `updateAdditionalText` with `fontSize` drops `maxFontSize`, so no later edit, font or brand change refits the text over it.
+
+### Patch Changes
+
+- 95288f2: Panning a background photo in Ausschnitt mode no longer jumps back when the pointer rests. The pan read its offset from the node, which it puts back on its box after every move. Konva fires `dragmove` without placing the node again when the pointer did not move, so a resting mouse or trackpad read a pan of zero and the photo jumped to where the drag began, back and forth while dragging and lost entirely when released during a pause. The offset now comes from the pointer, as Konva places a dragged node.
+- Panning a filtered background photo in Ausschnitt mode runs at frame rate. Every pointer move used to re-cache the node and so ran every filter over the whole bitmap again (about 85 ms per move). Now the node shows a copy of the whole photo, filtered once at the resolution it is shown at, with its crop scaled to that copy and no filters or cache. The copy is made when Ausschnitt mode opens, and again after a zoom. On release the photo, its filters and a sharp cache come back before the store updates. `cropGhostSource` takes an optional `maxSide`.
+
 ## 0.1.0-alpha.6
 
 ### Minor Changes

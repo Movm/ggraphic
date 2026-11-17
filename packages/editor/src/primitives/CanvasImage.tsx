@@ -13,12 +13,13 @@
  * - Single bounds calculation (removed from dragBoundFunc, only in handleDragMove)
  */
 
-import Konva from 'konva';
-import { useRef, useEffect, useCallback, useMemo, memo } from 'react';
+import type Konva from 'konva';
+import { useRef, useEffect, useCallback, memo } from 'react';
 import { Image as KonvaImage, Transformer } from 'react-konva';
 
 import { LOCKED_TRANSFORMER, useIsItemLocked } from '../components/canvasItemLock.js';
 import { useGeometryReporter, type GeometryReporter } from '../hooks/useGeometryReporter.js';
+import { useLookBitmap } from '../hooks/useLookBitmap.js';
 import { useSnapScheduler } from '../hooks/useSnapScheduler.js';
 import {
   panWindowPhoto,
@@ -29,9 +30,9 @@ import {
   type Rect,
 } from '../utils/coverFit.js';
 import { isGroupDrag } from '../utils/multiSelect.js';
+import { usePreviewCaptureRatio } from '../utils/filterCache.js';
+import { drawsLook, lookDrawAttrs, lookSceneFunc } from '../utils/lookBitmap.js';
 import { ELEMENT_TRANSFORMER, normalizeRotation } from '../utils/orientation.js';
-import { cacheFiltered, usePreviewCaptureRatio } from '../utils/filterCache.js';
-import { recacheNextFrame } from '../utils/recacheNextFrame.js';
 import { boxFrame, createBoxFrame, frameBounds, snapByBounds } from '../utils/snapping.js';
 import {
   panStraightPhoto,
@@ -39,7 +40,6 @@ import {
   straightDrawOf,
   straightenWindowPhoto,
   straightScaleCrop,
-  straightSceneFunc,
   windowPhotoOfStraight,
   zoomStraightPhoto,
 } from '../utils/straighten.js';
@@ -48,10 +48,8 @@ import {
   CROP_GHOST_NAME,
   CROP_GHOST_OPACITY,
   cropGhostAttrs,
-  cropGhostSource,
   placeCropGhost,
 } from '../utils/cropGhost.js';
-import { getActiveImageFilters, imageFilterAttrs } from '../utils/imageFilters.js';
 import { backgroundKeyCrop, cropKeyOf, type CropKey } from '../utils/keyboardCrop.js';
 
 import type { ImageAdjustments } from '../utils/userImageUtils.js';
@@ -59,6 +57,29 @@ import type { TransformConfig, TransformAnchor } from '../types/editorTypes.js';
 import type { SnapTarget, SnapLine } from '../utils/snapping.js';
 
 // Rahmen für Snap und Geometrie-Meldung, pro Aufruf neu beschrieben (synchron, ohne Allokation).
+/** The pointer in `node`'s parent space — where Konva itself places a dragged node from. */
+function pointerInParent(node: Konva.Node): Konva.Vector2d | null {
+  const pointer = node.getStage()?.getPointerPosition();
+  const parent = node.getParent();
+  if (!pointer || !parent) return null;
+  return parent.getAbsoluteTransform().copy().invert().point(pointer);
+}
+
+/**
+ * How far a pan has moved since its start. Taken from the pointer, not from the node: the pan puts
+ * the node back on its box after every move, and Konva fires `dragmove` without placing the node
+ * again when the pointer did not move (a resting mouse, a trackpad) — read from the node, that
+ * event is a pan of zero and the photo jumps back to where the drag began.
+ */
+function panDelta(
+  node: Konva.Node,
+  pan: { part: Rect; pointer: Konva.Vector2d | null }
+): [dx: number, dy: number] {
+  const at = pan.pointer && pointerInParent(node);
+  if (pan.pointer && at) return [at.x - pan.pointer.x, at.y - pan.pointer.y];
+  return [node.x() - pan.part.x, node.y() - pan.part.y];
+}
+
 const dragFrame = createBoxFrame();
 
 export interface CanvasImageProps {
@@ -159,12 +180,15 @@ function CanvasImageInner({
   const locked = useIsItemLocked();
   const imageRef = useRef<Konva.Image>(null);
   const captureRatio = usePreviewCaptureRatio();
-  // Drag of a cover-fitted photo: the node under the pointer at drag start, and the pan so far
-  // (begradigt: die Lage des gedrehten Fotos).
-  const panStartRef = useRef<{ part: Rect; dx: number; dy: number; photo: Rect | null } | null>(
-    null
-  );
-  const adjustmentFilters = adjustments ? getActiveImageFilters(adjustments) : [];
+  // Drag of a cover-fitted photo: the node under the pointer at drag start, the pointer there (in
+  // the node's parent space), and the pan so far (begradigt: die Lage des gedrehten Fotos).
+  const panStartRef = useRef<{
+    part: Rect;
+    pointer: Konva.Vector2d | null;
+    dx: number;
+    dy: number;
+    photo: Rect | null;
+  } | null>(null);
   const trRef = useRef<Konva.Transformer>(null);
   const ghostRef = useRef<Konva.Image>(null);
 
@@ -208,14 +232,21 @@ function CanvasImageInner({
       : null;
   // Begradigt dreht sich das Restbild samt gefilterter Kopie über `rotation` mit.
   const ghostAttrs = ghost ? cropGhostAttrs(ghost, mirror, turnDeg) : null;
-  // Außerhalb des Rahmens dieselbe Bearbeitung wie innen (Weichzeichner, S/W …).
-  const ghostWidth = ghost ? Math.round(ghost.width) : 0;
-  const ghostImage = useMemo(
-    () =>
-      image && ghostWidth
-        ? cropGhostSource(image, adjustments ?? null, ghostWidth, color ?? null)
-        : null,
-    [image, adjustments, color, ghostWidth]
+  // The look is a bitmap made once per look (`useLookBitmap`); panning only moves the crop. The
+  // dimmed rest outside the frame shows the same bitmap (blur, B/W …).
+  const look = adjustments ?? null;
+  const drawLook = drawsLook(look, color ?? null);
+  const lookPhoto = natural
+    ? (straight ?? photoRectAround(natural, { x, y, width, height }))
+    : null;
+  useLookBitmap(
+    [imageRef, ghostRef],
+    image ?? null,
+    look,
+    color ?? null,
+    lookPhoto?.width ?? width,
+    captureRatio,
+    !!ghost
   );
 
   useEffect(() => {
@@ -226,33 +257,6 @@ function CanvasImageInner({
       trRef.current.nodes([]);
     }
   }, [selected]);
-
-  // Konva filters require the node to be cached first; without filters the
-  // cache is only an extra offscreen canvas redrawn on every change.
-  useEffect(() => {
-    const node = imageRef.current;
-    if (!node || !image) return;
-    if (color || adjustmentFilters.length > 0) {
-      cacheFiltered(node, captureRatio);
-    } else {
-      node.clearCache();
-    }
-    node.getLayer()?.batchDraw();
-  }, [
-    image,
-    width,
-    height,
-    part?.crop.x,
-    part?.crop.y,
-    draw?.x,
-    draw?.y,
-    draw?.width,
-    draw?.rotation,
-    color,
-    adjustments,
-    adjustmentFilters.length,
-    captureRatio,
-  ]);
 
   const handleTouchStart = useCallback(
     (e: Konva.KonvaEventObject<TouchEvent>) => {
@@ -390,13 +394,7 @@ function CanvasImageInner({
       const pan = panStartRef.current;
       if (pan && straight && natural && slot) {
         // Der Knoten bleibt der Rahmen; das gedrehte Foto bewegt sich darin.
-        const moved = panStraightPhoto(
-          straight,
-          turnDeg,
-          slot,
-          node.x() - pan.part.x,
-          node.y() - pan.part.y
-        );
+        const moved = panStraightPhoto(straight, turnDeg, slot, ...panDelta(node, pan));
         node.position(slot);
         if (turned) {
           node.setAttr(STRAIGHT_DRAW_ATTR, straightDrawOf(moved, turnDeg, slot, mirror));
@@ -406,7 +404,6 @@ function CanvasImageInner({
         }
         pan.photo = moved;
         placeCropGhost(ghostRef.current, moved, mirror, turnDeg);
-        recacheNextFrame(node);
         return;
       }
       if (pan && natural && slot) {
@@ -415,8 +412,7 @@ function CanvasImageInner({
           natural,
           { x, y, width, height },
           slot,
-          node.x() - pan.part.x,
-          node.y() - pan.part.y,
+          ...panDelta(node, pan),
           mirror
         );
         if (!next.part) return;
@@ -431,7 +427,6 @@ function CanvasImageInner({
           photoRectAround(natural, { x: x + next.dx, y: y + next.dy, width, height }),
           mirror
         );
-        recacheNextFrame(node);
         return;
       }
       const nodeWidth = node.width() * node.scaleX();
@@ -504,8 +499,17 @@ function CanvasImageInner({
     (e: Konva.KonvaEventObject<DragEvent>) => {
       // In a group drag a cover-fitted image moves with the others; the background photo
       // never joins one, outside Ausschnitt mode it is not draggable.
+      const node = e.target as Konva.Image;
       panStartRef.current =
-        part && !isGroupDrag(e.target) ? { part: part.box, dx: 0, dy: 0, photo: null } : null;
+        part && !isGroupDrag(node)
+          ? {
+              part: part.box,
+              pointer: pointerInParent(node),
+              dx: 0,
+              dy: 0,
+              photo: null,
+            }
+          : null;
       snap.onDragStart();
     },
     [part, snap]
@@ -624,11 +628,12 @@ function CanvasImageInner({
 
   return (
     <>
-      {ghostAttrs && ghostImage && (
+      {ghostAttrs && (
         <KonvaImage
           ref={ghostRef}
           name={`selection-chrome ${CROP_GHOST_NAME}`}
-          image={ghostImage}
+          image={image}
+          sceneFunc={drawLook ? lookSceneFunc : undefined}
           opacity={CROP_GHOST_OPACITY}
           listening={false}
           {...ghostAttrs}
@@ -657,12 +662,9 @@ function CanvasImageInner({
         onTransform={handleTransform}
         onTransformEnd={handleTransformEnd}
         listening={listening}
-        filters={color ? [Konva.Filters.RGB, ...adjustmentFilters] : adjustmentFilters}
-        red={color ? parseInt(color.slice(1, 3), 16) : undefined}
-        green={color ? parseInt(color.slice(3, 5), 16) : undefined}
-        blue={color ? parseInt(color.slice(5, 7), 16) : undefined}
-        {...(adjustments ? imageFilterAttrs(adjustments) : {})}
-        {...(draw ? { sceneFunc: straightSceneFunc, [STRAIGHT_DRAW_ATTR]: draw } : {})}
+        {...lookDrawAttrs(look)}
+        sceneFunc={drawLook || draw ? lookSceneFunc : undefined}
+        {...(draw ? { [STRAIGHT_DRAW_ATTR]: draw } : {})}
       />
       {selected && (
         <Transformer
