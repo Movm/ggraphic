@@ -1,5 +1,14 @@
 # @ggraphic/studio
 
+## 0.1.0-alpha.10
+
+### Patch Changes
+
+- Updated dependencies [2297fbb]
+  - @ggraphic/editor@0.1.0-alpha.10
+  - @ggraphic/schema@0.1.0-alpha.3
+  - @ggraphic/templates-open@0.1.0-alpha.1
+
 ## 0.1.0-alpha.9
 
 ### Patch Changes
