@@ -18,6 +18,7 @@
 
 import {
   STATE_KIND_KEY,
+  assertWritableState,
   buildStateMap,
   mayWriteStructured,
   posBetween,
@@ -252,11 +253,14 @@ export function posForInsert(doc: Y.Doc, index: number): string {
   return posJitter(posBetween(before, after));
 }
 
+// Each checks the state first: `posForInsert` may re-space the pages before the page is built.
 export function insertPageAt(doc: Y.Doc, index: number, def: PageDef): void {
+  assertWritableState(def.state, builtFor(doc));
   getPagesMap(doc).set(def.id, buildPage(doc, def, posForInsert(doc, index)));
 }
 
 export function appendPage(doc: Y.Doc, def: PageDef): void {
+  assertWritableState(def.state, builtFor(doc));
   getPagesMap(doc).set(def.id, buildPage(doc, def, posForInsert(doc, Number.MAX_SAFE_INTEGER)));
 }
 
@@ -330,14 +334,20 @@ export function setPageConfigById(
 ): void {
   const page = getPagesMap(doc).get(id);
   if (!page) return;
+  // Built first: a state the codec rejects throws before the page changes.
+  const state = buildStateMap(newState, builtFor(doc));
   page.set(YDOC_KEYS.configId, configId);
-  page.set(YDOC_KEYS.state, buildStateMap(newState, builtFor(doc)));
+  page.set(YDOC_KEYS.state, state);
 }
 
-/** Make a page's state map equal `state` in place: absent keys deleted, changed keys set. */
+/**
+ * Make a page's state map equal `state` in place: absent keys deleted, changed keys set. A
+ * state the codec would reject throws before anything, the deletions included, is written.
+ */
 export function replacePageState(doc: Y.Doc, pageId: string, state: Record<string, unknown>): void {
   const stateY = getPagesMap(doc).get(pageId)?.get(YDOC_KEYS.state);
   if (!(stateY instanceof Y.Map)) return;
+  assertWritableState(state, liveWrite(), stateY as Y.Map<unknown>);
   for (const key of Array.from(stateY.keys())) {
     if (!(key in state)) stateY.delete(key);
   }
@@ -389,10 +399,17 @@ export interface ReplaceDeckOps {
  * a recomposed page may have dropped elements. The existing state Y.Map is
  * mutated in place (not swapped) so observers on it — useYjsPageStateSync —
  * keep firing. Order: updates, inserts (sequential), removes — so an insert
- * may anchor on a page that is removed in the same call.
+ * may anchor on a page that is removed in the same call. A state the codec
+ * would reject throws before any page is written.
  */
 export function replaceDeck(doc: Y.Doc, ops: ReplaceDeckOps, origin: unknown): string[] {
   const insertedIds: string[] = [];
+  const pagesMap = getPagesMap(doc);
+  for (const { pageId, state } of ops.updates) {
+    const stateY = pagesMap.get(pageId)?.get(YDOC_KEYS.state);
+    if (stateY instanceof Y.Map) assertWritableState(state, liveWrite(), stateY as Y.Map<unknown>);
+  }
+  for (const { state } of ops.inserts) assertWritableState(state, builtFor(doc));
   doc.transact(() => {
     for (const { pageId, state } of ops.updates) replacePageState(doc, pageId, state);
     for (const ins of ops.inserts) {
@@ -433,6 +450,8 @@ export function seedPagesIfEmpty(doc: Y.Doc, defs: PageDef[]): boolean {
   const pagesMap = getPagesMap(doc);
   const meta = getMetaMap(doc);
   if (!isUnseeded(doc)) return false;
+  // Every page first: a rejected state must not leave half a seed.
+  for (const def of defs) assertWritableState(def.state, builtFor(doc));
   let pos: string | null = null;
   for (const def of defs) {
     pos = posBetween(pos, null);
