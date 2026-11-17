@@ -325,8 +325,24 @@ export function updatePageStateById(
   if (!page) return;
   const stateY = page.get(YDOC_KEYS.state);
   if (!(stateY instanceof Y.Map)) return;
-  writeStateKeys(stateY as Y.Map<unknown>, partial, liveWrite(doc));
+  const write = liveWrite(doc);
+  // A classed key the page never had, given an empty collection or record, is not written: the
+  // canvas reports every collection after an undo (it rebuilds its state), and writing each of
+  // them would add ~15 empty structures to a page that holds none (#214). It would also widen the
+  // "first element of a kind" race: an empty structure created here can win the key against a
+  // peer's first element (see DOCUMENT_VERSIONING.md, "Risks"). Absent reads as empty already.
+  const toWrite = Object.fromEntries(
+    Object.entries(partial).filter(
+      ([key, value]) => stateY.has(key) || !write.classes.has(key) || !isEmptyValue(value)
+    )
+  );
+  writeStateKeys(stateY as Y.Map<unknown>, toWrite, write);
 }
+
+const isEmptyValue = (value: unknown): boolean =>
+  Array.isArray(value)
+    ? value.length === 0
+    : typeof value === 'object' && value !== null && Object.keys(value).length === 0;
 
 /**
  * Convert a page to another template in place: replaces `configId` and the
