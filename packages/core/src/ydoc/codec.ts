@@ -169,6 +169,16 @@ function cacheable(map: Y.Map<unknown>): boolean {
   return doc._transactionCleanups.every((transaction) => invalidated.has(transaction));
 }
 
+/** An own, enumerable property of any name, `__proto__` included. */
+const define = (target: PlainObject, key: string, value: unknown): void => {
+  Object.defineProperty(target, key, {
+    value,
+    writable: true,
+    enumerable: true,
+    configurable: true,
+  });
+};
+
 /** An order key as read: a missing or malformed one sorts first. */
 const keyOf = (value: unknown): string => (typeof value === 'string' ? value : '');
 
@@ -182,7 +192,7 @@ function readElement(map: Y.Map<unknown>, id: string, useCache: boolean): Elemen
   }
   const element: Element = { id };
   map.forEach((value, key) => {
-    if (key !== ELEMENT_POS_KEY && key !== 'id') element[key] = plainOf(value);
+    if (key !== ELEMENT_POS_KEY && key !== 'id') define(element, key, plainOf(value));
   });
   if (useCache) elementCache.set(map, element);
   return element;
@@ -211,7 +221,7 @@ function readOrder(map: Y.Map<unknown>): string[] {
 function readRecord(map: Y.Map<unknown>): PlainObject {
   const record: PlainObject = {};
   map.forEach((value, key) => {
-    if (key !== STATE_KIND_KEY) record[key] = plainOf(value);
+    if (key !== STATE_KIND_KEY) define(record, key, plainOf(value));
   });
   return record;
 }
@@ -251,7 +261,7 @@ export function readStateKey(stateY: Y.Map<unknown>, key: string): unknown {
 export function readState(stateY: Y.Map<unknown>): Record<string, unknown> {
   const state: Record<string, unknown> = {};
   stateY.forEach((value, key) => {
-    if (!isUnreadable(value)) state[key] = readValue(value);
+    if (!isUnreadable(value)) define(state, key, readValue(value));
   });
   return state;
 }

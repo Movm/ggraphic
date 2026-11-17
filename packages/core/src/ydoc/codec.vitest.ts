@@ -688,3 +688,51 @@ describe('stored order keys the codec never mints', () => {
     expect(readStateKey(stateY, 'shapeInstances')).toStrictEqual(next);
   });
 });
+
+describe('property and key names of any kind survive', () => {
+  const NAMES = ['__proto__', 'constructor', 'hasOwnProperty', 'toString', ''];
+
+  it.each(NAMES)('%j as an element property, a record key, an id and a state key', (name) => {
+    const own = (pairs: [string, unknown][]) =>
+      Object.fromEntries(pairs) as Record<string, unknown>;
+    const state = own([
+      [
+        'shapeInstances',
+        [
+          own([
+            ['id', 'a'],
+            [name, { x: 1 }],
+          ]),
+          { id: name || 'empty', x: 2 },
+        ],
+      ],
+      [
+        'iconStates',
+        own([
+          [name, { x: 1 }],
+          ['b', 2],
+        ]),
+      ],
+      ['layerOrder', [name || 'empty', 'a']],
+      [name || 'emptyKey', 'plain'],
+    ]);
+    const { doc, stateY } = pageWith(state);
+    expect(readState(stateY)).toStrictEqual(state);
+    const element = (readStateKey(stateY, 'shapeInstances') as Record<string, unknown>[])[0]!;
+    expect(Object.hasOwn(element, name)).toBe(true);
+
+    // Writing back what was read changes nothing.
+    const updates = updatesOf(doc, () => writeStateKeys(stateY, readState(stateY), LIFT));
+    expect(updates).toEqual([]);
+    const peer = new Y.Doc();
+    Y.applyUpdate(peer, Y.encodeStateAsUpdate(doc));
+    const peerState = peer.getMap<Y.Map<unknown>>('pagesById').get('p1')!.get('state');
+    const onPeer = readState(peerState as Y.Map<unknown>);
+    // Not toStrictEqual: it compares `.constructor` by reference, and an own `constructor`
+    // property decoded on the peer is an equal but different object.
+    expect(sameStateValue(onPeer, state)).toBe(true);
+    const peerElement = (onPeer['shapeInstances'] as Record<string, unknown>[])[0]!;
+    expect(Object.hasOwn(peerElement, name)).toBe(true);
+    expect(Object.hasOwn(onPeer['iconStates'] as object, name)).toBe(true);
+  });
+});
