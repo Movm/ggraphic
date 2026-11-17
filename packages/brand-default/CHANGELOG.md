@@ -1,5 +1,12 @@
 # @ggraphic/brand-default
 
+## 0.1.0-alpha.6
+
+### Patch Changes
+
+- Updated dependencies [234f4f9]
+  - @ggraphic/core@0.1.0-alpha.6
+
 ## 0.1.0-alpha.5
 
 ### Patch Changes

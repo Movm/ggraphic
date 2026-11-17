@@ -1,5 +1,16 @@
 # @ggraphic/editor
 
+## 0.1.0-alpha.13
+
+### Patch Changes
+
+- 234f4f9: `@ggraphic/core/ydoc` no longer exports `cyrb53`, `isDerivedClientId`, `posJitter`, `runAfterWrite`, `canonicalJsonValue`, `sameStateValue` and `representableProblem`: they are implementation details of the codec and the deterministic lift, not API. This removes public exports in an alpha (none of them was used by the Grünerator). The first six, which `@ggraphic/editor` needs across the package boundary, moved to the unstable channel `@ggraphic/core/internal/*` (`@ggraphic/core/internal/ydoc/internal`, no semver promise, like `@ggraphic/editor/internal/*`); `representableProblem` is private to the core. `liftSalt` stays public: a host that lifts documents itself needs it. The values the functions return are unchanged, so the bytes of the deterministic lift are identical.
+- 49cfc0b: Deleting an element through the factory actions (`createShapeActions` and the other `create*Actions` that remove an element) now also takes its id out of the page's `layerOrder`, as the page engine already did; before, the id stayed in the stored order (`$kind: order`) until a later reorder rewrote the list (#214). `updatePageStateById` no longer writes an empty collection, id list or record to a key of the format that the page does not hold: the canvas reports every collection after an undo, and each empty write created an empty structure (about 15 per page) that could win the key against a peer's first element of that kind. A key the page holds, and an empty value of a key the format does not classify, are written as before. `DOCUMENT_VERSIONING.md`: the measured growth of the deterministic position chain (#208), no change to the chain.
+- Updated dependencies [234f4f9]
+- Updated dependencies [49cfc0b]
+  - @ggraphic/core@0.1.0-alpha.6
+  - @ggraphic/schema@0.1.0-alpha.5
+
 ## 0.1.0-alpha.12
 
 ### Minor Changes
