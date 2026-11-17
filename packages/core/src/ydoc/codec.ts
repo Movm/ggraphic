@@ -337,16 +337,18 @@ function longestIncreasing(seq: readonly number[]): number[] {
   return out.reverse();
 }
 
-/** Every id on a fresh deterministic chain; returns the keys that differ from `current`. */
-function respace(
-  ids: readonly string[],
-  current: ReadonlyMap<string, string>
-): Map<string, string> {
+/**
+ * Every id on a fresh chain, each key jittered: two clients re-spacing the same list at once
+ * must not mint equal keys for different ids, which would tie again. Only user writes re-space;
+ * the lift and `buildStateMap` use the deterministic chain, so their convergence does not
+ * depend on this.
+ */
+function respace(ids: readonly string[]): Map<string, string> {
   const out = new Map<string, string>();
   let pos: string | null = null;
   for (const id of ids) {
-    pos = posBetween(pos, null);
-    if (current.get(id) !== pos) out.set(id, pos);
+    pos = posJitter(posBetween(pos, null));
+    out.set(id, pos);
   }
   return out;
 }
@@ -382,7 +384,7 @@ function planPositions(
       continue;
     }
     const next = nextFixed[i]!;
-    if (previous !== null && next !== null && previous >= next) return respace(ids, current);
+    if (previous !== null && next !== null && previous >= next) return respace(ids);
     const pos = posJitter(posBetween(previous, next));
     out.set(id, pos);
     previous = pos;

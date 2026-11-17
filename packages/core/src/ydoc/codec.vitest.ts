@@ -736,3 +736,31 @@ describe('property and key names of any kind survive', () => {
     expect(Object.hasOwn(onPeer['iconStates'] as object, name)).toBe(true);
   });
 });
+
+describe('re-spacing', () => {
+  /** A layerOrder whose `a` and `b` tie, on two synced docs. */
+  function tiedPair() {
+    const { doc: a, stateY: sa } = pageWith({ layerOrder: ['a', 'b', 'c'] });
+    const map = sa.get('layerOrder') as Y.Map<unknown>;
+    map.set('b', map.get('a'));
+    const b = new Y.Doc();
+    Y.applyUpdate(b, Y.encodeStateAsUpdate(a));
+    const sb = b.getMap<Y.Map<unknown>>('pagesById').get('p1')!.get('state') as Y.Map<unknown>;
+    return { a, sa, b, sb };
+  }
+
+  it('jitters the keys it mints, so two concurrent re-spaces do not tie again', () => {
+    for (let run = 0; run < 20; run++) {
+      const { a, sa, b, sb } = tiedPair();
+      writeStateKeys(sa, { layerOrder: ['a', 'n', 'b', 'c'] }, LIFT);
+      writeStateKeys(sb, { layerOrder: ['c', 'a', 'm', 'b'] }, LIFT);
+      Y.applyUpdate(a, Y.encodeStateAsUpdate(b));
+      Y.applyUpdate(b, Y.encodeStateAsUpdate(a));
+      expect(readStateKey(sa, 'layerOrder')).toStrictEqual(readStateKey(sb, 'layerOrder'));
+      const keys = Object.entries((sa.get('layerOrder') as Y.Map<unknown>).toJSON()).filter(
+        ([id]) => id !== STATE_KIND_KEY
+      );
+      expect(new Set(keys.map(([, key]) => key)).size).toBe(keys.length);
+    }
+  });
+});

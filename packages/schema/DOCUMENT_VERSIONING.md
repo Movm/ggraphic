@@ -320,7 +320,13 @@ The elements of a collection are ordered by `$pos`, the ids of an `order` map
 by their value. Both are fractional keys from `posBetween`, the scheme the
 page order already uses (header of the editor's `collab/pagesDoc.ts`). Ties
 are broken by id; a writer that needs a key between two tied neighbours
-re-spaces that list first, as `normalizePositions` does for pages.
+re-spaces that list first, every key with the random suffix, so two clients
+re-spacing at once do not tie again.
+
+A valid key is a non-empty string of alphabet characters that does not end in
+`0`; only such keys can bound `posBetween`. Readers sort whatever is stored as
+plain strings; a writer treats a stored key of any other form (or a missing
+one) as no key and gives that id a fresh one.
 
 - The lift writes the deterministic chain (`posBetween(previous, null)`,
   without a random suffix, as seeding does for pages), so two clients lifting
@@ -474,7 +480,8 @@ Once a version 4 document is stored, these are permanent:
   `elements`, `order` and `record`.
 - `$pos`, the reserved property of every element map in an `elements` value.
 - The fractional key format of `$pos` and of `order` values: the page-order
-  alphabet (`0-9A-Za-z`, compared as plain strings), ties broken by id.
+  alphabet (`0-9A-Za-z`, compared as plain strings), ties broken by id; a
+  valid key is non-empty and does not end in `0`.
 - `$` as a reserved prefix: no element id, `order` id or record key starting
   with `$` is stored in a structured value.
 - The class of each key listed above. A key may later join a class (additive:
