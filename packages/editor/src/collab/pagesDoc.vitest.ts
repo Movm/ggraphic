@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { posBetween as corePosBetween } from '@ggraphic/core/ydoc';
+import { posBetween as corePosBetween, stateKeyClasses, writeStateKeys } from '@ggraphic/core/ydoc';
 import { describe, it, expect } from 'vitest';
 import * as Y from 'yjs';
 
@@ -16,6 +16,8 @@ import {
   posBetween,
   readPages,
   removePageById,
+  replacePageState,
+  restorePageStateKeys,
   seedPageId,
   seedPagesIfEmpty,
   serializeDeck,
@@ -312,5 +314,119 @@ describe('legacy migration', () => {
     seedPagesIfEmpty(doc, [{ id: 'seed-0', configId: 'zitat', state: { quote: 'Default' } }]);
     doc.transact(() => foldLegacyFormStateIntoFirstPage(doc));
     expect(readPages(doc)[0].state.quote).toBe('Chat');
+  });
+});
+
+describe('reads through the codec', () => {
+  const classes = stateKeyClasses([]);
+  const SHAPES = [
+    { id: 'a', x: 1, y: 2, fill: { type: 'solid', color: '#f00' } },
+    { id: 'b', x: 3, y: 4 },
+  ];
+  const STATE = {
+    headline: 'Hallo',
+    shapeInstances: SHAPES,
+    layerOrder: ['b', 'a'],
+    iconStates: { i1: { x: 1 } },
+  };
+
+  /** A doc with one page whose state is `STATE`; `structured` stores it the version 4 way. */
+  const docWith = (structured: boolean): Y.Doc => {
+    const doc = new Y.Doc();
+    seedPagesIfEmpty(doc, [{ id: 'p', configId: 'fixture', state: { headline: 'Hallo' } }]);
+    if (structured) {
+      doc.getMap(YDOC_KEYS.meta).set(YDOC_KEYS.schemaVersion, 4);
+      const stateY = readPages(doc)[0]!.yMap.get(YDOC_KEYS.state) as Y.Map<unknown>;
+      writeStateKeys(stateY, STATE, { classes, lift: true });
+    } else {
+      updatePageStateById(doc, 'p', STATE);
+    }
+    return doc;
+  };
+  const stateMap = (doc: Y.Doc) => readPages(doc)[0]!.yMap.get(YDOC_KEYS.state) as Y.Map<unknown>;
+  const updates = (doc: Y.Doc, run: () => void): number => {
+    let count = 0;
+    const on = () => count++;
+    doc.on('update', on);
+    run();
+    doc.off('update', on);
+    return count;
+  };
+
+  it('stores the structured fixture as structures', () => {
+    expect(stateMap(docWith(true)).get('shapeInstances')).toBeInstanceOf(Y.Map);
+    expect(stateMap(docWith(false)).get('shapeInstances')).toBeInstanceOf(Array);
+  });
+
+  it('readPages returns the same state for plain and structured storage', () => {
+    expect(readPages(docWith(true))[0]!.state).toEqual(readPages(docWith(false))[0]!.state);
+  });
+
+  it('serializeDeck returns the same deck for plain and structured storage', () => {
+    expect(serializeDeck(docWith(true))).toEqual(serializeDeck(docWith(false)));
+  });
+
+  it('keeps the identity of unchanged structured values across reads', () => {
+    const doc = docWith(true);
+    const first = readPages(doc)[0]!.state;
+    const second = readPages(doc)[0]!.state;
+    expect(second.shapeInstances).toBe(first.shapeInstances);
+    stateMap(doc).doc!.transact(() => {
+      ((stateMap(doc).get('shapeInstances') as Y.Map<unknown>).get('a') as Y.Map<unknown>).set(
+        'x',
+        9
+      );
+    });
+    const third = readPages(doc)[0]!.state.shapeInstances as { id: string; x: number }[];
+    expect(third.find((s) => s.id === 'a')!.x).toBe(9);
+    expect(third.find((s) => s.id === 'b')).toBe(
+      (first.shapeInstances as { id: string }[]).find((s) => s.id === 'b')
+    );
+    expect(readPages(doc)[0]!.state.layerOrder).toBe(first.layerOrder);
+  });
+
+  it('updatePageStateById writes nothing for an equal plain value over a structure', () => {
+    const doc = docWith(true);
+    const reordered = [{ y: 2, fill: { color: '#f00', type: 'solid' }, x: 1, id: 'a' }, SHAPES[1]];
+    expect(
+      updates(doc, () =>
+        updatePageStateById(doc, 'p', { shapeInstances: reordered, layerOrder: ['b', 'a'] })
+      )
+    ).toBe(0);
+    expect(stateMap(doc).get('shapeInstances')).toBeInstanceOf(Y.Map);
+  });
+
+  it('replacePageState writes nothing for an equal plain value over a structure', () => {
+    const doc = docWith(true);
+    expect(updates(doc, () => replacePageState(doc, 'p', { ...STATE }))).toBe(0);
+    expect(stateMap(doc).get('layerOrder')).toBeInstanceOf(Y.Map);
+  });
+
+  it('restorePageStateKeys reads the live value through the codec', () => {
+    const doc = docWith(true);
+    const seen: unknown[] = [];
+    expect(
+      updates(doc, () =>
+        restorePageStateKeys(
+          doc,
+          'p',
+          STATE,
+          ['shapeInstances', 'layerOrder'],
+          (_key, live) => (seen.push(live), true)
+        )
+      )
+    ).toBe(0);
+    expect(seen).toEqual([SHAPES, ['b', 'a']]);
+    expect(stateMap(doc).get('shapeInstances')).toBeInstanceOf(Y.Map);
+  });
+
+  it('still writes a changed value, and deletes an absent key, over a structure', () => {
+    const doc = docWith(true);
+    restorePageStateKeys(doc, 'p', { headline: 'x' }, ['shapeInstances', 'headline'], () => true);
+    expect(readPages(doc)[0]!.state).toEqual({
+      headline: 'x',
+      layerOrder: ['b', 'a'],
+      iconStates: { i1: { x: 1 } },
+    });
   });
 });

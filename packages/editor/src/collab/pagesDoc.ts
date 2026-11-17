@@ -16,7 +16,13 @@
  * is migrated once per doc via `migrateLegacyDoc`.
  */
 
-import { posBetween, posJitter, sameStateValue } from '@ggraphic/core/ydoc';
+import {
+  posBetween,
+  posJitter,
+  readState,
+  readStateKey,
+  sameStateValue,
+} from '@ggraphic/core/ydoc';
 import { v4 as uuid } from 'uuid';
 import * as Y from 'yjs';
 
@@ -82,7 +88,9 @@ const pageToView = (yMap: Y.Map<unknown>): PageView | null => {
     return null;
   }
   const stateY = yMap.get(YDOC_KEYS.state);
-  const state = stateY instanceof Y.Map ? Object.fromEntries(stateY.entries()) : {};
+  // Through the codec: a structured key reads as its plain JSON (memoised per map; callers must
+  // not mutate it, as with the stored plain objects before).
+  const state = stateY instanceof Y.Map ? readState(stateY) : {};
   return { id, configId, pos, state, yMap, stateEpoch: epochOf(stateY) };
 };
 
@@ -224,16 +232,6 @@ export function movePageById(doc: Y.Doc, id: string, direction: 'up' | 'down'): 
   views[idx].yMap.set(YDOC_KEYS.pos, posJitter(posBetween(lo, hi)));
 }
 
-const jsonEqual = (a: unknown, b: unknown): boolean => {
-  if (a === b) return true;
-  if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false;
-  try {
-    return JSON.stringify(a) === JSON.stringify(b);
-  } catch {
-    return false;
-  }
-};
-
 /**
  * Patch primitive/plain-object fields on a page's `state` Y.Map. Structural
  * (JSON) equality guard: Y.Map.set on an identical value still emits an
@@ -250,7 +248,7 @@ export function updatePageStateById(
   const stateY = page.get(YDOC_KEYS.state);
   if (!(stateY instanceof Y.Map)) return;
   for (const [k, v] of Object.entries(partial)) {
-    if (!jsonEqual(stateY.get(k), v)) stateY.set(k, v);
+    if (!sameStateValue(readStateKey(stateY, k), v)) stateY.set(k, v);
   }
 }
 
@@ -280,7 +278,7 @@ export function replacePageState(doc: Y.Doc, pageId: string, state: Record<strin
     if (!(key in state)) stateY.delete(key);
   }
   for (const [k, v] of Object.entries(state)) {
-    if (!jsonEqual(stateY.get(k), v)) stateY.set(k, v);
+    if (!sameStateValue(readStateKey(stateY, k), v)) stateY.set(k, v);
   }
 }
 
@@ -301,10 +299,10 @@ export function restorePageStateKeys(
   const stateY = getPagesMap(doc).get(pageId)?.get(YDOC_KEYS.state);
   if (!(stateY instanceof Y.Map)) return;
   for (const k of keys) {
-    if (!untouched(k, stateY.get(k))) continue;
+    if (!untouched(k, readStateKey(stateY, k))) continue;
     if (!Object.hasOwn(target, k)) {
       if (stateY.has(k)) stateY.delete(k);
-    } else if (!jsonEqual(stateY.get(k), target[k])) {
+    } else if (!sameStateValue(readStateKey(stateY, k), target[k])) {
       stateY.set(k, target[k]);
     }
   }
@@ -462,7 +460,7 @@ export function foldLegacyFormStateIntoFirstPage(doc: Y.Doc): void {
     if (!(stateY instanceof Y.Map)) return;
     formState.forEach((value, key) => {
       if (key.startsWith('_')) return;
-      if (stateY.get(key) !== value) stateY.set(key, value);
+      if (readStateKey(stateY, key) !== value) stateY.set(key, value);
     });
   }
   meta.set(YDOC_KEYS.formStateFolded, true);
