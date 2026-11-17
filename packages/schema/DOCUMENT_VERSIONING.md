@@ -385,6 +385,7 @@ Two rules tie the stamp to the data:
 | Both add the first element of a kind where the key is still absent | one array wins                         | one new structured value wins at key level, so one side's first element is lost (see "Risks")                        |
 | An old writer writes plain JSON under a structured key             | —                                      | its whole value wins at key level, as in version 3; the key is lifted again later                                    |
 | Two clients lift the same document state (online or offline)       | —                                      | identical structs, kept once; both clients' later element edits merge                                                |
+| A lift against a concurrent plain write of the same key            | —                                      | the lift always wins: its derived id (≥ 2^32) is above every real client id, and Yjs keeps the higher one            |
 | Two clients lift different states of a version 3 document          | —                                      | the lifts meet at key level; the losing side's edits made before they met are lost (see "Lift and re-lift")          |
 | A write whose value a structure cannot hold (duplicate ids, …)     | —                                      | the key is stored plain (a peer's concurrent per-element edit of it is lost), reported once per key                  |
 
@@ -433,8 +434,8 @@ Two rules tie the stamp to the data:
   (the host's sync server), the states differ only when something other than
   a lift reached one replica before it opened while the document was still
   unlifted for both: a write by a build without element storage, by a client
-  that does not lift on open (`canWrite` omitted), by a server-side writer, or
-  a legacy lift. A transport without causal order (peer to peer) can also
+  that does not lift on open (`canWrite` omitted), a server-side plain patch,
+  or a legacy lift. A transport without causal order (peer to peer) can also
   deliver a peer's plain edit before the lift that peer had received.
 - **Lift on write:** a version 4 writer that writes a key it classes as
   structured and finds plain JSON there writes the new value structured. The
@@ -456,52 +457,111 @@ clock. The lift transaction therefore:
   The document's own id is set back before the transaction's observers,
   `afterTransaction` and `update` handlers run (they run in its cleanup), so a
   provider or the awareness protocol (which copies `doc.clientID` once, at
-  construction) never sees it. It must be an outermost transaction;
+  construction) never sees it. It must be an outermost transaction. Hooks the
+  writes report to (`onPlainFallback`, the editor's `onStateWriteWarning`) run
+  only after the transaction has returned, so a hook neither writes under the
+  derived id nor aborts the lift halfway; one that throws is ignored;
 - **writes only what is a pure function of the document state** and of the
-  writer's build: `migrateYDocument` (its pages in canonical order, every
-  page-state, element, record and config write in code-point order of its
-  keys, values in canonical key order, new order keys without the random
-  suffix, kind stamps in code-point order) and the lift (pages in code-point
-  order of their ids, keys in code-point order, each structure built
-  canonically on the deterministic chain). Nothing random, no timestamp, no
-  iteration in a replica's own map order. A derived id is fresh in the
-  document, so its clocks start at 0 on every replica.
+  writer's build: `migrateYDocument` (its pages in canonical order, its input
+  to the version steps in canonical key order, every page-state, element,
+  record and config write in UTF-16 code-unit order of its keys (JavaScript's
+  `<` on strings), values in canonical key order, new order keys without the
+  random suffix, kind stamps in that order too) and the lift (pages and keys
+  in UTF-16 code-unit order, each structure built canonically on the
+  deterministic chain). Nothing random, no timestamp, no iteration in a
+  replica's own map order. A derived id is fresh in the document, so its
+  clocks start at 0 on every replica.
 
 The id (`deterministicClientId` in `@ggraphic/core/ydoc`):
 
 1. `input` = the UTF-8 bytes of `ggraphic-lift-id/1` `\n` _salt_ `\n`,
    followed by `Y.encodeSnapshot(Y.snapshot(doc))`: the state vector and the
    delete set in Yjs's canonical encoding (clients sorted, deleted clock ranges
-   merged, so a replica's struct splits do not matter). The delete set is
-   needed: a map key's deletion adds no struct, so two replicas can share a
-   state vector and differ in content, and would then write different content
-   under one id; they would never converge (tested).
+   merged, so a replica's struct splits and pending structs do not matter).
+   The delete set is needed: a map key's deletion adds no struct, so two
+   replicas can share a state vector and differ in content, and would then
+   write different content under one id; they would never converge (tested).
 2. _salt_ = `JSON.stringify(["lift", schemaVersion, kinds, classes])`:
    the core version the writer brings the document to, its host kinds'
    versions above 1 as `[stateKey, version]` pairs, and its key classes as
-   `[key, class]` pairs, both lists sorted by key. Two builds that would write
-   differently get different ids.
-3. `h` = cyrb53(`input`), a 53-bit hash; the id is `2^32 + (h mod (2^53 − 2^32))`.
-   Yjs generates client ids as 32-bit unsigned integers, so a derived id never
-   equals one. Yjs 13.6 and lib0 0.2 encode, decode, merge and diff ids up to
-   2^53 in both update formats (tested).
-4. If the id already has structs in the document (the state vector names it:
-   an earlier lift, or a collision), hash again with one more byte `1`, `2`, …
-   appended to `input`, until it has none. A re-lift (an old writer wrote plain
-   JSON after the first lift) starts from a state that names the first id, so
-   it gets another id and never continues the first one's clock range.
+   `[key, class]` pairs, both lists sorted by key (UTF-16 code-unit order).
+   Two builds that would write differently get different ids.
+3. `h` = `cyrb53(input)` with seed 0, the byte variant below, and the id is
+   `2^32 + (h mod (2^53 − 2^32))`. Yjs generates client ids as 32-bit unsigned
+   integers, so a derived id never equals one. Yjs 13.6 and lib0 0.2 encode,
+   decode, merge and diff ids up to 2^53 in both update formats (tested).
+
+   ```js
+   function cyrb53(bytes, seed = 0) {
+     let h1 = 0xdeadbeef ^ seed,
+       h2 = 0x41c6ce57 ^ seed;
+     for (const byte of bytes) {
+       h1 = Math.imul(h1 ^ byte, 2654435761);
+       h2 = Math.imul(h2 ^ byte, 1597334677);
+     }
+     h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+     h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+     h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+     h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+     return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+   }
+   ```
+
+   Test vectors (`deterministic.vitest.ts`, "the derivation is pinned"): a
+   document whose client 42 set `pagesById.p1 = 'x'`, then
+   `meta.schemaVersion = 3`, then deleted `meta.schemaVersion`, gives the id
+   `1322104991787550` for the salt `salt ü € 𝄞` and `1403451316673095` for
+   the salt `lift`.
+
+4. **Rehash.** Attempt 0 hashes `input` as above. If the id already has
+   structs in the document (the state vector names it: an earlier lift, or a
+   collision), attempt _k_ (1 ≤ _k_ ≤ 255) hashes `input` with one more byte
+   of value _k_ (`k & 0xff`) appended, and the first id the document does not
+   name is used. If all 256 attempts name used ids, `deterministicClientId`
+   throws before anything is written, and the open fails for that document.
+   (Each attempt collides with probability about 2⁻⁵³; this is not reachable
+   in practice.) A re-lift (an old writer wrote plain JSON after the first
+   lift) starts from a state that names the first id, so it gets another id
+   and never continues the first one's clock range.
+
+**What is normative.** The id (steps 1 to 4) is specified by this text. The
+bytes the lift transaction writes are not fully specified by prose: their
+order inside `migrateYDocument`, the order in which a prelim `Y.Map` is built
+and integrated, and the encoding of each value are defined by the reference
+implementation (`@ggraphic/core/ydoc` and the editor's `collab/useYjsPages.ts`,
+`collab/documentVersion.ts`), pinned by golden tests on the exact bytes
+(`deterministic.vitest.ts`, "the bytes a lift writes are fixed", and the
+editor's `collab/liftGoldenBytes.vitest.tsx`, which includes a host kind
+migration). **The reference implementation plus these golden tests is the
+specification.** They were established with yjs 13.6.33 and lib0 0.2.119.
 
 **Every build that lifts must use exactly this algorithm** (it is listed under
 "F0 in version 4"). A build that derives ids differently still converges with
 everyone else, but its lifts no longer merge with theirs: they meet at key
-level, which loses one side's edits made before the lifts met. Changing the
-derivation, the salt or what the lift transaction writes needs a new
-`ggraphic-lift-id/<n>` and is a format change.
+level, which loses one side's edits made before the lifts met. A build that
+derives the same id but writes other bytes is worse: replicas then hold
+different content under one struct id and never converge. So changing the
+derivation, the salt, or anything the golden bytes depend on (`posBetween`,
+`representableProblem`, `canonicalJsonValue`, `buildStructured`, the sort
+order, what `migrateYDocument` writes, a Yjs upgrade that encodes differently)
+needs a new `ggraphic-lift-id/<n>` and is a format change.
 
-The reference host's sync server never lifts (it never raises the stamp of an
-existing document, "Server-side writers" rule 4); the documents it creates are
-seeded structured and stamped 4 in one transaction, so an open writes nothing
-into them. A server that does lift must use this algorithm.
+**Host migration steps run inside the lift transaction**, so their output is
+part of these bytes. A step must be pure and deterministic (as
+"Migration registry" already requires) and must not depend on anything but its
+input; it gets its input in canonical key order, so the order in which a
+replica integrated an element's properties cannot leak into it. Once a kind
+version is published, the output of its step is frozen like the codec: a step
+that writes other values for the same input under the same version gives two
+builds the same id and different content.
+
+**Server-side writers.** A server must never lift (it never raises the stamp
+of an existing document, "Server-side writers" rule 4). A document a server
+creates must be seeded structured and stamped 4 in one transaction, so that a
+client's open writes nothing into it. A server that does lift must use this
+algorithm. A server's plain patch into a document that is still at version 3
+is one of the writes that give two openers different starting states (see
+"Lift and re-lift").
 
 ### Old writers in version 4
 
@@ -589,8 +649,10 @@ Once a version 4 document is stored, these are permanent:
 - `schemaVersion` 4 meaning "page state may hold structured values".
 - The deterministic lift identity ("Deterministic lift identity"): the
   algorithm tag `ggraphic-lift-id/1`, the input layout, the salt format,
-  cyrb53, the mapping into [2^32, 2^53), the rehash rule, and what the lift
-  transaction writes in which order. Every build that lifts uses it.
+  `cyrb53` with seed 0, the mapping into [2^32, 2^53), the rehash rule, and
+  the bytes the lift transaction writes (the reference implementation and its
+  golden tests, including each published host migration step's output). Every
+  build that lifts uses it.
 
 Not introduced: `meta.stateFormat`. The codec's names (`@ggraphic/core/ydoc`,
 `readStateKey`, `readState`, `writeStateKeys`) are public API under semver,
@@ -659,6 +721,14 @@ does:
   id for that reason. Two different states hashing to one id (a 53-bit
   collision, about 2⁻⁵³ per pair of lifts that meet) would have the same
   effect.
+- **A lift always wins a concurrent conflict on one map key.** Yjs resolves
+  two concurrent writes of one key by client id, and a derived id is above
+  every real one. A concurrent plain write of the same key (an old build, a
+  client with `canWrite` omitted, a server patch) therefore always loses to a
+  lift, where it used to be a coin toss; and a value a version step writes in
+  the lift transaction always beats a concurrent user edit of the same
+  property. Accepted: the lift writes the value that was there, so the loser
+  is an edit made before its writer saw the lift.
 - **A write whose value a structure cannot hold** (duplicate ids, an element
   without a string id, an id with the reserved prefix) stores the key plain,
   replacing its structure: a peer's concurrent per-element edit of that key
