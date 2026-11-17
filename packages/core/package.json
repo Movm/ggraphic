@@ -17,6 +17,12 @@
       "types": "./src/index.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./ydoc": {
+      "development": "./src/ydoc/index.ts",
+      "types": "./src/ydoc/index.ts",
+      "import": "./dist/ydoc/index.js",
+      "default": "./dist/ydoc/index.js"
     }
   },
   "scripts": {
@@ -27,7 +33,16 @@
   "devDependencies": {
     "@types/node": "^26.3.0",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "yjs": "^13.6.33"
+  },
+  "peerDependencies": {
+    "yjs": "^13.6.33"
+  },
+  "peerDependenciesMeta": {
+    "yjs": {
+      "optional": true
+    }
   },
   "files": [
     "dist",
@@ -44,6 +59,11 @@
         "types": "./dist/index.d.ts",
         "import": "./dist/index.js",
         "default": "./dist/index.js"
+      },
+      "./ydoc": {
+        "types": "./dist/ydoc/index.d.ts",
+        "import": "./dist/ydoc/index.js",
+        "default": "./dist/ydoc/index.js"
       }
     }
   }

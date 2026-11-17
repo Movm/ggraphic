@@ -16,6 +16,7 @@
  * is migrated once per doc via `migrateLegacyDoc`.
  */
 
+import { posBetween, posJitter, sameStateValue } from '@ggraphic/core/ydoc';
 import { v4 as uuid } from 'uuid';
 import * as Y from 'yjs';
 
@@ -51,30 +52,8 @@ export interface SerializedPage {
 
 // ── fractional ordering ─────────────────────────────────────────────────────
 
-// ASCII-ordered so plain string comparison sorts correctly.
-const POS_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-
-/**
- * A key strictly between `a` and `b` (lexicographic). `null` means unbounded.
- * Generated keys never end in the smallest digit ('0'), which guarantees a
- * midpoint always exists between any two previously generated keys.
- */
-export function posBetween(a: string | null, b: string | null): string {
-  const lo = a ?? '';
-  const hi = b ?? '';
-  if (lo !== '' && hi !== '' && lo >= hi) {
-    throw new Error(`posBetween: '${lo}' >= '${hi}'`);
-  }
-  let result = '';
-  for (let i = 0; ; i++) {
-    const ca = i < lo.length ? POS_ALPHABET.indexOf(lo[i]) : 0;
-    const cb = i < hi.length ? POS_ALPHABET.indexOf(hi[i]) : POS_ALPHABET.length;
-    if (cb - ca > 1) {
-      return result + POS_ALPHABET[ca + Math.ceil((cb - ca) / 2)];
-    }
-    result += POS_ALPHABET[ca];
-  }
-}
+// Moved to `@ggraphic/core/ydoc`, which element order inside a page's state uses too.
+export { posBetween };
 
 // ── doc accessors ───────────────────────────────────────────────────────────
 
@@ -170,20 +149,6 @@ export function clonePage(source: Y.Map<unknown>, newId: string, pos: string): Y
 }
 
 // ── mutations (call inside doc.transact with your origin) ───────────────────
-
-/**
- * Random suffix for user-initiated pos keys. posBetween is deterministic, so
- * two clients concurrently appending after the same last page would mint the
- * SAME pos for different ids — a tie posBetween can never split again. Two
- * random non-'0' chars make that practically impossible while preserving
- * strict betweenness (appending to a between-key keeps it between, given the
- * no-trailing-'0' invariant). Seeds stay deterministic on purpose — identical
- * racing seeds must converge, and ties across identical ids merge anyway.
- */
-const posJitter = (pos: string): string =>
-  pos +
-  POS_ALPHABET[1 + Math.floor(Math.random() * (POS_ALPHABET.length - 1))] +
-  POS_ALPHABET[1 + Math.floor(Math.random() * (POS_ALPHABET.length - 1))];
 
 /**
  * Heal a doc whose pos keys collided (pre-jitter concurrent ops): re-space
@@ -319,19 +284,8 @@ export function replacePageState(doc: Y.Doc, pageId: string, state: Record<strin
   }
 }
 
-const canonicalJson = (value: unknown): string | undefined =>
-  JSON.stringify(value, (_key, v: unknown) =>
-    v !== null && typeof v === 'object' && !Array.isArray(v)
-      ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)))
-      : v
-  );
-
-/**
- * Equal as stored JSON: object key order and `undefined` members don't count
- * — a value that crossed the wire comes back JSON-decoded.
- */
-export const sameStateValue = (a: unknown, b: unknown): boolean =>
-  a === b || canonicalJson(a) === canonicalJson(b);
+// Moved to `@ggraphic/core/ydoc`, beside the codec that compares across its boundary with it.
+export { sameStateValue };
 
 /**
  * Write `target` into a page's state for each of `keys` the caller reports

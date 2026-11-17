@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import { posBetween as corePosBetween } from '@ggraphic/core/ydoc';
 import { describe, it, expect } from 'vitest';
 import * as Y from 'yjs';
 
@@ -60,36 +61,9 @@ const seedThree = (doc: Y.Doc) =>
   ]);
 
 describe('posBetween', () => {
-  it('produces keys strictly between the bounds', () => {
-    const mid = posBetween(null, null);
-    expect(posBetween(null, mid) < mid).toBe(true);
-    expect(posBetween(mid, null) > mid).toBe(true);
-  });
-
-  it('never ends in the smallest digit', () => {
-    let lo: string | null = null;
-    for (let i = 0; i < 100; i++) {
-      const key: string = posBetween(lo, null);
-      expect(key.endsWith('0')).toBe(false);
-      lo = key;
-    }
-  });
-
-  it('always finds a midpoint between adjacent generated keys', () => {
-    // Repeatedly bisect the same interval — the pathological case for
-    // fractional indexing.
-    let lo = posBetween(null, null);
-    let hi = posBetween(lo, null);
-    for (let i = 0; i < 50; i++) {
-      const mid = posBetween(lo, hi);
-      expect(lo < mid && mid < hi).toBe(true);
-      if (i % 2 === 0) lo = mid;
-      else hi = mid;
-    }
-  });
-
-  it('throws on inverted bounds', () => {
-    expect(() => posBetween('b', 'a')).toThrow();
+  // Its own tests moved with it to `@ggraphic/core` (`src/ydoc/pos.vitest.ts`).
+  it('is the core function, still reachable from this module', () => {
+    expect(posBetween).toBe(corePosBetween);
   });
 });
 
