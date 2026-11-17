@@ -34,6 +34,7 @@ import {
 import { v4 as uuid } from 'uuid';
 import * as Y from 'yjs';
 
+import { reportPlainFallback } from './stateWriteWarnings.js';
 import { YDOC_KEYS } from './ydocKeys.js';
 import { fromHostKinds } from '../utils/elementKinds.js';
 
@@ -86,7 +87,12 @@ export const editorStateKeyClasses: () => StateKeyClasses = fromHostKinds((kinds
  * the stamp inside the transaction and writes plain JSON into a document below version 4
  * (rule 1), so a writer in a version 3 document that is not being lifted stays plain.
  */
-const liveWrite = (): StateWriteOptions => ({ classes: editorStateKeyClasses(), lift: true });
+const liveWrite = (deterministic = false): StateWriteOptions => ({
+  classes: editorStateKeyClasses(),
+  lift: true,
+  deterministic,
+  onPlainFallback: reportPlainFallback,
+});
 
 /**
  * Options for `buildStateMap` of a map that `doc` will hold. A map outside a document cannot
@@ -96,6 +102,7 @@ const liveWrite = (): StateWriteOptions => ({ classes: editorStateKeyClasses(), 
 const builtFor = (doc: Y.Doc): StateWriteOptions => ({
   classes: editorStateKeyClasses(),
   lift: mayWriteStructured(doc),
+  onPlainFallback: reportPlainFallback,
 });
 
 // ── doc accessors ───────────────────────────────────────────────────────────
@@ -343,15 +350,23 @@ export function setPageConfigById(
 /**
  * Make a page's state map equal `state` in place: absent keys deleted, changed keys set. A
  * state the codec would reject throws before anything, the deletions included, is written.
+ * `deterministic`: the writes are a pure function of the document and `state` (the codec's
+ * `deterministic` option), for the version steps inside the deterministic lift transaction.
  */
-export function replacePageState(doc: Y.Doc, pageId: string, state: Record<string, unknown>): void {
+export function replacePageState(
+  doc: Y.Doc,
+  pageId: string,
+  state: Record<string, unknown>,
+  options: { deterministic?: boolean } = {}
+): void {
   const stateY = getPagesMap(doc).get(pageId)?.get(YDOC_KEYS.state);
   if (!(stateY instanceof Y.Map)) return;
-  assertWritableState(state, liveWrite(), stateY as Y.Map<unknown>);
+  const write = liveWrite(options.deterministic === true);
+  assertWritableState(state, write, stateY as Y.Map<unknown>);
   for (const key of Array.from(stateY.keys())) {
     if (!(key in state)) stateY.delete(key);
   }
-  writeStateKeys(stateY as Y.Map<unknown>, state, liveWrite());
+  writeStateKeys(stateY as Y.Map<unknown>, state, write);
 }
 
 // Moved to `@ggraphic/core/ydoc`, beside the codec that compares across its boundary with it.

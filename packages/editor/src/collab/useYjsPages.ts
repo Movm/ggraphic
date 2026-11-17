@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import { liftDocumentState, mayWriteStructured } from '@ggraphic/core/ydoc';
-import { type DocumentRefusal } from '@ggraphic/schema';
+import {
+  liftDocumentState,
+  liftSalt,
+  mayWriteStructured,
+  transactDeterministically,
+} from '@ggraphic/core/ydoc';
+import { documentMigrations, type DocumentRefusal } from '@ggraphic/schema';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuid } from 'uuid';
 import * as Y from 'yjs';
@@ -35,6 +40,7 @@ import {
   type PageView,
   type ReplaceDeckOps,
 } from './pagesDoc.js';
+import { reportPlainFallback } from './stateWriteWarnings.js';
 import { YDOC_KEYS } from './ydocKeys.js';
 import { type HistoryStamps, nextHistoryStamp } from '../utils/historyStamp.js';
 
@@ -262,20 +268,39 @@ function readOnlyApi(pages: PageView[], schemaRefusal: DocumentRefusal | null): 
 }
 
 /**
- * Brings a writable doc to this build's version, inside the caller's setup transaction: the
- * version steps (`migrateYDocument`, which raises the stamp), then the version 4 lift of every
- * classed key that still holds plain JSON. One transaction, so a peer receives the stamp and the
- * first structured values in one update (rule 2 of "Version 4" in DOCUMENT_VERSIONING.md). The
- * lift is triggered by the stamp or by the data: it also runs over plain data an old writer left
- * under a version 4 stamp. An empty, unseeded doc is left alone; its seed stamps it.
+ * Brings a writable doc to this build's version: the version steps (`migrateYDocument`, which
+ * raises the stamp), then, when `lift`, the version 4 lift of every classed key that still holds
+ * plain JSON. One transaction, so a peer receives the stamp and the first structured values in
+ * one update (rule 2 of "Version 4" in DOCUMENT_VERSIONING.md). The lift is triggered by the
+ * stamp or by the data: it also runs over plain data an old writer left under a version 4
+ * stamp. An empty, unseeded doc is left alone; its seed stamps it.
+ *
+ * With `lift`, the transaction runs under the deterministic lift identity
+ * (`transactDeterministically`): every write in it is a pure function of the document state, so
+ * two clients settling the same state write identical structs, Yjs keeps one copy, and what each
+ * then edits lands in the same structures. Without `lift` it runs under this client's own id, as
+ * before element storage.
  */
 function settleDocument(doc: Y.Doc, lift: boolean): YDocMigration {
   if (isUnseeded(doc)) return { status: 'current' };
-  const outcome = migrateYDocument(doc);
-  if (outcome.status === 'invalid' || outcome.status === 'newer') return outcome;
-  // Rule 1: structure only under a stamp of 4 or above, which the step above has just written.
-  if (lift && mayWriteStructured(doc)) liftDocumentState(doc, editorStateKeyClasses());
-  return outcome;
+  const settle = (): YDocMigration => {
+    const outcome = migrateYDocument(doc);
+    if (outcome.status === 'invalid' || outcome.status === 'newer') return outcome;
+    // Rule 1: structure only under a stamp of 4 or above, which the step above has just written.
+    if (lift && mayWriteStructured(doc)) {
+      liftDocumentState(doc, editorStateKeyClasses(), { onPlainFallback: reportPlainFallback });
+    }
+    return outcome;
+  };
+  if (!lift) return doc.transact(settle, SETUP_ORIGIN);
+  const salt = liftSalt(
+    {
+      schemaVersion: documentMigrations.coreVersion,
+      kindVersions: documentMigrations.kindVersions(),
+    },
+    editorStateKeyClasses()
+  );
+  return transactDeterministically(doc, salt, settle, SETUP_ORIGIN);
 }
 
 const shallowEqualState = (a: Record<string, unknown>, b: Record<string, unknown>): boolean => {
@@ -350,7 +375,7 @@ export function useYjsPages(
     };
     const settleVersion = () => {
       if (disposed || !writable || readYDocRefusal(ydoc)) return;
-      reportFailed(ydoc.transact(() => settleDocument(ydoc, lift), SETUP_ORIGIN));
+      reportFailed(settleDocument(ydoc, lift));
     };
 
     // A client that may not write runs no setup at all; it runs once it may.
@@ -358,14 +383,16 @@ export function useYjsPages(
       migratedDocsRef.current.add(ydoc);
       // A newer doc is not touched at all, not even by the legacy lift.
       if (!readYDocRefusal(ydoc)) {
-        // One transaction for everything an open writes (rule 2): the legacy
-        // lift, the form-state fold, the version steps and the version 4 lift.
-        const outcome = ydoc.transact(() => {
+        // The legacy lifts first, under this client's own id: they mint a
+        // timestamped page id and iterate in replica order, so they cannot be
+        // part of the deterministic transaction below. They write only into
+        // documents from before version 1 or not yet folded. The stamp and the
+        // version 4 lift then come in one transaction (rule 2).
+        ydoc.transact(() => {
           migrateLegacyDoc(ydoc);
           foldLegacyFormStateIntoFirstPage(ydoc);
-          return settleDocument(ydoc, lift);
         }, SETUP_ORIGIN);
-        reportFailed(outcome);
+        reportFailed(settleDocument(ydoc, lift));
       }
     }
 

@@ -12,6 +12,7 @@
  * Call the writers inside the caller's `doc.transact` (its origin decides
  * whether undo tracks them; the editor uses its untracked setup origin).
  */
+import { canonicalJsonValue } from '@ggraphic/core/ydoc';
 import {
   canvasPageSchema,
   documentMigrations,
@@ -88,14 +89,21 @@ export function readYDocRefusal(
   return newer ? { ...newer, document: null } : null;
 }
 
-/** Raises the doc's stamps to `versions`; never lowers one. A kind at 1 needs no stamp. */
+const byCodePoint = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+
+/**
+ * Raises the doc's stamps to `versions`; never lowers one. A kind at 1 needs no stamp. Kinds in
+ * code-point order: the writes are a pure function of the doc and `versions`, as the
+ * deterministic lift transaction needs.
+ */
 function raiseStamps(doc: Y.Doc, versions: DocumentVersions): void {
   const meta = getMetaMap(doc);
   const core = meta.get(YDOC_KEYS.schemaVersion);
   if (!isVersion(core) || core < versions.schemaVersion) {
     meta.set(YDOC_KEYS.schemaVersion, versions.schemaVersion);
   }
-  for (const [stateKey, version] of Object.entries(versions.kindVersions)) {
+  const kinds = Object.entries(versions.kindVersions).sort(([a], [b]) => byCodePoint(a, b));
+  for (const [stateKey, version] of kinds) {
     if (version <= 1) continue;
     const stored = meta.get(kindKey(stateKey));
     if (!isVersion(stored) || stored < version) meta.set(kindKey(stateKey), version);
@@ -109,19 +117,23 @@ export function stampYDocument(doc: Y.Doc, registry: MigrationRegistry = documen
 
 export type YDocMigration = { status: 'current' } | { status: 'migrated' } | DocumentRefusal;
 
+/** Config writes in code-point order and canonical values: a pure function of doc and `config`. */
 function replaceConfig(page: Y.Map<unknown>, config: Record<string, unknown>): void {
+  const entries = Object.keys(config)
+    .sort(byCodePoint)
+    .map((k): [string, unknown] => [k, canonicalJsonValue(config[k])]);
   const existing = page.get(YDOC_KEYS.config);
   if (!(existing instanceof Y.Map)) {
-    if (Object.keys(config).length === 0) return;
+    if (entries.length === 0) return;
     const map = new Y.Map<unknown>();
-    for (const [k, v] of Object.entries(config)) map.set(k, v);
+    for (const [k, v] of entries) map.set(k, v);
     page.set(YDOC_KEYS.config, map);
     return;
   }
   for (const key of Array.from(existing.keys())) {
     if (!Object.hasOwn(config, key)) existing.delete(key);
   }
-  for (const [k, v] of Object.entries(config)) {
+  for (const [k, v] of entries) {
     if (!sameStateValue(existing.get(k), v)) existing.set(k, v);
   }
 }
@@ -130,7 +142,10 @@ function replaceConfig(page: Y.Map<unknown>, config: Record<string, unknown>): v
  * Lifts an older doc to this build's versions, in place: page state and
  * config are rewritten key by key where a step changed them, then the
  * stamps are raised. A step that changes the set of pages is refused
- * (`invalid`) and nothing is written.
+ * (`invalid`) and nothing is written. Every write is a pure function of the
+ * doc and the registry (pages in canonical order, keys sorted, canonical
+ * values, no random order keys), so it may run inside the deterministic lift
+ * transaction (`transactDeterministically`).
  */
 export function migrateYDocument(
   doc: Y.Doc,
@@ -167,7 +182,7 @@ export function migrateYDocument(
     if (yPage.get(YDOC_KEYS.configId) !== page.configId) {
       yPage.set(YDOC_KEYS.configId, page.configId);
     }
-    replacePageState(doc, page.id as string, page.state);
+    replacePageState(doc, page.id as string, page.state, { deterministic: true });
     replaceConfig(yPage, page.config ?? {});
   }
   raiseStamps(doc, result.to);

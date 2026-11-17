@@ -235,24 +235,24 @@ describe('a convert and a deck replacement give the JSON view of a plain documen
 });
 
 describe('two clients lift the same version 3 document at once', () => {
-  // The accepted loss of "Lift and re-lift": what a client writes into its own structure before
-  // the peer's lift reaches it is lost when the peer's structure wins at key level. Y.Map keeps
-  // the entry of the higher client id (here A, client 2).
-  async function race(editor: 'a' | 'b') {
+  // The deterministic lift identity: both lift the same state into the same structs, so what
+  // either writes into its structure before the other's lift arrives lands in the shared one.
+  async function race(editor: 'a' | 'b' | 'both') {
     const { a, b, flush } = linkedDocs((clientID) =>
       v3Doc(pages({ [SHAPES]: [shape('s1', 100), shape('s2', 100)] }), clientID)
     );
     openDeck(a);
     openDeck(b);
     // Each has lifted its own copy; neither has the other's lift yet.
-    const target = editor === 'a' ? a : b;
-    target.transact(
-      () =>
-        updatePageStateById(target, PAGE_ID, {
-          [SHAPES]: [shape('s1', 500), shape('s2', 100)],
-        }),
-      PAGES_STATE_ORIGIN
-    );
+    const edit = (doc: Y.Doc, id: string, x: number) =>
+      doc.transact(() => {
+        const shapes = (pageState(doc)[SHAPES] as { id: string }[]).map((s) =>
+          s.id === id ? { ...s, x } : s
+        );
+        updatePageStateById(doc, PAGE_ID, { [SHAPES]: shapes });
+      }, PAGES_STATE_ORIGIN);
+    if (editor !== 'b') edit(a, 's1', 500);
+    if (editor !== 'a') edit(b, 's2', 600);
     await flush();
     for (const doc of [a, b]) {
       expect(schemaVersionOf(doc)).toBe(4);
@@ -263,29 +263,28 @@ describe('two clients lift the same version 3 document at once', () => {
     return { a, b, flush };
   }
 
-  it('the winning side’s edit before the lifts met survives', async () => {
+  it('the higher client’s edit before the lifts met survives', async () => {
     const { a } = await race('a');
     expect(xOf(pageState(a), 's1')).toBe(500);
   });
 
-  it('the losing side’s edit before the lifts met is lost, without corrupting anything', async () => {
+  it('the lower client’s edit before the lifts met survives too', async () => {
     const { a, b } = await race('b');
-    expect(xOf(pageState(a), 's1')).toBe(100);
-    // Whole, well-formed elements: no half structure, no duplicate.
-    expect(pageState(b)[SHAPES]).toEqual([shape('s1', 100), shape('s2', 100)]);
+    expect(xOf(pageState(a), 's2')).toBe(600);
+    expect(pageState(b)[SHAPES]).toEqual([shape('s1', 100), shape('s2', 600)]);
   });
 
-  it('an edit after the lifts met is kept, whichever side makes it', async () => {
-    const { a, b, flush } = await race('b');
-    b.transact(
-      () =>
-        updatePageStateById(b, PAGE_ID, {
-          [SHAPES]: [shape('s1', 700), shape('s2', 100)],
-        }),
-      PAGES_STATE_ORIGIN
+  it('both clients’ edits before the lifts met survive', async () => {
+    const { a } = await race('both');
+    expect(pageState(a)[SHAPES]).toEqual([shape('s1', 500), shape('s2', 600)]);
+  });
+
+  it('the two lifts are one: after the exchange no lift struct exists twice', async () => {
+    const { a } = await race('both');
+    const derived = Array.from(Y.decodeStateVector(Y.encodeStateVector(a)).keys()).filter(
+      (id) => id >= 2 ** 32
     );
-    await flush();
-    expect(xOf(pageState(a), 's1')).toBe(700);
+    expect(derived).toHaveLength(1);
   });
 });
 
