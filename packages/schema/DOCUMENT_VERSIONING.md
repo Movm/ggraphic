@@ -218,9 +218,10 @@ id.
 
 The core step 3 → 4 is the identity on the JSON document: flat documents (a
 host's initial state, deck autosaves, Studio documents) keep their shape and
-only carry the new stamp. The cost of one counter for both: a build without
-version 4 also refuses a flat v4 document read-only, although it could read
-it.
+only carry the new stamp. A build without version 4 therefore also refuses a
+flat v4 document read-only, although it could read it. This is accepted: one
+counter for both forms is simpler than a Y.Doc-only marker that old clients
+would not obey.
 
 Everything below is about the Y.Doc. Its JSON view, the one every consumer
 sees (`readPages`, `serializeDeck`, the canvas, exports, a server's flat
@@ -260,11 +261,12 @@ Why these classes:
   icon's state, one template element's rotation or alignment. An entry stays
   one plain JSON value, so two people changing different properties of the
   _same_ icon still resolve last-writer-wins on that icon's `IconState` (see
-  "Concurrency").
+  "Concurrency"). This is decided, not deferred: a property map per entry
+  would be a fourth structure for an edit nobody reported.
 - **Plain for the rest.** Scalars have nothing to merge. `bind`, `groups` and
-  `backgroundImageAdjustments` are containers too; they stay plain because no
-  concurrent partial edit of them has been reported and every class is more to
-  test. Because readers and writers follow the marker and not a key list, a
+  `backgroundImageAdjustments` are containers too; they stay plain in version
+  4 (decided), because no concurrent partial edit of them has been reported
+  and every class is more to test. Because readers and writers follow the marker and not a key list, a
   later build can move such a key into a class **without a version step**
   (see "Reading without a registry").
 
@@ -535,11 +537,14 @@ does:
 - A migration that rewrites a whole instance list races with a concurrent edit
   of that list on a not-yet-migrated peer; Yjs keeps one of the two values.
   The version 4 lift has the same race for the round trip after open.
-- **Version 4 keeps key-level last-writer-wins in three places:** two clients
-  creating the same absent structured key at once (the first element of a kind
-  on a page), the same property of one element, and one entry of a record.
-  Whether pages are built with every collection present as `[]`, which would
-  close the first case, is _unverified_.
+- **Version 4 keeps key-level last-writer-wins in three places, all
+  accepted:** two clients creating the same absent structured key at once (the
+  first element of a kind on a page), the same property of one element, and
+  one entry of a record. Pages are not pre-created with empty structured
+  collections to close the first case: that would add about 15 entries per
+  page and turn an absent key into `[]` in the JSON view, for a race of one
+  round trip. Whether pages are already built with every collection present
+  as `[]` (which would narrow it further) is _unverified_.
 - **A build from before the refusal** that meets version 4 data loses the
   elements of every collection it writes (see "Old writers in version 4").
 - Host top-level keys outside `pages` (the reference host's flat cover

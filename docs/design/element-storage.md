@@ -1,6 +1,6 @@
 # Element-level storage in the page Y.Doc (document version 4)
 
-Status: design, 2026-11-17. Not implemented. Refs #176. The normative format is `packages/schema/DOCUMENT_VERSIONING.md`, section "Version 4"; this note is how to build it. Line numbers are from `origin/main` at `e6908cb`. Anything marked _unverified_ is a reading of the code, not a test.
+Status: design, 2026-11-17; F0 names and open questions decided by the maintainer the same day. Not implemented. Refs #176. The normative format is `packages/schema/DOCUMENT_VERSIONING.md`, section "Version 4"; this note is how to build it. Line numbers are from `origin/main` at `e6908cb`. Anything marked _unverified_ is a reading of the code, not a test.
 
 ## Why
 
@@ -132,7 +132,7 @@ Notes for the builder:
 - **`undefined` values** are passed through as today (stored plain); `applyOwnWrite` and `planHistoryRebase` distinguish a present `undefined` from an absent key with `Object.hasOwn`, so turning it into a delete would be a behaviour change.
 - **Unrepresentable values** (see "Version 4") under a classed key are written plain. Over an existing structured value that replaces the structure; the next lift tries again and leaves it plain again. Deterministic, no loop.
 - **The diff of an `elements` value** against the live structure: delete removed ids; create a map for added ids (properties plus `$pos`); per kept element set changed properties (`sameStateValue`) and delete absent ones; for order, keep the ids on one longest increasing subsequence of their current positions in the new order and give the others a new `$pos` between their new neighbours (`posBetween` + `posJitter`; re-space the list first when the neighbours tie). `order` values diff the same way with the key as the value. Records diff per entry.
-- **The diff reads live, not the caller's base.** That is today's guard (`pagesDoc.ts:288`) at finer grain. A writer whose React state is stale (it emits a whole array that predates a remote edit it has already received) still writes the stale values of that element back. Version 3 writes the whole stale array, so this is no regression; a three-way diff (`partial` against the value the emitter last saw) would close it, see "Open questions".
+- **The diff reads live, not the caller's base.** That is today's guard (`pagesDoc.ts:288`) at finer grain. A writer whose React state is stale (it emits a whole array that predates a remote edit it has already received) still writes the stale values of that element back. Version 3 writes the whole stale array, so this is no regression. A three-way diff (`partial` against the value the emitter last saw) would close it; decided against for now, because it needs a base at every writer and the window is no worse than today.
 - **Lift chain vs jitter:** the lift and `buildStateMap` use the deterministic chain (no jitter), like `seedPagesIfEmpty`; user writes use jitter.
 
 ### The memo
@@ -244,6 +244,13 @@ Why the sync hook's read belongs in 3.A: when a v4 client lifts and stamps, a 3.
 
 ### PR 3.A
 
+Two measurements must be done in 3.A, before anything writes the new shape (3.C), and their results go into the 3.C PR:
+
+- **Reserved prefix:** whether any stored id or record key in templates (the open pack and hosts' templates), AI operations or test fixtures starts with `$`. A hit means that value stays plain forever under version 4, so it must be known before the format ships.
+- **Size:** the encoded size of a representative Y.Doc (a multi-page deck with many elements and some edit history) before and after the lift, and after a typical editing session on each.
+
+Tests:
+
 - `packages/core/src/ydoc/codec.vitest.ts`: round trip `readState(buildStateMap(x)) ≈ x` (`sameStateValue`) for every built-in kind and one host kind; plain values read as they are; each unrepresentable value stays plain; unknown `$kind` reads as absent; a `Y.Map` without `$kind` reads as `toJSON()`; `writeStateKeys` writes only changed elements, properties and positions (count the updates); the memo keeps identity of unchanged elements and collections, invalidates before observers, and is bypassed inside a transaction.
 - `packages/core/src/ydoc/pos.vitest.ts`: the `posBetween` tests moved from `collab/pagesDoc.vitest.ts:62` plus `posJitter`.
 - `packages/core/src/model/nodeSafe.vitest.ts`: `yjs` allowed only under `src/ydoc/`; `src/index.ts` does not reach it.
@@ -277,19 +284,22 @@ Red first, then green:
 - **Tests.** The plan does not mention that `undoKeepsRemoteEdits.vitest.tsx:269` asserts the #176 loss and must be rewritten, nor that `nodeSafe.vitest.ts` forbids any package import in core today.
 - **Server writes into a v3 document.** The plan has the internal API write through `writeStateKeys` everywhere. Writing structure into a document still at 3 would put structured values under a stamp v3 clients accept. Hence rule 1 and the `lift` option.
 
-## Open questions for the maintainer
+## Decided after review (maintainer, 2026-11-17)
 
-1. **`iconStates` entries:** keep one value per icon (concurrent edits of different properties of one icon stay last-writer-wins), or store each entry as a property map like an element? The second is a fourth structure.
-2. **`bind`, `groups`, `backgroundImageAdjustments`:** plain in version 4 as proposed? Adding one later needs no version step, only a key-class change.
-3. **First element of a kind on a page:** accept the key-level race, or have new pages carry every collection as an empty structured value? The second adds about 15 entries per page and turns an absent key into `[]` in the JSON view. Whether pages are already built with every carried list as `[]` is _unverified_.
-4. **Three-way diff in `writeStateKeys`:** write only what changed between the emitter's last seen value and the new one, instead of diffing against the live value? It closes the stale-emit window (see the API notes), but needs a base at every writer (`useEmitHostStateChanges` has `prevRef`).
-5. **Flat documents at version 4:** older builds will refuse v4 Studio documents and deck autosaves although their shape did not change. Accepted as the price of one counter?
+The F0 names in the spec were approved as written: `$kind` (`elements`, `order`, `record`), `$pos`, `$` as the reserved prefix, the key classes, `schemaVersion` 4, and no `meta.stateFormat`.
+
+1. **An `iconStates` entry stays one value per icon.** Concurrent edits of different properties of one icon stay last-writer-wins; a property map per entry would be a fourth structure for an edit nobody reported.
+2. **`bind`, `groups` and `backgroundImageAdjustments` stay plain in version 4.** No concurrent partial edit of them is reported, and one can join a class later without a version step.
+3. **The first element of a kind on a page keeps the key-level race.** Pages are not pre-created with empty structured collections: that would add about 15 entries per page and turn an absent key into `[]` in the JSON view, for a race of one round trip.
+4. **No three-way diff in `writeStateKeys` for now.** It would need a base at every writer, and the stale-emit window it closes is no worse than version 3.
+5. **Older builds refuse version 4 documents read-only, flat ones included.** One counter for both forms is the accepted price; a Y.Doc-only marker would not be obeyed by old clients.
 
 ## Unverified
 
-- That no element id, `order` id or record key in stored documents or in hosts' templates starts with `$`. The editor's ids are `prefix-timestamp-random` (`utils/duplicateElement.ts:107-109`); templates and AI operations were not checked.
+- That no element id, `order` id or record key in stored documents or in hosts' templates starts with `$`. The editor's ids are `prefix-timestamp-random` (`utils/duplicateElement.ts:107-109`); templates and AI operations were not checked. Measured in 3.A (see "Tests").
+- Whether pages are already built with every carried collection as `[]`, which would narrow the first-element race (decision 3).
 - That property order never matters to a consumer other than the comparisons named above.
-- The size effect on stored Y.Docs (one item per property instead of one per array; drags write two small items instead of a whole array). Not measured.
+- The size effect on stored Y.Docs (one item per property instead of one per array; drags write two small items instead of a whole array). Not measured yet; measured in 3.A (see "Tests").
 - That a v3 build's writer sees the refused API before its emitter runs (React batching of the `meta` observer and the sync handler in one update).
 - Which host bundles from before `0.1.0-alpha.0` still run.
 - The reference host's sync server details (it re-declares the keys, copies values per key, never touches `meta.schemaVersion`, and its API falls back to patching a flat mirror): taken from the brief for this design, not read here.
