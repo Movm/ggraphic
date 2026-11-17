@@ -331,8 +331,17 @@ one) as no key and gives that id a fresh one.
 
 - The lift writes the deterministic chain (`posBetween(previous, null)`,
   without a random suffix, as seeding does for pages), so two clients lifting
-  the same JSON write equal values. The chain grows by about one character per
-  six entries: 20 characters at the 100th.
+  the same JSON write equal values. The chain grows linearly, by about one
+  character per five entries: 20 characters at the 100th, and for long lists
+  far more. Measured on b1bcfda (#208): one collection of 5,000 elements gives
+  keys up to 1,000 characters and an update of 2.6 MB; 500 inserts into one gap
+  give 108-character keys. The order stays correct in both cases. Real pages
+  hold tens of elements per collection, so the chain is kept for now. Only the
+  key format (alphabet, plain string comparison, no trailing lowest character)
+  is permanent; a balanced deterministic key set would keep the format but
+  change this lift text (every client must run the same algorithm, and a
+  document lifted earlier keeps its chained keys), so it must be decided
+  before the writers ship.
 - A user insert or move writes `posBetween(before, after)` plus the
   two-character random suffix pages use, so two clients inserting into the same
   gap do not mint the same key.
