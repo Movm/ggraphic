@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useMemo, useRef } from 'react';
 
 import { templateTextAlignOf, type TextAlign } from '../utils/textAlign.js';

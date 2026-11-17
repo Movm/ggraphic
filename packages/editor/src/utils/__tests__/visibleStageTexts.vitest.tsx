@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import Konva from 'konva';
 import { afterEach, describe, expect, it } from 'vitest';
 

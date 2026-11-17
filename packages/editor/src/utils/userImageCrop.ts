@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { coverPhotoRect, panOfFramedPhoto, type Rect, type Size } from './coverFit.js';
 import { panOfStraightPhoto } from './straighten.js';
 

@@ -1,9 +1,10 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Canvas configs for hosts with their own page logic: `FullCanvasConfig` and its element configs, the loader, the factories, feature injection, placeholders and the share section. */
 export {
   type AdditionalText,
   type AnyCanvasConfig,
   type BackgroundElementConfig,
+  type CanvasActionHistory,
   type CanvasElementConfig,
   type FullCanvasConfig,
   type HeterogeneousPage,

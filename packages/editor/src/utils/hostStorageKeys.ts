@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * localStorage keys the editor persists under. The defaults are neutral; a host
  * that already shipped the editor registers the key its users' browsers hold

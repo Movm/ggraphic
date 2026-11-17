@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useEditorBoxRef } from '../hooks/editorBox.js';
 import { useIsCanvasMobile } from '../hooks/useIsCanvasMobile.js';
 import { useMessages } from '../i18n/messages.js';
@@ -93,7 +93,7 @@ export function CanvasEditorLayout({
       ref={measureBox}
       data-canvas-mobile={isMobile ? '' : undefined}
       onClickCapture={handleClickCapture}
-      className="canvas-editor-layout relative flex flex-col h-[var(--editor-height)] min-h-[500px] bg-[var(--editor-bg)]"
+      className="canvas-editor-layout relative flex flex-col h-[var(--editor-height,100dvh)] min-h-[500px] bg-[var(--editor-bg)]"
     >
       {toolbar}
       {hasSidebar && (

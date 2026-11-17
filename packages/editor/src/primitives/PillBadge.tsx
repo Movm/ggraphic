@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * PillBadge - Reusable Konva component for rendering a pill-shaped badge with text
  *
@@ -265,8 +265,8 @@ function PillBadgeInner({
     textarea.addEventListener('blur', removeTextarea);
 
     textarea.addEventListener('keydown', (e) => {
+      // Escape schliesst ab wie im Text (`CanvasTextOverlay`): das Getippte bleibt (#163).
       if (e.key === 'Escape') {
-        textarea.value = text;
         textarea.blur();
       }
       if (e.key === 'Enter' && !e.shiftKey) {

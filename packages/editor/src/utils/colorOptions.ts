@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The colours a picker offers come from the active brand pack. Pickers read
  * them as `ColorOption`s; the mapping is cached per pack, so a picker gets the

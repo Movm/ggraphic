@@ -1,5 +1,244 @@
 # @ggraphic/editor
 
+## 0.1.0-alpha.9
+
+### Minor Changes
+
+- ab6dea2: A failed upload no longer leaves an undo step that brings back its revoked `blob:` preview. The new `discardPlacedUserImage` action takes the placement out of the canvas and the history; wire the uploads section's `onRemovePlaced` to it. `createActions`' history argument gains `rewriteHistory`, and the store gains `rewriteHistory` too.
+
+### Patch Changes
+
+- b2d1dd1: `ConfigCanvas` and `StandaloneCanvas` take `previewCaptureRatio` and pass it to `GenericCanvas`. Until now only `preview` got through, so a host that renders offscreen through `StandaloneCanvas` could not say what it captures at: a filtered photo was cached at the offscreen stage's display scale, which settles only after the first effects. The same slide then rendered in two ways depending on whether the photo loaded before or after that scale was set, and a capture at 2x drew the photo from a cache at about 0.4.
+
+## 0.1.0-alpha.8
+
+### Minor Changes
+
+- f585f15: A photo's look (adjustments, background tint) is now a bitmap made once per look instead of Konva filters run over the node's cache. Panning, zooming and dragging the crop frame of a filtered photo (background or framed) no longer filter again; a slider drag shows a small bitmap and builds the full one once the look rests. Flip and vignette are drawn over the frame; the vignette darkens only the photo's own pixels. A filtered photo now exports as an image of its bitmap instead of a raster island. Removed `cacheFiltered`, `cropGhostSource`, `recacheNextFrame` and `straightSceneFunc` (no consumers).
+
+## 0.1.0-alpha.7
+
+### Minor Changes
+
+- e3124dd: Text size like in Canva. The size field in the toolbar takes a typed number: Enter or leaving the field applies it, Escape drops it, the arrow keys step by 1 (10 with Shift). A text has corner handles: dragging a corner scales the text, the size field follows the drag live, and the size is written on release in the same undo step as the box. A free text kept only its new width before. A template text gets corners where its size persists (`fontSizeStateKey`). A size set by hand fixes the size: `updateAdditionalText` with `fontSize` drops `maxFontSize`, so no later edit, font or brand change refits the text over it.
+
+### Patch Changes
+
+- 95288f2: Panning a background photo in Ausschnitt mode no longer jumps back when the pointer rests. The pan read its offset from the node, which it puts back on its box after every move. Konva fires `dragmove` without placing the node again when the pointer did not move, so a resting mouse or trackpad read a pan of zero and the photo jumped to where the drag began, back and forth while dragging and lost entirely when released during a pause. The offset now comes from the pointer, as Konva places a dragged node.
+- Panning a filtered background photo in Ausschnitt mode runs at frame rate. Every pointer move used to re-cache the node and so ran every filter over the whole bitmap again (about 85 ms per move). Now the node shows a copy of the whole photo, filtered once at the resolution it is shown at, with its crop scaled to that copy and no filters or cache. The copy is made when Ausschnitt mode opens, and again after a zoom. On release the photo, its filters and a sharp cache come back before the store updates. `cropGhostSource` takes an optional `maxSide`.
+
+## 0.1.0-alpha.6
+
+### Minor Changes
+
+- 064350e: Vector export follow-ups. `defineBrand` takes `print.cmyk` and validates it. A variable TTF is exported at the requested weight; a variable WOFF/WOFF2 or CFF2 font that cannot be set is listed in the new `ExportReport.defaultInstanceFonts`. A regular cut that stands in for a bold is emboldened like the canvas draws it. The soft hyphen no longer moves the PDF pen. `ExportReport.fallback` is now `{ kind: 'fonts' | 'timeout' | 'error', reason }`, and the download notice names the actual reason; raster islands no longer count against the 60 s timeout. Raster islands above 16.7 MP are scaled down and listed in `ExportReport.reducedRasters`. SVG shadows are written as filter primitives instead of `feDropShadow`. An image without an element id is rasterised instead of reported missing. SVG assets from the host catalogue are exported as trusted, so hosts must not list user uploads there. `isSafeColor` accepts `oklch()`, `lab()`, `color-mix()` and angle units. The text baseline falls back to measured ascents in engines without `alphabeticBaseline`.
+
+  Breaking for hosts that build these types by hand: `Messages.downloadPanel.pdfFallbackNotice` is now an object `{ fonts, timeout, error }` instead of a string, and `reducedRasterNotice` and `variableFontNotice` are new required keys, so a host that supplies or extends a full `Messages` object must add them. `FontFile` (from `export/fonts/fontFiles`) gained the required fields `fakeBold` and `variation`. New exports: `fitPixelRatio`, `variationInstance`, `isCatalogueInstance` and `embeddableBytes`; `FontkitFont` is extended. A host `exportFonts` file lighter than the weight asked (by its `OS/2.usWeightClass`) is emboldened too, and a raster island that does not finish within `islandTimeoutMs` (default 60 s) falls back to the raster PDF.
+
+- d570cbc: Vector PDF: print, slide and digital PDFs are now written as vectors with real, selectable text and subset-embedded fonts, instead of page images. Print PDFs keep the bleed, trim and crop-mark geometry. If the vector export fails (a font that cannot be loaded for more than one element, a writer error, or a 60 s timeout), the download falls back to the image PDF and says so. Digital formats offer PDF too.
+
+  `BrandPack.print.cmyk` (optional, keys `#rrggbb`, values 0–100): vector fills, strokes and text in these colours, and gradients whose stops are all mapped, are written as DeviceCMYK with exactly these values. Everything else, photos included, stays RGB. The export report lists brand colours that left the PDF in RGB. New: `CanvasEditorExportApi.exportPdf`.
+
+  `@ggraphic/editor/export` also exports `exportPagesPdf` and the browser helpers the exports are wired with (`fetchImageBytes`, `reencodeImage`, `rasterizeOps`, `pngFromDataUrl`), and `PagePreview` takes an `onCanvas` callback that hands over the page's canvas handle, so a host can export the page it previews.
+
+- 3d987af: PowerPoint export: elements PowerPoint cannot draw natively (path shapes, icons, illustrations) now go into the slide as SVG pictures with a PNG preview instead of PNG only, so they stay sharp when zoomed or printed. An element that is not fully vector, carries a shadow, or whose SVG picture fails to render keeps the PNG path. `PagePreview` takes an optional `onCanvas` callback that hands over the page's canvas once it has settled.
+- 5c0f142: SVG download: every page can be downloaded as a real vector SVG, recorded from what Konva draws. Text is written as outlines by default, or as editable `<text>` with the switch "Text bearbeitbar lassen". Icons, illustrations and charts stay vector, and only what has no vector form (filtered photos, unknown effects) is embedded as an image and listed in a notice. New: `CanvasEditorExportApi.exportSvg`, the optional host service `exportFonts`, and `@ggraphic/editor/export` exports the recorder (`recordPageScene`, `resolveScene`), `writeSvg` and `resolveFontFiles`.
+
+  Visible change: chart labels now draw in the brand body font on the canvas too (the font is embedded in the chart SVG), so canvas and export match. Chart colours that are not plain colours are replaced by the brand chart colour.
+
+### Patch Changes
+
+- e7a5637: Two brand leaks in a document of another pack. The image tint fallback follows the document's brand: its accent when that is one of its tint swatches, else the first swatch, and the „Stärke" slider on an image without a tint now writes that colour, so the highlighted swatch and the painted colour are always one the picker offers. `registerEditorShell` takes an optional `documentAudience(pages)`: whose assets (logos, marks) the Elemente tab offers for the document, `null` for the user's locale. A host without it keeps following `userLocale`. It is separate from `deckLocale`, which only says whose fonts a deck carries.
+- Updated dependencies [064350e]
+- Updated dependencies [d570cbc]
+  - @ggraphic/core@0.1.0-alpha.3
+
+## 0.1.0-alpha.5
+
+### Patch Changes
+
+- a9a467c: Undoing a deck op ("apply a template to all slides", `replaceDeck`) no longer takes the step before it along. Since 0.1.0-alpha.3, this client's own writes from another stack (a deck op, its undo by the page-level `Y.UndoManager`, a version lift) were written into every entry of the page's undo history, like another client's edit. The deck op and its undo overwrote the older entries, so after undoing the deck, undo no longer reverted the step before it. Such a write now reaches only the entries that still hold the value it replaced, and its undo restores every entry. Remote edits are handled as before (#160).
+
+  `useYjsPageStateSync` passes `own` (a local Yjs transaction) to `onRemoteState` as a third argument, and the store's `rebaseHistory` takes it as a third argument.
+
+## 0.1.0-alpha.4
+
+### Patch Changes
+
+- 0ed7bdb: A newly added text starts at 120 / 72 / 56 px (heading / subheading / text) across 80 % of a 1080 px page, and grows with the page width on every format. Before, it started at 48 / 36 / 32 px in a 400 px box and scaled only on slides, a third of the size of the headlines templates set.
+
+## 0.1.0-alpha.3
+
+### Minor Changes
+
+- 532ecff: `addPage` and the host's `EditorAddPage` take `inherit: boolean | PageInheritance`. `{ brand: true, background: false }` adds a page that keeps the active page's scheme and brand bindings (`colorScheme`, `colorSchemeId`, `bind`, `brandScheme`, `brandStamp`) without its background (photo, colour, composer planes). Such a page drops the bindings of background fields (for example `bind.backgroundColor`), since it carries none of those fields. `{ brand: false, background: true }` is the reverse. `true` and `false` mean what they meant before. `PageInheritance` is exported from `@ggraphic/editor/shell`, and `extractInheritablePageState` takes it as an optional third argument.
+- 5be7dcc: Export `BLANK_PAGE_ID` from `@ggraphic/editor/embed` and `@ggraphic/editor/host`: the page config id of the empty page `GgraphicEditor` registers, for a host that starts a blank design (`pages: [{ configId: BLANK_PAGE_ID, state: {} }]`). The host entry loads no React, so a server component can read it too.
+- 24a0d79: `captureActivePage` takes `fontWaitMs`: the longest wait for fonts before the export, after which the fallback faces are used. Without it the export waits until the fonts settle, as before.
+
+  A web view that cannot fetch a font file can leave its faces loading for good (WKWebView in an Expo DOM component), and `captureActivePage` then never returned. `@ggraphic/react-native` passes 3000.
+
+- 34c88be: `GenericCanvasRef.imageLoadState()` returns how many image elements are still loading (`pending`) and how many failed to load (`failed`). A capture is complete only when both are 0. `imagesSettled()` is also true after a failed load, so a host could not tell a complete capture from one without its photo.
+
+  `GenericCanvasRef.retryFailedImages()` loads every failed image element again and returns how many. They count as pending at once. Before, a failed image stayed failed: `use-image` loads again only for a new url.
+
+  **Breaking for direct importers of `utils/pendingImages`** (the deep path under the `./*` export): `PendingImagesContext` now holds `ImageLoads` (`{ pending, failed }`) instead of one `Set<string>`, and the module adds `ImageRetryContext` and `useImageRetry`. The public entries are unchanged.
+
+- 8b286ef: Export `formatLabel` and `formatDescription` from `@ggraphic/editor/host` and `@ggraphic/editor/templates`: a format's name and size line in the language of the message catalogue (`registerMessages('en' | 'de')`). The built-in formats' `label` and `description` fields stay in their original language (German); show these functions instead. The host entry loads no React, so a server component can list formats in English after `registerMessages('en')`.
+- cfeca71: Relicensed from MPL-2.0 to AGPL-3.0-only. Versions published before this change remain available under MPL-2.0.
+- 73f7316: An uploaded photo's durable URL replaces its `blob:` preview in the whole undo history instead of becoming an undo step of its own. Before, undo after a slow upload could bring back the revoked preview and save it, so the photo was lost for everyone. `createActions` gets an optional sixth argument, `history` (`CanvasActionHistory`), which `createUserImageActions` and `createElementActions` take as their last argument. A template that builds its own actions passes it on; without it the swap stays an undo step as before.
+
+### Patch Changes
+
+- 49f3140: Undo in a collaborative session no longer reverts other people's edits. An edit that arrives from another client is written into this client's undo history, so undo and redo only revert this client's own steps. They are patched per element and property, so an own change to another element in the same collection still undoes.
+
+  The edit is measured from the value its writer started from, so an own step that lost a simultaneous write to the same key stays in the history and can be redone. Layer order and locked layers merge per id, so undo of a reorder still works after someone adds a layer. Undo of an own add removes the element even after someone else changed it. `useYjsPageStateSync` passes that starting value to `onRemoteState` as a second argument.
+
+- 74f0c84: The editor is as tall as the viewport again in hosts that import `@ggraphic/editor/styles/editor` without `tokens.css` and don't declare `--editor-height` themselves (#152). Its root used to read the token without a fallback, so its height became `auto`, the editor grew with its content and the canvas fit grew with it. The root now falls back to `100dvh`, the default of `tokens.css`.
+- 6fad500: Escape ends a pill-badge edit the way it ends a normal text edit: the typed text is kept. Before, Escape discarded the edit on badges while it committed on normal text.
+- 137096d: A newly inserted element (text, shape, icon, chart, ...) is selected, and only it. Before, the previous selection stayed, and the new element had to be found and clicked first, which was awkward when it landed on top of other elements.
+- Updated dependencies [cfeca71]
+  - @ggraphic/core@0.1.0-alpha.2
+  - @ggraphic/schema@0.1.0-alpha.2
+
+## 0.1.0-alpha.2
+
+### Minor Changes
+
+- bdd1320: The canvas fills the available area on desktop and follows it when the window grows or shrinks (#112). **This is a visible size change for all hosts.**
+
+  - **Before:** a desktop stage was effectively capped at 400 px wide: 400 × 500 for 4:5 and 400 × 225 for 16:9, at any window size. After the window had been made smaller, the stage never grew back.
+  - **Now:** the stage takes the part of the canvas area that nothing covers. That is the area below the context bar slot and the page toolbar, and above the bottom bar, with the same 24 px gap above and below. Every page of a multi-page document gets that full size and is reached by scrolling.
+  - **Mobile:** the mobile layout, including an open sheet, keeps its own fit and is unchanged.
+  - **`CanvasStage`:** a new prop `fitToParent` (default `true`). Inside the editor it is off, because there the stage's parent sizes itself to the stage.
+  - **Shell measurement:** the shell measures the area with `useMeasuredStageFit` (`hooks/stageFit`).
+
+- 6676a77: New entry `@ggraphic/editor/host`. It holds what a host's start-up code and test setup need, without loading the editor UI:
+
+  - the `register*` seams: element kinds, asset catalogue, formats and format groups, templates, brand packs, messages, toasts, storage keys, PPTX fonts and screen-corner reservations;
+  - the format lookups a host's template registry needs: `canvasFormats`, `getCanvasFormat` and `getCanvasFormatOrDefault`;
+  - `useCanvasEditorServices` and `BlockInsertContext`;
+  - the interfaces a host augments: `CanvasEditorHostServices`, `HostElementKinds`, `HostCanvasActions` and `CanvasAiHostTypes`.
+
+  It loads 17 modules, none of them a component, store or primitive. Each of `shell`, `kinds` and `elements` loads at least 31. A host that `vi.mock`s editor modules can import its start-up code from `host`, and its mocks still apply. Every name is also in its domain entry.
+
+  Also added:
+
+  - `CanvasAiHostTypes` in `@ggraphic/editor/ai`, so a host can augment it through a public path.
+  - `stripMarks` in `@ggraphic/editor/text`.
+  - `surfaceGlow` in `@ggraphic/editor/brand`.
+  - `registerMeasuredCornerReservation` and its types in `@ggraphic/editor/services`.
+
+  **Breaking (alpha):** `BlockInsertApi.bloecke` is now `blocks`. The field only lives in the React context a host provides, nothing persists it, so there is no alias: a host that provides or reads the context renames it (a type error points at each site).
+
+  `CanvasFormatGroupDef` takes an optional `order`. It places a host group among the built-in picker groups, whose positions are in `CANVAS_FORMAT_GROUP_ORDER` (`templates`, `host`): `post` is 100, `square` 200, `slides` 300. A group without `order` follows the positioned ones, as before.
+
+- ef97b05: Public entry points. Each is a facade that re-exports a curated list of names:
+
+  - `@ggraphic/editor` (the same as `./embed`), `./embed`, `./page`, `./config`, `./shell`, `./canvas`, `./kinds`, `./store`, `./services`, `./brand`, `./templates`, `./elements`, `./text`, `./sidebar`, `./collab`, `./ai`, `./export`, `./i18n`;
+  - `./illustrations/<set>` for each of the seven illustration sets.
+
+  `./kinds` carries what a custom element kind needs, with a documented example. `./text` adds the generic text fitting (`wrapWords`, `balancedWrap`, `largestSizeWordsFit`).
+
+  `@ggraphic/editor/internal/*` reaches any compiled module, with no semver promise.
+
+  Deprecated: the deep paths (`@ggraphic/editor/utils/…`, `…/components/…` and the rest). They keep working in this alpha and are removed in the next one; move to the entries above, or to `internal/*` where an entry has no home for a name yet.
+
+- e9a3d1a: `<GgraphicEditor>` takes an `exportApiRef`: once the editor has loaded it receives `CanvasEditorExportApi`, so a host can render the active page or every page as PNG, export the deck as .pptx and read the pages from its own UI. `CanvasEditorExportApi` is exported from `@ggraphic/editor/embed`. The embedding skill has a new Export section.
+- 0a75b5c: New `loadTemplatePack(files)` in `@ggraphic/editor/embed`: `templatePackFromJson` in a chunk of its own, returning a promise of the pack. `<GgraphicEditor templates>` accepts that promise and resolves it while the editor loads. A host that called `templatePackFromJson` at module level carried zod, the XML parser and the page config in its entry chunk; with `loadTemplatePack` they load next to the editor (a minimal Vite host: entry chunk 561 kB → 221 kB minified). `templatePackFromJson` is unchanged.
+- 6dd815a: `GgraphicEditor` (`@ggraphic/editor/embed`): the editor in one component. A host passes a brand pack, a template pack (`templatePackFromJson`, also exported here), the document and an `onChange`; the component fills the brand, message and template registers, provides a React Query client and the host services, and renders the shell. Defaults: browser downloads, object-URL uploads, no AI and no collaboration, English texts (`locale`). The import is SSR-safe; the editor renders in the browser only. `CanvasEditorShell` gets `onPagesChange`, called with every page after each change to the deck.
+- 6c4abd9: `@ggraphic/editor/host` loads no React, so a server component (a Next.js layout, a route handler) can import it and call the `register*` functions. Before, `next build` failed with `createContext is not a function`.
+
+  The three React names left `host` for the new client entry `@ggraphic/editor/host-react` (`'use client'`, three modules, React only). Migration:
+
+  ```diff
+  - import { useCanvasEditorServices, BlockInsertContext, useBlockInsert } from '@ggraphic/editor/host';
+  + import { useCanvasEditorServices, BlockInsertContext, useBlockInsert } from '@ggraphic/editor/host-react';
+  ```
+
+  Everything else in `host` stays where it is. The three names are also still in `@ggraphic/editor/shell`.
+
+- c8b3945: The format catalogue is now the host's. The editor ships three neutral formats; hosts add their own with `registerCanvasFormatGroups` / `registerCanvasFormats`.
+
+  **Breaking for hosts that rely on the built-in formats.** Before this release the editor had 18 formats built in; now it has three.
+
+  - Built in: `post-portrait` (4:5), `profile-square` (1:1) and `slide-16-9` (16:9). Their ids are unchanged.
+  - Built-in groups are now `post`, `square`, `slides` and `print`. They were `sharepic`, `sharepic-tall`, `profilbild`, `praesentation` and `print`.
+    - `isSlideFormat` now checks the `slides` group: a host's slide format joins it.
+    - `print` has no built-in format; it holds a host's print formats.
+  - Moved out: `post-portrait-tall`, the 14 `print-*` formats and the `sharepic-tall` group. A stored document with one of these ids opens again once the host registers it under the same id. Until then, a print id is refused (`UnsupportedCanvasFormatError`) and an unknown digital id falls back to `post-portrait`, as before.
+  - For one alpha the moved catalogue stays unchanged in `@ggraphic/editor/formats/legacyCatalog` (deprecated):
+
+    ```ts
+    registerCanvasFormatGroups(LEGACY_CANVAS_FORMAT_GROUPS);
+    registerCanvasFormats(LEGACY_CANVAS_FORMATS);
+    ```
+
+  - `pinnedFormatId` maps a host's template ids, so it moved to `formats/legacyCatalog` (deprecated). It is still re-exported from `formats/index`, but is no longer in the `templates` entry.
+  - Message catalogue:
+    - `formats.names` holds only the three built-ins, with neutral names ("Post 4:5", "Square 1:1", "Presentation").
+    - `formats.groups` uses the new group ids.
+  - Image looks `gruen` → `tinted` and `grau` → `grayscale`, with the message keys `imageLooks.*` renamed the same way. Look ids are never stored: applying a look writes its values.
+  - `CoreSidebarTabId` no longer lists `'vorlagen'`. The editor has no such tab; a host tab with that id still type-checks as a `SidebarTabId`.
+  - `getCanvasFormatOrDefault` warns once per unknown id (`unknown canvas format 'x', falling back to 'post-portrait'; register it with registerCanvasFormats`), so a host that forgot to register a digital format sees it in its logs instead of shipping 4:5.
+
+- ba99f4f: Neutral names on the public surface. Every German or host-specific name reachable from the entry points is renamed; nothing here is persisted, so documents, template packs and stored state are unaffected.
+
+  - Types and functions (the old name stays as a `@deprecated` alias on its deep path until the next alpha):
+    - `CanvasImpressumService`, `CanvasImpressumParts`, `CanvasImpressumLabels`, `CanvasImpressumLocale` → `CanvasImprintService`, `CanvasImprintParts`, `CanvasImprintLabels`, `CanvasImprintLocale`
+    - `CanvasStudioAssetKind`, `CanvasStudioAssetScope`, `CanvasStudioAssetItem`, `CanvasStudioAssetsFilter`, `CanvasStudioAssetsState`, `UseCanvasStudioAssets`, `useNoStudioAssets` → `CanvasAssetLibraryKind`, `CanvasAssetLibraryScope`, `CanvasAssetLibraryItem`, `CanvasAssetLibraryFilter`, `CanvasAssetLibraryState`, `UseCanvasAssetLibrary`, `useNoAssetLibrary`
+    - `VORLAGE_DRAG_TYPE`, `isVorlageDrag`, `readVorlageDrag` → `TEMPLATE_DRAG_TYPE`, `isTemplateDrag`, `readTemplateDrag`
+    - `DiagrammeSection`, `FormenSection` → `ChartsSection`, `ShapesSection`; `StudioGalleryGrid` → `AssetGalleryGrid`; `buildSharepicText` → `buildCanvasText`
+  - Files (the old path re-exports the new one until the next alpha): `sidebar/sections/DiagrammeSection`, `FormenSection`, `RahmenSection`, `StudioGallery` → `ChartsSection`, `ShapesSection`, `FramesSection`, `AssetGallery`; `configs/buildSharepicText` → `configs/buildCanvasText`
+  - Props, fields and keys (no alias; rename them in the host):
+    - `CanvasEditorServices.useStudioAssets` → `useAssetLibrary`
+    - `CanvasPrintService.impressum` → `imprint`; `CanvasImprintParts.anschrift` → `address`
+    - `CanvasPrintSpec.seiten` → `pageCount`; `CanvasPrintSpec.impressum` → `imprint`, with the values `'jede-seite' | 'erste-seite' | 'letzte-seite'` → `'every-page' | 'first-page' | 'last-page'`
+    - `PageWrapperProps.onDropVorlage` → `onDropTemplate`
+    - `ChatSectionContentProps.getSharepicText` → `getCanvasText`
+    - `PendingAiSuggestion.source: 'vorlage'` → `'template'`
+    - Messages: `sharepicText` → `canvasText`, `sidebar.studio` → `sidebar.assetLibrary`, `shell.downloadPanel.impressum*` → `shell.downloadPanel.imprint*`
+  - The template drag type is now `application/x-ggraphic-template` (it only ever lives in a drag's `DataTransfer`).
+
+### Patch Changes
+
+- 01c1fab: The data entries `page`, `elements`, `templates`, `text` and `config` load without React, Konva or React-dependent packages, so they work in React Server Components and plain Node. As a side effect, the `embed` entry loads under React's server build too (the editor itself stays lazy).
+
+  - No exported name changes. Only the internal module graph does: React-free core modules sit next to the old ones, and the old modules re-export them.
+    - `i18n/catalogue` (`messages()` and the registers, without `useMessages`);
+    - `utils/fontGeneration`;
+    - `utils/fontSpecs`;
+    - `utils/framePresets`;
+    - `sidebar/coreSidebar`.
+  - `createPageConfig` and `createShareSection` name the core sidebar sections and tab icons by id. The editor shell provides them when its module loads. Reading a section's `component` or a tab's `icon` outside `CanvasEditorShell` throws a `coreSidebar:` error.
+  - `shareTab.icon` is now a getter, so its type is `readonly`.
+  - `canvasIcons` no longer registers icon sets with `@iconify/react` itself. The sidebar does that through `onIconSetLoaded`.
+  - `sideEffects` now names `utils/fontGeneration` (the `document.fonts` listener moved there) instead of `hooks/useFontGeneration`.
+
+- 0b8da42: The mobile layout and the canvas fit follow the editor's box instead of the window (#106). An editor embedded in a box narrower than 900 px uses the phone layout also in a wide window, and its pages are sized to the box's width and height. The editor root measures itself and carries `data-canvas-mobile` while it is narrow; the `max-canvas-mobile:` / `canvas-mobile:` variants of `@ggraphic/editor/styles/tailwind` and the mobile rules of the editor stylesheet key on it. Dialogs and menus, which open over the page, still follow the window. A full-screen host measures exactly the window, so nothing changes there. `isMobile()` and `getOptimalContainerWidth()` of `@ggraphic/editor/utils/viewport` take an optional width (the window's by default).
+- 3211079: Declare `@tiptap/pm`, `react-is` and `y-protocols` as dependencies. The editor's tiptap packages, recharts and `@hocuspocus/provider` need them as peers; package managers that don't install missing peers (yarn) failed to build a host.
+- d101d84: The editor's chrome sits inside the editor instead of the viewport, so a host can put its own bar or sidebar next to it (#100). The sidebar, the panel and the bottom bar are positioned against the editor's root, and the pages scroll inside the editor instead of the host page. Its height is the new token `--editor-height`: `100dvh` by default, as before, and `100%` in `GgraphicEditor`, which now fills exactly the box the host gives it. `--canvas-host-inset-left` is no longer read; a host that set it to clear its own sidebar can drop it.
+- a95f304: Internal imports are relative; no API change.
+- 89a7b84: The embedding skill notes that `@ggraphic/templates-open` ships its sample photos only from the `./photos` subpath.
+- bd40ea0: The `ggraphic-embed` skill no longer asks for one shared version across `@ggraphic/*`: the packages are versioned independently, so a host pins each one to the version under the `alpha` tag and takes core and schema at the versions the editor depends on.
+- feb274d: The `embed` entry (and the package root, its alias) starts with `'use client'`. A React Server Component that imports it now gets a client reference instead of failing with `createContext is not a function`. `templatePackFromJson` and `loadTemplatePack` are not server APIs: the skill now says so and shows the App Router setup.
+- fe90a3b: Auto-fit measures a bold word in bold. Words in `**bold**` runs were measured in the regular face, so a bold word that only fit in regular weight ran past the edge of its box. `SlotFit` gets an optional `widestWord` for callers that know the widest word better than `measureAt`, as `countLines` already does for the line count.
+- facbe6b: Importing the sidebar no longer registers the bundled icon sets with `@iconify/react`. The registration now runs when an icon first renders, so a host's `@iconify/react` mock without `addCollection` no longer fails at import.
+- 45b8f3a: On mobile, a page that the height limits now fits above the tab bar (#139). The mobile fit used to take the box height minus a fixed 120 px, too little for the header, page toolbar and tab bar, so a portrait page at 500 × 701 ran 38 px under the tab bar. The shell now measures the free canvas area on mobile too (`useMeasuredStageFit`), as it does on desktop. Pages the width limits, as on most phones, keep their size.
+
+  - **`useMeasuredStageFit(container, enabled, hold?)`:** new optional `hold`. While it is true, the last fit stays and nothing is measured. The shell sets it while a mobile sheet is open: the sheet takes space from the main column, and `useMobileSheetFit` scales the pages into what is left.
+
+- bbede91: webpack hosts can build the embed entry again (#133). `next build --webpack` and other webpack builds stopped with `UnhandledSchemeError: Reading from "node:https"`: pptxgenjs, the writer behind the PPTX export, loads `node:fs` and `node:https` with `import()`, and webpack rejects the `node:` scheme in a browser build even inside a lazy chunk.
+
+  - **The fix:** the package now ships a browser build of pptxgenjs 4.0.1 in `dist/vendor/pptxgen.js`, with JSZip and its dependencies. The PPTX export loads it through the package's `imports` map (`#pptxgenjs`), still lazily, and it loads no `node:` module. The licence texts of every bundled package are in `dist/vendor/pptxgen.LICENSES.txt`; JSZip is used under MIT.
+  - **Dependencies:** pptxgenjs is no longer a dependency of `@ggraphic/editor`, so hosts no longer install it.
+  - **Unchanged:** the export itself. Turbopack and Vite hosts were not affected.
+
+- 7a3bf1b: The editor shell preloads the Elements and Tools panels while the browser is idle, so their first open renders directly instead of suspending behind the chunk import. Any section of the config's tabs built with `lazyWithPreload` is warmed the same way.
+- 88aa4d8: The `react` and `react-dom` peer ranges now start at `^19.3.0` instead of `^19.0.0` (#134). The editor's `react-konva ^19.3.2` peer already required React 19.3, so a host on React 19.0–19.2 got `ERESOLVE` from npm naming react-konva, not the editor. Nothing changes for hosts on 19.3 or later. The README install line now uses the `alpha` dist-tag instead of a fixed version.
+- 555a2e6: The stylesheet entries get a second export key with the `.css` extension: `styles/compiled.css`, `styles/index.css`, `styles/editor.css`, `styles/tokens.css` and `styles/tailwind.css`. TypeScript 6 rejects a JavaScript side-effect import of a key without the extension (TS2882), because the bundler's `declare module '*.css'` does not match it. Import the `.css` keys from JavaScript; the old keys stay and resolve to the same files.
+- Updated dependencies [fe90a3b]
+  - @ggraphic/schema@0.1.0-alpha.1
+
 ## 0.1.0-alpha.1
 
 ### Minor Changes

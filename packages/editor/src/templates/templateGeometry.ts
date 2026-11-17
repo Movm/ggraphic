@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * How each element kind's numbers move when a template is placed on a page of
  * another size (axes: x, y, w, h, font size `s`, icon scale `k`). Every top-level

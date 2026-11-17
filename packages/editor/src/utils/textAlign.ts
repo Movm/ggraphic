@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Ausrichtung des Textes in seiner Box — nicht die Lage der Box auf der Seite,
  * die richtet `alignment.ts` aus (#4963).

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 export { cx } from './cx.js';
 export * from './components/Alert.js';
 export * from './components/AppShell.js';

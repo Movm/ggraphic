@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { MultiSelectionToolbar } from './MultiSelectionToolbar.js';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';

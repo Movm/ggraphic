@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
 import { searchIcons, type IconSearchResult } from '../utils/canvasIcons.js';

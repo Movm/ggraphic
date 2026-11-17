@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * `@ggraphic/editor/styles/compiled`: the stylesheet for hosts without Tailwind. Every rule must
  * sit in `@layer ggraphic` (host rules win without `!important`) and, apart from the global token

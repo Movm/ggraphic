@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import type { AssetInstance } from './canvasAssets.js';
 import type { AdditionalText, CanvasElementConfig } from '../configs/types.js';
 import type { ChartInstance } from './chartTypes.js';

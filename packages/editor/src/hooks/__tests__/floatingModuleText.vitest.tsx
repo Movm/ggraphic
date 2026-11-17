@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Die Format-Knöpfe eines nur ausgewählten Textes lesen den gespeicherten Text aus den
  * Leisten-Daten: bei freien Texten und bei bearbeitbaren Texten der Vorlage, nirgends sonst.

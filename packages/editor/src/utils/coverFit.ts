@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Cover-fitted photos (Canva model): the whole photo keeps its aspect, a frame
  * shows part of it, and moving or zooming the photo never opens a gap in the

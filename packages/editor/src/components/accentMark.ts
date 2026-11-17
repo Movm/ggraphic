@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Die tiptap-Mark zu `==Akzent==`. Sie steht in JEDEM Feld im Schema — ein
  * Dokument mit einer unbekannten Mark lässt ProseMirror werfen, und tiptap

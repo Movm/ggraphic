@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /** WCAG relative luminance of a `#rgb`/`#rrggbb` colour; null for anything else. */
 export function luminance(color: string): number | null {
   const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(color.trim())?.[1];

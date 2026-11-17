@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * A template action's history entry is the state AFTER the action (#4246).
  * The actions hand `saveToHistory` their render-time `getState()`, which

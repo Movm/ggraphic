@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /// <reference types="node" />
 /**
  * The core is what a server loads in plain Node ESM: no editor, no React, no Konva, no icon

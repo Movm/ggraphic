@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * What a free page can do with its elements: texts, shapes, icons, emoji,
  * illustrations, placed images and the background colour. The editor calls these by name
@@ -167,9 +167,15 @@ export function createPageActions(
             additionalTexts: prev.additionalTexts.map((t) => {
               if (t.id !== id) return t;
               const next = { ...t, ...partial };
+              // A size set by hand fixes the size: the text leaves the prototype's fitting for
+              // good, so no later edit, font or brand change refits it over the person's choice.
+              if ('fontSize' in partial) {
+                const { maxFontSize: _fitted, ...fixed } = next;
+                return fixed;
+              }
               // A committed text change refits a text with a prototype size: shrink as it grows,
-              // grow back as it shrinks. A size set by hand in the same change stands.
-              if (!('text' in partial) || 'fontSize' in partial) return next;
+              // grow back as it shrinks.
+              if (!('text' in partial)) return next;
               return refitted(next, prev);
             }),
           }),

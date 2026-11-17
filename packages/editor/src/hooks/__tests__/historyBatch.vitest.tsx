@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * runHistoryBatch: every save inside a batch becomes ONE history entry, a
  * nested batch does not end the outer one early, and a batch that changes

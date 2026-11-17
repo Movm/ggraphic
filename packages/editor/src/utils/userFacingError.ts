@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Ein Fehler, dessen Meldung für Menschen geschrieben ist. Erkannt am Feld
  * `userFacing`, nicht an einer Klasse: injizierte Dienste (apps/web) müssen dafür

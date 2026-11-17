@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * A remote stamp change queues a re-lift for the next microtask. If the
  * editor unmounts in between, that queued lift must not write to the doc.

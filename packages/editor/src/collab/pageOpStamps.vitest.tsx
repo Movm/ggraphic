@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The page-level history (page ops, `replaceDeck`) stamps each step from the
  * one history clock, so Undo and Redo can walk it together with the pages'

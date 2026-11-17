@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { contrastRatio, normalizeColor } from '../color/color.js';
 import { fitLogoBox, type Box } from './logoFit.js';
 import { type BrandColors, type BrandFonts, type BrandPack } from './brandPack.js';

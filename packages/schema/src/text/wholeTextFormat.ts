@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 
 /**
  * Auszeichnung und Listen über den GANZEN Text — ohne Editor.

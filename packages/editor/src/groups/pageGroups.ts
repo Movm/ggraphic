@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Groups on a page: the page state key `groups` (F0, shapes only grow) lists
  * element ids that belong together, such as the parts of a placed block.

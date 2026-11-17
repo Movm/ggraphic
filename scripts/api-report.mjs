@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * API report: writes the public surface of every package under packages/ to
  * packages/<name>/api-report.md, one section per export-map entry with every exported name and

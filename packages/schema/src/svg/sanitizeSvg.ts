@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Makes an SVG from outside safe to store in a design and to draw as an image:
  * it is parsed, and only allowlisted elements and attributes are written back

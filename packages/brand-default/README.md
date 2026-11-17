@@ -12,4 +12,4 @@ registerBrandPacks([defaultBrand]);
 
 For a brand of your own, `defineBrand` in `@ggraphic/core` derives a full pack from three colours, the fonts and a logo.
 
-Licence: MPL-2.0. The fonts are under the SIL Open Font License 1.1; see `THIRD_PARTY_NOTICES`.
+Licence: AGPL-3.0-only. The fonts are under the SIL Open Font License 1.1; see `THIRD_PARTY_NOTICES`.

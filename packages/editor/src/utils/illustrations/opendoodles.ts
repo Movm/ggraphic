@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * OpenDoodles Illustration Definitions
  * 33 hand-drawn SVG illustrations with German names and tags

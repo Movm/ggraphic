@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Snapping utilities for canvas elements
  * Enables snap-to-center and snap-to-element functionality during drag operations

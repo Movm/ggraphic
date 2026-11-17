@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * replaceDeck through the hook: one undo step, and a mounted page canvas hears
  * the whole-state replacement (changed keys with values, dropped keys as

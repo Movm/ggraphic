@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useState, useEffect } from 'react';
 
 export function useDebounce<T>(value: T, delay: number): T {

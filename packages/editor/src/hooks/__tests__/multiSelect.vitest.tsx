@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Mehrfachauswahl: Shift-Klick und Auswahlrahmen wählen mehrere Elemente, der
  * gemeinsame Transformer zieht sie zusammen, und jedes schreibt seine neue

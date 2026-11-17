@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The brand binding keys of a page (`bind`, `brandScheme`, `brandStamp`) go
  * through every door a page key has: the persisted and emitted lists, page

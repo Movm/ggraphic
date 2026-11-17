@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Places a template on a page: the one door from template data to page state. */
 import {
   instantiateTemplatePage,

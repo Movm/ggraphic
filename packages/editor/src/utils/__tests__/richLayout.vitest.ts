@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Umbruch mit Stil je Wort: ein fettes Wort ist breiter, und der Umbruch muss
  * das wissen — sonst bricht die Vorschau an einer anderen Stelle um als der

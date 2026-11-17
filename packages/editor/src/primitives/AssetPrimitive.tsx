@@ -1,19 +1,21 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { Image, Group, Rect, Transformer } from 'react-konva';
 
 import { activeBrand } from '../brand/brandRegistry.js';
 import { LOCKED_TRANSFORMER, useIsItemLocked } from '../components/canvasItemLock.js';
+import { markTrustedSvgImage } from '../export/scene/trustedSvgImages.js';
 import { useGeometryReporter, type GeometryReporter } from '../hooks/useGeometryReporter.js';
 import { useSnapScheduler } from '../hooks/useSnapScheduler.js';
 import { isGroupDrag } from '../utils/multiSelect.js';
 import { ELEMENT_TRANSFORMER, signedScale } from '../utils/orientation.js';
-import { useTrackPendingImage } from '../utils/pendingImages.js';
+import { useImageRetry, useTrackPendingImage } from '../utils/pendingImages.js';
 import { applyPixelHitArea } from '../utils/pixelHitArea.js';
 import { boxFrame, createBoxFrame, frameBounds, snapByBounds } from '../utils/snapping.js';
 
 import {
   ASSET_TARGET_SIZE,
+  isCatalogueInstance,
   isStickerLikeInstance,
   resolveAssetInstanceSrc,
 } from '../utils/canvasAssets.js';
@@ -65,33 +67,38 @@ function AssetPrimitiveInner({
 
   const src = resolveAssetInstanceSrc(asset);
   const stickerLike = isStickerLikeInstance(asset);
+  const fromCatalogue = isCatalogueInstance(asset);
 
-  const [settled, setSettled] = useState<{ src: string; ok: boolean } | null>(null);
+  const [settled, setSettled] = useState<{ src: string; retry: number; ok: boolean } | null>(null);
+  // A retry (`retryFailedImages`) loads the same source again.
+  const retry = useImageRetry(asset.id);
 
   useEffect(() => {
     if (!src) return;
 
     const img = new window.Image();
     img.crossOrigin = 'anonymous';
+    // The host's catalogue is the host's own artwork; a file stored for one instance is not.
+    if (fromCatalogue) markTrustedSvgImage(img);
     img.src = src;
     img.onload = () => {
       setImage(img);
       setImageSize({ width: img.naturalWidth, height: img.naturalHeight });
-      setSettled({ src, ok: true });
+      setSettled({ src, retry, ok: true });
     };
-    img.onerror = () => setSettled({ src, ok: false });
+    img.onerror = () => setSettled({ src, retry, ok: false });
 
     return () => {
       img.onload = null;
       img.onerror = null;
     };
-  }, [src]);
+  }, [src, retry, fromCatalogue]);
   // Logos and stickers are assets too: the chat preview must not capture
   // before they have arrived (#4834).
   useTrackPendingImage(
     asset.id,
     src ?? '',
-    settled?.src !== src ? 'loading' : settled.ok ? 'loaded' : 'failed'
+    settled?.src !== src || settled.retry !== retry ? 'loading' : settled.ok ? 'loaded' : 'failed'
   );
 
   // Attach transformer when selected

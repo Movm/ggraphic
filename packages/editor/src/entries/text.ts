@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Text measuring, wrapping and fitting, stripping inline marks, font loading and font aliases. */
 export {
   measureTextWidthWithFont,

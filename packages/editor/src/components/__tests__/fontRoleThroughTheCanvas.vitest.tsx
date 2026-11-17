@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Die Schriftrolle eines freien Textes geht von der Leiste über die Seite zur Aktion des Hosts —
  * und die Leiste erfährt von der Seite, ob es diese Aktion gibt (ohne sie keine Auswahl).

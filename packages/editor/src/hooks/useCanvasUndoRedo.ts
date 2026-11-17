@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useEffect, useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { useStore } from 'zustand';
@@ -26,6 +26,10 @@ interface UseCanvasUndoRedoReturn<
   commitPendingSave: () => void;
   /** Writes pending (immediate and debounced) saves, as Undo does before it steps back. */
   flushPendingSaves: () => void;
+  /** Replaces a string value in every history entry (the store's `replaceInHistory`). */
+  replaceInHistory: (from: string, to: string) => void;
+  /** Rewrites every history entry (the store's `rewriteHistory`). */
+  rewriteHistory: (rewrite: (componentState: TComponentState) => TComponentState | null) => void;
 }
 
 // Stable selectors defined outside component
@@ -251,6 +255,20 @@ export function useCanvasUndoRedo<
     [debounceMs]
   );
 
+  const replaceInHistory = useCallback((from: string, to: string) => {
+    getStore().replaceInHistory(from, to);
+  }, []);
+
+  const rewriteHistory = useCallback(
+    (rewrite: (componentState: TComponentState) => TComponentState | null) => {
+      // The store is typed with the default state; its entries are this hook's `TComponentState`.
+      getStore().rewriteHistory(
+        rewrite as (state: Record<string, unknown>) => Record<string, unknown> | null
+      );
+    },
+    []
+  );
+
   return {
     undo,
     redo,
@@ -261,5 +279,7 @@ export function useCanvasUndoRedo<
     saveNow,
     commitPendingSave,
     flushPendingSaves,
+    replaceInHistory,
+    rewriteHistory,
   };
 }

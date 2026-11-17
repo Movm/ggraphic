@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { BW_LOOK, duotoneLook, withoutDuotone } from './imageFilters.js';
 
 import type { Bindings, BrandPack } from '@ggraphic/core';

@@ -1,10 +1,13 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * PPTX-Modell → .pptx mit pptxgenjs. Was das Modell nativ beschreibt, wird ein
  * bearbeitbares PowerPoint-Objekt; jede Raster-Anfrage holt der Aufrufer als
  * PNG vom Stage (`rasterize`). Bilder lädt der Aufrufer (`loadImage`), weil
  * nur er an die Quellen kommt; ein Bild, das nicht lädt, wird gerastert.
- * pptxgenjs kommt erst hier per dynamischem `import()`.
+ * pptxgenjs kommt erst hier per dynamischem `import()`, über `#pptxgenjs`: in der
+ * Entwicklung das npm-Paket, im veröffentlichten Paket der Browser-Build aus
+ * `dist/vendor` (`scripts/bundle-pptxgen.mjs`, #133). pptxgenjs selbst lädt die
+ * Node-Module fs und https (mit `node:`-Präfix) per `import()`, und webpack bricht daran ab.
  */
 
 import { strFromU8, strToU8, unzipSync, zipSync } from 'fflate';
@@ -16,6 +19,7 @@ import {
   transparencyOf,
   type PptxUnits,
 } from './pptxUnits.js';
+import { svgDataUrl } from './svgPicture.js';
 import { shadowProps, textBoxOptions, textRuns } from './writeText.js';
 
 import type {
@@ -26,7 +30,7 @@ import type {
   PptxRasterRequest,
   PptxShapeItem,
 } from './types.js';
-import type PptxGenJS from 'pptxgenjs';
+import type PptxGenJS from '#pptxgenjs';
 
 export const PPTX_MIME_TYPE =
   'application/vnd.openxmlformats-officedocument.presentationml.presentation';
@@ -34,6 +38,15 @@ export const PPTX_MIME_TYPE =
 /** Ein gerastertes Element: PNG plus seine achsparallele Box in Seiten-px (Drehung im Bild). */
 export interface PptxRasterImage {
   dataUrl: string;
+  box: PptxBox;
+}
+
+/**
+ * Ein Element als SVG-Bild: das Markup plus seine achsparallele Box in Seiten-px (Drehung im Bild).
+ * pptxgenjs legt dazu das PNG-Vorschaubild an, das ältere Programme statt des SVG zeigen.
+ */
+export interface PptxVectorImage {
+  svg: string;
   box: PptxBox;
 }
 
@@ -47,6 +60,11 @@ export interface PptxLoadedImage {
 export interface WritePptxDeps {
   /** `null` oder Fehler: Knoten nicht gefunden oder nicht lesbar — das Element fehlt dann. */
   rasterize: (request: PptxRasterRequest, slideIndex: number) => Promise<PptxRasterImage | null>;
+  /**
+   * Das Element als SVG statt als PNG, oder `null` (oder Fehler): dann kommt `rasterize` dran.
+   * Gefragt wird zuerst; ohne diese Abhängigkeit bleibt es bei PNG.
+   */
+  vectorize?: (request: PptxRasterRequest, slideIndex: number) => Promise<PptxVectorImage | null>;
   /** `null`: Quelle nicht ladbar — das Bild wird dann gerastert. */
   loadImage: (src: string) => Promise<PptxLoadedImage | null>;
   onProgress?: (done: number, total: number) => void;
@@ -214,14 +232,34 @@ export async function writePptx(
   model: PptxDeckModel,
   deps: WritePptxDeps
 ): Promise<WritePptxResult> {
-  const { default: PptxGenJSClass } = await import('pptxgenjs');
+  const { default: PptxGenJSClass } = await import('#pptxgenjs');
   const pres = new PptxGenJSClass();
   pres.layout = 'LAYOUT_WIDE';
   if (deps.title) pres.title = deps.title;
   const units = pptxUnits(model.page.width);
   const skipped: string[] = [];
 
+  const vectorOf = async (request: PptxRasterRequest, slideIndex: number) => {
+    if (!deps.vectorize) return null;
+    try {
+      return await deps.vectorize(request, slideIndex);
+    } catch {
+      return null;
+    }
+  };
+
   const rasterInto = async (slide: Slide, request: PptxRasterRequest, slideIndex: number) => {
+    // Erst als SVG: dieselbe Box wie beim PNG, nur das Bildformat ist ein anderes.
+    const vector = await vectorOf(request, slideIndex);
+    if (vector) {
+      addRaster(
+        slide,
+        { dataUrl: svgDataUrl(vector.svg), box: vector.box },
+        request.elementId,
+        units
+      );
+      return;
+    }
     // Ein Raster, das wirft, kostet nur dieses Element, nicht den ganzen Export.
     const image = await deps.rasterize(request, slideIndex).catch(() => null);
     if (image) addRaster(slide, image, request.elementId, units);

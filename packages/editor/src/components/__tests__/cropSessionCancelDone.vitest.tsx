@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Abbrechen / Fertig im Zuschneide-Modus (Hintergrundfoto und eigenes Bild):
  * Abbrechen stellt den Zuschnitt vom Betreten her und hinterlässt keinen

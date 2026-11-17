@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Carries the element collections a user builds up on a canvas — added icons,
  * shapes, illustrations, texts, badges, frames, charts, uploaded images —

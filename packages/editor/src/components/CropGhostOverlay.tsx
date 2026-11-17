@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useLayoutEffect, useRef } from 'react';
 
 import { useCanvasStoreSelector } from '../stores/CanvasStoreProvider.js';

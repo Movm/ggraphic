@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Die Leiste liest Schrift und Rolle eines freien Textes aus den Leisten-Daten. Die behalten ihre
  * Referenz, solange sich nichts Abgeleitetes ändert — und müssen sich ändern, wenn die Rolle wechselt.

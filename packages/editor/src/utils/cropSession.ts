@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { BACKGROUND_STRAIGHTEN_KEY, backgroundStraighten, clampStraighten } from './straighten.js';
 import { type UserImageInstance } from './userImageUtils.js';
 

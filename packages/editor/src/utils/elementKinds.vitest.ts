@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { describe, expect, it, vi } from 'vitest';
 
 import { CARRIED_INSTANCE_KEYS } from '../configs/factory/carryInstanceState.js';

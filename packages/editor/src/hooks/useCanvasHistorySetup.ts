@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * useCanvasHistorySetup - Extended undo/redo setup with refs pattern
  * Wraps useCanvasUndoRedo and adds:
@@ -22,6 +22,10 @@ export interface UseCanvasHistorySetupResult<T extends Record<string, unknown>> 
   checkpoint: () => void;
   /** Writes pending saves, so the history's newest entry is the newest edit. */
   flushPendingSaves: () => void;
+  /** Replaces a string value in every history entry, without a step of its own. */
+  replaceInHistory: (from: string, to: string) => void;
+  /** Rewrites every history entry, without a step of its own. */
+  rewriteHistory: (rewrite: (componentState: T) => T | null) => void;
   undo: () => void;
   redo: () => void;
   canUndo: boolean;
@@ -60,6 +64,8 @@ export function useCanvasHistorySetup<T extends Record<string, unknown>>(
     saveNow,
     commitPendingSave,
     flushPendingSaves,
+    replaceInHistory,
+    rewriteHistory,
     undo,
     redo,
     canUndo,
@@ -150,6 +156,8 @@ export function useCanvasHistorySetup<T extends Record<string, unknown>>(
     runHistoryBatch,
     checkpoint,
     flushPendingSaves,
+    replaceInHistory,
+    rewriteHistory,
     undo,
     redo,
     canUndo,

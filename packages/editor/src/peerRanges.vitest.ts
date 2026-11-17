@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The editor's own `react` / `react-dom` floor must satisfy what its other peers ask for (#134).
  * react-konva 19.3 needs React ^19.3.0; while the editor said ^19.0.0, npm accepted React 19.1 for

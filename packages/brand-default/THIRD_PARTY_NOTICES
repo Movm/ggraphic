@@ -1,6 +1,6 @@
 # Third-party notices: @ggraphic/brand-default
 
-This package's code is MPL-2.0. It bundles no font files: `@ggraphic/brand-default/fonts`
+This package's code is AGPL-3.0-only. It bundles no font files: `@ggraphic/brand-default/fonts`
 loads them from the Fontsource packages it depends on, each of which ships its own copy of the
 licence. The families are licensed under the SIL Open Font License 1.1 (full text below).
 

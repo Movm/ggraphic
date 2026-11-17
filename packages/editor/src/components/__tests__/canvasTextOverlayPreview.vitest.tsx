@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Beim Tippen zeigt der Editor die Schrift, die der Text beim Übernehmen bekommt, und der Wirt
  * darf davor schon seine Platten nachführen. Nur der Wirt schreibt dabei etwas; der Entwurf

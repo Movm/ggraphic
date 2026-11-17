@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useMessages } from '../../../i18n/messages.js';
 import { useCanvasStoreSelector } from '../../../stores/CanvasStoreProvider.js';
 import { Check, LayoutTemplate, RotateCcw, Sparkles } from 'lucide-react';

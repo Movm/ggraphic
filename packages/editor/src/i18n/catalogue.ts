@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The message catalogue without React: the register and `messages()`. Data modules (formats,
  * factories, chart and placeholder texts) read texts from here, so the entries built from them load

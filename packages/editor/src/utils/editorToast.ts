@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Toast seam. The editor reports failures and offers undo through a toast, but
  * ships no toast library: the host registers one. A module-level register

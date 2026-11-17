@@ -1,8 +1,9 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { createContext, useContext } from 'react';
 
 import type {
   CanvasCarouselService,
+  CanvasExportFontService,
   CanvasIconSearchService,
   CanvasFeedbackService,
   CanvasFileDeliveryService,
@@ -224,6 +225,12 @@ export interface CanvasEditorServices extends CanvasEditorHostServices {
    * omitted, no format carries an impressum; the PDF export still works.
    */
   print?: CanvasPrintService;
+
+  /**
+   * The font files of the vector export (`CanvasExportFontService` in `hostServices.ts`). When
+   * omitted, the export reads the brand pack's font faces and the page's `@font-face` rules.
+   */
+  exportFonts?: CanvasExportFontService;
 
   /**
    * Where the host's feedback form opens from. When omitted, or while

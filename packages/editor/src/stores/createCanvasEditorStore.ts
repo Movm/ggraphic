@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * createCanvasEditorStore — Vanilla Zustand store factory
  *
@@ -20,6 +20,11 @@ import { createStore } from 'zustand/vanilla';
 
 import { activeBrand } from '../brand/brandRegistry.js';
 import { nextHistoryStamp } from '../utils/historyStamp.js';
+import {
+  applyHistoryRebase,
+  applyOwnWrite,
+  planHistoryRebase,
+} from '../utils/rebaseHistoryState.js';
 
 import { DEFAULT_FORMAT_ID, getCanvasFormatOrDefault } from '../formats/index.js';
 
@@ -101,6 +106,15 @@ export interface CanvasEditorActions<
   deselectAll: () => void;
 
   saveToHistory: (componentState?: TComponentState) => void;
+  /**
+   * Another client changed the page from `prev` to `next`: write that change
+   * into every entry, so undo and redo only ever revert this client's own
+   * steps (#160). With `own`, the write is this client's own from another
+   * stack (a deck op or its undo): it reaches only the entries that still hold
+   * the replaced value, so its inverse restores every entry and the steps
+   * before it stay undoable.
+   */
+  rebaseHistory: (prev: TComponentState, next: TComponentState, own?: boolean) => void;
   undo: () => void;
   redo: () => void;
   /** Merkt den aktuellen Verlaufsstand als Beginn einer Sitzung; `null` ohne Verlauf. */
@@ -115,6 +129,18 @@ export interface CanvasEditorActions<
     mark: HistorySessionMark<TComponentState>,
     outcome: 'discard' | 'squash'
   ) => boolean;
+  /**
+   * Replaces the string value `from` with `to` in every history entry, so undo and redo never bring
+   * `from` back: an upload's `blob:` preview once its durable URL is known.
+   */
+  replaceInHistory: (from: string, to: string) => void;
+  /**
+   * Rewrites every history entry with `rewrite`, oldest first, without a step of its own: a
+   * placement whose upload failed leaves the history as if it never happened. `null` drops the
+   * entry, so does becoming the same as the entry before it; a dropped current step hands over to
+   * the step before it.
+   */
+  rewriteHistory: (rewrite: (componentState: TComponentState) => TComponentState | null) => void;
   setStateRestorationCallback: (callback: ((state: TComponentState) => void) | null) => void;
 
   setSelectedElement: (id: string | null) => void;
@@ -320,6 +346,43 @@ export function createCanvasEditorStore<
           }
         }),
 
+      rebaseHistory: (prev, next, own = false) => {
+        const plan = own ? null : planHistoryRebase(prev, next);
+        if (plan?.length === 0) return;
+        const { history } = get();
+        const rebased = history.map((entry) =>
+          !entry.componentState
+            ? null
+            : plan
+              ? applyHistoryRebase(entry.componentState, plan)
+              : applyOwnWrite(entry.componentState, prev, next)
+        );
+        if (rebased.every((componentState, i) => componentState === history[i].componentState))
+          return;
+        set((state) => {
+          rebased.forEach((componentState, i) => {
+            if (componentState === history[i].componentState) return;
+            // Immer's Draft<T> conditional cannot resolve for a generic
+            // `TComponentState` (see saveToHistory); the runtime values match.
+            state.history[i].componentState =
+              componentState as (typeof state.history)[number]['componentState'];
+          });
+          // Two neighbours the edit made equal would be an undo step that changes nothing;
+          // saveToHistory never keeps such a pair either.
+          const touched = rebased.map(
+            (componentState, i) => componentState !== history[i].componentState
+          );
+          const json: (string | undefined)[] = [];
+          const jsonAt = (i: number) => (json[i] ??= JSON.stringify(rebased[i]));
+          for (let i = rebased.length - 1; i > 0; i--) {
+            if (!touched[i] && !touched[i - 1]) continue;
+            if (jsonAt(i) !== jsonAt(i - 1)) continue;
+            state.history.splice(i, 1);
+            if (state.historyIndex >= i) state.historyIndex--;
+          }
+        });
+      },
+
       undo: () => {
         const state = get();
         if (state.historyIndex > 0) {
@@ -380,6 +443,43 @@ export function createCanvasEditorStore<
         }
         return true;
       },
+
+      replaceInHistory: (from, to) =>
+        set((state) => {
+          const fromJson = JSON.stringify(from);
+          const toJson = JSON.stringify(to);
+          for (const entry of state.history) {
+            if (!entry.componentState) continue;
+            const json = JSON.stringify(entry.componentState);
+            if (json.includes(fromJson)) {
+              entry.componentState = JSON.parse(json.split(fromJson).join(toJson));
+            }
+          }
+        }),
+
+      rewriteHistory: (rewrite) =>
+        set((state) => {
+          const kept: typeof state.history = [];
+          let index = -1;
+          let previous: string | undefined;
+          state.history.forEach((entry, i) => {
+            if (entry.componentState) {
+              const plain = JSON.parse(JSON.stringify(entry.componentState)) as TComponentState;
+              const next = rewrite(plain);
+              if (next === null) {
+                if (i === state.historyIndex) index = kept.length - 1;
+                return;
+              }
+              entry.componentState = JSON.parse(JSON.stringify(next));
+            }
+            const json = JSON.stringify(entry.componentState ?? null);
+            if (json !== previous) kept.push(entry);
+            previous = json;
+            if (i === state.historyIndex) index = kept.length - 1;
+          });
+          state.history = kept;
+          state.historyIndex = index;
+        }),
 
       setStateRestorationCallback: (callback) =>
         set((state) => {

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The editor in one component. Importing it touches no browser global, so a server-rendered
  * page can import it; the editor itself loads and renders only in the browser.

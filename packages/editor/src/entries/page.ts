@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /** The generic page model: page config and actions, page state, seeds, template placement, template packs, typography, fitting and logo size. */
 export { createPageConfig, type PageConfigOptions } from '../page/config.js';
 export { createPageActions, type PageActions } from '../page/actions.js';

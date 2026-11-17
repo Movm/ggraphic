@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Shared by the per-kind guard tests (`brand/bindableFields.vitest.ts`,
  * `templates/templateGeometry.vitest.ts`): every kind built by its own factory,

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Centralized Y.Doc key strings. A typo in any of these is a silent
  * data-loss bug — keep all references through this module so a rename

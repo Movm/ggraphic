@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 // „Automatisch": smartcrop schlägt den interessantesten Ausschnitt vor; hier wird er zu Pan/Zoom.
 // Ausschnitt und Zoom: immer der kleinste erlaubte Zoom, ungedreht, auf Deckung.
 

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Auswahl aus der Ebenen-Liste. Die Liste sitzt in der Seitenleiste des
  * Editors, der Store gehört der Seite (`CanvasStoreProvider`) — die Änderung

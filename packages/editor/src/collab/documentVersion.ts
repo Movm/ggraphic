@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The document version of a Y.Doc: where it lives (`meta`), how a client
  * reads it, lifts an older doc in place and stamps a fresh one. The rules are

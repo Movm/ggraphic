@@ -2,6 +2,6 @@
 
 > **Alpha, untested.** Early work in progress: the API and the document format can change without notice. See the [repository README](../../README.md#ggraphic).
 
-The document format of the ggraphic design editor: the rich-text model and the inline-mark and list rules every text in a design follows. Licensed under the [Mozilla Public License 2.0](./LICENSE). Code moves in only once it passes the boundary check.
+The document format of the ggraphic design editor: the rich-text model and the inline-mark and list rules every text in a design follows. Licensed under [AGPL-3.0-only](./LICENSE). Versions published before the relicensing remain available under MPL-2.0. Code moves in only once it passes the boundary check.
 
 Unlike `@ggraphic/core` it has a real build (`dist/`): services that load their contracts at runtime with Node read it from there. In the monorepo, type checks and the Vite and Metro bundles read `src/` directly.

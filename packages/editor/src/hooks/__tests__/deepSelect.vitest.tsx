@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Ctrl/⌘-click selects what lies beneath (Canva). The case it is for: an AT
  * sharepic strip, where the green tint covers the background photo exactly,

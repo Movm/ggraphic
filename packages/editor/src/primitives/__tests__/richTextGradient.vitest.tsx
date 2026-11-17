@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Ein Verlauf auf einem Text mit Auszeichnung: CanvasRichText setzt je Lauf
  * einen eigenen Knoten. Ohne Weitergabe ging der Verlauf dort still verloren,

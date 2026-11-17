@@ -1,20 +1,107 @@
-/* SPDX-License-Identifier: MPL-2.0 */
+/* SPDX-License-Identifier: MIT */
 /* The host page's own styles. The editor's compiled CSS must leave them alone. */
 body {
   margin: 0;
   font-family: Georgia, serif;
+  color: #222;
+  background: #f7f6f3;
+}
+
+a {
+  color: inherit;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 1.25rem;
+  border-bottom: 1px solid #e2dfd8;
+  background: #fff;
 }
 
 .page-title {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
+  margin: 0;
   font-size: 1.25rem;
 }
 
-.editor {
+/* Start page */
+.start {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 3rem;
+}
+
+.start h2 {
+  margin: 1.5rem 0 0.75rem;
+  font-size: 1.05rem;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  box-sizing: border-box;
+  height: 100%;
+  padding: 0.75rem;
+  border: 1px solid #e2dfd8;
+  border-radius: 0.5rem;
+  background: #fff;
+  text-decoration: none;
+}
+
+.card:hover {
+  border-color: #9a968c;
+}
+
+.card:focus-visible {
+  outline: 2px solid #222;
+  outline-offset: 2px;
+}
+
+.card[aria-current] {
+  border-color: #222;
+  box-shadow: inset 0 0 0 1px #222;
+}
+
+.card-shape {
+  width: 100%;
+  height: 7rem;
+  margin-bottom: 0.5rem;
+  fill: #ebe8e1;
+}
+
+.card--template .card-shape {
+  fill: #d9e4dc;
+}
+
+.card-title {
+  font-weight: bold;
+}
+
+.card-meta,
+.note {
+  color: #6b675e;
+  font-size: 0.875rem;
+}
+
+.note {
+  margin: 0.75rem 0 0;
+}
+
+/* Editor page: the header takes its height, the editor the rest of the window. */
+.edit-layout {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   height: 100dvh;
 }

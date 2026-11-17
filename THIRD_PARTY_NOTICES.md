@@ -1,7 +1,7 @@
 # Third-party notices
 
 ggraphic Studio bundles the third-party works listed here. The Studio itself
-is AGPL-3.0-only; the shared packages are MPL-2.0 (see `LICENSES/`). This file
+is AGPL-3.0-only; the shared packages are AGPL-3.0-only too (see `LICENSES/`). This file
 is shown in the app at `/licenses`.
 
 `scripts/check-licences.mjs` fails when a directory under

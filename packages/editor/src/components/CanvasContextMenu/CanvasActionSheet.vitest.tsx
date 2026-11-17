@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { CanvasActionSheet } from './CanvasActionSheet.js';
 import { buildCanvasMenu } from './canvasMenuModel.js';
 import { act, render, screen, within } from '@testing-library/react';

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 export * from './richtext.js';
 export * from './text/listLayout.js';
 export * from './text/inlineMarks.js';

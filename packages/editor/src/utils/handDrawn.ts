@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Hand-drawn marks — the loose ellipse round a word, the brush underline, the
  * swoosh arrow and the burst strokes of the AT posts (Dc_L5vriG5z, DciacLNDopH,

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Markdown-lite in Sharepic-Texten: `**fett**`, `_kursiv_`, `<u>unterstrichen</u>`,
  * `==Akzent==`.

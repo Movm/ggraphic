@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { messages } from '../i18n/catalogue.js';
 
 export type CanvasFormatCategory = 'digital' | 'print';
@@ -38,7 +38,9 @@ export type PrintImprintPlacement = 'every-page' | 'first-page' | 'last-page';
 
 export interface CanvasFormat {
   id: string;
+  /** The name in the format's original language; show `formatLabel(format)`, which follows the catalogue. */
   label: string;
+  /** The size line in the original language; show `formatDescription(format)`. */
   description: string;
   group: CanvasFormatGroup;
   category: CanvasFormatCategory;
@@ -237,9 +239,10 @@ export function isSlideFormat(format: CanvasFormat): boolean {
 }
 
 /**
- * Startgröße neu eingefügter Elemente (Text, Formen, Icons, Grafiken,
- * Diagramme): die Voreinstellungen sind für 1080 px breite Sharepics gemacht,
- * auf einer Folie wachsen sie mit der Breite. Alle anderen Formate: 1.
+ * Startgröße neu eingefügter Elemente (Formen, Icons, Grafiken, Diagramme):
+ * die Voreinstellungen sind für 1080 px breite Sharepics gemacht, auf einer
+ * Folie wachsen sie mit der Breite. Alle anderen Formate: 1. Text skaliert
+ * auf jedem Format mit der Seitenbreite (`textPreset`).
  */
 export function insertScaleFor(format: CanvasFormat): number {
   return isSlideFormat(format) ? format.width / 1080 : 1;

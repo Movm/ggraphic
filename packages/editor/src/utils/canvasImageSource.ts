@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { type CanvasImageUrlService } from '../hostServices.js';
 
 /** The download UI offers 1x/2x export (TopBar/DownloadSection.tsx SCALE_OPTIONS). */

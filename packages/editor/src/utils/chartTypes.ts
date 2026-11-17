@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 
 /**
  * The chart element's data shape. It lives in `@ggraphic/core`; this module hands it out under

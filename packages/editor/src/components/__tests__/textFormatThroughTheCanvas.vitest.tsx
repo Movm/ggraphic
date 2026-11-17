@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Der ausgezeichnete Text eines nur ausgewählten Textes geht von der Leiste über die Seite zur
  * Aktion des Hosts: dieselbe, die auch ein getippter Text nimmt — sie passt ihn ein und

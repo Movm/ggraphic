@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The font generation counter without React (see `hooks/useFontGeneration`): text utilities
  * report a finished load through it, and the entries built on them load without React.

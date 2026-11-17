@@ -1,7 +1,6 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 // Begradigen. Gedrehte Fotos sind Rechtecke ihrer ungedrehten Lage, gedreht um die Mitte (Grad, wie Konva).
 
-import { cornersOf, hasCorners, traceRoundedRect, type CornerRadius } from './cornerRadius.js';
 import {
   coverPhotoRect,
   framedPhotoRect,
@@ -10,8 +9,6 @@ import {
   type Rect,
   type Size,
 } from './coverFit.js';
-
-import type Konva from 'konva';
 
 export const STRAIGHTEN_LIMIT = 45;
 
@@ -297,29 +294,6 @@ export function straightDrawOf(
 
 // Ziehen setzt das Attribut direkt, ohne React-Zustand.
 export const STRAIGHT_DRAW_ATTR = 'straightDraw';
-
-/** Konvas `crop` schneidet nur achsparallel aus; das gedrehte Foto zeichnet diese Funktion. */
-export function straightSceneFunc(context: Konva.Context, shape: Konva.Shape): void {
-  const image = shape.getAttr('image') as CanvasImageSource | undefined;
-  const draw = shape.getAttr(STRAIGHT_DRAW_ATTR) as StraightDraw | undefined;
-  if (!image || !draw) return;
-  const width = shape.width();
-  const height = shape.height();
-  const radius = shape.getAttr('cornerRadius') as CornerRadius | undefined;
-  context.save();
-  context.beginPath();
-  if (hasCorners(radius)) {
-    traceRoundedRect(context, width, height, cornersOf(radius, width, height));
-  } else {
-    context.rect(0, 0, width, height);
-  }
-  context.closePath();
-  context.clip();
-  context.translate(draw.x, draw.y);
-  context.rotate(radians(draw.rotation));
-  context.drawImage(image, -draw.width / 2, -draw.height / 2, draw.width, draw.height);
-  context.restore();
-}
 
 /** Trägt nur den Maßstab: `printImageInfo` liest `cropWidth` für die Druck-DPI. */
 export function straightScaleCrop(natural: Size, photo: Rect, box: Rect): Rect {

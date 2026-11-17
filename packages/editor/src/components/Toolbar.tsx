@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useCanvasStoreSelector } from '../stores/CanvasStoreProvider.js';
 import React, { memo } from 'react';
 

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Which renderer draws a text: one Konva `Text` node, or `CanvasRichText` (lists, inline marks,
  * a word wider than the box). `CanvasText` and the template render gate both ask here, so the

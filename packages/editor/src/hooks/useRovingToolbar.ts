@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useCallback, useEffect, useRef, type FocusEvent, type KeyboardEvent } from 'react';
 
 const DEFAULT_ITEM_SELECTOR = 'button:not(:disabled)';

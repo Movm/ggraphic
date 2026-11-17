@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The contract every migration step must meet, checked rather than trusted:
  * pure (does not mutate its input), deterministic (the same input gives the

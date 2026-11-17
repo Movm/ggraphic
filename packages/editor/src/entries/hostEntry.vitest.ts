@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -77,6 +77,34 @@ describe('@ggraphic/editor/host', () => {
   it('stays small', () => {
     // 17 modules when this was written. Raise it only for a seam, not for something it renders.
     expect(graph.length).toBeLessThanOrEqual(20);
+  });
+
+  it('names the blank page as the embed entry does, so a server component can read it', async () => {
+    const [fromHost, fromEmbed] = await Promise.all([import('./host.js'), import('./embed.js')]);
+    expect(fromHost.BLANK_PAGE_ID).toBe('ggraphic-blank');
+    expect(fromEmbed.BLANK_PAGE_ID).toBe(fromHost.BLANK_PAGE_ID);
+  });
+
+  it("names a format in the catalogue's language, as the templates entry does (#159)", async () => {
+    const [fromHost, fromTemplates] = await Promise.all([
+      import('./host.js'),
+      import('./templates.js'),
+    ]);
+    expect(fromHost.formatLabel).toBe(fromTemplates.formatLabel);
+    expect(fromHost.formatDescription).toBe(fromTemplates.formatDescription);
+    const portrait = fromHost.getCanvasFormatOrDefault('post-portrait');
+    const slides = fromHost.getCanvasFormatOrDefault('slide-16-9');
+    try {
+      fromHost.registerMessages('en');
+      expect(fromHost.formatLabel(portrait)).toBe('Post 4:5');
+      expect(fromHost.formatDescription(slides)).toBe('1920 × 1080 · 16:9 · Slides');
+      // German stays the host's choice, through the same catalogue.
+      fromHost.registerMessages('de');
+      expect(fromHost.formatLabel(portrait)).toBe('Beitrag 4:5');
+      expect(fromHost.formatDescription(slides)).toBe('1920 × 1080 · 16:9 · Folien');
+    } finally {
+      fromHost.registerMessages('de');
+    }
   });
 
   it('carries the interfaces a host augments, identical to their domain entries', () => {

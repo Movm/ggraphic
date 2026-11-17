@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Ob ein Textfeld ANKLICKBAR ist — die Frage, die `canvasTextEditing` nicht
  * stellen kann.

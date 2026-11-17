@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Custom element kinds: the registration, the renderer registry, and what a renderer needs from the
  * canvas (transformer presets, lock state, snapping, focus return, stage follow, pixel hit area,

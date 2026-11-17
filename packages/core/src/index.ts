@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 export { type BackgroundColorOption } from './brand/backgroundColorOption.js';
 export { FONT_FAMILY_ALIASES, aliasFontFamily } from './brand/fontAliases.js';
 export { brandDefault } from './brand/brandDefault.js';

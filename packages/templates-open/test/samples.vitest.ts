@@ -4,8 +4,8 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { SAMPLE_PHOTOS } from '../src/samples/index.js';
 import samples from '../src/samples/samples.json' with { type: 'json' };
-import { SAMPLE_PHOTOS } from '../src/index.js';
 
 const DIR = join(import.meta.dirname, '../src/samples');
 const files = readdirSync(DIR).filter((f) => f.endsWith('.jpg'));

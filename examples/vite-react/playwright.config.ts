@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MIT
 import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({

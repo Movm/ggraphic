@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Page groups in the editor: a click on a member selects the group, ungroup
  * and delete write `groups` in one history step, and a duplicated page keeps

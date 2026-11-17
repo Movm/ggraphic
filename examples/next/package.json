@@ -2,7 +2,7 @@
   "name": "ggraphic-example-next",
   "private": true,
   "type": "module",
-  "license": "MPL-2.0",
+  "license": "MIT",
   "scripts": {
     "pack:local": "node scripts/pack.mjs",
     "dev": "next dev",

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useCallback, useSyncExternalStore } from 'react';
 
 import { MOBILE_BREAKPOINT } from '../utils/viewport.js';

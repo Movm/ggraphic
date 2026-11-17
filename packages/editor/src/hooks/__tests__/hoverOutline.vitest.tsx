@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Fährt der Zeiger über ein verschiebbares Element, zeigt `useHoverOutline`
  * (Canva-Muster) einen dünnen Rahmen darum und den Verschiebe-Cursor — damit

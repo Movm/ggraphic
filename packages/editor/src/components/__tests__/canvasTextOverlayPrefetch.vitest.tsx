@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Der Editor-Chunk lädt, sobald ein bearbeitbarer Text auf der Bühne steht —
  * nicht erst beim Doppeltipp (#4384). Sonst käme der Fokus nach der Geste,

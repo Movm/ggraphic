@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MIT
 /**
  * Packs the built @ggraphic packages with the Vite example's script (importing it runs it) and
  * copies its tarballs here, so both examples install the same files. Run `pnpm build` in the

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Ein Host, der gleich schließt, übernimmt den offenen Entwurf vorher (#4397).
  * Ohne Blur — ein Tipp auf den Zurück-Knopf nimmt dem Text auf iOS den Fokus nicht.

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useCallback } from 'react';
 
 import { useImagePlacement } from '../../useImagePlacement.js';

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The neutral brand, ready to render: core's `brandDefault` with the real cuts of its families
  * declared. The families are open-licensed (SIL OFL 1.1); import `@ggraphic/brand-default/fonts`

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { fromLayout } from './layoutAccessors.js';
 
 import type { FillValue, LayoutResult, PositionValue, TextElementConfig } from '../types.js';

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Beschnitt- und Schutzzonen-Hilfslinien für Druckformate: Beschnittkante
  * (Endformat) und Schutzzone als dünne gestrichelte Linien, der Beschnittstreifen

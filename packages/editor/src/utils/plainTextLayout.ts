@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The line breaking of Konva's `Text` (wrap `word`, fixed width, no ellipsis), with the glyph
  * measure injected. It is a port of `Text._setTextData`, so the render gate can count the lines

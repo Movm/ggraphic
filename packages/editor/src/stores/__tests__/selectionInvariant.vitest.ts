@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * `selectedLayerIds` ist die Auswahl, `selectedElement` steht genau dann darin,
  * wenn es ein einziges Element ist. Alle Einzel-Oberflächen lesen nur

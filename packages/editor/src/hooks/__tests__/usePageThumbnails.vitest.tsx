@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * A thumbnail mirrors what its canvas shows. An AI proposal that recoloured an
  * off-screen slide waited for the slow rotation (one other page per tick), so

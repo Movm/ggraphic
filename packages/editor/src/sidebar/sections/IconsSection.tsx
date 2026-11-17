@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useIconCatalog } from '../../hooks/useIconCatalog.js';
 import { usePaginatedIcons } from '../../hooks/usePaginatedIcons.js';
 import { Skeleton } from '../../ui/skeleton.js';

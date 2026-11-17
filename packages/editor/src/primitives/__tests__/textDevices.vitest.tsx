@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Two text devices: a struck-through text (`strikethrough`) and a text that counts the page
  * (`counter: 'page'`).

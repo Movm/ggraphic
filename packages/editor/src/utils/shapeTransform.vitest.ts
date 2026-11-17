@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { describe, it, expect } from 'vitest';
 
 import { PATH_VIEWBOX, resizedShapeSize, shapeNodeScale } from './shapeTransform.js';

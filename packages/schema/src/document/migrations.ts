@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The versioned canvas document: its envelope, the migration registry and the
  * one door every load goes through (`migrateDocument`). Design and the list of

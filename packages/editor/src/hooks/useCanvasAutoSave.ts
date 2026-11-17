@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 
 import { useAutoSaveStore, useAutoSaveStoreApi } from '../stores/useAutoSaveStore.js';

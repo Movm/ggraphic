@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The editor keeps two histories: each page's element history (its canvas
  * store) and the page-level one (page ops and `replaceDeck`, a Y.UndoManager).

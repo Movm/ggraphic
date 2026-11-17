@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { contrastRatio, mixColors, parseColor, toHex } from '../color/color.js';
 import { brandDefault } from './brandDefault.js';
 import { type BrandBackground, type BrandColors } from './brandPack.js';

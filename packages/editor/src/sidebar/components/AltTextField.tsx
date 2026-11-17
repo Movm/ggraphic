@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useAnnounce } from '../../hooks/useAnnounce.js';
 import { messages, useMessages } from '../../i18n/messages.js';
 import { useAutoSaveStore, useAutoSaveStoreApi } from '../../stores/useAutoSaveStore.js';

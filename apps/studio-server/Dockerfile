@@ -38,7 +38,7 @@ ENV NODE_ENV=production \
 WORKDIR /app
 COPY --from=build /out ./
 COPY --from=build /web ./web
-# The licence texts: AGPL-3.0 for Studio, MPL-2.0 for the packages it contains.
+# The licence texts: AGPL-3.0 for Studio and the packages it contains, CC0-1.0 for the open templates.
 COPY --from=build /repo/LICENSES ./LICENSES
 RUN mkdir -p /data && chown node:node /data
 USER node

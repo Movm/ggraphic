@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * CanvasRichText — ein Textblock mit Aufzählung und/oder Inline-Auszeichnung.
  *
@@ -33,6 +33,7 @@ import { overlayBoxForNode, useCanvasTextEditor } from '../components/CanvasText
 import { useFontGeneration } from '../hooks/useFontGeneration.js';
 import { useGeometryReporter } from '../hooks/useGeometryReporter.js';
 import { useSnapScheduler } from '../hooks/useSnapScheduler.js';
+import { setLiveFontSize } from '../hooks/useLiveFontSize.js';
 import { resolveFontFamily } from '../utils/fontAliases.js';
 import { gradientFillProps } from '../utils/gradientFill.js';
 import { markerBoxes } from '../utils/markerBoxes.js';
@@ -42,15 +43,17 @@ import { ELEMENT_TRANSFORMER, normalizeRotation } from '../utils/orientation.js'
 import { boxFrame, createBoxFrame, frameBounds, snapByBounds } from '../utils/snapping.js';
 import { konvaFontStyle, runFont, runMeasurer } from '../utils/textUtils.js';
 
-import { type CanvasTextProps, isWidthOnlyScale } from './CanvasText.js';
+import {
+  type CanvasTextProps,
+  DEFAULT_TEXT_ANCHORS,
+  isWidthOnlyScale,
+  scaledFontSize,
+} from './CanvasText.js';
 
-import type { TransformAnchor } from '../types/editorTypes.js';
 import type Konva from 'konva';
 
 // Rahmen für Snap und Geometrie-Meldung, pro Aufruf neu beschrieben (synchron, ohne Allokation).
 const dragFrame = createBoxFrame();
-
-const DEFAULT_TEXT_ANCHORS: TransformAnchor[] = ['middle-left', 'middle-right'];
 
 export function CanvasRichText({
   id,
@@ -275,16 +278,21 @@ export function CanvasRichText({
   const liveWidthRef = useRef<number | null>(null);
   const handleTransform = useCallback(() => {
     const node = groupRef.current;
-    if (!node || !isWidthOnlyScale(node)) return;
+    if (!node) return;
+    if (!isWidthOnlyScale(node)) {
+      setLiveFontSize({ id: id ?? '', size: scaledFontSize(fontSize, node.scaleY()) });
+      return;
+    }
     const next = Math.max(1, (liveWidthRef.current ?? blockWidth) * node.scaleX());
     node.scaleX(1);
     liveWidthRef.current = next;
     setLiveWidth(next);
-  }, [blockWidth]);
+  }, [id, fontSize, blockWidth]);
 
   const handleTransformEnd = useCallback(() => {
     const node = groupRef.current;
     if (!node) return;
+    setLiveFontSize(null);
     const committedWidth = liveWidthRef.current;
     if (committedWidth != null) {
       liveWidthRef.current = null;
@@ -313,7 +321,7 @@ export function CanvasRichText({
     if (scaleChanged) {
       // Eine Gruppe trägt keine fontSize — anders als beim einfachen Textknoten
       // wird sie aus der Prop und dem Maßstab gerechnet.
-      const newFontSize = Math.max(8, Math.round(fontSize * scaleY));
+      const newFontSize = scaledFontSize(fontSize, scaleY);
       const newWidth = Math.round(blockWidth * scaleX);
       onFontSizeChange?.(newFontSize);
       onTransformEnd?.(node.x(), node.y(), newWidth, 1, 1, normalizeRotation(node.rotation()));

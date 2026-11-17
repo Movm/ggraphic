@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * What a colour pick does to a field's binding: a brand swatch carries the
  * role it stands for and binds the field to it; any other pick (a custom

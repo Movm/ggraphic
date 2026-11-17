@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { registeredAssetCatalog, type AssetInstance } from '../../../utils/canvasAssets.js';
 import { prefetchBackground } from '../../../utils/illustrations/svgCache.js';
 import { type ShapeInstance, type ShapeType } from '../../../utils/shapes.js';

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * CircleBadge - Reusable Konva component for rendering a colored circle with text lines
  *

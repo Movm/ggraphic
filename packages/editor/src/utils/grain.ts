@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Grain and patterns for rects: a noise tile, a dot grid and stripes, both drawn by `ShapePrimitive`
  * as a second node over the fill. Deterministic, so goldens stay stable.

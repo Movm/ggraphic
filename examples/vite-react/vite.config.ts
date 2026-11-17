@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: MIT
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { STROKE_ONLY_SHAPES } from '../../../utils/shapes.js';
 
 import type { FloatingModuleState } from '../../../hooks/useFloatingModuleState.js';

@@ -13,30 +13,31 @@ ggraphic is a brand-neutral, template-based, AI-centred open-source design edito
 
 ## Packages
 
-| Package                             | npm                        | Path                      | Licence  | Status      |
-| ----------------------------------- | -------------------------- | ------------------------- | -------- | ----------- |
-| Document schema                     | `@ggraphic/schema`         | `packages/schema`         | MPL-2.0  | alpha       |
-| Core (state, operations, rendering) | `@ggraphic/core`           | `packages/core`           | MPL-2.0  | alpha       |
-| Editor UI                           | `@ggraphic/editor`         | `packages/editor`         | MPL-2.0  | alpha       |
-| Real-time collaboration (Yjs)       | `@ggraphic/collab`         | `packages/collab`         | MPL-2.0  | alpha       |
-| UI kit (Studio components, tokens)  | `@ggraphic/ui`             | `packages/ui`             | MPL-2.0  | alpha       |
-| AI helpers                          | `@ggraphic/ai`             | `packages/ai`             | MPL-2.0  | alpha       |
-| Default brand                       | `@ggraphic/brand-default`  | `packages/brand-default`  | MPL-2.0  | not started |
-| Open template pack                  | `@ggraphic/templates-open` | `packages/templates-open` | CC0-1.0  | alpha       |
-| ggraphic Studio (hostable app)      | n/a                        | `apps/studio`             | AGPL-3.0 | alpha       |
-| ggraphic Studio server              | n/a                        | `apps/studio-server`      | AGPL-3.0 | alpha       |
+| Package                             | npm                        | Path                      | Licence       | Status      |
+| ----------------------------------- | -------------------------- | ------------------------- | ------------- | ----------- |
+| Document schema                     | `@ggraphic/schema`         | `packages/schema`         | AGPL-3.0-only | alpha       |
+| Core (state, operations, rendering) | `@ggraphic/core`           | `packages/core`           | AGPL-3.0-only | alpha       |
+| Editor UI                           | `@ggraphic/editor`         | `packages/editor`         | AGPL-3.0-only | alpha       |
+| Real-time collaboration (Yjs)       | `@ggraphic/collab`         | `packages/collab`         | AGPL-3.0-only | alpha       |
+| UI kit (Studio components, tokens)  | `@ggraphic/ui`             | `packages/ui`             | AGPL-3.0-only | alpha       |
+| AI helpers                          | `@ggraphic/ai`             | `packages/ai`             | AGPL-3.0-only | alpha       |
+| Default brand                       | `@ggraphic/brand-default`  | `packages/brand-default`  | AGPL-3.0-only | not started |
+| Open template pack                  | `@ggraphic/templates-open` | `packages/templates-open` | CC0-1.0       | alpha       |
+| ggraphic Studio (hostable app)      | n/a                        | `apps/studio`             | AGPL-3.0-only | alpha       |
+| ggraphic Studio server              | n/a                        | `apps/studio-server`      | AGPL-3.0-only | alpha       |
 
 ## Licence model
 
-- **Libraries (`packages/*`): MPL-2.0.** File-level copyleft: changes to our files stay open, but you can embed the packages in proprietary or differently licensed applications.
+- **Libraries (`packages/*`): AGPL-3.0-only.** If you embed the libraries in an application that you distribute or offer over a network, that application's source must be available under AGPL-compatible terms. There is no commercial licence for now. Versions published to npm before this change (up to and including the current alphas) stay available under MPL-2.0.
 - **Open template pack (`packages/templates-open`): CC0-1.0.** The template files are public domain, so anyone can copy and adapt them freely; the pack's few source files are CC0 too. `pnpm check:licences` verifies that every file's SPDX id matches its package's licence.
-- **ggraphic Studio (`apps/studio`): AGPL-3.0.** The complete hostable application; if you run a modified Studio as a network service you must offer its source to your users.
-- Full texts: [LICENSE](./LICENSE) (MPL-2.0), [LICENSES/MPL-2.0.txt](./LICENSES/MPL-2.0.txt), [LICENSES/AGPL-3.0.txt](./LICENSES/AGPL-3.0.txt), [LICENSES/CC0-1.0.txt](./LICENSES/CC0-1.0.txt). Each package and app carries its own `LICENSE` file.
+- **Host examples (`examples/*`): MIT.** Copy the example code freely; the AGPL obligation comes from the libraries it embeds, not from the example.
+- **ggraphic Studio (`apps/studio`): AGPL-3.0-only.** The complete hostable application; if you run a modified Studio as a network service you must offer its source to your users.
+- Full texts: [LICENSE](./LICENSE) (AGPL-3.0), [LICENSES/AGPL-3.0.txt](./LICENSES/AGPL-3.0.txt), [LICENSES/CC0-1.0.txt](./LICENSES/CC0-1.0.txt), [LICENSES/MIT.txt](./LICENSES/MIT.txt), [LICENSES/MPL-2.0.txt](./LICENSES/MPL-2.0.txt) (earlier published versions and MPL-licensed dependencies). Each package and app carries its own `LICENSE` file.
 - Contributions are made under the [DCO](./DCO).
 
 ## Provenance
 
-Originally developed as part of netzbegruenung/Gruenerator (AGPL-3.0); relicensed by the copyright holder under MPL-2.0.
+Originally developed as part of netzbegruenung/Gruenerator (AGPL-3.0); relicensed by the copyright holder, first under MPL-2.0 and since then under AGPL-3.0-only for the packages.
 
 ## Embedding the editor
 

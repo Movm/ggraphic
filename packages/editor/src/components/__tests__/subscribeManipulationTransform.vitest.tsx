@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Die Pille am Objekt soll beim Transformieren verschwinden. Konva feuert
  * `transformstart`/`transformend` aber ohne Bubbling, die Bühne hört sie nie —

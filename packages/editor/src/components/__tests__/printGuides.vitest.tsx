@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Hilfslinien für Druckformate: nur bei Print vorhanden, als `selection-chrome`
  * getaggt, damit kein Export sie sieht; digitale Formate bekommen keinen Knoten.

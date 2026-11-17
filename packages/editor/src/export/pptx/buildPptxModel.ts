@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Seitenzustand einer Präsentation → PPTX-Modell (`types.ts`). Rein: kein
  * pptxgenjs, kein Konva, kein React. Was nativ in PowerPoint geht (Farbe,

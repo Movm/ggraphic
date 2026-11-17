@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import type { IconType } from 'react-icons';
 
 export { type BackgroundColorOption } from '@ggraphic/core';

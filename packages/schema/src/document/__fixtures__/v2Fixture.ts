@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * TEST-ONLY version 2 of the canvas document, to drive the migration pipeline
  * end to end. Nothing in production registers these steps; the core ships at

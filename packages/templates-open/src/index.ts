@@ -180,5 +180,3 @@ export interface OpenTemplateAsset {
 
 /** The assets the pack ships. Empty: the three templates use none. */
 export const OPEN_TEMPLATE_MANIFEST: { assets: readonly OpenTemplateAsset[] } = manifest;
-
-export { SAMPLE_PHOTOS, type SamplePhoto, type SamplePhotoRole } from './samples/index.js';

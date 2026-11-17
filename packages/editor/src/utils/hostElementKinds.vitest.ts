@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * A host element kind (`registerElementKind`) goes through the same doors as
  * the core's kinds: render list, delete, duplicate, orientation, toolbar,

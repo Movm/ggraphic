@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Frame presets, paths and instances, without the sidebar icons (`./frameUtils`): the data entries load it without React. */
 import {
   type BrandPack,

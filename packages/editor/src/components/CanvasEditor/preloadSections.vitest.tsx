@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The shell warms the lazy sections of its config's tabs while idle (`usePreloadSections`), so
  * the first open of Elements or Tools does not suspend. Here the whole path runs: config, shell.

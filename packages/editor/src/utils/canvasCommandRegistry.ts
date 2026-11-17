@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Die Befehle des Canvas-Editors — Name, Reichweite und Tastenkürzel an einer
  * Stelle. Das Kontextmenü, die Tastatur und die Leisten lesen hier; ein Kürzel,

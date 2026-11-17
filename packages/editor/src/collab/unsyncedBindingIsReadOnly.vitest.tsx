@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Before the sync a page previews the locally cached doc: its stored config
  * reaches the store, but nothing flows back into the doc.

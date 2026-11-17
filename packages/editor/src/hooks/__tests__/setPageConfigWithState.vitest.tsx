@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * "Change template" on a page whose config does not change (every free page): the host hands
  * the new state, and the page takes it as one undoable step. Without a state, the same config

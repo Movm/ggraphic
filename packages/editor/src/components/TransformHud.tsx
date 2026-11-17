@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useEffect, useRef } from 'react';
 
 import { readNodeFrame, type NodeFrame } from '../utils/orientation.js';

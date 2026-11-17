@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Die Kästen eines ++Marker++-Textes: ein Stück je Zeile, an der gemessenen
  * Stelle. Attrappe: ein Zeichen = 10 px.

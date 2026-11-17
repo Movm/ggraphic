@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Ausrichten & Verteilen: reine Geometrie über achsenparallele Kästen.
  * Die Befehle reichen die gedrehten Umrisse (`axisAlignedBounds`) herein und

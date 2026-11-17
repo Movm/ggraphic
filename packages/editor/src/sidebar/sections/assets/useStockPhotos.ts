@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { messages } from '../../../i18n/catalogue.js';
 import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
 import { plainAssetImageUrls, registeredAssetCatalog } from '../../../utils/canvasAssets.js';

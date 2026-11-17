@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { type BindingRef, type FontRole } from '@ggraphic/core';
 import { useCanvasEditorServices } from '../../CanvasEditorProvider.js';
 import { useDocumentBrand } from '../../brand/documentBrand.js';
@@ -436,6 +436,7 @@ export function ContextControls({
     groups.push(
       <FloatingFontSizeControl
         key="fontsize"
+        elementId={activeFloatingModule.data.id}
         fontSize={activeFloatingModule.data.fontSize ?? 16}
         onFontSizeChange={(size) =>
           handlers.handleFontSizeChange(activeFloatingModule.data.id, size)

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Die Türen der Befehle einer Seite: Kopieren, Einfügen, Duplizieren, Löschen,
  * Ebenen, Alles auswählen. Tastatur, Kontextleiste, Pille und Kontextmenü

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 // Renders every component of the kit once. `pnpm --filter @ggraphic/ui demo` serves it;
 // the test suite mounts it and runs axe over it.
 import { useState, type ReactNode } from 'react';

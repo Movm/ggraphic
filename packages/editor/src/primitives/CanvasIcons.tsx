@@ -1,10 +1,11 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * CanvasIcons - Renders selected Tabler icons on the Konva canvas
  */
 import { useEffect, useState, useCallback } from 'react';
 import useImage from 'use-image';
 
+import { markTrustedSvgImage } from '../export/scene/trustedSvgImages.js';
 import { generateIconDataUrl } from '../utils/canvasIcons.js';
 
 import { CanvasImage } from './CanvasImage.js';
@@ -63,6 +64,10 @@ function CanvasIcon({
   }, [iconId, position.size, color]);
 
   const [image] = useImage(dataUrl || '', 'anonymous');
+  // `useImage` makes the element; its url is the icon set's SVG from `generateIconDataUrl`.
+  useEffect(() => {
+    if (image) markTrustedSvgImage(image);
+  }, [image]);
 
   if (!dataUrl || !image) return null;
 

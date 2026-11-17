@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { stampDocument } from '@ggraphic/schema';
 import { useEffect, useRef, useCallback } from 'react';
 

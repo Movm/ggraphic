@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { createCanvas } from '@napi-rs/canvas';
 import { render, act } from '@testing-library/react';
 import Konva from 'konva';

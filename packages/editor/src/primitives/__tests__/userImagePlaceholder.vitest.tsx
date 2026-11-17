@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { createCanvas } from '@napi-rs/canvas';
 import { mixColors, resolveScheme } from '@ggraphic/core';
 import { render, waitFor } from '@testing-library/react';

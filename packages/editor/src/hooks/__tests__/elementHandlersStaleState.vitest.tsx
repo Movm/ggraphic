@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Ein Handler, den ein memoisiertes Kind hält, kann älter sein als der
  * Zustand (#4909). Er darf deshalb nicht aus seinem Render-`state` den ganzen

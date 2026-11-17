@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import type { Messages } from './de.js';
 
 /** English catalogue. Typed against the German one: a missing key is a compile error. */
@@ -860,6 +860,32 @@ export const en: Messages = {
       imprintAddressPlaceholder: 'Street no., postcode city',
       imprintAddressRequired: 'Please enter the address.',
       imprintSubmit: 'Apply',
+      svg: 'SVG (vector)',
+      keepTextEditable: 'Keep text editable',
+      keepTextEditableHint: 'Only looks right where the font is installed.',
+      rasterNotice: (items) => `Embedded as an image: ${items}`,
+      missingNotice: (n) => `${n} element(s) are missing because their image could not be loaded.`,
+      reducedRasterNotice:
+        'An image area was embedded at a lower resolution because it would have been too large.',
+      variableFontNotice: (fonts) =>
+        `Font embedded at its default weight, the weight may differ: ${fonts}`,
+      pdfFallbackNotice: {
+        fonts: 'The PDF was made as an image because not all fonts could be loaded.',
+        timeout: 'The PDF was made as an image because creating the vector PDF took too long.',
+        error: 'The PDF was made as an image because creating the vector PDF failed.',
+      },
+      rasterReason: {
+        filter: 'Photo with filter',
+        composite: 'Blend',
+        'unsupported-call': 'Effect without a vector form',
+        'unsupported-pattern': 'Pattern',
+        'missing-glyph': 'Character without a font',
+        'font-unavailable': 'Font unavailable',
+        'bitmap-only-font': 'Bitmap font',
+        shadow: 'Shadow',
+        'svg-unsupported': 'SVG graphic',
+        'image-unreadable': 'Image unreadable',
+      },
     },
   },
 
@@ -942,6 +968,7 @@ export const en: Messages = {
     layerDown: 'Move layer down',
     fontSmaller: 'Make text smaller',
     fontLarger: 'Make text larger',
+    fontSizeInput: 'Font size',
     fontRole: 'Font',
     fontRoles: {
       headline: 'Headline',

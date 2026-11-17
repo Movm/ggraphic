@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Das `color`-Attribut von Akzent- und Markermark: im Dokument als
  * `attrs.color` (`#RRGGBB` oder `null` = Farbe der Vorlage), im DOM als

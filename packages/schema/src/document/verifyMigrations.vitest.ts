@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Idempotence per step is a requirement, not a hope: every registered step
  * must pass `verifyMigrationRegistry` over the v1 corpus. This file holds the

@@ -1,5 +1,39 @@
 # @ggraphic/studio-server
 
+## 0.1.0-alpha.9
+
+## 0.1.0-alpha.8
+
+## 0.1.0-alpha.7
+
+## 0.1.0-alpha.6
+
+### Patch Changes
+
+- Updated dependencies [064350e]
+- Updated dependencies [d570cbc]
+  - @ggraphic/core@0.1.0-alpha.3
+
+## 0.1.0-alpha.5
+
+## 0.1.0-alpha.4
+
+## 0.1.0-alpha.3
+
+### Patch Changes
+
+- Updated dependencies [cfeca71]
+  - @ggraphic/ai@0.1.0-alpha.1
+  - @ggraphic/core@0.1.0-alpha.2
+  - @ggraphic/schema@0.1.0-alpha.2
+
+## 0.1.0-alpha.2
+
+### Patch Changes
+
+- Updated dependencies [fe90a3b]
+  - @ggraphic/schema@0.1.0-alpha.1
+
 ## 0.1.0-alpha.1
 
 ### Patch Changes

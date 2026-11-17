@@ -1,5 +1,115 @@
 # @ggraphic/studio
 
+## 0.1.0-alpha.9
+
+### Patch Changes
+
+- Updated dependencies [b2d1dd1]
+- Updated dependencies [ab6dea2]
+  - @ggraphic/editor@0.1.0-alpha.9
+  - @ggraphic/templates-open@0.1.0-alpha.1
+
+## 0.1.0-alpha.8
+
+### Patch Changes
+
+- Updated dependencies [f585f15]
+  - @ggraphic/editor@0.1.0-alpha.8
+  - @ggraphic/templates-open@0.1.0-alpha.1
+
+## 0.1.0-alpha.7
+
+### Patch Changes
+
+- Updated dependencies [e3124dd]
+- Updated dependencies [95288f2]
+- Updated dependencies
+  - @ggraphic/editor@0.1.0-alpha.7
+  - @ggraphic/templates-open@0.1.0-alpha.1
+
+## 0.1.0-alpha.6
+
+### Patch Changes
+
+- Updated dependencies [e7a5637]
+- Updated dependencies [064350e]
+- Updated dependencies [d570cbc]
+- Updated dependencies [3d987af]
+- Updated dependencies [5c0f142]
+  - @ggraphic/editor@0.1.0-alpha.6
+  - @ggraphic/core@0.1.0-alpha.3
+  - @ggraphic/templates-open@0.1.0-alpha.1
+
+## 0.1.0-alpha.5
+
+### Patch Changes
+
+- Updated dependencies [a9a467c]
+  - @ggraphic/editor@0.1.0-alpha.5
+  - @ggraphic/templates-open@0.1.0-alpha.1
+
+## 0.1.0-alpha.4
+
+### Patch Changes
+
+- Updated dependencies [0ed7bdb]
+  - @ggraphic/editor@0.1.0-alpha.4
+  - @ggraphic/templates-open@0.1.0-alpha.1
+
+## 0.1.0-alpha.3
+
+### Patch Changes
+
+- Updated dependencies [532ecff]
+- Updated dependencies [49f3140]
+- Updated dependencies [74f0c84]
+- Updated dependencies [5be7dcc]
+- Updated dependencies [24a0d79]
+- Updated dependencies [34c88be]
+- Updated dependencies [6fad500]
+- Updated dependencies [8b286ef]
+- Updated dependencies [cfeca71]
+- Updated dependencies [137096d]
+- Updated dependencies [73f7316]
+  - @ggraphic/editor@0.1.0-alpha.3
+  - @ggraphic/core@0.1.0-alpha.2
+  - @ggraphic/schema@0.1.0-alpha.2
+  - @ggraphic/ui@0.1.0-alpha.1
+  - @ggraphic/templates-open@0.1.0-alpha.1
+
+## 0.1.0-alpha.2
+
+### Patch Changes
+
+- Updated dependencies [bdd1320]
+- Updated dependencies [01c1fab]
+- Updated dependencies [0b8da42]
+- Updated dependencies [3211079]
+- Updated dependencies [d101d84]
+- Updated dependencies [6676a77]
+- Updated dependencies [ef97b05]
+- Updated dependencies [a95f304]
+- Updated dependencies [e9a3d1a]
+- Updated dependencies [0a75b5c]
+- Updated dependencies [89a7b84]
+- Updated dependencies [bd40ea0]
+- Updated dependencies [feb274d]
+- Updated dependencies [fe90a3b]
+- Updated dependencies [6dd815a]
+- Updated dependencies [6c4abd9]
+- Updated dependencies [c8b3945]
+- Updated dependencies [facbe6b]
+- Updated dependencies [45b8f3a]
+- Updated dependencies [ba99f4f]
+- Updated dependencies [bbede91]
+- Updated dependencies [7a3bf1b]
+- Updated dependencies [88aa4d8]
+- Updated dependencies [555a2e6]
+- Updated dependencies [89a7b84]
+  - @ggraphic/editor@0.1.0-alpha.2
+  - @ggraphic/schema@0.1.0-alpha.1
+  - @ggraphic/templates-open@0.1.0-alpha.1
+
 ## 0.1.0-alpha.1
 
 ### Patch Changes

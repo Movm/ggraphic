@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * An undone text edit must be written back to the page's Y.Map (#4247).
  * Text fields reach the document only through their `on<Key>Change`

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { type HistoryStamps, routeHistory } from '../../../utils/historyStamp.js';
 import { editorSkipsKey } from '../../../utils/keyboardOwnership.js';
 import { useEffect } from 'react';

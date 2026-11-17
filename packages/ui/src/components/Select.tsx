@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { type ReactNode, useId } from 'react';
 import { Select as RadixSelect } from 'radix-ui';
 

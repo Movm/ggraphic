@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Source guard: `@ggraphic/editor/styles/compiled` styles only `[data-ggraphic]` and what is
  * inside it. A portal renders outside the shell's root, so a file that opens one (react-dom's

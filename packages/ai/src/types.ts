@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 
 export type StructuredResult<T> = { ok: true; data: T } | { ok: false; error: string };
 export type Validation<T> = { ok: true; value: T } | { ok: false; error: string };

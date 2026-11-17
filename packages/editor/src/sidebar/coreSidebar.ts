@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The core's sidebar sections and tab icons, by id. Configs that the data entries build
  * (`createPageConfig`, `createShareSection`) name them here instead of importing them, so those

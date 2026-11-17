@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { type BrandPack } from '@ggraphic/core';
 import { useDocumentBrand } from '../../../brand/documentBrand.js';
 import { useCanvasEditorServices } from '../../../CanvasEditorProvider.js';
@@ -26,6 +26,7 @@ import { withTone } from '../../../utils/emoji/emojiCatalog.js';
 import { KAWAII_ILLUSTRATIONS } from '../../../utils/illustrations/kawaii.js';
 import { ALL_PALETTE_SHAPES, getShapeVariant } from '../ShapesSection.js';
 
+import { useAssetAudience } from './assetAudience.js';
 import { ElementThumb } from './ElementThumb.js';
 import { useStockPhotos } from './useStockPhotos.js';
 
@@ -263,9 +264,9 @@ export function useElementCatalog(
 ): CatalogCategory[] {
   const t = useMessages();
   const shapes = shapeItems(useDocumentBrand());
-  const { userLocale = 'de-DE', fetchStockImages } = useCanvasEditorServices();
+  const { fetchStockImages } = useCanvasEditorServices();
   const panelHost = registeredAssetCatalog().elementPanel;
-  const locale: AssetAudience = userLocale;
+  const locale: AssetAudience = useAssetAudience();
   const recommendedAssetIds = props.recommendedAssetIds ?? NO_RECOMMENDED;
 
   const hasAssets = props.onAddAsset !== undefined;

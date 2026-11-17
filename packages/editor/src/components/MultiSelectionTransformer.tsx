@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Ein Transformer um alle ausgewählten Elemente, sobald es mehr als eines ist.
  *

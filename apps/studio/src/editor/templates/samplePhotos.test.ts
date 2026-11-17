@@ -2,7 +2,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { SAMPLE_PHOTOS, type SamplePhoto } from '@ggraphic/templates-open';
+import { SAMPLE_PHOTOS, type SamplePhoto } from '@ggraphic/templates-open/photos';
 import { describe, expect, it } from 'vitest';
 
 import { withSamplePhotos } from './samplePhotos';

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * A one-tab page config for the tests of the document brand: a colour ground, one text with a
  * marker run (no marker style of its own) and the Text tab. The actions are the editor's element

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { readGroups, wholeGroupsIn } from '../groups/pageGroups.js';
 import { canMoveLayer, type CanvasItem } from './canvasLayerManager.js';
 import { hostElementKind } from './elementKinds.js';

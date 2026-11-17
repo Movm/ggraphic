@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Die tiptap-Mark zu `++Marker++` — wie `accentMark.ts` immer im Schema (eine
  * unbekannte Mark lässt ProseMirror werfen und tiptap setzt ein leeres

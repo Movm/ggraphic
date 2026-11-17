@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Ein Klick auf einen Text zeigt die ganze Textleiste: Schrift UND Auszeichnung.
  * Ohne offene Sitzung gelten Fett, Kursiv, Akzent, Marker und Listen für den

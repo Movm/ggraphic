@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { describe, expect, it } from 'vitest';
 
 import { createPageActions } from './actions.js';
@@ -119,5 +119,40 @@ describe('toggleIcon for an icon already on the page', () => {
       iconId: 'iconify:reicon:bicycle-filled',
       svg,
     });
+  });
+});
+
+describe('updateAdditionalText with a size set by hand', () => {
+  const text = {
+    id: 't',
+    type: 'header',
+    text: 'Kurz',
+    x: 40,
+    y: 40,
+    width: 600,
+    fontSize: 80,
+    maxFontSize: 120,
+    fontFamily: 'Arial',
+  };
+
+  it('takes the text out of the prototype fitting', () => {
+    const { actions, state } = setup({ additionalTexts: [text] } as unknown as Partial<PageState>);
+    actions.updateAdditionalText('t', { fontSize: 200 });
+    const [after] = state().additionalTexts;
+    expect(after.fontSize).toBe(200);
+    expect(after).not.toHaveProperty('maxFontSize');
+  });
+
+  it('keeps the size through a later text edit', () => {
+    const { actions, state } = setup({ additionalTexts: [text] } as unknown as Partial<PageState>);
+    actions.updateAdditionalText('t', { fontSize: 200 });
+    actions.updateAdditionalText('t', { text: 'Ein viel längerer Text, der nicht mehr passt' });
+    expect(state().additionalTexts[0].fontSize).toBe(200);
+  });
+
+  it('leaves the fitting of a text whose size was not touched', () => {
+    const { actions, state } = setup({ additionalTexts: [text] } as unknown as Partial<PageState>);
+    actions.updateAdditionalText('t', { x: 50 });
+    expect(state().additionalTexts[0]).toHaveProperty('maxFontSize', 120);
   });
 });

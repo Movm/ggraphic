@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { CANVAS_ITEM_NAME } from './deepSelect.js';
 import { SELECTION_COLOR } from './multiSelect.js';
 import { COARSE_POINTER, touchAnchorStyleFunc } from './touchInput.js';

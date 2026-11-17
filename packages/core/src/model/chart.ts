@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The chart element's data shape. Its own module so types that name a chart
  * (base state, layer list, lifted blocks) need not import `chartUtils.ts`,

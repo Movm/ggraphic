@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 // Writes `dist/styles/compiled.css` (see compiled-css.mjs) and the stylesheets' type stub, which
 // the `cpSync` of the build skips like every `.ts` file.
 import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs';

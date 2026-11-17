@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import React, { useMemo, useRef } from 'react';
 
 import type { GenericCanvasRef } from '../../GenericCanvas.js';

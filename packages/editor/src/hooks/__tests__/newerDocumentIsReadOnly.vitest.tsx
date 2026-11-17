@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * A doc written by a newer build must not be written by this one: its pages
  * show read-only, nothing is seeded, lifted or edited, and the page manager

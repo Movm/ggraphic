@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Natural sizes of brand logos. A template seed is built synchronously but needs the
  * logo's proportions, so the host measures the image first (`measureLogo`, when it applies a

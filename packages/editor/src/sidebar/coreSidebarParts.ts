@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { PiShareFat, PiSquaresFour, PiTextAa, PiToolbox, PiUploadSimple } from 'react-icons/pi';
 
 import { type CoreSidebarParts } from './coreSidebar.js';

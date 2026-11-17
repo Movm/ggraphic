@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 // „Erweitern": die KI ergänzt das Foto auf das Seitenverhältnis seines Rahmens; danach liegt es wie neu eingesetzt.
 
 import { BACKGROUND_STRAIGHTEN_KEY, backgroundStraighten } from './straighten.js';

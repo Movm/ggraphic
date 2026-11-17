@@ -1,4 +1,4 @@
-<!-- SPDX-License-Identifier: MPL-2.0 -->
+<!-- SPDX-License-Identifier: AGPL-3.0-only -->
 
 # Canvas document versioning
 
@@ -37,7 +37,9 @@ are F0: stored in canvases and templates, never renamed.
 
 In a Y.Doc the same document is spread over shared types (`collab/pagesDoc.ts`):
 `pagesById` (Y.Map of page Y.Maps with `id`, `configId`, `pos`, `state`,
-`config`) and `meta` (seed watermark and one-shot legacy markers). The
+`config`) and `meta` (seed watermark and one-shot legacy markers). From
+version 4 some keys of a page's `state` hold Yjs structures instead of one JSON
+value (see "Version 4"). The
 pre-`pagesById` topologies (`pages` Y.Array, `legacy_root`, root `formState`)
 are older than version 1; `migrateLegacyDoc` and
 `foldLegacyFormStateIntoFirstPage` already lift them into the v1 shape on open
@@ -155,7 +157,8 @@ shape into a newer document. `newer` and `invalid` both become a refusal:
   only while the stored version is below its own, and stops once it is equal
   or above. The re-lift is triggered by the **stamp**, not the data: if the
   newer stamp wins, whatever the older client wrote in its own shape before
-  it saw that stamp stays as written.
+  it saw that stamp stays as written. Version 4 adds a data trigger for the
+  page-state format (see "Lift and re-lift").
 - Migrations must keep the page ids; a step that changes the set of pages is
   rejected as `invalid` on a Y.Doc (structural page ops are not migrations).
 
@@ -203,13 +206,291 @@ an added or converted page (they describe one page), and the PPTX export
 classifies them as unmapped: `templateRef` has nothing to draw, and group
 members are exported one by one.
 
+## Version 4
+
+Version 4 changes how a page's state is **stored in a Y.Doc**, not its JSON.
+Before it, every state key held one JSON value, so two clients editing
+different elements of one collection (`shapeInstances` holds every shape of
+the page) resolved last-writer-wins on the whole array, and one side's edits
+were lost without a trace. From version 4, element collections, id lists and
+three records are Yjs structures that merge per element, per property and per
+id.
+
+The core step 3 → 4 is the identity on the JSON document: flat documents (a
+host's initial state, deck autosaves, Studio documents) keep their shape and
+only carry the new stamp. A build without version 4 therefore also refuses a
+flat v4 document read-only, although it could read it. This is accepted: one
+counter for both forms is simpler than a Y.Doc-only marker that old clients
+would not obey.
+
+Everything below is about the Y.Doc. Its JSON view, the one every consumer
+sees (`readPages`, `serializeDeck`, the canvas, exports, a server's flat
+mirror), comes from one codec (`@ggraphic/core/ydoc`: `readStateKey`,
+`readState`, `writeStateKeys`) and is exactly the version 3 JSON, up to the
+order of object keys.
+
+### Stored structure
+
+A structured value is a `Y.Map` under the same state key. It carries a
+reserved entry `$kind` that names its class.
+
+| Class      | Keys                                                                                                                                                                                                                        | Stored as                                                                                                                                                      | Reads back as                                                                     |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `elements` | `shapeInstances`, `frameInstances`, `additionalTexts`, `illustrationInstances`, `assetInstances`, `circleBadgeInstances`, `pillBadgeInstances`, `userImageInstances`, `chartInstances`, and every host kind's `stateKey`    | `$kind: 'elements'`, then element id → `Y.Map` of that element's properties (one entry per property, its value plain JSON) plus `$pos`, a fractional order key | `[{ id, …props }]` in (`$pos`, id) order; `$pos` is stripped, `id` is the map key |
+| `order`    | `layerOrder`, `selectedIcons`, `lockedLayerIds`                                                                                                                                                                             | `$kind: 'order'`, then id → fractional order key                                                                                                               | `string[]` in (key, id) order                                                     |
+| `record`   | `iconStates`, `templateRotations`, `templateTextAligns`                                                                                                                                                                     | `$kind: 'record'`, then key → plain JSON                                                                                                                       | `Record<string, unknown>`                                                         |
+| plain      | everything else: scalars, positions, colours, template text fields, `backgroundImageAdjustments`, `backgroundImageRotation`, `bind`, `brandScheme`, `brandStamp`, `templateRef`, `groups`, `stashedComposerPlanes`, `notes` | the JSON value, as before                                                                                                                                      | the value                                                                         |
+
+Why these classes:
+
+- **`elements`.** The unit people edit concurrently is one property of one
+  element: a drag writes `x` and `y`, the colour picker writes `fill`. Nested
+  values (`crop`, `filters`, gradients, text runs) stay one JSON value per
+  property; a deeper split would multiply the structures to test for a case
+  nobody reported. The id is not stored as a property, so no second copy of it
+  can disagree with the key.
+- **`order` for all three id lists.** `layerOrder` is an order.
+  `selectedIcons` looks like a set but is the icon kind's list: an icon that
+  `layerOrder` does not track is drawn in `selectedIcons` order
+  (`buildCanvasItems` and `buildSortedRenderList` in the editor's
+  `utils/canvasLayerManager.ts`), so its order is visible and must survive.
+  `lockedLayerIds` is read as a set (`utils/layerLock.ts`); giving it the same
+  class saves a fourth structure and reads back today's order exactly. Each id
+  is a map key, so no id can be in a list twice.
+- **`record` for the three records.** Their entries are independent: one
+  icon's state, one template element's rotation or alignment. An entry stays
+  one plain JSON value, so two people changing different properties of the
+  _same_ icon still resolve last-writer-wins on that icon's `IconState` (see
+  "Concurrency"). This is decided, not deferred: a property map per entry
+  would be a fourth structure for an edit nobody reported.
+- **Plain for the rest.** Scalars have nothing to merge. `bind`, `groups` and
+  `backgroundImageAdjustments` are containers too; they stay plain in version
+  4 (decided), because no concurrent partial edit of them has been reported
+  and every class is more to test. Because readers and writers follow the marker and not a key list, a
+  later build can move such a key into a class **without a version step**
+  (see "Reading without a registry").
+
+What the structure cannot represent stays plain JSON under the key, and is read
+as it is:
+
+- an `elements` value that is not an array of objects with distinct string
+  ids, or that has an element with a property named `$pos`;
+- an `order` value that is not an array of distinct strings;
+- a `record` value that is not a plain object;
+- any value with an id or record key that starts with `$` (reserved, see
+  "F0 in version 4").
+
+The lift and the writers check this, so reading a structured value always
+gives back the value that was written.
+
+### Reading without a registry
+
+A reader must tell a structured value's class without knowing the keys: a
+server that does not know a host's element kinds must never read a host
+collection back in the wrong shape.
+
+| Option                                                  | Verdict                                                                                                                                                                                                                                                               |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Take the class from a key registry                      | Rejected. A reader without the host's registrations (a server, a tool, an older build) would fall back to `toJSON()`, an object keyed by id. That is the failure the format must exclude.                                                                             |
+| Infer the class from the value's shape                  | Rejected. An empty map has no shape, but an empty collection must read `[]` and an empty record `{}`. An `order` map (id → string) cannot be told from a record of strings (`templateTextAligns` maps ids to `'left'`). The guess would also change as values change. |
+| A class registry in `meta` (for example `stateKinds`)   | Rejected. It splits one fact over two shared types: a peer can receive a value before its class, and two clients registering at once resolve last-writer-wins.                                                                                                        |
+| **A reserved entry `$kind` inside each structured map** | **Chosen.** The value describes itself, arrives in the same update as its content and cannot disagree with it; an empty map still knows its class. Cost: one entry per structured value, and `$` as a reserved prefix.                                                |
+
+Reading rules (`readStateKey`):
+
+- A value that is not a Yjs type is returned as it is: every plain key, a
+  structured key in a document from before version 4, and plain JSON written
+  later by an old writer.
+- A `Y.Map` whose `$kind` is `elements`, `order` or `record` is read as that
+  class.
+- A `Y.Map` whose `$kind` is any other value is **unreadable** and reads as
+  absent. A new class needs a new document version, so a build that meets one
+  has already refused the document and only shows a preview.
+- Any other Yjs type, and a `Y.Map` without `$kind`, reads as its `toJSON()`.
+  No writer creates one.
+
+Only the **lift** and the **first structured write of a key** need to know
+which keys belong to which class: the key classes in `@ggraphic/core/ydoc`,
+plus the host kinds' `stateKey`s the caller passes in. Every later write diffs
+into whatever structure the marker names.
+
+### Element order
+
+The elements of a collection are ordered by `$pos`, the ids of an `order` map
+by their value. Both are fractional keys from `posBetween`, the scheme the
+page order already uses (header of the editor's `collab/pagesDoc.ts`). Ties
+are broken by id; a writer that needs a key between two tied neighbours
+re-spaces that list first, as `normalizePositions` does for pages.
+
+- The lift writes the deterministic chain (`posBetween(previous, null)`,
+  without a random suffix, as seeding does for pages), so two clients lifting
+  the same JSON write equal values. The chain grows by about one character per
+  six entries: 20 characters at the 100th.
+- A user insert or move writes `posBetween(before, after)` plus the
+  two-character random suffix pages use, so two clients inserting into the same
+  gap do not mint the same key.
+- A move writes one entry: the element's `$pos`, or the id's key.
+
+Why not a `Y.Array` of ids or of element maps: a move in a `Y.Array` is a
+delete plus an insert. Two clients moving the same element at once leave it in
+the array twice, and a moved element map would have to be cloned, dropping
+the edits another client made to it meanwhile. A fractional key is one map
+entry: concurrent moves of one element end in one position, and the element
+keeps its identity.
+
+### Version and marker
+
+`meta.schemaVersion` 4 is the marker of the format. There is **no**
+`meta.stateFormat` key:
+
+- Old clients obey `schemaVersion` only (`readYDocRefusal`); a second marker
+  would protect nobody.
+- Readers do not need it: each structured value carries `$kind`.
+- The lift does not need it: it is triggered by the data as well (below), so a
+  document-level "lifted" flag would repeat what the values already say.
+- A second marker can disagree with the stamp (both are last-writer-wins
+  entries in `meta`) and would need rules of its own for that.
+
+Two rules tie the stamp to the data:
+
+1. **A writer creates a structured value only in a document at version 4 or
+   above, or in one it stamps 4 in the same transaction** (a seed, a newly
+   created document). In a document below 4 it writes plain JSON.
+2. **The open-time lift and the raise of the stamp to 4 happen in one
+   transaction.** A version 3 client receives both in one update, so the
+   update that first shows it a structured value also turns it read-only.
+
+### Concurrency
+
+| Two clients at the same time                                       | Version 3 (one JSON value per key)     | Version 4                                                                                                            |
+| ------------------------------------------------------------------ | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Edit different elements of one collection                          | one array wins, the other edit is lost | both edits survive                                                                                                   |
+| Add different elements to one collection                           | one added element is lost              | both survive; their relative order is arbitrary but the same everywhere                                              |
+| Edit different properties of one element                           | one is lost                            | both survive                                                                                                         |
+| Edit the same property of one element                              | last writer wins                       | last writer wins (Yjs order). Accepted: there is nothing to merge                                                    |
+| Edit different properties of one icon (an `iconStates` entry)      | one is lost                            | last writer wins on that icon's `IconState`: a record entry is one value                                             |
+| Delete an element while the other edits it                         | whichever array wins                   | the delete wins; the edit lands in a removed map                                                                     |
+| Move the same element (`$pos`, or one id in `layerOrder`)          | one array wins                         | one position wins; the element is never duplicated                                                                   |
+| Move different elements                                            | one array wins                         | both moves apply                                                                                                     |
+| Lock or unlock different layers                                    | one list wins                          | both apply                                                                                                           |
+| Both lock (or both unlock) the same layer                          | one list wins                          | one entry (or none)                                                                                                  |
+| Delete an element while the other moves it in `layerOrder`         | one list wins                          | the move survives, so `layerOrder` may keep an id without an element; `buildSortedRenderList` already skips such ids |
+| Both add the first element of a kind where the key is still absent | one array wins                         | one new structured value wins at key level, so one side's first element is lost (see "Risks")                        |
+| An old writer writes plain JSON under a structured key             | —                                      | its whole value wins at key level, as in version 3; the key is lifted again later                                    |
+
+### Lift and re-lift
+
+- **When:** on open, by a client that may write the document (not refused),
+  after the sync, never on the unsynced local cache. It runs in the setup
+  transaction (`SETUP_ORIGIN`, untracked by undo) together with the legacy
+  lift, the form-state fold and `migrateYDocument`, so lift and stamp reach
+  peers in one update (rule 2). It runs again whenever the `meta` observer
+  re-settles the version. A lift is never part of an undo step.
+- **Trigger: the stamp or the data.** It runs when the stored version is below
+  4, and also when a key the client classes as structured still holds a plain
+  value the structure can represent. This is the old-shape detection that
+  "Old writers" asks the first real step to bring: the old shape is
+  recognisable because it is not a Yjs type.
+- **What it writes:** per such key one structured value built from the plain
+  JSON, so `readStateKey` returns what was there before. It is deterministic
+  (the chain above), idempotent (a structured key is left alone) and the
+  identity on the JSON view.
+- **Two clients lifting at once** write two structured values with equal
+  content under one key, and one wins at key level. What a client wrote _into_
+  the losing value before it saw the winner is lost; the window is the round
+  trip right after open.
+- **Lift on write:** a version 4 writer that writes a key it classes as
+  structured and finds plain JSON there writes the new value structured. The
+  lift is then part of that write, and of its undo step if the write is
+  tracked; the plain value before it stays readable.
+- **Previews and refused clients never lift.** They read both forms through
+  the codec. A build that has the codec but is still at version 3 (the readers
+  release) therefore shows a v4 document correctly, read-only.
+
+### Old writers in version 4
+
+- **A build with the refusal** (every published version since
+  `0.1.0-alpha.0`) sees `schemaVersion` 4 and turns read-only, also live
+  through the `meta` observer, and by rule 2 in the same update that brings the
+  first structured values. A build without the codec reads a structured value
+  as an opaque object: `carryInstanceState` reads a list that is no array as
+  `[]`, so its read-only page shows without those elements. It writes nothing.
+  The exception is the race in which its own stamp write wins over a newer one
+  (see "(e) Yjs"): until the newer client stamps again it may write, and what
+  it writes is plain JSON.
+- **A build from before the refusal** (none is published; whether host bundles
+  from before the core was published still run is _unverified_) reads
+  structured values as opaque objects as well, so its lists read as empty, and
+  its next write of such a key replaces the structured value with an array of
+  only what it knows. Those elements are lost, and no reader can bring them
+  back. The format cannot protect against a writer that ignores the stamp;
+  only retiring such bundles can.
+- **Why a lenient reader and the data-triggered re-lift are enough** for every
+  other writer: a writer that obeys the stamp writes the old shape only before
+  it sees the stamp, or in the race window. What it writes is plain JSON under
+  one key, which the codec reads as it is. That is the path every plain key
+  takes, so this lenient reader is permanent, not a window of N releases. The
+  next open, or the next version 4 write of that key, lifts it again. Its write
+  wins at key level over concurrent structured edits of that key: version 3's
+  behaviour, not a new loss.
+- **No dual write.** Writing both shapes would double the document, keep the
+  old copy under key-level last-writer-wins (so an old writer still wins), and
+  need a rule for which copy is true when they disagree.
+
+### Server-side writers
+
+A server that writes canvas Y.Docs (the host's sync server: seeds, state
+patches, deck changes, version restore) must:
+
+1. **Read and write page state only through the codec.** `toJSON()` of a
+   structured value is an object keyed by id with `$kind` and `$pos` in it,
+   not the document's shape, and `state.set(key, value)` with plain JSON over
+   a structured value is an old writer. A Yjs value cannot be copied into
+   another map either (an integrated type cannot be inserted twice): read
+   plain, write through the codec.
+2. **Stamp `meta.schemaVersion`** with the version it writes, in the same
+   transaction that creates the document (a seed into an empty document, pages
+   written into a document that had none). Only then may it write structured
+   values (rule 1).
+3. **Refuse to write into a newer document**: when `meta.schemaVersion` or a
+   `kindVersion:<stateKey>` is above what it knows, or malformed, it writes
+   nothing, like `readYDocRefusal` on a client.
+4. **Leave the stamp of an existing document alone.** It cannot run a host's
+   kind migrations. In a document below 4 it writes through the codec with
+   lifting off, so its values stay plain until a client opens and lifts the
+   document.
+5. **Pass the host's collection keys** to the codec when it writes. Without
+   them, a host collection that is still absent or plain is written as plain
+   JSON: correct, but merged per key until a client lifts it.
+6. **Report a refusal as an error.** The caller must not answer it by
+   patching a flat JSON mirror of the document instead: the next open reads
+   the Y.Doc, not the mirror, so the edit would exist in one copy only.
+
+### F0 in version 4
+
+Once a version 4 document is stored, these are permanent:
+
+- `$kind`, the reserved entry of every structured `Y.Map`, and its values
+  `elements`, `order` and `record`.
+- `$pos`, the reserved property of every element map in an `elements` value.
+- The fractional key format of `$pos` and of `order` values: the page-order
+  alphabet (`0-9A-Za-z`, compared as plain strings), ties broken by id.
+- `$` as a reserved prefix: no element id, `order` id or record key starting
+  with `$` is stored in a structured value.
+- The class of each key listed above. A key may later join a class (additive:
+  readers follow the marker), but never leave one or change it.
+- `schemaVersion` 4 meaning "page state may hold structured values".
+
+Not introduced: `meta.stateFormat`. The codec's names (`@ggraphic/core/ydoc`,
+`readStateKey`, `readState`, `writeStateKeys`) are public API under semver,
+not stored data.
+
 ## Deliberately left out
 
 - **Server-side writers and readers** (the reference host's sync-server
-  internal API, its deck changes, version restore, template snapshots). With one
-  version they are correct as they are; before the first v2 they must copy
-  `meta.schemaVersion` into snapshots, and refuse or migrate before writing
-  into a newer doc.
+  internal API, its deck changes, version restore, template snapshots) are not
+  changed by the core. Version 4 states the rules they must follow
+  ("Server-side writers" there); implementing them is the host's change.
 - **Rewriting at rest.** Old documents are lifted on open, lazily, never by a
   batch job.
 - **Downgrades.** There is no `vN → vN-1`; an older client goes read-only.
@@ -234,9 +515,11 @@ does:
   that window may a reader drop the old shape.
 - **Old-shape detection.** A step whose input shape is recognisable can come
   with a detector; a load that finds old-shape data under a current stamp then
-  re-lifts those keys (steps are idempotent, so this is safe). Not built yet:
-  the first real step brings its detector, or justifies why lenient readers
-  are enough.
+  re-lifts those keys (steps are idempotent, so this is safe). Version 4 is
+  the first step with one: a key classed as structured that holds plain JSON
+  is lifted again on the next open, and on the next write of that key (see
+  "Version 4", "Lift and re-lift"). For version 4 the lenient reader is
+  permanent, because the old shape is the plain shape every other key keeps.
 
 ## Risks
 
@@ -245,10 +528,24 @@ does:
   deck-changes endpoint, version restore, and the AI/chat edit paths that
   write a canvas through the server. With version 1 harmless; before the
   first v2 each must refuse a newer doc, or migrate what it writes, and the
-  snapshot copies must carry the stamp.
+  snapshot copies must carry the stamp. From version 4 a server that copies
+  whole values per key is an old writer: it reads structured values in the
+  wrong shape and writes plain JSON over them. It must follow "Server-side
+  writers" in "Version 4" before the first client writes version 4.
 - **Old bundles** keep writing the old shape (see "Old writers"): mitigated
   only by lenient readers and detectors, not by the stamp.
 - A migration that rewrites a whole instance list races with a concurrent edit
   of that list on a not-yet-migrated peer; Yjs keeps one of the two values.
+  The version 4 lift has the same race for the round trip after open.
+- **Version 4 keeps key-level last-writer-wins in three places, all
+  accepted:** two clients creating the same absent structured key at once (the
+  first element of a kind on a page), the same property of one element, and
+  one entry of a record. Pages are not pre-created with empty structured
+  collections to close the first case: that would add about 15 entries per
+  page and turn an absent key into `[]` in the JSON view, for a race of one
+  round trip. Whether pages are already built with every collection present
+  as `[]` (which would narrow it further) is _unverified_.
+- **A build from before the refusal** that meets version 4 data loses the
+  elements of every collection it writes (see "Old writers in version 4").
 - Host top-level keys outside `pages` (the reference host's flat cover
   state in its initial state) are opaque to the core; a host step does not reach them.

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { useMessages } from '../../../i18n/messages.js';
 import React from 'react';
 import { PiStackPlus, PiStackMinus } from 'react-icons/pi';

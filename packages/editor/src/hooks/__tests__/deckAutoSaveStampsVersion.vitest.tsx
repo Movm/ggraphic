@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * The gallery deck autosave writes a canvas document, so it carries the
  * document format version beside its pages (additive: `pages` is unchanged).

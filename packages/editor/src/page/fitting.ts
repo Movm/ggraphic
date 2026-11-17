@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * Text sizes fitted to the brand's fonts, up to the prototype's size (`maxFontSize`). The fit
  * itself is the gate adapter's (`TEMPLATE_GATE_ADAPTER.fitText`, the width tables the gate

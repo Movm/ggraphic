@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /** Building blocks for host panels: the sidebar panel and tab bars, sliders and hints, the reusable sections, the element panel and the tab types. */
 export { SidebarPanel } from '../sidebar/SidebarPanel.js';
 export { SidebarTabBar } from '../sidebar/SidebarTabBar.js';

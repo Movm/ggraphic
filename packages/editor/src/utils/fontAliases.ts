@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 import { FONT_FAMILY_ALIASES, aliasFontFamily as aliasReplacedFamily } from '@ggraphic/core';
 
 import { declaredFontFamilies } from '../brand/brandRegistry.js';

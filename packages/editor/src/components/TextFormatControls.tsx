@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MPL-2.0
+// SPDX-License-Identifier: AGPL-3.0-only
 /**
  * TextFormatControls — die Knöpfe für Fett, Kursiv, Unterstrichen, Akzent,
  * Textmarker und Listen, solange ein Text im Editor bearbeitet wird: sie
