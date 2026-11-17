@@ -91,13 +91,6 @@ export function readTemplateDrag(dataTransfer: DataTransfer | null): string | nu
   return dataTransfer?.getData(TEMPLATE_DRAG_TYPE) || null;
 }
 
-/** @deprecated Use `TEMPLATE_DRAG_TYPE`. Removed in the next alpha. */
-export const VORLAGE_DRAG_TYPE = TEMPLATE_DRAG_TYPE;
-/** @deprecated Use `isTemplateDrag`. Removed in the next alpha. */
-export const isVorlageDrag = isTemplateDrag;
-/** @deprecated Use `readTemplateDrag`. Removed in the next alpha. */
-export const readVorlageDrag = readTemplateDrag;
-
 export function isMediaDrag(dataTransfer: DataTransfer | null): boolean {
   return !!dataTransfer && Array.from(dataTransfer.types).includes(MEDIA_DRAG_TYPE);
 }

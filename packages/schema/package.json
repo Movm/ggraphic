@@ -18,11 +18,10 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
-    "./*": {
-      "development": "./src/*.ts",
-      "types": "./src/*.ts",
-      "import": "./dist/*.js",
-      "default": "./dist/*.js"
+    "./testing/v2Fixture": {
+      "development": "./src/document/__fixtures__/v2Fixture.ts",
+      "types": "./src/document/__fixtures__/v2Fixture.ts",
+      "default": "./src/document/__fixtures__/v2Fixture.ts"
     }
   },
   "scripts": {
@@ -52,11 +51,6 @@
         "types": "./dist/index.d.ts",
         "import": "./dist/index.js",
         "default": "./dist/index.js"
-      },
-      "./*": {
-        "types": "./dist/*.d.ts",
-        "import": "./dist/*.js",
-        "default": "./dist/*.js"
       }
     }
   }

@@ -11,7 +11,7 @@ import type { UserImageInstance } from './userImageUtils.js';
 
 /**
  * The element kinds a host adds to the core's. Empty in the core; a host
- * augments it (`declare module '@ggraphic/editor/utils/canvasItem'`) with one
+ * augments it (`declare module '@ggraphic/editor/host'`) with one
  * entry per kind: where its list lives in the canvas state (`stateKey`), one
  * instance (`data`) and, when a tile or a drop can add one, the fields that
  * tile carries next to `kind` (`payload`). The runtime half, what the editor

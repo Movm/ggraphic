@@ -5,7 +5,7 @@ The neutral ggraphic brand pack, ready to render: colours, grounds and pickers f
 ```ts
 import { defaultBrand } from '@ggraphic/brand-default';
 import '@ggraphic/brand-default/fonts'; // Bricolage Grotesque, Instrument Sans, Fraunces, Anton (OFL)
-import { registerBrandPacks } from '@ggraphic/editor/brand/brandRegistry';
+import { registerBrandPacks } from '@ggraphic/editor/host';
 
 registerBrandPacks([defaultBrand]);
 ```

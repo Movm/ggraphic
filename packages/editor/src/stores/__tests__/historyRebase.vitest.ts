@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { describe, expect, it } from 'vitest';
 
-import { createCanvasEditorStore } from '@ggraphic/editor/stores/createCanvasEditorStore';
+import { createCanvasEditorStore } from '../createCanvasEditorStore.js';
 
 describe('rebaseHistory', () => {
   it('merges entries a remote edit made equal, as saveToHistory would not have kept them', () => {

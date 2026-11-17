@@ -1,16 +1,13 @@
 // SPDX-License-Identifier: CC0-1.0
 import { checkTemplate, type GateContext, type GateProblem } from '@ggraphic/core';
-import {
-  createTemplateGateAdapter,
-  illustrationLookup,
-} from '@ggraphic/editor/templates/templateGeometry';
-import { GOPHERS } from '@ggraphic/editor/utils/illustrations/gophers';
-import { HUMAAANS } from '@ggraphic/editor/utils/illustrations/humaaans';
-import { ILLLUSTRATIONS } from '@ggraphic/editor/utils/illustrations/illlustrations';
-import { KAWAII_ILLUSTRATIONS } from '@ggraphic/editor/utils/illustrations/kawaii';
-import { OPENDOODLES } from '@ggraphic/editor/utils/illustrations/opendoodles';
-import { OPENPEEPS } from '@ggraphic/editor/utils/illustrations/openpeeps';
-import { TRANSHUMANS } from '@ggraphic/editor/utils/illustrations/transhumans';
+import { GOPHERS } from '@ggraphic/editor/illustrations/gophers';
+import { HUMAAANS } from '@ggraphic/editor/illustrations/humaaans';
+import { ILLLUSTRATIONS } from '@ggraphic/editor/illustrations/illlustrations';
+import { KAWAII_ILLUSTRATIONS } from '@ggraphic/editor/illustrations/kawaii';
+import { OPENDOODLES } from '@ggraphic/editor/illustrations/opendoodles';
+import { OPENPEEPS } from '@ggraphic/editor/illustrations/openpeeps';
+import { TRANSHUMANS } from '@ggraphic/editor/illustrations/transhumans';
+import { createTemplateGateAdapter, illustrationLookup } from '@ggraphic/editor/templates';
 import { readTemplateFile } from '@ggraphic/schema';
 
 import { OPEN_TEMPLATE_MANIFEST } from '../src/index.js';
