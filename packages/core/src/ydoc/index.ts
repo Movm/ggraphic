@@ -22,6 +22,9 @@ export {
 export {
   assertWritableState,
   buildStateMap,
+  canonicalJsonValue,
+  representableProblem,
+  type PlainFallback,
   mayWriteStructured,
   readState,
   readStateKey,
@@ -29,6 +32,14 @@ export {
   writeStateKeys,
   type StateWriteOptions,
 } from './codec.js';
-export { liftDocumentState, liftStateMap } from './lift.js';
+export { liftDocumentState, liftStateMap, type LiftOptions } from './lift.js';
+export {
+  LIFT_ID_ALGORITHM,
+  cyrb53,
+  deterministicClientId,
+  isDerivedClientId,
+  liftSalt,
+  transactDeterministically,
+} from './deterministic.js';
 export { YDOC_KEYS, type YDocKey } from './ydocKeys.js';
 export { posBetween, posJitter } from './pos.js';

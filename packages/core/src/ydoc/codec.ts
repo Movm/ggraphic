@@ -71,37 +71,57 @@ const isPlainObject = (value: unknown): value is PlainObject => {
 
 const reserved = (name: string): boolean => name.startsWith(RESERVED_PREFIX);
 
-const isElementList = (value: unknown): value is Element[] => {
-  if (!Array.isArray(value)) return false;
+function elementListProblem(value: unknown): string | null {
+  if (!Array.isArray(value)) return 'is not a list';
   const ids = new Set<string>();
-  for (const element of value) {
-    if (!isPlainObject(element)) return false;
+  for (let i = 0; i < value.length; i++) {
+    const element: unknown = value[i];
+    if (!isPlainObject(element)) return `[${i}] is not a plain object`;
     const id = element['id'];
-    if (typeof id !== 'string' || reserved(id) || ids.has(id)) return false;
-    if (Object.hasOwn(element, ELEMENT_POS_KEY)) return false;
+    if (typeof id !== 'string') return `[${i}] has no string id`;
+    if (reserved(id)) return `[${i}] has the reserved id '${id}'`;
+    if (ids.has(id)) return `[${i}] repeats the id '${id}'`;
+    if (Object.hasOwn(element, ELEMENT_POS_KEY))
+      return `[${i}] has a property '${ELEMENT_POS_KEY}'`;
     ids.add(id);
   }
-  return true;
-};
+  return null;
+}
 
-const isIdList = (value: unknown): value is string[] =>
-  Array.isArray(value) &&
-  value.every((id) => typeof id === 'string' && !reserved(id)) &&
-  new Set(value).size === value.length;
+function idListProblem(value: unknown): string | null {
+  if (!Array.isArray(value)) return 'is not a list';
+  const seen = new Set<unknown>();
+  for (let i = 0; i < value.length; i++) {
+    const id: unknown = value[i];
+    if (typeof id !== 'string') return `[${i}] is not a string`;
+    if (reserved(id)) return `[${i}] is the reserved id '${id}'`;
+    if (seen.has(id)) return `[${i}] repeats the id '${id}'`;
+    seen.add(id);
+  }
+  return null;
+}
 
-const isRecord = (value: unknown): value is PlainObject =>
-  isPlainObject(value) && Object.keys(value).every((key) => !reserved(key));
+function recordProblem(value: unknown): string | null {
+  if (!isPlainObject(value)) return 'is not a plain object';
+  const key = Object.keys(value).find(reserved);
+  return key === undefined ? null : `has the reserved key '${key}'`;
+}
+
+/** Why `value` cannot be stored as a structure of class `cls`, or `null` when it can. */
+export function representableProblem(cls: StateKeyClass, value: unknown): string | null {
+  switch (cls) {
+    case 'elements':
+      return elementListProblem(value);
+    case 'order':
+      return idListProblem(value);
+    case 'record':
+      return recordProblem(value);
+  }
+}
 
 /** Can `value` be stored as a structure of class `cls`? What cannot stays plain JSON. */
 export function representable(cls: StateKeyClass, value: unknown): boolean {
-  switch (cls) {
-    case 'elements':
-      return isElementList(value);
-    case 'order':
-      return isIdList(value);
-    case 'record':
-      return isRecord(value);
-  }
+  return representableProblem(cls, value) === null;
 }
 
 // ── reading ─────────────────────────────────────────────────────────────────
@@ -266,19 +286,53 @@ export function readState(stateY: Y.Map<unknown>): Record<string, unknown> {
   return state;
 }
 
+// ── canonical writes ────────────────────────────────────────────────────────
+
+const byCodePoint = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+
+/**
+ * A deep copy of `value` with every object's keys inserted in code-point order. A write that
+ * must be a pure function of the document state (`StateWriteOptions.deterministic`, the lift)
+ * stores this, because the key order of a value read from a Y.Doc depends on the order in which
+ * that replica integrated its entries. Arrays keep their order and holes; other values are
+ * returned as they are.
+ */
+export function canonicalJsonValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(canonicalJsonValue);
+  if (value === null || typeof value !== 'object') return value;
+  const out: PlainObject = {};
+  for (const key of Object.keys(value).sort(byCodePoint)) {
+    define(out, key, canonicalJsonValue((value as PlainObject)[key]));
+  }
+  return out;
+}
+
+/** The entries of `object`, in code-point order of their keys when `canonical`. */
+const entriesOf = (object: PlainObject, canonical: boolean): [string, unknown][] =>
+  canonical
+    ? Object.keys(object)
+        .sort(byCodePoint)
+        .map((key) => [key, canonicalJsonValue(object[key])])
+    : Object.entries(object);
+
 // ── building ────────────────────────────────────────────────────────────────
 
-function setProps(map: Y.Map<unknown>, element: Element): void {
-  for (const [key, value] of Object.entries(element)) {
+function setProps(map: Y.Map<unknown>, element: Element, canonical: boolean): void {
+  for (const [key, value] of entriesOf(element, canonical)) {
     if (key !== 'id') map.set(key, value);
   }
 }
 
 /**
  * A fresh structure of class `cls` holding `value` (which must be representable), its order on
- * the deterministic chain: two clients building the same JSON write equal content.
+ * the deterministic chain: two clients building the same JSON write equal content. `canonical`
+ * also fixes the order of the writes inside it (see `canonicalJsonValue`).
  */
-export function buildStructured(cls: StateKeyClass, value: unknown): Y.Map<unknown> {
+export function buildStructured(
+  cls: StateKeyClass,
+  value: unknown,
+  canonical = false
+): Y.Map<unknown> {
   const map = new Y.Map<unknown>();
   map.set(STATE_KIND_KEY, cls);
   let pos: string | null = null;
@@ -286,7 +340,7 @@ export function buildStructured(cls: StateKeyClass, value: unknown): Y.Map<unkno
     for (const element of value as Element[]) {
       pos = posBetween(pos, null);
       const elementMap = new Y.Map<unknown>();
-      setProps(elementMap, element);
+      setProps(elementMap, element, canonical);
       elementMap.set(ELEMENT_POS_KEY, pos);
       map.set(element.id, elementMap);
     }
@@ -296,9 +350,56 @@ export function buildStructured(cls: StateKeyClass, value: unknown): Y.Map<unkno
       map.set(id, pos);
     }
   } else {
-    for (const [key, entry] of Object.entries(value as PlainObject)) map.set(key, entry);
+    for (const [key, entry] of entriesOf(value as PlainObject, canonical)) map.set(key, entry);
   }
   return map;
+}
+
+// ── plain fallback reports ──────────────────────────────────────────────────
+
+/** A classed key that a write or the lift stores as plain JSON, because the value cannot be a structure. */
+export interface PlainFallback {
+  key: string;
+  keyClass: StateKeyClass;
+  /** Why the value is not representable (`representableProblem`). */
+  reason: string;
+  /** A structure was there and is replaced by the plain value (a concurrent per-element edit of it is lost). */
+  replaced: boolean;
+}
+
+const reportedFallbacks = new WeakMap<object, Set<string>>();
+
+/** Calls `options.onPlainFallback` once per state map and key. */
+function reportPlainFallback(
+  stateY: Y.Map<unknown>,
+  fallback: PlainFallback,
+  onPlainFallback: ((fallback: PlainFallback) => void) | undefined
+): void {
+  if (onPlainFallback === undefined) return;
+  let keys = reportedFallbacks.get(stateY);
+  if (keys === undefined) {
+    keys = new Set();
+    reportedFallbacks.set(stateY, keys);
+  }
+  if (keys.has(fallback.key)) return;
+  keys.add(fallback.key);
+  onPlainFallback(fallback);
+}
+
+/** Reports `value` under `key` when the classes name the key and the structure cannot hold it. */
+export function reportIfPlainFallback(
+  stateY: Y.Map<unknown>,
+  key: string,
+  value: unknown,
+  cls: StateKeyClass | undefined,
+  replaced: boolean,
+  onPlainFallback: ((fallback: PlainFallback) => void) | undefined
+): void {
+  if (cls === undefined || onPlainFallback === undefined) return;
+  const reason = representableProblem(cls, value);
+  if (reason !== null) {
+    reportPlainFallback(stateY, { key, keyClass: cls, reason, replaced }, onPlainFallback);
+  }
 }
 
 // ── writing ─────────────────────────────────────────────────────────────────
@@ -314,6 +415,19 @@ export interface StateWriteOptions {
    * into its structure either way.
    */
   lift: boolean;
+  /**
+   * Make the write a pure function of the document state and `partial`: keys, properties and
+   * record entries are written in code-point order, values in canonical key order
+   * (`canonicalJsonValue`), and new order keys get no random suffix. For a transaction two
+   * clients must produce identically (`transactDeterministically`); user writes leave it off.
+   */
+  deterministic?: boolean;
+  /**
+   * Called once per state map and key when a key the classes name is written plain because its
+   * value cannot be a structure (duplicate ids, an element without a string id, …). The write
+   * itself goes ahead as plain JSON; see `PlainFallback`.
+   */
+  onPlainFallback?: (fallback: PlainFallback) => void;
 }
 
 /** Indices into `seq` of one longest strictly increasing subsequence. */
@@ -344,11 +458,12 @@ function longestIncreasing(seq: readonly number[]): number[] {
  * the lift and `buildStateMap` use the deterministic chain, so their convergence does not
  * depend on this.
  */
-function respace(ids: readonly string[]): Map<string, string> {
+function respace(ids: readonly string[], jitter: boolean): Map<string, string> {
   const out = new Map<string, string>();
   let pos: string | null = null;
   for (const id of ids) {
-    pos = posJitter(posBetween(pos, null));
+    pos = posBetween(pos, null);
+    if (jitter) pos = posJitter(pos);
     out.set(id, pos);
   }
   return out;
@@ -362,7 +477,8 @@ function respace(ids: readonly string[]): Map<string, string> {
  */
 function planPositions(
   ids: readonly string[],
-  current: ReadonlyMap<string, string>
+  current: ReadonlyMap<string, string>,
+  jitter: boolean
 ): Map<string, string> {
   const kept = ids.filter((id) => current.has(id));
   const ranked = [...kept].sort((a, b) => byKeyThenId([a, current.get(a)!], [b, current.get(b)!]));
@@ -385,15 +501,16 @@ function planPositions(
       continue;
     }
     const next = nextFixed[i]!;
-    if (previous !== null && next !== null && previous >= next) return respace(ids);
-    const pos = posJitter(posBetween(previous, next));
+    if (previous !== null && next !== null && previous >= next) return respace(ids, jitter);
+    const between = posBetween(previous, next);
+    const pos = jitter ? posJitter(between) : between;
     out.set(id, pos);
     previous = pos;
   }
   return out;
 }
 
-function diffElements(map: Y.Map<unknown>, elements: readonly Element[]): void {
+function diffElements(map: Y.Map<unknown>, elements: readonly Element[], canonical: boolean): void {
   const next = new Map(elements.map((element) => [element.id, element]));
   for (const id of Array.from(map.keys())) {
     if (id !== STATE_KIND_KEY && !next.has(id)) map.delete(id);
@@ -407,7 +524,7 @@ function diffElements(map: Y.Map<unknown>, elements: readonly Element[]): void {
         elementMap.delete(key);
       }
     }
-    for (const [key, value] of Object.entries(element)) {
+    for (const [key, value] of entriesOf(element, canonical)) {
       if (key === 'id') continue;
       if (elementMap.has(key) && sameStateValue(plainOf(elementMap.get(key)), value)) continue;
       elementMap.set(key, value);
@@ -417,7 +534,8 @@ function diffElements(map: Y.Map<unknown>, elements: readonly Element[]): void {
   }
   const positions = planPositions(
     elements.map((element) => element.id),
-    current
+    current,
+    !canonical
   );
   for (const [id, pos] of positions) {
     const existing = map.get(id);
@@ -426,13 +544,13 @@ function diffElements(map: Y.Map<unknown>, elements: readonly Element[]): void {
       continue;
     }
     const elementMap = new Y.Map<unknown>();
-    setProps(elementMap, next.get(id)!);
+    setProps(elementMap, next.get(id)!, canonical);
     elementMap.set(ELEMENT_POS_KEY, pos);
     map.set(id, elementMap);
   }
 }
 
-function diffOrder(map: Y.Map<unknown>, ids: readonly string[]): void {
+function diffOrder(map: Y.Map<unknown>, ids: readonly string[], canonical: boolean): void {
   const next = new Set(ids);
   const current = new Map<string, string>();
   for (const [id, pos] of Array.from(map.entries())) {
@@ -440,14 +558,14 @@ function diffOrder(map: Y.Map<unknown>, ids: readonly string[]): void {
     if (!next.has(id)) map.delete(id);
     else if (isValidPos(pos)) current.set(id, pos);
   }
-  for (const [id, pos] of planPositions(ids, current)) map.set(id, pos);
+  for (const [id, pos] of planPositions(ids, current, !canonical)) map.set(id, pos);
 }
 
-function diffRecord(map: Y.Map<unknown>, record: PlainObject): void {
+function diffRecord(map: Y.Map<unknown>, record: PlainObject, canonical: boolean): void {
   for (const key of Array.from(map.keys())) {
     if (key !== STATE_KIND_KEY && !Object.hasOwn(record, key)) map.delete(key);
   }
-  for (const [key, value] of Object.entries(record)) {
+  for (const [key, value] of entriesOf(record, canonical)) {
     if (map.has(key) && sameStateValue(plainOf(map.get(key)), value)) continue;
     map.set(key, value);
   }
@@ -459,25 +577,31 @@ function writeKey(
   value: unknown,
   options: StateWriteOptions
 ): void {
+  const canonical = options.deterministic === true;
+  const plain = (v: unknown): unknown => (canonical ? canonicalJsonValue(v) : v);
   const current = stateY.get(key);
   const cls = current instanceof Y.Map ? classOf(current as Y.Map<unknown>) : null;
   if (cls === 'elements' || cls === 'order' || cls === 'record') {
     const map = current as Y.Map<unknown>;
-    if (!representable(cls, value)) stateY.set(key, value);
-    else if (cls === 'elements') diffElements(map, value as Element[]);
-    else if (cls === 'order') diffOrder(map, value as string[]);
-    else diffRecord(map, value as PlainObject);
+    if (!representable(cls, value)) {
+      // Accepted (review of #211, finding 4): the key is stored plain and reported.
+      reportIfPlainFallback(stateY, key, value, cls, true, options.onPlainFallback);
+      stateY.set(key, plain(value));
+    } else if (cls === 'elements') diffElements(map, value as Element[], canonical);
+    else if (cls === 'order') diffOrder(map, value as string[], canonical);
+    else diffRecord(map, value as PlainObject, canonical);
     return;
   }
   // Plain, absent, or a Yjs value no writer creates: compared as its JSON view.
   if (sameStateValue(readValue(current), value)) return;
   const target = options.classes.get(key);
-  stateY.set(
-    key,
-    options.lift && target !== undefined && representable(target, value)
-      ? buildStructured(target, value)
-      : value
-  );
+  if (options.lift && target !== undefined && representable(target, value)) {
+    stateY.set(key, buildStructured(target, value, canonical));
+    return;
+  }
+  if (options.lift)
+    reportIfPlainFallback(stateY, key, value, target, false, options.onPlainFallback);
+  stateY.set(key, plain(value));
 }
 
 /**
@@ -649,9 +773,7 @@ const effectiveOptions = (
   stateY: Y.Map<unknown> | null
 ): StateWriteOptions => {
   const doc = stateY?.doc ?? null;
-  return doc === null
-    ? options
-    : { classes: options.classes, lift: options.lift && mayWriteStructured(doc) };
+  return doc === null ? options : { ...options, lift: options.lift && mayWriteStructured(doc) };
 };
 
 /**
@@ -685,8 +807,10 @@ export function writeStateKeys(
     const reason = rejection(stateY, key, value, effective);
     if (reason !== null) throw new Error(`writeStateKeys: ${reason}`);
   }
+  const keys = Object.keys(partial);
+  if (options.deterministic === true) keys.sort(byCodePoint);
   doc.transact(() => {
-    for (const [key, value] of Object.entries(partial)) writeKey(stateY, key, value, effective);
+    for (const key of keys) writeKey(stateY, key, partial[key], effective);
   });
 }
 
@@ -703,15 +827,20 @@ export function buildStateMap(
     const reason = rejection(null, key, value, options);
     if (reason !== null) throw new Error(`buildStateMap: ${reason}`);
   }
+  const canonical = options.deterministic === true;
   const stateY = new Y.Map<unknown>();
-  for (const [key, value] of Object.entries(state)) {
+  const keys = Object.keys(state);
+  if (canonical) keys.sort(byCodePoint);
+  for (const key of keys) {
+    const value = state[key];
     const cls = options.classes.get(key);
-    stateY.set(
-      key,
-      options.lift && cls !== undefined && representable(cls, value)
-        ? buildStructured(cls, value)
-        : value
-    );
+    if (options.lift && cls !== undefined && representable(cls, value)) {
+      stateY.set(key, buildStructured(cls, value, canonical));
+      continue;
+    }
+    if (options.lift)
+      reportIfPlainFallback(stateY, key, value, cls, false, options.onPlainFallback);
+    stateY.set(key, canonical ? canonicalJsonValue(value) : value);
   }
   return stateY;
 }
