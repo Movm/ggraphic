@@ -173,4 +173,13 @@ describe('applyOwnWrite', () => {
     const entry = { fill: 'own' };
     expect(applyOwnWrite(entry, { fill: 'band' }, { fill: 'cd' })).toBe(entry);
   });
+
+  it("does not depend on the order of an object's keys (#183)", () => {
+    // The snapshot comes from React state, `prev` from the codec: same value, other key order.
+    const entry = { crop: { x: 1, y: 2 }, fill: 'band' };
+    const prev = { crop: { y: 2, x: 1 }, fill: 'band' };
+    const next = { crop: { x: 5, y: 6 }, fill: 'band' };
+    expect(applyOwnWrite(entry, prev, next)).toEqual(next);
+    expect(planHistoryRebase({ crop: { x: 1, y: 2 } }, { crop: { y: 2, x: 1 } })).toEqual([]);
+  });
 });

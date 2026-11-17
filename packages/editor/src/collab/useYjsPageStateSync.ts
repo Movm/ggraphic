@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { useEffect, useRef } from 'react';
+import { readStateKey, sameStateValue } from '@ggraphic/core/ydoc';
 import * as Y from 'yjs';
 
 import { YDOC_KEYS } from './ydocKeys.js';
@@ -78,9 +79,26 @@ export function useYjsPageStateSync(options: {
       }
       holdsOwn.set(key, own);
     };
+    // Per structured key: its plain value as of the end of the last transaction seen (own
+    // `PAGES_STATE_ORIGIN` writes included). Plain keys need none: their item carries the base.
+    const structuredValues = new Map<string, unknown>();
+    const isStructured = (value: unknown) => value instanceof Y.AbstractType;
+    const forgetTracking = (key: string) => {
+      holdsOwn.delete(key);
+      ownValues.delete(key);
+      runStart.delete(key);
+    };
+    let cachedFor: Y.Map<unknown> | null = null;
+    const fill = (stateY: Y.Map<unknown>) => {
+      cachedFor = stateY;
+      structuredValues.clear();
+      for (const key of stateY.keys()) {
+        if (isStructured(stateY.get(key))) structuredValues.set(key, readStateKey(stateY, key));
+        else track(stateY, key, stateY.get(key));
+      }
+    };
     const initial = pageYMap.get(YDOC_KEYS.state);
-    if (initial instanceof Y.Map)
-      for (const key of initial.keys()) track(initial, key, initial.get(key));
+    if (initial instanceof Y.Map) fill(initial);
 
     /**
      * The base of `item`'s write, which replaced an own write it may not have
@@ -102,23 +120,62 @@ export function useYjsPageStateSync(options: {
       return start?.value;
     };
 
+    /** The state key whose structure holds `target`, or null when it is not under `stateY`. */
+    const keyUnder = (stateY: Y.Map<unknown>, target: Y.AbstractType<unknown>): string | null => {
+      let node = target;
+      for (;;) {
+        const item = node._item;
+        if (!item || !(item.parent instanceof Y.AbstractType)) return null;
+        if (item.parent === stateY) return item.parentSub;
+        node = item.parent;
+      }
+    };
+
     const handler = (events: Y.YEvent<Y.AbstractType<unknown>>[]) => {
       const stateY = pageYMap.get(YDOC_KEYS.state);
       if (!(stateY instanceof Y.Map)) return;
+      // The page's state map was replaced (convert): what was cached belongs to the old one.
+      if (cachedFor !== stateY) fill(stateY);
       const partial: Record<string, unknown> = {};
       const base: Record<string, unknown> = {};
+      // Per key this transaction touched: the change of its top-level entry, if it had one (a
+      // deep event alone means an edit inside a structure).
+      const touched = new Map<string, { oldValue: unknown } | null>();
       for (const event of events) {
-        if (event.target !== stateY) continue;
-        const own = event.transaction.origin === PAGES_STATE_ORIGIN;
-        for (const [key, change] of (event as Y.YMapEvent<unknown>).changes.keys) {
+        if (event.target === stateY) {
+          for (const [key, change] of (event as Y.YMapEvent<unknown>).changes.keys)
+            touched.set(key, change);
+        } else {
+          const key = keyUnder(stateY, event.target);
+          if (key !== null && !touched.has(key)) touched.set(key, null);
+        }
+      }
+      const own = events[0]!.transaction.origin === PAGES_STATE_ORIGIN;
+      for (const [key, change] of touched) {
+        const replaced = change?.oldValue;
+        const current = stateY.get(key);
+        if (change !== null && !isStructured(replaced) && !isStructured(current)) {
+          // A plain key, before and after: the top-level item tracks it.
           if (!own) {
             const item = stateY._map.get(key);
             const overOwn =
               holdsOwn.get(key) === true && !!item && !item.deleted && item.id.client !== me();
-            partial[key] = stateY.get(key);
-            base[key] = overOwn ? baseOverOwn(stateY, key, item) : change.oldValue;
+            partial[key] = readStateKey(stateY, key);
+            base[key] = overOwn ? baseOverOwn(stateY, key, item) : replaced;
           }
-          track(stateY, key, change.oldValue);
+          track(stateY, key, replaced);
+          continue;
+        }
+        // A key that is or was a structure: its top-level item does not follow the edits inside.
+        const plain = readStateKey(stateY, key);
+        const before =
+          change !== null && !isStructured(replaced) ? replaced : structuredValues.get(key);
+        if (isStructured(current)) structuredValues.set(key, plain);
+        else structuredValues.delete(key);
+        forgetTracking(key);
+        if (!own && !sameStateValue(plain, before)) {
+          partial[key] = plain;
+          base[key] = before;
         }
       }
       if (Object.keys(partial).length > 0)
