@@ -75,6 +75,8 @@ afterAll(() => {
 type UploadActions = {
   placeUserImageFromFile: (file: File) => Promise<string>;
   updateUserImage: (id: string, partial: Partial<UserImageInstance>) => void;
+  removeUserImage: (id: string) => void;
+  discardPlacedUserImage: (id: string) => void;
 };
 
 async function mountCanvas() {
@@ -191,6 +193,75 @@ describe('the upload URL swap (#161)', () => {
 
     await act(async () => {
       ref.current!.redo!();
+    });
+    expect(images()[0]?.src).toBe(DURABLE);
+  }, 90_000);
+});
+
+describe('a failed upload (#170)', () => {
+  it('takes the image out of the history: no undo step brings the revoked preview back', async () => {
+    const { ref, actions, images, historyJson, store } = await mountCanvas();
+    const before = store.getState().history.length;
+
+    let id = '';
+    await act(async () => {
+      id = await actions().placeUserImageFromFile(file());
+    });
+    await act(async () => {
+      actions().discardPlacedUserImage(id);
+    });
+
+    expect(images()).toHaveLength(0);
+    expect(revoked).toContain(BLOB);
+    expect(historyJson()).not.toContain('blob:');
+    expect(store.getState().history).toHaveLength(before);
+    expect(store.getState().canUndo()).toBe(false);
+
+    await act(async () => {
+      ref.current!.undo!();
+    });
+    expect(images()).toHaveLength(0);
+  }, 90_000);
+
+  it('drops the preview from the redo entries when the image was undone during the upload', async () => {
+    const { ref, actions, images, historyJson, store } = await mountCanvas();
+
+    let id = '';
+    await act(async () => {
+      id = await actions().placeUserImageFromFile(file());
+    });
+    await act(async () => {
+      ref.current!.undo!();
+    });
+    await act(async () => {
+      actions().discardPlacedUserImage(id);
+    });
+
+    expect(historyJson()).not.toContain('blob:');
+    expect(store.getState().canRedo()).toBe(false);
+    await act(async () => {
+      ref.current!.redo!();
+    });
+    expect(images()).toHaveLength(0);
+  }, 90_000);
+
+  it('leaves a user delete undoable', async () => {
+    const { ref, actions, images } = await mountCanvas();
+
+    let id = '';
+    await act(async () => {
+      id = await actions().placeUserImageFromFile(file());
+    });
+    await act(async () => {
+      actions().updateUserImage(id, { src: DURABLE });
+    });
+    await act(async () => {
+      actions().removeUserImage(id);
+    });
+    expect(images()).toHaveLength(0);
+
+    await act(async () => {
+      ref.current!.undo!();
     });
     expect(images()[0]?.src).toBe(DURABLE);
   }, 90_000);

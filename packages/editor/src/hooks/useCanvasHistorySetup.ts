@@ -24,6 +24,8 @@ export interface UseCanvasHistorySetupResult<T extends Record<string, unknown>> 
   flushPendingSaves: () => void;
   /** Replaces a string value in every history entry, without a step of its own. */
   replaceInHistory: (from: string, to: string) => void;
+  /** Rewrites every history entry, without a step of its own. */
+  rewriteHistory: (rewrite: (componentState: T) => T | null) => void;
   undo: () => void;
   redo: () => void;
   canUndo: boolean;
@@ -63,6 +65,7 @@ export function useCanvasHistorySetup<T extends Record<string, unknown>>(
     commitPendingSave,
     flushPendingSaves,
     replaceInHistory,
+    rewriteHistory,
     undo,
     redo,
     canUndo,
@@ -154,6 +157,7 @@ export function useCanvasHistorySetup<T extends Record<string, unknown>>(
     checkpoint,
     flushPendingSaves,
     replaceInHistory,
+    rewriteHistory,
     undo,
     redo,
     canUndo,

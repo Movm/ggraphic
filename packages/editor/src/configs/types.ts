@@ -387,6 +387,12 @@ export interface CanvasActionHistory {
    * an upload's `blob:` preview once its durable URL is known.
    */
   replaceInHistory: (from: string, to: string) => void;
+  /**
+   * Rewrites every history entry's state, oldest first, without a step of its own. `null` drops
+   * the entry, and an entry that ends up the same as the one before it collapses. Takes back a
+   * placement whose upload failed.
+   */
+  rewriteHistory: <TState>(rewrite: (state: TState) => TState | null) => void;
 }
 
 export interface ShareDescription {

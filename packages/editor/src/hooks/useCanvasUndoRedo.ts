@@ -28,6 +28,8 @@ interface UseCanvasUndoRedoReturn<
   flushPendingSaves: () => void;
   /** Replaces a string value in every history entry (the store's `replaceInHistory`). */
   replaceInHistory: (from: string, to: string) => void;
+  /** Rewrites every history entry (the store's `rewriteHistory`). */
+  rewriteHistory: (rewrite: (componentState: TComponentState) => TComponentState | null) => void;
 }
 
 // Stable selectors defined outside component
@@ -257,6 +259,16 @@ export function useCanvasUndoRedo<
     getStore().replaceInHistory(from, to);
   }, []);
 
+  const rewriteHistory = useCallback(
+    (rewrite: (componentState: TComponentState) => TComponentState | null) => {
+      // The store is typed with the default state; its entries are this hook's `TComponentState`.
+      getStore().rewriteHistory(
+        rewrite as (state: Record<string, unknown>) => Record<string, unknown> | null
+      );
+    },
+    []
+  );
+
   return {
     undo,
     redo,
@@ -268,5 +280,6 @@ export function useCanvasUndoRedo<
     commitPendingSave,
     flushPendingSaves,
     replaceInHistory,
+    rewriteHistory,
   };
 }
