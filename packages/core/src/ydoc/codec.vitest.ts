@@ -541,3 +541,87 @@ describe('read memo', () => {
     expect(readStateKey(peerState, 'shapeInstances')).toStrictEqual([{ id: 'a', x: 9 }]);
   });
 });
+
+describe('read memo: never served while a write it has not seen exists', () => {
+  const shapes = [{ id: 'a', x: 1 }];
+
+  it('a write from an observer is seen by a read in that observer and in afterTransaction', () => {
+    const { doc, stateY } = pageWith({ shapeInstances: shapes });
+    readStateKey(stateY, 'shapeInstances');
+    let inObserver: unknown;
+    let inAfter: unknown;
+    const other = doc.getMap('other');
+    other.observe(() => {
+      writeStateKeys(stateY, { shapeInstances: [{ id: 'a', x: 2 }] }, LIFT);
+      inObserver = readStateKey(stateY, 'shapeInstances');
+    });
+    doc.on('afterTransaction', (transaction: Y.Transaction) => {
+      if ([...transaction.changed.keys()].includes(other as never))
+        inAfter = readStateKey(stateY, 'shapeInstances');
+    });
+    other.set('k', 1);
+    expect(inObserver).toStrictEqual([{ id: 'a', x: 2 }]);
+    expect(inAfter).toStrictEqual([{ id: 'a', x: 2 }]);
+    expect(readStateKey(stateY, 'shapeInstances')).toStrictEqual([{ id: 'a', x: 2 }]);
+  });
+
+  it('a second observer of the same transaction sees what the first one wrote', () => {
+    const { doc, stateY } = pageWith({ layerOrder: ['a', 'b'] });
+    readStateKey(stateY, 'layerOrder');
+    let seen: unknown;
+    doc.getMap('one').observe(() => writeStateKeys(stateY, { layerOrder: ['b', 'a'] }, LIFT));
+    doc.getMap('two').observe(() => {
+      seen = readStateKey(stateY, 'layerOrder');
+    });
+    doc.transact(() => {
+      doc.getMap('one').set('k', 1);
+      doc.getMap('two').set('k', 1);
+    });
+    expect(seen).toStrictEqual(['b', 'a']);
+  });
+
+  it('a write from an update handler is seen right after it', () => {
+    const { doc, stateY } = pageWith({ layerOrder: ['a', 'b'] });
+    readStateKey(stateY, 'layerOrder');
+    let seen: unknown;
+    const once = () => {
+      doc.off('update', once);
+      writeStateKeys(stateY, { layerOrder: ['b', 'a'] }, LIFT);
+      seen = readStateKey(stateY, 'layerOrder');
+    };
+    doc.on('update', once);
+    doc.getMap('other').set('k', 1);
+    expect(seen).toStrictEqual(['b', 'a']);
+  });
+
+  it('a beforeObserverCalls listener registered before the codec reads fresh', () => {
+    const { doc, stateY } = pageWith({ layerOrder: ['a', 'b'] });
+    let seen: unknown;
+    doc.on('beforeObserverCalls', () => {
+      seen = readStateKey(stateY, 'layerOrder');
+    });
+    readStateKey(stateY, 'layerOrder'); // registers the codec's listener after this one
+    writeStateKeys(stateY, { layerOrder: ['b', 'a'] }, LIFT);
+    expect(seen).toStrictEqual(['b', 'a']);
+  });
+
+  it('a destroyed doc is read fresh', () => {
+    const { doc, stateY } = pageWith({ layerOrder: ['a', 'b'] });
+    readStateKey(stateY, 'layerOrder');
+    doc.destroy();
+    writeStateKeys(stateY, { layerOrder: ['b', 'a'] }, LIFT);
+    expect(readStateKey(stateY, 'layerOrder')).toStrictEqual(['b', 'a']);
+  });
+
+  it('still shares structure for reads in an observer of a plain transaction', () => {
+    const { stateY } = pageWith({ shapeInstances: [...shapes, { id: 'b', x: 2 }] });
+    const before = readStateKey(stateY, 'shapeInstances') as unknown[];
+    let after: unknown[] = [];
+    stateY.observeDeep(() => {
+      after = readStateKey(stateY, 'shapeInstances') as unknown[];
+    });
+    writeStateKeys(stateY, { shapeInstances: [shapes[0], { id: 'b', x: 3 }] }, LIFT);
+    expect(after[0]).toBe(before[0]);
+    expect(after[1]).toStrictEqual({ id: 'b', x: 3 });
+  });
+});

@@ -110,16 +110,28 @@ function classOf(map: Y.Map<unknown>): StateKeyClass | 'unknown' | null {
 const plainOf = (value: unknown): unknown =>
   value instanceof Y.AbstractType ? (value.toJSON() as unknown) : value;
 
-/** Structured map → its plain value; element map → its plain element. */
+/**
+ * The read memo. Structured map → its plain value; element map → its plain element.
+ *
+ * Guarantee: an entry is filled and served only while the doc is quiescent for the codec: no
+ * transaction is open (`doc._transaction`), and every transaction Yjs still has to clean up
+ * (`doc._transactionCleanups`) has already passed `invalidate`. `invalidate` runs on each
+ * transaction's `beforeObserverCalls` and drops every type in `transaction.changed` and all its
+ * ancestors. Every change to a Yjs type happens inside a transaction that is in that list until
+ * its cleanup has run, so no entry is served while a write it has not seen exists: not inside a
+ * transaction, not for a transaction an observer, `afterTransaction` or `update` handler
+ * started (Yjs queues it behind the running cleanup), not for a `beforeObserverCalls` listener
+ * that runs before the codec's. A type created in a transaction is not in `changed`, but it was
+ * never cached either. A destroyed doc is never cached (its listeners are gone).
+ *
+ * Relies on: `transaction.changed` listing every pre-existing type a transaction changed, and on
+ * the `_transaction`, `_transactionCleanups` and `_item.parent` fields of yjs 13.6.
+ */
 const valueCache = new WeakMap<object, unknown>();
 const elementCache = new WeakMap<object, Element>();
 const watchedDocs = new WeakSet<Y.Doc>();
+const invalidated = new WeakSet<Y.Transaction>();
 
-/**
- * Drop every type a transaction changed and all its ancestors from the caches. Runs on
- * `beforeObserverCalls`, so observers already read fresh values (`afterTransaction` would fire
- * after them).
- */
 function invalidate(transaction: Y.Transaction): void {
   const seen = new Set<object>();
   for (const changed of transaction.changed.keys()) {
@@ -132,21 +144,21 @@ function invalidate(transaction: Y.Transaction): void {
       type = parent instanceof Y.AbstractType ? (parent as Y.AbstractType<unknown>) : null;
     }
   }
+  invalidated.add(transaction);
 }
 
-/**
- * May a read of `map` use and fill the caches? Only outside a transaction: inside one, writers
- * read their own writes back and no invalidation has run yet. A map that is not part of a doc
- * is never cached.
- */
+/** May a read of `map` use and fill the caches? See the guarantee above. */
 function cacheable(map: Y.Map<unknown>): boolean {
   const doc = map.doc;
-  if (doc === null || doc._transaction !== null) return false;
+  if (doc === null || doc.isDestroyed) return false;
   if (!watchedDocs.has(doc)) {
+    // Transactions already in flight were not seen by `invalidate`, so the check below keeps
+    // the caches off until they are cleaned up.
     watchedDocs.add(doc);
     doc.on('beforeObserverCalls', invalidate);
   }
-  return true;
+  if (doc._transaction !== null) return false;
+  return doc._transactionCleanups.every((transaction) => invalidated.has(transaction));
 }
 
 /** An order key as read: a missing or malformed one sorts first. */
