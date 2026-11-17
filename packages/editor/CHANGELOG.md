@@ -1,5 +1,15 @@
 # @ggraphic/editor
 
+## 0.1.0-alpha.9
+
+### Minor Changes
+
+- ab6dea2: A failed upload no longer leaves an undo step that brings back its revoked `blob:` preview. The new `discardPlacedUserImage` action takes the placement out of the canvas and the history; wire the uploads section's `onRemovePlaced` to it. `createActions`' history argument gains `rewriteHistory`, and the store gains `rewriteHistory` too.
+
+### Patch Changes
+
+- b2d1dd1: `ConfigCanvas` and `StandaloneCanvas` take `previewCaptureRatio` and pass it to `GenericCanvas`. Until now only `preview` got through, so a host that renders offscreen through `StandaloneCanvas` could not say what it captures at: a filtered photo was cached at the offscreen stage's display scale, which settles only after the first effects. The same slide then rendered in two ways depending on whether the photo loaded before or after that scale was set, and a capture at 2x drew the photo from a cache at about 0.4.
+
 ## 0.1.0-alpha.8
 
 ### Minor Changes
