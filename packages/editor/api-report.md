@@ -330,6 +330,7 @@ interface ConfigCanvasProps {  // from packages/editor/src/components/ConfigCanv
   onExport?: ((base64: string) => void) | undefined
   className?: string | undefined
   preview?: boolean | undefined
+  previewCaptureRatio?: number | undefined
 }
 const GenericCanvas: typeof GenericCanvasWithProvider  // from packages/editor/src/components/GenericCanvas.tsx
 interface GenericCanvasProps<TState, TActions extends OptionalCanvasActions> {  // from packages/editor/src/components/GenericCanvas.tsx (type-only export)
@@ -1311,6 +1312,7 @@ interface ConfigCanvasProps {
   onExport?: ((base64: string) => void) | undefined
   className?: string | undefined
   preview?: boolean | undefined
+  previewCaptureRatio?: number | undefined
 }
 ```
 
