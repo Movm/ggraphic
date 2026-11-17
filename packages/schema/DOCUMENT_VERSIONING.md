@@ -387,8 +387,14 @@ Two rules tie the stamp to the data:
 
 ### Lift and re-lift
 
-- **When:** on open, by a client that may write the document (not refused),
-  after the sync, never on the unsynced local cache. It runs in the setup
+- **When:** on open, by a client that may write the document (not refused,
+  and its connection writes: the host passes `collaborative.canWrite: true`;
+  `CanvasEditor` derives it from `readOnly`), after the sync, never on the
+  unsynced local cache. A client on a read-only connection must not lift: its
+  server drops the update, and its own unsent structure would then win at key
+  level locally over every writer's lift, freezing its view; with
+  `canWrite: false` it writes nothing at all. Without `canWrite` the editor
+  does not lift on open (keys are lifted when that client writes them). It runs in the setup
   transaction (`SETUP_ORIGIN`, untracked by undo) together with the legacy
   lift, the form-state fold and `migrateYDocument`, in that order, so lift and
   stamp reach peers in one update (rule 2). It runs again whenever the `meta`
@@ -426,12 +432,22 @@ Two rules tie the stamp to the data:
 - **A build with the refusal** (every published version since
   `0.1.0-alpha.0`) sees `schemaVersion` 4 and turns read-only, also live
   through the `meta` observer, and by rule 2 in the same update that brings the
-  first structured values. A build without the codec reads a structured value
-  as an opaque object: `carryInstanceState` reads a list that is no array as
-  `[]`, so its read-only page shows without those elements. It writes nothing.
-  The exception is the race in which its own stamp write wins over a newer one
-  (see "(e) Yjs"): until the newer client stamps again it may write, and what
-  it writes is plain JSON.
+  first structured values. A build without the codec (every release before
+  the readers, `@ggraphic/editor` 0.1.0-alpha.6 included) reads a structured
+  value as a raw `Y.Map`: its sync hook hands it to the canvas,
+  `carryInstanceState` reads a list that is no array as `[]`, and the canvas
+  echo (`useEmitHostStateChanges` → `updatePageStateById`, whose guard sees a
+  `Y.Map` and `[]` as unequal) writes that `[]` back unprompted. Such a client
+  therefore **empties every collection it receives structured** unless it has
+  turned read-only first. In the race in which its own stamp write wins over a
+  newer one (see "(e) Yjs") it is not read-only, and it does; the elements are
+  gone for every client, not only written as plain JSON. Whether, outside that
+  race, the refusal reaches its writer before the echo runs (React batching of
+  the `meta` observer and the canvas update) is _unverified_. Verified by
+  reading the published 0.1.0-alpha.6 build (`dist/collab/useYjsPageStateSync.js`,
+  `dist/configs/factory/carryInstanceState.js`, `dist/collab/pagesDoc.js`),
+  not by running it. A build with the readers (the codec) reads the plain
+  value and writes nothing in the same situation.
 - **A build from before the refusal** (none is published; whether host bundles
   from before the core was published still run is _unverified_) reads
   structured values as opaque objects as well, so its lists read as empty, and
