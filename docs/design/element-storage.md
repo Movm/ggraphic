@@ -1,6 +1,6 @@
 # Element-level storage in the page Y.Doc (document version 4)
 
-Status: implemented, 2026-11-17. PR 3.A (the codec in core, every reader through it: #207, #210), then PR 3.C (the writers, the lift on open, document version 4; fixes #176); 3.E (one `Y.UndoManager` per page) is open. F0 names and open questions were decided by the maintainer on 2026-11-17. Refs #176. The normative format is `packages/schema/DOCUMENT_VERSIONING.md`, section "Version 4"; this note is how to build it. Line numbers are from `origin/main` at `e6908cb`. Anything marked _unverified_ is a reading of the code, not a test.
+Status: implemented, 2026-11-17, including the review decisions at the end of this note (deterministic lift identity, plain-fallback reports, write capability). PR 3.A (the codec in core, every reader through it: #207, #210), then PR 3.C (the writers, the lift on open, document version 4; fixes #176); 3.E (one `Y.UndoManager` per page) is open. F0 names and open questions were decided by the maintainer on 2026-11-17. Refs #176. The normative format is `packages/schema/DOCUMENT_VERSIONING.md`, section "Version 4"; this note is how to build it. Line numbers are from `origin/main` at `e6908cb`. Anything marked _unverified_ is a reading of the code, not a test.
 
 ## Why
 
@@ -293,6 +293,16 @@ The F0 names in the spec were approved as written: `$kind` (`elements`, `order`,
 3. **The first element of a kind on a page keeps the key-level race.** Pages are not pre-created with empty structured collections: that would add about 15 entries per page and turn an absent key into `[]` in the JSON view, for a race of one round trip.
 4. **No three-way diff in `writeStateKeys` for now.** It would need a base at every writer, and the stale-emit window it closes is no worse than version 3.
 5. **Older builds refuse version 4 documents read-only, flat ones included.** One counter for both forms is the accepted price; a Y.Doc-only marker would not be obeyed by old clients.
+
+## Decided after the review of #211 (maintainer, 2026-11-17)
+
+1. **Concurrent lifts: deterministic lift identity.** Two clients that lift the same document state write identical Yjs structs, so Yjs keeps one copy and later edits on both sides merge, also after a whole offline session. Normative in `DOCUMENT_VERSIONING.md`, "Deterministic lift identity", and F0. As built:
+   - `@ggraphic/core/ydoc` `transactDeterministically(doc, salt, fn, origin)` runs `fn` in an outermost transaction under `deterministicClientId(doc, salt)`, a cyrb53 hash of the algorithm tag, the salt (`liftSalt`: target versions and key classes) and `Y.encodeSnapshot(Y.snapshot(doc))` (state vector and delete set), mapped into [2^32, 2^53), rehashed while the id already has structs. The own id is set back at the end of the body, before observers and `update` handlers.
+   - The lift transaction holds `migrateYDocument` and `liftDocumentState`, both written as pure functions of the state: canonical key order everywhere (`StateWriteOptions.deterministic`, `canonicalJsonValue`), no jitter, pages and keys in code-point order, kind stamps sorted.
+   - Moved out, to a transaction under the own id before it: `migrateLegacyDoc` (a `legacy-${Date.now()}` id, replica-order iteration) and `foldLegacyFormStateIntoFirstPage`. They write only into documents from before version 1 or not yet folded.
+   - Still lost: edits made into the losing structure when two clients lift **different** states (an update reached one of them and not the other before it opened, while the document was unlifted for both). Through a relay server only non-lift writes cause that (old builds, `canWrite` omitted, server writers, legacy lifts); a non-causal transport can also deliver a peer's plain edit before the lift it had received. Pinned in `collab/concurrentLiftOffline.vitest.tsx`, "remaining case".
+2. **A non-representable write: accept and report.** The key is stored plain as before; the codec calls `StateWriteOptions.onPlainFallback` once per state map and key (core never logs), and the editor forwards it to `onStateWriteWarning` listeners (`@ggraphic/editor/collab`), else `console.warn`.
+3. **Write capability.** `collaborative.canWrite` (`usePageManager`, `CanvasEditor`, `useYjsPages`): `false` writes nothing, not even the open's lift; `CanvasEditor` derives it from `readOnly`.
 
 ## Unverified
 

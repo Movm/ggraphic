@@ -384,6 +384,9 @@ Two rules tie the stamp to the data:
 | Delete an element while the other moves it in `layerOrder`         | one list wins                          | the move survives, so `layerOrder` may keep an id without an element; `buildSortedRenderList` already skips such ids |
 | Both add the first element of a kind where the key is still absent | one array wins                         | one new structured value wins at key level, so one side's first element is lost (see "Risks")                        |
 | An old writer writes plain JSON under a structured key             | —                                      | its whole value wins at key level, as in version 3; the key is lifted again later                                    |
+| Two clients lift the same document state (online or offline)       | —                                      | identical structs, kept once; both clients' later element edits merge                                                |
+| Two clients lift different states of a version 3 document          | —                                      | the lifts meet at key level; the losing side's edits made before they met are lost (see "Lift and re-lift")          |
+| A write whose value a structure cannot hold (duplicate ids, …)     | —                                      | the key is stored plain (a peer's concurrent per-element edit of it is lost), reported once per key                  |
 
 ### Lift and re-lift
 
@@ -394,11 +397,15 @@ Two rules tie the stamp to the data:
   server drops the update, and its own unsent structure would then win at key
   level locally over every writer's lift, freezing its view; with
   `canWrite: false` it writes nothing at all. Without `canWrite` the editor
-  does not lift on open (keys are lifted when that client writes them). It runs in the setup
-  transaction (`SETUP_ORIGIN`, untracked by undo) together with the legacy
-  lift, the form-state fold and `migrateYDocument`, in that order, so lift and
-  stamp reach peers in one update (rule 2). It runs again whenever the `meta`
-  observer re-settles the version. A lift is never part of an undo step.
+  does not lift on open (keys are lifted when that client writes them). The
+  open writes in two transactions, both untracked by undo (`SETUP_ORIGIN`):
+  first the legacy lift and the form-state fold, under the client's own id
+  (they mint a timestamped page id and iterate in replica order, and write only
+  into documents from before version 1 or not yet folded); then
+  `migrateYDocument` and the lift in one transaction under the **deterministic
+  lift identity** (below), so lift and stamp reach peers in one update
+  (rule 2). That second transaction runs again whenever the `meta` observer
+  re-settles the version. A lift is never part of an undo step.
 - **An empty document** (no pages, no seed watermark) is neither stamped nor
   lifted on open: there is nothing to lift, and its seed stamps it. The seed
   raises the stamp first and then builds its pages structured, in one
@@ -413,12 +420,22 @@ Two rules tie the stamp to the data:
   JSON, so `readStateKey` returns what was there before. It is deterministic
   (the chain above), idempotent (a structured key is left alone) and the
   identity on the JSON view.
-- **Two clients lifting at once** write two structured values with equal
-  content under one key, and one wins at key level (in Yjs the entry of the
-  higher client id). What a client wrote _into_ the losing value before it saw
-  the winner is lost; the window is from its open until the peer's lift
-  arrives, one round trip. The loss is whole: the losing client's elements
-  read as the winner's, never as a mix.
+- **Two clients lifting the same state** write identical Yjs structs (the
+  deterministic lift identity), which Yjs keeps once. Whatever either writes
+  into its structure afterwards, before or after the other's lift arrives,
+  online or in a whole offline session, lands in the one shared structure and
+  merges per element.
+- **Two clients lifting different states** (one has an update the other
+  lacks) get different ids. Their structured values then meet at key level,
+  as every lift did before: one wins (the higher derived id), and what a
+  client wrote into the losing value before it saw the winner is lost, whole
+  (never a mix of the two). Through a relay server that keeps causal order
+  (the host's sync server), the states differ only when something other than
+  a lift reached one replica before it opened while the document was still
+  unlifted for both: a write by a build without element storage, by a client
+  that does not lift on open (`canWrite` omitted), by a server-side writer, or
+  a legacy lift. A transport without causal order (peer to peer) can also
+  deliver a peer's plain edit before the lift that peer had received.
 - **Lift on write:** a version 4 writer that writes a key it classes as
   structured and finds plain JSON there writes the new value structured. The
   lift is then part of that write, and of its undo step if the write is
@@ -426,6 +443,65 @@ Two rules tie the stamp to the data:
 - **Previews and refused clients never lift.** They read both forms through
   the codec. A build that has the codec but is still at version 3 (the readers
   release) therefore shows a v4 document correctly, read-only.
+
+### Deterministic lift identity
+
+A Yjs struct is identified by (client id, clock), and Yjs integrates a struct
+it already holds by its id without comparing content. So two clients that
+lift the same state write the same structs only if they write the same
+content, in the same order, under the same client id, starting at the same
+clock. The lift transaction therefore:
+
+- **runs under a derived client id**, set for the transaction's body only.
+  The document's own id is set back before the transaction's observers,
+  `afterTransaction` and `update` handlers run (they run in its cleanup), so a
+  provider or the awareness protocol (which copies `doc.clientID` once, at
+  construction) never sees it. It must be an outermost transaction;
+- **writes only what is a pure function of the document state** and of the
+  writer's build: `migrateYDocument` (its pages in canonical order, every
+  page-state, element, record and config write in code-point order of its
+  keys, values in canonical key order, new order keys without the random
+  suffix, kind stamps in code-point order) and the lift (pages in code-point
+  order of their ids, keys in code-point order, each structure built
+  canonically on the deterministic chain). Nothing random, no timestamp, no
+  iteration in a replica's own map order. A derived id is fresh in the
+  document, so its clocks start at 0 on every replica.
+
+The id (`deterministicClientId` in `@ggraphic/core/ydoc`):
+
+1. `input` = the UTF-8 bytes of `ggraphic-lift-id/1` `\n` _salt_ `\n`,
+   followed by `Y.encodeSnapshot(Y.snapshot(doc))`: the state vector and the
+   delete set in Yjs's canonical encoding (clients sorted, deleted clock ranges
+   merged, so a replica's struct splits do not matter). The delete set is
+   needed: a map key's deletion adds no struct, so two replicas can share a
+   state vector and differ in content, and would then write different content
+   under one id; they would never converge (tested).
+2. _salt_ = `JSON.stringify(["lift", schemaVersion, kinds, classes])`:
+   the core version the writer brings the document to, its host kinds'
+   versions above 1 as `[stateKey, version]` pairs, and its key classes as
+   `[key, class]` pairs, both lists sorted by key. Two builds that would write
+   differently get different ids.
+3. `h` = cyrb53(`input`), a 53-bit hash; the id is `2^32 + (h mod (2^53 − 2^32))`.
+   Yjs generates client ids as 32-bit unsigned integers, so a derived id never
+   equals one. Yjs 13.6 and lib0 0.2 encode, decode, merge and diff ids up to
+   2^53 in both update formats (tested).
+4. If the id already has structs in the document (the state vector names it:
+   an earlier lift, or a collision), hash again with one more byte `1`, `2`, …
+   appended to `input`, until it has none. A re-lift (an old writer wrote plain
+   JSON after the first lift) starts from a state that names the first id, so
+   it gets another id and never continues the first one's clock range.
+
+**Every build that lifts must use exactly this algorithm** (it is listed under
+"F0 in version 4"). A build that derives ids differently still converges with
+everyone else, but its lifts no longer merge with theirs: they meet at key
+level, which loses one side's edits made before the lifts met. Changing the
+derivation, the salt or what the lift transaction writes needs a new
+`ggraphic-lift-id/<n>` and is a format change.
+
+The reference host's sync server never lifts (it never raises the stamp of an
+existing document, "Server-side writers" rule 4); the documents it creates are
+seeded structured and stamped 4 in one transaction, so an open writes nothing
+into them. A server that does lift must use this algorithm.
 
 ### Old writers in version 4
 
@@ -511,6 +587,10 @@ Once a version 4 document is stored, these are permanent:
 - The class of each key listed above. A key may later join a class (additive:
   readers follow the marker), but never leave one or change it.
 - `schemaVersion` 4 meaning "page state may hold structured values".
+- The deterministic lift identity ("Deterministic lift identity"): the
+  algorithm tag `ggraphic-lift-id/1`, the input layout, the salt format,
+  cyrb53, the mapping into [2^32, 2^53), the rehash rule, and what the lift
+  transaction writes in which order. Every build that lifts uses it.
 
 Not introduced: `meta.stateFormat`. The codec's names (`@ggraphic/core/ydoc`,
 `readStateKey`, `readState`, `writeStateKeys`) are public API under semver,
@@ -567,7 +647,26 @@ does:
   only by lenient readers and detectors, not by the stamp.
 - A migration that rewrites a whole instance list races with a concurrent edit
   of that list on a not-yet-migrated peer; Yjs keeps one of the two values.
-  The version 4 lift has the same race for the round trip after open.
+  The version 4 lift has the same race only between clients that lift
+  **different** states (see "Lift and re-lift"); two lifts of one state are
+  one set of structs.
+- **The deterministic lift identity is a format rule.** A build that lifts
+  with another derivation, or writes anything non-deterministic in the lift
+  transaction, loses the merge (different ids) or, worse, writes different
+  content under one struct id (same id): replicas that each keep their own
+  copy and never converge. The second case needs a wrong implementation, not
+  a race; the tests pin the canonical write order and the delete set in the
+  id for that reason. Two different states hashing to one id (a 53-bit
+  collision, about 2⁻⁵³ per pair of lifts that meet) would have the same
+  effect.
+- **A write whose value a structure cannot hold** (duplicate ids, an element
+  without a string id, an id with the reserved prefix) stores the key plain,
+  replacing its structure: a peer's concurrent per-element edit of that key
+  is lost, and the next representable write lifts it again. Accepted, not
+  repaired; the codec reports it once per state map and key
+  (`StateWriteOptions.onPlainFallback`; the editor forwards it to
+  `onStateWriteWarning` listeners, else `console.warn`), so a host can find
+  the writer that produces such values.
 - **Version 4 keeps key-level last-writer-wins in three places, all
   accepted:** two clients creating the same absent structured key at once (the
   first element of a kind on a page), the same property of one element, and
