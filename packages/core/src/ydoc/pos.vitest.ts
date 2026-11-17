@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { describe, expect, it } from 'vitest';
 
-import { posBetween, posJitter } from './pos.js';
+import { isValidPos, posBetween, posJitter } from './pos.js';
 
 describe('posBetween', () => {
   it('produces keys strictly between the bounds', () => {
@@ -59,5 +59,18 @@ describe('posJitter', () => {
     const base = posBetween(null, null);
     const keys = new Set(Array.from({ length: 50 }, () => posJitter(base)));
     expect(keys.size).toBeGreaterThan(45);
+  });
+});
+
+describe('isValidPos', () => {
+  it('accepts what posBetween mints and rejects what it cannot bound', () => {
+    let pos: string | null = null;
+    for (let i = 0; i < 50; i++) {
+      pos = posJitter(posBetween(pos, null));
+      expect(isValidPos(pos)).toBe(true);
+    }
+    for (const bad of ['', '0', 'A0', '-', 'a.b', 'ä', 7, null, undefined]) {
+      expect(isValidPos(bad)).toBe(false);
+    }
   });
 });

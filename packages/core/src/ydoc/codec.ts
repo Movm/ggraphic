@@ -20,7 +20,7 @@
  */
 import * as Y from 'yjs';
 
-import { posBetween, posJitter } from './pos.js';
+import { isValidPos, posBetween, posJitter } from './pos.js';
 import {
   ELEMENT_POS_KEY,
   ELEMENT_STORAGE_VERSION,
@@ -343,7 +343,7 @@ function respace(
 
 /**
  * The order keys to write so that `ids` reads back in this order. `current` holds the valid keys
- * of the ids that have one. The ids on one longest run that is already in order keep their key;
+ * (`isValidPos`) of the ids that have one; an id with a missing or malformed key counts as new. The ids on one longest run that is already in order keep their key;
  * every other id (moved or new) gets a jittered key between its new neighbours. When two
  * neighbours tie, the whole list is re-spaced first.
  */
@@ -380,8 +380,6 @@ function planPositions(
   return out;
 }
 
-const validKey = (value: unknown): value is string => typeof value === 'string' && value !== '';
-
 function diffElements(map: Y.Map<unknown>, elements: readonly Element[]): void {
   const next = new Map(elements.map((element) => [element.id, element]));
   for (const id of Array.from(map.keys())) {
@@ -402,7 +400,7 @@ function diffElements(map: Y.Map<unknown>, elements: readonly Element[]): void {
       elementMap.set(key, value);
     }
     const pos = elementMap.get(ELEMENT_POS_KEY);
-    if (validKey(pos)) current.set(element.id, pos);
+    if (isValidPos(pos)) current.set(element.id, pos);
   }
   const positions = planPositions(
     elements.map((element) => element.id),
@@ -427,7 +425,7 @@ function diffOrder(map: Y.Map<unknown>, ids: readonly string[]): void {
   for (const [id, pos] of Array.from(map.entries())) {
     if (id === STATE_KIND_KEY) continue;
     if (!next.has(id)) map.delete(id);
-    else if (validKey(pos)) current.set(id, pos);
+    else if (isValidPos(pos)) current.set(id, pos);
   }
   for (const [id, pos] of planPositions(ids, current)) map.set(id, pos);
 }

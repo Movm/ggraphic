@@ -10,6 +10,15 @@
 const POS_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 
 /**
+ * Is `key` a key `posBetween` can mint and bound: non-empty, only alphabet characters, not
+ * ending in the smallest digit. A stored key of any other form (written by a foreign writer,
+ * or corrupt) still sorts as a plain string on read, but a writer must not use it as a bound:
+ * `posBetween(null, '0')` has no answer inside the bounds.
+ */
+export const isValidPos = (key: unknown): key is string =>
+  typeof key === 'string' && /^[0-9A-Za-z]*[1-9A-Za-z]$/.test(key);
+
+/**
  * A key strictly between `a` and `b` (lexicographic). `null` means unbounded.
  * Generated keys never end in the smallest digit ('0'), which guarantees a
  * midpoint always exists between any two previously generated keys.

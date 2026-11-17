@@ -662,3 +662,29 @@ describe('a rejected write changes nothing', () => {
     });
   });
 });
+
+describe('stored order keys the codec never mints', () => {
+  it.each([
+    ['ending in the smallest digit', { a: '0', b: 'V' }, ['n', 'a', 'b']],
+    ['ending in the smallest digit, as the upper bound', { a: 'A', b: 'A0' }, ['a', 'n', 'b']],
+    ['outside the alphabet', { a: '-', b: '.' }, ['a', 'n', 'b']],
+    ['empty', { a: '', b: 'V' }, ['n', 'a', 'b']],
+  ])('%s: the id gets a fresh key and the order holds', (_name, keys, next) => {
+    const { stateY } = pageWith({ layerOrder: ['a', 'b'] });
+    const map = stateY.get('layerOrder') as Y.Map<unknown>;
+    for (const [id, key] of Object.entries(keys)) map.set(id, key);
+    expect(readStateKey(stateY, 'layerOrder')).toStrictEqual(['a', 'b']);
+    writeStateKeys(stateY, { layerOrder: next }, LIFT);
+    expect(readStateKey(stateY, 'layerOrder')).toStrictEqual(next);
+  });
+
+  it('the same for an element $pos', () => {
+    const { stateY } = pageWith({ shapeInstances: [{ id: 'a' }, { id: 'b' }] });
+    const map = stateY.get('shapeInstances') as Y.Map<Y.Map<unknown>>;
+    map.get('a')!.set(ELEMENT_POS_KEY, '0');
+    map.get('b')!.set(ELEMENT_POS_KEY, 'V');
+    const next = [{ id: 'n' }, { id: 'a' }, { id: 'b' }];
+    writeStateKeys(stateY, { shapeInstances: next }, LIFT);
+    expect(readStateKey(stateY, 'shapeInstances')).toStrictEqual(next);
+  });
+});
