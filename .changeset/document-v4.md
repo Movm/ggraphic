@@ -1,0 +1,16 @@
+---
+'@ggraphic/schema': minor
+'@ggraphic/editor': minor
+---
+
+Canvas document version 4: element storage in the Y.Doc (#176). Breaking change to the stored format of collaborative documents.
+
+The core step 3 → 4 is the identity on JSON documents: flat documents (a host's initial state, deck autosaves, Studio projects) keep their shape and only carry `schemaVersion: 4`. In a Y.Doc, the editor now stores element collections (`shapeInstances` and the other core collections, and every registered host kind's `stateKey`), the id lists `layerOrder`, `selectedIcons` and `lockedLayerIds`, and the records `iconStates`, `templateRotations` and `templateTextAligns` as Yjs structures, so two people editing different elements, properties or ids of one page no longer lose one side's edit. Every writer of page state (`updatePageStateById`, `replaceDeck`, `setPageConfigById`, a new, seeded or duplicated page, the deck undo's restore, the legacy form-state fold) goes through `@ggraphic/core/ydoc`. The JSON view (`readPages`, `serializeDeck`, the canvas, exports) is unchanged.
+
+Opening a version 3 Y.Doc with a writing, synced client lifts every classed key and raises the stamp to 4 in one untracked transaction, together with the legacy lifts; previews and refused clients never write. Plain data found under a classed key of a version 4 document (an old writer) is lifted again on the next open and on the next write of that key. An empty document is stamped 4 by its seed, which then builds its pages structured.
+
+For hosts:
+
+- A build with version 3 or older opens a version 4 document read-only, flat or Y.Doc, and live as soon as the stamp arrives (the lift and the stamp come in one update). Roll out this build to every client before documents are opened with it, or accept that older clients go read-only on documents a newer client has opened.
+- A server-side writer of canvas Y.Docs (seeds, state patches, deck changes, version restore) must follow "Server-side writers" in `DOCUMENT_VERSIONING.md` before this build opens its documents: read and write page state only through `@ggraphic/core/ydoc` (never `toJSON()` a state value, never `state.set(key, plainJson)` over a structured key, never copy a Yjs value between maps), stamp `meta.schemaVersion` in the transaction that creates a document, refuse to write a newer or malformed document, leave the stamp of an existing document alone (write with `lift: false` below 4), pass the host's collection keys, and report a refusal as an error instead of patching a flat mirror. A writer that keeps writing whole plain values per key is an old writer: its value wins at key level as in version 3, and the next open lifts it again.
+- `@ggraphic/editor/collab`'s `updatePageStateById`, `seedPagesIfEmpty`, `replaceDeck` and `setPageConfigById` now write structured state into a document stamped 4 or above, and plain JSON below. `seedPagesIfEmpty` does not stamp: to seed structured pages, set `meta.schemaVersion` (`YDOC_KEYS` from `@ggraphic/core/ydoc`) to `CANVAS_DOCUMENT_VERSION` first, in the same transaction. Unstamped, the pages are seeded plain and the editor's open lifts them.

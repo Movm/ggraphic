@@ -65,7 +65,8 @@ function open(doc: Y.Doc, isSynced = true) {
       usePageManager({
         initialConfigId: 'fixture-poster',
         initialProps: {},
-        collaborative: { ydoc: doc, isSynced: props.isSynced },
+        // `isLocalLoaded`: before the sync the page manager shows the local cache as a preview.
+        collaborative: { ydoc: doc, isSynced: props.isSynced, isLocalLoaded: true },
       }),
     { initialProps: { isSynced } }
   );

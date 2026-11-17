@@ -1,17 +1,25 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import { liftDocumentState, mayWriteStructured } from '@ggraphic/core/ydoc';
 import { type DocumentRefusal } from '@ggraphic/schema';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuid } from 'uuid';
 import * as Y from 'yjs';
 
-import { migrateYDocument, readYDocRefusal, stampYDocument } from './documentVersion.js';
+import {
+  migrateYDocument,
+  readYDocRefusal,
+  stampYDocument,
+  type YDocMigration,
+} from './documentVersion.js';
 import {
   appendPage,
   duplicatePageById,
+  editorStateKeyClasses,
   foldLegacyFormStateIntoFirstPage,
   getMetaMap,
   getPagesMap,
   insertPageAt,
+  isUnseeded,
   migrateLegacyDoc,
   movePageById,
   readPages,
@@ -243,6 +251,23 @@ function refusedApi(pages: PageView[], schemaRefusal: DocumentRefusal): YjsPages
   };
 }
 
+/**
+ * Brings a writable doc to this build's version, inside the caller's setup transaction: the
+ * version steps (`migrateYDocument`, which raises the stamp), then the version 4 lift of every
+ * classed key that still holds plain JSON. One transaction, so a peer receives the stamp and the
+ * first structured values in one update (rule 2 of "Version 4" in DOCUMENT_VERSIONING.md). The
+ * lift is triggered by the stamp or by the data: it also runs over plain data an old writer left
+ * under a version 4 stamp. An empty, unseeded doc is left alone; its seed stamps it.
+ */
+function settleDocument(doc: Y.Doc): YDocMigration {
+  if (isUnseeded(doc)) return { status: 'current' };
+  const outcome = migrateYDocument(doc);
+  if (outcome.status === 'invalid' || outcome.status === 'newer') return outcome;
+  // Rule 1: structure only under a stamp of 4 or above, which the step above has just written.
+  if (mayWriteStructured(doc)) liftDocumentState(doc, editorStateKeyClasses());
+  return outcome;
+}
+
 const shallowEqualState = (a: Record<string, unknown>, b: Record<string, unknown>): boolean => {
   const keysA = Object.keys(a);
   if (keysA.length !== Object.keys(b).length) return false;
@@ -289,29 +314,32 @@ export function useYjsPages(
     // when it is newer. Re-run when a version stamp changes remotely: a
     // stamp raced down by an older client is lifted again (the steps are
     // idempotent), a newer one turns this client read-only. Neither loops —
-    // this client writes only while the stored version is below its own.
-    // The trigger is the stamp, not the data: old-shape data written under
-    // a current stamp (an old bundle, a peer before it saw the newer stamp)
-    // is never lifted here — see "Old writers" in DOCUMENT_VERSIONING.md.
+    // this client writes only while the stored version is below its own, or
+    // a classed key still holds plain JSON. The version steps are triggered
+    // by the stamp; the version 4 lift also by the data (`settleDocument`).
     let disposed = false;
+    const reportFailed = (outcome: YDocMigration) => {
+      if (outcome.status !== 'invalid' && outcome.status !== 'newer') return;
+      console.error('[useYjsPages] document version not lifted:', outcome);
+      setFailedLift({ doc: ydoc, refusal: outcome });
+    };
     const settleVersion = () => {
       if (disposed || readYDocRefusal(ydoc)) return;
-      const outcome = ydoc.transact(() => migrateYDocument(ydoc), SETUP_ORIGIN);
-      if (outcome.status === 'invalid' || outcome.status === 'newer') {
-        console.error('[useYjsPages] document version not lifted:', outcome);
-        setFailedLift({ doc: ydoc, refusal: outcome });
-      }
+      reportFailed(ydoc.transact(() => settleDocument(ydoc), SETUP_ORIGIN));
     };
 
     if (!migratedDocsRef.current.has(ydoc)) {
       migratedDocsRef.current.add(ydoc);
       // A newer doc is not touched at all, not even by the legacy lift.
       if (!readYDocRefusal(ydoc)) {
-        ydoc.transact(() => {
+        // One transaction for everything an open writes (rule 2): the legacy
+        // lift, the form-state fold, the version steps and the version 4 lift.
+        const outcome = ydoc.transact(() => {
           migrateLegacyDoc(ydoc);
           foldLegacyFormStateIntoFirstPage(ydoc);
+          return settleDocument(ydoc);
         }, SETUP_ORIGIN);
-        settleVersion();
+        reportFailed(outcome);
       }
     }
 
@@ -403,16 +431,17 @@ export function useYjsPages(
 
     const seedIfEmpty: YjsPagesApi['seedIfEmpty'] = (defs) => {
       ydoc.transact(() => {
-        const seeded = seedPagesIfEmpty(
+        if (!isUnseeded(ydoc)) return;
+        // Stamp first: the seed builds its pages structured only under a
+        // version 4 stamp, and stamp and pages reach peers in one update.
+        stampYDocument(ydoc);
+        seedPagesIfEmpty(
           ydoc,
           defs.map((def, index) => ({ ...def, id: def.id ?? seedPageId(index) }))
         );
         // Fold NOW, in the same transaction — deferring to a later open
         // would overwrite page edits made in between (see pagesDoc).
-        if (seeded) {
-          foldLegacyFormStateIntoFirstPage(ydoc);
-          stampYDocument(ydoc);
-        }
+        foldLegacyFormStateIntoFirstPage(ydoc);
       }, SETUP_ORIGIN);
     };
 
