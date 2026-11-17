@@ -23,6 +23,7 @@ const SHAPES: Shape[] = [
 /** Two docs holding the same lifted page, then disconnected. */
 function pair(state: Record<string, unknown>, lift = true) {
   const a = new Y.Doc();
+  a.getMap('meta').set('schemaVersion', 4);
   const page = new Y.Map<unknown>();
   page.set('state', buildStateMap(state, { classes, lift }));
   a.getMap<Y.Map<unknown>>('pagesById').set('p', page);

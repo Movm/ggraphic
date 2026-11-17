@@ -79,9 +79,13 @@ const PLAIN: Record<string, unknown> = {
 
 const SAMPLE: Record<string, unknown> = { ...PLAIN, ...COLLECTIONS, ...ORDERS, ...RECORDS };
 
-/** A doc with one page whose state map is built from `state`. */
+/**
+ * A version 4 doc (stamped, so structured writes are allowed) with one page whose state map is
+ * built from `state`; `lift: false` keeps every key plain, as a document lifted only in part.
+ */
 function pageWith(state: Record<string, unknown>, lift = true) {
   const doc = new Y.Doc();
+  doc.getMap('meta').set('schemaVersion', 4);
   const page = new Y.Map<unknown>();
   page.set('state', buildStateMap(state, { classes, lift }));
   doc.getMap<Y.Map<unknown>>('pagesById').set('p1', page);
@@ -146,6 +150,7 @@ describe('round trip', () => {
 
   it('reads back what writeStateKeys wrote into an empty state, through an update', () => {
     const doc = new Y.Doc();
+    doc.getMap('meta').set('schemaVersion', 4);
     doc.getMap('pagesById').set('p1', new Y.Map());
     const page = doc.getMap<Y.Map<unknown>>('pagesById').get('p1')!;
     page.set('state', new Y.Map());
@@ -762,5 +767,35 @@ describe('re-spacing', () => {
       );
       expect(new Set(keys.map(([, key]) => key)).size).toBe(keys.length);
     }
+  });
+});
+
+describe('rule 1, enforced by writeStateKeys', () => {
+  it('writes plain in a document below version 4, whatever lift says', () => {
+    for (const version of [undefined, 3]) {
+      const doc = new Y.Doc();
+      if (version !== undefined) doc.getMap('meta').set('schemaVersion', version);
+      doc.getMap<Y.Map<unknown>>('pagesById').set('p', new Y.Map());
+      const page = doc.getMap<Y.Map<unknown>>('pagesById').get('p')!;
+      page.set('state', new Y.Map());
+      const stateY = page.get('state') as Y.Map<unknown>;
+      writeStateKeys(stateY, { shapeInstances: [{ id: 'a' }], layerOrder: ['a'] }, LIFT);
+      expect(classOf(stateY, 'shapeInstances')).toBe('plain');
+      expect(classOf(stateY, 'layerOrder')).toBe('plain');
+    }
+  });
+
+  it('writes structure when the same transaction stamps 4 first', () => {
+    const doc = new Y.Doc();
+    doc.getMap('meta').set('schemaVersion', 3);
+    doc.getMap<Y.Map<unknown>>('pagesById').set('p', new Y.Map());
+    const page = doc.getMap<Y.Map<unknown>>('pagesById').get('p')!;
+    page.set('state', new Y.Map());
+    const stateY = page.get('state') as Y.Map<unknown>;
+    doc.transact(() => {
+      doc.getMap('meta').set('schemaVersion', 4);
+      writeStateKeys(stateY, { shapeInstances: [{ id: 'a' }] }, LIFT);
+    });
+    expect(classOf(stateY, 'shapeInstances')).toBe('elements');
   });
 });

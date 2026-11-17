@@ -309,8 +309,9 @@ export interface StateWriteOptions {
   /**
    * May a key the classes name, holding plain JSON or absent, be written structured?
    * True only in a document at ≥ ELEMENT_STORAGE_VERSION, or one stamped in the same
-   * transaction (rule 1). A key that is structured already is diffed into its structure
-   * either way.
+   * transaction (rule 1). `writeStateKeys` also checks the stamp itself; `buildStateMap`
+   * builds a map outside any document and cannot. A key that is structured already is diffed
+   * into its structure either way.
    */
   lift: boolean;
 }
@@ -499,8 +500,10 @@ function rejection(stateY: Y.Map<unknown>, key: string, value: unknown): string 
  * Write each key of `partial`. A structured key is diffed into its structure (only changed
  * elements, properties, ids and positions are written; a value the structure cannot represent
  * replaces it plain); a plain key is set when its value changed (`sameStateValue`). A key the
- * classes name that is plain or absent is written structured only when `lift` is set and it
- * changed. Runs in the caller's transaction if there is one, else in its own.
+ * classes name that is plain or absent is written structured only when `lift` is set, the
+ * document allows it (`mayWriteStructured`, read inside the transaction: rule 1, so a caller
+ * that stamps version 4 in the same transaction stamps first) and the value changed. Runs in
+ * the caller's transaction if there is one, else in its own.
  *
  * Throws, before writing anything, when the map is not part of a document (use
  * `buildStateMap`), when a key of `partial` holds a structure of a class this build does not
@@ -521,7 +524,8 @@ export function writeStateKeys(
     if (reason !== null) throw new Error(`writeStateKeys: '${key}' ${reason}`);
   }
   doc.transact(() => {
-    for (const [key, value] of Object.entries(partial)) writeKey(stateY, key, value, options);
+    const effective = { classes: options.classes, lift: options.lift && mayWriteStructured(doc) };
+    for (const [key, value] of Object.entries(partial)) writeKey(stateY, key, value, effective);
   });
 }
 
