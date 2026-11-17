@@ -625,3 +625,40 @@ describe('read memo: never served while a write it has not seen exists', () => {
     expect(after[1]).toStrictEqual({ id: 'b', x: 3 });
   });
 });
+
+describe('a rejected write changes nothing', () => {
+  const cyclic: Record<string, unknown> = { id: 'b' };
+  cyclic['self'] = cyclic;
+
+  it.each([
+    ['a BigInt', [{ id: 'b', x: 10n }]],
+    ['a cycle', [cyclic]],
+    ['a Yjs value', new Y.Map()],
+  ])('%s anywhere in partial', (_name, bad) => {
+    const before = {
+      headline: 'old',
+      shapeInstances: [
+        { id: 'a', x: 1 },
+        { id: 'b', x: 1 },
+      ],
+    };
+    const { doc, stateY } = pageWith(before);
+    const updates = updatesOf(doc, () =>
+      expect(() => writeStateKeys(stateY, { headline: 'new', shapeInstances: bad }, LIFT)).toThrow(
+        /writeStateKeys: 'shapeInstances'/
+      )
+    );
+    expect(updates).toEqual([]);
+    expect(readState(stateY)).toStrictEqual(before);
+  });
+
+  it('a stored value that is not JSON is replaced instead of throwing midway', () => {
+    const { stateY } = pageWith({ shapeInstances: [{ id: 'a', x: 1 }] });
+    (stateY.get('shapeInstances') as Y.Map<Y.Map<unknown>>).get('a')!.set('x', 10n);
+    writeStateKeys(stateY, { headline: 'new', shapeInstances: [{ id: 'a', x: 2 }] }, LIFT);
+    expect(readState(stateY)).toStrictEqual({
+      headline: 'new',
+      shapeInstances: [{ id: 'a', x: 2 }],
+    });
+  });
+});

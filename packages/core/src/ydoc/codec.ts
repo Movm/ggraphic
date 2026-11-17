@@ -48,10 +48,18 @@ const canonicalJson = (value: unknown): string | undefined =>
 
 /**
  * Equal as stored JSON: object key order and `undefined` members don't count
- * — a value that crossed the wire comes back JSON-decoded.
+ * — a value that crossed the wire comes back JSON-decoded. A value that is not JSON is equal
+ * only to itself.
  */
-export const sameStateValue = (a: unknown, b: unknown): boolean =>
-  a === b || canonicalJson(a) === canonicalJson(b);
+export const sameStateValue = (a: unknown, b: unknown): boolean => {
+  if (a === b) return true;
+  try {
+    return canonicalJson(a) === canonicalJson(b);
+  } catch {
+    // Not JSON (a BigInt, a cycle): unequal, so a writer replaces it instead of throwing midway.
+    return false;
+  }
+};
 
 // ── what a structure can hold ───────────────────────────────────────────────
 
@@ -462,6 +470,22 @@ function writeKey(
 }
 
 /**
+ * Why `value` cannot be written, or `null`. Checked for every key before the transaction
+ * starts, because Yjs has no rollback: a write that threw halfway would leave half of it in the
+ * document.
+ */
+function rejection(stateY: Y.Map<unknown>, key: string, value: unknown): string | null {
+  if (isUnreadable(stateY.get(key))) return 'holds a structure of a class this build lacks';
+  if (value instanceof Y.AbstractType) return 'is a Yjs value, not plain JSON';
+  try {
+    canonicalJson(value);
+  } catch (error) {
+    return `is not JSON (${error instanceof Error ? error.message : String(error)})`;
+  }
+  return null;
+}
+
+/**
  * Write each key of `partial`. A structured key is diffed into its structure (only changed
  * elements, properties, ids and positions are written; a value the structure cannot represent
  * replaces it plain); a plain key is set when its value changed (`sameStateValue`). A key the
@@ -469,8 +493,9 @@ function writeKey(
  * changed. Runs in the caller's transaction if there is one, else in its own.
  *
  * Throws, before writing anything, when the map is not part of a document (use
- * `buildStateMap`) or when a key of `partial` holds a structure of a class this build does not
- * know: such a document is newer, and writing into it would destroy what a newer client stored.
+ * `buildStateMap`), when a key of `partial` holds a structure of a class this build does not
+ * know (such a document is newer, and writing into it would destroy what a newer client
+ * stored), or when a value is a Yjs type or not serialisable as JSON (a BigInt, a cycle).
  */
 export function writeStateKeys(
   stateY: Y.Map<unknown>,
@@ -481,10 +506,9 @@ export function writeStateKeys(
   if (doc === null) {
     throw new Error('writeStateKeys: the state map is not part of a document; use buildStateMap');
   }
-  for (const key of Object.keys(partial)) {
-    if (isUnreadable(stateY.get(key))) {
-      throw new Error(`writeStateKeys: '${key}' holds a structure of a class this build lacks`);
-    }
+  for (const [key, value] of Object.entries(partial)) {
+    const reason = rejection(stateY, key, value);
+    if (reason !== null) throw new Error(`writeStateKeys: '${key}' ${reason}`);
   }
   doc.transact(() => {
     for (const [key, value] of Object.entries(partial)) writeKey(stateY, key, value, options);
