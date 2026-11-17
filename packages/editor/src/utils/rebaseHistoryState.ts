@@ -22,8 +22,11 @@
  * the change does not reach it.
  */
 
-const jsonEqual = (a: unknown, b: unknown): boolean =>
-  a === b || JSON.stringify(a) === JSON.stringify(b);
+import { sameStateValue } from '@ggraphic/core/ydoc';
+
+// Order-insensitive: the history snapshots come from React state, the remote values from the
+// codec, and the two may build the same object with its keys in another order (#183).
+const jsonEqual = sameStateValue;
 
 type WithId = { id: string };
 type Rec = Record<string, unknown>;
