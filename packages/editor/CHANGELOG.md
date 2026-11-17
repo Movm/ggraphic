@@ -1,5 +1,14 @@
 # @ggraphic/editor
 
+## 0.1.0-alpha.11
+
+### Patch Changes
+
+- 6fc2f59: Read every page state through the document codec, so the editor can read both the plain and the structured form of a page's state (document version 4). Nothing writes the structured form yet. A change inside a structured key reaches the canvas as the whole key, and the history comparison no longer depends on the order of an object's keys.
+- 56e9208: `YDOC_KEYS`, `posBetween` and `sameStateValue` now come from `@ggraphic/core/ydoc`; the editor's `collab/ydocKeys` and `collab/pagesDoc` modules (reachable as `@ggraphic/editor/internal/collab/…`) re-export them, so every import keeps working. No behaviour change.
+- Updated dependencies [5d34304]
+  - @ggraphic/core@0.1.0-alpha.4
+
 ## 0.1.0-alpha.10
 
 ### Minor Changes
