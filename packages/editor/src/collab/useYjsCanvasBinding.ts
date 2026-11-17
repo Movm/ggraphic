@@ -10,9 +10,11 @@ import type * as Y from 'yjs';
 interface Options {
   parent: Y.Map<unknown> | null;
   isSynced: boolean;
+  /** The client may not write the doc: follow the stored config, write nothing. */
+  readOnly?: boolean;
 }
 
-export function useYjsCanvasBinding({ parent, isSynced }: Options): void {
+export function useYjsCanvasBinding({ parent, isSynced, readOnly = false }: Options): void {
   const store = useCanvasStore();
 
   useEffect(() => {
@@ -24,9 +26,9 @@ export function useYjsCanvasBinding({ parent, isSynced }: Options): void {
       seedCanvasStoreFromYMap(store, parent);
       return undefined;
     }
-    const binding = bindCanvasStoreToYMap({ store, parent });
+    const binding = bindCanvasStoreToYMap({ store, parent, readOnly });
     return () => {
       binding.destroy();
     };
-  }, [store, parent, isSynced]);
+  }, [store, parent, isSynced, readOnly]);
 }

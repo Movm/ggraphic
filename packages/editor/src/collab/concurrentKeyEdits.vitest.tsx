@@ -266,8 +266,8 @@ describe('the same concurrency from a version 3 document opened through the page
       v3Doc(page({ [SHAPES]: [shape('s1', 100), shape('s2', 100)] }), clientID)
     );
     // Each client opens its copy of the document: the lift runs here, on both, at once.
-    renderHook(() => useYjsPages(a, true));
-    renderHook(() => useYjsPages(b, true));
+    renderHook(() => useYjsPages(a, true, null, true));
+    renderHook(() => useYjsPages(b, true, null, true));
     await flush();
     expect(isStructured(a, SHAPES)).toBe(true);
     expect(isStructured(b, SHAPES)).toBe(true);

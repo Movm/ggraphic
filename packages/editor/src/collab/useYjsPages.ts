@@ -219,6 +219,11 @@ export interface YjsPagesApi {
    * nothing is seeded or lifted; show `pages` read-only.
    */
   schemaRefusal: DocumentRefusal | null;
+  /**
+   * True when nothing may be written: the doc is refused (`schemaRefusal`), or
+   * the client may not write it (`canWrite: false`). Every mutator is a no-op.
+   */
+  readOnly: boolean;
 }
 
 const noChrome: CanvasCarouselService['refreshChrome'] = () => {};
@@ -226,8 +231,12 @@ const noChrome: CanvasCarouselService['refreshChrome'] = () => {};
 const noop = () => {};
 const noStamps = (): HistoryStamps => ({ undo: null, redo: null });
 
-/** The API of a doc this build must not write: its pages, and nothing that changes them. */
-function refusedApi(pages: PageView[], schemaRefusal: DocumentRefusal): YjsPagesApi {
+/**
+ * The API of a doc this client must not write: its pages, and nothing that
+ * changes them. `schemaRefusal` says why when the build refuses the doc; it is
+ * null for a client that may not write (`canWrite: false`).
+ */
+function readOnlyApi(pages: PageView[], schemaRefusal: DocumentRefusal | null): YjsPagesApi {
   return {
     pages,
     // Seeded as far as the page manager is concerned: it must not seed over it.
@@ -248,6 +257,7 @@ function refusedApi(pages: PageView[], schemaRefusal: DocumentRefusal): YjsPages
     canRedoPageOp: false,
     pageOpStamps: noStamps,
     schemaRefusal,
+    readOnly: true,
   };
 }
 
@@ -259,12 +269,12 @@ function refusedApi(pages: PageView[], schemaRefusal: DocumentRefusal): YjsPages
  * lift is triggered by the stamp or by the data: it also runs over plain data an old writer left
  * under a version 4 stamp. An empty, unseeded doc is left alone; its seed stamps it.
  */
-function settleDocument(doc: Y.Doc): YDocMigration {
+function settleDocument(doc: Y.Doc, lift: boolean): YDocMigration {
   if (isUnseeded(doc)) return { status: 'current' };
   const outcome = migrateYDocument(doc);
   if (outcome.status === 'invalid' || outcome.status === 'newer') return outcome;
   // Rule 1: structure only under a stamp of 4 or above, which the step above has just written.
-  if (mayWriteStructured(doc)) liftDocumentState(doc, editorStateKeyClasses());
+  if (lift && mayWriteStructured(doc)) liftDocumentState(doc, editorStateKeyClasses());
   return outcome;
 }
 
@@ -281,11 +291,24 @@ const shallowEqualState = (a: Record<string, unknown>, b: Record<string, unknown
  * Mirror a Y.Doc's `pagesById` map into React state and expose mutation
  * helpers that wrap each change in a `ydoc.transact` so it propagates to
  * remote peers. Migrates legacy docs (pages Y.Array, legacy_root) once.
+ *
+ * `canWrite` is whether this client may write the doc (the host's connection
+ * scope, not the user's role in the UI):
+ * - `true`: the open runs the legacy lifts, the version steps and the
+ *   version 4 lift, and the mutators write.
+ * - `false`: nothing is written, not even on open (no lift, no stamp, no
+ *   seed); the pages stay live and every mutator is a no-op. A read-only
+ *   share must pass it: a write its server drops would leave this client's
+ *   own lift winning locally over everyone's edits.
+ * - omitted: as before element storage, the open runs the legacy lifts and
+ *   the version steps and the mutators write, but the open does not lift;
+ *   a key becomes structured when this client writes it.
  */
 export function useYjsPages(
   ydoc: Y.Doc | null,
   isSynced: boolean,
-  normalizeEcho: NormalizeEcho | null = null
+  normalizeEcho: NormalizeEcho | null = null,
+  canWrite?: boolean
 ): YjsPagesApi | null {
   const [version, setVersion] = useState(0);
   const [historyVersion, setHistoryVersion] = useState(0);
@@ -307,6 +330,8 @@ export function useYjsPages(
 
   useEffect(() => {
     if (!ydoc || !isSynced) return undefined;
+    const writable = canWrite !== false;
+    const lift = canWrite === true;
     const pagesMap = getPagesMap(ydoc);
     const meta = getMetaMap(ydoc);
 
@@ -324,11 +349,12 @@ export function useYjsPages(
       setFailedLift({ doc: ydoc, refusal: outcome });
     };
     const settleVersion = () => {
-      if (disposed || readYDocRefusal(ydoc)) return;
-      reportFailed(ydoc.transact(() => settleDocument(ydoc), SETUP_ORIGIN));
+      if (disposed || !writable || readYDocRefusal(ydoc)) return;
+      reportFailed(ydoc.transact(() => settleDocument(ydoc, lift), SETUP_ORIGIN));
     };
 
-    if (!migratedDocsRef.current.has(ydoc)) {
+    // A client that may not write runs no setup at all; it runs once it may.
+    if (writable && !migratedDocsRef.current.has(ydoc)) {
       migratedDocsRef.current.add(ydoc);
       // A newer doc is not touched at all, not even by the legacy lift.
       if (!readYDocRefusal(ydoc)) {
@@ -337,7 +363,7 @@ export function useYjsPages(
         const outcome = ydoc.transact(() => {
           migrateLegacyDoc(ydoc);
           foldLegacyFormStateIntoFirstPage(ydoc);
-          return settleDocument(ydoc);
+          return settleDocument(ydoc, lift);
         }, SETUP_ORIGIN);
         reportFailed(outcome);
       }
@@ -395,7 +421,7 @@ export function useYjsPages(
       undoManager.destroy();
       undoManagerRef.current = null;
     };
-  }, [ydoc, isSynced]);
+  }, [ydoc, isSynced, canWrite]);
 
   return useMemo<YjsPagesApi | null>(() => {
     if (!ydoc || !isSynced) return null;
@@ -404,7 +430,7 @@ export function useYjsPages(
     // effect could seed or write.
     const schemaRefusal =
       readYDocRefusal(ydoc) ?? (failedLift?.doc === ydoc ? failedLift.refusal : null);
-    if (schemaRefusal) return refusedApi(readPages(ydoc), schemaRefusal);
+    if (schemaRefusal) return readOnlyApi(readPages(ydoc), schemaRefusal);
 
     const fresh = readPages(ydoc);
     const prev = viewsRef.current;
@@ -428,6 +454,8 @@ export function useYjsPages(
     });
     const pages = unchanged ? prev : stable;
     viewsRef.current = pages;
+    // Live pages, nothing that writes: the canvases stay bound and follow remote edits.
+    if (canWrite === false) return readOnlyApi(pages, null);
 
     const seedIfEmpty: YjsPagesApi['seedIfEmpty'] = (defs) => {
       ydoc.transact(() => {
@@ -561,7 +589,8 @@ export function useYjsPages(
           : noStamps();
       },
       schemaRefusal: null,
+      readOnly: false,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- version/historyVersion invalidate the derived view
-  }, [ydoc, isSynced, version, historyVersion, normalizeEcho, refreshChrome, failedLift]);
+  }, [ydoc, isSynced, version, historyVersion, normalizeEcho, refreshChrome, failedLift, canWrite]);
 }

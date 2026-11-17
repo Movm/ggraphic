@@ -67,7 +67,8 @@ const pages = (state: Record<string, unknown> = STATE) => [
   { id: 'p2', configId: 'fixture-poster', state: { [SHAPES]: [shape('z', 5)], headline: 'Zwei' } },
 ];
 
-const openDeck = (doc: Y.Doc) => renderHook(() => useYjsPages(doc, true));
+/** A writing client's open (`canWrite: true`), which lifts. */
+const openDeck = (doc: Y.Doc) => renderHook(() => useYjsPages(doc, true, null, true));
 
 describe('undo after the lift', () => {
   it('the first canvas edit is undoable, and its undo keeps the lift', async () => {

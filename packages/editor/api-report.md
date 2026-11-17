@@ -169,7 +169,7 @@ interface GenericCanvasProps<TState, TActions extends OptionalCanvasActions> {  
   pageNumber?: number | undefined
   readOnly?: boolean | undefined
   onLiveState?: ((state: Record<string, unknown>, actions: Record<string, unknown>, selectedElement: string | null) => void) | undefined
-  pageBinding?: { pageYMap: Y.Map<unknown>; isSynced: boolean; provider?: HocuspocusProvider | null; pageId?: string | null; publishSelection?: boolean; } | undefined
+  pageBinding?: { pageYMap: Y.Map<unknown>; isSynced: boolean; provider?: HocuspocusProvider | null; pageId?: string | null; publishSelection?: boolean; canWrite?: boolean; } | undefined
 }
 interface GenericCanvasRef {  // from packages/editor/src/components/GenericCanvas.tsx (type-only export)
   toDataURL: (options?: { format?: "png" | "jpeg" | "webp"; pixelRatio?: number; quality?: number; includeBackground?: boolean; keepPlaceholders?: boolean; }) => string | undefined
@@ -234,7 +234,7 @@ Source: `src/entries/collab.ts`
 
 ```ts
 function appendPage(doc: Y.Doc, def: PageDef) => void  // from packages/editor/src/collab/pagesDoc.ts
-function bindCanvasStoreToYMap({ store, parent }: BindOptions) => CanvasBinding  // from packages/editor/src/collab/yjsBinding.ts
+function bindCanvasStoreToYMap({ store, parent, readOnly }: BindOptions) => CanvasBinding  // from packages/editor/src/collab/yjsBinding.ts
 interface CanvasBinding {  // from packages/editor/src/collab/yjsBinding.ts (type-only export)
   destroy: () => void
 }
@@ -274,8 +274,8 @@ interface SerializedPage {  // from packages/editor/src/collab/pagesDoc.ts (type
 function setPageConfigById(doc: Y.Doc, id: string, configId: string, newState: Record<string, unknown>) => void  // from packages/editor/src/collab/pagesDoc.ts
 function updatePageStateById(doc: Y.Doc, id: string, partial: Record<string, unknown>) => void  // from packages/editor/src/collab/pagesDoc.ts
 function useSelectionAwareness(provider: HocuspocusProvider | null, options?: UseSelectionAwarenessOptions) => RemoteSelection[]  // from packages/editor/src/collab/useSelectionAwareness.ts
-function useYjsCanvasBinding({ parent, isSynced }: Options) => void  // from packages/editor/src/collab/useYjsCanvasBinding.ts
-function useYjsPages(ydoc: Y.Doc | null, isSynced: boolean, normalizeEcho?: NormalizeEcho | null) => YjsPagesApi | null  // from packages/editor/src/collab/useYjsPages.ts
+function useYjsCanvasBinding({ parent, isSynced, readOnly }: Options) => void  // from packages/editor/src/collab/useYjsCanvasBinding.ts
+function useYjsPages(ydoc: Y.Doc | null, isSynced: boolean, normalizeEcho?: NormalizeEcho | null, canWrite?: boolean) => YjsPagesApi | null  // from packages/editor/src/collab/useYjsPages.ts
 interface YjsPagesApi {  // from packages/editor/src/collab/useYjsPages.ts (type-only export)
   pages: PageView[]
   isSeeded: boolean
@@ -295,6 +295,7 @@ interface YjsPagesApi {  // from packages/editor/src/collab/useYjsPages.ts (type
   canRedoPageOp: boolean
   pageOpStamps: () => HistoryStamps
   schemaRefusal: DocumentRefusal | null
+  readOnly: boolean
 }
 type YjsPageView = PageView  // from packages/editor/src/collab/useYjsPages.ts (type-only export)
 ```
@@ -1817,7 +1818,7 @@ interface CanvasEditorProps<TConfigId extends string = string> {  // from packag
   callbacks?: Record<string, (val: unknown) => void> | undefined
   maxPages?: number | undefined
   initialPages?: InitialPageDef<string>[] | undefined
-  collaborative?: { ydoc: Y.Doc; isSynced: boolean; provider?: HocuspocusProvider | null; previewBeforeSync?: boolean; isLocalLoaded?: boolean; } | undefined
+  collaborative?: { ydoc: Y.Doc; isSynced: boolean; provider?: HocuspocusProvider | null; previewBeforeSync?: boolean; isLocalLoaded?: boolean; canWrite?: boolean; } | undefined
   chromeLeft?: React.ReactNode
   chromeCenter?: React.ReactNode
   chromeRight?: React.ReactNode
@@ -1948,7 +1949,7 @@ interface PageWrapperProps {  // from packages/editor/src/components/CanvasEdito
   onToolbarStateChange?: ((state: ToolbarStateReport) => void) | undefined
   onAutoSaveShareToken?: ((token: string) => void) | undefined
   autoSave?: boolean | undefined
-  pageBinding?: { pageYMap: Y.Map<unknown>; isSynced: boolean; provider?: HocuspocusProvider | null; pageId?: string | null; publishSelection?: boolean; } | undefined
+  pageBinding?: { pageYMap: Y.Map<unknown>; isSynced: boolean; provider?: HocuspocusProvider | null; pageId?: string | null; publishSelection?: boolean; canWrite?: boolean; } | undefined
   pageRef?: React.Ref<HTMLDivElement> | undefined
   readOnly?: boolean | undefined
 }

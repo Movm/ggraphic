@@ -66,7 +66,7 @@ function open(doc: Y.Doc, isSynced = true) {
         initialConfigId: 'fixture-poster',
         initialProps: {},
         // `isLocalLoaded`: before the sync the page manager shows the local cache as a preview.
-        collaborative: { ydoc: doc, isSynced: props.isSynced, isLocalLoaded: true },
+        collaborative: { ydoc: doc, isSynced: props.isSynced, isLocalLoaded: true, canWrite: true },
       }),
     { initialProps: { isSynced } }
   );
@@ -213,7 +213,7 @@ describe('opening a version 3 document with a writing client', () => {
       usePageManager({
         initialConfigId: 'fixture-poster',
         initialProps: { [SHAPES]: [shape('s1', 100)], layerOrder: ['s1'] },
-        collaborative: { ydoc: doc, isSynced: true },
+        collaborative: { ydoc: doc, isSynced: true, canWrite: true },
       })
     );
     expect(schemaVersionOf(doc)).toBe(4);
