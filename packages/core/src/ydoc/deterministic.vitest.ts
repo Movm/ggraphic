@@ -21,6 +21,8 @@ import {
 
 const classes = stateKeyClasses();
 const SALT = liftSalt({ schemaVersion: 4, kindVersions: {} }, classes);
+const GOLDEN_LENGTH = 469;
+const GOLDEN_HASH = 7329282182823857;
 
 /** A plain (version 3) document with one page; `clientID` is the creator's. */
 function v3(state: Record<string, unknown>): Y.Doc {
@@ -84,7 +86,7 @@ describe('two replicas lifting one state', () => {
 
   it('also when the replicas integrated the same keys in different orders', () => {
     // Two writers set two keys concurrently; the replicas receive them in opposite orders, so
-    // their maps iterate the keys differently. The lift writes in code-point order anyway.
+    // their maps iterate the keys differently. The lift writes in UTF-16 code-unit order anyway.
     const doc = v3({});
     const w1 = replica(doc, 11);
     const w2 = replica(doc, 12);
@@ -271,6 +273,27 @@ describe('the derivation is pinned (F0)', () => {
     doc.getMap('meta').delete('schemaVersion');
     expect(deterministicClientId(doc, 'salt ü € 𝄞')).toBe(1322104991787550);
     expect(deterministicClientId(doc, 'lift')).toBe(1403451316673095);
+  });
+
+  it('the bytes a lift writes are fixed (established with yjs 13.6.33, lib0 0.2.119)', () => {
+    // Every class, nested values, unrepresentable keys left plain, a plain key. A change here
+    // means a different lift for the same state and id: bump LIFT_ID_ALGORITHM, never the values.
+    const doc = v3({
+      shapeInstances: [
+        { id: 's2', y: 2, x: 1, fill: { type: 'linear', stops: [0, 1] } },
+        { id: 's1', x: 0 },
+      ],
+      layerOrder: ['s1', 's2'],
+      lockedLayerIds: ['s2'],
+      iconStates: { i2: { size: 1 }, i1: { color: 'red' } },
+      templateRotations: { title: 5 },
+      additionalTexts: [{ id: 'a' }, { id: 'a' }],
+      headline: 'h',
+    });
+    const before = Y.encodeStateVector(doc);
+    lift(doc);
+    const bytes = Y.encodeStateAsUpdate(doc, before);
+    expect([bytes.length, cyrb53(bytes)]).toEqual([GOLDEN_LENGTH, GOLDEN_HASH]);
   });
 });
 

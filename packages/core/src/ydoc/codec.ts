@@ -21,6 +21,7 @@
 import * as Y from 'yjs';
 
 import { isValidPos, posBetween, posJitter } from './pos.js';
+import { runAfterWrite } from './reports.js';
 import {
   ELEMENT_POS_KEY,
   ELEMENT_STORAGE_VERSION,
@@ -288,10 +289,11 @@ export function readState(stateY: Y.Map<unknown>): Record<string, unknown> {
 
 // ── canonical writes ────────────────────────────────────────────────────────
 
-const byCodePoint = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+/** UTF-16 code-unit order (JavaScript's `<` on strings). F0 for the deterministic writes. */
+const byCodeUnit = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
 /**
- * A deep copy of `value` with every object's keys inserted in code-point order. A write that
+ * A deep copy of `value` with every object's keys inserted in UTF-16 code-unit order. A write that
  * must be a pure function of the document state (`StateWriteOptions.deterministic`, the lift)
  * stores this, because the key order of a value read from a Y.Doc depends on the order in which
  * that replica integrated its entries. Arrays keep their order and holes; other values are
@@ -301,17 +303,17 @@ export function canonicalJsonValue(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(canonicalJsonValue);
   if (value === null || typeof value !== 'object') return value;
   const out: PlainObject = {};
-  for (const key of Object.keys(value).sort(byCodePoint)) {
+  for (const key of Object.keys(value).sort(byCodeUnit)) {
     define(out, key, canonicalJsonValue((value as PlainObject)[key]));
   }
   return out;
 }
 
-/** The entries of `object`, in code-point order of their keys when `canonical`. */
+/** The entries of `object`, in UTF-16 code-unit order of their keys when `canonical`. */
 const entriesOf = (object: PlainObject, canonical: boolean): [string, unknown][] =>
   canonical
     ? Object.keys(object)
-        .sort(byCodePoint)
+        .sort(byCodeUnit)
         .map((key) => [key, canonicalJsonValue(object[key])])
     : Object.entries(object);
 
@@ -369,7 +371,10 @@ export interface PlainFallback {
 
 const reportedFallbacks = new WeakMap<object, Set<string>>();
 
-/** Calls `options.onPlainFallback` once per state map and key. */
+/**
+ * Calls `options.onPlainFallback` once per state map and key, after the write is over
+ * (`runAfterWrite`), never inside it.
+ */
 function reportPlainFallback(
   stateY: Y.Map<unknown>,
   fallback: PlainFallback,
@@ -383,7 +388,7 @@ function reportPlainFallback(
   }
   if (keys.has(fallback.key)) return;
   keys.add(fallback.key);
-  onPlainFallback(fallback);
+  runAfterWrite(stateY.doc, () => onPlainFallback(fallback));
 }
 
 /** Reports `value` under `key` when the classes name the key and the structure cannot hold it. */
@@ -417,7 +422,7 @@ export interface StateWriteOptions {
   lift: boolean;
   /**
    * Make the write a pure function of the document state and `partial`: keys, properties and
-   * record entries are written in code-point order, values in canonical key order
+   * record entries are written in UTF-16 code-unit order, values in canonical key order
    * (`canonicalJsonValue`), and new order keys get no random suffix. For a transaction two
    * clients must produce identically (`transactDeterministically`); user writes leave it off.
    */
@@ -808,7 +813,7 @@ export function writeStateKeys(
     if (reason !== null) throw new Error(`writeStateKeys: ${reason}`);
   }
   const keys = Object.keys(partial);
-  if (options.deterministic === true) keys.sort(byCodePoint);
+  if (options.deterministic === true) keys.sort(byCodeUnit);
   doc.transact(() => {
     for (const key of keys) writeKey(stateY, key, partial[key], effective);
   });
@@ -830,7 +835,7 @@ export function buildStateMap(
   const canonical = options.deterministic === true;
   const stateY = new Y.Map<unknown>();
   const keys = Object.keys(state);
-  if (canonical) keys.sort(byCodePoint);
+  if (canonical) keys.sort(byCodeUnit);
   for (const key of keys) {
     const value = state[key];
     const cls = options.classes.get(key);

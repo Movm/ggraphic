@@ -41,5 +41,6 @@ export {
   liftSalt,
   transactDeterministically,
 } from './deterministic.js';
+export { runAfterWrite } from './reports.js';
 export { YDOC_KEYS, type YDocKey } from './ydocKeys.js';
 export { posBetween, posJitter } from './pos.js';

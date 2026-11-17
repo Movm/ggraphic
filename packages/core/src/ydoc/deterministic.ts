@@ -16,6 +16,7 @@
  */
 import * as Y from 'yjs';
 
+import { holdingReports } from './reports.js';
 import { type StateKeyClasses } from './stateKeyClasses.js';
 
 /** Versions the derivation below; part of every derived id's input. F0. */
@@ -26,8 +27,10 @@ const DERIVED_ID_FLOOR = 2 ** 32;
 const DERIVED_ID_RANGE = Number.MAX_SAFE_INTEGER + 1 - DERIVED_ID_FLOOR;
 
 /**
- * cyrb53 (bryc, public domain) over bytes: a 53-bit, well-mixed, non-cryptographic hash. F0:
- * the derived id depends on every bit of it.
+ * cyrb53 (bryc, public domain) in a byte variant: it mixes each byte where the original mixes
+ * each UTF-16 code unit of a string. A 53-bit, well-mixed, non-cryptographic hash. F0, with
+ * seed 0: the derived id depends on every bit of it; the test vectors are in
+ * `deterministic.vitest.ts`.
  */
 export function cyrb53(bytes: Uint8Array, seed = 0): number {
   let h1 = 0xdeadbeef ^ seed;
@@ -77,8 +80,13 @@ function utf8(text: string): Uint8Array {
  * builds that would write differently never share an id.
  *
  * The hash is mapped into [2^32, 2^53). If the id already has structs in `doc` (an earlier
- * lift, or a collision), it is hashed again with one more byte, 1, 2, … appended, until it has
- * none: a deterministic transaction never appends to a range another state started.
+ * lift, or a collision), attempt k (1 ≤ k ≤ 255) hashes the input with one more byte of value k
+ * appended, and the first id the document does not name is used: a deterministic transaction
+ * never appends to a range another state started. If all 256 attempts are taken it throws, before
+ * anything is written (about 2^-53 per attempt; not reachable in practice).
+ *
+ * Normative in `DOCUMENT_VERSIONING.md`, "Deterministic lift identity". The bytes written under
+ * the id are specified by this implementation together with its golden tests.
  */
 export function deterministicClientId(doc: Y.Doc, salt: string): number {
   const head = utf8(`${LIFT_ID_ALGORITHM}\n${salt}\n`);
@@ -95,7 +103,8 @@ export function deterministicClientId(doc: Y.Doc, salt: string): number {
   }
 }
 
-const byCodePoint = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+/** UTF-16 code-unit order (JavaScript's `<` on strings). F0 for the deterministic writes. */
+const byCodeUnit = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
 /**
  * The salt of the open-time lift (F0): everything its writes depend on besides the document,
@@ -109,8 +118,8 @@ export function liftSalt(
 ): string {
   const kinds = Object.entries(versions.kindVersions)
     .filter(([, version]) => version > 1)
-    .sort(([a], [b]) => byCodePoint(a, b));
-  const keyClasses = Array.from(classes.entries()).sort(([a], [b]) => byCodePoint(a, b));
+    .sort(([a], [b]) => byCodeUnit(a, b));
+  const keyClasses = Array.from(classes.entries()).sort(([a], [b]) => byCodeUnit(a, b));
   return JSON.stringify(['lift', versions.schemaVersion, kinds, keyClasses]);
 }
 
@@ -127,8 +136,9 @@ export const isDerivedClientId = (id: number): boolean =>
  *
  * The document's own id is set back before the transaction's observers, `afterTransaction` and
  * `update` handlers run (they run in its cleanup, after `fn`), so nothing outside `fn`, a
- * provider or the awareness protocol included, ever sees the derived id. Throws inside another
- * transaction, whose other writes would be part of this one's update and state.
+ * provider or the awareness protocol included, ever sees the derived id. Reports `fn` produces
+ * (`onPlainFallback`) are delivered after this has returned, never inside `fn`. Throws inside
+ * another transaction, whose other writes would be part of this one's update and state.
  */
 export function transactDeterministically<T>(
   doc: Y.Doc,
@@ -140,13 +150,17 @@ export function transactDeterministically<T>(
     throw new Error('transactDeterministically: must not run inside another transaction');
   }
   const derived = deterministicClientId(doc, salt);
-  return doc.transact(() => {
-    const own = doc.clientID;
-    doc.clientID = derived;
-    try {
-      return fn();
-    } finally {
-      doc.clientID = own;
-    }
-  }, origin);
+  // Reports found inside (`onPlainFallback`) wait until this has returned: a hook must neither
+  // write under the derived id nor abort the transaction halfway.
+  return holdingReports(() =>
+    doc.transact(() => {
+      const own = doc.clientID;
+      doc.clientID = derived;
+      try {
+        return fn();
+      } finally {
+        doc.clientID = own;
+      }
+    }, origin)
+  );
 }
