@@ -72,6 +72,24 @@ describe('ShareDropdown panel', () => {
     expect(accessM.compareDocumentPosition(tileM) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
   });
 
+  it('keeps all tiles in one row on desktop and wraps them on mobile', () => {
+    const { unmount } = renderShare({
+      onSaveAsTemplate: () => {},
+      shareActions: [
+        { id: 'a', label: 'A', icon: <i /> },
+        { id: 'b', label: 'B', icon: <i /> },
+      ],
+    });
+    const grid = document.querySelector('[data-slot="share-tiles"]');
+    expect(grid?.className).toContain('grid-flow-col');
+    unmount();
+    mobile = true;
+    renderShare();
+    expect(document.querySelector('[data-slot="share-tiles"]')?.className).not.toContain(
+      'grid-flow-col'
+    );
+  });
+
   it('shows no separate alt-text copy button on the description page', () => {
     renderShare();
     fireEvent.click(screen.getByText('Beschreibung'));

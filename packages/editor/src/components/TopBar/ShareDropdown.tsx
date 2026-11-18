@@ -357,7 +357,17 @@ export function ShareDropdown({
         <h3 className="text-base font-semibold text-foreground m-0">{t.shell.share}</h3>
         {/* Mobil wird zuerst gesendet, dann erst Zugriff geregelt: Kacheln oben. */}
         {!isMobile && access}
-        <div className="grid grid-cols-[repeat(auto-fit,minmax(72px,1fr))] gap-x-3 gap-y-[14px]">
+        <div
+          data-slot="share-tiles"
+          className={cn(
+            'grid',
+            // Desktop: one row, however many host tiles there are; a fifth tile
+            // wrapped into a second row on its own. Mobile wraps four per row.
+            isMobile
+              ? 'grid-cols-[repeat(auto-fit,minmax(72px,1fr))] gap-x-3 gap-y-[14px]'
+              : 'grid-flow-col auto-cols-[minmax(0,1fr)] gap-x-1'
+          )}
+        >
           {isMobile && nativeShareTile}
           <ShareTile
             icon={<PiDownloadSimple />}
@@ -467,7 +477,7 @@ export function ShareDropdown({
       ) : (
         <PopoverTrigger asChild>{trigger}</PopoverTrigger>
       )}
-      <PopoverContent align="end" sideOffset={8} className="w-96 max-w-[calc(100vw-1rem)] p-5">
+      <PopoverContent align="end" sideOffset={8} className="w-[26rem] max-w-[calc(100vw-1rem)] p-5">
         {content}
       </PopoverContent>
     </Popover>
