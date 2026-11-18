@@ -50,12 +50,33 @@ const labels = () =>
     .filter(Boolean);
 
 describe('ShareDropdown panel', () => {
-  it('orders the tiles: native share last on desktop', () => {
+  it('orders the tiles and leaves native share to mobile', () => {
     renderShare({
       onSaveAsTemplate: () => {},
       shareActions: [{ id: 'x', label: 'Extra', icon: <i /> }],
     });
-    expect(labels()).toEqual(['Download', 'Extra', 'Vorlage', 'Beschreibung', 'Senden …']);
+    expect(labels()).toEqual(['Download', 'Extra', 'Vorlage', 'Beschreibung']);
+  });
+
+  it('puts the tiles above the access section on mobile and below it on desktop', () => {
+    const accessSection = () => <p>Zugriff</p>;
+    const { unmount } = renderShare({ accessSection });
+    const access = screen.getByText('Zugriff');
+    const tile = screen.getByText('Download');
+    expect(access.compareDocumentPosition(tile) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    unmount();
+    mobile = true;
+    renderShare({ accessSection });
+    const accessM = screen.getByText('Zugriff');
+    const tileM = screen.getByText('Download');
+    expect(accessM.compareDocumentPosition(tileM) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
+  });
+
+  it('shows no separate alt-text copy button on the description page', () => {
+    renderShare();
+    fireEvent.click(screen.getByText('Beschreibung'));
+    expect(screen.queryByText('Alt-Text kopieren')).toBeNull();
+    expect(screen.getByText('Beitragstext kopieren')).toBeTruthy();
   });
 
   it('puts native share first on mobile, inside a bottom sheet', () => {
@@ -68,7 +89,7 @@ describe('ShareDropdown panel', () => {
   it('speaks English', () => {
     registerMessages('en');
     renderShare();
-    expect(labels()).toEqual(['Download', 'Description', 'Send …']);
+    expect(labels()).toEqual(['Download', 'Description']);
   });
 
   it('shows the attention dot while the alt text is empty', () => {
