@@ -45,9 +45,11 @@ export function useCaptionAltText(altText: string): string {
 interface AltTextFieldProps {
   value: string;
   onChange: (value: string) => void;
+  /** Own copy button; off where the surrounding page copies the whole post text. */
+  showCopy?: boolean;
 }
 
-export function AltTextField({ value, onChange }: AltTextFieldProps) {
+export function AltTextField({ value, onChange, showCopy = true }: AltTextFieldProps) {
   const t = useMessages();
   const fieldId = useId();
   const hintId = useId();
@@ -91,14 +93,16 @@ export function AltTextField({ value, onChange }: AltTextFieldProps) {
         />
         {t.sidebar.altText.sendWithPost}
       </label>
-      <button
-        type="button"
-        onClick={copy}
-        disabled={!value.trim()}
-        className="self-start min-h-6 rounded-lg border border-editor-border bg-transparent px-3 py-1 text-sm font-medium text-foreground cursor-pointer hover:bg-editor-surface-hover disabled:opacity-40 disabled:cursor-not-allowed"
-      >
-        {t.sidebar.altText.copy}
-      </button>
+      {showCopy && (
+        <button
+          type="button"
+          onClick={copy}
+          disabled={!value.trim()}
+          className="self-start min-h-6 rounded-lg border border-editor-border bg-transparent px-3 py-1 text-sm font-medium text-foreground cursor-pointer hover:bg-editor-surface-hover disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          {t.sidebar.altText.copy}
+        </button>
+      )}
     </div>
   );
 }

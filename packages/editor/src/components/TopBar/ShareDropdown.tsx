@@ -321,7 +321,7 @@ export function ShareDropdown({
     content = subPage(
       t.shell.describe,
       <>
-        <AltTextField value={altText} onChange={setAltText} />
+        <AltTextField value={altText} onChange={setAltText} showCopy={false} />
         {photoCredit && (
           <div className="flex flex-col gap-2 rounded-md border border-[var(--editor-border-soft)] p-3">
             <p className="m-0 text-xs font-semibold text-foreground">{t.credit.heading}</p>
@@ -338,15 +338,25 @@ export function ShareDropdown({
   } else if (typeof view === 'object') {
     content = subPage(customPage?.title ?? view.custom, customPage?.render(nav) ?? null);
   } else {
+    const divider = <hr className="m-0 border-0 border-t border-[var(--editor-border-soft)]" />;
+    const access = accessSection ? (
+      isMobile ? (
+        <>
+          {divider}
+          <div>{accessSection(nav)}</div>
+        </>
+      ) : (
+        <>
+          <div>{accessSection(nav)}</div>
+          {divider}
+        </>
+      )
+    ) : null;
     content = (
       <div className="flex flex-col gap-[18px]">
         <h3 className="text-base font-semibold text-foreground m-0">{t.shell.share}</h3>
-        {accessSection && (
-          <>
-            <div>{accessSection(nav)}</div>
-            <hr className="m-0 border-0 border-t border-[var(--editor-border-soft)]" />
-          </>
-        )}
+        {/* Mobil wird zuerst gesendet, dann erst Zugriff geregelt: Kacheln oben. */}
+        {!isMobile && access}
         <div className="grid grid-cols-[repeat(auto-fit,minmax(72px,1fr))] gap-x-3 gap-y-[14px]">
           {isMobile && nativeShareTile}
           <ShareTile
@@ -404,8 +414,8 @@ export function ShareDropdown({
               }}
             />
           )}
-          {!isMobile && nativeShareTile}
         </div>
+        {isMobile && access}
       </div>
     );
   }
