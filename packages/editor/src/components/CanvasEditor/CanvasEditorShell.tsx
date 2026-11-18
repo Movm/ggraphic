@@ -219,6 +219,8 @@ function CanvasEditorInner({
   chromeCenter,
   chromeRight,
   onInvitePeople,
+  accessSection,
+  shareActions,
   onSaveAsTemplate,
   onCollabSnapshot,
   onAutoSaveShareToken,
@@ -1502,6 +1504,8 @@ function CanvasEditorInner({
       exportError: multiExportError,
       exportNotice: multiExportNotice,
       onInvitePeople,
+      accessSection,
+      shareActions,
       onSaveAsTemplate,
       printExport: printFormat
         ? {
@@ -1552,6 +1556,8 @@ function CanvasEditorInner({
       multiExportError,
       multiExportNotice,
       onInvitePeople,
+      accessSection,
+      shareActions,
       onSaveAsTemplate,
     ]
   );

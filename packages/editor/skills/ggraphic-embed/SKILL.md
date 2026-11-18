@@ -280,6 +280,40 @@ A template is a `FullCanvasConfig` (canvas size, sidebar tabs and sections, elem
 - `CanvasEditorShell` is as tall as the viewport (`--editor-height: 100dvh`), as a full-screen host expects. To make it fill a container of yours instead, set `--editor-height: 100%` on an element around it; the chrome is positioned inside the editor either way.
 - Konva needs `window`: in Next.js and other SSR frameworks render the shell client-only (`'use client'` plus a dynamic import with `ssr: false`).
 
+### Share panel: `accessSection` and `shareActions`
+
+The Share menu is one panel: heading, an optional access section of yours, then a grid of action tiles (Download, your actions, Vorlage, Beschreibung, and "Senden …" where the device can share natively). Sub-pages slide in inside the panel with a back arrow; on phones the same panel is a bottom sheet. Pass these to `CanvasEditorShell` (low-level path):
+
+```tsx
+<CanvasEditorShell
+  accessSection={(nav) => (
+    <MyAccessRow
+      onShowAll={() => nav.openPage({ title: 'People', render: () => <MyPeopleList /> })}
+    />
+  )}
+  shareActions={[
+    {
+      id: 'link',
+      label: 'Link',
+      icon: <LinkIcon />,
+      page: { title: 'Link', render: (nav) => <MyLink onDone={nav.close} /> },
+    },
+    {
+      id: 'publish',
+      label: 'Publish',
+      icon: <Globe />,
+      attention: !published,
+      onSelect: (nav) => {
+        publish();
+        nav.close();
+      },
+    },
+  ]}
+/>
+```
+
+`accessSection` renders nothing of the editor's own; the editor adds a divider below it. A `ShareAction` either runs `onSelect(nav)` or opens `page`. `ShareNav` has `openPage`, `back` and `close`. `onInvitePeople` still works but is deprecated: its "Personen" tile is hidden when `accessSection` is set. The types `ShareNav` and `ShareAction` come from `@ggraphic/editor/shell`.
+
 ### Per-document brand
 
 A document can carry its own brand: set `brand` on the template's `FullCanvasConfig` (or resolve it per page). React code inside the editor reads it through `useDocumentBrand()`; `activeBrand()` is the app-wide default. Do not re-register packs to switch brands while editors are open: it flips every open editor.

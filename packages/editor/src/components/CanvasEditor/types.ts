@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import type { ExportReport } from '../../export/scene/types.js';
 import type { SidebarTabId } from '../../sidebar/types.js';
+import type { ShareAction, ShareNav } from '../TopBar/ShareDropdown.js';
 import type { GenericCanvasRef, ToolbarStateReport } from '../GenericCanvas.js';
 import type { FullCanvasConfig } from '../../configs/types.js';
 import type { InitialPageDef } from '../../hooks/usePageManager.js';
@@ -58,8 +59,17 @@ export interface CanvasEditorProps<TConfigId extends string = string> {
   /**
    * When provided, the share popover shows a "Personen" entry that triggers
    * this callback. Used by collab hosts to open their invite/permissions dialog.
+   *
+   * @deprecated Use `accessSection`; the "Personen" tile is hidden when it is set.
    */
   onInvitePeople?: () => void;
+  /**
+   * Host-owned access section at the top of the share panel (above the action
+   * tiles). `nav.openPage` opens a sub-page inside the panel.
+   */
+  accessSection?: (nav: ShareNav) => React.ReactNode;
+  /** Host tiles in the share panel, between "Download" and "Vorlage". */
+  shareActions?: ShareAction[];
   /**
    * When provided, the share surfaces show a "Vorlage" entry that triggers
    * this callback. The host owns the template flow — it knows the document
