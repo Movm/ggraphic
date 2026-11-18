@@ -20,7 +20,7 @@
  */
 import * as Y from 'yjs';
 
-import { isValidPos, posBetween, posJitter } from './pos.js';
+import { isValidPos, posJitter, posRange } from './pos.js';
 import { runAfterWrite } from './reports.js';
 import {
   ELEMENT_POS_KEY,
@@ -337,20 +337,19 @@ export function buildStructured(
 ): Y.Map<unknown> {
   const map = new Y.Map<unknown>();
   map.set(STATE_KIND_KEY, cls);
-  let pos: string | null = null;
   if (cls === 'elements') {
-    for (const element of value as Element[]) {
-      pos = posBetween(pos, null);
+    const elements = value as Element[];
+    const keys = posRange(null, null, elements.length);
+    elements.forEach((element, i) => {
       const elementMap = new Y.Map<unknown>();
       setProps(elementMap, element, canonical);
-      elementMap.set(ELEMENT_POS_KEY, pos);
+      elementMap.set(ELEMENT_POS_KEY, keys[i]!);
       map.set(element.id, elementMap);
-    }
+    });
   } else if (cls === 'order') {
-    for (const id of value as string[]) {
-      pos = posBetween(pos, null);
-      map.set(id, pos);
-    }
+    const ids = value as string[];
+    const keys = posRange(null, null, ids.length);
+    ids.forEach((id, i) => map.set(id, keys[i]!));
   } else {
     for (const [key, entry] of entriesOf(value as PlainObject, canonical)) map.set(key, entry);
   }
@@ -464,14 +463,8 @@ function longestIncreasing(seq: readonly number[]): number[] {
  * depend on this.
  */
 function respace(ids: readonly string[], jitter: boolean): Map<string, string> {
-  const out = new Map<string, string>();
-  let pos: string | null = null;
-  for (const id of ids) {
-    pos = posBetween(pos, null);
-    if (jitter) pos = posJitter(pos);
-    out.set(id, pos);
-  }
-  return out;
+  const keys = posRange(null, null, ids.length);
+  return new Map(ids.map((id, i) => [id, jitter ? posJitter(keys[i]!) : keys[i]!]));
 }
 
 /**
@@ -499,18 +492,23 @@ function planPositions(
 
   const out = new Map<string, string>();
   let previous: string | null = null;
-  for (let i = 0; i < ids.length; i++) {
+  for (let i = 0; i < ids.length;) {
     const id = ids[i]!;
     if (fixed.has(id)) {
       previous = current.get(id)!;
+      i++;
       continue;
     }
+    // The run of ids up to the next kept one shares one gap; one spread set keeps it short.
+    let end = i;
+    while (end < ids.length && !fixed.has(ids[end]!)) end++;
     const next = nextFixed[i]!;
     if (previous !== null && next !== null && previous >= next) return respace(ids, jitter);
-    const between = posBetween(previous, next);
-    const pos = jitter ? posJitter(between) : between;
-    out.set(id, pos);
-    previous = pos;
+    const keys = posRange(previous, next, end - i);
+    for (let k = 0; k < keys.length; k++) {
+      out.set(ids[i + k]!, jitter ? posJitter(keys[k]!) : keys[k]!);
+    }
+    i = end;
   }
   return out;
 }

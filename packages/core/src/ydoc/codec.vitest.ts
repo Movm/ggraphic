@@ -742,6 +742,32 @@ describe('property and key names of any kind survive', () => {
   });
 });
 
+describe('order key length (#208)', () => {
+  const posLengths = (stateY: Y.Map<unknown>, key: string) => {
+    const map = stateY.get(key) as Y.Map<Y.Map<unknown>>;
+    return Array.from(map.entries())
+      .filter(([id]) => id !== STATE_KIND_KEY)
+      .map(([, element]) => (element.get(ELEMENT_POS_KEY) as string).length);
+  };
+
+  it('a structure built from 5,000 elements gets keys of three characters', () => {
+    const shapes = Array.from({ length: 5000 }, (_, i) => ({ id: `s${i}` }));
+    const { stateY } = pageWith({ shapeInstances: shapes });
+    expect(Math.max(...posLengths(stateY, 'shapeInstances'))).toBe(3);
+    expect(readStateKey(stateY, 'shapeInstances')).toStrictEqual(shapes);
+  });
+
+  it('a run of new elements written into one gap shares one spread set', () => {
+    const { stateY } = pageWith({ shapeInstances: [{ id: 'a' }, { id: 'z' }] });
+    const inner = Array.from({ length: 500 }, (_, i) => ({ id: `n${i}` }));
+    const next = [{ id: 'a' }, ...inner, { id: 'z' }];
+    writeStateKeys(stateY, { shapeInstances: next }, LIFT);
+    expect(readStateKey(stateY, 'shapeInstances')).toStrictEqual(next);
+    // Two characters of spread set plus the two-character random suffix of a user write.
+    expect(Math.max(...posLengths(stateY, 'shapeInstances'))).toBeLessThanOrEqual(5);
+  });
+});
+
 describe('re-spacing', () => {
   /** A layerOrder whose `a` and `b` tie, on two synced docs. */
   function tiedPair() {

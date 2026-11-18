@@ -641,7 +641,7 @@ const CORE_ELEMENT_COLLECTION_KEYS: readonly ["shapeInstances", "frameInstances"
 function deterministicClientId(doc: Y.Doc, salt: string) => number  // from packages/core/src/ydoc/deterministic.ts
 const ELEMENT_POS_KEY: "$pos"  // from packages/core/src/ydoc/stateKeyClasses.ts
 const ELEMENT_STORAGE_VERSION: 4  // from packages/core/src/ydoc/stateKeyClasses.ts
-const LIFT_ID_ALGORITHM: "ggraphic-lift-id/1"  // from packages/core/src/ydoc/deterministic.ts
+const LIFT_ID_ALGORITHM: "ggraphic-lift-id/2"  // from packages/core/src/ydoc/deterministic.ts
 function liftDocumentState(doc: Y.Doc, classes: StateKeyClasses, options?: LiftOptions) => number  // from packages/core/src/ydoc/lift.ts
 interface LiftOptions {  // from packages/core/src/ydoc/lift.ts (type-only export)
   onPlainFallback?: ((fallback: PlainFallback) => void) | undefined
