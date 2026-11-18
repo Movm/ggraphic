@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 /** The editor shell: `CanvasEditorShell`, its provider, the shell extension points, layout, skeleton, page preview and announcements. */
+export { type ShareAction, type ShareNav } from '../components/TopBar/ShareDropdown.js';
 export { CanvasEditorShell } from '../components/CanvasEditor/CanvasEditorShell.js';
 export {
   type CanvasEditorExportApi,
