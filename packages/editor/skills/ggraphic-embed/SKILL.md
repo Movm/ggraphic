@@ -312,7 +312,7 @@ The Share menu is one panel: heading, an optional access section of yours, then 
 />
 ```
 
-`accessSection` renders nothing of the editor's own; the editor adds a divider below it. A `ShareAction` either runs `onSelect(nav)` or opens `page`. `ShareNav` has `openPage`, `back` and `close`. `onInvitePeople` still works but is deprecated: its "Personen" tile is hidden when `accessSection` is set. The types `ShareNav` and `ShareAction` come from `@ggraphic/editor/shell`.
+`accessSection` renders nothing of the editor's own; the editor adds a divider below it. A `ShareAction` either runs `onSelect(nav)` or opens `page`. `ShareNav` has `openPage`, `back`, `close` and `captureImage()` (resolves to the PNG data URL of the current page, or `null`; use it when an action needs the rendered image). `onInvitePeople` still works but is deprecated: its "Personen" tile is hidden when `accessSection` is set. The types `ShareNav` and `ShareAction` come from `@ggraphic/editor/shell`.
 
 ### Per-document brand
 

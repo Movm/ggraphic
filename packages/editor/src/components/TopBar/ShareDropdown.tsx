@@ -50,6 +50,8 @@ export interface ShareNav {
   openPage: (page: { title: string; render: (nav: ShareNav) => ReactNode }) => void;
   back: () => void;
   close: () => void;
+  /** PNG data URL of the current page, or null when the capture fails. */
+  captureImage: () => Promise<string | null>;
 }
 
 /** A host-supplied tile in the share panel. */
@@ -246,8 +248,9 @@ export function ShareDropdown({
       },
       back: () => setView('main'),
       close: closePanel,
+      captureImage: onCaptureCanvas,
     }),
-    [closePanel]
+    [closePanel, onCaptureCanvas]
   );
 
   const copyPostText = () => {

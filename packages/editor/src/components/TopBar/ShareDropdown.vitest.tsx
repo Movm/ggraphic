@@ -146,4 +146,33 @@ describe('ShareDropdown panel', () => {
     renderShare({ onInvitePeople: () => {}, accessSection: () => <p>Zugriff</p> });
     expect(screen.queryByText('Personen')).toBeNull();
   });
+
+  it('lets a custom page capture the image through nav', async () => {
+    const onCaptureCanvas = vi.fn().mockResolvedValue('data:image/png;base64,AAA');
+    const seen: Array<string | null> = [];
+    renderShare({
+      onCaptureCanvas,
+      shareActions: [
+        {
+          id: 'a',
+          label: 'Posten',
+          icon: <i />,
+          page: {
+            title: 'Seite P',
+            render: (nav) => (
+              <button
+                type="button"
+                onClick={() => void nav.captureImage().then((u) => seen.push(u))}
+              >
+                Bild holen
+              </button>
+            ),
+          },
+        },
+      ],
+    });
+    fireEvent.click(screen.getByText('Posten'));
+    fireEvent.click(screen.getByText('Bild holen'));
+    await vi.waitFor(() => expect(seen).toEqual(['data:image/png;base64,AAA']));
+  });
 });
