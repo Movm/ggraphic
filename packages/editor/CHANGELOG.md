@@ -1,5 +1,11 @@
 # @ggraphic/editor
 
+## 0.1.0-alpha.14
+
+### Minor Changes
+
+- 0960e2e: The share popover is now one panel. `CanvasEditorShell` takes `accessSection?: (nav: ShareNav) => ReactNode` (a host-owned section under the heading, followed by a divider) and `shareActions?: ShareAction[]` (host tiles between "Download" and "Vorlage"; each runs `onSelect(nav)` or opens a `page` inside the panel). `ShareNav` (`openPage`, `back`, `close`, `captureImage`, which resolves to the PNG data URL of the current page) and `ShareAction` are exported from `@ggraphic/editor/shell`. The actions are a grid of tiles; Download, the new "Beschreibung" page (alt text, photo credit, "Copy post text") and the host pages slide in inside the panel with a back arrow instead of opening modals. The alt-text field and the photo-credit card left the main view; "Beschreibung" shows a dot while the alt text is empty. The native share tile is called "Senden …" (`shell.send`), sits first on phones and last on desktop. On phones the panel is a bottom sheet. New messages: `shell.send`, `shell.describe`, `shell.copyPostText`. `onInvitePeople` is deprecated in favour of `accessSection`; its "Personen" tile is hidden when `accessSection` is set.
+
 ## 0.1.0-alpha.13
 
 ### Patch Changes
