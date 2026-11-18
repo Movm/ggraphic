@@ -1,5 +1,13 @@
 # @ggraphic/studio
 
+## 0.1.0-alpha.16
+
+### Patch Changes
+
+- Updated dependencies [cad2851]
+  - @ggraphic/editor@0.1.0-alpha.16
+  - @ggraphic/templates-open@0.1.0-alpha.1
+
 ## 0.1.0-alpha.15
 
 ### Patch Changes
