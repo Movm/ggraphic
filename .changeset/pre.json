@@ -62,6 +62,7 @@
     "editor-public-entries",
     "editor-reads-through-codec",
     "editor-relative-imports",
+    "editor-tab-available-pages",
     "editor-ydoc-keys-from-core",
     "embed-export-api",
     "embed-lazy-template-pack",
