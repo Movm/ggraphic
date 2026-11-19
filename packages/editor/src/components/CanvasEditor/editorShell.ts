@@ -34,8 +34,15 @@ export interface EditorTabDefinition {
   tab: SidebarTab;
   /** Where the tab goes among the active page's tabs, „Ebenen" already appended. */
   insertAt: (tabs: readonly SidebarTab[]) => number;
-  /** Whether this document shows the tab. */
-  isAvailable: (ctx: { services: CanvasEditorServices; formatId: string | undefined }) => boolean;
+  /**
+   * Whether this document shows the tab. Asked again as the pages change, so
+   * a tab may follow what the deck holds (e.g. only pages the host composed).
+   */
+  isAvailable: (ctx: {
+    services: CanvasEditorServices;
+    formatId: string | undefined;
+    pages: readonly HeterogeneousPage[];
+  }) => boolean;
   /** The section takes tiles dropped onto a page, through its `ref`. */
   takesPageDrops?: boolean;
   Section: React.ComponentType<EditorTabSectionProps>;

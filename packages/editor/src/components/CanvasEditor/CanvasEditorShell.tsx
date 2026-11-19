@@ -637,11 +637,18 @@ function CanvasEditorInner({
   const shareTitle = fileDelivery.shareTitle ?? 'ggraphic';
   // The host's document tabs (the Vorlagen) change the deck, so they need the
   // synced pages doc.
-  const availableEditorTabs = useMemo(
-    () =>
-      hasReplaceDeck ? editorTabs.filter((def) => def.isAvailable({ services, formatId })) : [],
-    [editorTabs, hasReplaceDeck, services, formatId]
-  );
+  // Asked on every page change, but the list only changes with the answer:
+  // the sidebar tabs depend on it and need not rebuild per keystroke.
+  const availableTabIds = hasReplaceDeck
+    ? editorTabs
+        .filter((def) => def.isAvailable({ services, formatId, pages }))
+        .map((def) => def.tab.id)
+        .join('\n')
+    : '';
+  const availableEditorTabs = useMemo(() => {
+    const ids = new Set(availableTabIds.split('\n'));
+    return editorTabs.filter((def) => ids.has(def.tab.id));
+  }, [editorTabs, availableTabIds]);
   const takesPageDrops = availableEditorTabs.some((def) => def.takesPageDrops);
   // A tile dropped on a page goes to the open document tab: a Seite lands
   // after that page, a print Vorlage asks first on a design with content.
