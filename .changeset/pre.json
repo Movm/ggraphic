@@ -17,6 +17,7 @@
   "changesets": [
     "add-page-brand-only",
     "ai-pick-and-fill",
+    "balanced-lift-keys",
     "block-bounds-pill-badges",
     "brand-bindings-followups",
     "brand-bindings",

@@ -1,5 +1,13 @@
 # @ggraphic/react-native
 
+## 0.0.1-alpha.14
+
+### Patch Changes
+
+- Updated dependencies [68baa26]
+  - @ggraphic/core@0.1.0-alpha.7
+  - @ggraphic/editor@0.1.0-alpha.17
+
 ## 0.0.1-alpha.13
 
 ### Patch Changes
