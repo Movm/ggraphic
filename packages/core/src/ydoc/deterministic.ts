@@ -20,7 +20,7 @@ import { holdingReports } from './reports.js';
 import { type StateKeyClasses } from './stateKeyClasses.js';
 
 /** Versions the derivation below; part of every derived id's input. F0. */
-export const LIFT_ID_ALGORITHM = 'ggraphic-lift-id/1';
+export const LIFT_ID_ALGORITHM = 'ggraphic-lift-id/2';
 
 /** Derived ids live above every id Yjs generates (`random.uint32()`), so they never meet one. */
 const DERIVED_ID_FLOOR = 2 ** 32;

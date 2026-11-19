@@ -329,22 +329,32 @@ A valid key is a non-empty string of alphabet characters that does not end in
 plain strings; a writer treats a stored key of any other form (or a missing
 one) as no key and gives that id a fresh one.
 
-- The lift writes the deterministic chain (`posBetween(previous, null)`,
-  without a random suffix, as seeding does for pages), so two clients lifting
-  the same JSON write equal values. The chain grows linearly, by about one
-  character per five entries: 20 characters at the 100th, and for long lists
-  far more. Measured on b1bcfda (#208): one collection of 5,000 elements gives
-  keys up to 1,000 characters and an update of 2.6 MB; 500 inserts into one gap
-  give 108-character keys. The order stays correct in both cases. Real pages
-  hold tens of elements per collection, so the chain is kept for now. Only the
-  key format (alphabet, plain string comparison, no trailing lowest character)
-  is permanent; a balanced deterministic key set would keep the format but
-  change this lift text (every client must run the same algorithm, and a
-  document lifted earlier keeps its chained keys), so it must be decided
-  before the writers ship.
+- The lift writes a deterministic spread set, without a random suffix: the
+  _n_ ids of a list get `posRange(null, null, n)` (`ydoc/pos.ts` in `@ggraphic/core`),
+  so two clients lifting the same JSON write equal values. `posRange(a, b, n)`
+  takes the shortest width _w_ ≥ max(len _a_, len _b_, 1) at which the gap,
+  read as _w_-digit base-62 numbers (shorter keys padded with `0`), holds a
+  step _s_ = ⌊(_b_ − _a_) / (_n_ + 1)⌋ ≥ 2 (an unbounded _b_ is 62^_w_), and
+  mints _a_ + _i_·_s_ for _i_ = 1 … _n_, plus one where that ends in `0`, as
+  _w_-digit keys. One key is `posBetween(a, b)`. Keys grow with the logarithm
+  of _n_: 100 elements give two characters, 5,000 give three. Until
+  `ggraphic-lift-id/2` the lift wrote the chain `posBetween(previous, null)`,
+  which grows by one character per five entries (5,000 elements gave keys of
+  1,000 characters and a 2.6 MB update, #208); a document lifted then keeps
+  its chained keys, and they stay valid.
 - A user insert or move writes `posBetween(before, after)` plus the
   two-character random suffix pages use, so two clients inserting into the same
-  gap do not mint the same key.
+  gap do not mint the same key. A write that places several new ids into one
+  gap (between the same two kept neighbours) gives them one spread set
+  `posRange(before, after, k)`, each with the suffix, not a chain. Every spread
+  key stays between its neighbours and the bound with the suffix appended,
+  because it is as wide as its neighbours and no shorter than the bound.
+- Deleting an element removes its map, and with it its key. An undo that
+  restores it writes it back as a new element between the same neighbours,
+  with a fresh key: the order is what it was before the delete, but a reorder
+  by another client in between can place it elsewhere than before. Accepted
+  (#214); the history holds plain JSON without keys, and carrying them would
+  change its format.
 - A move writes one entry: the element's `$pos`, or the id's key.
 
 Why not a `Y.Array` of ids or of element maps: a move in a `Y.Array` is a
@@ -428,7 +438,7 @@ Two rules tie the stamp to the data:
   recognisable because it is not a Yjs type.
 - **What it writes:** per such key one structured value built from the plain
   JSON, so `readStateKey` returns what was there before. It is deterministic
-  (the chain above), idempotent (a structured key is left alone) and the
+  (the spread set above), idempotent (a structured key is left alone) and the
   identity on the JSON view.
 - **Two clients lifting the same state** write identical Yjs structs (the
   deterministic lift identity), which Yjs keeps once. Whatever either writes
@@ -477,13 +487,13 @@ clock. The lift transaction therefore:
   `<` on strings), values in canonical key order, new order keys without the
   random suffix, kind stamps in that order too) and the lift (pages and keys
   in UTF-16 code-unit order, each structure built canonically on the
-  deterministic chain). Nothing random, no timestamp, no iteration in a
+  deterministic spread set). Nothing random, no timestamp, no iteration in a
   replica's own map order. A derived id is fresh in the document, so its
   clocks start at 0 on every replica.
 
 The id (`deterministicClientId` in `@ggraphic/core/ydoc`):
 
-1. `input` = the UTF-8 bytes of `ggraphic-lift-id/1` `\n` _salt_ `\n`,
+1. `input` = the UTF-8 bytes of `ggraphic-lift-id/2` `\n` _salt_ `\n`,
    followed by `Y.encodeSnapshot(Y.snapshot(doc))`: the state vector and the
    delete set in Yjs's canonical encoding (clients sorted, deleted clock ranges
    merged, so a replica's struct splits and pending structs do not matter).
@@ -551,6 +561,7 @@ level, which loses one side's edits made before the lifts met. A build that
 derives the same id but writes other bytes is worse: replicas then hold
 different content under one struct id and never converge. So changing the
 derivation, the salt, or anything the golden bytes depend on (`posBetween`,
+`posRange`,
 `representableProblem`, `canonicalJsonValue`, `buildStructured`, the sort
 order, what `migrateYDocument` writes, a Yjs upgrade that encodes differently)
 needs a new `ggraphic-lift-id/<n>` and is a format change.
@@ -657,7 +668,7 @@ Once a version 4 document is stored, these are permanent:
   readers follow the marker), but never leave one or change it.
 - `schemaVersion` 4 meaning "page state may hold structured values".
 - The deterministic lift identity ("Deterministic lift identity"): the
-  algorithm tag `ggraphic-lift-id/1`, the input layout, the salt format,
+  algorithm tag `ggraphic-lift-id/2`, the input layout, the salt format,
   `cyrb53` with seed 0, the mapping into [2^32, 2^53), the rehash rule, and
   the bytes the lift transaction writes (the reference implementation and its
   golden tests, including each published host migration step's output). Every

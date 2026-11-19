@@ -21,7 +21,7 @@ import { cyrb53, isDerivedClientId } from './internal.js';
 const classes = stateKeyClasses();
 const SALT = liftSalt({ schemaVersion: 4, kindVersions: {} }, classes);
 const GOLDEN_LENGTH = 469;
-const GOLDEN_HASH = 7329282182823857;
+const GOLDEN_HASH = 418709633411373;
 
 /** A plain (version 3) document with one page; `clientID` is the creator's. */
 function v3(state: Record<string, unknown>): Y.Doc {
@@ -270,8 +270,8 @@ describe('the derivation is pinned (F0)', () => {
     doc.getMap('pagesById').set('p1', 'x');
     doc.getMap('meta').set('schemaVersion', 3);
     doc.getMap('meta').delete('schemaVersion');
-    expect(deterministicClientId(doc, 'salt ü € 𝄞')).toBe(1322104991787550);
-    expect(deterministicClientId(doc, 'lift')).toBe(1403451316673095);
+    expect(deterministicClientId(doc, 'salt ü € 𝄞')).toBe(1873106621648726);
+    expect(deterministicClientId(doc, 'lift')).toBe(8896870959388611);
   });
 
   it('the bytes a lift writes are fixed (established with yjs 13.6.33, lib0 0.2.119)', () => {
