@@ -4,6 +4,8 @@
  * Replaces SidebarPrimitives.css with composable string constants.
  */
 
+export { HIDDEN_SCROLLBAR, SIDEBAR_PANEL_ID } from '@ggraphic/editor-chrome';
+
 export const CARD_GRID =
   'grid grid-cols-[repeat(auto-fill,minmax(68px,1fr))] gap-2 w-full max-canvas-mobile:grid-cols-[repeat(auto-fill,minmax(44px,1fr))] max-canvas-mobile:gap-1';
 
@@ -11,10 +13,6 @@ export const CARD_GRID =
 export const MOBILE_INPUT_TEXT = 'max-canvas-mobile:text-base';
 
 export const CARD_GRID_SINGLE_COL = 'grid grid-cols-1 gap-2 w-full';
-
-/** Horizontal scroll container without a visible scrollbar */
-export const HIDDEN_SCROLLBAR =
-  '[scrollbar-width:none] [&::-webkit-scrollbar]:hidden [-webkit-overflow-scrolling:touch]';
 
 export const SELECTABLE_CARD =
   'aspect-square p-1.5 rounded-lg bg-transparent border border-transparent cursor-pointer transition-[background,border-color] duration-150 flex items-center justify-center hover:bg-hover-alt';
@@ -122,6 +120,3 @@ export const ACTION_BTN_DANGER =
 /** Text action button (inline, small text) */
 export const ACTION_BTN_TEXT =
   'ml-auto text-[length:var(--font-size-xs)] text-primary-600 bg-transparent border-none cursor-pointer hover:underline';
-
-/** Id of the open sidebar panel / mobile sheet; the tab buttons point at it via aria-controls. */
-export const SIDEBAR_PANEL_ID = 'canvas-sidebar-panel';

@@ -8,7 +8,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, readdirSync, renameSync, rmSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-const PACKAGES = ['schema', 'core', 'brand-default', 'editor', 'react-native'];
+const PACKAGES = ['schema', 'core', 'brand-default', 'editor-chrome', 'editor', 'react-native'];
 
 const root = fileURLToPath(new URL('../../../', import.meta.url));
 const out = fileURLToPath(new URL('../tarballs/', import.meta.url));

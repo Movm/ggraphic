@@ -1,0 +1,4 @@
+This package bundles no third-party components.
+
+Its npm dependencies keep their own licenses: clsx (MIT), tailwind-merge (MIT)
+and react-icons (MIT; the icon sets it ships carry their own licenses).

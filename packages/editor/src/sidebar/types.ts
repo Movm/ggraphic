@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
+import type { SidebarTabBarProps as ChromeSidebarTabBarProps } from '@ggraphic/editor-chrome';
+
 import type { AdditionalText } from '../configs/types.js';
-import type { SidebarTab, SidebarTabId } from './tabTypes.js';
+import type { SidebarTabId } from './tabTypes.js';
 
 export type {
   BackgroundColorOption,
@@ -42,18 +44,6 @@ export interface GradientSectionProps {
 
 export type AutoSaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
-export interface SidebarTabBarProps {
-  tabs: SidebarTab[];
-  activeTab: SidebarTabId | null;
-  onTabClick: (tabId: SidebarTabId) => void;
-  onExport?: () => void;
-  // autoSaveStatus removed - SidebarTabBar now reads directly from useAutoSaveStore
-  disabledTabs?: SidebarTabId[];
-  horizontal?: boolean;
-}
+export type SidebarTabBarProps = ChromeSidebarTabBarProps<SidebarTabId>;
 
-export interface SidebarPanelProps {
-  isOpen: boolean;
-  children: React.ReactNode;
-  onClose?: () => void;
-}
+export type { SidebarPanelProps } from '@ggraphic/editor-chrome';

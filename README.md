@@ -18,6 +18,7 @@ ggraphic is a brand-neutral, template-based, AI-centred open-source design edito
 | Document schema                     | `@ggraphic/schema`         | `packages/schema`         | AGPL-3.0-only | alpha       |
 | Core (state, operations, rendering) | `@ggraphic/core`           | `packages/core`           | AGPL-3.0-only | alpha       |
 | Editor UI                           | `@ggraphic/editor`         | `packages/editor`         | AGPL-3.0-only | alpha       |
+| Editor chrome (sidebar shell)       | `@ggraphic/editor-chrome`  | `packages/editor-chrome`  | AGPL-3.0-only | alpha       |
 | Real-time collaboration (Yjs)       | `@ggraphic/collab`         | `packages/collab`         | AGPL-3.0-only | alpha       |
 | UI kit (Studio components, tokens)  | `@ggraphic/ui`             | `packages/ui`             | AGPL-3.0-only | alpha       |
 | AI helpers                          | `@ggraphic/ai`             | `packages/ai`             | AGPL-3.0-only | alpha       |

@@ -1,0 +1,87 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/**
+ * @ggraphic/editor-chrome — Tailwind v4 entry
+ *
+ * For hosts that build with Tailwind v4, after `@import 'tailwindcss'`:
+ *
+ *   @import 'tailwindcss';
+ *   @import '@ggraphic/editor-chrome/tokens.css';
+ *   @import '@ggraphic/editor-chrome/styles.css';
+ *   @import '@ggraphic/editor-chrome/tailwind.css';
+ *
+ * It scans the chrome for the classes it uses and adds what stock Tailwind does not have: the
+ * `touch-target` utility, the `kbd`, `max-canvas-mobile` and `canvas-mobile` variants and the
+ * subsection fade. A host with its own definitions of these names adds only the `@source`.
+ */
+
+@source "../**/*.{js,jsx,ts,tsx}";
+
+/* Trefferfläche auf 44px (WCAG 2.2 „Target Size") bringen, ohne die Optik
+   anzufassen: ein unsichtbares Pseudo-Element deckt die fehlenden Pixel ab.
+   Nur auf Zeigergeräten. Voraussetzung: kein Vorfahre mit `overflow: hidden`,
+   und das Element benutzt `::after` nicht schon selbst. */
+@utility touch-target {
+  @media (pointer: coarse) {
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 50%;
+      min-width: 44px;
+      min-height: 44px;
+      translate: -50% -50%;
+    }
+  }
+}
+
+/* `kbd:` applies only while the last input was a key (data-focus-modality is
+   set on <html> by the editor), so focus rings show for keyboard users only. */
+@custom-variant kbd (&:where([data-focus-modality="keyboard"] *));
+
+/* Mobile layout follows the editor's box: `CanvasEditorLayout` sets data-canvas-mobile on its root
+   while the root is narrower than 900px (`useIsCanvasMobile`). Portals sit outside the root and
+   fall back to the window; the root is never wider than the window, so inside it the media query
+   adds nothing. `canvas-mobile:` is the exact complement. */
+@custom-variant max-canvas-mobile {
+  @media (max-width: 899px) {
+    @slot;
+  }
+  &:where([data-canvas-mobile], [data-canvas-mobile] *) {
+    @slot;
+  }
+}
+@custom-variant canvas-mobile {
+  @media (min-width: 900px) {
+    &:where(:not([data-canvas-mobile], [data-canvas-mobile] *)) {
+      @slot;
+    }
+  }
+}
+
+@theme {
+  --animate-subsection-fade-in: subsectionFadeIn 0.15s ease-out;
+}
+
+@keyframes subsectionFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Reduced motion: the fade stays, the movement goes. */
+@media (prefers-reduced-motion: reduce) {
+  @keyframes subsectionFadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}
