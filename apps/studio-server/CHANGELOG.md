@@ -1,5 +1,7 @@
 # @ggraphic/studio-server
 
+## 0.1.0-alpha.19
+
 ## 0.1.0-alpha.18
 
 ## 0.1.0-alpha.17
