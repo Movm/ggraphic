@@ -12,7 +12,8 @@
     "@ggraphic/templates-open": "0.0.0",
     "@ggraphic/ui": "0.0.0",
     "@ggraphic/brand-default": "0.0.0",
-    "@ggraphic/react-native": "0.0.0"
+    "@ggraphic/react-native": "0.0.0",
+    "@ggraphic/editor-chrome": "0.0.0"
   },
   "changesets": [
     "add-page-brand-only",
@@ -51,6 +52,7 @@
     "document-v4",
     "duotone",
     "editor-box-layout",
+    "editor-chrome",
     "editor-declare-peers",
     "editor-delete-order-undo",
     "editor-element-types-from-core",

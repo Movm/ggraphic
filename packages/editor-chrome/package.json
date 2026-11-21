@@ -1,6 +1,6 @@
 {
   "name": "@ggraphic/editor-chrome",
-  "version": "0.0.0",
+  "version": "0.1.0-alpha.0",
   "description": "ggraphic editor chrome: the sidebar shell (tab rail, flyout panel, mobile sheet) with its tokens, without the canvas editor",
   "license": "AGPL-3.0-only",
   "repository": {
