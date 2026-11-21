@@ -320,12 +320,12 @@ describe('mobile sheet: sliding in and out', () => {
   /** Layout box 800 high; the sheet (420 high) rests 64 px above its bottom. Transforms do not count. */
   function stubSheetGeometry() {
     const isSheet = (el: HTMLElement) => el.matches('section.sidebar-panel');
-    const isLayout = (el: HTMLElement) => el.classList.contains('canvas-editor-layout');
+    const isLayout = (el: HTMLElement) => el.hasAttribute('data-editor-chrome-root');
     const spies = [
       vi.spyOn(HTMLElement.prototype, 'offsetParent', 'get').mockImplementation(function (
         this: HTMLElement
       ) {
-        return isSheet(this) ? this.closest('.canvas-editor-layout') : null;
+        return isSheet(this) ? this.closest('[data-editor-chrome-root]') : null;
       }),
       vi.spyOn(HTMLElement.prototype, 'offsetTop', 'get').mockImplementation(function (
         this: HTMLElement
@@ -348,13 +348,13 @@ describe('mobile sheet: sliding in and out', () => {
 
   it('takes the closing sheet out of the flow at its resting place', () => {
     const restore = stubSheetGeometry();
-    const { rerender } = render(<div className="canvas-editor-layout">{panel(true)}</div>);
+    const { rerender } = render(<div data-editor-chrome-root="">{panel(true)}</div>);
     const sheet = screen.getByRole('region', { name: 'Text' });
     endTransition(sheet);
     expect(sheet.className).not.toMatch(/\babsolute\b/);
     expect(sheet.style.getPropertyValue('--sheet-rest-bottom')).toBe('64px');
 
-    rerender(<div className="canvas-editor-layout">{panel(false)}</div>);
+    rerender(<div data-editor-chrome-root="">{panel(false)}</div>);
     expect(sheet).toHaveAttribute('data-state', 'closing');
     expect(sheet.className).toMatch(/\babsolute\b/);
     expect(sheet.className).toContain('bottom-[var(--sheet-rest-bottom,0px)]');
@@ -363,11 +363,11 @@ describe('mobile sheet: sliding in and out', () => {
 
   it('knows its resting place when closed before the slide-in ends', () => {
     const restore = stubSheetGeometry();
-    const { rerender } = render(<div className="canvas-editor-layout">{panel(true)}</div>);
+    const { rerender } = render(<div data-editor-chrome-root="">{panel(true)}</div>);
     const sheet = screen.getByRole('region', { name: 'Text' });
     expect(sheet).toHaveAttribute('data-state', 'entering');
 
-    rerender(<div className="canvas-editor-layout">{panel(false)}</div>);
+    rerender(<div data-editor-chrome-root="">{panel(false)}</div>);
     expect(sheet).toHaveAttribute('data-state', 'closing');
     expect(sheet.style.getPropertyValue('--sheet-rest-bottom')).toBe('64px');
     restore();

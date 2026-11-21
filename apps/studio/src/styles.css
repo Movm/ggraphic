@@ -11,6 +11,7 @@
 @import 'tailwindcss';
 
 @source '../../../packages/editor/src/**/*.{ts,tsx}';
+@source '../../../packages/editor-chrome/src/**/*.{ts,tsx}';
 @source './**/*.{ts,tsx}';
 
 /* The editor's focus rings show only after keyboard input (src/ui/focusModality.ts). */

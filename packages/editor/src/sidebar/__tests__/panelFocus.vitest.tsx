@@ -44,7 +44,7 @@ function Editor({
 }) {
   const title = TABS.find((t) => t.id === activeTab)?.label;
   return (
-    <div className="canvas-editor-layout">
+    <div className="canvas-editor-layout" data-editor-chrome-root="">
       <SidebarTabBar tabs={TABS} activeTab={activeTab} onTabClick={onTabClick} />
       <SidebarPanel isOpen={activeTab !== null} title={title} onClose={onClose}>
         {activeTab !== null && content}

@@ -14,15 +14,9 @@ const PAGE_TARGET = '[data-page-focus-target]';
 const EDITOR_ROOT = '.canvas-editor-layout';
 const LAYER_OPTION = '[role="option"][data-layer-id]';
 
-/** Kam die letzte Fokusbewegung von der Tastatur? (`data-focus-modality` am `<html>`, siehe `kbd:`) */
-export function isKeyboardModality(): boolean {
-  return document.documentElement.dataset.focusModality === 'keyboard';
-}
+import { isFocusLost } from '@ggraphic/editor-chrome';
 
-export function isFocusLost(): boolean {
-  const active = document.activeElement;
-  return active === null || active === document.body;
-}
+export { isFocusLost, isKeyboardModality } from '@ggraphic/editor-chrome';
 
 /**
  * Der Knopf „Seite N bearbeiten" der Seite, in der `anchor` liegt (etwa der

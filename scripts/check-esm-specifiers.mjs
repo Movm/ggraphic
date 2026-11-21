@@ -28,7 +28,16 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const PACKAGES = ['schema', 'core', 'editor', 'collab', 'ui', 'ai', 'templates-open'];
+export const PACKAGES = [
+  'schema',
+  'core',
+  'editor',
+  'editor-chrome',
+  'collab',
+  'ui',
+  'ai',
+  'templates-open',
+];
 
 const SPEC =
   /(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s+|\brequire\s*\(\s*)(['"])(\.{1,2}(?:\/[^'"]*)?)\1/g;

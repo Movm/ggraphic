@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
@@ -9,6 +10,9 @@ import { describe, expect, it } from 'vitest';
 // the only place a standalone host gets the tokens from, so every custom
 // property the core reads needs a neutral default there, `--editor-*` or not.
 const SRC = path.resolve(import.meta.dirname, '..');
+const CHROME_STYLES = path.dirname(
+  createRequire(import.meta.url).resolve('@ggraphic/editor-chrome/tokens.css')
+);
 const TOKENS = path.join(SRC, 'styles/tokens.css');
 const RULES = path.join(SRC, 'styles/editor.css');
 
@@ -40,8 +44,8 @@ const SET_BY_THE_CORE: Readonly<Record<string, string>> = {
   '--canvas-sheet-scale': 'written by useMobileSheetFit',
   '--canvas-sheet-shift': 'written by useMobileSheetFit',
   '--canvas-total-scale': 'derived from the two above in editor.css',
-  '--canvas-panel-width': 'written on <html> by SidebarPanel; every read carries a 0px fallback',
-  '--sheet-rest-bottom': 'written on the mobile sheet by SidebarPanel',
+  '--canvas-panel-width':
+    "written on <html> by the chrome's SidebarPanel; every read carries a 0px fallback",
   '--canvas-fade-start': 'registered with @property and set by the scroll-fade rules in editor.css',
   '--canvas-fade-end': 'registered with @property and set by the scroll-fade rules in editor.css',
   '--canvas-rte-list-indent': 'inline style of the rich-text overlay (CanvasTextOverlay)',
@@ -156,12 +160,17 @@ describe('editor height', () => {
 // theme mapping, two utilities and a variant that no stock Tailwind has.
 describe('core tailwind entry', () => {
   const tw = () => stripComments(readFileSync(path.join(SRC, 'styles/tailwind.css'), 'utf8'));
+  const chromeTw = () =>
+    stripComments(readFileSync(path.join(CHROME_STYLES, 'tailwind.css'), 'utf8'));
 
   it('defines the utilities and the variant the core classes use', () => {
     const css = tw();
-    expect(css).toMatch(/@utility touch-target\b/);
+    // touch-target, kbd and the canvas-mobile variants come with the chrome's entry.
+    expect(css).toMatch(/@import '@ggraphic\/editor-chrome\/tailwind\.css'/);
+    expect(chromeTw()).toMatch(/@utility touch-target\b/);
+    expect(chromeTw()).toMatch(/@custom-variant kbd\b/);
+    expect(chromeTw()).toMatch(/@custom-variant max-canvas-mobile\b/);
     expect(css).toMatch(/@utility element-enter\b/);
-    expect(css).toMatch(/@custom-variant kbd\b/);
   });
 
   it('maps every --color-editor-* utility the core uses', () => {
@@ -177,5 +186,34 @@ describe('core tailwind entry', () => {
       }
     }
     expect([...missing].sort()).toEqual([]);
+  });
+});
+
+// The chrome ships the subset of tokens it reads, for hosts without the editor. Same names, same
+// values, in the same three blocks: a drift would theme the sidebar differently in such a host.
+describe('chrome token defaults', () => {
+  const byBlock = (css: string) => {
+    const out = new Map<string, Map<string, string>>();
+    for (const b of blocks(css)) {
+      const decls = new Map(
+        [...b.body.matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()])
+      );
+      if (decls.size) out.set(b.selector, decls);
+    }
+    return out;
+  };
+
+  it('matches the editor tokens.css for every chrome token', () => {
+    const editor = byBlock(readFileSync(TOKENS, 'utf8'));
+    const chrome = byBlock(readFileSync(path.join(CHROME_STYLES, 'tokens.css'), 'utf8'));
+    expect(chrome.size).toBe(3);
+    const drift: string[] = [];
+    for (const [selector, decls] of chrome) {
+      for (const [name, value] of decls) {
+        const own = editor.get(selector)?.get(name);
+        if (own !== value) drift.push(`${selector} ${name}: chrome ${value}, editor ${own}`);
+      }
+    }
+    expect(drift).toEqual([]);
   });
 });

@@ -1,0 +1,58 @@
+/* SPDX-License-Identifier: AGPL-3.0-only */
+/**
+ * @ggraphic/editor-chrome — neutral token defaults
+ *
+ * The custom properties the chrome reads, with the same values as `@ggraphic/editor`'s
+ * `tokens.css` (a test in the editor keeps both equal). Defaults sit in `:where()`
+ * (specificity 0): a host value on `:root` or `[data-theme="dark"]` wins. A host that
+ * declares these tokens itself (or imports the editor's tokens) leaves this file out.
+ */
+
+:where(:root) {
+  --editor-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --editor-ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --editor-topbar-height: 56px;
+  --editor-surface: #ffffff;
+  --editor-surface-hover: #eeeeec;
+  --editor-border: #e7e7e5;
+  --editor-border-soft: #e2e2df;
+  --editor-border-strong: #d6d6d3;
+  --editor-tile: #f3f3f2;
+  --editor-text: #262626;
+  --editor-text-secondary: #4a4a48;
+  --editor-text-muted: #6a6a67;
+  --editor-accent: #2563eb;
+  --editor-active-bg: #dbeafe;
+  --editor-active-fg: #1d4ed8;
+  --image-studio-tab-bar-width: 76px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :where(:root:not([data-theme='light'])) {
+    --editor-surface: #1e1e1e;
+    --editor-surface-hover: rgba(255, 255, 255, 0.06);
+    --editor-border: rgba(255, 255, 255, 0.08);
+    --editor-border-soft: rgba(255, 255, 255, 0.1);
+    --editor-border-strong: #656565;
+    --editor-tile: #464646;
+    --editor-text: #f0f0ee;
+    --editor-text-secondary: #bdbdbd;
+    --editor-text-muted: #b5b5b5;
+    --editor-active-bg: #1e3a8a;
+    --editor-active-fg: #93c5fd;
+  }
+}
+
+:where([data-theme='dark']) {
+  --editor-surface: #1e1e1e;
+  --editor-surface-hover: rgba(255, 255, 255, 0.06);
+  --editor-border: rgba(255, 255, 255, 0.08);
+  --editor-border-soft: rgba(255, 255, 255, 0.1);
+  --editor-border-strong: #656565;
+  --editor-tile: #464646;
+  --editor-text: #f0f0ee;
+  --editor-text-secondary: #bdbdbd;
+  --editor-text-muted: #b5b5b5;
+  --editor-active-bg: #1e3a8a;
+  --editor-active-fg: #93c5fd;
+}

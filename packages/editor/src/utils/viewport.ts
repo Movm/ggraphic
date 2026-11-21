@@ -4,7 +4,9 @@
  * (`useEditorBox`); it defaults to the window.
  */
 
-export const MOBILE_BREAKPOINT = 900;
+import { MOBILE_BREAKPOINT } from '@ggraphic/editor-chrome';
+
+export { MOBILE_BREAKPOINT };
 const MOBILE_PADDING = 32;
 const DESKTOP_SIDEBAR_WIDTH = 64;
 const DESKTOP_PADDING = 48;

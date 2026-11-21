@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-only
-import type { IconType } from 'react-icons';
+import type { SidebarTab as ChromeSidebarTab } from '@ggraphic/editor-chrome';
 
 export { type BackgroundColorOption } from '@ggraphic/core';
 
@@ -44,9 +44,4 @@ export type CoreSidebarTabId =
  */
 export type SidebarTabId = CoreSidebarTabId | (string & {});
 
-export interface SidebarTab {
-  id: SidebarTabId;
-  icon: IconType;
-  label: string;
-  ariaLabel: string;
-}
+export type SidebarTab = ChromeSidebarTab<SidebarTabId>;

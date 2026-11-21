@@ -91,6 +91,7 @@ export function CanvasEditorLayout({
   return (
     <div
       ref={measureBox}
+      data-editor-chrome-root=""
       data-canvas-mobile={isMobile ? '' : undefined}
       onClickCapture={handleClickCapture}
       className="canvas-editor-layout relative flex flex-col h-[var(--editor-height,100dvh)] min-h-[500px] bg-[var(--editor-bg)]"
