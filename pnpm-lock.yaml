@@ -451,7 +451,7 @@ importers:
         specifier: workspace:*
         version: link:../core
       '@ggraphic/editor-chrome':
-        specifier: workspace:*
+        specifier: workspace:^
         version: link:../editor-chrome
       '@ggraphic/schema':
         specifier: workspace:*

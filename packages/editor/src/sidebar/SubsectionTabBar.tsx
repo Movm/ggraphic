@@ -11,5 +11,5 @@ export { type Subsection, type SubsectionTabBarProps } from '@ggraphic/editor-ch
 /** The chrome's subsection tabs with the editor's texts. */
 export function SubsectionTabBar(props: SubsectionTabBarProps) {
   const t = useMessages();
-  return <ChromeSubsectionTabBar viewLabel={t.ui.view} {...props} />;
+  return <ChromeSubsectionTabBar {...props} viewLabel={props.viewLabel ?? t.ui.view} />;
 }

@@ -94,7 +94,7 @@
   },
   "dependencies": {
     "@ggraphic/core": "workspace:*",
-    "@ggraphic/editor-chrome": "workspace:*",
+    "@ggraphic/editor-chrome": "workspace:^",
     "@ggraphic/schema": "workspace:*",
     "@hocuspocus/provider": "^4.8.0",
     "@iconify-json/bi": "^1.2.7",

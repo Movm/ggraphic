@@ -2028,7 +2028,7 @@ function SidebarHint({ children, className, style }: SidebarHintProps) => JSX.El
 function SidebarPanel(props: SidebarPanelProps) => JSX.Element  // from packages/editor/src/sidebar/SidebarPanel.tsx
 function SidebarSlider({ value, onValueChange, min, max, step, label, hideLabel, unit, showValue, }: SidebarSliderProps) => React.JSX.Element  // from packages/editor/src/sidebar/components/SidebarSlider.tsx
 type SidebarTab = ChromeSidebarTab<SidebarTabId>  // from packages/editor/src/sidebar/tabTypes.ts (type-only export)
-function SidebarTabBar(props: SidebarTabBarProps) => JSX.Element  // from packages/editor/src/sidebar/SidebarTabBar.tsx
+const SidebarTabBar: MemoExoticComponent<(props: SidebarTabBarProps) => JSX.Element>  // from packages/editor/src/sidebar/SidebarTabBar.tsx
 type SidebarTabId = CoreSidebarTabId | (string & {})  // from packages/editor/src/sidebar/tabTypes.ts (type-only export)
 interface Subsection {  // from packages/editor-chrome/src/SubsectionTabBar.tsx (type-only export)
   id: string

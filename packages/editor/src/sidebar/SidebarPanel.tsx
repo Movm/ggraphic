@@ -10,9 +10,9 @@ export function SidebarPanel(props: SidebarPanelProps) {
   const t = useMessages();
   return (
     <ChromeSidebarPanel
-      closeLabel={t.ui.closeSection}
-      collapseLabel={t.ui.collapsePanel}
       {...props}
+      closeLabel={props.closeLabel ?? t.ui.closeSection}
+      collapseLabel={props.collapseLabel ?? t.ui.collapsePanel}
     />
   );
 }

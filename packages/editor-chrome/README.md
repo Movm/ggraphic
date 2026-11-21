@@ -20,6 +20,8 @@ Inside the monorepo: `"@ggraphic/editor-chrome": "workspace:*"`. Peers: `react`,
 @import '@ggraphic/editor-chrome/tailwind.css'; /* scan + touch-target, kbd, canvas-mobile variants */
 ```
 
+`tokens.css` follows the system colour scheme like the editor's tokens: under `prefers-color-scheme: dark` the chrome turns dark unless `<html>` carries `data-theme="light"`. A light-only host sets `data-theme="light"`, or leaves `tokens.css` out and declares the `--editor-*` tokens itself.
+
 A host with its own Tailwind theme that already defines `kbd`, `touch-target`, `max-canvas-mobile`/`canvas-mobile` and `animate-subsection-fade-in` adds only an `@source` for this package's `dist` instead of `tailwind.css`.
 
 ```tsx
@@ -43,4 +45,5 @@ Layout contract:
 - The desktop panel is absolutely positioned at `top: var(--editor-topbar-height)` and `left: var(--image-studio-tab-bar-width, 76px)` of that root, 348px wide. While it is open it writes `--canvas-panel-width: 348px` on `<html>`, so the content can make room.
 - Mobile means: the box of an `EditorBoxProvider` narrower than 900px, otherwise the window (`(max-width: 899px)`). `useIsCanvasMobile` answers it.
 - Texts default to German; pass `ariaLabel` (tab bar), `closeLabel` and `collapseLabel` (panel), `viewLabel` (`SubsectionTabBar`) to change them.
+- One copy: `@ggraphic/editor` depends on this package with a caret range. A host that also depends on it directly keeps both on compatible versions, or the editor box context (`EditorBoxProvider`) splits across two copies.
 - Keyboard focus rings (`kbd:`) need `data-focus-modality="keyboard"` on `<html>` while the last input was a key; the host sets it.
