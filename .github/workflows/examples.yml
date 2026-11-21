@@ -63,7 +63,8 @@ jobs:
       - run: npm run test:smoke
 
   # The same example with the other package managers: install from the tarballs, tsc, vite build.
-  # Each one gets the npm `overrides` pins (core and schema from the tarballs) in its own form.
+  # Each one gets the npm `overrides` pins (core, schema and editor-chrome from the tarballs) in its
+  # own form.
   vite-react-package-managers:
     name: vite-react (${{ matrix.manager }})
     needs: pack
@@ -99,6 +100,7 @@ jobs:
           hoist: false
           overrides:
             '@ggraphic/core': file:tarballs/ggraphic-core.tgz
+            '@ggraphic/editor-chrome': file:tarballs/ggraphic-editor-chrome.tgz
             '@ggraphic/schema': file:tarballs/ggraphic-schema.tgz
           EOF
           pnpm install
@@ -111,6 +113,7 @@ jobs:
           corepack enable
           npm pkg set packageManager=yarn@4.18.1 \
             'resolutions[@ggraphic/core]=file:./tarballs/ggraphic-core.tgz' \
+            'resolutions[@ggraphic/editor-chrome]=file:./tarballs/ggraphic-editor-chrome.tgz' \
             'resolutions[@ggraphic/schema]=file:./tarballs/ggraphic-schema.tgz'
           printf 'nodeLinker: node-modules\n' > .yarnrc.yml
           touch yarn.lock
@@ -125,7 +128,7 @@ jobs:
         run: |
           copies=$(find node_modules -type f -name package.json | grep -E '/@ggraphic/[^/]+/package\.json$')
           echo "$copies"
-          test "$(echo "$copies" | wc -l)" -eq 4
+          test "$(echo "$copies" | wc -l)" -eq 5
       - name: tsc and vite build
         run: ${{ matrix.manager }} run build
 
