@@ -58,6 +58,27 @@ describe('parseInlineMarks', () => {
     expect(parseInlineMarks('2 * 3 * 4')).toEqual([plain('2 * 3 * 4')]);
   });
 
+  it('lässt den Genderstern mitten im Wort literal, auch mehrfach in einer Zeile', () => {
+    const line = 'Bürger*innen, Eigentümer*innen und Mieter*innen';
+    expect(parseInlineMarks(line)).toEqual([plain(line)]);
+    expect(parseInlineMarks('Alle Bürger*innen sind gemeint')).toEqual([
+      plain('Alle Bürger*innen sind gemeint'),
+    ]);
+  });
+
+  it('liest `*kursiv*` am Wortanfang und `**fett**` weiter wie zuvor', () => {
+    expect(parseInlineMarks('ein *kursiv* Wort')).toEqual([
+      plain('ein '),
+      { ...plain('kursiv'), italic: true },
+      plain(' Wort'),
+    ]);
+    expect(parseInlineMarks('ein **fett** Wort')).toEqual([
+      plain('ein '),
+      { ...plain('fett'), bold: true },
+      plain(' Wort'),
+    ]);
+  });
+
   it('lässt einen Unterstrich mitten im Wort literal', () => {
     expect(parseInlineMarks('snake_case_name')).toEqual([plain('snake_case_name')]);
   });

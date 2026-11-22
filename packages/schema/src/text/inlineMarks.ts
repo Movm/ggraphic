@@ -159,13 +159,16 @@ function tokenize(line: string): Token[] {
   ) => {
     flush();
     // Ein `_` (und `++`, siehe `markerCanOpenAt`) mitten im Wort (`snake_case`) darf nicht ÖFFNEN, sonst würde
-    // jeder Bezeichner kursiv. Beim SCHLIESSEN gilt die Einschränkung nicht:
+    // jeder Bezeichner kursiv. Dasselbe gilt für ein einzelnes `*`: der Genderstern
+    // (`Bürger*innen, Eigentümer*innen`) ist ein Wortzeichen, kein Kursiv-Anfang —
+    // sonst paarten zwei davon in einer Zeile und verschluckten beide Sterne.
+    // `**` bleibt unberührt. Beim SCHLIESSEN gilt die Einschränkung nicht:
     // `_grün_er` — ein kursiver Wortanfang — hat rechts vom schließenden
     // Marker ein Wortzeichen, und mit der Bedingung auch dort ließ sich
     // genau das nicht mehr lesen, was `serializeInlineMarks` selbst schreibt.
     // Ohne einen offenen Marker auf dem Stapel paart `resolve` ohnehin nicht,
     // `snake_case_name` bleibt also unberührt.
-    const wordBound = raw.startsWith('_') || kind === 'marker';
+    const wordBound = raw.startsWith('_') || raw === '*' || kind === 'marker';
     tokens.push({
       type: 'delim',
       kind,
