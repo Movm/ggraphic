@@ -108,6 +108,28 @@ export function setWholeTextMark(
 }
 
 /**
+ * Nimmt jeden Akzent mit eigener Farbe (`=={#RRGGBB}…==`) aus dem Text. Ein
+ * solcher Akzent ist die Textfarbe eines Teils; wer die Textfarbe des ganzen
+ * Elements wählt, meint den ganzen Text, und der Akzent würde die neue Farbe
+ * sonst überdecken. Ein Akzent in der Farbe der Vorlage (`==…==`) bleibt: er
+ * ist Auszeichnung, keine Textfarbe. Zeilen ohne farbigen Akzent bleiben
+ * Zeichen für Zeichen, wie sie sind.
+ */
+export function withoutAccentColors(text: string): string {
+  return readLines(text)
+    .map((line) => {
+      if (line.blank) return line.raw;
+      const runs = parseInlineMarks(line.body);
+      if (!runs.some((run) => run.accent && run.accentColor)) return line.raw;
+      const body = serializeInlineMarks(
+        runs.map((run) => (run.accentColor ? withMark(run, 'accent', false, null) : run))
+      );
+      return line.marker === null ? body : `${line.marker} ${body}`;
+    })
+    .join('\n');
+}
+
+/**
  * Setzt jede nicht leere Zeile in die Liste (`null`: aus der Liste). Eine
  * Nummerierung zählt je Block neu; sie braucht mindestens zwei Zeilen
  * (`wholeTextCanOrderedList`) und lässt den Text sonst, wie er ist.

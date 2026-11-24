@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { type BindingRef, type FontRole } from '@ggraphic/core';
+import { wholeTextFormat } from '@ggraphic/schema';
 import { useCanvasEditorServices } from '../../CanvasEditorProvider.js';
 import { useDocumentBrand } from '../../brand/documentBrand.js';
 import { useCanvasTextFormatting, useIsCanvasTextEditing } from '../CanvasTextOverlay.js';
@@ -222,7 +223,14 @@ export function ContextControls({
 
   const showColorFor = (type: FloatingModuleState['type']) => {
     if (type === 'text') {
-      return { color: activeFloatingModule?.data.fill || '#000000', variant: 'font' as const };
+      // An accent in its own colour over the whole text is the colour the text shows; `fill` is
+      // hidden beneath it. The swatch names what is on the page, and a pick recolours both.
+      const text = activeFloatingModule?.data.text;
+      const shown = typeof text === 'string' ? wholeTextFormat(text).accentColor : null;
+      return {
+        color: shown ?? (activeFloatingModule?.data.fill || '#000000'),
+        variant: 'font' as const,
+      };
     }
     // The colour plane takes the template's palette, below.
     if (type === 'background') return null;

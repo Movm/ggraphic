@@ -6,6 +6,7 @@ import {
   setWholeTextMark,
   wholeTextCanOrderedList,
   wholeTextFormat,
+  withoutAccentColors,
 } from './wholeTextFormat.js';
 
 describe('setWholeTextMark: one mark over the whole text', () => {
@@ -133,6 +134,33 @@ describe('wholeTextFormat: what the whole text carries', () => {
     const marked = setWholeTextMark('Eins\nZwei', 'accent', true, '#E6007E');
     expect(wholeTextFormat(marked).accentColor).toBe('#E6007E');
     expect(wholeTextFormat(setWholeTextMark(marked, 'accent', false)).accent).toBe(false);
+  });
+});
+
+describe('withoutAccentColors: the text colour picked for the whole text wins', () => {
+  it('takes off an accent that colours the whole text', () => {
+    expect(withoutAccentColors('=={#005538}Wir machen Solar möglich.==')).toBe(
+      'Wir machen Solar möglich.'
+    );
+  });
+
+  it('takes off a coloured accent on a part and leaves the rest as it is', () => {
+    expect(withoutAccentColors('Sonne für =={#E6007E}alle== **heute**')).toBe(
+      'Sonne für alle **heute**'
+    );
+  });
+
+  it('keeps an accent in the colour of the template', () => {
+    expect(withoutAccentColors('Sonne für ==alle==')).toBe('Sonne für ==alle==');
+  });
+
+  it('keeps the other marks of a coloured accent, the lines and the list markers', () => {
+    expect(withoutAccentColors('• =={#E6007E}**Eins**==\n\n• Zwei')).toBe('• **Eins**\n\n• Zwei');
+  });
+
+  it('returns a text without coloured accents unchanged', () => {
+    const text = '++Hallo++ _Welt_';
+    expect(withoutAccentColors(text)).toBe(text);
   });
 });
 
