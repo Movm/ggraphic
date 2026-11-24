@@ -1416,6 +1416,7 @@ function GenericCanvasWithRef<
             cropCancelCount={cropSession.cancelCount}
             getStage={getStage}
             onToolbarStateChange={onToolbarStateChange}
+            callbacks={callbacks}
           />
         </PreviewRenderContext.Provider>
       </ImageRetryContext.Provider>

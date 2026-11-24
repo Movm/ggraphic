@@ -107,6 +107,8 @@ interface ToolbarStateBridgeProps<
   /** Die Bühne der Seite: „Automatisch" liest dort das geladene Foto. */
   getStage: () => Konva.Stage | null;
   onToolbarStateChange?: (state: ToolbarStateReport) => void;
+  /** The host's `on<Key>Change` callbacks (`useFloatingModuleHandlers`). */
+  callbacks?: Record<string, ((val: unknown) => void) | undefined>;
 }
 
 export function ToolbarStateBridge<
@@ -129,6 +131,7 @@ export function ToolbarStateBridge<
   cropCancelCount,
   getStage,
   onToolbarStateChange,
+  callbacks,
 }: ToolbarStateBridgeProps<TState, TActions>) {
   const store = useCanvasStore();
   const { expandImage, imageUrls = plainImageUrls } = useCanvasEditorServices();
@@ -206,6 +209,7 @@ export function ToolbarStateBridge<
     state,
     setState,
     debouncedSaveToHistory,
+    callbacks,
   });
 
   // Nach dem Warten auf smartcrop schreibt der Stand der letzten Darstellung, nicht der beim Klick.

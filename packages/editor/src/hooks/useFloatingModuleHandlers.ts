@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 import { type BindingRef, type Bindings } from '@ggraphic/core';
+import { withoutAccentColors } from '@ggraphic/schema';
 import { useCallback } from 'react';
 
 import { imageLookPatch, type ImageLookId } from '../utils/imageLook.js';
@@ -45,6 +46,11 @@ export interface UseFloatingModuleHandlersOptions<
   state: TState;
   setState: (partial: Partial<TState> | ((prev: TState) => TState)) => void;
   debouncedSaveToHistory: (state: TState) => void;
+  /**
+   * The host's `on<Key>Change` callbacks. A template text field reaches the page document only
+   * through its own callback, so a colour pick that also rewrites the field's text calls it.
+   */
+  callbacks?: Record<string, ((val: unknown) => void) | undefined>;
 }
 
 export interface UseFloatingModuleHandlersResult {
@@ -82,8 +88,15 @@ export function useFloatingModuleHandlers<
   TState extends Partial<BaseCanvasState>,
   TActions extends OptionalCanvasActions = OptionalCanvasActions,
 >(options: UseFloatingModuleHandlersOptions<TState, TActions>): UseFloatingModuleHandlersResult {
-  const { activeFloatingModule, actions, config, state, setState, debouncedSaveToHistory } =
-    options;
+  const {
+    activeFloatingModule,
+    actions,
+    config,
+    state,
+    setState,
+    debouncedSaveToHistory,
+    callbacks,
+  } = options;
 
   const handleColorSelect = useCallback(
     (color: string, ref?: BindingRef) => {
@@ -112,13 +125,19 @@ export function useFloatingModuleHandlers<
       } else if (activeFloatingModule.type === 'text') {
         const id = activeFloatingModule.data.id;
 
+        // The text colour of the whole element is the colour of the whole text: a coloured
+        // accent (the colour of a part) would cover it and leave the pick without effect.
         const additionalTexts = state.additionalTexts ?? [];
-        if (additionalTexts.find((t) => t.id === id)) {
+        const text = additionalTexts.find((t) => t.id === id);
+        if (text) {
           if (actions.updateAdditionalText) {
+            const recoloured =
+              typeof text.text === 'string' ? withoutAccentColors(text.text) : text.text;
             actions.updateAdditionalText(id, {
               fill: color,
               fillGradient: null,
               ...pick('fill'),
+              ...(recoloured !== text.text ? { text: recoloured } : {}),
             });
           }
           return;
@@ -128,9 +147,21 @@ export function useFloatingModuleHandlers<
         if (elementConfig && elementConfig.type === 'text') {
           const fillStateKey = elementConfig.fillStateKey as string | undefined;
           if (fillStateKey) {
-            const next = withPageColor(state, fillStateKey, color, ref);
+            const { textKey } = elementConfig;
+            const current = (state as Record<string, unknown>)[textKey];
+            const recoloured = typeof current === 'string' ? withoutAccentColors(current) : current;
+            const changesText = recoloured !== current;
+            // Boundary: `textKey` names a string field of this config's state.
+            const next = {
+              ...withPageColor(state, fillStateKey, color, ref),
+              ...(changesText ? { [textKey]: recoloured } : {}),
+            } as TState;
             setState(() => next);
             debouncedSaveToHistory(next);
+            if (changesText) {
+              const callbackKey = `on${textKey.charAt(0).toUpperCase()}${textKey.slice(1)}Change`;
+              callbacks?.[callbackKey]?.(recoloured);
+            }
           }
         }
       } else if (activeFloatingModule.type === 'image') {
@@ -169,7 +200,15 @@ export function useFloatingModuleHandlers<
         });
       }
     },
-    [activeFloatingModule, actions, config.elements, state, setState, debouncedSaveToHistory]
+    [
+      activeFloatingModule,
+      actions,
+      config.elements,
+      state,
+      setState,
+      debouncedSaveToHistory,
+      callbacks,
+    ]
   );
 
   const handleOpacityChange = useCallback(
