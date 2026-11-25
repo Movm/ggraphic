@@ -1,5 +1,15 @@
 # @ggraphic/schema
 
+## 0.1.0-alpha.7
+
+### Minor Changes
+
+- da074cb: Picking the text colour of a whole text element now recolours the whole text. An accent in its own colour (`=={#RRGGBB}…==`) used to cover the picked `fill`, so a text whose accent spanned all of it could not be recoloured from the colour button at all, and the button showed `fill` while the page showed the accent colour. The pick now takes coloured accents off in the same step (free texts through `updateAdditionalText`, template text fields together with their colour key and their `on<Key>Change` callback); accents in the template's colour stay. The colour button shows the accent colour when one coloured accent covers the whole text. New in `@ggraphic/schema`: `withoutAccentColors(text)`. `ToolbarStateBridge` and `useFloatingModuleHandlers` take the host's `callbacks` as an optional option.
+
+### Patch Changes
+
+- cb2479a: `parseInlineMarks` no longer reads a single `*` inside a word as an italic delimiter. The German gender star in `Bürger*innen, Eigentümer*innen und Mieter*innen` used to pair across the line, drop both stars and set the text between them in italics. A single `*` now behaves like `_`: it cannot open directly after a word character. `*kursiv*` at a word start and `**fett**` are unchanged, and `serializeInlineMarks` never relied on a mid-word `*`.
+
 ## 0.1.0-alpha.6
 
 ### Patch Changes

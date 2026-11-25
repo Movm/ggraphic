@@ -12,7 +12,8 @@
     "@ggraphic/templates-open": "0.0.0",
     "@ggraphic/ui": "0.0.0",
     "@ggraphic/brand-default": "0.0.0",
-    "@ggraphic/react-native": "0.0.0"
+    "@ggraphic/react-native": "0.0.0",
+    "@ggraphic/editor-chrome": "0.0.0"
   },
   "changesets": [
     "add-page-brand-only",
@@ -51,6 +52,7 @@
     "document-v4",
     "duotone",
     "editor-box-layout",
+    "editor-chrome",
     "editor-declare-peers",
     "editor-delete-order-undo",
     "editor-element-types-from-core",
@@ -77,6 +79,7 @@
     "font-roles-editor",
     "fonts-wait-has-an-end",
     "gate-photo-contrast",
+    "gender-star-not-italic",
     "ggraphic-editor-component",
     "host-entry-server-safe",
     "host-font-cuts-and-page-files",
@@ -117,6 +120,7 @@
     "template-instantiate",
     "templates-open-photos-subpath",
     "templates-open",
+    "text-colour-over-coloured-accent",
     "text-format-and-labels",
     "text-format-on-select",
     "text-insert-size-follows-width",

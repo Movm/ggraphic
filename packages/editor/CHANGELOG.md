@@ -1,5 +1,20 @@
 # @ggraphic/editor
 
+## 0.1.0-alpha.19
+
+### Minor Changes
+
+- e4fe77b: Add `@ggraphic/editor-chrome`: the sidebar shell (`SidebarTabBar`, `SidebarPanel`, `SubsectionTabBar`, `useIsCanvasMobile`, `EditorBoxProvider`, the mobile sheet) with its tokens, rules and Tailwind entry, without konva, tiptap, yjs or the editor store. `@ggraphic/editor` builds its sidebar from it and keeps exporting the same names from `./sidebar` and `./shell`. New for hosts of the chrome: `SidebarTabBar` takes `footer` and `ariaLabel`, `SidebarPanel` takes `closeLabel` and `collapseLabel`, `SubsectionTabBar` takes `viewLabel`; the panel finds its layout root by `data-editor-chrome-root` (the editor's layout sets it) instead of `.canvas-editor-layout`. `SidebarTabBarProps` no longer has `onExport`; it was never read.
+
+### Patch Changes
+
+- da074cb: Picking the text colour of a whole text element now recolours the whole text. An accent in its own colour (`=={#RRGGBB}…==`) used to cover the picked `fill`, so a text whose accent spanned all of it could not be recoloured from the colour button at all, and the button showed `fill` while the page showed the accent colour. The pick now takes coloured accents off in the same step (free texts through `updateAdditionalText`, template text fields together with their colour key and their `on<Key>Change` callback); accents in the template's colour stay. The colour button shows the accent colour when one coloured accent covers the whole text. New in `@ggraphic/schema`: `withoutAccentColors(text)`. `ToolbarStateBridge` and `useFloatingModuleHandlers` take the host's `callbacks` as an optional option.
+- Updated dependencies [e4fe77b]
+- Updated dependencies [cb2479a]
+- Updated dependencies [da074cb]
+  - @ggraphic/editor-chrome@0.1.0-alpha.0
+  - @ggraphic/schema@0.1.0-alpha.7
+
 ## 0.1.0-alpha.18
 
 ### Minor Changes
